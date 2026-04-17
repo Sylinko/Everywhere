@@ -11,9 +11,7 @@ using Everywhere.Interop;
 using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
 using Everywhere.Mac.Interop;
-using Everywhere.Mac.Patches;
 using Everywhere.StrategyEngine;
-using HarmonyLib;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -31,7 +29,6 @@ public static class Program
 #endif
 
         await Entrance.InitializeAsync(args);
-        InitializeHarmony();
 
         ServiceLocator.Build(x => x
 
@@ -165,13 +162,6 @@ public static class Program
             },
             _ => NativeMessageBoxResult.None
         };
-    }
-
-    private static void InitializeHarmony()
-    {
-        // Apply Harmony patches
-        var harmony = new Harmony("com.sylinko.everywhere.mac.patches");
-        ControlAutomationPeerPatch.Patch(harmony);
     }
 
     private static AppBuilder BuildAvaloniaApp() =>

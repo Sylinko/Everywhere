@@ -35,5 +35,7 @@
     </Content>
   </ItemGroup>
 
+  <Import Project="..\Build.Patches.targets" />
+
   <Import Project="..\Build.Watchdog.targets" />
 </Project>

@@ -57,6 +57,8 @@
     <AvaloniaResource Include="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
 
+  <Import Project="..\Build.Patches.targets" />
+
   <ItemGroup>
     <TrimmerRootAssembly Include="Everywhere"/>
     <TrimmerRootAssembly Include="Everywhere.Abstractions"/>
@@ -108,7 +110,7 @@
   <Import Project="..\Build.Watchdog.targets"/>
 
   <PropertyGroup>
-    <DeleteAfterPublishScript>$(MSBuildThisFileDirectory)..\DeleteAfterPublish.ps1</DeleteAfterPublishScript>
+    <DeleteAfterPublishScript>$(MSBuildThisFileDirectory)..\..\tools\DeleteAfterPublish.ps1</DeleteAfterPublishScript>
     <DeleteAfterPublishList>$(MSBuildThisFileDirectory)\DeleteAfterPublish.txt</DeleteAfterPublishList>
     <DeleteAfterPublishDir>$(ProjectDir)\$(PublishDir)</DeleteAfterPublishDir>
   </PropertyGroup>

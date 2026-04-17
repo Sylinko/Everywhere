@@ -1,10 +1,13 @@
-﻿// resharper disable InconsistentNaming
-using System.Runtime.CompilerServices;
+﻿// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedMember.Local
+// ReSharper disable MemberCanBePrivate.Global
+
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
-using HarmonyLib;
+using MonoMod;
 
-namespace Everywhere.Patches.Avalonia;
+namespace Everywhere.Patches.Avalonia.Base;
 
 /// <summary>
 /// This fixes https://github.com/DearVa/Everywhere/issues/313
@@ -28,29 +31,32 @@ namespace Everywhere.Patches.Avalonia;
 ///   at IntPtr PopupImpl.WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)()
 ///   at IntPtr WindowImpl.WndProcMessageHandler(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)()
 /// </remarks>
-internal static class TextLeadingPrefixCharacterEllipsis_Collapse
+[MonoModPatch("Avalonia.Media.TextFormatting.TextLeadingPrefixCharacterEllipsis")]
+public sealed class patch_TextLeadingPrefixCharacterEllipsis : TextCollapsingProperties
 {
-    public static void Patch(Harmony harmony)
+    [MonoModIgnore]
+    public extern override double Width { get; }
+
+    [MonoModIgnore]
+    public extern override TextRun Symbol { get; }
+
+    [MonoModIgnore]
+    public extern override FlowDirection FlowDirection { get; }
+
+    [MonoModIgnore]
+    private int _prefixLength;
+
+    [MonoModReplace]
+    public override TextRun[]? Collapse(TextLine textLine)
     {
-        var original = AccessTools.Method(typeof(TextLeadingPrefixCharacterEllipsis), nameof(TextLeadingPrefixCharacterEllipsis.Collapse));
-        harmony.Patch(original, new HarmonyMethod(Prefix));
-    }
-
-    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_prefixLength")]
-    private static extern ref int GetPrefixLength(TextLeadingPrefixCharacterEllipsis @this);
-
-    private static bool Prefix(TextLeadingPrefixCharacterEllipsis __instance, ref TextLine textLine, ref TextRun[]? __result)
-    {
-        var shapedSymbol = TextFormatter.CreateSymbol(__instance.Symbol, FlowDirection.LeftToRight);
-
-        if (__instance.Width < shapedSymbol.GlyphRun.Bounds.Width)
+        var shapedSymbol = TextFormatter.CreateSymbol(Symbol, FlowDirection.LeftToRight);
+        if (Width < shapedSymbol.GlyphRun.Bounds.Width)
         {
-            __result = [];
-            return false;
+            return [];
         }
 
         var textRunEnumerator = new LogicalTextRunEnumerator(textLine);
-        var availableWidth = __instance.Width - shapedSymbol.Size.Width;
+        var availableWidth = Width - shapedSymbol.Size.Width;
         while (textRunEnumerator.MoveNext(out var run))
         {
             if (run is not DrawableTextRun drawableTextRun) continue;
@@ -73,12 +79,12 @@ internal static class TextLeadingPrefixCharacterEllipsis_Collapse
             try
             {
                 FormattingObjectPool.RentedList<TextRun>? effectivePostSplitRuns;
-                var availableSuffixWidth = __instance.Width - shapedSymbol.Size.Width;
+                var availableSuffixWidth = Width - shapedSymbol.Size.Width;
 
                 // prepare the prefix
-                if (GetPrefixLength(__instance) > 0)
+                if (_prefixLength > 0)
                 {
-                    (rentedPreSplitRuns, rentedPostSplitRuns) = TextFormatterImpl.SplitTextRuns(textRuns, GetPrefixLength(__instance), objectPool);
+                    (rentedPreSplitRuns, rentedPostSplitRuns) = TextFormatterImpl.SplitTextRuns(textRuns, _prefixLength, objectPool);
                     effectivePostSplitRuns = rentedPostSplitRuns;
                     if (rentedPreSplitRuns != null)
                     {
@@ -102,8 +108,7 @@ internal static class TextLeadingPrefixCharacterEllipsis_Collapse
 
                 if (effectivePostSplitRuns is null || availableSuffixWidth <= 0)
                 {
-                    __result = collapsedRuns.ToArray();
-                    return false;
+                    return collapsedRuns.ToArray();
                 }
 
                 var suffixStartIndex = collapsedRuns.Count;
@@ -153,8 +158,7 @@ internal static class TextLeadingPrefixCharacterEllipsis_Collapse
                     }
                 }
 
-                __result = collapsedRuns.ToArray();
-                return false;
+                return collapsedRuns.ToArray();
             }
             finally
             {
@@ -165,7 +169,6 @@ internal static class TextLeadingPrefixCharacterEllipsis_Collapse
             }
         }
 
-        __result = null;
-        return false;
+        return null;
     }
 }

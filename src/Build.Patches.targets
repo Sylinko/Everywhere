@@ -1,0 +1,96 @@
+<Project>
+
+  <PropertyGroup>
+    <PatchesBasePath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\patches\'))</PatchesBasePath>
+    <PatcherExe>$(PatchesBasePath)Everywhere.BuildTask.Patcher\bin\$(Configuration)\net10.0\Everywhere.BuildTask.Patcher.dll</PatcherExe>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Everywhere.BuildTask.Patcher.WeaveAssembliesTask" AssemblyFile="$(PatcherExe)" />
+  <UsingTask TaskName="Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask" AssemblyFile="$(PatcherExe)" />
+
+  <!-- Patcher tool: build-order dependency only, no runtime reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.BuildTask.Patcher\Everywhere.BuildTask.Patcher.csproj"
+                      ReferenceOutputAssembly="false"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <!-- Patch projects: MSBuild builds them during ResolveProjectReferences,
+         output DLL paths are collected into @(PatchAssembly) via OutputItemType.
+         PatchTargets metadata = semicolon-separated target assembly names to weave. -->
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Base\Everywhere.Patches.Avalonia.Base.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Avalonia.Base"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Controls\Everywhere.Patches.Avalonia.Controls.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Avalonia.Controls"
+                      Condition="'$(IsMacOS)' == 'true'"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Native\Everywhere.Patches.Avalonia.Native.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Avalonia.Native"
+                      Condition="'$(IsMacOS)' == 'true'"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.AvaloniaEdit\Everywhere.Patches.AvaloniaEdit.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="AvaloniaEdit"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.SemanticKernel\Everywhere.Patches.SemanticKernel.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Microsoft.SemanticKernel.Abstractions"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+  </ItemGroup>
+
+  <Target Name="WeaveAssemblies" AfterTargets="ResolveAssemblyReferences" Condition="'$(DesignTimeBuild)' != 'true' and '@(PatchAssembly)' != ''">
+    <Message Importance="High" Text="================== WeaveAssemblies is running in $(MSBuildProjectName)! ==================" />
+
+    <Everywhere.BuildTask.Patcher.WeaveAssembliesTask
+        References="@(ReferencePath)"
+        PatchAssemblies="@(PatchAssembly)"
+        OutputDirectory="$(IntermediateOutputPath)Patched\">
+      <Output TaskParameter="RemovedReferences" ItemName="_RemovedReferences" />
+      <Output TaskParameter="AddedReferences" ItemName="_AddedReferences" />
+    </Everywhere.BuildTask.Patcher.WeaveAssembliesTask>
+
+    <ItemGroup>
+      <ReferencePath Remove="@(_RemovedReferences)" />
+      <ReferencePath Include="@(_AddedReferences)" />
+      <ReferenceCopyLocalPaths Remove="@(_RemovedReferences)" />
+      <ReferenceCopyLocalPaths Include="@(_AddedReferences)" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Replace patched DLLs in the publish file list for app bundle creation (macOS/iOS).
+    On macOS, the SDK reuses the publish pipeline during 'dotnet build' to populate the .app bundle.
+    @(ResolvedFileToPublish) is populated from @(_ResolvedCopyLocalBuildAssets) (NuGet originals)
+    independently of our @(ReferenceCopyLocalPaths) modifications, so we must replace by filename
+    AFTER ComputeResolvedFilesToPublishList but BEFORE ILLink, ensuring the trimmer processes
+    patched code and produces a single linked/ output without NETSDK1152 conflicts.
+  -->
+  <Target Name="_PatchResolvedFilesToPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          BeforeTargets="ILLink;_ComputeResolvedFilesToPublishTypes"
+          Condition="'@(_AddedReferences)' != ''">
+
+    <Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask OriginalItems="@(ResolvedFileToPublish)" ReplacementItems="@(_AddedReferences)">
+      <Output TaskParameter="ItemsToRemove" ItemName="_PublishItemsToRemove" />
+      <Output TaskParameter="ItemsToAdd" ItemName="_PublishItemsToAdd" />
+    </Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask>
+
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(_PublishItemsToRemove)" />
+      <ResolvedFileToPublish Include="@(_PublishItemsToAdd)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

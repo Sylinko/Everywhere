@@ -1,29 +1,21 @@
-﻿using System.Text.Json;
-using HarmonyLib;
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
+
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using MonoMod;
 using FunctionCallContent = Microsoft.Extensions.AI.FunctionCallContent;
 using TextContent = Microsoft.Extensions.AI.TextContent;
 
 namespace Everywhere.Patches.SemanticKernel;
 
-/// <summary>
-/// The original `ChatResponseUpdateExtensions.ToStreamingChatMessageContent` method does not properly handle the case where the update contains a mix of content types, such as text and function calls.
-/// This patch ensures that all content items are processed and included in the resulting `StreamingChatMessageContent`, allowing for richer and more accurate streaming chat messages that reflect the full range of content provided by the model.
-/// Additionally, it ensures that metadata and raw representations are preserved for each content item, which is crucial for downstream processing and accurate rendering of the chat message.
-/// </summary>
-internal static class ChatResponseUpdateExtensions_ToStreamingChatMessageContent
+[MonoModPatch("Microsoft.Extensions.AI.ChatResponseUpdateExtensions")]
+internal static class patch_ChatResponseUpdateExtensions
 {
-    public static void Patch(Harmony harmony)
-    {
-        var original = AccessTools.Method(typeof(ChatResponseUpdateExtensions), nameof(ChatResponseUpdateExtensions.ToStreamingChatMessageContent));
-        harmony.Patch(original, new HarmonyMethod(Prefix));
-    }
-
-    // ReSharper disable once InconsistentNaming
-    // ReSharper disable once RedundantAssignment
-    private static bool Prefix(ref ChatResponseUpdate update, ref StreamingChatMessageContent __result)
+    [MonoModReplace]
+    internal static StreamingChatMessageContent ToStreamingChatMessageContent(this ChatResponseUpdate update)
     {
         StreamingChatMessageContent content = new(
             update.Role is not null ? new AuthorRole(update.Role.Value.Value) : null,
@@ -87,8 +79,7 @@ internal static class ChatResponseUpdateExtensions_ToStreamingChatMessageContent
             content.Items.Add(resultContent);
         }
 
-        __result = content;
-        return false;
+        return content;
     }
 
     private static IReadOnlyDictionary<string,object?>? Union(Dictionary<string, object?>? metadata1, AdditionalPropertiesDictionary? metadata2)
