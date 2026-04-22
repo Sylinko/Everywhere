@@ -2642,6 +2642,12 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
         <value>This attachment type is not supported by the model, but the model can still see the metadata and be prompted to use tools to process it.</value>
     </data>
+    <data name="ShortcutSettings_QuickMode_Header" xml:space="preserve">
+        <value />
+    </data>
+    <data name="ShortcutSettings_QuickMode_Desription" xml:space="preserve">
+        <value />
+    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>The model is blocked from calling tools.</value>
     </data>

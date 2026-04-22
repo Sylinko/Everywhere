@@ -44,38 +44,38 @@ public partial class VisualElementContext(
 
     private readonly AtspiService _atspi = new(backend);
 
-    public IVisualElement? ElementFromPoint(PixelPoint point, ScreenSelectionMode mode = ScreenSelectionMode.Element)
+    public IVisualElement? ElementFromPoint(PixelPoint point, ScreenSelectionModes modes = ScreenSelectionModes.Element)
     {
         try
         {
-            switch (mode)
+            switch (modes)
             {
-                case ScreenSelectionMode.Element:
+                case ScreenSelectionModes.Element:
                     var win = backend.GetWindowElementAt(point);
                     var elem = _atspi.ElementFromWindow(point, win);
                     return elem ?? win; // fallback to window mode
 
-                case ScreenSelectionMode.Window:
+                case ScreenSelectionModes.Window:
                     return backend.GetWindowElementAt(point);
 
-                case ScreenSelectionMode.Screen:
+                case ScreenSelectionModes.Screen:
                     return backend.GetScreenElement();
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
+                    throw new ArgumentOutOfRangeException(nameof(modes), modes, null);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "ElementFromPoint failed for point {point}, mode {mode}", point, mode);
+            logger.LogError(ex, "ElementFromPoint failed for point {point}, mode {mode}", point, modes);
             return null;
         }
     }
 
-    public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
+    public IVisualElement? ElementFromPointer(ScreenSelectionModes modes = ScreenSelectionModes.Element)
     {
         var point = backend.GetPointer();
-        return ElementFromPoint(point, mode);
+        return ElementFromPoint(point, modes);
     }
 
     public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)
@@ -83,7 +83,7 @@ public partial class VisualElementContext(
         throw new NotImplementedException();
     }
 
-    public async Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionMode? initialMode)
+    public async Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionModes? initialMode)
     {
         if (Application.Current is not { ApplicationLifetime: ClassicDesktopStyleApplicationLifetime desktopLifetime })
         {
@@ -97,7 +97,7 @@ public partial class VisualElementContext(
         return result;
     }
 
-    public async Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionMode? initialMode)
+    public async Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionModes? initialMode)
     {
         if (Application.Current is not { ApplicationLifetime: ClassicDesktopStyleApplicationLifetime desktopLifetime })
         {

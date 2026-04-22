@@ -8,14 +8,14 @@ public partial class VisualElementContext
 {
     private class ElementPicker : ScreenSelectionSession
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Window;
+        private static ScreenSelectionModes _previousModes = ScreenSelectionModes.Window;
         public static async Task<IVisualElement?> PickAsync(
             VisualElementContext context,
             IWindowBackend backend,
-            ScreenSelectionMode? initialMode)
+            ScreenSelectionModes? initialMode)
         {
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
-            var window = new ElementPicker(context, backend, initialMode ?? _previousMode);
+            var window = new ElementPicker(context, backend, initialMode ?? _previousModes);
             window.Show();
             window.Activate();
             return await window._pickingPromise.Task;
@@ -28,8 +28,8 @@ public partial class VisualElementContext
         private ElementPicker(
             VisualElementContext context,
             IWindowBackend backend,
-            ScreenSelectionMode screenSelectionMode)
-            : base(backend, [ScreenSelectionMode.Screen, ScreenSelectionMode.Window], screenSelectionMode)
+            ScreenSelectionModes screenSelectionMode)
+            : base(backend, ScreenSelectionModes.Screen | ScreenSelectionModes.Window | ScreenSelectionModes.Element, screenSelectionMode)
         {
             _context = context;
             backend.SetFocusable(this, true);
@@ -75,7 +75,7 @@ public partial class VisualElementContext
         {
             base.OnClosed(e);
 
-            _previousMode = CurrentMode;
+            _previousModes = CurrentMode;
         }
     }
 }

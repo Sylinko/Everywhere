@@ -2,8 +2,10 @@
 
 public partial class MainView : ReactiveUserControl<MainViewModel>
 {
-    public MainView()
+    public MainView(FloatingIslandWindow floatingIslandWindow)
     {
         InitializeComponent();
+
+        floatingIslandWindow.Show();
     }
 }

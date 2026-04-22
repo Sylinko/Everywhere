@@ -13,17 +13,17 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
 
     public IEnumerable<IVisualElement> Screens => NSScreen.Screens.Select(screen => new NSScreenVisualElement(screen));
 
-    IVisualElement? IVisualElementContext.ElementFromPoint(PixelPoint point, ScreenSelectionMode mode) => ElementFromPoint(point, mode);
+    IVisualElement? IVisualElementContext.ElementFromPoint(PixelPoint point, ScreenSelectionModes modes) => ElementFromPoint(point, modes);
 
-    private static IVisualElement? ElementFromPoint(PixelPoint point, ScreenSelectionMode mode = ScreenSelectionMode.Element)
+    private static IVisualElement? ElementFromPoint(PixelPoint point, ScreenSelectionModes modes = ScreenSelectionModes.Element)
     {
-        switch (mode)
+        switch (modes)
         {
-            case ScreenSelectionMode.Element:
+            case ScreenSelectionModes.Element:
             {
                 return AXUIElement.SystemWide.ElementAtPosition(point.X, point.Y);
             }
-            case ScreenSelectionMode.Window:
+            case ScreenSelectionModes.Window:
             {
                 // Traverse up to find the containing window element
                 IVisualElement? current = AXUIElement.SystemWide.ElementAtPosition(point.X, point.Y);
@@ -33,7 +33,7 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
                 }
                 return current;
             }
-            case ScreenSelectionMode.Screen:
+            case ScreenSelectionModes.Screen:
             {
                 var screen = NSScreen.Screens.FirstOrDefault(s => s.Frame.Contains(new CGPoint(point.X, point.Y)));
                 return screen is null ? null : new NSScreenVisualElement(screen);
@@ -45,7 +45,7 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         }
     }
 
-    public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
+    public IVisualElement? ElementFromPointer(ScreenSelectionModes modes = ScreenSelectionModes.Element)
     {
         var point = Dispatcher.UIThread.InvokeOnDemand<PixelPoint?>(() =>
         {
@@ -63,7 +63,7 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
             return new PixelPoint((int)x, (int)y);
         });
 
-        return point is null ? null : ElementFromPoint(point.Value, mode);
+        return point is null ? null : ElementFromPoint(point.Value, modes);
     }
 
     public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)
@@ -71,12 +71,12 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         return AXUIElement.ElementFromWindowId((uint)windowHandle);
     }
 
-    public Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionMode? initialMode)
+    public Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionModes? initialMode)
     {
         return PickerSession.PickAsync(windowHelper, initialMode);
     }
 
-    public Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionMode? initialMode)
+    public Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionModes? initialMode)
     {
         return ScreenshotSession.TakeAsync(windowHelper, initialMode);
     }

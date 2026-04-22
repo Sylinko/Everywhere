@@ -11,14 +11,14 @@ partial class VisualElementContext
 {
     private sealed class ScreenshotSession : ScreenSelectionSession
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
+        private static ScreenSelectionModes _previousModes = ScreenSelectionModes.Element;
 
-        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionModes? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new ScreenshotSession(windowHelper, initialMode ?? _previousMode);
+            var window = new ScreenshotSession(windowHelper, initialMode ?? _previousModes);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -33,11 +33,8 @@ partial class VisualElementContext
         private CGPoint _dragStart;
         private PixelRect _dragRect;
 
-        private ScreenshotSession(IWindowHelper windowHelper, ScreenSelectionMode initialMode)
-            : base(
-                windowHelper,
-                [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
-                initialMode)
+        private ScreenshotSession(IWindowHelper windowHelper, ScreenSelectionModes initialMode) :
+            base(windowHelper, ScreenSelectionModes.All, initialMode)
         {
             CaptureAndSetBackground();
         }
@@ -68,7 +65,7 @@ partial class VisualElementContext
 
         protected override void OnClosed(EventArgs e)
         {
-            _previousMode = CurrentMode;
+            _previousModes = CurrentMode;
             _disposables.Dispose();
             _pickingPromise.TrySetResult(_resultBitmap);
             base.OnClosed(e);
@@ -76,7 +73,7 @@ partial class VisualElementContext
 
         protected override void OnLeftButtonDown()
         {
-            if (CurrentMode != ScreenSelectionMode.Free) return;
+            if (CurrentMode != ScreenSelectionModes.Free) return;
 
             _dragStart = CurrentMouseLocation; // Cocoa coords (bottom-left)
             // But CurrentMouseLocation is updated in OnPointerMoved.
@@ -103,7 +100,7 @@ partial class VisualElementContext
         {
             PixelRect captureRect;
 
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (!_isDragging) return false;
                 _isDragging = false;
@@ -124,7 +121,7 @@ partial class VisualElementContext
 
         protected override void OnMove(CGPoint point)
         {
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (_isDragging)
                 {

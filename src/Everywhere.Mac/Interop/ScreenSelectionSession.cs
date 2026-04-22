@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
-using DynamicData;
 using Everywhere.Interop;
 using Everywhere.Views;
 using ObjCRuntime;
@@ -11,20 +9,17 @@ using ZLinq;
 
 namespace Everywhere.Mac.Interop;
 
-internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindow
+internal abstract class ScreenSelectionSession : ScreenSelectionSessionWindowBase
 {
     protected IWindowHelper WindowHelper { get; }
     protected ScreenSelectionMaskWindow[] MaskWindows { get; }
     protected ScreenSelectionToolTipWindow ToolTipWindow { get; }
-
-    protected ScreenSelectionMode CurrentMode { get; private set; }
 
     // Track current mouse location for updates
     protected CGPoint CurrentMouseLocation { get; private set; }
 
     protected IVisualElement? SelectedElement { get; private set; }
 
-    private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
     private readonly uint _windowNumber;
     private readonly CGRect _allScreenFrame;
     private readonly PixelRect _allScreenBounds;
@@ -34,13 +29,12 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     /// </summary>
     private readonly List<int> _windowOwnerPids = [];
 
-    protected ScreenSelectionSession(IWindowHelper windowHelper, IReadOnlyList<ScreenSelectionMode> allowedModes, ScreenSelectionMode initialMode)
+    protected ScreenSelectionSession(
+        IWindowHelper windowHelper,
+        ScreenSelectionModes allowedModes,
+        ScreenSelectionModes initialMode) : base(allowedModes, initialMode)
     {
-        Debug.Assert(allowedModes.Count > 0);
-
         WindowHelper = windowHelper;
-        _allowedModes = allowedModes;
-        CurrentMode = initialMode;
 
         var handle = TryGetPlatformHandle()?.Handle ?? 0;
         if (handle != 0)
@@ -111,37 +105,14 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         SetNsWindowPlacement(this, _allScreenFrame);
 
         foreach (var maskWindow in MaskWindows) maskWindow.Show(this);
-        ToolTipWindow.Show(this);
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        var point = e.GetCurrentPoint(this);
+        base.OnPointerPressed(e);
 
         e.Handled = true;
         e.Pointer.Capture(null);
-
-        if (point.Properties.IsRightButtonPressed)
-        {
-            OnCanceled();
-            Close();
-            return;
-        }
-
-        if (point.Properties.IsLeftButtonPressed)
-        {
-            OnLeftButtonDown();
-        }
-    }
-
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
-    {
-        if (e.InitialPressMouseButton != MouseButton.Left) return;
-
-        if (OnLeftButtonUp())
-        {
-            Close();
-        }
     }
 
     private void HandleCGEvent(CGEventType type, CGEvent cgEvent, ref IntPtr cgEventRef)
@@ -172,57 +143,31 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             case CGKeyCode.NumPad1:
             case CGKeyCode.F1:
             {
-                SetMode(ScreenSelectionMode.Screen);
+                SetMode(ScreenSelectionModes.Screen);
                 break;
             }
             case CGKeyCode.D2:
             case CGKeyCode.NumPad2:
             case CGKeyCode.F2:
             {
-                SetMode(ScreenSelectionMode.Window);
+                SetMode(ScreenSelectionModes.Window);
                 break;
             }
             case CGKeyCode.D3:
             case CGKeyCode.NumPad3:
             case CGKeyCode.F3:
             {
-                SetMode(ScreenSelectionMode.Element);
+                SetMode(ScreenSelectionModes.Element);
                 break;
             }
             case CGKeyCode.D4:
             case CGKeyCode.NumPad4:
             case CGKeyCode.F4:
             {
-                SetMode(ScreenSelectionMode.Free);
+                SetMode(ScreenSelectionModes.Free);
                 break;
             }
         }
-
-        void SetMode(ScreenSelectionMode mode)
-        {
-            if (type != CGEventType.KeyDown) return;
-            if (!_allowedModes.Contains(mode)) return;
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                CurrentMode = mode;
-                HandlePickModeChanged();
-            });
-        }
-    }
-
-    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-    {
-        OnMouseWheel(Math.Sign(e.Delta.Y));
-    }
-
-    private void OnMouseWheel(int delta)
-    {
-        var newIndex = _allowedModes.IndexOf(CurrentMode) + (delta > 0 ? -1 : 1);
-        if (newIndex < 0) newIndex = _allowedModes.Count - 1;
-        else if (newIndex >= _allowedModes.Count) newIndex = 0;
-        CurrentMode = _allowedModes[newIndex];
-        HandlePickModeChanged();
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
@@ -230,10 +175,13 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         HandlePointerMoved(CurrentMouseLocation = NSEvent.CurrentMouseLocation);
     }
 
-    private void HandlePickModeChanged()
+    protected override void HandleModeChanged()
     {
-        HandlePointerMoved(CurrentMouseLocation);
-        ToolTipWindow.ToolTip.Mode = CurrentMode;
+        Dispatcher.UIThread.Post(() =>
+        {
+            HandlePointerMoved(CurrentMouseLocation);
+            ToolTipWindow.ToolTip.CurrentMode = CurrentMode;
+        });
     }
 
     private void HandlePointerMoved(CGPoint point)
@@ -277,7 +225,16 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             screen.Frame.Width,
             screen.Frame.Height);
 
-        var tooltipSize = ToolTipWindow.Bounds.Size;
+        Size tooltipSize;
+        if (!ToolTipWindow.IsVisible)
+        {
+            ToolTipWindow.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            tooltipSize = ToolTipWindow.DesiredSize;
+        }
+        else
+        {
+            tooltipSize = ToolTipWindow.Bounds.Size;
+        }
 
         var x = pointerPoint.X.Value;
         var y = pointerPoint.Y.Value - margin - tooltipSize.Height;
@@ -295,10 +252,12 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         }
 
         ToolTipWindow.Position = new PixelPoint((int)x, (int)y);
+        ToolTipWindow.IsVisible = true;
     }
 
-    protected virtual void OnCanceled()
+    protected override void OnCanceled()
     {
+        ToolTipWindow.Close();
         SelectedElement = null;
         CGEventListener.Default.EventReceived -= HandleCGEvent;
     }
@@ -308,7 +267,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         var maskRect = new PixelRect();
         switch (CurrentMode)
         {
-            case ScreenSelectionMode.Screen:
+            case ScreenSelectionModes.Screen:
             {
                 var primaryHeight = NSScreen.Screens[0].Frame.Height;
                 var screen = NSScreen.Screens.FirstOrDefault(s =>
@@ -330,7 +289,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 }
                 break;
             }
-            case ScreenSelectionMode.Window:
+            case ScreenSelectionModes.Window:
             {
                 SelectedElement = GetElementAtPoint();
                 while (SelectedElement is AXUIElement axui && axui.Role != AXRoleAttribute.AXWindow)
@@ -340,7 +299,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 if (SelectedElement != null) maskRect = SelectedElement.BoundingRectangle;
                 break;
             }
-            case ScreenSelectionMode.Element:
+            case ScreenSelectionModes.Element:
             {
                 SelectedElement = GetElementAtPoint();
                 if (SelectedElement != null) maskRect = SelectedElement.BoundingRectangle;
@@ -369,14 +328,6 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             return null;
         }
     }
-
-    protected virtual void OnLeftButtonDown() { }
-
-    /// <summary>
-    /// Called when left mouse button is released.
-    /// </summary>
-    /// <returns>if true, the picking session will end and the window will close.</returns>
-    protected virtual bool OnLeftButtonUp() => true;
 
     protected void UpdateToolTipInfo(PixelRect rect)
     {

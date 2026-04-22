@@ -55,7 +55,7 @@
     <PackageVersion Include="ZLinq" Version="1.5.5" />
   </ItemGroup>
   <ItemGroup Label="AI">
-    <PackageVersion Include="Anthropic" Version="12.11.0" />
+    <PackageVersion Include="Anthropic" Version="12.16.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MEAIVersion)" />

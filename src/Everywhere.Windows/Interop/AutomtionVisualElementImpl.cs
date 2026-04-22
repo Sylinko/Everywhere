@@ -507,7 +507,6 @@ public partial class VisualElementContext
             return null;
         }
 
-        // BUG: For a minimized window, the captured image is buggy (but child elements are fine).
         public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
         {
             var rect = BoundingRectangle;

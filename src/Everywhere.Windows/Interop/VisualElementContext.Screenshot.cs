@@ -10,16 +10,16 @@ namespace Everywhere.Windows.Interop;
 
 public partial class VisualElementContext
 {
-    private sealed class ScreenshotSession : ScreenSelectionSession
+    private sealed class ScreenshotSessionWindow : ScreenSelectionSessionWindow
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
+        private static ScreenSelectionModes _previousMode = ScreenSelectionModes.Element;
 
-        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionModes? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new ScreenshotSession(windowHelper, initialMode ?? _previousMode);
+            var window = new ScreenshotSessionWindow(windowHelper, initialMode ?? _previousMode);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -34,11 +34,8 @@ public partial class VisualElementContext
         private PixelPoint _dragStart;
         private PixelRect _dragRect;
 
-        private ScreenshotSession(IWindowHelper windowHelper, ScreenSelectionMode initialMode)
-            : base(
-                windowHelper,
-                [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
-                initialMode)
+        private ScreenshotSessionWindow(IWindowHelper windowHelper, ScreenSelectionModes initialMode) :
+            base(windowHelper, ScreenSelectionModes.All, initialMode)
         {
             // Freeze screen for better screenshot experience
             CaptureAndSetBackground();
@@ -93,7 +90,7 @@ public partial class VisualElementContext
         protected override void OnLeftButtonDown()
         {
             // If in Free mode, start dragging
-            if (CurrentMode != ScreenSelectionMode.Free) return;
+            if (CurrentMode != ScreenSelectionModes.Free) return;
 
             PInvoke.GetCursorPos(out var point);
             _dragStart = new PixelPoint(point.X, point.Y);
@@ -109,7 +106,7 @@ public partial class VisualElementContext
         {
             PixelRect captureRect;
 
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (!_isDragging) return false; // Clicked without dragging? Maybe treat as single pixel point or ignore?
                 _isDragging = false;
@@ -130,11 +127,11 @@ public partial class VisualElementContext
             return true; // Close
         }
 
-        protected override void PickElement(Point cursorPos)
+        protected override void UpdatePickingElement(Point cursorPos)
         {
             var pixelPoint = new PixelPoint(cursorPos.X, cursorPos.Y);
 
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (_isDragging)
                 {
@@ -171,7 +168,7 @@ public partial class VisualElementContext
                 // Reset Drag state if we switched modes while dragging (should handle in OnModeChanged but Update is enough)
                 _isDragging = false;
 
-                base.PickElement(cursorPos);
+                base.UpdatePickingElement(cursorPos);
             }
         }
 

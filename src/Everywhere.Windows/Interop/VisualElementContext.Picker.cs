@@ -11,16 +11,16 @@ public partial class VisualElementContext
     /// <summary>
     /// A window that allows the user to pick an element from the screen.
     /// </summary>
-    private sealed class PickerSession : ScreenSelectionSession
+    private sealed class PickerSessionWindow : ScreenSelectionSessionWindow
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
+        private static ScreenSelectionModes _previousModes = ScreenSelectionModes.Element;
 
-        public static async Task<IVisualElement?> PickAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<IVisualElement?> PickAsync(IWindowHelper windowHelper, ScreenSelectionModes? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new PickerSession(windowHelper, initialMode ?? _previousMode);
+            var window = new PickerSessionWindow(windowHelper, initialMode ?? _previousModes);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -30,8 +30,8 @@ public partial class VisualElementContext
         /// </summary>
         private readonly TaskCompletionSource<IVisualElement?> _pickingPromise = new();
 
-        private PickerSession(IWindowHelper windowHelper, ScreenSelectionMode initialMode)
-            : base(windowHelper, [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element], initialMode)
+        private PickerSessionWindow(IWindowHelper windowHelper, ScreenSelectionModes initialMode)
+            : base(windowHelper, ScreenSelectionModes.Screen | ScreenSelectionModes.Window | ScreenSelectionModes.Element, initialMode)
         {
         }
 
@@ -39,7 +39,7 @@ public partial class VisualElementContext
         {
             base.OnClosed(e);
 
-            _previousMode = CurrentMode;
+            _previousModes = CurrentMode;
             _pickingPromise.TrySetResult(PickingElement);
         }
     }

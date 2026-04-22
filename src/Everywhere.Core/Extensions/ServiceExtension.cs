@@ -31,6 +31,8 @@ public static class ServiceExtension
                 .AddSingleton<VisualTreeDebugger>()
                 .AddSingleton<ChatWindowViewModel>()
                 .AddSingleton<ChatWindow>()
+                .AddSingleton<FloatingIslandWindowViewModel>()
+                .AddSingleton<FloatingIslandWindow>()
                 .AddSingleton<CustomAssistantPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, CustomAssistantPage>()
                 .AddSingleton<ChatPluginPageViewModel>()

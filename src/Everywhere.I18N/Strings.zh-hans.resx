@@ -2643,6 +2643,9 @@
     <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
         <value>此附件类型不被模型支持，但模型仍可看到元数据并被提示使用工具处理</value>
     </data>
+    <data name="ShortcutSettings_QuickMode_Header" xml:space="preserve">
+        <value>快捷模式</value>
+    </data>
     <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
         <value>已阻止模型调用工具。</value>
     </data>

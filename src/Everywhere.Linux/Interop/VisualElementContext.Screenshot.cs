@@ -10,14 +10,14 @@ public partial class VisualElementContext
 {
     private sealed class ScreenshotPicker : ScreenSelectionSession
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
+        private static ScreenSelectionModes _previousModes = ScreenSelectionModes.Element;
         public static async Task<Bitmap?> TakeAsync(
             VisualElementContext context,
             IWindowBackend backend,
-            ScreenSelectionMode? initialMode)
+            ScreenSelectionModes? initialMode)
         {
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
-            var window = new ScreenshotPicker(context, backend, initialMode ?? _previousMode);
+            var window = new ScreenshotPicker(context, backend, initialMode ?? _previousModes);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -34,11 +34,8 @@ public partial class VisualElementContext
         private PixelPoint _dragStart;
         private PixelRect _dragRect;
 
-        private ScreenshotPicker(
-            VisualElementContext context,
-            IWindowBackend backend,
-            ScreenSelectionMode initialMode)
-            : base(backend, [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free], initialMode)
+        private ScreenshotPicker(VisualElementContext context, IWindowBackend backend, ScreenSelectionModes initialMode) :
+            base(backend, ScreenSelectionModes.All, initialMode)
         {
             _context = context;
             backend.SetFocusable(this, true);
@@ -86,7 +83,7 @@ public partial class VisualElementContext
 
         protected override void OnLeftButtonDown()
         {
-            if (CurrentMode != ScreenSelectionMode.Free) return;
+            if (CurrentMode != ScreenSelectionModes.Free) return;
 
             _dragStart = Backend.GetPointer();
             _isDragging = true;
@@ -100,7 +97,7 @@ public partial class VisualElementContext
         {
             PixelRect captureRect;
 
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (!_isDragging) return false;
                 _isDragging = false;
@@ -122,7 +119,7 @@ public partial class VisualElementContext
 
         protected override void OnMove(PixelPoint point)
         {
-            if (CurrentMode == ScreenSelectionMode.Free)
+            if (CurrentMode == ScreenSelectionModes.Free)
             {
                 if (_isDragging)
                 {
@@ -176,7 +173,7 @@ public partial class VisualElementContext
         {
             base.OnClosed(e);
 
-            _previousMode = CurrentMode;
+            _previousModes = CurrentMode;
         }
 
         private void UpdateToolTipInfo(PixelRect rect)

@@ -1,0 +1,53 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:QuickModeVisualElementCardContainer}"
+    TargetType="v:QuickModeVisualElementCardContainer">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="Canvas.Left"
+          Duration="0:0:0.15"/>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="Canvas.Top"
+          Duration="0:0:0.15"/>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="RotateAngle"
+          Duration="0:0:0.15"/>
+      </Transitions>
+    </Setter>
+    <Setter Property="Effect">
+      <DropShadowEffect
+        BlurRadius="13" OffsetX="9"
+        OffsetY="9" Color="#50000000"/>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate x:DataType="v:QuickModeVisualElement">
+        <Panel Background="Transparent">
+          <v:QuickModeVisualElementCard
+            IsHitTestVisible="False"
+            Opacity="{Binding Attachment.Opacity, TargetNullValue=0}">
+            <v:QuickModeVisualElementCard.RenderTransform>
+              <RotateTransform Angle="{Binding $parent[v:QuickModeVisualElementCardContainer].RotateAngle}"/>
+            </v:QuickModeVisualElementCard.RenderTransform>
+          </v:QuickModeVisualElementCard>
+
+          <Button
+            x:Name="PART_CloseButton" Classes="Compact DestructiveIcon"
+            Margin="8" HorizontalAlignment="Right"
+            VerticalAlignment="Top" IsVisible="False">
+            <LucideIcon
+              Kind="X"
+              Size="{DynamicResource FontSizeL}"/>
+          </Button>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ Button#PART_CloseButton">
+      <Setter Property="IsVisible" Value="True"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

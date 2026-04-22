@@ -1,0 +1,85 @@
+﻿<Window
+  x:Class="Everywhere.Views.QuickModeActionOverlay" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:se="clr-namespace:Everywhere.StrategyEngine"
+  xmlns:v="clr-namespace:Everywhere.Views" Background="#80000000"
+  BorderThickness="0" CanMaximize="False"
+  CanMinimize="False" CanResize="False"
+  Focusable="True" ShowActivated="False"
+  ShowInTaskbar="False" SystemDecorations="None"
+  Topmost="True" WindowState="FullScreen">
+  <Grid
+    VerticalAlignment="Center" RowDefinitions="Auto,Auto,Auto">
+    <v:QuickModeVisualElementCardCarousel
+      x:Name="CardCarousel" Grid.Row="0"
+      VerticalAlignment="Center"/>
+
+    <Border
+      Grid.Row="1" HorizontalAlignment="Center"
+      Background="{DynamicResource DialogBackgroundColor}"
+      BorderBrush="{DynamicResource BorderColor}"
+      ClipToBounds="True"
+      CornerRadius="{DynamicResource MdCornerRadius}">
+      <ScrollViewer
+        MinWidth="240" MaxHeight="400"
+        HorizontalScrollBarVisibility="Disabled">
+        <Interaction.Behaviors>
+          <HorizontalScrollViewerBehavior/>
+        </Interaction.Behaviors>
+
+        <ItemsControl
+          x:Name="StrategyItemsControl" Padding="8,4">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel
+                Orientation="Vertical" Spacing="4"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="se:Strategy">
+              <Button
+                Classes="Outline Compact Uniform" Padding="6,4"
+                Command="{Binding $parent[v:ChatWindow].ViewModel.SelectStrategyCommand, Mode=OneTime}"
+                CommandParameter="{Binding Mode=OneTime}"
+                Focusable="False">
+                <ToolTip.Tip>
+                  <TextBlock
+                    MaxWidth="240"
+                    Text="{Binding DescriptionKey^, Mode=OneTime, FallbackValue={x:Null}}"
+                    TextWrapping="Wrap"/>
+                </ToolTip.Tip>
+
+                <StackPanel
+                  Orientation="Horizontal" Spacing="4">
+                  <v:IconPresenter
+                    Width="{DynamicResource FontSizeM}"
+                    Height="{DynamicResource FontSizeM}"
+                    VerticalAlignment="Center"
+                    Background="{x:Null}"
+                    Icon="{Binding Icon, Mode=OneTime}"
+                    IconSize="{DynamicResource FontSizeM}"/>
+
+                  <TextBlock
+                    MaxWidth="120"
+                    Text="{Binding NameKey^, Mode=OneTime}"
+                    TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <Border
+      Grid.Row="2" MinWidth="240"
+      Padding="8" HorizontalAlignment="Center"
+      Background="{DynamicResource DialogBackgroundColor}"
+      BorderBrush="{DynamicResource BorderColor}"
+      BorderThickness="1" ClipToBounds="True"
+      CornerRadius="{DynamicResource MdCornerRadius}">
+      <v:ChatTextEditor/>
+    </Border>
+  </Grid>
+</Window>
+

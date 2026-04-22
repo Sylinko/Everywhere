@@ -1,0 +1,76 @@
+﻿<v:ReactiveWindow
+  x:Class="Everywhere.Views.FloatingIslandWindow" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ap="clr-namespace:Everywhere.AttachedProperties"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" VerticalContentAlignment="Top"
+  ap:SaveWindowPlacementAssist.Key="FloatingIslandWindow" ap:SaveWindowPlacementAssist.SafetyPadding="0"
+  x:DataType="vm:FloatingIslandWindowViewModel" x:TypeArguments="vm:FloatingIslandWindowViewModel"
+  Background="{x:Null}"
+  BorderThickness="0" CanMaximize="False"
+  CanMinimize="False" CanResize="False"
+  Focusable="True" ShowActivated="False"
+  ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+  SystemDecorations="None" Topmost="True"
+  TransparencyLevelHint="Transparent">
+  <Window.Styles>
+    <Style Selector="Border#BackgroundBorder.Pressed">
+      <Setter Property="ScaleTransform.ScaleX" Value="0.95"/>
+      <Setter Property="ScaleTransform.ScaleY" Value="0.95"/>
+      <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    </Style>
+
+    <Style Selector="Grid#SmallStatusBar">
+      <Style Selector="^ TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
+      </Style>
+
+      <Style Selector="^ Inline">
+        <Setter Property="BaselineAlignment" Value="Center"/>
+      </Style>
+    </Style>
+  </Window.Styles>
+
+  <Panel>
+    <Border
+      x:Name="BackgroundBorder" HorizontalAlignment="Stretch"
+      VerticalAlignment="Stretch"
+      Background="{DynamicResource WindowBackgroundColor}"
+      Classes.Pressed="{Binding $parent[v:FloatingIslandWindow].IsPressing}"
+      CornerRadius="{DynamicResource FullCornerRadius}">
+      <Border.Transitions>
+        <Transitions>
+          <DoubleTransition
+            Easing="{x:Static shadui:EaseOutBack.Strong}"
+            Property="ScaleTransform.ScaleX" Duration="0:0:0.2"/>
+          <DoubleTransition
+            Easing="{x:Static shadui:EaseOutBack.Strong}"
+            Property="ScaleTransform.ScaleY" Duration="0:0:0.2"/>
+        </Transitions>
+      </Border.Transitions>
+    </Border>
+
+    <Grid
+      x:Name="SmallStatusBar" Margin="8,4"
+      ColumnDefinitions="*,Auto,*" ColumnSpacing="6"
+      IsHitTestVisible="False">
+      <StackPanel
+        Grid.Column="0" VerticalAlignment="Center"
+        Orientation="Horizontal" Spacing="4">
+        <TextBlock Text="进行中"/>
+        <TextBlock Text="2"/>
+      </StackPanel>
+
+      <v:Eva
+        Grid.Column="1" Width="20"
+        Height="20" VerticalAlignment="Center"/>
+
+      <StackPanel
+        Grid.Column="2" VerticalAlignment="Center"
+        Orientation="Horizontal" Spacing="4">
+        <TextBlock Text="已完成"/>
+        <TextBlock Text="2"/>
+      </StackPanel>
+    </Grid>
+  </Panel>
+</v:ReactiveWindow>

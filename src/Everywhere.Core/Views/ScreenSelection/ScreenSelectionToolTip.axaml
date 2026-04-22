@@ -21,7 +21,7 @@
             <TextBlock
               FontWeight="SemiBold"
               Foreground="{DynamicResource PrimaryColor}"
-              IsVisible="{Binding Mode, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static interop:ScreenSelectionMode.Free}}"
+              IsVisible="{Binding CurrentMode, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static interop:ScreenSelectionModes.Free}}"
               Text="{TemplateBinding Header}"/>
             <TextBlock
               FontSize="12"
@@ -35,7 +35,7 @@
 
             <ListBox
               ItemsSource="{Binding AllowedModes, RelativeSource={RelativeSource TemplatedParent}}"
-              SelectedItem="{TemplateBinding Mode}">
+              SelectedItem="{TemplateBinding CurrentMode}">
               <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                   <UniformGrid Rows="1"/>
@@ -51,7 +51,7 @@
                 </ControlTheme>
               </ListBox.ItemContainerTheme>
               <ListBox.DataTemplates>
-                <DataTemplate DataType="interop:ScreenSelectionMode">
+                <DataTemplate DataType="interop:ScreenSelectionModes">
                   <TextBlock
                     HorizontalAlignment="Center"
                     Text="{Binding Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>

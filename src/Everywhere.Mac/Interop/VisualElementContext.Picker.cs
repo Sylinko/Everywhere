@@ -7,31 +7,28 @@ partial class VisualElementContext
 {
     private class PickerSession : ScreenSelectionSession
     {
-        private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
+        private static ScreenSelectionModes _previousModes = ScreenSelectionModes.Element;
 
-        public static async Task<IVisualElement?> PickAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<IVisualElement?> PickAsync(IWindowHelper windowHelper, ScreenSelectionModes? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new PickerSession(windowHelper, initialMode ?? _previousMode);
+            var window = new PickerSession(windowHelper, initialMode ?? _previousModes);
             window.Show();
             return await window._pickingPromise.Task;
         }
 
         private readonly TaskCompletionSource<IVisualElement?> _pickingPromise = new();
 
-        private PickerSession(IWindowHelper windowHelper, ScreenSelectionMode screenSelectionMode)
-            : base(
-                windowHelper,
-                [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element],
-                screenSelectionMode)
+        private PickerSession(IWindowHelper windowHelper, ScreenSelectionModes screenSelectionMode) :
+            base(windowHelper, ScreenSelectionModes.Screen | ScreenSelectionModes.Window | ScreenSelectionModes.Element, screenSelectionMode)
         {
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            _previousMode = CurrentMode;
+            _previousModes = CurrentMode;
             _pickingPromise.TrySetResult(SelectedElement);
             base.OnClosed(e);
         }

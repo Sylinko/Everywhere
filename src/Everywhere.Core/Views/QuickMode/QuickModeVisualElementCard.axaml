@@ -1,0 +1,86 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:QuickModeVisualElementCard}"
+    TargetType="v:QuickModeVisualElementCard">
+    <Setter Property="Background" Value="{DynamicResource DialogBackgroundColor}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    <Setter Property="BorderThickness" Value="3"/>
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    <Setter Property="IsHitTestVisible" Value="False"/>
+    <Setter Property="MaxHeight" Value="300"/>
+    <Setter Property="MaxWidth" Value="300"/>
+    <Setter Property="MinHeight" Value="160"/>
+    <Setter Property="MinWidth" Value="160"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="Canvas.Left"
+          Duration="0:0:0.15"/>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="Canvas.Top"
+          Duration="0:0:0.15"/>
+        <TransformOperationsTransition
+          Easing="CubicEaseOut" Property="RenderTransform"
+          Duration="0:0:0.15"/>
+      </Transitions>
+    </Setter>
+
+    <Setter Property="Template">
+      <ControlTemplate x:DataType="v:QuickModeVisualElement">
+        <Panel>
+          <Panel.Effect>
+            <DropShadowEffect
+              BlurRadius="7" OffsetX="5"
+              OffsetY="5" Color="#80000000"/>
+          </Panel.Effect>
+
+          <Border
+            Background="{TemplateBinding Background}"
+            ClipToBounds="True"
+            CornerRadius="{TemplateBinding CornerRadius}"
+            Opacity="{Binding Attachment?.Opacity, TargetNullValue=0}">
+            <Image
+              Width="{Binding $self.Source?.Size.Width, TargetNullValue=0}"
+              Height="{Binding $self.Source?.Size.Height, TargetNullValue=0}"
+              MaxWidth="300" MaxHeight="300"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Source="{Binding PreviewImage}"
+              Stretch="UniformToFill"/>
+          </Border>
+
+          <Border
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{TemplateBinding CornerRadius}"/>
+
+          <Border
+            x:Name="PART_ElementBorder" Height="24"
+            Margin="8" HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Background="{DynamicResource DialogBackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" CornerRadius="4">
+            <DockPanel
+              Margin="6,0" ClipToBounds="False"
+              HorizontalSpacing="2" LastChildFill="True">
+              <LucideIcon
+                DockPanel.Dock="Left" VerticalAlignment="Center"
+                Kind="{Binding Attachment?.Icon, TargetNullValue={x:Null}}"
+                Size="{DynamicResource FontSizeM}"/>
+
+              <TextBlock
+                MaxWidth="160" VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                Text="{Binding Attachment?.HeaderKey^, TargetNullValue={x:Null}}"
+                TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}"
+                TextWrapping="NoWrap"/>
+            </DockPanel>
+          </Border>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

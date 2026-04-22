@@ -4,7 +4,7 @@ using Everywhere.Interop;
 
 namespace Everywhere.Views;
 
-public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedModes) : TemplatedControl
+public class ScreenSelectionToolTip(ScreenSelectionModes allowedModes) : TemplatedControl
 {
     public static readonly StyledProperty<string?> HeaderProperty =
         AvaloniaProperty.Register<ScreenSelectionToolTip, string?>(nameof(Header));
@@ -15,15 +15,15 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         set => SetValue(HeaderProperty, value);
     }
 
-    public IEnumerable<ScreenSelectionMode> AllowedModes { get; } = allowedModes;
+    public IEnumerable<ScreenSelectionModes> AllowedModes { get; } = GetAllowedModes(allowedModes);
 
-    public static readonly StyledProperty<ScreenSelectionMode> ModeProperty =
-        AvaloniaProperty.Register<ScreenSelectionToolTip, ScreenSelectionMode>(nameof(Mode));
+    public static readonly StyledProperty<ScreenSelectionModes> CurrentModeProperty =
+        AvaloniaProperty.Register<ScreenSelectionToolTip, ScreenSelectionModes>(nameof(CurrentMode));
 
-    public ScreenSelectionMode Mode
+    public ScreenSelectionModes CurrentMode
     {
-        get => GetValue(ModeProperty);
-        set => SetValue(ModeProperty, value);
+        get => GetValue(CurrentModeProperty);
+        set => SetValue(CurrentModeProperty, value);
     }
 
     public static readonly DirectProperty<ScreenSelectionToolTip, string> TipTextProperty =
@@ -31,7 +31,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         nameof(TipText),
         o => o.TipText);
 
-    public string TipText => Mode == ScreenSelectionMode.Free ?
+    public string TipText => CurrentMode == ScreenSelectionModes.Free ?
         LocaleResolver.ScreenSelectionToolTip_TipText_Free :
         LocaleResolver.ScreenSelectionToolTip_TipText_Normal;
 
@@ -55,7 +55,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ModeProperty)
+        if (change.Property == CurrentModeProperty)
         {
             RaisePropertyChanged(TipTextProperty, string.Empty, TipText);
         }
@@ -93,5 +93,15 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         }
 
         return key.ToString();
+    }
+
+    private static List<ScreenSelectionModes> GetAllowedModes(ScreenSelectionModes allowedModes)
+    {
+        var results = new List<ScreenSelectionModes>();
+        if (allowedModes.HasFlag(ScreenSelectionModes.Screen)) results.Add(ScreenSelectionModes.Screen);
+        if (allowedModes.HasFlag(ScreenSelectionModes.Window)) results.Add(ScreenSelectionModes.Window);
+        if (allowedModes.HasFlag(ScreenSelectionModes.Element)) results.Add(ScreenSelectionModes.Element);
+        if (allowedModes.HasFlag(ScreenSelectionModes.Free)) results.Add(ScreenSelectionModes.Free);
+        return results;
     }
 }

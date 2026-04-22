@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
@@ -10,10 +9,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Rendering;
 using Avalonia.Threading;
-using DynamicData;
 using Everywhere.Interop;
 using Everywhere.Utilities;
 using Everywhere.Views;
+using ZLinq;
 using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
@@ -29,26 +28,22 @@ public partial class VisualElementContext
     /// with the standard event routing to this window.
     /// </para>
     /// </summary>
-    private abstract class ScreenSelectionSession : ScreenSelectionTransparentWindow
+    private abstract class ScreenSelectionSessionWindow : ScreenSelectionSessionWindowBase
     {
         protected IWindowHelper WindowHelper { get; }
         protected ScreenSelectionMaskWindow[] MaskWindows { get; }
         protected ScreenSelectionToolTipWindow ToolTipWindow { get; }
-
-        protected ScreenSelectionMode CurrentMode { get; private set; }
         protected IVisualElement? PickingElement { get; private set; }
 
-        private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
         private readonly HashSet<HWND> _ownWindows = [];
         private IDisposable? _keyboardHookSubscription;
 
-        protected ScreenSelectionSession(IWindowHelper windowHelper, IReadOnlyList<ScreenSelectionMode> allowedModes, ScreenSelectionMode initialMode)
+        protected ScreenSelectionSessionWindow(
+            IWindowHelper windowHelper,
+            ScreenSelectionModes allowedModes,
+            ScreenSelectionModes initialMode) : base(allowedModes, initialMode)
         {
-            Debug.Assert(allowedModes.Count > 0);
-
-            _allowedModes = allowedModes;
             WindowHelper = windowHelper;
-            CurrentMode = initialMode;
 
             var allScreens = Screens.All;
             MaskWindows = new ScreenSelectionMaskWindow[allScreens.Count];
@@ -86,11 +81,10 @@ public partial class VisualElementContext
             }
 
             // Collect all overlay HWNDs so PickElement can skip them when looking for the window behind.
-            foreach (var maskWindow in MaskWindows) maskWindow.Show();
-            ToolTipWindow.Show();
+            foreach (var maskWindow in MaskWindows.AsValueEnumerable()) maskWindow.Show();
 
             _ownWindows.Clear();
-            foreach (var w in MaskWindows.Cast<Window>().Append(this).Append(ToolTipWindow))
+            foreach (var w in MaskWindows.AsValueEnumerable().Cast<Window>().Append(this).Append(ToolTipWindow))
             {
                 if (w.TryGetPlatformHandle()?.Handle is { } h and not 0)
                     _ownWindows.Add((HWND)h);
@@ -102,7 +96,7 @@ public partial class VisualElementContext
             _keyboardHookSubscription ??= LowLevelHook.CreateKeyboardHook(HandleKeyboardHook, false);
 
             // Pick the element under the cursor immediately
-            Dispatcher.UIThread.Post(PickCursorElement);
+            Dispatcher.UIThread.Post(UpdatePickingElement);
         }
 
         protected override void OnPointerMoved(PointerEventArgs e)
@@ -112,71 +106,7 @@ public partial class VisualElementContext
             var screenPos = ((IRenderRoot)this).PointToScreen(pos);
             var cursorPos = new Point(screenPos.X, screenPos.Y);
             SetToolTipWindowPosition(cursorPos);
-            PickElement(cursorPos);
-        }
-
-        protected override void OnPointerPressed(PointerPressedEventArgs e)
-        {
-            base.OnPointerPressed(e);
-
-            if (e.Properties.IsLeftButtonPressed)
-            {
-                OnLeftButtonDown();
-            }
-        }
-
-        protected override void OnPointerReleased(PointerReleasedEventArgs e)
-        {
-            base.OnPointerReleased(e);
-
-            if (e.InitialPressMouseButton == MouseButton.Left)
-            {
-                if (OnLeftButtonUp())
-                {
-                    Close();
-                }
-            }
-            else if (e.InitialPressMouseButton == MouseButton.Right)
-            {
-                Cancel();
-            }
-        }
-
-        protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-        {
-            base.OnPointerWheelChanged(e);
-            OnMouseWheel((int)e.Delta.Y);
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            switch (e.Key)
-            {
-                case Key.Escape:
-                    Cancel();
-                    break;
-                case Key.NumPad1 or Key.D1 or Key.F1:
-                    SetMode(ScreenSelectionMode.Screen);
-                    break;
-                case Key.NumPad2 or Key.D2 or Key.F2:
-                    SetMode(ScreenSelectionMode.Window);
-                    break;
-                case Key.NumPad3 or Key.D3 or Key.F3:
-                    SetMode(ScreenSelectionMode.Element);
-                    break;
-                case Key.NumPad4 or Key.D4 or Key.F4:
-                    SetMode(ScreenSelectionMode.Free);
-                    break;
-            }
-
-            void SetMode(ScreenSelectionMode mode)
-            {
-                if (!_allowedModes.Contains(mode)) return;
-                CurrentMode = mode;
-                HandleModeChanged();
-            }
+            UpdatePickingElement(cursorPos);
         }
 
         private void HandleKeyboardHook(WINDOW_MESSAGE msg, ref KBDLLHOOKSTRUCT hookStruct, ref bool blockNext)
@@ -193,19 +123,10 @@ public partial class VisualElementContext
             }
         }
 
-        private void OnMouseWheel(int delta)
+        protected override void HandleModeChanged()
         {
-            var newIndex = _allowedModes.IndexOf(CurrentMode) + (delta > 0 ? -1 : 1);
-            if (newIndex < 0) newIndex = _allowedModes.Count - 1;
-            else if (newIndex >= _allowedModes.Count) newIndex = 0;
-            CurrentMode = _allowedModes[newIndex];
-            HandleModeChanged();
-        }
-
-        private void HandleModeChanged()
-        {
-            ToolTipWindow.ToolTip.Mode = CurrentMode;
-            PickCursorElement();
+            ToolTipWindow.ToolTip.CurrentMode = CurrentMode;
+            UpdatePickingElement();
         }
 
         protected override void OnClosing(WindowClosingEventArgs e)
@@ -222,11 +143,11 @@ public partial class VisualElementContext
             base.OnClosed(e);
         }
 
-        private void PickCursorElement()
+        private void UpdatePickingElement()
         {
             if (!PInvoke.GetCursorPos(out var cursorPos)) return;
 
-            PickElement(cursorPos);
+            UpdatePickingElement(cursorPos);
             SetToolTipWindowPosition(cursorPos);
         }
 
@@ -266,13 +187,7 @@ public partial class VisualElementContext
             return result;
         }
 
-        private void Cancel()
-        {
-            OnCanceled();
-            Close();
-        }
-
-        protected virtual void OnCanceled()
+        protected override void OnCanceled()
         {
             PickingElement = null;
         }
@@ -281,14 +196,12 @@ public partial class VisualElementContext
         /// Picks the element under the cursor based on the current selection mode.
         /// </summary>
         /// <param name="cursorPos"></param>
-        protected virtual void PickElement(Point cursorPos)
+        protected virtual void UpdatePickingElement(Point cursorPos)
         {
-            // cursorPos = new Point(cursorPos.X * 2, cursorPos.Y * 2);
-
             var maskRect = default(PixelRect);
             switch (CurrentMode)
             {
-                case ScreenSelectionMode.Screen:
+                case ScreenSelectionModes.Screen:
                 {
                     var pixelPoint = new PixelPoint(cursorPos.X, cursorPos.Y);
                     var screen = Screens.All.FirstOrDefault(s => s.Bounds.Contains(pixelPoint));
@@ -301,7 +214,7 @@ public partial class VisualElementContext
                     maskRect = screen.Bounds;
                     break;
                 }
-                case ScreenSelectionMode.Window:
+                case ScreenSelectionModes.Window:
                 {
                     var targetHWnd = FindWindowBehindOwnOverlays(cursorPos);
                     if (targetHWnd.IsNull) break;
@@ -315,7 +228,7 @@ public partial class VisualElementContext
                     maskRect = PickingElement.BoundingRectangle;
                     break;
                 }
-                case ScreenSelectionMode.Element:
+                case ScreenSelectionModes.Element:
                 {
                     PickingElement = TryCreateVisualElement(() => Automation.FromPoint(new Point(cursorPos.X, cursorPos.Y)));
 
@@ -330,17 +243,6 @@ public partial class VisualElementContext
             ToolTipWindow.ToolTip.Element = PickingElement;
         }
 
-        /// <summary>
-        /// Called when Left Button Down.
-        /// </summary>
-        protected virtual void OnLeftButtonDown() { }
-
-        /// <summary>
-        /// Called when Left Button Up.
-        /// Returns true if the picker should close.
-        /// </summary>
-        protected virtual bool OnLeftButtonUp() => true;
-
         private void SetToolTipWindowPosition(Point cursorPos)
         {
             const int margin = 16;
@@ -349,8 +251,16 @@ public partial class VisualElementContext
             var screen = Screens.All.FirstOrDefault(s => s.Bounds.Contains(pointerPoint));
             if (screen == null) return;
 
-            var screenBounds = screen.Bounds;
-            var tooltipSize = ToolTipWindow.Bounds.Size * ToolTipWindow.DesktopScaling;
+            Size tooltipSize;
+            if (!ToolTipWindow.IsVisible)
+            {
+                ToolTipWindow.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                tooltipSize = ToolTipWindow.DesiredSize * screen.Scaling;
+            }
+            else
+            {
+                tooltipSize = ToolTipWindow.Bounds.Size * screen.Scaling;
+            }
 
             var x = (double)pointerPoint.X;
             var y = pointerPoint.Y - margin - tooltipSize.Height;
@@ -362,12 +272,13 @@ public partial class VisualElementContext
             }
 
             // Check if there is enough space to the right of the pointer
-            if (x + tooltipSize.Width > screenBounds.Right)
+            if (x + tooltipSize.Width > screen.Bounds.Right)
             {
                 x = pointerPoint.X - tooltipSize.Width; // place to the left of the pointer
             }
 
             ToolTipWindow.Position = new PixelPoint((int)x, (int)y);
+            ToolTipWindow.IsVisible = true; // Show after set position
         }
     }
 }

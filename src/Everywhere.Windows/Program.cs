@@ -90,6 +90,7 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, QuickModeInitializer>()
                 .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
             #endregion

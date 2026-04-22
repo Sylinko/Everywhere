@@ -439,13 +439,10 @@ partial class VisualElementContext
             }
             catch (Exception ex)
             {
-                var isExpected = ex is
-                    COMException { ErrorCode: unchecked((int)0x80040201) } or // COMException: 事件无法调用任何订户 (0x80040201)
-                    InvalidOperationException or
-                    TimeoutException;
+                var isExpected = ex is COMException or InvalidOperationException or TimeoutException;
 
                 // Ignore errors during detection
-                if (!isExpected) Log.ForContext<TextSelectionDetector>().Error(ex, "Error during text selection detection");
+                if (!isExpected) Log.ForContext<TextSelectionDetector>().Warning(ex, "Error during text selection detection");
             }
             finally
             {
@@ -530,7 +527,7 @@ partial class VisualElementContext
             byte[]? backupData = null;
             uint backupFormat = 0;
 
-            if (PInvoke.OpenClipboard(default))
+            if (PInvoke.OpenClipboard())
             {
                 // Priority 1: Text
                 if (TryGetClipboardData(CF_UNICODETEXT, out backupData))
@@ -672,7 +669,7 @@ partial class VisualElementContext
                 else
                 {
                     // If we didn't have recognized data, clear the clipboard to remove the "Selected Text"
-                    if (PInvoke.OpenClipboard(default))
+                    if (PInvoke.OpenClipboard())
                     {
                         PInvoke.EmptyClipboard();
                         PInvoke.CloseClipboard();
@@ -847,7 +844,7 @@ partial class VisualElementContext
         private static unsafe bool TryGetClipboardText(out string? text, bool emptyClipboard = false, bool openClipboard = true)
         {
             text = null;
-            if (openClipboard && !PInvoke.OpenClipboard(default)) return false;
+            if (openClipboard && !PInvoke.OpenClipboard()) return false;
 
             try
             {
@@ -908,7 +905,7 @@ partial class VisualElementContext
 
         private static unsafe void SetClipboardData(uint format, byte[] data)
         {
-            if (!PInvoke.OpenClipboard(default)) return;
+            if (!PInvoke.OpenClipboard()) return;
 
             try
             {

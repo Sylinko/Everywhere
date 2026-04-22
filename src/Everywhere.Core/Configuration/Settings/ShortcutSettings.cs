@@ -22,6 +22,13 @@ public sealed partial class ShortcutSettings : SettingsBase, ISettingsCategory
 
     [ObservableProperty]
     [DynamicResourceKey(
+        LocaleKey.ShortcutSettings_QuickMode_Header,
+        LocaleKey.ShortcutSettings_QuickMode_Desription)]
+    [SettingsTemplatedItem]
+    public partial KeyboardShortcut QuickMode { get; set; } = new(Key.Q, KeyModifiers.Control | KeyModifiers.Shift);
+
+    [ObservableProperty]
+    [DynamicResourceKey(
         LocaleKey.ShortcutSettings_ChatWindow_Header,
         LocaleKey.ShortcutSettings_ChatWindow_Desription)]
     [SettingsTemplatedItem]
