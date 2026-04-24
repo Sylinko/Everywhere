@@ -5,7 +5,7 @@ using DynamicData;
 
 namespace Everywhere.Extensions;
 
-public static class DynamicDataExtension
+public static class DynamicDataExtensions
 {
     /// <summary>
     /// A convenience method to add the disposable to a collection.

@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿#nullable disable
 
-#nullable disable
+using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Everywhere.Database.Migrations
+namespace Everywhere.Database.Migrations.Chat
 {
     /// <inheritdoc />
     public partial class BlobStorage : Migration

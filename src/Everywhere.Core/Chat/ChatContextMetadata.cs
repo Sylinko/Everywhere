@@ -16,7 +16,7 @@ public enum ChatContextMetadataStates
 }
 
 /// <summary>Chat context metadata persisted along with the object graph.</summary>
-[MessagePackObject(AllowPrivate = true)]
+[MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
 {
     /// <summary>
@@ -29,15 +29,9 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
     public DateTimeOffset DateCreated { get; } = dateCreated;
 
     [Key(2)]
-    [field: IgnoreMember]
-    public DateTimeOffset DateModified
-    {
-        get;
-        set
-        {
-            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(LocalDateModified));
-        }
-    } = dateModified;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LocalDateModified))]
+    public partial DateTimeOffset DateModified { get; set; } = dateModified;
 
     [IgnoreMember]
     public DateTime LocalDateModified => DateModified.ToLocalTime().DateTime;
@@ -49,7 +43,7 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
         get;
         set
         {
-            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(ActualTopic));
+            if (SetProperty(ref field, value.SafeSubstring(0, 20))) OnPropertyChanged(nameof(ActualTopic));
         }
     } = topic;
 
@@ -62,8 +56,15 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
             if (string.IsNullOrWhiteSpace(Topic)) return LocaleResolver.ChatContext_Metadata_Topic_Default;
             return Topic;
         }
-        set => Topic = value?.Trim();
+        private set => Topic = value?.Trim();
     }
+
+    /// <summary>
+    /// When global memory is updated, set this as the last <see cref="UserChatMessage.CreatedAt"/>
+    /// </summary>
+    [Key(4)]
+    [ObservableProperty]
+    public partial DateTimeOffset LastLongTermMemoryUpdatedAt { get; set; }
 
     /// <summary>
     /// Indicates whether the topic is being generated.

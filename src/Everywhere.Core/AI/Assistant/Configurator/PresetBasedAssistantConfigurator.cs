@@ -140,7 +140,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
         if (ModelProviderTemplate is { } modelProviderTemplate &&
             modelProviderTemplate.ModelDefinitions.FirstOrDefault(m => m.Specializations.HasFlag(specialization)) is { } modelDefinitionTemplate)
         {
-            var systemAssistant = new SystemAssistant { ApiKey = owner.ApiKey, ConfiguratorType = AssistantConfiguratorType.PresetBased };
+            var systemAssistant = new SystemAssistant(specialization) { ApiKey = owner.ApiKey, };
             systemAssistant.ApplyTemplate(modelProviderTemplate);
             systemAssistant.ApplyTemplate(modelDefinitionTemplate);
             return systemAssistant;

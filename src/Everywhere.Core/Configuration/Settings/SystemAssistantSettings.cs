@@ -23,5 +23,5 @@ public sealed partial class SystemAssistantSettings : SettingsBase, ISettingsCat
         LocaleKey.SystemAssistantSettings_CommonDesription)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(TitleGeneration)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
-    public SystemAssistant TitleGeneration { get; } = new();
+    public SystemAssistant TitleGeneration { get; } = new(ModelSpecializations.TitleGeneration);
 }

@@ -3,7 +3,7 @@ using Serilog;
 
 namespace Everywhere.Extensions;
 
-public static class SerilogExtension
+public static class SerilogExtensions
 {
     public static AnonymousExceptionHandler ToExceptionHandler(this ILogger logger)
     {

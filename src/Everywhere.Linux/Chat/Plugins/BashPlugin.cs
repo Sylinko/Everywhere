@@ -38,7 +38,6 @@ public sealed class BashPlugin : BuiltInChatPlugin
     [DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header)]
     private async Task<string> ExecuteScriptAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         [Description("A concise description for user, explaining what you are doing")] string description,
         [Description("Single or multi-line")] string script,
@@ -86,7 +85,7 @@ public sealed class BashPlugin : BuiltInChatPlugin
 
         userInterface.DisplaySink.AppendBlocks(detailBlock);
 
-        var workingDirectory = chatContextManager.EnsureWorkingDirectory(chatContext);
+        var workingDirectory = chatContext.EnsureWorkingDirectory();
         var scopeName = $"everywhere-bash-{Guid.NewGuid():N}";
 
         // Use systemd-run to create a scope for bash process

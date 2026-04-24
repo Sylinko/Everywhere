@@ -8,7 +8,7 @@ using ZLinq;
 
 namespace Everywhere.Extensions;
 
-public static class AvaloniaExtension
+public static class AvaloniaExtensions
 {
     public static AnonymousExceptionHandler ToExceptionHandler(this DialogManager dialogManager) => new((exception, message, source, lineNumber) =>
         dialogManager.CreateDialog(exception.GetFriendlyMessage().ToString() ?? "Unknown error", $"[{source}:{lineNumber}] {message ?? "Error"}"));

@@ -457,21 +457,6 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
     public Task<ChatContext?> LoadChatContextAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default) =>
         metadata.Id == _current?.Metadata.Id ? Task.FromResult<ChatContext?>(_current) : LoadChatContextAsync(metadata.Id, false, cancellationToken);
 
-    public string EnsureWorkingDirectory(ChatContext chatContext) =>
-        RuntimeConstants.EnsureWritableDataFolderPath("plugins", chatContext.Metadata.DateCreated.ToString("yyyy-MM-dd"));
-
-    public IDictionary<string, Func<string>> GetPromptVariables(ChatContext chatContext)
-    {
-        return new Dictionary<string, Func<string>>(
-        [
-            new KeyValuePair<string, Func<string>>("Date", () => DateTime.Now.ToString("D")),
-            new KeyValuePair<string, Func<string>>("Time", () => DateTime.Now.ToString("F")),
-            new KeyValuePair<string, Func<string>>("OS", () => Environment.OSVersion.ToString()),
-            new KeyValuePair<string, Func<string>>("SystemLanguage", () => LocaleManager.CurrentLocale.ToEnglishName()),
-            new KeyValuePair<string, Func<string>>("WorkingDirectory", () => EnsureWorkingDirectory(chatContext)),
-        ]);
-    }
-
     private async Task<ChatContext?> LoadChatContextAsync(Guid id, bool deleteIfFailed, CancellationToken cancellationToken = default)
     {
         try

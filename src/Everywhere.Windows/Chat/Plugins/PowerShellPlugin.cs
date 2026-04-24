@@ -45,7 +45,6 @@ public sealed class PowerShellPlugin : BuiltInChatPlugin
     [DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header)]
     private async Task<string> ExecuteScriptAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         [Description("A concise description for user, explaining what you are doing")] string description,
         [Description("Single or multi-line")] string script,
@@ -105,7 +104,7 @@ public sealed class PowerShellPlugin : BuiltInChatPlugin
             StandardInputEncoding = new UTF8Encoding(false), // remove BOM header
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = chatContextManager.EnsureWorkingDirectory(chatContext),
+            WorkingDirectory = chatContext.EnsureWorkingDirectory(),
         };
 
         // Ensure the latest PATH variable is used

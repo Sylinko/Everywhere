@@ -80,7 +80,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private string SearchFiles(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Regex search pattern to match file and directory names.")] string filePattern = ".*",
@@ -98,7 +97,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             skip,
             maxCount);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
+        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var regex = new Regex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, RegexTimeout);
         var directoryInfo = EnsureDirectoryInfo(path);
@@ -168,13 +168,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private string GetFileInformation(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path)
     {
         _logger.LogDebug("Getting file information for path: {Path}", path);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var info = EnsureFileSystemInfo(path);
@@ -205,7 +204,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> SearchFileContentAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         [Description("File or directory path to search.")] string path,
         [Description("Text or regex pattern to search for within the file.")] string pattern,
@@ -224,7 +222,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             ignoreCase,
             filePattern);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var regexOptions = RegexOptions.Compiled | RegexOptions.Multiline;
@@ -385,7 +383,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> ReadFileAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Optional: the 1-based line number or bytes to start reading from. If not specified, reads from the beginning.")]
@@ -399,7 +396,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             offset,
             limit);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var fileInfo = EnsureFileInfo(path);
@@ -526,15 +523,14 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private bool MoveFile(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         [Description("Source file or directory path.")] string source,
         [Description("Destination file or directory path. Type must match the source.")] string destination)
     {
         _logger.LogDebug("Moving file from {Source} to {Destination}", source, destination);
 
-        ExpandFullPath(chatContextManager, chatContext, ref source);
-        ExpandFullPath(chatContextManager, chatContext, ref destination);
+        ExpandFullPath(chatContext, ref source);
+        ExpandFullPath(chatContext, ref destination);
         displaySink.AppendFileReferences(
             new ChatPluginFileReference(source),
             new ChatPluginFileReference(destination));
@@ -589,7 +585,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     private async Task<string> DeleteFilesAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [FromKernelServices] IChatPluginUserInterface userInterface,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         [Description("File or directory path to delete.")] string path,
         [Description(
@@ -601,7 +596,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         _logger.LogDebug("Deleting file at {Path}", path);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         if (Path.GetDirectoryName(path) is null)
@@ -697,13 +692,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private void CreateDirectory(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path)
     {
         _logger.LogDebug("Creating directory at {Path}", path);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         Directory.CreateDirectory(path);
@@ -717,7 +711,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task WriteToFileAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path,
         string? content,
@@ -725,7 +718,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         _logger.LogDebug("Writing text file at {Path}, append: {Append}", path, append);
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         await using var stream = new FileStream(path, append ? FileMode.Append : FileMode.Create, FileAccess.ReadWrite, FileShare.None);
@@ -754,7 +747,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> ReplaceFileContentAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [FromKernelServices] IChatContextManager chatContextManager,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Text or regex patterns to search for within the file.")] IReadOnlyList<string> patterns,
@@ -787,7 +779,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 new ArgumentException("Replacements count must match patterns count.", nameof(replacements)));
         }
 
-        ExpandFullPath(chatContextManager, chatContext, ref path);
+        ExpandFullPath(chatContext, ref path);
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var fileInfo = EnsureFileInfo(path);
@@ -823,7 +815,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             var pattern = patterns[i];
             var replacement = i < replacements.Count ? replacements[i] : string.Empty;
-            
+
             if (isRegex)
             {
                 var regex = new Regex(pattern, regexOptions, RegexTimeout);
@@ -858,7 +850,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         return difference.ToModelSummary(fileContent, default);
     }
 
-    private static void ExpandFullPath(IChatContextManager chatContextManager, ChatContext chatContext, ref string path)
+    private static void ExpandFullPath(ChatContext chatContext, ref string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -869,7 +861,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
 
         var originalWorkingDirectory = Environment.CurrentDirectory;
-        Environment.CurrentDirectory = chatContextManager.EnsureWorkingDirectory(chatContext);
+        Environment.CurrentDirectory = chatContext.EnsureWorkingDirectory();
         try
         {
             path = Environment.ExpandEnvironmentVariables(path);

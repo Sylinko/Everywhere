@@ -1,9 +1,8 @@
-﻿using System;
+﻿#nullable disable
+
 using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
-
-namespace Everywhere.Database.Migrations
+namespace Everywhere.Database.Migrations.Chat
 {
     /// <inheritdoc />
     public partial class Initial : Migration

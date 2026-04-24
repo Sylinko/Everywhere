@@ -51,7 +51,7 @@ public sealed partial class OfficialAssistantConfigurator : AssistantConfigurato
         if (ServiceLocator.Resolve<IOfficialModelProvider>().ModelDefinitions.Items.FirstOrDefault(m => m.Specializations.HasFlag(specialization)) is
             { } modelDefinitionTemplate)
         {
-            var systemAssistant = new SystemAssistant
+            var systemAssistant = new SystemAssistant(specialization)
             {
                 ConfiguratorType = AssistantConfiguratorType.Official
             };

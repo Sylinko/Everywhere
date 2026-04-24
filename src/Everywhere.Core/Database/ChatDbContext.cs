@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using MessagePack;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Database;
@@ -12,8 +10,7 @@ namespace Everywhere.Database;
 /// <summary>
 /// EF Core DbContext for local chat storage.
 /// </summary>
-[method: DynamicDependency(DynamicallyAccessedMemberTypes.AllConstructors, typeof(DateTimeToTicksConverter))]
-public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbContext(options)
+public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbContextBase(options)
 {
     /// <summary>
     /// Indicates whether a synchronization operation is currently in progress.
@@ -94,16 +91,6 @@ public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbC
 
         optionsBuilder.AddInterceptors(new SyncSaveChangesInterceptor());
     }
-
-    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
-    {
-        builder
-            .Properties<DateTimeOffset>()
-            .HaveConversion<DateTimeOffsetToTicksConverter>();
-    }
-
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.AllConstructors)]
-    private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.Ticks, v => new DateTimeOffset(v, TimeSpan.Zero));
 }
 
 public class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory, ILogger<ChatDbInitializer> logger) : IAsyncInitializer

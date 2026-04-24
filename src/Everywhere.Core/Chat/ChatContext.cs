@@ -10,6 +10,7 @@ using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
@@ -471,5 +472,27 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         {
             _chatPluginUserInterfaceItemsSourceList.Remove(item);
         }
+    }
+
+    /// <summary>
+    /// Get and ensures the working directory
+    /// </summary>
+    /// <returns>
+    /// Usually a temporary directory path like C:\Users\[UserName]\AppData\Roaming\Everywhere\plugins\2025-12-30
+    /// </returns>
+
+    public string EnsureWorkingDirectory() =>
+        RuntimeConstants.EnsureWritableDataFolderPath("plugins", Metadata.DateCreated.ToString("yyyy-MM-dd"));
+
+    public IDictionary<string, Func<string>> GetPromptVariables()
+    {
+        return new Dictionary<string, Func<string>>(
+        [
+            new KeyValuePair<string, Func<string>>("Date", () => DateTime.Now.ToString("D")),
+            new KeyValuePair<string, Func<string>>("Time", () => DateTime.Now.ToString("F")),
+            new KeyValuePair<string, Func<string>>("OS", () => Environment.OSVersion.ToString()),
+            new KeyValuePair<string, Func<string>>("SystemLanguage", () => LocaleManager.CurrentLocale.ToEnglishName()),
+            new KeyValuePair<string, Func<string>>("WorkingDirectory", EnsureWorkingDirectory),
+        ]);
     }
 }

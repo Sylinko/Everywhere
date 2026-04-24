@@ -2,7 +2,7 @@
 
 namespace Everywhere.Extensions;
 
-public static class I18NExtension
+public static class I18NExtensions
 {
     // public static string I18N(this string key, params DynamicResourceKeyBase[] args) => new FormattedDynamicResourceKey(key, args).ToString();
 

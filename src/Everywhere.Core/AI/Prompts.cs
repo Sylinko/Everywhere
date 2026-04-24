@@ -76,4 +76,9 @@ public static class Prompts
         This is a test prompt.
         You MUST Only reply with "Test successful!".
         """;
+
+    public const string GlobalMemoryGenerator =
+        """
+
+        """;
 }

@@ -4,7 +4,7 @@ namespace Everywhere.AI;
 
 public interface IPromptRenderer
 {
-    string RenderPrompt(string prompt);
+    string RenderSystemPrompt(string prompt);
 
     string RenderStrategyUserPrompt(string strategyBody, string? userInput, PreprocessorResult? preprocessorResult);
 }

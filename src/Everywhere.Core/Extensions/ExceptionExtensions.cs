@@ -6,11 +6,13 @@ using ZLinq;
 
 namespace Everywhere.Extensions;
 
-public static class ExceptionExtension
+public static class ExceptionExtensions
 {
     /// <summary>
-    /// 将Exception转换为用户友好的消息
+    /// Convert the exception to a friendly message resource key. It will try to find a specific message for the exception type, if not found, it will return the original message.
+    /// For some common exceptions, it will also try to provide more user-friendly messages based on the exception details (e.g. HttpRequestException with status code).
     /// </summary>
+    /// <param name="e"></param>
     /// <returns></returns>
     public static IDynamicResourceKey GetFriendlyMessage(this Exception e)
     {

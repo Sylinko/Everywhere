@@ -17,4 +17,15 @@ public class ChatDbContextFactory : IDesignTimeDbContextFactory<ChatDbContext>
     }
 }
 
+public class MemoryDbContextFactory : IDesignTimeDbContextFactory<MemoryDbContext>
+{
+    public MemoryDbContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<MemoryDbContext>();
+        var dbPath = RuntimeConstants.GetDatabasePath("memory.db");
+        optionsBuilder.UseSqlite($"Data Source={dbPath}");
+        return new MemoryDbContext(optionsBuilder.Options);
+    }
+}
+
 #endif

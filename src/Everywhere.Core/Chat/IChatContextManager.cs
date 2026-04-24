@@ -61,18 +61,4 @@ public interface IChatContextManager : INotifyPropertyChanged
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<ChatContext?> LoadChatContextAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get and ensures the working directory for the given chat context.
-    /// </summary>
-    /// <returns>
-    /// Usually a temporary directory path like C:\Users\[UserName]\AppData\Roaming\Everywhere\plugins\2025-12-30
-    /// </returns>
-    string EnsureWorkingDirectory(ChatContext chatContext);
-
-    /// <summary>
-    /// Render the given prompt and populate variables
-    /// </summary>
-    /// <param name="chatContext"></param>
-    IDictionary<string, Func<string>> GetPromptVariables(ChatContext chatContext);
 }
