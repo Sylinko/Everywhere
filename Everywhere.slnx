@@ -85,6 +85,11 @@
     <Project Path="tests/Everywhere.Patches.SemanticKernel.Tests/Everywhere.Patches.SemanticKernel.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
     <Project Path="tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj" />
+    <Project Path="tests/Everywhere.VisualContext.Avalonia.TestApp/Everywhere.VisualContext.Avalonia.TestApp.csproj" />
+    <Project Path="tests/Everywhere.VisualContext.CefSharp.TestApp/Everywhere.VisualContext.CefSharp.TestApp.csproj" />
+    <Project Path="tests/Everywhere.VisualContext.TestApp.Shared/Everywhere.VisualContext.TestApp.Shared.csproj" />
+    <Project Path="tests/Everywhere.VisualContext.Testing/Everywhere.VisualContext.Testing.csproj" />
+    <Project Path="tests/Everywhere.VisualContext.WinForms.TestApp/Everywhere.VisualContext.WinForms.TestApp.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <File Path="tools/build_vcproj.ps1" />
