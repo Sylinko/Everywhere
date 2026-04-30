@@ -26,5 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.VisualContext.TestApp.Shared\Everywhere.VisualContext.TestApp.Shared.csproj"/>
+    <ProjectReference Include="..\Everywhere.VisualContext.Testing\Everywhere.VisualContext.Testing.csproj"/>
   </ItemGroup>
 </Project>
