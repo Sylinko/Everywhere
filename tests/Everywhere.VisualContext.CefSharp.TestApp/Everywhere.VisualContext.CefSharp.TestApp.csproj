@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>$(TargetFrameworkPrefix)-windows</TargetFramework>
+    <RootNamespace>Everywhere.VisualContext.CefSharp.TestApp</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <PlatformTarget Condition="'$(IsX86)' == 'true'">x86</PlatformTarget>
+    <PlatformTarget Condition="'$(IsX64)' == 'true'">x64</PlatformTarget>
+    <PlatformTarget Condition="'$(IsARM64)' == 'true'">arm64</PlatformTarget>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsX86)' == 'true'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsX64)' == 'true'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(IsARM64)' == 'true'">win-arm64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CefSharp.WinForms.NETCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.VisualContext.TestApp.Shared\Everywhere.VisualContext.TestApp.Shared.csproj" />
+    <ProjectReference Include="..\Everywhere.VisualContext.Testing\Everywhere.VisualContext.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>
