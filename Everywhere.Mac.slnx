@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/3rd/">
+    <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
+    <Project Path="3rd/WritableJsonConfiguration/src/WritableJsonConfiguration/WritableJsonConfiguration.csproj" />
+  </Folder>
+  <Folder Name="/3rd/MessagePack/">
+    <Project Path="3rd/MessagePack-CSharp/src/MessagePack.Analyzers.CodeFixes/MessagePack.Analyzers.CodeFixes.csproj" />
+    <Project Path="3rd/MessagePack-CSharp/src/MessagePack.Analyzers/MessagePack.Analyzers.csproj" />
+    <Project Path="3rd/MessagePack-CSharp/src/MessagePack.Annotations/MessagePack.Annotations.csproj" />
+    <Project Path="3rd/MessagePack-CSharp/src/MessagePack.SourceGenerator/MessagePack.SourceGenerator.csproj" />
+    <Project Path="3rd/MessagePack-CSharp/src/MessagePack/MessagePack.csproj" />
+  </Folder>
+  <Folder Name="/3rd/SemanticKernel/">
+    <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
+  </Folder>
+  <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
+  <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
+  <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />
+  <Project Path="src/Everywhere.Core/Everywhere.Core.csproj" />
+  <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
+  <Project Path="src/Everywhere.I18N/Everywhere.I18N.csproj" />
+  <Project Path="src/Everywhere.Mac/Everywhere.Mac.csproj" />
+  <Project Path="src/Everywhere.Patches/Everywhere.Patches.csproj" />
+  <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
+</Solution>

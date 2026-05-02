@@ -27,8 +27,8 @@ if [[ "$BUILD_PROJECT" == "true" ]]; then
         VERSION="1.0.0.0"
     fi
     echo "Building project for runtime '$RUNTIME_ARCH'..."
-    dotnet clean Everywhere.Linux.slnf -c Release
-    dotnet restore Everywhere.Linux.slnf
+    dotnet clean Everywhere.Linux.slnx -c Release
+    dotnet restore Everywhere.Linux.slnx
     dotnet publish src/Everywhere.Linux/Everywhere.Linux.csproj -c Release -r "$RUNTIME_ARCH" -o "$PUBLISH_DIR" /p:Version="$VERSION" --self-contained true --no-restore 
 fi
 

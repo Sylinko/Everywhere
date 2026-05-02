@@ -85,7 +85,7 @@ jobs:
 
     - name: Restore
       run: |
-        dotnet restore Everywhere.Mac.slnf \
+        dotnet restore Everywhere.Mac.slnx \
           -r ${{ matrix.runtime }} \
           /p:RuntimeIdentifier=${{ matrix.runtime }}
 

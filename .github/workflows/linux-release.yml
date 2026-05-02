@@ -54,7 +54,7 @@ jobs:
 
     - name: Restore
       run: |
-        dotnet restore Everywhere.Linux.slnf \
+        dotnet restore Everywhere.Linux.slnx \
           -r ${{ matrix.runtime }}
 
     - name: Publish

@@ -101,7 +101,7 @@ jobs:
     - name: Restore
       shell: pwsh
       run: |
-        dotnet restore Everywhere.Windows.slnf -r win-x64
+        dotnet restore Everywhere.Windows.slnx -r win-x64
 
     - name: Publish Everywhere.Windows
       shell: pwsh
