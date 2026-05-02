@@ -11,6 +11,14 @@ public static class AutomationExtension
 {
     extension(AutomationElement element)
     {
+        /// <summary>
+        /// UIA3 throws a lot of exceptions and causing other issues, use this instead
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="transformer"></param>
+        /// <typeparam name="TNativePattern"></typeparam>
+        /// <typeparam name="TPattern"></typeparam>
+        /// <returns></returns>
         private TPattern? TryGetPattern<TNativePattern, TPattern>(
             PatternId pattern,
             Func<UIA3FrameworkAutomationElement, TNativePattern, TPattern> transformer) where TPattern : class

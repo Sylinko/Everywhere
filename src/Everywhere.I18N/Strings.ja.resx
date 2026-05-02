@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>ウェブページをブラウズする能力を提供します。大規模モデルはリリース後の知識が固定され、タイムリーな問題を処理する際に幻覚が発生しやすいです。このプラグインはアシスタントがリアルタイムでウェブコンテンツをブラウズできるようにし、アシスタントの能力を向上させます。</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>PowerShellスクリプトを実行する機能を提供し、システムとの直接的な対話を可能にします。ただし、危険であり、ファイルの誤削除やシステムクラッシュを引き起こす可能性があります。</value>
     </data>
@@ -1223,9 +1220,6 @@
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} リンク</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>次のPowerShellスクリプトが実行されます</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>UI要素をキャプチャ</value>
     </data>
@@ -1234,9 +1228,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Everythingでファイルを検索</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>スクリプトを実行</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>ドキュメント</value>
@@ -1279,9 +1270,6 @@
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>ネットワークプロキシ</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>PowerShellスクリプトの実行に失敗しました: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>指定されたパスで、与えられたパターンに一致するファイルまたはディレクトリを検索します。</value>
@@ -1418,9 +1406,6 @@
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>リクエストタイムアウト</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>ユーザーがPowerShellスクリプトの実行に対する同意を拒否しました。</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>プロキシサーバーのアドレスが必要です。</value>
@@ -1791,18 +1776,6 @@
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>zshスクリプトを実行する機能を提供し、システムとの直接的な対話を可能にします。ただし、危険であり、ファイルの誤削除やシステムクラッシュを引き起こす可能性があります。</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>スクリプトを実行</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>以下のzshスクリプトが実行されます</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>ユーザーがzshスクリプトの実行を拒否しました。</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>zshスクリプトの実行に失敗しました: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>新しいアシスタントを割り当てる</value>
     </data>
@@ -2028,18 +2001,6 @@
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>bash スクリプトを実行する能力を提供し、システムと直接対話できます。ただし、予期しないファイルの削除やシステムのクラッシュを引き起こすリスクもあります。</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>ユーザーはbashスクリプトの実行を拒否しました。</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>bash スクリプトの実行に失敗しました：{0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>スクリプトの実行</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>以下のbashスクリプトが実行されます</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash シェル</value>

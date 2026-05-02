@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Proporciona la capacidad de navegar por la web. Los grandes modelos a menudo tienen un conocimiento fijo después de su lanzamiento y pueden tener ilusiones al tratar problemas de actualidad. Este plugin permite al asistente navegar en tiempo real por el contenido de la web, mejorando así sus capacidades.</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>Proporciona la capacidad de ejecutar scripts de PowerShell, permitiendo la interacción directa con el sistema. Sin embargo, también es peligroso y puede resultar en la eliminación accidental de archivos o fallos del sistema.</value>
     </data>
@@ -1223,9 +1220,6 @@ Se pueden usar marcadores de posición en la palabra clave, que están contenido
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} Enlaces</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>El siguiente script de PowerShell será ejecutado</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>Capturar Elemento de UI</value>
     </data>
@@ -1234,9 +1228,6 @@ Se pueden usar marcadores de posición en la palabra clave, que están contenido
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Buscar Archivos con Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>Ejecutar Script</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>Documento</value>
@@ -1279,9 +1270,6 @@ Se pueden usar marcadores de posición en la palabra clave, que están contenido
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>Proxy de Red</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>La ejecución del script de PowerShell falló: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>Buscar archivos o directorios en una ruta especificada que coincidan con el patrón dado.</value>
@@ -1418,9 +1406,6 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Tiempo de Espera de Solicitud</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>El usuario denegó el consentimiento para la ejecución del script de PowerShell.</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>Se requiere la dirección del servidor proxy.</value>
@@ -1791,18 +1776,6 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>Proporciona la capacidad de ejecutar scripts de zsh, permitiendo la interacción directa con el sistema. Sin embargo, también es peligroso y puede resultar en la eliminación accidental de archivos o fallos del sistema.</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>Ejecutar Script</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>El siguiente script zsh será ejecutado</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>El usuario denegó el consentimiento para la ejecución del script zsh.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>La ejecución del script zsh falló: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>Asignar Nuevo Asistente</value>
     </data>
@@ -2028,18 +2001,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>Proporciona la capacidad de ejecutar scripts bash, permitiendo la interacción directa con el sistema. Sin embargo, esto también conlleva riesgos, como la posible eliminación accidental de archivos o fallos del sistema.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>El usuario ha denegado el permiso para ejecutar el script bash.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Error al ejecutar el script bash: {0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>Ejecutar Script</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>El siguiente script bash será ejecutado</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash Shell</value>

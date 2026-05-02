@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>웹 페이지를 탐색할 수 있는 기능을 제공합니다. 대형 모델들은 출시 후 지식이 고정되며, 시의성 문제를 처리할 때 환각이 발생하기 쉽습니다. 이 플러그인은 도우미가 웹 콘텐츠를 실시간으로 탐색하여 능력을 향상시킵니다.</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>파워셸</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>파워셸 스크립트를 실행할 수 있는 기능을 제공하여 시스템과 직접 상호작용할 수 있습니다. 그러나 이는 위험할 수 있으며, 파일 삭제나 시스템 충돌이 발생할 수 있습니다.</value>
     </data>
@@ -1223,9 +1220,6 @@
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} 링크</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>다음 파워셸 스크립트가 실행됩니다</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>UI 요소 캡처</value>
     </data>
@@ -1234,9 +1228,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Everything으로 파일 검색</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>스크립트 실행</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>문서</value>
@@ -1279,9 +1270,6 @@
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>네트워크 프록시</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>PowerShell 스크립트 실행 실패: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>지정된 경로에서 주어진 패턴과 일치하는 파일 또는 디렉터리를 검색합니다.</value>
@@ -1418,9 +1406,6 @@
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>요청 시간 초과</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>사용자가 PowerShell 스크립트 실행에 대한 동의를 거부했습니다.</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>프록시 서버 주소가 필요합니다.</value>
@@ -1791,18 +1776,6 @@
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>zsh 스크립트를 실행할 수 있는 기능을 제공하며, 시스템과 직접 상호작용할 수 있지만 매우 위험할 수 있으며, 파일 삭제나 시스템 충돌을 초래할 수 있습니다.</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>스크립트 실행</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>다음 zsh 스크립트가 실행됩니다.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>사용자가 zsh 스크립트 실행에 대한 동의를 거부했습니다.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>zsh 스크립트 실행 실패: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>새 보조 도우미 할당</value>
     </data>
@@ -2028,18 +2001,6 @@
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>bash 스크립트를 실행할 수 있는 기능을 제공하며, 시스템과 직접 상호작용할 수 있습니다. 그러나 이로 인해 예기치 않은 파일 삭제나 시스템 충돌이 발생할 위험이 있습니다.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>사용자가 bash 스크립트 실행 허가를 거부했습니다.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>bash 스크립트 실행 실패: {0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>스크립트 실행</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>다음 bash 스크립트가 실행됩니다</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash 셸</value>

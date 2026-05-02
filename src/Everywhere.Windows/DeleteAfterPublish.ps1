@@ -1,37 +1,31 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$PublishDir,
-
-    [string]$PruneListFile = "DeleteAfterPublish.txt",
-
     # Optional: override which language subfolders to process. Defaults to auto-detected culture folders.
     [string[]]$LanguageFolders
 )
 
 $ErrorActionPreference = "Stop"
 
-function Resolve-ListPath {
-    param([string]$Path)
-    if ([System.IO.Path]::IsPathRooted($Path)) { return $Path }
-    return Join-Path -Path $PSScriptRoot -ChildPath $Path
-}
-
 $publishRoot = Resolve-Path -Path $PublishDir
-$listPath = Resolve-ListPath -Path $PruneListFile
-
-if (-not (Test-Path -LiteralPath $listPath)) {
-    throw "Prune list file not found: $listPath"
-}
-
-# Read entries, ignore blank lines and lines starting with #
-$entries = Get-Content -LiteralPath $listPath |
-    Where-Object { $_ -and -not $_.StartsWith('#') } |
-    ForEach-Object { $_.Trim() }
-
-if (-not $entries) {
-    Write-Host "Prune list is empty. Nothing to delete."
-    exit 0
-}
+$entries = @(
+  "libSkiaSharp.pdb",
+  "PresentationCore.dll",
+  "PresentationFramework.dll",
+  "PresentationNative_cor3.dll",
+  "PresentationUI.dll",
+  "System.Windows.Forms.Primitives.dll",
+  "System.Windows.Forms.dll",
+  "wpfgfx_cor3.dll",
+  "*/Microsoft.VisualBasic.Forms.resources.dll",
+  "*/PresentationCore.resources.dll",
+  "*/PresentationFramework.resources.dll",
+  "*/PresentationUI.resources.dll",
+  "*/System.Windows.Forms.Design.resources.dll",
+  "*/System.Windows.Forms.Primitives.resources.dll",
+  "*/System.Windows.Forms.resources.dll",
+  "*/WindowsFormsIntegration.resources.dll"
+)
 
 $allFiles = Get-ChildItem -Path $publishRoot -File -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
 

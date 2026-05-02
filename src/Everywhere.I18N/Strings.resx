@@ -647,11 +647,26 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Enables browsing the web. The knowledge of major models often becomes fixed after release, leading to hallucinations when addressing timeliness issues. This plugin allows the assistant to browse web content in real-time, enhancing its capabilities.</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>Provides the ability to execute PowerShell scripts, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminal</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Provides the ability to execute shell commands via a pseudo-terminal, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Execute Script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>The following shell script will be executed</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>User denied consent for shell script execution.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Shell script execution failed: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>File System</value>
@@ -1223,9 +1238,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} Links</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>The following PowerShell script will be executed</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>Capture UI Element</value>
     </data>
@@ -1234,9 +1246,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Search Files via Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>Execute Script</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>Document</value>
@@ -1279,9 +1288,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>Proxy</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>PowerShell script execution failed: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>Search for files or directories in a specified path matching the given pattern.</value>
@@ -1418,9 +1424,6 @@ Scroll wheel or number keys to switch pick modes</value>
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Request Timeout</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>User denied consent for PowerShell script execution.</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>Proxy server address is required.</value>
@@ -1791,18 +1794,6 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>Provides the ability to execute zsh scripts, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>Execute Script</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>The following zsh script will be executed</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>User denied consent for zsh script execution.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>zsh script execution failed: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>Assign New Assistant</value>
     </data>
@@ -2028,18 +2019,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>Provides the ability to execute bash scripts, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>User denied consent for bash script execution.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>bash script execution failed: {0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>Execute Script</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>The following bash script will be executed</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash Shell</value>
@@ -2827,5 +2806,8 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value />
     </data>
 </root>

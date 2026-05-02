@@ -76,7 +76,6 @@ public static class Program
                 #region Chat Plugins
 
                 .AddTransient<BuiltInChatPlugin, FdFindPlugin>()
-                .AddTransient<BuiltInChatPlugin, BashPlugin>()
 
                 #endregion
 

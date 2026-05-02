@@ -5,6 +5,7 @@ using Windows.Win32.UI.Shell;
 using Avalonia;
 using Avalonia.Controls;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -76,7 +77,6 @@ public static class Program
 
                 #region Chat Plugins
 
-                .AddTransient<BuiltInChatPlugin, PowerShellPlugin>()
                 .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
                 #endregion

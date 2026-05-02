@@ -13,3 +13,6 @@
 [submodule "3rd/semantic-kernel"]
 	path = 3rd/semantic-kernel
 	url = https://github.com/microsoft/semantic-kernel
+[submodule "3rd/Porta.Pty"]
+	path = 3rd/Porta.Pty
+	url = https://github.com/Sylinko/Porta.Pty

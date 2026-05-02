@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Предоставляет возможность просматривать веб-страницы. Знания крупных моделей часто фиксированы после выпуска и могут возникать проблемы с актуальностью. Этот плагин позволяет ассистенту в реальном времени просматривать содержимое веб-страниц, что улучшает его возможности.</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>Предоставляет возможность выполнять скрипты PowerShell, позволяя прямое взаимодействие с системой. Однако это также опасно и может привести к случайному удалению файлов или сбоям системы.</value>
     </data>
@@ -1223,9 +1220,6 @@
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} Ссылки</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Следующий скрипт PowerShell будет выполнен</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>Захват элемента интерфейса</value>
     </data>
@@ -1234,9 +1228,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Поиск файлов через Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>Выполнить скрипт</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>Документ</value>
@@ -1279,9 +1270,6 @@
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>Сетевой Прокси</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Ошибка выполнения скрипта PowerShell: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>Искать файлы или директории по указанному пути, соответствующие заданному шаблону.</value>
@@ -1418,9 +1406,6 @@
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Тайм-аут запроса</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>Пользователь отказал в согласии на выполнение скрипта PowerShell.</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>Необходим адрес прокси-сервера.</value>
@@ -1791,18 +1776,6 @@
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>Предоставляет возможность выполнять скрипты zsh, позволяя взаимодействовать с системой напрямую, но это также опасно и может привести к случайному удалению файлов или сбоям системы.</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>Выполнить скрипт</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Следующий zsh скрипт будет выполнен</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>Пользователь отклонил согласие на выполнение zsh скрипта.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Ошибка выполнения zsh скрипта: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>Назначить нового помощника</value>
     </data>
@@ -2028,18 +2001,6 @@
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>Предоставляет возможность выполнения bash-скриптов, позволяя взаимодействовать с системой напрямую. Однако это также связано с рисками, которые могут привести к случайному удалению файлов или сбоям системы.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>Пользователь отказал в разрешении на выполнение bash-скрипта.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Ошибка выполнения bash-скрипта: {0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>Выполнение скрипта</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Следующий bash-скрипт будет выполнен</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash Shell</value>

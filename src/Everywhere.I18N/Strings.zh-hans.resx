@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>提供浏览网页的能力。各家大模型在发布之后的知识往往已固定且在处理时效性问题时容易出现幻觉。此插件允许助手实时浏览网页内容从而提高助手能力。</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>提供执行 PowerShell 脚本的能力，允许直接和系统交互，但也很危险，可能造成误删文件或系统崩溃。</value>
     </data>
@@ -1224,9 +1221,6 @@
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} 个链接</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>即将执行下列 PowerShell 脚本</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>UI 元素截图</value>
     </data>
@@ -1235,9 +1229,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>使用 Everything 搜索文件</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>执行脚本</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>文档</value>
@@ -1280,9 +1271,6 @@
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>网络代理</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>PowerShell 脚本执行失败: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>在指定路径中搜索匹配条件的文件或文件夹。</value>
@@ -1419,9 +1407,6 @@
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>请求超时时长</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>用户拒绝了脚本执行。</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>代理服务器地址缺失。</value>
@@ -1792,18 +1777,6 @@
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>提供执行 zsh 脚本的能力，允许直接和系统交互，但也很危险，可能造成误删文件或系统崩溃。</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>执行脚本</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>即将执行下列 zsh 脚本</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>用户拒绝了脚本执行。</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>zsh 脚本执行失败: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>指派新助手</value>
     </data>
@@ -2029,18 +2002,6 @@
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>提供执行 bash 脚本的能力，允许直接与系统交互。然而，这也存在风险，可能导致意外文件删除或系统崩溃。</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>用户拒绝了执行 bash 脚本的许可。</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>bash 脚本执行失败：{0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>执行脚本</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>以下 bash 脚本将被执行</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash Shell</value>
@@ -2828,5 +2789,26 @@
     </data>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>开启后，所有终端操作将自动放行，无需手动批准。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>执行脚本</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>脚本执行失败: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>即将执行下列脚本</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>用户拒绝了脚本执行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>终端</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>提供在终端中执行脚本的能力，允许直接和系统交互，但也很危险，可能造成误删文件或系统崩溃。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>调用系统终端执行脚本。</value>
     </data>
 </root>

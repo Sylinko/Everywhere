@@ -19,11 +19,11 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
+    <PackageReference Include="FlaUI.UIA3"/>
     <PackageReference Include="Microsoft.Windows.CsWin32">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FlaUI.UIA3"/>
     <PackageReference Include="SkiaSharp.NativeAssets.Win32"/>
     <PackageReference Include="Vortice.Direct3D11"/>
     <PackageReference Include="Vortice.DirectComposition"/>
@@ -33,7 +33,6 @@
     <ProjectReference Include="..\..\3rd\EverythingNetCore\EverythingNet\EverythingNet.csproj"/>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
-    <ProjectReference Include="..\Everywhere.Windows.PowerShell\Everywhere.Windows.PowerShell.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -52,9 +51,7 @@
     <None Remove="Assets\Icons\Everything.svg"/>
     <AvaloniaResource Include="Assets\Icons\Everything.svg"/>
     <None Remove="Assets\Icons\PowerShell.svg"/>
-    <AvaloniaResource Include="Assets\Icons\PowerShell.svg"/>
     <None Remove="Assets\Icons\Windows11.svg"/>
-    <AvaloniaResource Include="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
 
   <Import Project="..\Build.Patches.targets" />
@@ -66,7 +63,6 @@
     <TrimmerRootAssembly Include="Everywhere.Core"/>
     <TrimmerRootAssembly Include="Everywhere.Cloud"/>
     <TrimmerRootAssembly Include="Everywhere.I18N"/>
-    <TrimmerRootAssembly Include="Everywhere.Windows.PowerShell"/>
     <TrimmerRootAssembly Include="Anthropic"/>
     <TrimmerRootAssembly Include="CSharpMath.Avalonia"/>
     <TrimmerRootAssembly Include="DirectWriteForwarder"/>
@@ -80,17 +76,11 @@
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Abstractions"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Relational"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore.Sqlite"/>
-    <TrimmerRootAssembly Include="Microsoft.PowerShell.Commands.Diagnostics"/>
-    <TrimmerRootAssembly Include="Microsoft.PowerShell.Commands.Management"/>
-    <TrimmerRootAssembly Include="Microsoft.PowerShell.Commands.Utility"/>
-    <TrimmerRootAssembly Include="Microsoft.PowerShell.ConsoleHost"/>
-    <TrimmerRootAssembly Include="Microsoft.PowerShell.SDK"/>
     <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Abstractions"/>
     <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Connectors.Google"/>
     <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Core"/>
     <TrimmerRootAssembly Include="ModelContextProtocol"/>
     <TrimmerRootAssembly Include="ModelContextProtocol.Core"/>
-    <TrimmerRootAssembly Include="Newtonsoft.Json"/>
     <TrimmerRootAssembly Include="OllamaSharp"/>
     <TrimmerRootAssembly Include="OpenAI"/>
     <TrimmerRootAssembly Include="PuppeteerSharp"/>
@@ -99,7 +89,6 @@
     <TrimmerRootAssembly Include="SharpGen.Runtime"/>
     <TrimmerRootAssembly Include="SharpGen.Runtime.COM"/>
     <TrimmerRootAssembly Include="System.Management"/>
-    <TrimmerRootAssembly Include="System.Management.Automation"/>
     <TrimmerRootAssembly Include="Vortice.Direct2D1"/>
     <TrimmerRootAssembly Include="Vortice.Direct3D11"/>
     <TrimmerRootAssembly Include="Vortice.DirectComposition"/>
@@ -109,17 +98,18 @@
     <TrimmerRootAssembly Include="WritableJsonConfiguration"/>
   </ItemGroup>
 
-  <PropertyGroup>
-    <DeleteAfterPublishScript>$(MSBuildThisFileDirectory)..\..\tools\DeleteAfterPublish.ps1</DeleteAfterPublishScript>
-    <DeleteAfterPublishList>$(MSBuildThisFileDirectory)\DeleteAfterPublish.txt</DeleteAfterPublishList>
-    <DeleteAfterPublishDir>$(ProjectDir)\$(PublishDir)</DeleteAfterPublishDir>
-  </PropertyGroup>
+  <Import Project="..\Build.Watchdog.targets"/>
 
-  <Target Name="RunDeleteAfterPublishScript"
-          AfterTargets="Publish">
-    <Message Text="Pruning publish output via $(DeleteAfterPublishScript) on $(DeleteAfterPublishOutputEscaped)" Importance="High"/>
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
-          Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(DeleteAfterPublishScript)&quot; -PublishDir &quot;$(PublishDir)\&quot; -PruneListFile &quot;$(DeleteAfterPublishList)&quot;"/>
+  <!-- Prune WPF/WinForms assemblies and localized resources natively without an external PowerShell script -->
+  <Target Name="FilterPublishOutput" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('Presentation'))" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('System.Windows.Forms'))" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsBase'))" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsFormsIntegration'))" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('wpfgfx'))" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(FileName)' == 'libSkiaSharp' And '%(Extension)' == '.pdb'" />
+    </ItemGroup>
   </Target>
 
 </Project>

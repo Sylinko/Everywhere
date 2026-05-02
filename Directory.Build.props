@@ -1,65 +1,65 @@
 <Project>
-    <PropertyGroup>
-        <LangVersion>preview</LangVersion>
-        <TargetFrameworkPrefix>net10.0</TargetFrameworkPrefix>
-        <TargetFramework>$(TargetFrameworkPrefix)</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>nullable</WarningsAsErrors>
-        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-        <NoWarn>$(NoWarn),CA1826,SKEXP0001,SKEXP0010,SKEXP0050,SKEXP0110,KMEXP00,OPENAI001,AVLN3001,AVA3001</NoWarn>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <CETCompat>false</CETCompat>
-        <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>preview</LangVersion>
+    <TargetFrameworkPrefix>net10.0</TargetFrameworkPrefix>
+    <TargetFramework>$(TargetFrameworkPrefix)</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <NoWarn>$(NoWarn),CA1826,SKEXP0001,SKEXP0010,SKEXP0050,SKEXP0110,KMEXP00,OPENAI001,AVLN3001,AVA3001</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CETCompat>false</CETCompat>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-        <IsWindows>true</IsWindows>
-        <DefineConstants>$(DefineConstants);WINDOWS;IsWindows</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <IsWindows>true</IsWindows>
+    <DefineConstants>$(DefineConstants);WINDOWS;IsWindows</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-        <IsLinux>true</IsLinux>
-        <DefineConstants>$(DefineConstants);LINUX;IsLinux</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <IsLinux>true</IsLinux>
+    <DefineConstants>$(DefineConstants);LINUX;IsLinux</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-        <IsOSX>true</IsOSX>
-        <IsMacOS>true</IsMacOS>
-        <DefineConstants>$(DefineConstants);OSX;MACOS;IsOSX;IsMacOS</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <IsOSX>true</IsOSX>
+    <IsMacOS>true</IsMacOS>
+    <DefineConstants>$(DefineConstants);OSX;MACOS;IsOSX;IsMacOS</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <_OSArchitecture>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</_OSArchitecture>
-    </PropertyGroup>
+  <PropertyGroup>
+    <_OSArchitecture>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</_OSArchitecture>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(_OSArchitecture)' == 'X64'">
-        <IsX64>true</IsX64>
-        <DefineConstants>$(DefineConstants);X64;IsX64</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(_OSArchitecture)' == 'X64'">
+    <IsX64>true</IsX64>
+    <DefineConstants>$(DefineConstants);X64;IsX64</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(_OSArchitecture)' == 'X86'">
-        <IsX86>true</IsX86>
-        <DefineConstants>$(DefineConstants);X86;IsX86</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(_OSArchitecture)' == 'X86'">
+    <IsX86>true</IsX86>
+    <DefineConstants>$(DefineConstants);X86;IsX86</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm64'">
-        <IsARM64>true</IsARM64>
-        <DefineConstants>$(DefineConstants);ARM64;IsARM64</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm64'">
+    <IsARM64>true</IsARM64>
+    <DefineConstants>$(DefineConstants);ARM64;IsARM64</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm'">
-        <IsARM>true</IsARM>
-        <DefineConstants>$(DefineConstants);ARM;IsARM</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(_OSArchitecture)' == 'Arm'">
+    <IsARM>true</IsARM>
+    <DefineConstants>$(DefineConstants);ARM;IsARM</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(IsWindows)' == 'true' OR '$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
-        <IsDesktop>true</IsDesktop>
-        <DefineConstants>$(DefineConstants);DESKTOP;IsDesktop</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(IsWindows)' == 'true' OR '$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
+    <IsDesktop>true</IsDesktop>
+    <DefineConstants>$(DefineConstants);DESKTOP;IsDesktop</DefineConstants>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
-        <IsUnix>true</IsUnix>
-        <DefineConstants>$(DefineConstants);UNIX;IsUnix</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(IsLinux)' == 'true' OR '$(IsOSX)' == 'true'">
+    <IsUnix>true</IsUnix>
+    <DefineConstants>$(DefineConstants);UNIX;IsUnix</DefineConstants>
+  </PropertyGroup>
 </Project>

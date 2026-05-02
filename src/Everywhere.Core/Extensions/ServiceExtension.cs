@@ -73,7 +73,9 @@ public static class ServiceExtension
                 // Add built-in plugins
                 .AddTransient<BuiltInChatPlugin, EssentialPlugin>()
                 .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
+                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
                 .AddTransient<BuiltInChatPlugin, WebPlugin>()
+                .AddTransient<BuiltInChatPlugin, TerminalPlugin>()
                 .AddTransient<BuiltInChatPlugin, FileSystemPlugin>();
 
     }

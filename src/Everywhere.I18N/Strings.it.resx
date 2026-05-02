@@ -647,9 +647,6 @@
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Fornisce la capacità di navigare in rete. Le conoscenze dei grandi modelli spesso rimangono fisse dopo il rilascio e possono presentare illusioni quando si affrontano problemi di tempestività. Questo plugin consente all'assistente di navigare in tempo reale nei contenuti web, migliorando le sue capacità.</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
-        <value>PowerShell</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>Fornisce la possibilità di eseguire script PowerShell, consentendo l'interazione diretta con il sistema. Tuttavia, è anche pericoloso e potrebbe causare eliminazioni accidentali di file o crash del sistema.</value>
     </data>
@@ -1223,9 +1220,6 @@ Nel prompt possono essere utilizzati segnaposto, racchiusi in {}, che verranno s
     <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
         <value>{0} Link</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Il seguente script PowerShell verrà eseguito</value>
-    </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
         <value>Cattura Elemento UI</value>
     </data>
@@ -1234,9 +1228,6 @@ Nel prompt possono essere utilizzati segnaposto, racchiusi in {}, che verranno s
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
         <value>Cerca File tramite Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_Header" xml:space="preserve">
-        <value>Esegui Script</value>
     </data>
     <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
         <value>Documento</value>
@@ -1279,9 +1270,6 @@ Nel prompt possono essere utilizzati segnaposto, racchiusi in {}, che verranno s
     </data>
     <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
         <value>Proxy di Rete</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Esecuzione dello script PowerShell non riuscita: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
         <value>Cerca file o directory in un percorso specificato che corrispondono al modello fornito.</value>
@@ -1418,9 +1406,6 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="CustomAssistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Timeout Richiesta</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>L'utente ha negato il consenso per l'esecuzione dello script PowerShell.</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>L'indirizzo del server proxy è obbligatorio.</value>
@@ -1791,18 +1776,6 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
         <value>Fornisce la possibilità di eseguire script zsh, consentendo l'interazione diretta con il sistema. Tuttavia, è anche pericoloso e potrebbe causare eliminazioni accidentali di file o crash del sistema.</value>
     </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_Header" xml:space="preserve">
-        <value>Esegui Script</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Il seguente script zsh verrà eseguito</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>L'utente ha negato il consenso per l'esecuzione dello script zsh.</value>
-    </data>
-    <data name="MacOS_BuiltInChatPlugin_Zsh_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Esecuzione dello script zsh fallita: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
         <value>Assegna Nuovo Assistente</value>
     </data>
@@ -2028,18 +2001,6 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
         <value>Fornisce la capacità di eseguire script bash, consentendo l'interazione diretta con il sistema. Tuttavia, ciò comporta dei rischi, che possono portare a cancellazioni accidentali di file o crash del sistema.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>L'utente ha rifiutato il permesso per eseguire lo script bash.</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Esecuzione dello script bash fallita: {0}</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_Header" xml:space="preserve">
-        <value>Esegui Script</value>
-    </data>
-    <data name="Linux_BuiltInChatPlugin_Bash_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>Il seguente script bash verrà eseguito</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
         <value>Bash Shell</value>

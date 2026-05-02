@@ -25,7 +25,6 @@
       "src\\Everywhere.I18N.SourceGenerator\\Everywhere.I18N.SourceGenerator.csproj",
       "src\\Everywhere.I18N\\Everywhere.I18N.csproj",
       "src\\Everywhere.Watchdog\\Everywhere.Watchdog.csproj",
-      "src\\Everywhere.Windows.PowerShell\\Everywhere.Windows.PowerShell.csproj",
       "src\\Everywhere.Windows\\Everywhere.Windows.csproj",
       "tests\\Everywhere.Abstractions.Tests\\Everywhere.Abstractions.Tests.csproj",
       "tests\\Everywhere.Tests\\Everywhere.Tests.csproj"
