@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>モデルの出力テキストの多様性を制御します。通常、数値が高いほどモデルはより多くの潜在的な回答を受け入れ、数値が低いほど最も可能性の高い回答を選択します。通常、温度を同時に変更しないことをお勧めします。エラーが発生した場合は、デフォルト値に戻してみてください。</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>ウェブ検索エンジンのサービスプロバイダーを選択します。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -626,7 +626,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>チャットプラグインには、組み込みプラグインとMCPプラグインが含まれます。ツール呼び出しをサポートするLLMは、適切なタイミングでこれらのプラグインを使用し（例: ウェブ検索やローカルファイルへのアクセス）、より強力な機能を提供します。</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>ウェブ検索エンジンプロバイダー</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">

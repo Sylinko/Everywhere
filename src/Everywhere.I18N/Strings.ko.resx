@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>모델 출력 텍스트의 다양성을 제어하는 데 사용됩니다. 일반적으로 값이 높을수록 모델이 더 많은 잠재적 답변을 수용하고, 값이 낮을수록 가장 가능성이 높은 답변을 선호합니다. 보통 온도를 동시에 변경하지 않는 것이 좋습니다. 오류가 발생하면 기본값으로 복원해 보세요.</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>웹 검색 엔진의 서비스 제공자를 선택하세요.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -626,7 +626,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>채팅 플러그인은 내장 플러그인과 MCP 플러그인을 포함합니다. 도구 호출을 지원하는 LLM은 적절한 시점에 이러한 플러그인을 사용하여 더 강력한 기능을 제공합니다 (예: 웹 검색 또는 로컬 파일 접근).</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>웹 검색 엔진 제공자</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">

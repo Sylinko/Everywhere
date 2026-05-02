@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>Контролирует разнообразие текстов, генерируемых моделью. Обычно, чем выше значение, тем больше потенциальных ответов принимает модель, чем ниже - тем более вероятный ответ будет выбран. Рекомендуется не изменять температуру одновременно. Если возникли ошибки, попробуйте восстановить значения по умолчанию.</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Выберите поставщика услуг для поисковых систем.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -626,7 +626,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Чат-плагины включают встроенные плагины и MCP-плагины. LLM, поддерживающие вызовы инструментов, будут использовать эти плагины в подходящее время (например, для поиска в интернете или доступа к локальным файлам), чтобы получить более мощные функции.</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Поставщик поисковой системы</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">

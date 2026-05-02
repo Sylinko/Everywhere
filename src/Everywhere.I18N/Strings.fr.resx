@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>Utilisé pour contrôler la diversité des textes générés par le modèle. En général, une valeur plus élevée permet au modèle d'accepter plus de réponses potentielles, tandis qu'une valeur plus basse privilégie la réponse la plus probable. Il est généralement conseillé de ne pas modifier la température en même temps. Si vous rencontrez des erreurs, essayez de restaurer les valeurs par défaut.</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Sélectionnez le fournisseur de service pour les moteurs de recherche web.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -626,7 +626,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Les plugins de chat incluent des plugins intégrés et des plugins MCP. Les LLMs qui prennent en charge les appels d'outils utiliseront ces plugins au moment opportun (comme la recherche sur le web ou l'accès aux fichiers locaux) pour obtenir des fonctionnalités plus puissantes.</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Fournisseur de Moteur de Recherche Web</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">

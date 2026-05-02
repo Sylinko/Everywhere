@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using ShadUI;
@@ -8,6 +8,20 @@ namespace Everywhere.Configuration;
 [GeneratedSettingsItems]
 public sealed partial class TerminalPluginSettings : ObservableObject
 {
+    [DynamicResourceKey(
+        LocaleKey.TerminalPluginSettings_ShellPath_Header,
+        LocaleKey.TerminalPluginSettings_ShellPath_Description)]
+    [SettingsStringItem]
+    [ObservableProperty]
+    public partial string? ShellPath { get; set; }
+
+    [DynamicResourceKey(
+        LocaleKey.TerminalPluginSettings_ShellArgs_Header,
+        LocaleKey.TerminalPluginSettings_ShellArgs_Description)]
+    [SettingsStringItem]
+    [ObservableProperty]
+    public partial string? ShellArgs { get; set; }
+
     [DynamicResourceKey(
         LocaleKey.TerminalPluginSettings_AutoApprove_Header,
         LocaleKey.TerminalPluginSettings_AutoApprove_Description)]

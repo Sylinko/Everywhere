@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>用于控制模型输出文本的多样性。通常情况下，数值越高，模型会接受更多潜在回答，数值越低，则更倾向于最可能的回答。通常建议不要同时更改 temperature。如果遇到错误，请尝试还原默认值。</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>选择用于网络搜索引擎的服务提供商。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -626,7 +626,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>聊天插件包括内置插件和 MCP 插件，支持工具调用的大语言模型 (LLMs) 会在合适的时机使用这些插件 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>网络搜索引擎提供方</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
@@ -2810,5 +2810,17 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
         <value>调用系统终端执行脚本。</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>终端路径</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>自定义终端可执行文件的路径，如果留空则会自动检测。</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellArgs_Header" xml:space="preserve">
+        <value>终端参数</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellArgs_Description" xml:space="preserve">
+        <value>自定义启动终端时的参数，留空则会自动检测。</value>
     </data>
 </root>

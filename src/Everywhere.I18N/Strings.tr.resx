@@ -106,7 +106,7 @@
     <data name="CustomAssistant_TopP_Description" xml:space="preserve">
         <value>Modelin çıktısının çeşitliliğini kontrol etmek için kullanılır. Genellikle, değer ne kadar yüksekse, model daha fazla olası yanıt kabul eder; değer ne kadar düşükse, en olası yanıtı tercih eder. Genellikle sıcaklığı aynı anda değiştirmemeniz önerilir. Hata alırsanız, lütfen varsayılan değerlere geri dönmeyi deneyin.</value>
     </data>
-    <data name="WebSearchEngineProvider_Description" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Web arama motorları için servis sağlayıcısını seçin.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -625,7 +625,7 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Soğbet eklentileri, yerleşik eklentiler ve MCP eklentilerini içerir. Araç çağrılarını destekleyen LLM'ler, daha güçlü işlevsellik elde etmek için (web arama veya yerel dosyalara erişim gibi) bu eklentileri uygun zamanlarda kullanır.</value>
     </data>
-    <data name="WebSearchEngineProvider_Header" xml:space="preserve">
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Arama Motoru Sağlayıcısı</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
