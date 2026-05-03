@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Text;
 using System.Text.RegularExpressions;
 using DynamicData;
 using Everywhere.Chat.Permissions;
@@ -17,7 +16,8 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 
 /// <summary>
 /// A unified cross-platform terminal plugin that uses PTY (pseudo-terminal) for shell command execution.
-/// Replaces the platform-specific PowerShellPlugin, BashPlugin, and ZshPlugin.
+/// Uses Shell Integration (OSC 633 markers) when available (Rich strategy), falls back to
+/// idle detection + heuristic cleaning (None strategy) when not available.
 /// </summary>
 public sealed partial class TerminalPlugin : BuiltInChatPlugin
 {
@@ -50,11 +50,11 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
     [KernelFunction("execute_in_terminal")]
 #if WINDOWS
-    [Description("Executes script in PowerShell and obtains its output.")]
+    [Description("Executes script in PowerShell and obtains its output. Each line is sent as a separate Enter keypress.")]
 #elif MACOS
-    [Description("Executes script in zsh and obtains its output.")]
+    [Description("Executes script in zsh and obtains its output. Each line is sent as a separate Enter keypress.")]
 #else
-    [Description("Executes script in bash and obtains its output.")]
+    [Description("Executes script in bash and obtains its output. Each line is sent as a separate Enter keypress.")]
 #endif
     [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Header,
@@ -71,23 +71,31 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
         if (string.IsNullOrWhiteSpace(script))
         {
-            throw new ArgumentException("Script cannot be null or empty.", nameof(script));
+            throw new ArgumentException("Script cannot be empty or whitespace.", nameof(script));
         }
 
-        // Detect shell
-        var (shellPath, shellArgs) = DetectShell();
+        var (shellPath, shellType) = DetectShell();
+        if (shellType == ShellType.Unknown)
+        {
+            throw new HandledException(
+                new NotSupportedException(
+                    $"Unsupported shell or not found: {shellPath}. Only PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash are supported."),
+                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell),
+                showDetails: false);
+        }
 
         // Consent
+        var isMultiline = OutputCleaner.IsMultilineCommand(script);
         string? consentKey;
-        var trimmedScript = script.AsSpan().Trim();
-        if (!trimmedScript.Contains('\n'))
+        if (isMultiline)
         {
-            var command = trimmedScript[trimmedScript.Split(' ').FirstOrDefault(new Range(0, trimmedScript.Length))].ToString();
-            consentKey = $"single.{command}";
+            consentKey = "multi-line";
         }
         else
         {
-            consentKey = "multi-line";
+            var trimmedScript = script.AsSpan().Trim();
+            var command = trimmedScript[trimmedScript.Split(' ').FirstOrDefault(new Range(0, trimmedScript.Length))].ToString();
+            consentKey = $"single.{command}";
         }
 
         var detailBlock = new ChatPluginContainerDisplayBlock
@@ -100,7 +108,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             consentKey,
             new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
             detailBlock,
-            canRemember: false,
+            canRemember: consentKey[0] == 's',
             cancellationToken: cancellationToken);
         if (!consent)
         {
@@ -114,43 +122,31 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
         var workingDirectory = chatContextManager.EnsureWorkingDirectory(chatContext);
 
-        // Build environment
-        var environment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["NO_COLOR"] = "1",
-        };
+        // Generate nonce for shell integration marker verification
+        var nonce = Guid.NewGuid().ToString("N")[..16];
 
-        if (!OperatingSystem.IsWindows())
-        {
-            environment["TERM"] = "dumb";
-        }
+        // Build shell integration args and environment
+        var shellArgs = ShellIntegrationScript.BuildShellArgs(shellType);
+        var environment = ShellIntegrationScript.BuildEnvironmentVariables(shellType, nonce);
 
         if (EnvironmentVariableUtilities.GetLatestPathVariable() is { Length: > 0 } latestPath)
         {
             environment["PATH"] = latestPath;
         }
 
-        // Build script to send via stdin
-        // The shell will exit after processing stdin (EOF closes the stream)
-        var fullScript = new StringBuilder();
-        fullScript.Append(script);
-        fullScript.AppendLine();
-        fullScript.AppendLine("exit");
-
-        // Spawn PTY
         var options = new PtyOptions
         {
             Name = "Everywhere-Terminal",
-            Cols = 1024, // Wide columns to prevent soft-wrap that would break command echo detection
+            Cols = 1024,
             Rows = 50,
             Cwd = workingDirectory,
             App = shellPath,
-            CommandLine = shellArgs,
+            CommandLine = shellArgs ?? [],
             VerbatimCommandLine = true,
             Environment = environment,
         };
 
-        string result;
+        ExecuteResult executeResult;
         using (var pty = await PtyProvider.SpawnAsync(options, cancellationToken))
         {
             var pid = pty.Pid;
@@ -160,44 +156,59 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
 
             try
             {
-                // Write script to PTY stdin
-                var scriptBytes = Encoding.UTF8.GetBytes(fullScript.ToString());
-                await pty.WriterStream.WriteAsync(scriptBytes, cancellationToken);
-                await pty.WriterStream.FlushAsync(cancellationToken);
-                pty.WriterStream.Close(); // Signal EOF to the shell
+                // Detect shell integration and choose strategy
+                // If scripts are not available (shellArgs is null), skip detection and use None directly
+                IExecuteStrategy strategy;
+                if (shellArgs is null)
+                {
+                    _logger.LogDebug("Shell integration scripts not available for {ShellType}, using None strategy", shellType);
+                    strategy = new NoneExecuteStrategy(_logger);
+                }
+                else
+                {
+                    strategy = await IExecuteStrategy.DetectStrategyAsync(pty, shellType, _logger, cancellationToken);
+                }
 
-                // Capture output through VT buffer until process exits
-                result = await CaptureTerminalOutputAsync(pty, TimeSpan.FromSeconds(30), cancellationToken);
-
-                // Wait for process to exit
-                pty.WaitForExit(5000);
+                // Execute the command using the chosen strategy
+                executeResult = await strategy.ExecuteAsync(
+                    pty,
+                    script,
+                    isMultiline,
+                    TimeSpan.FromSeconds(30),
+                    cancellationToken);
             }
             finally
             {
-                // Unregister from Watchdog
-                await _watchdogManager.UnregisterProcessAsync(pid, killIfRunning: false);
+                // Unregister from Watchdog and kill the shell process
+                await _watchdogManager.UnregisterProcessAsync(pid, killIfRunning: true);
             }
         }
 
-        // Clean output: strip command echo and trailing prompt
-        result = CleanPtyOutput(result, script);
+        var result = executeResult.Output;
+
+        // Display exit code if non-zero
+        if (executeResult.ExitCode is > 0)
+        {
+            _logger.LogInformation("Command exited with code {ExitCode}", executeResult.ExitCode);
+        }
 
         userInterface.DisplaySink.AppendCodeBlock(result.Trim(), "log");
         return result;
     }
 
     /// <summary>
-    /// Detect the platform shell and build the command line.
+    /// Detect the platform shell and its type.
     /// </summary>
-    private (string ShellPath, string[] Args) DetectShell()
+    private (string ShellPath, ShellType Type) DetectShell()
     {
         if (!_pluginSettings.ShellPath.IsNullOrWhiteSpace())
         {
-            return (_pluginSettings.ShellPath, SplitCommandLineArguments(_pluginSettings.ShellArgs));
+            var type = DetectShellType(_pluginSettings.ShellPath);
+            return (_pluginSettings.ShellPath, type);
         }
 
         string shellPath;
-        string? shellArgs;
+        ShellType shellType;
 
         if (OperatingSystem.IsWindows())
         {
@@ -205,122 +216,37 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             shellPath = FindPowerShellExecutable() ?? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.System),
                 @"WindowsPowerShell\v1.0\powershell.exe");
-            shellArgs = "-NoProfile -NoLogo";
+            shellType = ShellType.PowerShell;
         }
         else if (OperatingSystem.IsMacOS())
         {
             shellPath = "/bin/zsh";
-            shellArgs = null;
+            shellType = ShellType.Zsh;
         }
         else // Linux
         {
             shellPath = "/bin/bash";
-            shellArgs = null;
+            shellType = ShellType.Bash;
         }
 
         _pluginSettings.ShellPath = shellPath;
-        _pluginSettings.ShellArgs = shellArgs;
-        return (shellPath, SplitCommandLineArguments(shellArgs));
+        return (shellPath, shellType);
     }
 
     /// <summary>
-    /// Splits a command-line argument string into an array, respecting quoted strings.
-    /// Supports both double quotes (Windows) and single quotes (Unix).
+    /// Detect the shell type from the executable path.
+    /// Returns Unknown for unrecognized shells.
     /// </summary>
-    private static string[] SplitCommandLineArguments(string? args)
+    private static ShellType DetectShellType(string shellPath)
     {
-        if (string.IsNullOrWhiteSpace(args)) return [];
-
-        var result = new List<string>();
-        var current = new StringBuilder();
-        var inDoubleQuote = false;
-        var inSingleQuote = false;
-        var i = 0;
-
-        while (i < args.Length)
+        var name = Path.GetFileNameWithoutExtension(shellPath).ToLowerInvariant();
+        return name switch
         {
-            var c = args[i];
-
-            if (inDoubleQuote)
-            {
-                switch (c)
-                {
-                    case '"' when (i + 1 >= args.Length || args[i + 1] != '"'):
-                    {
-                        inDoubleQuote = false;
-                        break;
-                    }
-                    case '"' when i + 1 < args.Length && args[i + 1] == '"':
-                    {
-                        // Escaped double quote inside double-quoted string: "" → "
-                        current.Append('"');
-                        i++;
-                        break;
-                    }
-                    default:
-                    {
-                        current.Append(c);
-                        break;
-                    }
-                }
-            }
-            else if (inSingleQuote)
-            {
-                if (c == '\'')
-                {
-                    inSingleQuote = false;
-                }
-                else
-                {
-                    current.Append(c);
-                }
-            }
-            else
-            {
-                switch (c)
-                {
-                    case '"':
-                    {
-                        inDoubleQuote = true;
-                        break;
-                    }
-                    case '\'':
-                    {
-                        inSingleQuote = true;
-                        break;
-                    }
-                    case '\\' when i + 1 < args.Length:
-                    {
-                        // Backslash escape: consume next char literally
-                        current.Append(args[++i]);
-                        break;
-                    }
-                    case ' ' or '\t':
-                    {
-                        if (current.Length > 0)
-                        {
-                            result.Add(current.ToString());
-                            current.Clear();
-                        }
-                        break;
-                    }
-                    default:
-                    {
-                        current.Append(c);
-                        break;
-                    }
-                }
-            }
-
-            i++;
-        }
-
-        if (current.Length > 0)
-        {
-            result.Add(current.ToString());
-        }
-
-        return result.ToArray();
+            "powershell" or "pwsh" => ShellType.PowerShell,
+            "zsh" => ShellType.Zsh,
+            "bash" => ShellType.Bash,
+            _ => ShellType.Unknown
+        };
     }
 
     /// <summary>
@@ -330,306 +256,13 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     {
         return Path.GetFileNameWithoutExtension(shellPath)?.ToLowerInvariant() switch
         {
-            "powershell" or "pwsh" => "powershell",
+            "powershell" or "pwsh" => "PowerShell",
             "sh" => "sh",
             "zsh" => "zsh",
             "bash" => "bash",
             _ => "shell"
         };
     }
-
-    /// <summary>
-    /// Capture PTY output through a virtual terminal buffer until the process exits or timeout.
-    /// The VT buffer handles ANSI sequences, cursor movement, erase operations, etc.,
-    /// producing clean text from the final terminal state.
-    /// </summary>
-    private async Task<string> CaptureTerminalOutputAsync(
-        IPtyConnection pty,
-        TimeSpan timeout,
-        CancellationToken cancellationToken)
-    {
-        var buffer = new byte[4096];
-        var vtBuffer = new VirtualTerminalBuffer(1024);
-        var parser = new VtSequenceParser(vtBuffer);
-
-        using var timeoutCts = new CancellationTokenSource(timeout);
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-        var linkedToken = linkedCts.Token;
-
-        try
-        {
-            while (!linkedToken.IsCancellationRequested)
-            {
-                var bytesRead = await pty.ReaderStream.ReadAsync(buffer, linkedToken);
-                if (bytesRead == 0) break; // Stream closed (process exited)
-
-                var text = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                parser.Feed(text);
-            }
-        }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
-        {
-            _logger.LogWarning("PTY output read timed out after {Timeout}", timeout);
-            try { pty.Kill(); }
-            catch { /* ignore */ }
-        }
-
-        return vtBuffer.GetText();
-    }
-
-    /// <summary>
-    /// Clean PTY output from the virtual terminal buffer.
-    /// The VT buffer already handled ANSI sequences, cursor movement, and \r/\n.
-    /// This method only does text-level cleaning: strip command echo and trailing prompt.
-    /// </summary>
-    private static string CleanPtyOutput(string rawOutput, string script)
-    {
-        // Strip script echo + trailing prompt
-        rawOutput = StripCommandEchoAndPrompt(rawOutput, script);
-
-        // Truncate if too long (keep tail)
-        // TODO: elevate trimming logic to ChatService
-        const int maxLength = 60_000;
-        if (rawOutput.Length > maxLength)
-        {
-            const string truncationMessage = "\n\n[... PREVIOUS OUTPUT TRUNCATED ...]\n\n";
-            var availableLength = maxLength - truncationMessage.Length;
-            rawOutput = truncationMessage + rawOutput[^availableLength..];
-        }
-
-        return rawOutput.Trim();
-    }
-
-    #region VS Code-inspired output cleaning
-
-    /// <summary>
-    /// Strips the command echo and trailing prompt lines from terminal output.
-    /// Ported from VS Code's strategyHelpers.ts stripCommandEchoAndPrompt.
-    ///
-    /// Without shell integration, PTY output captures:
-    /// 1. The command echo line (what was sent via stdin, with prompt prefix)
-    /// 2. The actual command output
-    /// 3. The next shell prompt line(s)
-    ///
-    /// This function removes (1) and (3) to isolate the actual output.
-    /// </summary>
-    private static string StripCommandEchoAndPrompt(string output, string commandLine)
-    {
-        var result = StripCommandEchoAndPromptOnce(output, commandLine);
-
-        // After stripping the first command echo and trailing prompt, the remaining
-        // content may still contain the command re-echoed by the shell. If the command
-        // appears again in the remaining text, strip it one more time.
-        if (result.Trim().Length > 0 && FindCommandEcho(result, commandLine, allowSuffixMatch: false).HasValue)
-        {
-            result = StripCommandEchoAndPromptOnce(result, commandLine);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Single-pass strip of command echo and trailing prompt.
-    /// </summary>
-    /// <remarks>
-    /// https://github.com/microsoft/vscode/blob/161a11c5/src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/executeStrategy/strategyHelpers.ts
-    /// </remarks>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="RegexMatchTimeoutException"></exception>
-    private static string StripCommandEchoAndPromptOnce(string output, string commandLine)
-    {
-        // Strip leading lines that are part of the command echo
-        var echoResult = FindCommandEcho(output, commandLine, allowSuffixMatch: true);
-        string[] lines;
-        const int startIndex = 0;
-
-        // Use evidence from the prompt prefix to narrow down which trailing prompt patterns to check
-        var promptBefore = echoResult?.ContentBefore ?? "";
-        var isUnixAt = UnixAtRegex().IsMatch(promptBefore);
-        var isUnixHost = !isUnixAt && UnixHostRegex().IsMatch(promptBefore);
-        var isUnix = isUnixAt || isUnixHost;
-        var isPowerShell = PowerShellRegex().IsMatch(promptBefore);
-        var isCmd = !isPowerShell && CmdRegex().IsMatch(promptBefore);
-        var isStarship = promptBefore.Contains('\u276f');
-        var isPython = promptBefore.Contains(">>>");
-        var knownPrompt = isUnix || isPowerShell || isCmd || isStarship || isPython;
-
-        if (echoResult.HasValue)
-        {
-            lines = echoResult.Value.LinesAfter;
-        }
-        else
-        {
-            lines = output.Split('\n');
-        }
-
-        // Strip trailing lines that are part of the next shell prompt.
-        // Prompts may span multiple lines due to terminal column wrapping.
-        var endIndex = lines.Length;
-        var trailingStrippedCount = 0;
-        const int maxTrailingPromptLines = 2;
-
-        while (endIndex > startIndex)
-        {
-            var line = lines[endIndex - 1].TrimEnd();
-            if (line.Length == 0)
-            {
-                endIndex--;
-                continue;
-            }
-            if (trailingStrippedCount >= maxTrailingPromptLines)
-            {
-                break;
-            }
-
-            // Complete (self-contained) prompt patterns
-            var isCompletePrompt =
-                // Bash/zsh: user@host:path ending with $ or #
-                (!knownPrompt || isUnixAt) && BashZshPromptRegex().IsMatch(line) ||
-                // hostname:path user$ or hostname:path user#
-                (!knownPrompt || isUnixHost) && HostNamePathPromptRegex().IsMatch(line) ||
-                // PowerShell: PS C:\path>
-                (!knownPrompt || isPowerShell) && PowerShellPromptRegex().IsMatch(line) ||
-                // Windows cmd: C:\path>
-                (!knownPrompt || isCmd) && CmdPromptRegex().IsMatch(line) ||
-                // Starship prompt character
-                (!knownPrompt || isStarship) && line.EndsWith('\u276f') ||
-                // Python REPL
-                (!knownPrompt || isPython) && line.TrimEnd() == ">>>";
-
-            // Fragment/partial prompt patterns (wrapped across terminal lines)
-            var isPromptFragment =
-                // Wrapped fragment ending with $ or # (e.g. "er$", "ts/testWorkspace$")
-                (!knownPrompt || isUnix) && WrappedFragmentEndingPromptRegex().IsMatch(line) ||
-                // Bracketed prompt start: [ hostname:/path or [ user@host:/path
-                (!knownPrompt || isUnix) && BracketedPromptStartRegex().IsMatch(line) ||
-                // Wrapped continuation (only after already stripping a fragment)
-                (!knownPrompt || isUnix) && trailingStrippedCount > 0 && WrappedContinuationPromptRegex().IsMatch(line) ||
-                // Bracketed prompt end: ...] $ or ...] #
-                (!knownPrompt || isUnix) && BracketedPromptEndRegex().IsMatch(line);
-
-            if (isCompletePrompt)
-            {
-                endIndex--;
-                // trailingStrippedCount++;
-                break; // Complete prompt = nothing above can be prompt wrap
-            }
-            if (isPromptFragment)
-            {
-                endIndex--;
-                trailingStrippedCount++;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        return string.Join('\n', lines[startIndex..endIndex]);
-    }
-
-    /// <summary>
-    /// Finds the command echo in the output and returns the content before it (for prompt type detection)
-    /// and the lines after the echo (the actual output).
-    /// Ported from VS Code's strategyHelpers.ts findCommandEcho.
-    ///
-    /// The algorithm strips newlines from both output and command, does a substring search,
-    /// then maps the match position back to the original line structure.
-    /// This handles terminal wrapping that splits the command echo across multiple lines.
-    /// </summary>
-    private static (string ContentBefore, string[] LinesAfter)? FindCommandEcho(string output, string commandLine, bool allowSuffixMatch)
-    {
-        var trimmedCommand = commandLine.Trim();
-        if (trimmedCommand.Length == 0) return null;
-
-        // Strip newlines from the output so we can find the command as a
-        // contiguous substring even when terminal wrapping splits it across lines.
-        var (strippedOutput, indexMapping) = StripNewLinesAndBuildMapping(output);
-        var matchIndex = strippedOutput.IndexOf(trimmedCommand, StringComparison.Ordinal);
-
-        int matchEndInStripped;
-        string contentBefore;
-
-        if (matchIndex != -1)
-        {
-            // Full command found in the output
-            contentBefore = strippedOutput[..matchIndex].Trim();
-            matchEndInStripped = matchIndex + trimmedCommand.Length - 1;
-        }
-        else if (allowSuffixMatch)
-        {
-            // If the full command wasn't found, check if the output starts with a
-            // suffix of the command. This happens when the prompt line is not included,
-            // so only the wrapped continuation of the command echo appears at the beginning.
-            var suffixLen = 0;
-            for (var len = trimmedCommand.Length - 1; len >= 1; len--)
-            {
-                var suffix = trimmedCommand[^len..];
-                if (strippedOutput.StartsWith(suffix, StringComparison.Ordinal))
-                {
-                    // Require the suffix to start mid-word in the command (not at a word boundary).
-                    // A word-boundary match like "MARKER_123" matching the tail of "echo MARKER_123"
-                    // is almost certainly actual output, not a wrapped command continuation.
-                    var charBefore = trimmedCommand[trimmedCommand.Length - len - 1];
-                    if (charBefore is not (' ' or '\t'))
-                    {
-                        suffixLen = len;
-                    }
-                    break;
-                }
-            }
-            if (suffixLen == 0) return null;
-
-            contentBefore = "";
-            matchEndInStripped = suffixLen - 1;
-        }
-        else
-        {
-            return null;
-        }
-
-        // Map the match end back to the original output position and determine
-        // which line it falls on to split linesAfter.
-        var originalEnd = indexMapping[matchEndInStripped];
-
-        var lines = output.Split('\n');
-        var echoEndLine = 0;
-        var offset = 0;
-        for (var i = 0; i < lines.Length; i++)
-        {
-            var lineEnd = offset + lines[i].Length; // excludes the \n
-            if (offset <= originalEnd && originalEnd <= lineEnd)
-            {
-                echoEndLine = i + 1;
-                break;
-            }
-            offset = lineEnd + 1; // +1 for the \n
-        }
-
-        return (contentBefore, lines[echoEndLine..]);
-    }
-
-    /// <summary>
-    /// Strips newlines from the output and builds a mapping from stripped indices to original indices.
-    /// Ported from VS Code's strategyHelpers.ts stripNewLinesAndBuildMapping.
-    /// </summary>
-    private static (string StrippedOutput, int[] IndexMapping) StripNewLinesAndBuildMapping(string output)
-    {
-        var indexMapping = new List<int>(output.Length);
-        var strippedChars = new StringBuilder(output.Length);
-        for (var i = 0; i < output.Length; i++)
-        {
-            if (output[i] != '\n')
-            {
-                strippedChars.Append(output[i]);
-                indexMapping.Add(i);
-            }
-        }
-        return (strippedChars.ToString(), indexMapping.ToArray());
-    }
-
-    #endregion
 
     #region Shell Detection (Windows)
 
@@ -713,45 +346,8 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         return null;
     }
 
-    [GeneratedRegex(@"^(\d+(\.\d+)*)")]
-    private static partial Regex VersionRegex();
-
-    [GeneratedRegex(@"\w+@[\w.-]+:")]
-    private static partial Regex UnixAtRegex();
-
-    [GeneratedRegex(@"[\w.-]+:\S")]
-    private static partial Regex UnixHostRegex();
-
-    [GeneratedRegex(@"^PS\s", RegexOptions.IgnoreCase)]
-    private static partial Regex PowerShellRegex();
-
-    [GeneratedRegex(@"^[A-Z]:\\")]
-    private static partial Regex CmdRegex();
-
-    [GeneratedRegex(@"^\s*\w+@[\w.-]+:.*[#$]\s*$")]
-    private static partial Regex BashZshPromptRegex();
-
-    [GeneratedRegex(@"^\s*[\w.-]+:\S.*\s\w+[#$]\s*$")]
-    private static partial Regex HostNamePathPromptRegex();
-
-    [GeneratedRegex(@"^PS\s+[A-Z]:\\.*>\s*$")]
-    private static partial Regex PowerShellPromptRegex();
-
-    [GeneratedRegex(@"^[A-Z]:\\.*>\s*$")]
-    private static partial Regex CmdPromptRegex();
-
-    [GeneratedRegex(@"^\s*[\w/.-]+[#$]\s*$")]
-    private static partial Regex WrappedFragmentEndingPromptRegex();
-
-    [GeneratedRegex(@"^\[\s*[\w.-]+(@[\w.-]+)?:[~/]")]
-    private static partial Regex BracketedPromptStartRegex();
-
-    [GeneratedRegex(@"^\s*[\w][-\w.]*(@[\w.-]+)?:\S")]
-    private static partial Regex WrappedContinuationPromptRegex();
-
-    [GeneratedRegex(@"\]\s*[#$]\s*$")]
-    private static partial Regex BracketedPromptEndRegex();
-
     #endregion
 
+    [GeneratedRegex(@"^(\d+(\.\d+)*)")]
+    private static partial Regex VersionRegex();
 }

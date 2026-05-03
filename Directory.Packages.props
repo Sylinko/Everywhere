@@ -35,8 +35,10 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftPackageVersion)" />
+    <PackageVersion Include="Microsoft.Windows.Console.ConPTY" Version="1.24.260303001" />
     <PackageVersion Include="MonoMod.Patcher" Version="25.0.1" />
     <PackageVersion Include="Nito.AsyncEx" Version="5.1.2" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />

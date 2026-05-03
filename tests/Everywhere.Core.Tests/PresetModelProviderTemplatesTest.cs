@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Everywhere.AI;
 using Everywhere.AI.Configurator;
 
-namespace Everywhere.Tests;
+namespace Everywhere.Core.Tests;
 
 /// <summary>
 /// Compares local ModelProviderTemplates against models.dev to detect configuration drift.

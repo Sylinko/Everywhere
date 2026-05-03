@@ -5,12 +5,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="NSubstitute" />
     <PackageReference Include="NUnit"/>
     <PackageReference Include="NUnit.Analyzers">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter"/>
+    <PackageReference Include="Serilog"/>
+    <PackageReference Include="Serilog.Sinks.Console"/>
+    <PackageReference Include="Serilog.Extensions.Logging"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -20,4 +24,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
   </ItemGroup>
+
+  <!-- conpty.dll is inside output/runtimes/win-x64/native/ and needs to be copied to the output directory for tests to run on Windows -->
+  <Target Name="CopyConPTY" AfterTargets="Build" Condition="'$(IsWindows)' == 'true' AND '$(IsX64)' == 'true'">
+    <Message Importance="high" Text="Copying $(OutputPath)runtimes\win-x64\native\conpty.dll to $(OutputPath)"/>
+    <Copy SourceFiles="$(OutputPath)runtimes\win-x64\native\conpty.dll" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

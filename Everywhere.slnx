@@ -40,7 +40,6 @@
     <File Path=".gitignore" />
     <File Path=".gitmodules" />
     <File Path="CHANGELOG.md" />
-    <File Path="CONTRIBUTING.md" />
     <File Path="DATA_AND_PRIVACY.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
@@ -59,7 +58,7 @@
   <Folder Name="/tests/">
     <Project Path="3rd/WritableJsonConfiguration/src/WritableJsonConfiguration.Tests/WritableJsonConfiguration.Tests.csproj" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
-    <Project Path="tests/Everywhere.Tests/Everywhere.Tests.csproj" />
+    <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <File Path="tools/build_vcproj.ps1" />

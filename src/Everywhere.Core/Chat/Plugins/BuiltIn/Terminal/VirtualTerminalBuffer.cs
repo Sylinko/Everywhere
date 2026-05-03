@@ -3,13 +3,12 @@ using System.Text;
 namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
 
 /// <summary>
-/// A virtual terminal buffer that maintains a 2D character grid with cursor tracking.
+/// A virtual terminal buffer that maintains a grid with cursor tracking.
 /// Similar to xterm.js screen buffer but simplified for text extraction only (no styling).
 /// Height grows on demand to capture all output.
 /// </summary>
-public sealed class VirtualTerminalBuffer
+internal sealed class VirtualTerminalBuffer(int cols)
 {
-    private readonly int _cols;
     private readonly List<char[]> _lines = [];
     private int _scrollTop;
     private int _scrollBottom = -1; // -1 means "last line"
@@ -32,10 +31,15 @@ public sealed class VirtualTerminalBuffer
     /// </summary>
     private int MaxRow => _lines.Count - 1;
 
-    public VirtualTerminalBuffer(int cols)
-    {
-        _cols = cols;
-    }
+    /// <summary>
+    /// The number of columns in the buffer.
+    /// </summary>
+    public int Cols => cols;
+
+    /// <summary>
+    /// The number of lines currently in the buffer.
+    /// </summary>
+    public int LineCount => _lines.Count;
 
     /// <summary>
     /// Ensure the buffer has at least (row + 1) lines.
@@ -44,7 +48,7 @@ public sealed class VirtualTerminalBuffer
     {
         while (_lines.Count <= row)
         {
-            _lines.Add(new char[_cols]); // initialized to '\0'
+            _lines.Add(new char[cols]); // initialized to '\0'
         }
     }
 
@@ -56,7 +60,7 @@ public sealed class VirtualTerminalBuffer
     {
         EnsureLine(CursorY);
 
-        if (CursorX >= _cols)
+        if (CursorX >= cols)
         {
             // Line wrap: move to next line
             CursorX = 0;
@@ -89,17 +93,13 @@ public sealed class VirtualTerminalBuffer
 
     /// <summary>
     /// Line feed: move cursor down one line. If at scroll bottom, scroll up.
+    /// Only scrolls when an explicit scroll region has been set (_scrollBottom >= 0).
+    /// Without a scroll region, the buffer grows indefinitely.
     /// </summary>
     public void LineFeed()
     {
-        if (CursorY >= ScrollBottom)
-        {
-            ScrollUp(1);
-        }
-        else
-        {
-            CursorY++;
-        }
+        if (_scrollBottom >= 0 && CursorY >= ScrollBottom) ScrollUp();
+        else CursorY++;
         EnsureLine(CursorY);
     }
 
@@ -119,7 +119,7 @@ public sealed class VirtualTerminalBuffer
     /// </summary>
     public void Tab()
     {
-        CursorX = Math.Min((CursorX / 8 + 1) * 8, _cols - 1);
+        CursorX = Math.Min((CursorX / 8 + 1) * 8, cols - 1);
     }
 
     #region Cursor Movement (CSI sequences)
@@ -134,10 +134,12 @@ public sealed class VirtualTerminalBuffer
 
     /// <summary>
     /// CSI B: Cursor Down.
+    /// Only clamps to ScrollBottom when an explicit scroll region has been set.
     /// </summary>
     public void CursorDown(int n = 1)
     {
-        CursorY = Math.Min(CursorY + n, ScrollBottom);
+        if (_scrollBottom >= 0) CursorY = Math.Min(CursorY + n, ScrollBottom);
+        else CursorY += n;
         EnsureLine(CursorY);
     }
 
@@ -146,7 +148,7 @@ public sealed class VirtualTerminalBuffer
     /// </summary>
     public void CursorForward(int n = 1)
     {
-        CursorX = Math.Min(CursorX + n, _cols - 1);
+        CursorX = Math.Min(CursorX + n, cols - 1);
     }
 
     /// <summary>
@@ -180,7 +182,7 @@ public sealed class VirtualTerminalBuffer
     /// </summary>
     public void CursorHorizontalAbsolute(int n = 1)
     {
-        CursorX = Math.Clamp(n - 1, 0, _cols - 1);
+        CursorX = Math.Clamp(n - 1, 0, cols - 1);
     }
 
     /// <summary>
@@ -190,7 +192,7 @@ public sealed class VirtualTerminalBuffer
     {
         // CSI H is 1-based; convert to 0-based
         CursorY = Math.Clamp(row - 1, 0, int.MaxValue);
-        CursorX = Math.Clamp(col - 1, 0, _cols - 1);
+        CursorX = Math.Clamp(col - 1, 0, cols - 1);
         EnsureLine(CursorY);
     }
 
@@ -229,7 +231,7 @@ public sealed class VirtualTerminalBuffer
         switch (mode)
         {
             case 0: // cursor to end
-                EraseLine(0); // erase rest of current line
+                EraseLine(); // erase rest of current line
                 for (var y = CursorY + 1; y < _lines.Count; y++)
                 {
                     Array.Clear(_lines[y]);
@@ -268,7 +270,7 @@ public sealed class VirtualTerminalBuffer
         switch (mode)
         {
             case 0: // cursor to end
-                Array.Clear(line, CursorX, _cols - CursorX);
+                Array.Clear(line, CursorX, cols - CursorX);
                 break;
 
             case 1: // start to cursor
@@ -292,10 +294,10 @@ public sealed class VirtualTerminalBuffer
     {
         if (CursorY >= _lines.Count) return;
         var line = _lines[CursorY];
-        n = Math.Min(n, _cols - CursorX);
+        n = Math.Min(n, cols - CursorX);
 
         // Shift characters right
-        Array.Copy(line, CursorX, line, CursorX + n, _cols - CursorX - n);
+        Array.Copy(line, CursorX, line, CursorX + n, cols - CursorX - n);
         // Clear inserted area
         Array.Clear(line, CursorX, n);
     }
@@ -307,12 +309,12 @@ public sealed class VirtualTerminalBuffer
     {
         if (CursorY >= _lines.Count) return;
         var line = _lines[CursorY];
-        n = Math.Min(n, _cols - CursorX);
+        n = Math.Min(n, cols - CursorX);
 
         // Shift characters left
-        Array.Copy(line, CursorX + n, line, CursorX, _cols - CursorX - n);
+        Array.Copy(line, CursorX + n, line, CursorX, cols - CursorX - n);
         // Clear vacated area
-        Array.Clear(line, _cols - n, n);
+        Array.Clear(line, cols - n, n);
     }
 
     /// <summary>
@@ -328,7 +330,7 @@ public sealed class VirtualTerminalBuffer
         {
             EnsureLine(i);
             EnsureLine(i - n);
-            Array.Copy(_lines[i - n], _lines[i], _cols);
+            Array.Copy(_lines[i - n], _lines[i], cols);
         }
 
         // Clear inserted lines
@@ -352,7 +354,7 @@ public sealed class VirtualTerminalBuffer
         {
             EnsureLine(i);
             EnsureLine(i + n);
-            Array.Copy(_lines[i + n], _lines[i], _cols);
+            Array.Copy(_lines[i + n], _lines[i], cols);
         }
 
         // Clear vacated lines at bottom of scroll region
@@ -379,7 +381,7 @@ public sealed class VirtualTerminalBuffer
         {
             EnsureLine(i);
             EnsureLine(i + n);
-            Array.Copy(_lines[i + n], _lines[i], _cols);
+            Array.Copy(_lines[i + n], _lines[i], cols);
         }
 
         // Clear new lines at bottom
@@ -402,7 +404,7 @@ public sealed class VirtualTerminalBuffer
         {
             EnsureLine(i);
             EnsureLine(i - n);
-            Array.Copy(_lines[i - n], _lines[i], _cols);
+            Array.Copy(_lines[i - n], _lines[i], cols);
         }
 
         // Clear new lines at top
@@ -428,6 +430,29 @@ public sealed class VirtualTerminalBuffer
     #endregion
 
     #region Text Extraction
+
+    /// <summary>
+    /// Get the text content of the last non-empty line in the buffer.
+    /// Used for idle/prompt detection.
+    /// </summary>
+    public string GetLastLine()
+    {
+        for (var y = _lines.Count - 1; y >= 0; y--)
+        {
+            var text = GetLineText(y);
+            if (text.Length > 0) return text;
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Get the text content of the line at the current cursor position.
+    /// Used for prompt detection in idle heuristics.
+    /// </summary>
+    public string GetCursorLine()
+    {
+        return GetLineText(CursorY);
+    }
 
     /// <summary>
     /// Extract all non-empty lines from the buffer as plain text.
@@ -461,13 +486,68 @@ public sealed class VirtualTerminalBuffer
     }
 
     /// <summary>
+    /// Extract text between two line indices (inclusive).
+    /// Used by RichExecuteStrategy to extract content between B (CommandReady) and A (PromptStart) markers.
+    /// Lines are clamped to valid range. Trailing empty lines are trimmed.
+    /// </summary>
+    /// <param name="startLine">Start line index (inclusive).</param>
+    /// <param name="endLine">End line index (inclusive). Use -1 for "last line".</param>
+    /// <returns>The extracted text.</returns>
+    public string GetTextBetween(int startLine, int endLine)
+    {
+        if (_lines.Count == 0) return string.Empty;
+
+        startLine = Math.Max(startLine, 0);
+        if (endLine < 0) endLine = _lines.Count - 1;
+        endLine = Math.Min(endLine, _lines.Count - 1);
+
+        if (startLine > endLine) return string.Empty;
+
+        // Find last non-empty line within range
+        var lastNonEmpty = -1;
+        for (var y = endLine; y >= startLine; y--)
+        {
+            if (LineHasContent(y))
+            {
+                lastNonEmpty = y;
+                break;
+            }
+        }
+
+        if (lastNonEmpty < 0) return string.Empty;
+
+        var sb = new StringBuilder();
+        for (var y = startLine; y <= lastNonEmpty; y++)
+        {
+            if (y > startLine) sb.Append('\n');
+            sb.Append(GetLineText(y));
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Reset the buffer to empty state.
+    /// </summary>
+    public void Reset()
+    {
+        _lines.Clear();
+        CursorX = 0;
+        CursorY = 0;
+        _savedCursorX = 0;
+        _savedCursorY = 0;
+        _scrollTop = 0;
+        _scrollBottom = -1;
+    }
+
+    /// <summary>
     /// Check if a line has any non-null, non-space content.
     /// </summary>
-    private bool LineHasContent(int row)
+    public bool LineHasContent(int row)
     {
         if (row >= _lines.Count) return false;
         var line = _lines[row];
-        for (var x = 0; x < _cols; x++)
+        for (var x = 0; x < cols; x++)
         {
             if (line[x] != '\0' && line[x] != ' ') return true;
         }
@@ -477,13 +557,13 @@ public sealed class VirtualTerminalBuffer
     /// <summary>
     /// Get the text content of a single line, trimming trailing whitespace/nulls.
     /// </summary>
-    private string GetLineText(int row)
+    public string GetLineText(int row)
     {
         if (row >= _lines.Count) return string.Empty;
         var line = _lines[row];
 
         // Find last non-null character
-        var end = _cols - 1;
+        var end = cols - 1;
         while (end >= 0 && (line[end] == '\0' || line[end] == ' '))
         {
             end--;

@@ -2,6 +2,8 @@ using System.Text;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
 
+internal delegate void ShellIntegrationMarkerHandler(in ShellIntegrationMarker marker);
+
 /// <summary>
 /// A minimal VT100/ECMA-48 sequence parser that drives a <see cref="VirtualTerminalBuffer"/>.
 /// Implements the state machine needed to handle ANSI escape sequences from PTY output,
@@ -10,17 +12,20 @@ namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
 /// This parser is intentionally minimal — it only handles sequences that affect text layout
 /// (cursor movement, erase, scroll, etc.). Color/style sequences are consumed but ignored.
 /// </summary>
-public sealed class VtSequenceParser
+internal sealed class VtSequenceParser(VirtualTerminalBuffer buffer, ShellIntegrationMarkerHandler? shellIntegrationMarkerHandler = null)
 {
-    private readonly VirtualTerminalBuffer _buffer;
+    /// <summary>
+    /// The virtual terminal buffer driven by this parser.
+    /// </summary>
+    public VirtualTerminalBuffer Buffer { get; } = buffer;
 
     // UTF-16 surrogate pair tracking
     private char _highSurrogate;
 
-    public VtSequenceParser(VirtualTerminalBuffer buffer)
-    {
-        _buffer = buffer;
-    }
+    /// <summary>
+    /// Whether any Shell Integration (OSC 633) markers have been detected.
+    /// </summary>
+    public bool HasDetectedShellIntegration { get; private set; }
 
     private enum State
     {
@@ -74,12 +79,12 @@ public sealed class VtSequenceParser
                 // Complete surrogate pair — write as two chars
                 if (_state == State.Ground)
                 {
-                    _buffer.WriteChar(_highSurrogate);
-                    _buffer.WriteChar(c);
+                    Buffer.WriteChar(_highSurrogate);
+                    Buffer.WriteChar(c);
                 }
                 _highSurrogate = '\0';
-                return;
             }
+
             // Orphan low surrogate, skip
             return;
         }
@@ -89,7 +94,7 @@ public sealed class VtSequenceParser
         {
             if (_state == State.Ground)
             {
-                _buffer.WriteChar(_highSurrogate);
+                Buffer.WriteChar(_highSurrogate);
             }
             _highSurrogate = '\0';
         }
@@ -130,22 +135,22 @@ public sealed class VtSequenceParser
     {
         switch (c)
         {
-            case '\x1b': // ESC
+            case '\e': // ESC
                 _state = State.Escape;
                 break;
             case '\r': // CR
-                _buffer.CarriageReturn();
+                Buffer.CarriageReturn();
                 break;
             case '\n': // LF
             case '\v': // VT
             case '\f': // FF
-                _buffer.LineFeed();
+                Buffer.LineFeed();
                 break;
             case '\b': // BS
-                _buffer.Backspace();
+                Buffer.Backspace();
                 break;
             case '\t': // HT
-                _buffer.Tab();
+                Buffer.Tab();
                 break;
             case '\a': // BEL — ignore
                 break;
@@ -154,7 +159,7 @@ public sealed class VtSequenceParser
             default:
                 if (c >= 0x20) // Printable character (including Unicode)
                 {
-                    _buffer.WriteChar(c);
+                    Buffer.WriteChar(c);
                 }
                 break;
         }
@@ -177,36 +182,30 @@ public sealed class VtSequenceParser
                 _state = State.CharsetSelect;
                 break;
             case '7': // DECSC — Save Cursor
-                _buffer.SaveCursor();
+                Buffer.SaveCursor();
                 _state = State.Ground;
                 break;
             case '8': // DECRC — Restore Cursor
-                _buffer.RestoreCursor();
+                Buffer.RestoreCursor();
                 _state = State.Ground;
                 break;
             case 'D': // IND — Index (move down, scroll if at bottom)
-                _buffer.LineFeed();
+                Buffer.LineFeed();
                 _state = State.Ground;
                 break;
             case 'E': // NEL — Next Line
-                _buffer.CarriageReturn();
-                _buffer.LineFeed();
+                Buffer.CarriageReturn();
+                Buffer.LineFeed();
                 _state = State.Ground;
                 break;
             case 'M': // RI — Reverse Index (move up, scroll if at top)
-                if (_buffer.CursorY <= 0)
-                {
-                    _buffer.ScrollDown(1);
-                }
-                else
-                {
-                    _buffer.CursorUp(1);
-                }
+                if (Buffer.CursorY <= 0) Buffer.ScrollDown();
+                else Buffer.CursorUp();
                 _state = State.Ground;
                 break;
             case 'c': // RIS — Full Reset
-                _buffer.EraseDisplay(2);
-                _buffer.CursorPosition(1, 1);
+                Buffer.EraseDisplay(2);
+                Buffer.CursorPosition();
                 _state = State.Ground;
                 break;
             case '=': // DECKPAM — Application Keypad Mode
@@ -222,69 +221,80 @@ public sealed class VtSequenceParser
 
     private void HandleCsiEntry(char c)
     {
-        if (c >= '0' && c <= '9')
+        switch (c)
         {
-            _currentParam = c - '0';
-            _state = State.CsiParam;
-        }
-        else if (c == '?')
-        {
-            _csiPrivateParam = true;
-            _state = State.CsiParam;
-        }
-        else if (c == '>' || c == '=')
-        {
-            // Secondary DA or other — ignore
-            _csiPrivateParam = true;
-            _state = State.CsiParam;
-        }
-        else if (c >= 0x40 && c <= 0x7E)
-        {
-            // Single-character CSI with no params
-            DispatchCsi(c);
-        }
-        else if (c >= 0x20 && c <= 0x2F)
-        {
-            _csiIntermediate = c;
-            _state = State.CsiIntermediate;
-        }
-        else
-        {
-            // Invalid — return to ground
-            _state = State.Ground;
+            case >= '0' and <= '9':
+                _currentParam = c - '0';
+                _state = State.CsiParam;
+                break;
+            case '?':
+                _csiPrivateParam = true;
+                _state = State.CsiParam;
+                break;
+            case '>' or '=':
+                // Secondary DA or other — ignore
+                _csiPrivateParam = true;
+                _state = State.CsiParam;
+                break;
+            default:
+            {
+                if (c >= 0x40 && c <= 0x7E)
+                {
+                    // Single-character CSI with no params
+                    DispatchCsi(c);
+                }
+                else if (c >= 0x20 && c <= 0x2F)
+                {
+                    _csiIntermediate = c;
+                    _state = State.CsiIntermediate;
+                }
+                else
+                {
+                    // Invalid — return to ground
+                    _state = State.Ground;
+                }
+                break;
+            }
         }
     }
 
     private void HandleCsiParam(char c)
     {
-        if (c >= '0' && c <= '9')
+        switch (c)
         {
-            if (_currentParam < 0) _currentParam = 0;
-            _currentParam = _currentParam * 10 + (c - '0');
-        }
-        else if (c == ';')
-        {
-            _csiParams.Add(_currentParam < 0 ? 0 : _currentParam);
-            _currentParam = -1;
-        }
-        else if (c >= 0x40 && c <= 0x7E)
-        {
-            // Final byte — dispatch
-            if (_currentParam >= 0)
+            case >= '0' and <= '9':
             {
-                _csiParams.Add(_currentParam);
+                if (_currentParam < 0) _currentParam = 0;
+                _currentParam = _currentParam * 10 + (c - '0');
+                break;
             }
-            DispatchCsi(c);
-        }
-        else if (c >= 0x20 && c <= 0x2F)
-        {
-            _csiIntermediate = c;
-            _state = State.CsiIntermediate;
-        }
-        else
-        {
-            // Invalid — return to ground
-            _state = State.Ground;
+            case ';':
+                _csiParams.Add(_currentParam < 0 ? 0 : _currentParam);
+                _currentParam = -1;
+                break;
+            default:
+            {
+                if (c >= 0x40 && c <= 0x7E)
+                {
+                    // Final byte — dispatch
+                    if (_currentParam >= 0)
+                    {
+                        _csiParams.Add(_currentParam);
+                    }
+                    DispatchCsi(c);
+                }
+                else if (c >= 0x20 && c <= 0x2F)
+                {
+                    _csiIntermediate = c;
+                    _state = State.CsiIntermediate;
+                }
+                else
+                {
+                    // Invalid — return to ground
+                    _state = State.Ground;
+                }
+                break;
+            }
         }
     }
 
@@ -315,7 +325,7 @@ public sealed class VtSequenceParser
                 ProcessOsc();
                 _state = State.Ground;
                 break;
-            case '\x1b': // Potential ST (ESC \)
+            case '\e': // Potential ST (ESC \)
                 _state = State.OscStringEscape;
                 break;
             default:
@@ -339,7 +349,7 @@ public sealed class VtSequenceParser
         else
         {
             // Not ST — the ESC was part of the content
-            _oscBuffer.Append('\x1b');
+            _oscBuffer.Append('\e');
             _oscBuffer.Append(c);
             _state = State.OscString;
         }
@@ -377,76 +387,76 @@ public sealed class VtSequenceParser
         switch (finalByte)
         {
             case 'A': // CUU — Cursor Up
-                _buffer.CursorUp(Math.Max(p0, 1));
+                Buffer.CursorUp(Math.Max(p0, 1));
                 break;
             case 'B': // CUD — Cursor Down
-                _buffer.CursorDown(Math.Max(p0, 1));
+                Buffer.CursorDown(Math.Max(p0, 1));
                 break;
             case 'C': // CUF — Cursor Forward
-                _buffer.CursorForward(Math.Max(p0, 1));
+                Buffer.CursorForward(Math.Max(p0, 1));
                 break;
             case 'D': // CUB — Cursor Backward
-                _buffer.CursorBackward(Math.Max(p0, 1));
+                Buffer.CursorBackward(Math.Max(p0, 1));
                 break;
             case 'E': // CNL — Cursor Next Line
-                _buffer.CursorNextLine(Math.Max(p0, 1));
+                Buffer.CursorNextLine(Math.Max(p0, 1));
                 break;
             case 'F': // CPL — Cursor Previous Line
-                _buffer.CursorPreviousLine(Math.Max(p0, 1));
+                Buffer.CursorPreviousLine(Math.Max(p0, 1));
                 break;
             case 'G': // CHA — Cursor Horizontal Absolute
-                _buffer.CursorHorizontalAbsolute(Math.Max(p0, 1));
+                Buffer.CursorHorizontalAbsolute(Math.Max(p0, 1));
                 break;
             case 'H': // CUP — Cursor Position
             case 'f': // HVP — Horizontal Vertical Position
-                _buffer.CursorPosition(Math.Max(p0, 1), Math.Max(p1, 1));
+                Buffer.CursorPosition(Math.Max(p0, 1), Math.Max(p1, 1));
                 break;
             case 'J': // ED — Erase in Display
-                _buffer.EraseDisplay(p0);
+                Buffer.EraseDisplay(p0);
                 break;
             case 'K': // EL — Erase in Line
-                _buffer.EraseLine(p0);
+                Buffer.EraseLine(p0);
                 break;
             case 'L': // IL — Insert Lines
-                _buffer.InsertLines(Math.Max(p0, 1));
+                Buffer.InsertLines(Math.Max(p0, 1));
                 break;
             case 'M': // DL — Delete Lines
-                _buffer.DeleteLines(Math.Max(p0, 1));
+                Buffer.DeleteLines(Math.Max(p0, 1));
                 break;
             case 'P': // DCH — Delete Characters
-                _buffer.DeleteChars(Math.Max(p0, 1));
+                Buffer.DeleteChars(Math.Max(p0, 1));
                 break;
             case 'S': // SU — Scroll Up
-                _buffer.ScrollUp(Math.Max(p0, 1));
+                Buffer.ScrollUp(Math.Max(p0, 1));
                 break;
             case 'T': // SD — Scroll Down
-                _buffer.ScrollDown(Math.Max(p0, 1));
+                Buffer.ScrollDown(Math.Max(p0, 1));
                 break;
             case '@': // ICH — Insert Characters
-                _buffer.InsertChars(Math.Max(p0, 1));
+                Buffer.InsertChars(Math.Max(p0, 1));
                 break;
             case 'r': // DECSTBM — Set Scrolling Region
-                _buffer.SetScrollRegion(Math.Max(p0, 1), p1 > 0 ? p1 : -1);
+                Buffer.SetScrollRegion(Math.Max(p0, 1), p1 > 0 ? p1 : -1);
                 break;
             case 's': // SCP — Save Cursor Position
-                _buffer.SaveCursor();
+                Buffer.SaveCursor();
                 break;
             case 'u': // RCP — Restore Cursor Position
-                _buffer.RestoreCursor();
+                Buffer.RestoreCursor();
                 break;
             case 'd': // VPA — Vertical Position Absolute
-                _buffer.CursorPosition(Math.Max(p0, 1), _buffer.CursorX + 1);
+                Buffer.CursorPosition(Math.Max(p0, 1), Buffer.CursorX + 1);
                 break;
             case 'X': // ECH — Erase Characters
-                if (_buffer.CursorY < 0) break;
+                if (Buffer.CursorY < 0) break;
                 var eraseCount = Math.Max(p0, 1);
-                for (var i = 0; i < eraseCount && _buffer.CursorX + i < 1024; i++)
+                for (var i = 0; i < eraseCount && Buffer.CursorX + i < 1024; i++)
                 {
                     // Write space at cursor + i position
-                    var savedX = _buffer.CursorX;
-                    _buffer.CursorX += i;
-                    _buffer.WriteChar(' ');
-                    _buffer.CursorX = savedX;
+                    var savedX = Buffer.CursorX;
+                    Buffer.CursorX += i;
+                    Buffer.WriteChar(' ');
+                    Buffer.CursorX = savedX;
                 }
                 break;
             case 'm': // SGR — Select Graphic Rendition (colors/styles) — ignore
@@ -463,9 +473,7 @@ public sealed class VtSequenceParser
             case 'p': // various — ignore
             case 't': // Window manipulation — ignore
                 break;
-            default:
-                // Unknown CSI — ignore
-                break;
+            // Unknown CSI — ignore
         }
     }
 
@@ -487,18 +495,16 @@ public sealed class VtSequenceParser
                 // All ignored for text extraction
                 break;
             case 'J': // DECSED — Selective Erase in Display
-                _buffer.EraseDisplay(p0);
+                Buffer.EraseDisplay(p0);
                 break;
             case 'K': // DECSEL — Selective Erase in Line
-                _buffer.EraseLine(p0);
+                Buffer.EraseLine(p0);
                 break;
             case 'm': // SGR with private params — ignore (colors)
                 break;
             case 'n': // DSR — Device Status Report — ignore
                 break;
-            default:
-                // Unknown private CSI — ignore
-                break;
+            // Unknown private CSI — ignore
         }
     }
 
@@ -508,19 +514,107 @@ public sealed class VtSequenceParser
 
     private void ProcessOsc()
     {
-        // OSC sequences are typically:
-        // OSC 0 ; <title> ST  — Set window title
-        // OSC 2 ; <title> ST  — Set window title
-        // OSC 4 ; <num> ; <color> ST  — Set palette color
-        // etc.
-        //
-        // We ignore all OSC sequences for text extraction.
-        // The window title might be useful in the future but not for now.
+        var content = _oscBuffer.ToString();
+
+        // Check for Shell Integration markers: OSC 633 ; <type> [; <data>] ST
+        if (content.StartsWith("633;"))
+        {
+            ProcessShellIntegrationMarker(content);
+            return;
+        }
+
+        // All other OSC sequences are ignored for text extraction.
+    }
+
+    /// <summary>
+    /// Parse an OSC 633 Shell Integration marker and fire the event.
+    /// </summary>
+    private void ProcessShellIntegrationMarker(string content)
+    {
+        // Format: 633 ; <type> [; <data>]
+        // content = "633;A" or "633;D;0" or "633;E;command;nonce" etc.
+        var parts = content.Split(';');
+        if (parts.Length < 2) return;
+
+        HasDetectedShellIntegration = true;
+        var markerChar = parts[1];
+        switch (markerChar)
+        {
+            case "A":
+            {
+                shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.PromptStart,
+                        Line: Buffer.CursorY));
+                break;
+            }
+            case "B":
+            {
+                shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.CommandReady,
+                        Line: Buffer.CursorY));
+                break;
+            }
+            case "C":
+            {
+                shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.CommandExecuted,
+                        Line: Buffer.CursorY));
+                break;
+            }
+            case "D":
+            {
+                // D may have an exit code: 633;D;<exitcode>
+                int? exitCode = null;
+                if (parts.Length >= 3 && int.TryParse(parts[2], out var code))
+                {
+                    exitCode = code;
+                }
+                shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.CommandFinished,
+                        ExitCode: exitCode,
+                        Line: Buffer.CursorY));
+                break;
+            }
+            case "E":
+            {
+                // E has command text: 633;E;<command>[;<nonce>]
+                var cmdLine = parts.Length >= 3 ? parts[2] : null;
+                shellIntegrationMarkerHandler?.Invoke(
+                    new ShellIntegrationMarker(
+                        ShellIntegrationMarkerType.CommandLine,
+                        CommandLine: cmdLine,
+                        Line: Buffer.CursorY));
+                break;
+            }
+        }
     }
 
     #endregion
 
     #region Helpers
+
+    /// <summary>
+    /// Reset the parser state. Does not reset <see cref="HasDetectedShellIntegration"/>.
+    /// </summary>
+    public void Reset()
+    {
+        _state = State.Ground;
+        _highSurrogate = '\0';
+        ResetCsi();
+        _oscBuffer.Clear();
+    }
+
+    /// <summary>
+    /// Reset the shell integration detection flag.
+    /// </summary>
+    public void ResetShellIntegrationDetected()
+    {
+        HasDetectedShellIntegration = false;
+    }
 
     private void ResetCsi()
     {
@@ -545,4 +639,5 @@ public sealed class VtSequenceParser
     }
 
     #endregion
+
 }

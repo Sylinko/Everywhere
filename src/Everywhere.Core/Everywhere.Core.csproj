@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Everywhere.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AvaloniaResource Include="Assets\**"/>
   </ItemGroup>
 
@@ -104,10 +108,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Views\Configuration\OpenWebBrowserControl.axaml.cs">
-      <DependentUpon>OpenWebBrowserControl.axaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
+    <None Include="Assets\Terminal\shellIntegration.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\Terminal\shellIntegration.ps1</Link>
+    </None>
+    <None Include="Assets\Terminal\shellIntegration.zsh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\Terminal\shellIntegration.zsh</Link>
+    </None>
+    <None Include="Assets\Terminal\shellIntegration.bash">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\Terminal\shellIntegration.bash</Link>
+    </None>
   </ItemGroup>
 
   <Import Project="..\Build.Generate.Telemetry.targets"/>

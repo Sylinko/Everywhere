@@ -2816,10 +2816,7 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
         <value />
     </data>
-    <data name="TerminalPluginSettings_ShellArgs_Header" xml:space="preserve">
-        <value />
-    </data>
-    <data name="TerminalPluginSettings_ShellArgs_Description" xml:space="preserve">
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value />
     </data>
 </root>

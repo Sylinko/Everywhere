@@ -2815,12 +2815,9 @@
         <value>终端路径</value>
     </data>
     <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
-        <value>自定义终端可执行文件的路径，如果留空则会自动检测。</value>
+        <value>自定义终端可执行文件的路径，只支持 PowerShell、zsh 和 bash。如果留空则会自动检测。</value>
     </data>
-    <data name="TerminalPluginSettings_ShellArgs_Header" xml:space="preserve">
-        <value>终端参数</value>
-    </data>
-    <data name="TerminalPluginSettings_ShellArgs_Description" xml:space="preserve">
-        <value>自定义启动终端时的参数，留空则会自动检测。</value>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>当前 Shell 类型不受支持或未找到，请确保计算机上至少安装了 PowerShell、zsh 或者 bash。</value>
     </data>
 </root>
