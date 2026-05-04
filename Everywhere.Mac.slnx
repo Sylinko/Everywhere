@@ -10,6 +10,10 @@
     <Project Path="3rd/MessagePack-CSharp/src/MessagePack.SourceGenerator/MessagePack.SourceGenerator.csproj" />
     <Project Path="3rd/MessagePack-CSharp/src/MessagePack/MessagePack.csproj" />
   </Folder>
+  <Folder Name="/3rd/Porta.Pty/">
+    <Project Path="3rd/Porta.Pty/src/Porta.Pty/Porta.Pty.csproj" />
+    <Project Path="3rd/Porta.Pty/src/Porta.Pty.Native/Porta.Pty.Native.csproj" />
+  </Folder>
   <Folder Name="/3rd/SemanticKernel/">
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
   </Folder>

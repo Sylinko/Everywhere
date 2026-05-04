@@ -125,4 +125,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
   </ItemGroup>
+  <ItemGroup Label="Local">
+    <PackageVersion Include="Porta.Pty.Native" Version="1.0.0"/>
+  </ItemGroup>
 </Project>

@@ -13,6 +13,10 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <LocalPackageOutputPath>$(MSBuildThisFileDirectory).packages</LocalPackageOutputPath>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <IsWindows>true</IsWindows>
     <DefineConstants>$(DefineConstants);WINDOWS;IsWindows</DefineConstants>

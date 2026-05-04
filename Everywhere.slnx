@@ -28,6 +28,7 @@
     <Project Path="3rd/MessagePack-CSharp/src/MessagePack/MessagePack.csproj" />
   </Folder>
   <Folder Name="/3rd/Porta.Pty/">
+    <Project Path="3rd/Porta.Pty/src/Porta.Pty.Native/Porta.Pty.Native.csproj" />
     <Project Path="3rd/Porta.Pty/src/Porta.Pty.Tests/Porta.Pty.Tests.csproj" />
     <Project Path="3rd/Porta.Pty/src/Porta.Pty/Porta.Pty.csproj" />
   </Folder>
