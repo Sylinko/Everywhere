@@ -66,37 +66,40 @@ internal interface IExecuteStrategy
 
         try
         {
+            logger.LogDebug(
+                "[Detect] Starting Shell Integration detection for {ShellType} (Timeout: {Timeout}s)",
+                shellType,
+                detectionTimeout.TotalSeconds);
+
             while (!linkedToken.IsCancellationRequested)
             {
+                var bytesRead = await pty.ReaderStream.ReadAsync(readBuffer, linkedToken);
+                if (bytesRead == 0)
+                {
+                    logger.LogWarning("[Detect] PTY stream closed unexpectedly during detection.");
+                    break;
+                }
+
+                var text = Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
+                parser.Feed(text);
+
                 if (parser.HasDetectedShellIntegration)
                 {
-                    logger.LogDebug("Shell Integration detected for {ShellType}, using Rich strategy", shellType);
+                    logger.LogDebug("[Detect] Shell Integration detected for {ShellType}, using Rich strategy", shellType);
                     return new RichExecuteStrategy(logger);
-                }
-
-                using var pollCts = CancellationTokenSource.CreateLinkedTokenSource(linkedToken);
-                pollCts.CancelAfter(150);
-
-                try
-                {
-                    var bytesRead = await pty.ReaderStream.ReadAsync(readBuffer, pollCts.Token);
-                    if (bytesRead == 0) break;
-
-                    var text = Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
-                    parser.Feed(text);
-                }
-                catch (OperationCanceledException) when (pollCts.IsCancellationRequested && !linkedToken.IsCancellationRequested)
-                {
-                    // Poll timeout — no new data, keep waiting
                 }
             }
         }
         catch (OperationCanceledException)
         {
             // Detection timeout reached
+            if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                logger.LogDebug("[Detect] Timeout reached. Shell Integration markers not found.");
+            }
         }
 
-        logger.LogDebug("No Shell Integration detected for {ShellType}, using None strategy", shellType);
+        logger.LogInformation("[Detect] Falling back to None strategy for {ShellType}.", shellType);
         return new NoneExecuteStrategy(logger);
     }
 }

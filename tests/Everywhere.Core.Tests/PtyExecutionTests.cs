@@ -532,7 +532,7 @@ public class PtyExecutionTests
     public async Task DetectStrategy_WithoutShellIntegration_ReturnsNone()
     {
         // Build output without any shell integration markers — just a plain prompt
-        var output = Encoding.UTF8.GetBytes("user@host:~$ ");
+        var output = "user@host:~$ "u8.ToArray();
         var readerStream = new MemoryStream(output);
         var writerStream = new MemoryStream();
         var pty = Substitute.For<IPtyConnection>();
