@@ -515,6 +515,9 @@
     <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
         <value>Clé API</value>
     </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>Si c'est un modèle en ligne, il doit être obtenu auprès de l'entité officielle correspondante, veuillez consulter la documentation pour plus de détails.</value>
+    </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>Modalités d'Entrée</value>
     </data>
@@ -629,8 +632,20 @@
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>Clé API</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>Doit être obtenu auprès de l'entité officielle correspondante, veuillez consulter la documentation pour plus de détails.</value>
+    </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>ID du Moteur de Recherche</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>Fournit un ID de moteur de recherche programmable, veuillez consulter la documentation pour plus de détails.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>Web</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>Permet de naviguer sur le web. Les connaissances des grands modèles sont souvent fixes après leur publication et peuvent être sujettes à des hallucinations lors du traitement de problèmes d'actualité. Ce plugin permet à l'assistant de naviguer en temps réel sur le contenu du web, améliorant ainsi ses capacités.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>PowerShell</value>
@@ -1199,6 +1214,9 @@ Le prompt peut contenir des espaces réservés, inclus dans {}, qui seront rempl
     <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
         <value>etc.</value>
     </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>Extraire le contenu du web</value>
+    </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
         <value>🧐 {0}</value>
     </data>
@@ -1339,6 +1357,9 @@ Le prompt peut contenir des espaces réservés, inclus dans {}, qui seront rempl
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
         <value>Effectuez une recherche sur le web.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>Extrait le contenu principal d'une page web. Cela exécutera un navigateur web caché en arrière-plan via Puppeteer pour accéder à la page. Pour des raisons de compatibilité, le premier lancement peut nécessiter le téléchargement automatique du navigateur, ce qui peut prendre du temps selon la connexion.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Le fournisseur de moteur de recherche web n'est pas sélectionné. Veuillez le configurer dans les paramètres du navigateur web du plugin.</value>
@@ -2687,7 +2708,97 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Autorisez-vous l'exécution des opérations d'automatisation suivantes ?</value>
     </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>Recherche Web</value>
+    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere Cloud Search</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>Voir la documentation</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>Par défaut</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>Définir par défaut</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>Déjà par défaut</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>La clé API ne peut pas être vide.</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>Afficher le navigateur au premier plan</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>Lorsque activé, le navigateur sera affiché lors de l'extraction de contenu web, généralement déconseillé. Un redémarrage de l'application est nécessaire pour appliquer les changements.</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>Ouvrir le navigateur</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>Ouvre une instance du navigateur web utilisée pour l'extraction de contenu, vous pouvez vous connecter à des sites courants à l'avance pour réduire les chances d'être bloqué en tant que robot lors de l'extraction. Pour des raisons de compatibilité, le premier lancement peut nécessiter le téléchargement automatique du navigateur, ce qui peut prendre du temps selon la connexion.</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>Ouvrir</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>Le navigateur web fonctionne en arrière-plan et ne peut pas être ouvert.</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>Dans la journée</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>Basique</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>Rapide</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>Ultra rapide</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>Dans le mois</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>Dans la semaine</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>Dans l'année</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>Finance</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>Général</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>Actualités</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>Profondeur de recherche</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>Plage temporelle</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>Domaine ciblé</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>Plage temporelle allant de la date actuelle vers le passé, utilisée pour filtrer les résultats selon la date de publication ou de dernière mise à jour. Très utile pour trouver des sources de données publiées ou mises à jour. Cette option n'affecte pas le coût de l'appel.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>Catégorie de recherche. Par exemple, « Actualités » est très utile pour obtenir des mises à jour en temps réel, en particulier sur les événements majeurs liés au sport et aux reportages des médias grand public. « Général » est utilisé pour des recherches plus larges, pouvant inclure diverses sources. Cette option n'affecte pas le coût de l'appel.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>Contrôle le compromis entre latence et pertinence, cette option n'affecte pas le coût de l'appel.</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>Utilisez la recherche web pour améliorer la réactivité des réponses de l'assistant</value>
     </data>
 </root>

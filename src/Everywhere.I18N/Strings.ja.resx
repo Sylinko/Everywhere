@@ -515,6 +515,9 @@
     <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
         <value>APIキー</value>
     </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>オンラインモデルの場合、対応する公式から取得する必要があります。詳細はドキュメントを参照してください。</value>
+    </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>入力モダリティ</value>
     </data>
@@ -629,8 +632,20 @@
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>APIキー</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>対応する公式から取得する必要があります。詳細はドキュメントを参照してください。</value>
+    </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>検索エンジンID</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>プログラム可能な検索エンジンIDを提供します。詳細はドキュメントを参照してください。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>ウェブ</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>ウェブページをブラウズする能力を提供します。大規模モデルはリリース後の知識が固定され、タイムリーな問題を処理する際に幻覚が発生しやすいです。このプラグインはアシスタントがリアルタイムでウェブコンテンツをブラウズできるようにし、アシスタントの能力を向上させます。</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>PowerShell</value>
@@ -1199,6 +1214,9 @@
     <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
         <value>など</value>
     </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>ウェブコンテンツの抽出</value>
+    </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
         <value>🧐 {0}</value>
     </data>
@@ -1339,6 +1357,9 @@
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
         <value>ウェブ検索を実行します。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>ウェブページの主要なコンテンツを抽出します。バックグラウンドでPuppeteerを使用して隠れたウェブブラウザを実行し、このブラウザを介してウェブページにアクセスします。互換性のため、初回起動時に自動的にウェブブラウザがダウンロードされる場合があり、ネットワーク状況によっては時間がかかることがあります。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>ウェブ検索エンジンプロバイダーが選択されていません。プラグイン設定のウェブブラウザで構成してください。</value>
@@ -2687,7 +2708,97 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>以下の自動化操作を実行してもよろしいですか？</value>
     </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>ウェブ検索</value>
+    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere クラウド検索</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>ドキュメントを見る</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>デフォルト</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>デフォルトに設定</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>既にデフォルト</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>APIキーは空にできません。</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>ブラウザを前面に表示</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>有効にすると、ウェブコンテンツを抽出する際にブラウザが表示されます。通常は有効にしないことをお勧めします。ソフトウェアを再起動する必要があります。</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>ブラウザを開く</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>ウェブページを抽出するためのブラウザインスタンスを開きます。よく使うサイトに事前にログインしておくことで、ウェブページを抽出する際にロボットとしてブロックされる確率を減らすことができます。互換性のため、初回起動時に自動的にウェブブラウザがダウンロードされる場合があり、ネットワーク状況によっては時間がかかることがあります。</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>開く</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>ウェブブラウザがバックグラウンドで実行中のため、開くことができません。</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>1日以内</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>基本</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>速い</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>超速</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>1ヶ月以内</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>1週間以内</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>1年以内</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>金融</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>一般</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>ニュース</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>検索深度</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>時間範囲</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>検索トピック</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>現在の日付から遡る時間範囲で、公開日または最終更新日によって結果をフィルタリングします。公開または更新されたデータのソースを探す際に非常に役立ちます。このオプションは呼び出しコストには影響しません。</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>検索のカテゴリです。例えば、「ニュース」は特にスポーツやメディアの重要な出来事に関するリアルタイムの更新を取得するのに役立ちます。「一般」はより広範な検索に使用され、さまざまなソースを含む可能性があります。このオプションは呼び出しコストには影響しません。</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>遅延と関連性のトレードオフを制御します。このオプションは呼び出しコストには影響しません。</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>ネット検索を使ってアシスタントの回答のタイムリーさを向上させる</value>
     </data>
 </root>

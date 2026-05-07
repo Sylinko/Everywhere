@@ -515,6 +515,9 @@
     <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
         <value>API Key</value>
     </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>Если это онлайн-модель, необходимо получить ключ от соответствующего официального источника, подробности смотрите в документации.</value>
+    </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>Входные Модальности</value>
     </data>
@@ -629,8 +632,20 @@
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API ключ</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>Необходимо получить ключ от соответствующего официального источника, подробности смотрите в документации.</value>
+    </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>ID поисковой системы</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>Предоставляет ID программируемой поисковой системы, подробности смотрите в документации.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>Веб</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>Предоставляет возможность просматривать веб-страницы. Знания крупных моделей часто фиксированы после выпуска и могут возникать проблемы с актуальностью. Этот плагин позволяет ассистенту в реальном времени просматривать содержимое веб-страниц, что улучшает его возможности.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>PowerShell</value>
@@ -1199,6 +1214,9 @@
     <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
         <value>и т.д.</value>
     </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>Извлечение содержимого веб-страницы</value>
+    </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
         <value>🧐 {0}</value>
     </data>
@@ -1339,6 +1357,9 @@
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
         <value>Выполнить веб-поиск.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>Извлекает основное содержимое веб-страницы. Это будет выполняться в фоновом режиме с помощью Puppeteer, который запускает скрытый веб-браузер и получает доступ к веб-странице. Для совместимости при первом открытии может потребоваться автоматическая загрузка веб-браузера, в зависимости от сети это может занять продолжительное время.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Поставщик веб-поиска не выбран. Пожалуйста, настройте его в настройках веб-браузера плагина.</value>
@@ -2687,7 +2708,97 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Разрешаете ли вы выполнение следующих автоматизированных действий?</value>
     </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>Веб-поиск</value>
+    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere Облачный Поиск</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>Смотреть документацию</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>По умолчанию</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>Установить по умолчанию</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>Уже по умолчанию</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>API-ключ не может быть пустым.</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>Показать браузер на переднем плане</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>При включении браузер будет отображаться при извлечении содержимого веб-страниц, обычно не рекомендуется включать. Требуется перезапуск приложения для применения изменений.</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>Открыть браузер</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>Открывает экземпляр веб-браузера, используемого для извлечения веб-страниц. Можно заранее войти на часто используемые сайты, чтобы снизить вероятность блокировки как бота во время извлечения. Для совместимости при первом открытии может потребоваться автоматическая загрузка веб-браузера, в зависимости от сети это может занять продолжительное время.</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>Открыть</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>Веб-браузер работает в фоновом режиме и не может быть открыт.</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>За день</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>Базовый</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>Быстрый</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>Ультрабыстрый</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>За месяц</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>За неделю</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>За год</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>Финансы</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>Общий</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>Новости</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>Глубина поиска</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>Временной диапазон</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>Тематика</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>Временной диапазон от текущей даты назад, используемый для фильтрации результатов по дате публикации или последнего обновления. Полезно при поиске источников опубликованных или обновленных данных. Этот параметр не влияет на стоимость вызова.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>Категория поиска. Например, «Новости» полезны для получения актуальных обновлений, особенно о значительных событиях в спорте и основных медиа. «Общий» используется для более широкого общего поиска, который может включать различные источники. Этот параметр не влияет на стоимость вызова.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>Контролирует компромисс между задержкой и релевантностью, этот параметр не влияет на стоимость вызова.</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>Используйте веб-поиск для повышения актуальности ответов помощника</value>
     </data>
 </root>

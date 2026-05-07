@@ -514,6 +514,9 @@
     <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
         <value>API Anahtarı</value>
     </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>Çevrimiçi modelse, ilgili resmi kaynaktan alınmalıdır, ayrıntılar için belgeleri kontrol edin.</value>
+    </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>Giriş Modları</value>
     </data>
@@ -628,8 +631,20 @@
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API Anahtarı</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>İlgili resmi kaynaktan alınmalıdır, ayrıntılar için belgeleri kontrol edin.</value>
+    </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>Arama Motoru Kimliği</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>Programlanabilir arama motoru ID'si sağlayın, ayrıntılar için belgeleri kontrol edin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>Web</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>Web'de gezinme yeteneği sağlar. Büyük modeller genellikle yayınlandıktan sonra bilgileri sabitler ve zamanlama sorunlarını işlerken yanılsamalar yaşayabilir. Bu eklenti, asistanın web içeriğini gerçek zamanlı olarak taramasına olanak tanır ve asistanın yeteneklerini artırır.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>PowerShell</value>
@@ -1198,6 +1213,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
         <value>vs.</value>
     </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>Web İçeriğini Çıkar</value>
+    </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
         <value>🧐 {0}</value>
     </data>
@@ -1338,6 +1356,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
         <value>Bir web araması yapın.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>Web'in ana içeriğini çıkarır. Bu, arka planda Puppeteer kullanarak gizli bir web tarayıcısı çalıştırır ve bu tarayıcı aracılığıyla web sayfasına erişir. Uyumluluk açısından, ilk açılışta otomatik olarak web tarayıcısı indirilebilir, internet durumuna bağlı olarak bu işlem uzun sürebilir.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Web arama motoru sağlayıcısı seçilmemiştir. Lütfen bunu eklenti ayarlarında yapılandırın.</value>
@@ -2686,7 +2707,97 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Aşağıdaki otomatik işlemleri gerçekleştirmeye izin veriyor musunuz?</value>
     </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>Web Arama</value>
+    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere Bulut Arama</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>Belgeleri Görüntüle</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>Varsayılan</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>Varsayılan Olarak Ayarla</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>Zaten varsayılan</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>API anahtarı boş olamaz.</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>Tarayıcıyı Ön Planda Göster</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>Açıldığında, web içeriği çıkarılırken tarayıcı gösterilecektir, genellikle açılması önerilmez. Değişikliklerin etkili olması için yazılımın yeniden başlatılması gerekir.</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>Tarayıcıyı Aç</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>Web içeriğini çıkarmak için kullanılan bir tarayıcı örneğini açar, sık kullanılan sitelere önceden giriş yaparak çıkarım sırasında robot olarak engellenme olasılığını azaltabilirsiniz. Uyumluluk açısından, ilk açılışta otomatik olarak web tarayıcısı indirilebilir, internet durumuna bağlı olarak bu işlem uzun sürebilir.</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>Aç</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>Web tarayıcısı arka planda çalışıyor, açılamaz.</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>Bir Gün İçinde</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>Temel</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>Hızlı</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>En Hızlı</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>Bir Ay İçinde</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>Bir Hafta İçinde</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>Bir Yıl İçinde</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>Finans</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>Genel</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>Haberler</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>Arama Derinliği</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>Zaman Aralığı</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>Konu Alanı</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>Mevcut tarihten geriye doğru olan zaman aralığı, sonuçları yayın tarihi veya son güncelleme tarihine göre filtrelemek için kullanılır. Yayınlanmış veya güncellenmiş veri kaynakları ararken çok faydalıdır. Bu seçenek çağrı maliyetini etkilemez.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>Aramanın kategorisi. Örneğin, 'Haberler' gerçek zamanlı güncellemeler almak için çok faydalıdır, özellikle spor ve ana akım medya raporlarıyla ilgili önemli olaylar hakkında. 'Genel' ise daha geniş kapsamlı genel aramalar için kullanılır ve çeşitli kaynakları içerebilir. Bu seçenek çağrı maliyetini etkilemez.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>Gecikme ile alaka düzeyi arasındaki dengeyi kontrol eder, bu seçenek çağrı maliyetini etkilemez.</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>Asistanın yanıtlarının güncelliğini artırmak için web araması yapın</value>
     </data>
 </root>

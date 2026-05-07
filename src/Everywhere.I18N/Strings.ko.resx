@@ -515,6 +515,9 @@
     <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
         <value>API 키</value>
     </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>온라인 모델의 경우, 해당 공식 사이트에서 받아야 합니다. 자세한 내용은 문서를 참조하세요.</value>
+    </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>입력 모달</value>
     </data>
@@ -629,8 +632,20 @@
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API 키</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>해당 공식 사이트에서 받아야 합니다. 자세한 내용은 문서를 참조하세요.</value>
+    </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>검색 엔진 ID</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>프로그래머블 검색 엔진 ID를 제공합니다. 자세한 내용은 문서를 참조하세요.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>웹</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>웹 페이지를 탐색할 수 있는 기능을 제공합니다. 대형 모델들은 출시 후 지식이 고정되며, 시의성 문제를 처리할 때 환각이 발생하기 쉽습니다. 이 플러그인은 도우미가 웹 콘텐츠를 실시간으로 탐색하여 능력을 향상시킵니다.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>파워셸</value>
@@ -1199,6 +1214,9 @@
     <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
         <value>기타</value>
     </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>웹 콘텐츠 추출</value>
+    </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
         <value>🧐 {0}</value>
     </data>
@@ -1339,6 +1357,9 @@
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
         <value>웹 검색을 수행합니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>웹 페이지의 주요 내용을 추출합니다. 이는 백그라운드에서 Puppeteer를 통해 숨겨진 웹 브라우저를 실행하고, 이 브라우저를 통해 웹 페이지에 접근합니다. 호환성 문제로 인해 처음 열 때 자동으로 웹 브라우저를 다운로드할 수 있으며, 네트워크 상황에 따라 시간이 걸릴 수 있습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>웹 검색 엔진 제공자가 선택되지 않았습니다. 플러그인 설정의 웹 브라우저에서 구성해 주세요.</value>
@@ -2687,7 +2708,97 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>다음 자동화 작업을 실행해도 괜찮습니까?</value>
     </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>웹 검색</value>
+    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere 클라우드 검색</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>문서 보기</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>기본</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>기본으로 설정</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>기본으로 설정됨</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>API 키는 비어 있을 수 없습니다.</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>브라우저를 전면에 표시</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>활성화하면 웹 콘텐츠를 추출할 때 브라우저가 표시됩니다. 일반적으로 활성화하지 않는 것이 좋습니다. 소프트웨어를 재시작해야 적용됩니다.</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>브라우저 열기</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>웹 페이지 추출에 사용되는 웹 브라우저 인스턴스를 엽니다. 자주 사용하는 사이트에 미리 로그인하여 웹 페이지 추출 시 로봇으로 간주되는 확률을 줄일 수 있습니다. 호환성 문제로 인해 처음 열 때 자동으로 웹 브라우저를 다운로드할 수 있으며, 네트워크 상황에 따라 시간이 걸릴 수 있습니다.</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>열기</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>웹 브라우저가 백그라운드에서 실행 중이므로 열 수 없습니다.</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>1일 내</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>기본</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>빠름</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>가장 빠름</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>1개월 내</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>1주 내</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>1년 내</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>재무</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>일반</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>뉴스</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>검색 깊이</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>시간 범위</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>주제</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>현재 날짜부터 과거로의 시간 범위로, 게시일 또는 마지막 업데이트 날짜에 따라 결과를 필터링하는 데 사용됩니다. 게시되거나 업데이트된 데이터의 출처를 찾을 때 매우 유용합니다. 이 옵션은 호출 비용에 영향을 미치지 않습니다.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>검색의 범주입니다. 예를 들어, '뉴스'는 스포츠 및 주요 미디어 보도와 관련된 실시간 업데이트를 얻는 데 매우 유용합니다. '일반'은 다양한 출처를 포함할 수 있는 더 넓은 일반 검색에 사용됩니다. 이 옵션은 호출 비용에 영향을 미치지 않습니다.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>지연과 관련성 간의 균형을 조절합니다. 이 옵션은 호출 비용에 영향을 미치지 않습니다.</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>웹 검색을 사용하여 도우미의 응답 시의성을 높입니다.</value>
     </data>
 </root>

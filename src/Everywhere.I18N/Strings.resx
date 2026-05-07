@@ -516,7 +516,7 @@
         <value>API Key</value>
     </data>
     <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
-        <value />
+        <value>If using an online model, obtain it from the respective official source. Please refer to the documentation for details.</value>
     </data>
     <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
         <value>Input Modalities</value>
@@ -633,19 +633,19 @@
         <value>API Key</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
-        <value />
+        <value>Obtain it from the respective official source. Please refer to the documentation for details.</value>
     </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
         <value>Search Engine ID</value>
     </data>
     <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
-        <value />
+        <value>Provides a programmable search engine ID. Please refer to the documentation for details.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value />
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value />
+        <value>Enables browsing the web. The knowledge of major models often becomes fixed after release, leading to hallucinations when addressing timeliness issues. This plugin allows the assistant to browse web content in real-time, enhancing its capabilities.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Header" xml:space="preserve">
         <value>PowerShell</value>
@@ -1359,7 +1359,7 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
         <value>Perform a web search.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value />
+        <value>Extracts the main content of a webpage. This runs a hidden web browser in the background using Puppeteer to access the webpage. For compatibility, the first launch may automatically download the web browser, which may take some time depending on network conditions.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Web search engine provider is not selected. Please configure it in the web browser of plugin settings.</value>
@@ -2709,96 +2709,96 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Do you allow the following automated actions?</value>
     </data>
     <data name="WebSearchPage_Title" xml:space="preserve">
-        <value />
+        <value>Web Search</value>
     </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
-        <value />
+        <value>Everywhere Cloud Search</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value />
+        <value>View Documentation</value>
     </data>
     <data name="Common_Default" xml:space="preserve">
-        <value />
+        <value>Default</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value />
+        <value>Set as Default</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value />
+        <value>Already Default</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
-        <value />
-    </data>
-    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
-        <value />
+        <value>API key cannot be empty.</value>
     </data>
     <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
-        <value />
+        <value>Show Browser in Foreground</value>
     </data>
     <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
-        <value />
+        <value>When enabled, the browser will be displayed while extracting webpage content, which is generally not recommended. A restart is required for changes to take effect.</value>
     </data>
     <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
-        <value />
+        <value>Open Browser</value>
     </data>
     <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
-        <value />
+        <value>Opens an instance of the web browser used for extracting webpages. You can log in to frequently used sites in advance to reduce the chances of being flagged as a bot during extraction. For compatibility, the first launch may automatically download the web browser, which may take some time depending on network conditions.</value>
     </data>
     <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
-        <value />
+        <value>Open</value>
     </data>
     <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
-        <value />
+        <value>The web browser is running in the background and cannot be opened.</value>
     </data>
     <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
-        <value />
+        <value>Within One Day</value>
     </data>
-    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
-        <value />
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>Basic</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>Fast</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>Ultra Fast</value>
     </data>
     <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
-        <value />
+        <value>Within a Month</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>Within a Week</value>
     </data>
     <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
-        <value />
+        <value>Within a Year</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>Finance</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>General</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>News</value>
     </data>
     <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
-        <value />
+        <value>Search Depth</value>
     </data>
     <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
-        <value />
+        <value>Time Range</value>
     </data>
-    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
-        <value />
-    </data>
-    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
-        <value />
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>Search Topic</value>
     </data>
     <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
-        <value />
+        <value>The time range going back from the current date, used to filter results by publication date or last updated date. This is useful when looking for sources of published or updated data. This option does not affect invocation costs.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>The category of the search. For example, 'News' is very useful for getting real-time updates, especially on significant events in sports and mainstream media coverage. 'General' is used for broader searches that may include various sources. This option does not affect invocation costs.</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>Controls the trade-off between latency and relevance; this option does not affect invocation costs.</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>Use web search to enhance the timeliness of assistant responses.</value>
     </data>
 </root>
