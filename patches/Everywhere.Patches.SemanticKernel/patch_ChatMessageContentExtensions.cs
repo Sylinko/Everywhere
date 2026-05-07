@@ -1,23 +1,20 @@
-﻿using HarmonyLib;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
+using MonoMod;
 using FunctionCallContent = Microsoft.SemanticKernel.FunctionCallContent;
 using FunctionResultContent = Microsoft.SemanticKernel.FunctionResultContent;
 using TextContent = Microsoft.SemanticKernel.TextContent;
 
 namespace Everywhere.Patches.SemanticKernel;
 
-internal static class ChatMessageContentExtensions_ToChatMessage
+[MonoModPatch("Microsoft.SemanticKernel.ChatMessageContentExtensions")]
+internal static class patch_ChatMessageContentExtensions
 {
-    public static void Patch(Harmony harmony)
-    {
-        var original = AccessTools.Method(typeof(ChatMessageContentExtensions), nameof(ChatMessageContentExtensions.ToChatMessage));
-        harmony.Patch(original, new HarmonyMethod(Prefix));
-    }
-
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once RedundantAssignment
-    private static bool Prefix(ref ChatMessageContent content, ref ChatMessage __result)
+    [Experimental("SKEXP0001")]
+    internal static ChatMessage ToChatMessage(this ChatMessageContent content)
     {
         ChatMessage message = new()
         {
@@ -97,7 +94,6 @@ internal static class ChatMessageContentExtensions_ToChatMessage
             }
         }
 
-        __result = message;
-        return false;
+        return message;
     }
 }
