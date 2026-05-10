@@ -2819,4 +2819,13 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡 Присоединяйтесь к официальному сообществу на странице 'О нас' для общения и взаимодействия~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>Автоматическое одобрение терминальных инструментов включено. Неправильное использование помощника может привести к серьезным сбоям системы или необратимой потере файлов. Риск на вашей стороне.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Автоматическое Одобрение</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>При включении все терминальные операции будут автоматически разрешены без ручного одобрения. Неправильное использование помощника может привести к серьезным сбоям системы или необратимой потере файлов. Включение этой опции означает, что вы оценили и готовы взять на себя риск.</value>
+    </data>
 </root>

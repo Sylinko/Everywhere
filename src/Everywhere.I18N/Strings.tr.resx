@@ -2818,4 +2818,13 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Hakkında sayfasında resmi topluluğumuza katılın ve bizimle etkileşimde bulunun~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>Terminal araçlarının otomatik onayı açıldı, asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir, lütfen riski kendiniz üstlenin.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Otomatik Onay</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğinizi gösterir.</value>
+    </data>
 </root>

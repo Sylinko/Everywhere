@@ -2819,4 +2819,13 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡¡Únete a nuestra comunidad oficial en la página de información y comunícate con nosotros!</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>La aprobación automática de la herramienta de terminal está habilitada. Las llamadas inapropiadas del asistente pueden causar fallos graves en el sistema o pérdida de archivos irrecuperables. Asumes el riesgo.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Aprobación Automática</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>Al habilitar esto, todas las operaciones de terminal se permitirán automáticamente sin necesidad de aprobación manual. Las llamadas inapropiadas del asistente pueden causar fallos graves en el sistema o pérdida de archivos irrecuperables. Activar esta opción significa que has evaluado y estás dispuesto a asumir el riesgo.</value>
+    </data>
 </root>

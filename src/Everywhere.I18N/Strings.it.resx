@@ -2819,4 +2819,13 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Unisciti alla nostra comunità ufficiale nella pagina 'Informazioni' per interagire con noi~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>L'approvazione automatica degli strumenti terminal è attivata. Chiamate inappropriate dell'assistente possono causare gravi crash di sistema o perdita di file irreversibile. Assumi i rischi.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Approvazione Automatica</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>Se attivato, tutte le operazioni del terminale verranno autorizzate automaticamente, senza necessità di approvazione manuale. Chiamate inappropriate dell'assistente possono causare gravi crash di sistema o perdita di file irreversibile. Attivare questa opzione significa che hai valutato e sei disposto ad assumerti i rischi.</value>
+    </data>
 </root>

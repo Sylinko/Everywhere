@@ -2820,12 +2820,12 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>💡 Feel free to join our official community on the About page to interact with us~</value>
     </data>
     <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value />
+        <value>Auto approval for terminal tools is enabled. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Please proceed at your own risk.</value>
     </data>
     <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value />
+        <value>Auto Approval</value>
     </data>
     <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value />
+        <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
     </data>
 </root>

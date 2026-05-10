@@ -2819,4 +2819,13 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡정보 페이지에서 공식 커뮤니티에 참여하여 소통해 주세요~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>터미널 도구의 자동 승인이 활성화되었습니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구할 수 없는 파일 손실을 초래할 수 있으니, 위험을 감수하시기 바랍니다.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>자동 승인</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>활성화하면 모든 터미널 작업이 자동으로 승인되어 수동 승인이 필요하지 않습니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구할 수 없는 파일 손실을 초래할 수 있습니다. 이 옵션을 활성화하면 위험을 평가하고 감수할 것에 동의하는 것입니다.</value>
+    </data>
 </root>

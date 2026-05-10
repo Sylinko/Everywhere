@@ -2818,4 +2818,13 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Treten Sie unserer offiziellen Community auf der Über-Seite bei und interagieren Sie mit uns~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>Die automatische Genehmigung für das Terminal-Tool ist aktiviert. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Bitte übernehmen Sie das Risiko selbst.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Automatische Genehmigung</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>Wenn aktiviert, werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Bestätigung. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu übernehmen.</value>
+    </data>
 </root>

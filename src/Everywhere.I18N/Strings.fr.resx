@@ -2819,4 +2819,13 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Rejoignez notre communauté officielle sur la page À propos pour échanger avec nous~</value>
     </data>
+    <data name="ShellPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>L'approbation automatique des outils de terminal est activée. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Veuillez assumer les risques.</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>Approbation Automatique</value>
+    </data>
+    <data name="ShellPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>Une fois activé, toutes les opérations terminales seront automatiquement autorisées, sans approbation manuelle. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Activer cette option signifie que vous avez évalué et êtes prêt à assumer les risques.</value>
+    </data>
 </root>
