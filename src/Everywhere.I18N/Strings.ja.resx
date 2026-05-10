@@ -2804,4 +2804,19 @@
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>クラウド検索</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Everywhereのクラウドサービスに接続されているのは公式の純正大モデルです</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Everywhereのクラウドサービスに登録すると、追加パッケージと無料トライアルが利用できます</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡単一の視覚要素を追加しても、Everywhereは全体のコンテキストを賢く抽出します</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Everywhereのコア開発は2人だけです。コードの貢献や貴重な意見をお待ちしています</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡「About」ページで公式コミュニティに参加して、私たちと交流しましょう~</value>
+    </data>
 </root>

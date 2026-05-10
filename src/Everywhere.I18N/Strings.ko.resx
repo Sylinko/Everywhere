@@ -2804,4 +2804,19 @@
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>클라우드 검색</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Everywhere 클라우드 서비스에 접속하는 것은 공식 순수 대모델입니다.</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Everywhere 클라우드 서비스에 등록하면 추가 패키지와 무료 체험을 즐길 수 있습니다.</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡단일 시각 요소 첨부만 추가해도, Everywhere는 전체 맥락을 스마트하게 추출합니다.</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Everywhere의 핵심 개발자는 단 두 명입니다. 코드 기여나 귀중한 의견을 환영합니다.</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡정보 페이지에서 공식 커뮤니티에 참여하여 소통해 주세요~</value>
+    </data>
 </root>

@@ -2804,4 +2804,19 @@
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>雲搜索</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡 Everywhere 的雲端服務接入均為官方純血大模型</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡 註冊 Everywhere 雲端服務可享加量包和免費試用</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡 即使添加單個視覺元素附件，Everywhere 也會智能提取整個上下文</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡 Everywhere 的核心開發只有兩個人，歡迎貢獻代碼或提出寶貴意見</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡 歡迎在關於頁面加入官方社群與我們交流互動~</value>
+    </data>
 </root>

@@ -2059,6 +2059,15 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>Activar Llamada A Herramientas</value>
     </data>
+    <data name="Greetings_Tip1" xml:space="preserve">
+        <value>💡Puedes usar Ctrl + tecla numérica para cambiar rápidamente al asistente</value>
+    </data>
+    <data name="Greetings_Tip2" xml:space="preserve">
+        <value>💡Puedes usar la rueda del ratón sobre el ícono del asistente en la esquina inferior izquierda para cambiar rápidamente</value>
+    </data>
+    <data name="Greetings_Tip3" xml:space="preserve">
+        <value>💡Puedes configurar la tecla de Copilot como un atajo para Everywhere</value>
+    </data>
     <data name="ChatContextManager_RemoveSelectedDialog_Title" xml:space="preserve">
         <value>Confirmar Eliminación</value>
     </data>
@@ -2794,5 +2803,20 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Búsqueda en la Nube</value>
+    </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Los servicios en la nube de Everywhere utilizan modelos oficiales de alta calidad</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Regístrate en el servicio en la nube de Everywhere para obtener paquetes adicionales y una prueba gratuita</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡Incluso al agregar un solo elemento visual, Everywhere extraerá inteligentemente todo el contexto</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡El desarrollo central de Everywhere solo tiene dos personas, ¡bienvenido a contribuir con código o a dar tu opinión!</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡¡Únete a nuestra comunidad oficial en la página de información y comunícate con nosotros!</value>
     </data>
 </root>

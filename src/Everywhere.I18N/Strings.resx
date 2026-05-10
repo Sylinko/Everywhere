@@ -2805,18 +2805,18 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Cloud Search</value>
     </data>
     <data name="Greetings_NotLoginTip1" xml:space="preserve">
-        <value />
+        <value>💡 Everywhere's cloud service connects to official pure-blood large models.</value>
     </data>
     <data name="Greetings_NotLoginTip2" xml:space="preserve">
-        <value />
+        <value>💡 Register for Everywhere's cloud service to enjoy bonus packages and free trials.</value>
     </data>
     <data name="Greetings_Tip4" xml:space="preserve">
-        <value />
+        <value>💡 Even when adding a single visual element attachment, Everywhere intelligently extracts the entire context.</value>
     </data>
     <data name="Greetings_Tip5" xml:space="preserve">
-        <value />
+        <value>💡 Only two people are core developers of Everywhere; contributions and feedback are welcome.</value>
     </data>
     <data name="Greetings_Tip6" xml:space="preserve">
-        <value />
+        <value>💡 Feel free to join our official community on the About page to interact with us~</value>
     </data>
 </root>

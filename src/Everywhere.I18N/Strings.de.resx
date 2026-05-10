@@ -2803,4 +2803,19 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Cloud-Suche</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Die Everywhere Cloud-Dienste nutzen ausschließlich offizielle, hochentwickelte Modelle.</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Registrieren Sie sich für die Everywhere Cloud-Dienste, um von zusätzlichen Paketen und kostenlosen Testversionen zu profitieren.</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡Selbst bei der Hinzufügung eines einzelnen visuellen Elementes extrahiert Everywhere intelligent den gesamten Kontext.</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Das Kernteam von Everywhere besteht nur aus zwei Personen. Beiträge und Feedback sind herzlich willkommen!</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡Treten Sie unserer offiziellen Community auf der Über-Seite bei und interagieren Sie mit uns~</value>
+    </data>
 </root>

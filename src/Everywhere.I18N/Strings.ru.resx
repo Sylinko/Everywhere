@@ -2804,4 +2804,19 @@
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Облачный Поиск</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡 Все модели Everywhere являются официальными и высококачественными.</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡 Зарегистрируйтесь в облачном сервисе Everywhere, чтобы получить дополнительные пакеты и бесплатный пробный период.</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡 Даже если вы добавите один визуальный элемент, Everywhere умно извлечет весь контекст.</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡 В команде разработки Everywhere всего два человека, мы приветствуем ваши предложения и код.</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡 Присоединяйтесь к официальному сообществу на странице 'О нас' для общения и взаимодействия~</value>
+    </data>
 </root>

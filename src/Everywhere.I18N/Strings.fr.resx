@@ -2059,6 +2059,15 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>Activer l'Appel d'Outil</value>
     </data>
+    <data name="Greetings_Tip1" xml:space="preserve">
+        <value>💡Vous pouvez utiliser Ctrl + Touche numérique pour changer rapidement d'assistant</value>
+    </data>
+    <data name="Greetings_Tip2" xml:space="preserve">
+        <value>💡Vous pouvez faire défiler rapidement en utilisant la molette sur l'icône de l'assistant en bas à gauche</value>
+    </data>
+    <data name="Greetings_Tip3" xml:space="preserve">
+        <value>💡Vous pouvez définir la touche Copilot comme raccourci pour Everywhere</value>
+    </data>
     <data name="ChatContextManager_RemoveSelectedDialog_Title" xml:space="preserve">
         <value>Confirmer la Suppression</value>
     </data>
@@ -2794,5 +2803,20 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     </data>
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Cloud Search</value>
+    </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Tous les services cloud d'Everywhere sont basés sur des modèles officiels de haute qualité</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Inscrivez-vous aux services cloud d'Everywhere pour bénéficier de forfaits supplémentaires et d'essais gratuits</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡Même en ajoutant un seul élément visuel, Everywhere extraira intelligemment tout le contexte</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Le développement principal d'Everywhere est réalisé par seulement deux personnes, n'hésitez pas à contribuer ou à donner votre avis</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡Rejoignez notre communauté officielle sur la page À propos pour échanger avec nous~</value>
     </data>
 </root>

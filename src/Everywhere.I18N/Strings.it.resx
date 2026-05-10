@@ -2804,4 +2804,19 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Cloud Search</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Tutti i servizi cloud di Everywhere utilizzano modelli ufficiali avanzati.</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Registrati per i servizi cloud di Everywhere per pacchetti aggiuntivi e prova gratuita.</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡Anche aggiungendo un singolo elemento visivo, Everywhere estrae intelligentemente l'intero contesto.</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Il team di sviluppo principale di Everywhere è composto da sole due persone, contribuisci con codice o suggerimenti preziosi.</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡Unisciti alla nostra comunità ufficiale nella pagina 'Informazioni' per interagire con noi~</value>
+    </data>
 </root>

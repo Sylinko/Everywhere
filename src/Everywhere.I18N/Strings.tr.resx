@@ -2803,4 +2803,19 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
         <value>Bulut Arama</value>
     </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡Everywhere bulut hizmetine erişim sağlayanlar resmi büyük modeldir.</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡Everywhere bulut hizmetine kaydolun, ek paket ve ücretsiz deneme fırsatından yararlanın.</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡Tek bir görsel öğe ekleseniz bile, Everywhere tüm bağlamı akıllıca çıkarır.</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡Everywhere'ın temel geliştirmesini sadece iki kişi yapıyor, kod katkısında bulunmaya veya değerli görüşlerinizi paylaşmaya davetlisiniz.</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡Hakkında sayfasında resmi topluluğumuza katılın ve bizimle etkileşimde bulunun~</value>
+    </data>
 </root>
