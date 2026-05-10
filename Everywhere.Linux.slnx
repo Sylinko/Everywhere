@@ -18,6 +18,14 @@
   <Folder Name="/3rd/SemanticKernel/">
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
   </Folder>
+  <Folder Name="/patches/">
+    <Project Path="patches/Everywhere.BuildTask.Patcher/Everywhere.BuildTask.Patcher.csproj" />
+    <Project Path="patches/Everywhere.Patches.Avalonia.Base/Everywhere.Patches.Avalonia.Base.csproj" />
+    <Project Path="patches/Everywhere.Patches.Avalonia.Controls/Everywhere.Patches.Avalonia.Controls.csproj" />
+    <Project Path="patches/Everywhere.Patches.Avalonia.Native/Everywhere.Patches.Avalonia.Native.csproj" />
+    <Project Path="patches/Everywhere.Patches.AvaloniaEdit/Everywhere.Patches.AvaloniaEdit.csproj" />
+    <Project Path="patches/Everywhere.Patches.SemanticKernel/Everywhere.Patches.SemanticKernel.csproj" />
+  </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />
@@ -25,6 +33,5 @@
   <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
   <Project Path="src/Everywhere.I18N/Everywhere.I18N.csproj" />
   <Project Path="src/Everywhere.Linux/Everywhere.Linux.csproj" />
-  <Project Path="src/Everywhere.Patches/Everywhere.Patches.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
 </Solution>

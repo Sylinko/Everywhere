@@ -98,8 +98,6 @@
     <TrimmerRootAssembly Include="WritableJsonConfiguration"/>
   </ItemGroup>
 
-  <Import Project="..\Build.Watchdog.targets"/>
-
   <!-- Prune WPF/WinForms assemblies and localized resources natively without an external PowerShell script -->
   <Target Name="FilterPublishOutput" AfterTargets="ComputeResolvedFilesToPublishList">
     <ItemGroup>
@@ -108,7 +106,8 @@
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsBase'))" />
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsFormsIntegration'))" />
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('wpfgfx'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(FileName)' == 'libSkiaSharp' And '%(Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.xml'" />
     </ItemGroup>
   </Target>
 

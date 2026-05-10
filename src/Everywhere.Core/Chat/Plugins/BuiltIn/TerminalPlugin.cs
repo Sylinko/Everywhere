@@ -36,7 +36,6 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     public TerminalPlugin(Settings settings, IWatchdogManager watchdogManager, ILogger<TerminalPlugin> logger) : base("terminal")
     {
         _pluginSettings = settings.Plugin.Terminal;
-
         _watchdogManager = watchdogManager;
         _logger = logger;
 
@@ -85,37 +84,27 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         }
 
         // Consent
-        var isMultiline = OutputCleaner.IsMultilineCommand(script);
-        string? consentKey;
-        if (isMultiline)
-        {
-            consentKey = "multi-line";
-        }
-        else
-        {
-            var trimmedScript = script.AsSpan().Trim();
-            var command = trimmedScript[trimmedScript.Split(' ').FirstOrDefault(new Range(0, trimmedScript.Length))].ToString();
-            consentKey = $"single.{command}";
-        }
-
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
             new ChatPluginTextDisplayBlock(description),
             new ChatPluginCodeBlockDisplayBlock(script, DetectLanguageHint(shellPath)),
         };
 
-        var consent = await userInterface.RequestConsentAsync(
-            consentKey,
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
-            detailBlock,
-            canRemember: consentKey[0] == 's',
-            cancellationToken: cancellationToken);
-        if (!consent)
+        if (_pluginSettings.AutoApprove)
         {
-            throw new HandledException(
-                new UnauthorizedAccessException(consent.FormatReason("User denied consent for shell script execution.")),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage),
-                showDetails: false);
+            var consent = await userInterface.RequestConsentAsync(
+                null,
+                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
+                detailBlock,
+                RequestConsentRememberMasks.AllowOnce | RequestConsentRememberMasks.AllowSession,
+                cancellationToken: cancellationToken);
+            if (!consent)
+            {
+                throw new HandledException(
+                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for shell script execution.")),
+                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage),
+                    showDetails: false);
+            }
         }
 
         userInterface.DisplaySink.AppendBlocks(detailBlock);
@@ -173,7 +162,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 executeResult = await strategy.ExecuteAsync(
                     pty,
                     script,
-                    isMultiline,
+                    OutputCleaner.IsMultilineCommand(script),
                     TimeSpan.FromSeconds(30),
                     cancellationToken);
             }

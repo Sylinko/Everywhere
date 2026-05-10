@@ -16,13 +16,6 @@ public sealed partial class TerminalPluginSettings : ObservableObject
     public partial string? ShellPath { get; set; }
 
     [DynamicResourceKey(
-        LocaleKey.TerminalPluginSettings_ShellArgs_Header,
-        LocaleKey.TerminalPluginSettings_ShellArgs_Description)]
-    [SettingsStringItem]
-    [ObservableProperty]
-    public partial string? ShellArgs { get; set; }
-
-    [DynamicResourceKey(
         LocaleKey.TerminalPluginSettings_AutoApprove_Header,
         LocaleKey.TerminalPluginSettings_AutoApprove_Description)]
     public bool AutoApprove

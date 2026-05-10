@@ -29,6 +29,11 @@ public sealed partial class PluginSettings : SettingsBase
     [ObservableProperty] public partial IReadOnlyList<McpChatPluginEntity> McpChatPlugins { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the web search engine settings.
+    /// </summary>
+    public WebSearchEngineSettings WebSearchEngine { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the web browser settings.
     /// </summary>
     public WebBrowserSettings WebBrowser { get; set; } = new();
@@ -36,7 +41,7 @@ public sealed partial class PluginSettings : SettingsBase
     /// <summary>
     /// Gets or sets the terminal settings.
     /// </summary>
-    public TerminalPluginSettings TerminalPlugin { get; set; } = new();
+    public TerminalPluginSettings Terminal { get; set; } = new();
 }
 
 /// <summary>
