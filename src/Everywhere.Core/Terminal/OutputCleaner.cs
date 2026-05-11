@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// Provides output cleaning utilities for terminal command output.

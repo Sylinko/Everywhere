@@ -1,4 +1,4 @@
-using Everywhere.Chat.Plugins.BuiltIn.Terminal;
+using Everywhere.Terminal;
 
 namespace Everywhere.Core.Tests;
 

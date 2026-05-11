@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// Identifies the shell type detected for the current platform.

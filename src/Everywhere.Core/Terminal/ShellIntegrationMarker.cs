@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// Types of Shell Integration markers (OSC 633 sequences).

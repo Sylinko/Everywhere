@@ -1,6 +1,6 @@
 using Everywhere.Configuration;
 
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// Manages Shell Integration scripts deployed alongside the application.

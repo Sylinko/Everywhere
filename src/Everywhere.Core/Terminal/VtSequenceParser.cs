@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 internal delegate void ShellIntegrationMarkerHandler(in ShellIntegrationMarker marker);
 

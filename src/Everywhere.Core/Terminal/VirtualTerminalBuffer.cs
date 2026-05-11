@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// A virtual terminal buffer that maintains a grid with cursor tracking.

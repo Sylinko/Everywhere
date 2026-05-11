@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Porta.Pty;
 
-namespace Everywhere.Chat.Plugins.BuiltIn.Terminal;
+namespace Everywhere.Terminal;
 
 /// <summary>
 /// Execute strategy used when Shell Integration (OSC 633) markers are detected.

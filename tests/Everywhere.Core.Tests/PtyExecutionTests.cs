@@ -1,9 +1,10 @@
 using System.Text;
-using Everywhere.Chat.Plugins.BuiltIn.Terminal;
+using Everywhere.Terminal;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Porta.Pty;
 using Serilog;
+using Serilog.Core;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Everywhere.Core.Tests;
@@ -16,7 +17,7 @@ namespace Everywhere.Core.Tests;
 public class PtyExecutionTests
 {
     private ILogger _logger = null!;
-    private Serilog.Core.Logger _serilogLogger = null!;
+    private Logger _serilogLogger = null!;
 
     [OneTimeSetUp]
     public void SetupLogger()

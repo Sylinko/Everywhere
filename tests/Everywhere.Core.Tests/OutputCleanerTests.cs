@@ -1,9 +1,9 @@
-using Everywhere.Chat.Plugins.BuiltIn.Terminal;
+using Everywhere.Terminal;
 
 namespace Everywhere.Core.Tests;
 
 /// <summary>
-/// Unit tests for <see cref="OutputCleaner"/> — pure functions with no side effects.
+/// Unit tests for <see cref="Terminal.OutputCleaner"/> — pure functions with no side effects.
 /// </summary>
 [TestFixture]
 public class OutputCleanerTests
