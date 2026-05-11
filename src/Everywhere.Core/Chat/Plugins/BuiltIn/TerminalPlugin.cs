@@ -90,7 +90,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             new ChatPluginCodeBlockDisplayBlock(script, DetectLanguageHint(shellPath)),
         };
 
-        if (_pluginSettings.AutoApprove)
+        if (!_pluginSettings.AutoApprove)
         {
             var consent = await userInterface.RequestConsentAsync(
                 null,
