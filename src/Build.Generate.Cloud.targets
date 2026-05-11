@@ -11,7 +11,7 @@
     <ItemGroup>
       <CloudCode Include="// &lt;auto-generated /&gt;"/>
       <CloudCode Include="namespace Everywhere.Cloud%3B"/>
-      <CloudCode Include="internal partial class CloudConstants"/>
+      <CloudCode Include="internal static class CloudConstants"/>
       <CloudCode Include="{"/>
       <CloudCode Include="public const string ClientId = &quot;$(ClientId)&quot;%3B"/>
       <CloudCode Include="public const string AccountBaseUrl = &quot;$(AccountBaseUrl)&quot;%3B"/>

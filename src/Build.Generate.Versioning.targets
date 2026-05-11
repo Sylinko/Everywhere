@@ -1,0 +1,24 @@
+<Project>
+  <Target Name="GenerateVersioningConstants" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <SemanticVersion Condition="'$(SemanticVersion)' == ''">1.0.0</SemanticVersion>
+      <GeneratedVersioningFile>$(IntermediateOutputPath)Versioning.g.cs</GeneratedVersioningFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <VersioningCode Include="// &lt;auto-generated /&gt;"/>
+      <VersioningCode Include="using Everywhere.Common%3B"/>
+      <VersioningCode Include="namespace Everywhere.Configuration%3B"/>
+      <VersioningCode Include="partial class RuntimeConstants"/>
+      <VersioningCode Include="{"/>
+      <VersioningCode Include="public static SemanticVersion Version { get%3B } = SemanticVersion.TryParse(&quot;$(SemanticVersion)&quot;, out var version) ? version : new SemanticVersion(1)%3B"/>
+      <VersioningCode Include="}"/>
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(GeneratedVersioningFile)" Lines="@(VersioningCode)" Overwrite="true"/>
+
+    <ItemGroup>
+      <Compile Include="$(GeneratedVersioningFile)"/>
+    </ItemGroup>
+  </Target>
+</Project>

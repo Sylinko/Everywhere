@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides runtime constants and utility methods for managing writable data paths and database paths.
 /// </summary>
-public static class RuntimeConstants
+public static partial class RuntimeConstants
 {
     /// <summary>
     /// Get a unique device identifier for the current machine with length of 36 characters (GUID format).

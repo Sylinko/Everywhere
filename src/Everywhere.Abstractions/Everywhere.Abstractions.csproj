@@ -16,4 +16,6 @@
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack\MessagePack.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N\Everywhere.I18N.csproj" />
   </ItemGroup>
+
+  <Import Project="..\Build.Generate.Versioning.targets"/>
 </Project>
