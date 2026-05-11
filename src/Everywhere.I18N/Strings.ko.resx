@@ -2789,4 +2789,34 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>활성화하면 모든 터미널 작업이 자동으로 승인되어 수동 승인이 필요하지 않습니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구할 수 없는 파일 손실을 초래할 수 있습니다. 이 옵션을 활성화하면 위험을 평가하고 감수할 것에 동의하는 것입니다.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>스크립트 실행</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>스크립트 실행 실패: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>다음 스크립트를 실행합니다</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>사용자가 스크립트 실행을 거부했습니다</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>터미널</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>터미널에서 스크립트를 실행할 수 있는 기능을 제공하며, 시스템과 직접 상호작용할 수 있지만, 파일 삭제나 시스템 충돌을 초래할 수 있는 위험이 있습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>시스템 터미널을 호출하여 스크립트를 실행합니다.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>터미널 경로</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>사용자 정의 터미널 실행 파일의 경로로, PowerShell, zsh 및 bash만 지원합니다. 비워두면 자동으로 감지됩니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>현재 Shell 유형이 지원되지 않거나 찾을 수 없습니다. 컴퓨터에 PowerShell, zsh 또는 bash가 최소한 하나 이상 설치되어 있는지 확인하십시오.</value>
+    </data>
 </root>

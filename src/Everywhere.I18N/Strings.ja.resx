@@ -2789,4 +2789,34 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>有効にすると、すべてのターミナル操作が自動的に承認され、手動での承認は不要になります。不適切な呼び出しは深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性があります。このオプションを有効にすることは、リスクを評価し、自己責任で行うことを意味します。</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>スクリプトを実行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>スクリプトの実行に失敗しました: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>以下のスクリプトを実行します</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>ユーザーがスクリプトの実行を拒否しました</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>ターミナル</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>ターミナルでスクリプトを実行する機能を提供し、システムと直接対話できますが、ファイルの誤削除やシステムのクラッシュを引き起こす可能性があるため注意が必要です。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>システムターミナルを呼び出してスクリプトを実行します。</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>ターミナルパス</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>カスタムターミナル実行ファイルのパスを指定します。PowerShell、zsh、bashのみサポートされています。空白の場合は自動検出されます。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>現在のシェルタイプはサポートされていないか、見つかりません。コンピュータにPowerShell、zsh、またはbashが少なくともインストールされていることを確認してください。</value>
+    </data>
 </root>

@@ -2789,4 +2789,34 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>開啟後，所有終端操作將自動放行，無需手動批准。助手的不當調用可能會造成嚴重的系統崩潰或不可恢復的文件遺失。開啟此選項意味著你已評估並願意自行承擔風險。</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>執行腳本</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>腳本執行失敗: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>即將執行以下腳本</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>用戶拒絕了腳本執行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>終端</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>提供在終端中執行腳本的能力，允許直接與系統互動，但也很危險，可能造成誤刪文件或系統崩潰。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>調用系統終端執行腳本。</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>終端路徑</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>自定義終端可執行文件的路徑，只支持 PowerShell、zsh 和 bash。如果留空則會自動檢測。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>當前 Shell 類型不受支持或未找到，請確保計算機上至少安裝了 PowerShell、zsh 或者 bash。</value>
+    </data>
 </root>

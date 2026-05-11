@@ -2788,4 +2788,34 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Wenn aktiviert, werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Bestätigung. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu übernehmen.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Skript Ausführen</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Skript-Ausführung fehlgeschlagen: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>Das folgende Skript wird ausgeführt</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>Benutzer hat die Skriptausführung abgelehnt</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminal</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Ermöglicht das Ausführen von Skripten im Terminal, um direkt mit dem System zu interagieren, kann jedoch gefährlich sein und zu Datenverlust oder Systemabstürzen führen.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>Ruft das Systemterminal auf, um Skripte auszuführen.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>Terminalpfad</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>Pfad zur ausführbaren Datei des benutzerdefinierten Terminals, unterstützt nur PowerShell, zsh und bash. Bei leerer Eingabe wird automatisch erkannt.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>Der aktuelle Shell-Typ wird nicht unterstützt oder wurde nicht gefunden. Bitte stellen Sie sicher, dass mindestens PowerShell, zsh oder bash auf dem Computer installiert ist.</value>
+    </data>
 </root>

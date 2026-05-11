@@ -2789,4 +2789,34 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Une fois activé, toutes les opérations terminales seront automatiquement autorisées, sans approbation manuelle. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Activer cette option signifie que vous avez évalué et êtes prêt à assumer les risques.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Exécuter le Script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Échec de l'exécution du script : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>Exécution du script suivant</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>L'utilisateur a refusé l'exécution du script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminal</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Permet d'exécuter des scripts dans le terminal, permettant une interaction directe avec le système, mais cela peut être dangereux et entraîner la suppression de fichiers ou un plantage du système.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>Appelle le terminal système pour exécuter un script.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>Chemin du Terminal</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>Chemin du fichier exécutable du terminal personnalisé, prend en charge uniquement PowerShell, zsh et bash. Si laissé vide, la détection automatique sera effectuée.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>Le type de shell actuel n'est pas pris en charge ou introuvable. Veuillez vous assurer que PowerShell, zsh ou bash est installé sur l'ordinateur.</value>
+    </data>
 </root>

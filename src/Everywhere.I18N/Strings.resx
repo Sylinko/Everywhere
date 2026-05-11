@@ -650,24 +650,6 @@
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
         <value>Provides the ability to execute PowerShell scripts, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
-        <value>Terminal</value>
-    </data>
-    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
-        <value>Provides the ability to execute shell commands via a pseudo-terminal, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
-    </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Execute Script</value>
-    </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value>The following shell script will be executed</value>
-    </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>User denied consent for shell script execution.</value>
-    </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Shell script execution failed: {0}</value>
-    </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>File System</value>
     </data>
@@ -2807,16 +2789,34 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Execute Script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Shell script execution failed: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>The following shell script will be executed</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>User denied consent for shell script execution.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminal</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Provides the ability to execute shell commands via a pseudo-terminal, allowing direct interaction with the system. However, it is also dangerous and may result in accidental file deletion or system crashes.</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
-        <value />
+        <value>Invoke the system terminal to execute scripts.</value>
     </data>
     <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
-        <value />
+        <value>Terminal Path</value>
     </data>
     <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
-        <value />
+        <value>Custom path for the terminal executable, supporting only PowerShell, zsh, and bash. Leave empty for automatic detection.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
-        <value />
+        <value>The current shell type is unsupported or not found. Please ensure that at least PowerShell, zsh, or bash is installed on your computer.</value>
     </data>
 </root>

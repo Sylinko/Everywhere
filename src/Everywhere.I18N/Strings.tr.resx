@@ -2788,4 +2788,34 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğinizi gösterir.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Scripti Çalıştır</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Script çalıştırma hatası: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>Aşağıdaki scripti çalıştırmak üzeresiniz</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>Kullanıcı script çalıştırmayı reddetti</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminal</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Terminalde script çalıştırma yeteneği sağlar, sistemle doğrudan etkileşimde bulunmanıza olanak tanır, ancak tehlikeli olabilir ve dosyaların yanlışlıkla silinmesine veya sistemin çökmesine neden olabilir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>Sistem terminalini kullanarak script çalıştırır.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>Terminal Yolu</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>Özelleştirilmiş terminal çalıştırılabilir dosyasının yolu, yalnızca PowerShell, zsh ve bash desteklenmektedir. Boş bırakılırsa otomatik olarak algılanacaktır.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>Geçerli Shell türü desteklenmiyor veya bulunamadı, lütfen bilgisayarınızda en az PowerShell, zsh veya bash yüklü olduğundan emin olun.</value>
+    </data>
 </root>

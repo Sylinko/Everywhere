@@ -2789,4 +2789,34 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>При включении все терминальные операции будут автоматически разрешены без ручного одобрения. Неправильное использование помощника может привести к серьезным сбоям системы или необратимой потере файлов. Включение этой опции означает, что вы оценили и готовы взять на себя риск.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Выполнить Скрипт</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Ошибка выполнения скрипта: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>Скоро будет выполнен следующий скрипт</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>Пользователь отказался от выполнения скрипта</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Терминал</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Предоставляет возможность выполнять скрипты в терминале, позволяя взаимодействовать с системой напрямую, но это может быть опасно и привести к удалению файлов или сбоям системы.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>Вызов системного терминала для выполнения скрипта.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>Путь к Терминалу</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>Путь к исполняемому файлу терминала, поддерживаются только PowerShell, zsh и bash. Если оставить пустым, будет выполнено автоматическое определение.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>Текущий тип оболочки не поддерживается или не найден, убедитесь, что на компьютере установлены PowerShell, zsh или bash.</value>
+    </data>
 </root>

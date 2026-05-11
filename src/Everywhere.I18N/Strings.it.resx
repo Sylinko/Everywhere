@@ -2789,4 +2789,34 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Se attivato, tutte le operazioni del terminale verranno autorizzate automaticamente, senza necessità di approvazione manuale. Chiamate inappropriate dell'assistente possono causare gravi crash di sistema o perdita di file irreversibile. Attivare questa opzione significa che hai valutato e sei disposto ad assumerti i rischi.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Esegui Script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>Esecuzione script fallita: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>Stai per eseguire il seguente script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>L'utente ha rifiutato l'esecuzione dello script</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>Terminale</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>Fornisce la capacità di eseguire script nel terminale, consentendo interazioni dirette con il sistema, ma può essere pericoloso e causare cancellazioni di file o crash del sistema.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>Chiama il terminale di sistema per eseguire script.</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>Percorso Terminale</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>Percorso personalizzato per il file eseguibile del terminale, supporta solo PowerShell, zsh e bash. Se lasciato vuoto, verrà rilevato automaticamente.</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>Il tipo di Shell attuale non è supportato o non trovato, assicurati che almeno PowerShell, zsh o bash siano installati sul computer.</value>
+    </data>
 </root>
