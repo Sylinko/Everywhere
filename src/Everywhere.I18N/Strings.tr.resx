@@ -535,6 +535,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Derin Düşünme</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>Görsel Giriş Desteği</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>Sohbetin maksimum bağlam uzunluğu (context_limit). Bu, görsel bağlam oluşturma stratejisini etkiler, mümkünse gerçek bir değer olarak ayarlayın.</value>
     </data>

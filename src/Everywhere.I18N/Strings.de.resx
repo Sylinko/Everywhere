@@ -535,6 +535,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Tiefes Denken</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>Bildeingabe-Unterstützung</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>Maximale Kontextlänge der Konversation (context_limit). Dies beeinflusst die Strategie zum Aufbau des visuellen Kontexts, bitte so realistisch wie möglich einstellen.</value>
     </data>

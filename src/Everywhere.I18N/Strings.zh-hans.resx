@@ -536,6 +536,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>深度思考</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>图像输入支持</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>对话的最大上下文长度 (context_limit)。此项会影响构建视觉上下文的策略，请尽可能设为真实值。</value>
     </data>

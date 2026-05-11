@@ -536,6 +536,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Глубокое Мышление</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>Поддержка Ввода Изображения</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>Максимальная длина контекста диалога (context_limit). Это повлияет на стратегию построения визуального контекста, постарайтесь установить реальное значение.</value>
     </data>

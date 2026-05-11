@@ -136,7 +136,7 @@
         <shadui:Badge
           Background="Chocolate"
           IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsReasoning_Header}}">
+          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsImage_Header}}">
           <LucideIcon Kind="Eye"/>
         </shadui:Badge>
         <shadui:Badge

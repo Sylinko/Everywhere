@@ -536,6 +536,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>深い思考</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>画像入力サポート</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>対話の最大コンテキスト長 (context_limit)。これは視覚的コンテキストを構築する戦略に影響を与えるため、できるだけ実際の値に設定してください。</value>
     </data>

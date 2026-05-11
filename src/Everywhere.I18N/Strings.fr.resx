@@ -536,6 +536,9 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Réflexion approfondie</value>
     </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>Support d'Entrée d'Image</value>
+    </data>
     <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
         <value>Longueur maximale du contexte de la conversation (context_limit). Cela influencera la stratégie de construction du contexte visuel, veuillez le définir autant que possible à une valeur réelle.</value>
     </data>
