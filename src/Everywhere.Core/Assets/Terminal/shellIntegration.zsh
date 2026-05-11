@@ -14,7 +14,7 @@ EVERYWHERE_SHELL_INTEGRATION=1
 __everywhere_nonce="$EVERYWHERE_NONCE"
 unset EVERYWHERE_NONCE
 
-__everywhere_in_command_execution=""
+__everywhere_in_command_execution="1"
 __everywhere_current_command=""
 __everywhere_prior_prompt=""
 __everywhere_prior_rprompt=""

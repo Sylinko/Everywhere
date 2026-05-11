@@ -520,7 +520,6 @@ internal sealed class VtSequenceParser(VirtualTerminalBuffer buffer, ShellIntegr
         if (content.StartsWith("633;"))
         {
             ProcessShellIntegrationMarker(content);
-            return;
         }
 
         // All other OSC sequences are ignored for text extraction.

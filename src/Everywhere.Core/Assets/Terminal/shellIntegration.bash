@@ -40,6 +40,14 @@ __everywhere_prompt_end() {
     printf '\e]633;B\a'
 }
 
+__everywhere_update_prompt() {
+    if [[ -z "$__everywhere_custom_PS1" || "$__everywhere_custom_PS1" != "$PS1" ]]; then
+        __everywhere_original_PS1="$PS1"
+        __everywhere_custom_PS1="\[$(__everywhere_prompt_start)\]$__everywhere_original_PS1\[$(__everywhere_prompt_end)\]"
+        PS1="$__everywhere_custom_PS1"
+    fi
+}
+
 __everywhere_precmd() {
     local status="$?"
 
@@ -47,6 +55,8 @@ __everywhere_precmd() {
         __everywhere_in_command_execution=""
         printf '\e]633;D;%s\a' "$status"
     fi
+    
+    __everywhere_update_prompt
 }
 
 __everywhere_preexec() {
