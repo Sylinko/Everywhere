@@ -23,4 +23,6 @@
     <EmbeddedResource Remove="I18N\Strings*.resx"/>
     <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
+
+  <Import Project="..\Build.Generate.Versioning.targets"/>
 </Project>

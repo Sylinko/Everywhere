@@ -66,6 +66,7 @@
   <Folder Name="/Targets/">
     <File Path="src/Build.Generate.Cloud.targets" />
     <File Path="src/Build.Generate.Telemetry.targets" />
+    <File Path="src/Build.Generate.Versioning.targets" />
     <File Path="src/Build.Watchdog.targets" />
   </Folder>
   <Folder Name="/tests/">
