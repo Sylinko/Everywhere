@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Модель поддерживает использование настроенных инструментов. Если модель не поддерживает, включение этой опции может привести к ошибкам в диалоге.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>Модель поддерживает предварительное обдумывание перед ответом. Если модель не поддерживает эту функцию, включение этой опции может привести к ошибкам в диалоге. Обратите внимание, что эта опция влияет только на то, как Everywhere обрабатывает ответы модели, и не может контролировать, действительно ли обдумывание включено. Для моделей, которые могут динамически переключать обдумывание, включите эту опцию и затем настройте параметр «Включить обдумывание» ниже.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Глубокое Мышление</value>
     </data>
@@ -2818,5 +2821,20 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Текущий тип оболочки не поддерживается или не найден, убедитесь, что на компьютере установлены PowerShell, zsh или bash.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Выберите или введите пользовательскую интенсивность рассуждений. Разные модели поддерживают разные варианты, подробности смотрите в соответствующей документации. Оставьте пустым, чтобы не включать этот параметр в запрос.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Тип мышления (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Для моделей, поддерживающих динамическое переключение мышления, можно использовать эту опцию для отключения мышления модели. Оставьте пустым, чтобы не включать этот параметр в запрос.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Бюджет мышления (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Установите бюджет для вывода мышления, единица измерения - токены.</value>
     </data>
 </root>

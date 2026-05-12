@@ -531,7 +531,7 @@
         <value>The model supports using configured tools. Enabling this option may cause errors during conversation if the model does not support it.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
-        <value />
+        <value>The model supports reasoning before responding. Enabling this option may cause errors in conversations if the model does not support it. Note that this option only affects how Everywhere handles model responses and does not control whether the model actually enables reasoning. For models that can dynamically toggle reasoning, enable this option and then adjust the 'Enable Reasoning' option below.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Deep Thinking</value>
@@ -2823,18 +2823,18 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>The current shell type is unsupported or not found. Please ensure that at least PowerShell, zsh, or bash is installed on your computer.</value>
     </data>
     <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
-        <value />
+        <value>Select or enter a custom reasoning intensity. Different models support different options; please refer to the corresponding documentation for details. Leaving it blank means this parameter will not be included in the request.</value>
     </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
-        <value />
+        <value>Thinking Type (thinking.type)</value>
     </data>
     <data name="Assistant_ThinkingType_Description" xml:space="preserve">
-        <value />
+        <value>For models that support dynamic reasoning toggling, this option can be used to disable model reasoning. Leaving it blank means this parameter will not be included in the request.</value>
     </data>
     <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
-        <value />
+        <value>Thinking Budget (thinking_budget)</value>
     </data>
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
-        <value />
+        <value>Set the budget for reasoning output, measured in tokens.</value>
     </data>
 </root>

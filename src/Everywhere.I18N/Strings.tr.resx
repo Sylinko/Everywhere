@@ -529,6 +529,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Model yapılandırılmış araçları kullanmayı destekler. Model desteklemiyorsa, bu seçeneği açmak sohbet sırasında hatalara neden olabilir.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>Model, önce düşünmeyi sonra yanıt vermeyi destekler. Model desteklemiyorsa, bu seçeneği açmak diyalogda hatalara neden olabilir. Bu seçenek yalnızca Everywhere'ın model yanıtlarını nasıl işlediğini etkiler, modelin gerçekten düşünmeyi etkinleştirip etkinleştirmediğini kontrol etmez. Düşünmeyi dinamik olarak açıp kapatabilen modeller için, bu seçeneği açtıktan sonra aşağıdaki 'Düşünmeyi Etkinleştir' seçeneği ile daha fazla ayar yapın.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Derin Düşünme</value>
     </data>
@@ -2817,5 +2820,20 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Geçerli Shell türü desteklenmiyor veya bulunamadı, lütfen bilgisayarınızda en az PowerShell, zsh veya bash yüklü olduğundan emin olun.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Özel akıl yürütme gücünü seçin veya girin. Farklı modellerin desteklediği seçenekler farklıdır, ayrıntılar için ilgili belgeleri kontrol edin. Boş bırakmak, bu parametreyi isteğe dahil etmemek anlamına gelir.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Düşünme Türü (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Düşünmeyi dinamik olarak açıp kapatabilen modeller için, bu seçenekle modelin düşünmesini kapatabilirsiniz. Boş bırakmak, bu parametreyi isteğe dahil etmemek anlamına gelir.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Düşünme Bütçesi (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Düşünme çıktısının bütçesini ayarlayın, birim token'dır.</value>
     </data>
 </root>

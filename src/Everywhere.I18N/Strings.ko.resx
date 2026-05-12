@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>모델은 구성된 도구를 사용하여 기능 호출을 지원합니다. 모델이 지원하지 않는 경우 이 옵션을 활성화하면 대화 중 오류가 발생할 수 있습니다.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>모델이 먼저 생각한 후에 대답하도록 지원합니다. 모델이 지원하지 않는 경우, 이 옵션을 활성화하면 대화 중 오류가 발생할 수 있습니다. 이 옵션은 Everywhere가 모델 응답을 처리하는 방식에만 영향을 미치며, 모델이 실제로 사고를 활성화하는지 제어하지 않습니다. 사고를 동적으로 전환할 수 있는 모델의 경우, 이 옵션을 활성화한 후 아래의 '사고 활성화' 옵션에서 추가 조정을 하세요.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>심층 사고</value>
     </data>
@@ -2818,5 +2821,20 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>현재 Shell 유형이 지원되지 않거나 찾을 수 없습니다. 컴퓨터에 PowerShell, zsh 또는 bash가 최소한 하나 이상 설치되어 있는지 확인하십시오.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>사용자 정의 추론 강도를 선택하거나 입력하세요. 서로 다른 모델이 지원하는 옵션이 다르므로, 자세한 내용은 해당 문서를 참조하세요. 비워두면 요청에 이 매개변수를 포함하지 않습니다.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>사고 유형 (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>사고를 동적으로 전환할 수 있는 모델의 경우, 이 옵션을 사용하여 모델의 사고를 끌 수 있습니다. 비워두면 요청에 이 매개변수를 포함하지 않습니다.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>사고 예산 (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>사고 출력의 예산을 설정합니다. 단위는 토큰입니다.</value>
     </data>
 </root>

@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Le modèle prend en charge l'utilisation des outils configurés. Si le modèle ne prend pas en charge cette option, l'activer peut entraîner des erreurs lors des conversations.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>Le modèle prend en charge la réflexion avant de répondre. Si le modèle ne prend pas en charge cette fonctionnalité, activer cette option peut entraîner des erreurs lors de la conversation. Notez que cette option n'affecte que la façon dont Everywhere traite les réponses du modèle et ne peut pas contrôler si le modèle active réellement la réflexion. Pour les modèles pouvant activer ou désactiver la réflexion dynamiquement, activez cette option, puis ajustez l'option &quot;Activer la réflexion&quot; ci-dessous.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Réflexion approfondie</value>
     </data>
@@ -2818,5 +2821,20 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Le type de shell actuel n'est pas pris en charge ou introuvable. Veuillez vous assurer que PowerShell, zsh ou bash est installé sur l'ordinateur.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Sélectionnez ou saisissez l'intensité de raisonnement personnalisée. Les options disponibles varient selon les modèles, veuillez consulter la documentation correspondante pour plus de détails. Laisser vide signifie que ce paramètre ne sera pas inclus dans la demande.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Type de Pensée (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Pour les modèles prenant en charge l'activation ou la désactivation dynamique de la réflexion, vous pouvez utiliser cette option pour désactiver la réflexion du modèle. Laisser vide signifie que ce paramètre ne sera pas inclus dans la demande.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Budget de Pensée (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Définissez le budget de sortie de réflexion, en unités de token.</value>
     </data>
 </root>

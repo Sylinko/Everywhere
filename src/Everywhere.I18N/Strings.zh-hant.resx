@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的「啟用思考」選項作進一步調整。</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>深度思考</value>
     </data>
@@ -2818,5 +2821,20 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>當前 Shell 類型不受支持或未找到，請確保計算機上至少安裝了 PowerShell、zsh 或者 bash。</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>選擇或者輸入自定義推理強度。不同的模型支持的選項不同，詳情請參考對應文檔。留空表示不在請求中包含此參數。</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>思考類型 (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>對於支持動態開關思考的模型，可以使用此選項關閉模型思考。留空表示不在請求中包含此參數。</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>思考預算 (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>設置思考輸出的預算，單位為 token。</value>
     </data>
 </root>

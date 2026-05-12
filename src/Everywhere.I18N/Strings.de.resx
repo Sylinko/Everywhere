@@ -529,6 +529,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Das Modell unterstützt die Verwendung konfigurierter Werkzeuge. Wenn das Modell dies nicht unterstützt, kann das Aktivieren dieser Option zu Fehlern im Gespräch führen.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>Das Modell unterstützt das Nachdenken vor der Antwort. Wenn das Modell dies nicht unterstützt, kann das Aktivieren dieser Option zu Fehlern im Gespräch führen. Beachten Sie, dass diese Option nur beeinflusst, wie Everywhere die Modellantworten verarbeitet, nicht ob das Modell tatsächlich das Nachdenken aktiviert. Für Modelle, die das Nachdenken dynamisch ein- und ausschalten können, aktivieren Sie diese Option und nehmen Sie weitere Anpassungen unter der Option „Nachdenken aktivieren“ unten vor.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Tiefes Denken</value>
     </data>
@@ -2817,5 +2820,20 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Der aktuelle Shell-Typ wird nicht unterstützt oder wurde nicht gefunden. Bitte stellen Sie sicher, dass mindestens PowerShell, zsh oder bash auf dem Computer installiert ist.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Wählen oder geben Sie die benutzerdefinierte Intensität des Denkens ein. Verschiedene Modelle unterstützen unterschiedliche Optionen, bitte beachten Sie die entsprechenden Dokumente. Ein leerer Wert bedeutet, dass dieser Parameter nicht in der Anfrage enthalten ist.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Denkenstyp (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Für Modelle, die das Nachdenken dynamisch ein- und ausschalten können, können Sie diese Option verwenden, um das Nachdenken des Modells auszuschalten. Ein leerer Wert bedeutet, dass dieser Parameter nicht in der Anfrage enthalten ist.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Denkbudget (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Setzen Sie das Budget für die Denk-Ausgabe, Einheit ist Token.</value>
     </data>
 </root>

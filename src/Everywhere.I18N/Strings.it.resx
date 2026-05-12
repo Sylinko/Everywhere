@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Il modello supporta l'uso degli strumenti configurati. Se il modello non lo supporta, attivare questa opzione potrebbe causare errori durante la conversazione.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>Il modello supporta il pensiero prima di rispondere. Se il modello non supporta questa funzione, attivare questa opzione potrebbe causare errori durante la conversazione. Nota che questa opzione influisce solo su come Everywhere gestisce le risposte del modello e non controlla se il modello è realmente in grado di pensare. Per i modelli che possono attivare o disattivare il pensiero dinamicamente, attiva questa opzione e poi regola ulteriormente l'opzione 'Abilita Pensiero' qui sotto.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Pensiero Profondo</value>
     </data>
@@ -2818,5 +2821,20 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Il tipo di Shell attuale non è supportato o non trovato, assicurati che almeno PowerShell, zsh o bash siano installati sul computer.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Seleziona o inserisci l'intensità del ragionamento personalizzato. Le opzioni supportate variano a seconda del modello, per maggiori dettagli consulta la documentazione corrispondente. Lasciando vuoto non verrà incluso questo parametro nella richiesta.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Tipo Di Pensiero (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Per i modelli che supportano l'attivazione dinamica del pensiero, puoi utilizzare questa opzione per disattivare il pensiero del modello. Lasciando vuoto non verrà incluso questo parametro nella richiesta.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Budget Di Pensiero (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Imposta il budget per l'output di pensiero, espresso in token.</value>
     </data>
 </root>

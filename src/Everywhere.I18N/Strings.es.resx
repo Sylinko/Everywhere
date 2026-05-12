@@ -530,6 +530,9 @@
     <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
         <value>El modelo admite el uso de herramientas configuradas. Si el modelo no lo admite, activar esta opción puede causar errores durante la conversación.</value>
     </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>El modelo admite pensar antes de responder. Si el modelo no lo admite, activar esta opción puede causar errores en la conversación. Ten en cuenta que esta opción solo afectará cómo Everywhere maneja las respuestas del modelo, no controla si el modelo realmente habilita el pensamiento. Para modelos que pueden alternar el pensamiento dinámicamente, activa esta opción y luego ajusta la opción 'Habilitar Pensamiento' a continuación.</value>
+    </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Pensamiento Profundo</value>
     </data>
@@ -2818,5 +2821,20 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>El tipo de Shell actual no es compatible o no se encontró, asegúrese de que al menos PowerShell, zsh o bash estén instalados en la computadora.</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Selecciona o ingresa la intensidad de razonamiento personalizada. Las opciones varían según el modelo, consulta la documentación correspondiente para más detalles. Dejar en blanco significa que este parámetro no se incluirá en la solicitud.</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>Tipo de Pensamiento (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>Para modelos que admiten alternar el pensamiento dinámicamente, puedes usar esta opción para desactivar el pensamiento del modelo. Dejar en blanco significa que este parámetro no se incluirá en la solicitud.</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>Presupuesto de Pensamiento (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>Establece el presupuesto de salida de pensamiento, en unidades de token.</value>
     </data>
 </root>
