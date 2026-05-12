@@ -2837,4 +2837,7 @@
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>設置思考輸出的預算，單位為 token。</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
+    </data>
 </root>

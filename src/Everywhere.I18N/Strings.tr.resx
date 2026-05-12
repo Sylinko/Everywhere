@@ -2836,4 +2836,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>Düşünme çıktısının bütçesini ayarlayın, birim token'dır.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>imza, bazı düşünce modellerinin özel verisidir ve Everywhere bunu çözemiyor. Düşünce içeriği olan bir bağlamda farklı sağlayıcıların modelleri arasında geçiş yapmak bu soruna neden olabilir; yeni bir sohbet başlatmak bu sorunu çözebilir.</value>
+    </data>
 </root>

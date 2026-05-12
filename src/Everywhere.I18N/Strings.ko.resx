@@ -2837,4 +2837,7 @@
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>사고 출력의 예산을 설정합니다. 단위는 토큰입니다.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>서명은 일부 사고 모델의 비공식 데이터로, Everywhere에서는 해독할 수 없습니다. 사고 내용이 포함된 컨텍스트에서 다른 공급자의 모델로 전환하면 이 문제가 발생할 수 있으며, 새로운 대화를 시작하면 이 문제를 해결할 수 있습니다.</value>
+    </data>
 </root>

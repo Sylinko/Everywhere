@@ -2836,4 +2836,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>Setzen Sie das Budget für die Denk-Ausgabe, Einheit ist Token.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>Die Signatur ist private Daten bestimmter Denkmodelle, die von Everywhere nicht dekodiert werden können. Das Wechseln zwischen Modellen verschiedener Anbieter im Kontext von Denk-Inhalten kann dieses Problem verursachen. Ein neues Gespräch zu beginnen, kann dieses Problem lösen.</value>
+    </data>
 </root>

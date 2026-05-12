@@ -2837,4 +2837,7 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>Définissez le budget de sortie de réflexion, en unités de token.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>La signature est une donnée privée de certains modèles de pensée, et Everywhere ne peut pas la décoder. Changer de modèle d'un fournisseur différent dans un contexte avec du contenu de pensée peut causer ce problème. Ouvrir une nouvelle conversation peut résoudre ce problème.</value>
+    </data>
 </root>

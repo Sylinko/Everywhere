@@ -2837,4 +2837,7 @@
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>Установите бюджет для вывода мышления, единица измерения - токены.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>Подпись является приватными данными некоторых моделей мышления, которые Everywhere не может декодировать. Переключение между моделями разных провайдеров в контексте с содержанием мысли может привести к этой проблеме; открытие нового диалога может решить её.</value>
+    </data>
 </root>

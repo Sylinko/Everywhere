@@ -2837,4 +2837,7 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>Imposta il budget per l'output di pensiero, espresso in token.</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>La firma è un dato privato di alcuni modelli di pensiero che Everywhere non può decodificare. Passare a modelli di fornitori diversi in un contesto con contenuti di pensiero potrebbe causare questo problema; avviare una nuova conversazione può risolverlo.</value>
+    </data>
 </root>

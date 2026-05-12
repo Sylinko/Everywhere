@@ -2837,4 +2837,7 @@
     <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
         <value>思考出力の予算を設定します。単位はトークンです。</value>
     </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>signatureは特定の思考モデルのプライベートデータであり、Everywhereではデコードできません。思考内容を含むコンテキストで異なるプロバイダーのモデルに切り替えると、この問題が発生する可能性があります。新しい会話を開始することで解決できます。</value>
+    </data>
 </root>

@@ -2838,6 +2838,6 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Set the budget for reasoning output, measured in tokens.</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
-        <value />
+        <value>The signature is private data for certain thought models, and Everywhere cannot decode it. Switching between different provider models in a context with thought content may cause this issue; starting a new conversation can resolve it.</value>
     </data>
 </root>
