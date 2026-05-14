@@ -2168,7 +2168,7 @@
         <value>加量包積分</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>已用 {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>有未完成的支付，請盡快處理</value>
@@ -2835,5 +2835,23 @@
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>由於違反我們的服務條款，你已被封禁，詳情請聯繫支持。</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>你已使用超過 80% 的積分，可考慮換用更經濟的模型。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>你已使用超過 80% 的免費雲搜索次數，超出免費次數的雲搜索將會扣減積分。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>你已用尽免費雲搜索次數，雲搜索將會扣減積分。</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>新版本已準備好，點擊立即更新。
+當前版本: {0}
+最新版本: {1}
+發佈日期: {2}</value>
     </data>
 </root>

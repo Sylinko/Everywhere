@@ -2168,7 +2168,7 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
         <value>Punti Bonus</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Utilizzato {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Hai un pagamento in sospeso, per favore gestiscilo al più presto</value>
@@ -2835,5 +2835,23 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>La firma è un dato privato di alcuni modelli di pensiero che Everywhere non può decodificare. Passare a modelli di fornitori diversi in un contesto con contenuti di pensiero potrebbe causare questo problema; avviare una nuova conversazione può risolverlo.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Sei stato bannato per violazione dei nostri termini di servizio, contatta il supporto per maggiori dettagli.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Hai utilizzato oltre l'80% dei crediti, considera di passare a un modello più economico.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Hai utilizzato oltre l'80% delle ricerche web gratuite, le ricerche oltre il limite gratuito ridurranno i crediti.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Hai esaurito le ricerche web gratuite, le ricerche future ridurranno i crediti.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>È disponibile una nuova versione, clicca per aggiornare ora.
+Versione attuale: {0}
+Ultima versione: {1}
+Data di rilascio: {2}</value>
     </data>
 </root>

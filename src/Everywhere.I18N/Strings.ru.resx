@@ -2168,7 +2168,7 @@
         <value>Бонусные баллы</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Использовано {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Есть незавершенные платежи, пожалуйста, обработайте их как можно скорее</value>
@@ -2835,5 +2835,23 @@
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>Подпись является приватными данными некоторых моделей мышления, которые Everywhere не может декодировать. Переключение между моделями разных провайдеров в контексте с содержанием мысли может привести к этой проблеме; открытие нового диалога может решить её.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Вы заблокированы за нарушение наших условий обслуживания. Для получения информации свяжитесь с поддержкой.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Вы использовали более 80% кредитов, рассмотрите возможность перехода на более экономичную модель.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Вы использовали более 80% бесплатных поисковых запросов в облаке, превышение бесплатного лимита будет списываться с кредитов.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Вы исчерпали бесплатные поисковые запросы в облаке, дальнейшие поиски будут списываться с кредитов.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>Доступна новая версия, нажмите, чтобы обновить.
+Текущая версия: {0}
+Последняя версия: {1}
+Дата выпуска: {2}</value>
     </data>
 </root>

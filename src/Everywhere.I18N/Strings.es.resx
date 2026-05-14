@@ -2168,7 +2168,7 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
         <value>Puntos de paquete adicional</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Usado {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Tienes un pago pendiente, por favor, resuélvelo pronto</value>
@@ -2835,5 +2835,23 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>La firma es un dato privado de ciertos modelos de pensamiento que Everywhere no puede decodificar. Cambiar entre modelos de diferentes proveedores en un contexto con contenido de pensamiento puede causar este problema; iniciar una nueva conversación puede resolverlo.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Has sido prohibido por violar nuestros términos de servicio, para más detalles contacta con soporte.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Has usado más del 80% de tus créditos, considera cambiar a un modelo más económico.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Has usado más del 80% de tus búsquedas web gratuitas, las búsquedas adicionales descontarán créditos.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Has agotado tus búsquedas web gratuitas, las búsquedas descontarán créditos.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>Una nueva versión está lista, haz clic para actualizar ahora.
+Versión actual: {0}
+Última versión: {1}
+Fecha de lanzamiento: {2}</value>
     </data>
 </root>

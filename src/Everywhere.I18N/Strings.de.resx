@@ -2167,7 +2167,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
         <value>Bonuspunkte</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Verwendet {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Es gibt ausstehende Zahlungen, bitte schnellstmöglich erledigen</value>
@@ -2834,5 +2834,23 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>Die Signatur ist private Daten bestimmter Denkmodelle, die von Everywhere nicht dekodiert werden können. Das Wechseln zwischen Modellen verschiedener Anbieter im Kontext von Denk-Inhalten kann dieses Problem verursachen. Ein neues Gespräch zu beginnen, kann dieses Problem lösen.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Du wurdest aufgrund eines Verstoßes gegen unsere Nutzungsbedingungen gesperrt. Bitte kontaktiere den Support für weitere Informationen.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Du hast über 80 % deiner Credits verwendet. Du könntest in Erwägung ziehen, ein kostengünstigeres Modell zu verwenden.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Du hast über 80 % deiner kostenlosen Cloud-Suchanfragen verwendet. Über die kostenlosen Anfragen hinausgehende Cloud-Suchen werden Credits abziehen.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Du hast deine kostenlosen Cloud-Suchanfragen aufgebraucht. Cloud-Suchen werden Credits abziehen.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>Eine neue Version ist verfügbar. Klicke hier, um jetzt zu aktualisieren.
+Aktuelle Version: {0}
+Neueste Version: {1}
+Veröffentlichungsdatum: {2}</value>
     </data>
 </root>

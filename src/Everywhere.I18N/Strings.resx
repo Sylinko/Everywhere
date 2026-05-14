@@ -2168,7 +2168,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Bonus Credits</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Used {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>You have pending payments, please address them soon</value>
@@ -2837,18 +2837,21 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>The signature is private data for certain thought models, and Everywhere cannot decode it. Switching between different provider models in a context with thought content may cause this issue; starting a new conversation can resolve it.</value>
     </data>
     <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
-        <value />
+        <value>You've been banned for violating our terms of service. Please contact support for details.</value>
     </data>
     <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
-        <value />
+        <value>You've used over 80% of your credits. Consider switching to a more economical model.</value>
     </data>
     <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
-        <value />
+        <value>You've used over 80% of your free cloud search queries. Additional searches will deduct credits.</value>
     </data>
     <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
-        <value />
+        <value>You've exhausted your free cloud search queries. Future searches will deduct credits.</value>
     </data>
     <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
-        <value />
+        <value>A new version is ready. Click to update now.
+Current version: {0}
+Latest version: {1}
+Release date: {2}</value>
     </data>
 </root>

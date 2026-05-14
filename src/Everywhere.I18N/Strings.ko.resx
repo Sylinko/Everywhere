@@ -2168,7 +2168,7 @@
         <value>보너스 포인트</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>사용됨 {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>미결제 내역이 있습니다. 가능한 빨리 처리하세요.</value>
@@ -2835,5 +2835,23 @@
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>서명은 일부 사고 모델의 비공식 데이터로, Everywhere에서는 해독할 수 없습니다. 사고 내용이 포함된 컨텍스트에서 다른 공급자의 모델로 전환하면 이 문제가 발생할 수 있으며, 새로운 대화를 시작하면 이 문제를 해결할 수 있습니다.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>서비스 약관 위반으로 인해 차단되었습니다. 자세한 내용은 지원팀에 문의하세요.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>크레딧의 80% 이상을 사용했습니다. 더 경제적인 모델로 변경하는 것을 고려하세요.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>무료 클라우드 검색 횟수의 80% 이상을 사용했습니다. 무료 횟수를 초과하는 클라우드 검색은 크레딧이 차감됩니다.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>무료 클라우드 검색 횟수를 모두 사용했습니다. 클라우드 검색은 크레딧이 차감됩니다.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>새 버전이 준비되었습니다. 지금 업데이트하려면 클릭하세요.
+현재 버전: {0}
+최신 버전: {1}
+출시 날짜: {2}</value>
     </data>
 </root>

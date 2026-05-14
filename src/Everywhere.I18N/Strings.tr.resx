@@ -2167,7 +2167,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Bonus Puan Paketi</value>
     </data>
     <data name="UserProfilePresenter_UsedTextBlock_Text" xml:space="preserve">
-        <value/>
+        <value>Kullanılan {0}</value>
     </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Tamamlanmamış bir ödeme var, lütfen en kısa sürede halledin</value>
@@ -2834,5 +2834,23 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>imza, bazı düşünce modellerinin özel verisidir ve Everywhere bunu çözemiyor. Düşünce içeriği olan bir bağlamda farklı sağlayıcıların modelleri arasında geçiş yapmak bu soruna neden olabilir; yeni bir sohbet başlatmak bu sorunu çözebilir.</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Hizmet şartlarımızı ihlal ettiğiniz için yasaklandınız, daha fazla bilgi için destekle iletişime geçin.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Kredilerinizin %80'inden fazlasını kullandınız, daha ekonomik bir modele geçmeyi düşünebilirsiniz.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Ücretsiz bulut arama hakkınızın %80'inden fazlasını kullandınız, ücretsiz haklarınızı aştığınızda kredilerinizden düşülecektir.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Ücretsiz bulut arama hakkınızı tükettiniz, bulut arama kredilerinizden düşülecektir.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>Yeni bir sürüm hazır, hemen güncellemek için tıklayın.
+Mevcut sürüm: {0}
+Son sürüm: {1}
+Yayın tarihi: {2}</value>
     </data>
 </root>
