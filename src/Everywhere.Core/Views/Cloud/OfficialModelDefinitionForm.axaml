@@ -125,6 +125,7 @@
                         Spacing="2">
                         <StackPanel.Styles>
                           <Style Selector="shadui|Badge">
+                            <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
                             <Setter Property="Height" Value="{DynamicResource FontSizeXl}"/>
                             <Setter Property="CornerRadius" Value="4"/>
                             <Style Selector="^ LucideIcon">
@@ -191,7 +192,7 @@
 
               <shadui:Toast
                 Margin="0" Padding="8"
-                CanDismiss="False" CanDismissByClicking="False"
+                CanDismiss="False" CanDismissByClicking="False" HorizontalAlignment="Left"
                 IsVisible="{Binding SelectedItem.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:False}}"
                 Notification="Warning">
                 <shadui:Toast.Title>

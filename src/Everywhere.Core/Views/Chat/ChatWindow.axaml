@@ -561,6 +561,7 @@
                         Height="{DynamicResource FontSizeXl}"
                         Margin="4,0,-4,0" VerticalAlignment="Center"
                         Icon="{Binding Icon, Mode=OneTime}"
+                        Foreground="{DynamicResource BadgeForegroundColor}"
                         IconSize="{DynamicResource FontSizeM}"/>
 
                       <TextBlock
@@ -1057,7 +1058,7 @@
 
               <v:ChatInputArea.SettingsMenuItemsSource>
                 <StackPanel
-                  Orientation="Vertical" Spacing="4">
+                  Orientation="Vertical" Spacing="4" Margin="0,0,0,4">
                   <StackPanel
                     Orientation="Horizontal" Spacing="4">
                     <TextBlock
@@ -1080,16 +1081,15 @@
                   </TextBlock>
 
                   <Slider
+                    Margin="0,-2,0,0"
                     MinWidth="160" IsSnapToTickEnabled="True"
                     Maximum="4" Minimum="0"
                     TickFrequency="1"
                     Value="{Binding PersistentState.VisualContextLengthLimit, Mode=TwoWay, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
-
-                  <Separator/>
                 </StackPanel>
 
                 <StackPanel
-                  Margin="0,4,0,0" Orientation="Vertical"
+                  Margin="0,4,0,4" Orientation="Vertical"
                   Spacing="4">
                   <StackPanel
                     Orientation="Horizontal" Spacing="4">
@@ -1115,14 +1115,13 @@
                   <Slider
                     MinWidth="160" IsSnapToTickEnabled="True"
                     Maximum="2" Minimum="0"
+                    Margin="0,-2,0,0"
                     TickFrequency="1"
                     Value="{Binding PersistentState.VisualContextDetailLevel, Mode=TwoWay, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
-
-                  <Separator/>
                 </StackPanel>
 
                 <StackPanel
-                  Margin="0,4,0,0" Orientation="Vertical"
+                  Margin="0,4,0,4" Orientation="Vertical"
                   Spacing="4">
                   <StackPanel
                     Orientation="Horizontal" Spacing="4">
@@ -1148,11 +1147,10 @@
 
                   <Slider
                     MinWidth="160" IsSnapToTickEnabled="True"
+                    Margin="0,-2,0,0"
                     Maximum="30" Minimum="-1"
                     TickFrequency="1"
                     Value="{Binding PersistentState.MaxContextRounds, Mode=TwoWay}"/>
-
-                  <Separator/>
                 </StackPanel>
 
                 <Button
@@ -1164,13 +1162,15 @@
 
               <v:ChatInputArea.LeadingContentTemplate>
                 <DataTemplate x:DataType="se:Strategy">
-                  <shadui:Badge Background="{DynamicResource PrimaryColor}">
+                  <shadui:Badge
+                    Background="{DynamicResource PrimaryColor}">
                     <StackPanel
                       Orientation="Horizontal" Spacing="4">
                       <v:IconPresenter
                         VerticalAlignment="Center"
                         Background="{x:Null}"
                         Icon="{Binding Icon}"
+                        Foreground="{DynamicResource BadgeForegroundColor}"
                         IconSize="{DynamicResource FontSizeM}"/>
                       <TextBlock
                         Text="{Binding NameKey^}"

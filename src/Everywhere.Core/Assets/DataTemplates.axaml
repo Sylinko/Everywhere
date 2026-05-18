@@ -129,6 +129,7 @@
             <Setter Property="CornerRadius" Value="4"/>
             <Style Selector="^ LucideIcon">
               <Setter Property="Size" Value="12"/>
+              <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
             </Style>
           </Style>
         </StackPanel.Styles>
@@ -165,6 +166,7 @@
 
           <TextBlock
             FontSize="{DynamicResource FontSizeS}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
             Text="{Binding ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
         </shadui:Badge>
       </StackPanel>

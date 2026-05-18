@@ -2674,7 +2674,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
-        <value>Everywhere Cloud-Suche</value>
+        <value>Everywhere Cloud</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Dokumentation anzeigen</value>

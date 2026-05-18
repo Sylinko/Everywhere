@@ -94,8 +94,9 @@
                     Text="{Binding CloudClient?.UserProfile?.Name}"
                     TextTrimming="CharacterEllipsis"/>
                   <shadui:Badge
-                    Classes="Secondary" Padding="4,2"
+                    Padding="4,2"
                     VerticalAlignment="Center"
+                    Foreground="{DynamicResource BadgeForegroundColor}"
                     Background="{Binding CloudClient?.Subscription?.Plan, Converter={x:Static v:SubscriptionPlanToBrushValueConverter.Shared}, TargetNullValue={x:Null}}"
                     Content="{Binding CloudClient?.Subscription?.Plan, TargetNullValue={x:Null}}"/>
                 </StackPanel>

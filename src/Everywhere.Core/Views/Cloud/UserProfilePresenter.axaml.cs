@@ -41,9 +41,9 @@ public sealed class SubscriptionPlanToBrushValueConverter : IValueConverter
             return plan switch
             {
                 SubscriptionPlan.Free => Brushes.Gray,
-                SubscriptionPlan.Starter => new SolidColorBrush(new Color(0xff, 0x0e, 0x27, 0x52)),
-                SubscriptionPlan.Plus => new SolidColorBrush(new Color(0xff, 0x35, 0x15, 0x52)),
-                SubscriptionPlan.Pro => new SolidColorBrush(new Color(0xff, 0x52, 0x32, 0x00)),
+                SubscriptionPlan.Starter => new SolidColorBrush(new Color(180, 0, 131, 255)),
+                SubscriptionPlan.Plus => new SolidColorBrush(new Color(180, 155, 79, 255)),
+                SubscriptionPlan.Pro => new SolidColorBrush(new Color(180, 255, 150, 0)),
                 _ => Brushes.Transparent
             };
         }

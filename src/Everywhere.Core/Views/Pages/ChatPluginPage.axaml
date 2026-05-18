@@ -335,6 +335,7 @@
                                 HorizontalAlignment="Left" VerticalAlignment="Center"
                                 Background="{DynamicResource WarningColor60}"
                                 Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
+                                Foreground="{DynamicResource BadgeForegroundColor}"
                                 IsVisible="{Binding IsExperimental}"
                                 ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
                             </StackPanel>

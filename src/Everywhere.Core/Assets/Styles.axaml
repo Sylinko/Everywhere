@@ -12,14 +12,14 @@
           <system:String x:Key="BaseStylesheet"><![CDATA[
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: #E5E5E5; /* ForegroundColor */
+  color: #08080B; /* ForegroundColor */
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
   padding: 0;
 }
 h1, h2, h3, h4, h5, h6 {
-  color: #E5E5E5; /* ForegroundColor */
+  color: #08080B; /* ForegroundColor */
   font-weight: 600;
   margin-top: 24px;
   margin-bottom: 16px;
@@ -28,12 +28,12 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
   font-size: 1.8em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #353535; /* BorderColor */
+  border-bottom: 1px solid #DEDEDE; /* BorderColor */
 }
 h2 {
   font-size: 1.5em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #353535; /* BorderColor */
+  border-bottom: 1px solid #DEDEDE; /* BorderColor */
 }
 h3 { font-size: 1.25em; }
 p, ul, ol {
@@ -41,7 +41,7 @@ p, ul, ol {
   margin-bottom: 16px;
 }
 a {
-  color: #2979FF; /* InfoColor */
+  color: #0288D1; /* InfoColor */
   text-decoration: none;
 }
 a:hover {
@@ -50,21 +50,21 @@ a:hover {
 blockquote {
   margin: 0 0 16px 0;
   padding: 8px 16px;
-  color: #A1A1AA; /* ForegroundLeadColor */
-  border-left: 4px solid #D7BA7D; /* QuoteColor */
-  background-color: rgba(26, 26, 26, 0.4); /* DialogBackgroundColor */
+  color: #71717A; /* ForegroundLeadColor */
+  border-left: 4px solid #CA5010; /* QuoteColor */
+  background-color: #F2F2F2; /* DialogBackgroundColor */
 }
 code {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.9em;
-  color: #E5E5E5; /* ForegroundColor */
+  color: #08080B; /* ForegroundColor */
   background-color: #454545; /* GhostColor */
   padding: 2px 4px;
   border-radius: 4px;
 }
 pre {
   background-color: #1A1A1A; /* DialogBackgroundColor */
-  border: 1px solid #353535; /* BorderColor */
+  border: 1px solid #E6E6E6; /* BorderColor */
   padding: 12px;
   border-radius: 6px;
   overflow: auto;
@@ -77,7 +77,7 @@ pre code {
 hr {
   height: 1px;
   border: none;
-  background-color: #353535; /* BorderColor */
+  background-color: #DEDEDE; /* BorderColor */
   margin: 24px 0;
 }
 ul, ol { padding-left: 2em; }

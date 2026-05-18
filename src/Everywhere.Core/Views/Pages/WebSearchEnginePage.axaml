@@ -46,7 +46,8 @@
                 DockPanel.Dock="Right" VerticalAlignment="Center"
                 Background="{DynamicResource SuccessColor60}"
                 Content="{I18N {x:Static LocaleKey.Common_Default}}"
-                CornerRadius="{DynamicResource FullCornerRadius}">
+                CornerRadius="{DynamicResource FullCornerRadius}"
+                Foreground="{DynamicResource BadgeForegroundColor}">
                 <shadui:Badge.IsVisible>
                   <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
                     <Binding Path="Id"/>
