@@ -2853,4 +2853,10 @@ Aktuelle Version: {0}
 Neueste Version: {1}
 Veröffentlichungsdatum: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Fortfahren und erneut versuchen</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Hier fortfahren und erneut versuchen, ohne die bisherigen Nachrichten des Assistenten in dieser Runde zu löschen</value>
+    </data>
 </root>

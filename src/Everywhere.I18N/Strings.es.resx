@@ -2854,4 +2854,10 @@ Versión actual: {0}
 Última versión: {1}
 Fecha de lanzamiento: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Continuar y Reintentar</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Continúa desde aquí y reintenta, sin borrar los mensajes del asistente en esta ronda</value>
+    </data>
 </root>

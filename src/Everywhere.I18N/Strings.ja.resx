@@ -2854,4 +2854,10 @@
 最新のバージョン: {1}
 リリース日: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>続行して再試行</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>ここから続行して再試行します。このラウンド内の既存のアシスタントメッセージは消去されません</value>
+    </data>
 </root>

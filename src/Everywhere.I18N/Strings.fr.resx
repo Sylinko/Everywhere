@@ -2854,4 +2854,10 @@ Version actuelle : {0}
 Dernière version : {1}
 Date de publication : {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Continuer et Réessayer</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Continuer et réessayer à partir d'ici, sans effacer les messages de l'assistant déjà présents dans ce tour</value>
+    </data>
 </root>

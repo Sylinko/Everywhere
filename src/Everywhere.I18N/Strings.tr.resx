@@ -2853,4 +2853,10 @@ Mevcut sürüm: {0}
 Son sürüm: {1}
 Yayın tarihi: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Devam Et ve Yeniden Dene</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Buradan devam et ve yeniden dene, bu oturumda mevcut asistan mesajlarını silme</value>
+    </data>
 </root>

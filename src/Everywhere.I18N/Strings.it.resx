@@ -2854,4 +2854,10 @@ Versione attuale: {0}
 Ultima versione: {1}
 Data di rilascio: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Continua e Riprova</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Continua e riprova da qui, senza cancellare i messaggi dell'assistente già presenti in questo turno</value>
+    </data>
 </root>

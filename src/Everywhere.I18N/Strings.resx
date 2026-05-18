@@ -2855,9 +2855,9 @@ Latest version: {1}
 Release date: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
-        <value />
+        <value>Continue and Retry</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
-        <value />
+        <value>Continue from here and retry without clearing existing assistant messages in this round</value>
     </data>
 </root>

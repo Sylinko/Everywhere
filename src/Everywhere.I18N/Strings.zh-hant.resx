@@ -2854,4 +2854,10 @@
 最新版本: {1}
 發佈日期: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>繼續並重試</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>從此處繼續並重試，不清除本輪次內已有的助手消息</value>
+    </data>
 </root>

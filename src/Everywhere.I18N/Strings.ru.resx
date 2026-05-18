@@ -2854,4 +2854,10 @@
 Последняя версия: {1}
 Дата выпуска: {2}</value>
     </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>Продолжить и повторить</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>Продолжить и повторить с этого места, не очищая уже существующие сообщения помощника в этом раунде</value>
+    </data>
 </root>
