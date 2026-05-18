@@ -30,7 +30,6 @@
             <v:ConditionalContentControl.TrueContent>
               <ControlTemplate x:DataType="cloud:ICloudClient">
                 <Border
-                  Margin="-16,-24,-16,-16"
                   Background="{DynamicResource SecondaryCardBackgroundColor}"
                   CornerRadius="{DynamicResource XlCornerRadius}">
                   <v:UserProfileCard

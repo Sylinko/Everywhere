@@ -2674,9 +2674,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
-    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
-        <value>Everywhere Búsqueda en la Nube</value>
-    </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Ver Documentación</value>
     </data>
@@ -2859,5 +2856,8 @@ Fecha de lanzamiento: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Continúa desde aquí y reintenta, sin borrar los mensajes del asistente en esta ronda</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere Cloud</value>
     </data>
 </root>

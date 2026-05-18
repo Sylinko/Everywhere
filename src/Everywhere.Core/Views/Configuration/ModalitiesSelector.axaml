@@ -21,27 +21,27 @@
             Margin="{TemplateBinding Padding}"
             ItemSpacing="6" LineSpacing="4">
             <ToggleButton
-              Classes="Compact Uniform"
+              Classes="Primary Compact Uniform"
               shadui:ButtonAssist.Icon="{LucideIconContent TextInitial}"
               Content="{I18N {x:Static LocaleKey.Modalities_Text}}"
               IsChecked="{TemplateBinding SupportsText, Mode=TwoWay}"/>
             <ToggleButton
-              Classes="Compact Uniform"
+              Classes="Primary Compact Uniform"
               shadui:ButtonAssist.Icon="{LucideIconContent Image}"
               Content="{I18N {x:Static LocaleKey.Modalities_Image}}"
               IsChecked="{TemplateBinding SupportsImage, Mode=TwoWay}"/>
             <ToggleButton
-              Classes="Compact Uniform"
+              Classes="Primary Compact Uniform"
               shadui:ButtonAssist.Icon="{LucideIconContent AudioWaveform}"
               Content="{I18N {x:Static LocaleKey.Modalities_Audio}}"
               IsChecked="{TemplateBinding SupportsAudio, Mode=TwoWay}"/>
             <ToggleButton
-              Classes="Compact Uniform"
+              Classes="Primary Compact Uniform"
               shadui:ButtonAssist.Icon="{LucideIconContent Video}"
               Content="{I18N {x:Static LocaleKey.Modalities_Video}}"
               IsChecked="{TemplateBinding SupportsVideo, Mode=TwoWay}"/>
             <ToggleButton
-              Classes="Compact Uniform"
+              Classes="Primary Compact Uniform"
               shadui:ButtonAssist.Icon="{LucideIconContent FileText}"
               Content="{I18N {x:Static LocaleKey.Modalities_Pdf}}"
               IsChecked="{TemplateBinding SupportsPdf, Mode=TwoWay}"/>

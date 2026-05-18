@@ -2674,7 +2674,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
-        <value>Everywhere Bulut Arama</value>
+        <value>Everywhere Cloud</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Belgeleri Görüntüle</value>
