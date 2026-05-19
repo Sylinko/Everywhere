@@ -2614,6 +2614,18 @@
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>有効な認証情報を取得できませんでした。再試行してください。</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>ローカルに保存されたログイン資格情報が無効になったか、他の場所で更新されました。再ログインしてください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>ログインサービスがこのアプリのOAuthクライアント設定を拒否しました。アプリを更新するか、サポートに連絡してください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>ログインサービスは一時的に利用できません。後でもう一度お試しください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>ログインサービスがトークンリクエストを拒否しました。再ログインをお試しください。サーバーの応答：{0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>無効</value>
     </data>

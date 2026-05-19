@@ -2614,6 +2614,18 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>No se pudo obtener un código de autorización válido, por favor intente de nuevo.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Las credenciales de inicio de sesión guardadas localmente han expirado o se han actualizado en otro lugar. Por favor, vuelve a iniciar sesión. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>El servicio de inicio de sesión rechazó la configuración del cliente OAuth de esta aplicación. Actualiza la aplicación o contacta con soporte. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>El servicio de inicio de sesión no está disponible temporalmente, por favor intenta de nuevo más tarde. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>El servicio de inicio de sesión rechazó la solicitud de token. Intenta volver a iniciar sesión. El servidor respondió: {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Desactivado</value>
     </data>
@@ -2673,6 +2685,9 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere Cloud</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Ver Documentación</value>
@@ -2856,8 +2871,5 @@ Fecha de lanzamiento: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Continúa desde aquí y reintenta, sin borrar los mensajes del asistente en esta ronda</value>
-    </data>
-    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
-        <value>Everywhere Cloud</value>
     </data>
 </root>

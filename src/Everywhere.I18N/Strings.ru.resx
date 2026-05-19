@@ -2614,6 +2614,18 @@
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>Не удалось получить действительные учетные данные для авторизации, пожалуйста, попробуйте снова.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Сохраненные учетные данные для входа недействительны или были обновлены в другом месте. Пожалуйста, войдите снова. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Служба входа отклонила конфигурацию OAuth клиента этого приложения. Пожалуйста, обновите приложение или свяжитесь с поддержкой. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Служба входа временно недоступна, пожалуйста, попробуйте позже. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Служба входа отклонила запрос на токен. Пожалуйста, попробуйте войти снова. Сервер вернул: {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Отключено</value>
     </data>

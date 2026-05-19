@@ -2613,6 +2613,18 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>Es konnte kein gültiges Autorisierungstoken abgerufen werden. Bitte versuchen Sie es erneut.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Die lokal gespeicherten Anmeldedaten sind ungültig oder wurden an anderer Stelle aktualisiert. Bitte melden Sie sich erneut an. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Der Anmeldeservice hat die OAuth-Clientkonfiguration dieser Anwendung abgelehnt. Bitte aktualisieren Sie die Anwendung oder kontaktieren Sie den Support. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Der Anmeldeservice ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Der Anmeldeservice hat die Tokenanforderung abgelehnt. Bitte versuchen Sie es erneut. Serverantwort: {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Deaktiviert</value>
     </data>

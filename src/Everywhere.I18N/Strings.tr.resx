@@ -2613,6 +2613,18 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>Geçerli bir yetkilendirme belgesi alınamadı, lütfen tekrar deneyin.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Yerel olarak kaydedilen oturum açma kimlik bilgileri geçersiz veya başka bir yerde güncellenmiş. Lütfen tekrar oturum açın. Sunucu yanıtı: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Oturum açma hizmeti bu uygulamanın OAuth istemci yapılandırmasını reddetti. Lütfen uygulamayı güncelleyin veya destekle iletişime geçin. Sunucu yanıtı: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Oturum açma hizmeti geçici olarak kullanılamıyor, lütfen daha sonra tekrar deneyin. Sunucu yanıtı: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Oturum açma hizmeti token isteğini reddetti. Lütfen tekrar oturum açmayı deneyin. Sunucu yanıtı: {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Devre Dışı</value>
     </data>

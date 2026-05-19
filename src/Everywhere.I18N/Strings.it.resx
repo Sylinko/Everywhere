@@ -2614,6 +2614,18 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>Impossibile ottenere un codice di autorizzazione valido, riprova.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Le credenziali di accesso salvate localmente sono scadute o sono state aggiornate altrove. Effettua nuovamente il login. Server restituito: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Il servizio di login ha rifiutato la configurazione del client OAuth di questa applicazione. Aggiorna l'app o contatta il supporto. Server restituito: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Il servizio di login non è disponibile al momento, riprova più tardi. Server restituito: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Il servizio di login ha rifiutato la richiesta del token. Prova a effettuare nuovamente il login. Server restituito: {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Disabilitato</value>
     </data>

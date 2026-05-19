@@ -2614,6 +2614,18 @@
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>未能獲取到有效的授權憑證，請重試。</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>本地保存的登入憑證已失效，或已在其他位置被刷新。請重新登入。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>登入服務拒絕了此應用的 OAuth 客戶端配置。請更新應用或聯繫支援。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>登入服務暫時不可用，請稍後重試。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>登入服務拒絕了令牌請求。請嘗試重新登入。伺服器回傳：{0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>禁用</value>
     </data>

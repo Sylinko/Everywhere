@@ -2614,6 +2614,18 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
         <value>Impossible d'obtenir un jeton d'autorisation valide, veuillez réessayer.</value>
     </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Les informations d'identification de connexion enregistrées localement ont expiré ou ont été mises à jour ailleurs. Veuillez vous reconnecter. Serveur renvoyé : {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Le service de connexion a refusé la configuration du client OAuth de cette application. Veuillez mettre à jour l'application ou contacter le support. Serveur renvoyé : {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Le service de connexion est temporairement indisponible, veuillez réessayer plus tard. Serveur renvoyé : {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Le service de connexion a refusé la demande de jeton. Veuillez essayer de vous reconnecter. Serveur renvoyé : {0} - {1}</value>
+    </data>
     <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
         <value>Désactivé</value>
     </data>
