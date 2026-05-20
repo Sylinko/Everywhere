@@ -89,8 +89,9 @@
     <Style Selector="ItemsControl.ChatFunctionPermissions">
       <Setter Property="ItemsPanel">
         <ItemsPanelTemplate>
-          <StackPanel
-            Orientation="Horizontal" Spacing="4"/>
+          <WrapPanel
+            ItemSpacing="4" LineSpacing="2"
+            Orientation="Horizontal"/>
         </ItemsPanelTemplate>
       </Setter>
       <Setter Property="ItemTemplate">
@@ -385,10 +386,13 @@
                                 ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
                             </StackPanel>
 
-                            <TextBlock
-                              Classes="Muted Caption"
-                              Text="{Binding DescriptionKey^}"
-                              TextWrapping="Wrap"/>
+                            <ScrollViewer
+                              MaxHeight="100" VerticalScrollBarVisibility="Hidden">
+                              <TextBlock
+                                Classes="Muted Caption"
+                                Text="{Binding DescriptionKey^}"
+                                TextWrapping="Wrap"/>
+                            </ScrollViewer>
 
                             <ItemsControl
                               Classes="ChatFunctionPermissions" Margin="0,2,0,0"
@@ -432,8 +436,8 @@
                   CornerRadius="8">
                   <DockPanel LastChildFill="True">
                     <Border
-                      DockPanel.Dock="Top"
-                      Background="{DynamicResource BorderColor}">
+                      DockPanel.Dock="Top" Padding="6,4"
+                      Background="{DynamicResource SettingsItemBackgroundColor}">
                       <Grid ColumnDefinitions="Auto,Auto,*">
                         <ToggleSwitch
                           Grid.Column="0" Margin="8,0"
