@@ -41,6 +41,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [DynamicResourceKey(
         LocaleKey.CustomAssistant_ModelProviderTemplate_Header,
         LocaleKey.CustomAssistant_ModelProviderTemplate_Description)]
+    [SettingsItem(Group = "_")]
     [SettingsSelectionItem(nameof(ModelProviderTemplates), DataTemplateKey = typeof(ModelProviderTemplate))]
     public ModelProviderTemplate? ModelProviderTemplate
     {
@@ -65,6 +66,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [DynamicResourceKey(
         LocaleKey.Assistant_ApiKey_Header,
         LocaleKey.Assistant_ApiKey_Description)]
+    [SettingsItem(Group = "_")]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
@@ -104,6 +106,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [DynamicResourceKey(
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Header,
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Description)]
+    [SettingsItem(Group = "_")]
     [SettingsSelectionItem(nameof(ModelDefinitionTemplates), DataTemplateKey = typeof(ModelDefinitionTemplate))]
     public ModelDefinitionTemplate? ModelDefinitionTemplate
     {

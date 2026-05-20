@@ -31,6 +31,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_Endpoint_Header,
         LocaleKey.Assistant_Endpoint_Description)]
+    [SettingsItem(Group = "_")]
     public SettingsControl<PreviewEndpointTextBox> PreviewEndpointControl => new(
         new PreviewEndpointTextBox
         {
@@ -64,6 +65,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_ApiKey_Header,
         LocaleKey.Assistant_ApiKey_Description)]
+    [SettingsItem(Group = "_")]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
@@ -77,6 +79,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_Schema_Header,
         LocaleKey.Assistant_Schema_Description)]
+    [SettingsItem(Group = "_")]
     public ModelProviderSchema Schema
     {
         get => owner.Schema;
@@ -92,6 +95,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_ModelId_Header,
         LocaleKey.Assistant_ModelId_Description)]
+    [SettingsItem(Group = "_")]
     [Required, MinLength(1)]
     public string? ModelId
     {
@@ -102,6 +106,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_SupportsToolCall_Header,
         LocaleKey.Assistant_SupportsToolCall_Description)]
+    [SettingsItem(Group = "_")]
     public bool SupportsToolCall
     {
         get => owner.SupportsToolCall;
@@ -111,6 +116,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_InputModalities_Header,
         LocaleKey.Assistant_InputModalities_Description)]
+    [SettingsItem(Group = "_")]
     public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(
         new ModalitiesSelector
         {
@@ -127,6 +133,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_ContextLimit_Header,
         LocaleKey.Assistant_ContextLimit_Description)]
+    [SettingsItem(Group = "_")]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int ContextLimit
     {
@@ -140,6 +147,7 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [DynamicResourceKey(
         LocaleKey.Assistant_OutputLimit_Header,
         LocaleKey.Assistant_OutputLimit_Description)]
+    [SettingsItem(Group = "_")]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int OutputLimit
     {

@@ -1,9 +1,10 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.Pages.SettingsPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:pages="clr-namespace:Everywhere.Views.Pages"
-  xmlns:v="clr-namespace:Everywhere.Views" x:Name="Self">
+  xmlns:v="clr-namespace:Everywhere.Views" x:Name="Self"
+  Margin="0,20,0,0">
   <DockPanel
-    MaxWidth="1080" LastChildFill="True"
+    MaxWidth="1000" LastChildFill="True"
     VerticalSpacing="16">
     <TextBlock
       Classes="h4" DockPanel.Dock="Top"
@@ -13,8 +14,7 @@
     <ScrollViewer
       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <ItemsControl
-        HorizontalAlignment="Stretch"
-        Margin="0,0,12,0"
+        Margin="0,0,12,0" HorizontalAlignment="Stretch"
         ItemsSource="{Binding #Self.Items}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -25,12 +25,12 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pages:SettingsPage+Item">
             <Button
-              Classes="Outline NoPressedAnimation" Padding="16"
+              Classes="SettingsItem NoPressedAnimation" Padding="20,14"
               HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
               Command="{Binding $parent[v:MainView].ViewModel.NavigateToCommand}"
               CommandParameter="{Binding Page}">
               <Grid
-                ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12"
+                ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18"
                 RowDefinitions="Auto,*" RowSpacing="4">
                 <LucideIcon
                   Grid.Row="0" Grid.RowSpan="2"

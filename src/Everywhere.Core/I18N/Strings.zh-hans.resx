@@ -918,13 +918,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>创建</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>名称</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>指定助手的名称，仅用于显示和区分。</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>描述</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

@@ -8,7 +8,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <ComboBox
-          x:Name="PART_ComboBox" MinWidth="320"
+          x:Name="PART_ComboBox" MinWidth="240"
           MinHeight="32"
           ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
           MaxDropDownHeight="320"

@@ -29,25 +29,50 @@
             </Button.Flyout>
           </Button>
 
-          <StackPanel Spacing="8">
-            <TextBox
-              MinWidth="160"
-              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.CustomAssistant_Name_Header}}"
-              MaxLength="32"
-              Text="{Binding CustomAssistant.Name, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=''}"
-              ToolTip.Placement="Bottom"
-              ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_Name_Description}}"
-              Watermark="{I18N {x:Static LocaleKey.CustomAssistant_Name_Description}}"/>
+          <StackPanel
+            VerticalAlignment="Center" Spacing="4">
+            <StackPanel
+              Orientation="Horizontal" Spacing="4">
+              <shadui:EditableTextBlock
+                x:Name="PART_NameTextBlock" VerticalAlignment="Center"
+                AcceptsReturn="False"
+                FontSize="{DynamicResource FontSize2Xl}"
+                FontWeight="Bold"
+                Text="{Binding CustomAssistant?.Name, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                Watermark="{I18N {x:Static LocaleKey.CustomAssistant_EmptyName_Watermark}}"/>
 
-            <TextBox
-              HorizontalAlignment="Stretch"
-              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.CustomAssistant_Description_Header}}"
-              AcceptsReturn="True" MaxLength="4096"
-              MaxLines="4" MinLines="2"
-              Text="{Binding CustomAssistant.Description, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=''}"
-              TextWrapping="Wrap" ToolTip.Placement="Bottom"
-              ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_Description_Description}}"
-              Watermark="{I18N {x:Static LocaleKey.CustomAssistant_Description_Description}}"/>
+              <Button
+                Classes="Ghost Compact Uniform" VerticalAlignment="Bottom"
+                shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                Command="{Binding #PART_NameTextBlock.EnterEditMode}"
+                IsVisible="{Binding !#PART_NameTextBlock.IsEditing}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_Name_Description}}"/>
+            </StackPanel>
+
+            <DockPanel
+              HorizontalAlignment="Left" HorizontalSpacing="4">
+              <Button
+                Classes="Ghost Muted Compact Uniform" DockPanel.Dock="Right"
+                VerticalAlignment="Top"
+                shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                Command="{Binding #PART_DescriptionTextBlock.EnterEditMode}"
+                IsVisible="{Binding !#PART_DescriptionTextBlock.IsEditing}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_Description_Description}}"/>
+
+              <ScrollViewer
+                MaxHeight="60" HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <shadui:EditableTextBlock
+                  x:Name="PART_DescriptionTextBlock" Classes="Muted"
+                  Margin="0,0,6,0" VerticalAlignment="Center"
+                  AcceptsReturn="True" MaxLength="4096"
+                  Text="{Binding CustomAssistant?.Description, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                  TextWrapping="Wrap"
+                  Watermark="{I18N {x:Static LocaleKey.CustomAssistant_EmptyDescription_Watermark}}"/>
+              </ScrollViewer>
+            </DockPanel>
           </StackPanel>
         </DockPanel>
       </ControlTemplate>

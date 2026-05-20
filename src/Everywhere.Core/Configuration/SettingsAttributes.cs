@@ -42,6 +42,13 @@ public class SettingsItemAttribute : Attribute
     /// Optional documentation URL for this settings item.
     /// </summary>
     public string? DocumentUrl { get; set; }
+
+    /// <summary>
+    /// Groups multiple settings items under a common header.
+    /// Items with the same non-null Group value will be wrapped in a <see cref="SettingsGroupItem"/>.
+    /// If starts with "_", group header will hidden.
+    /// </summary>
+    public string? Group { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]

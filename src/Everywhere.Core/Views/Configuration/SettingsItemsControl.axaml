@@ -2,10 +2,6 @@
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="using:Everywhere.Views">
-  <Design.PreviewWith>
-    <v:SettingsItemsControl/>
-  </Design.PreviewWith>
-
   <ControlTheme
     x:Key="{x:Type v:SettingsItemsControl}"
     TargetType="v:SettingsItemsControl">
@@ -20,7 +16,7 @@
 
     <Setter Property="ItemsPanel">
       <ItemsPanelTemplate>
-        <StackPanel Spacing="8"/>
+        <StackPanel Spacing="28"/>
       </ItemsPanelTemplate>
     </Setter>
 
@@ -31,227 +27,41 @@
       </ControlTheme>
     </Setter>
 
-    <Setter Property="ItemTemplate">
-      <DataTemplate DataType="c:SettingsItem">
-        <Expander
-          Classes="LeftIcon" Padding="16"
-          shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-          Classes.NotExpandable="{Binding !IsExpandable}"
-          IsEnabled="{Binding IsEnabled}"
-          IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
-          <Expander.Styles>
-            <Style Selector="ContentControl#PART_SettingsItemContentControl">
-              <Setter Property="ClipToBounds" Value="False"/>
-              <Setter Property="shadui:BindingAssist.DataTemplates">
-                <DataTemplates>
-                  <DataTemplate DataType="c:SettingsBooleanItem">
-                    <ToggleSwitch
-                      Margin="4,0"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      IsChecked="{Binding Value, Mode=TwoWay}"
-                      IsThreeState="{Binding IsNullable}"/>
-                  </DataTemplate>
+    <Setter Property="shadui:BindingAssist.DataTemplates">
+      <DataTemplates>
+        <DataTemplate x:DataType="c:SettingsGroupItem">
+          <v:SettingsGroupPanel
+            BorderBrush="{DynamicResource BorderColor}"
+            Header="{Binding GroupKey^}"
+            ItemsSource="{Binding Children}">
+            <v:SettingsGroupPanel.Styles>
+              <Style Selector="v|SettingsItemControl">
+                <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+                <Setter Property="Margin" Value="0,-1,0,0"/>
 
-                  <DataTemplate DataType="c:SettingsStringItem">
-                    <TextBox
-                      MinWidth="320" MinHeight="32"
-                      HorizontalAlignment="Left"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      shadui:ControlAssist.Height="{Binding Height}"
-                      AcceptsReturn="{Binding IsMultiline}"
-                      MaxLength="{Binding MaxLength}"
-                      MaxLines="6"
-                      PasswordChar="{Binding PasswordChar}"
-                      Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      TextWrapping="{Binding TextWrapping}"
-                      Watermark="{Binding Watermark}"/>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsIntegerItem">
-                    <StackPanel
-                      HorizontalAlignment="Left"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      Orientation="Horizontal" Spacing="8">
-                      <Slider
-                        Width="320" VerticalAlignment="Center"
-                        IsSnapToTickEnabled="True"
-                        IsVisible="{Binding IsSliderVisible}"
-                        LargeChange="1"
-                        Maximum="{Binding MaxValue}"
-                        Minimum="{Binding MinValue}"
-                        SmallChange="1" TickFrequency="1"
-                        Value="{Binding Value, Mode=TwoWay}"/>
-                      <TextBox
-                        MinHeight="32" VerticalAlignment="Center"
-                        IsVisible="{Binding IsTextBoxVisible}"
-                        Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsDoubleItem">
-                    <StackPanel
-                      HorizontalAlignment="Left"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      Orientation="Horizontal" Spacing="8">
-                      <Slider
-                        Width="320" VerticalAlignment="Center"
-                        IsSnapToTickEnabled="True"
-                        IsVisible="{Binding IsSliderVisible}"
-                        Maximum="{Binding MaxValue}"
-                        Minimum="{Binding MinValue}"
-                        TickFrequency="{Binding Step}"
-                        Value="{Binding Value, Mode=TwoWay}"/>
-                      <TextBox
-                        MinHeight="32" VerticalAlignment="Center"
-                        IsVisible="{Binding IsTextBoxVisible}"
-                        Text="{Binding ValueText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                        <Interaction.Behaviors>
-                          <LoseFocusOnEnterBehavior/>
-                        </Interaction.Behaviors>
-                      </TextBox>
-                    </StackPanel>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsCustomizableItem">
-                    <DockPanel
-                      HorizontalAlignment="Left"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      HorizontalSpacing="8" LastChildFill="True">
-                      <Button
-                        Classes="Ghost" DockPanel.Dock="Right"
-                        Width="36" Padding="0"
-                        Command="{Binding ResetCommand}"
-                        ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Reset}}">
-                        <LucideIcon
-                          Kind="RotateCcw"
-                          Size="{DynamicResource FontSizeL}"/>
-                      </Button>
-
-                      <ContentControl
-                        x:Name="PART_SettingsItemContentControl" HorizontalAlignment="Left"
-                        HorizontalContentAlignment="Left"
-                        Content="{Binding CustomValueItem}"/>
-                    </DockPanel>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsSelectionItem">
-                    <ComboBox
-                      MinWidth="320" MinHeight="32"
-                      HorizontalAlignment="Left"
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      ItemsSource="{Binding ItemsSource}"
-                      SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
-                      <ComboBox.ItemTemplate>
-                        <DataTemplate DataType="c:SettingsSelectionItem+Item">
-                          <ContentControl
-                            Content="{Binding Key^}"
-                            ContentTemplate="{Binding ContentTemplate}"/>
-                        </DataTemplate>
-                      </ComboBox.ItemTemplate>
-                    </ComboBox>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsTemplatedItem">
-                    <ContentControl
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      Content="{Binding}"
-                      ContentTemplate="{Binding DataTemplate}"/>
-                  </DataTemplate>
-
-                  <DataTemplate DataType="c:SettingsControlItem">
-                    <ContentControl
-                      shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
-                      ClipToBounds="False"
-                      Content="{Binding Control}"/>
-                  </DataTemplate>
-                </DataTemplates>
-              </Setter>
-            </Style>
-          </Expander.Styles>
-
-          <Expander.Header>
-            <DockPanel
-              HorizontalSpacing="32" VerticalSpacing="8">
-              <DockPanel.Styles>
-                <Style Selector="ContentControl">
-                  <Setter Property="DockPanel.Dock" Value="Bottom"/>
-                  <Style Selector="^.right:not(.FullSize)">
-                    <Setter Property="DockPanel.Dock" Value="Right"/>
-                  </Style>
+                <Style Selector="^:nth-child(1)">
+                  <Setter Property="CornerRadius" Value="12,12,0,0"/>
+                  <Setter Property="Margin" Value="0"/>
                 </Style>
-              </DockPanel.Styles>
+                <Style Selector="^:nth-last-child(1)">
+                  <Setter Property="CornerRadius" Value="0,0,12,12"/>
+                </Style>
+              </Style>
+            </v:SettingsGroupPanel.Styles>
+          </v:SettingsGroupPanel>
+        </DataTemplate>
 
-              <ContentControl
-                x:Name="PART_SettingsItemContentControl" VerticalAlignment="Center"
-                Content="{Binding}"
-                IsVisible="{Binding !IsEmpty}">
-                <Classes.FullSize>
-                  <MultiBinding Converter="{x:Static BoolConverters.And}">
-                    <Binding
-                      ElementName="HeaderTextBlock" Path="!IsVisible"/>
-                    <Binding
-                      ElementName="DescriptionTextBlock" Path="!IsVisible"/>
-                  </MultiBinding>
-                </Classes.FullSize>
-
-                <Interaction.Behaviors>
-                  <shadui:AdaptiveRatioBehavior
-                    DenominatorControl="{Binding $parent[DockPanel]}"
-                    NumeratorControl="{Binding #PART_SettingsItemContentControl}"
-                    NumeratorControlMode="DesiredSize">
-                    <AdaptiveClassSetter
-                      MinWidth="0" MaxWidth="0.5"
-                      ClassName="right" MaxWidthOperator="LessThan"
-                      MinWidthOperator="GreaterThanOrEqual"/>
-                    <AdaptiveClassSetter
-                      MinWidth="0.5" MaxWidth="Infinity"
-                      ClassName="bottom" MaxWidthOperator="LessThan"
-                      MinWidthOperator="GreaterThanOrEqual"/>
-                  </shadui:AdaptiveRatioBehavior>
-                </Interaction.Behaviors>
-              </ContentControl>
-
-              <StackPanel
-                VerticalAlignment="Center" Spacing="4">
-                <StackPanel
-                  Orientation="Horizontal" Spacing="6">
-                  <TextBlock
-                    x:Name="HeaderTextBlock" VerticalAlignment="Center"
-                    FontWeight="SemiBold" IsHitTestVisible="False"
-                    IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Text="{Binding HeaderKey^, FallbackValue={x:Null}}"
-                    TextWrapping="Wrap"/>
-                  <shadui:Badge
-                    HorizontalAlignment="Left" VerticalAlignment="Center"
-                    Background="{DynamicResource WarningColor60}"
-                    Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
-                    IsVisible="{Binding IsExperimental}"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
-                  <HyperlinkButton
-                    MinHeight="0" Padding="0"
-                    IsVisible="{Binding DocumentUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    NavigateUri="{Binding DocumentUrl}"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.SettingsItem_DocumentHyperlinkButton_ToolTip}}">
-                    <LucideIcon
-                      VerticalAlignment="Center" Kind="ExternalLink"
-                      Size="{DynamicResource FontSizeM}"/>
-                  </HyperlinkButton>
-                </StackPanel>
-                <TextBlock
-                  x:Name="DescriptionTextBlock" Classes="Muted Caption"
-                  IsHitTestVisible="False"
-                  IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                  Text="{Binding DescriptionKey^, FallbackValue={x:Null}}"
-                  TextWrapping="Wrap"/>
-              </StackPanel>
-            </DockPanel>
-          </Expander.Header>
-
-          <v:SettingsItemsControl
-            HorizontalAlignment="Stretch"
-            ItemsSource="{Binding Children}"/>
-        </Expander>
-      </DataTemplate>
+        <DataTemplate x:DataType="c:SettingsItem">
+          <v:SettingsItemControl
+            shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
+            IsEnabled="{Binding IsEnabled}"
+            IsExpandable="{Binding IsExpandable}"
+            IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+            Item="{Binding}"/>
+        </DataTemplate>
+      </DataTemplates>
     </Setter>
 
     <Style Selector="^.Ghost">

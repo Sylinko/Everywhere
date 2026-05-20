@@ -46,6 +46,8 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/OpenWebBrowserControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/PreviewEndpointTextBox.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/RestartAsAdministratorControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsGroupPanel.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SoftwareUpdateControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>

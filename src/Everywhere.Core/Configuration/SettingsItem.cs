@@ -478,3 +478,31 @@ public sealed class SettingsControlItem(Func<Control> controlFactory) : Settings
     /// </summary>
     public Control Control => controlFactory();
 }
+
+/// <summary>
+/// A settings item that groups multiple child items under a common header.
+/// The group is always expandable and arranges its children vertically.
+/// </summary>
+public sealed class SettingsGroupItem : SettingsItem
+{
+    /// <summary>
+    /// Gets the name of the group, used as the display header.
+    /// </summary>
+    public string? GroupName { get; init; }
+
+    /// <summary>
+    /// Gets the localized group key
+    /// </summary>
+    public IDynamicResourceKey GroupKey => GroupName?.StartsWith('_') is not false ? DirectResourceKey.Empty : new DynamicResourceKey(GroupName);
+
+    /// <summary>
+    /// A group item has no value of its own; it only serves as a container.
+    /// </summary>
+    public override bool IsEmpty => true;
+
+    public SettingsGroupItem()
+    {
+        IsExpandable = true;
+        IsExpanded = true;
+    }
+}

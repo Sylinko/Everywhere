@@ -28,12 +28,16 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
     [MaxLength(128)]
     public partial string? Name { get; set; }
 
-    [ObservableProperty]
     [SettingsItemIgnore]
-    public partial string? Description { get; set; }
+    public string? Description
+    {
+        get;
+        set => SetProperty(ref field, value?.SafeSubstring(0, 4096)?.Trim());
+    }
 
     [JsonIgnore]
     [DynamicResourceKey(LocaleKey.Empty)]
+    [SettingsItem(Classes = ["Ghost"])]
     public SettingsControl<CustomAssistantInformationForm> InformationForm => new(
         new CustomAssistantInformationForm
         {
@@ -44,6 +48,7 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
     [DynamicResourceKey(
         LocaleKey.CustomAssistant_SystemPrompt_Header,
         LocaleKey.CustomAssistant_SystemPrompt_Description)]
+    [SettingsItem(Classes = ["Ghost"])]
     [SettingsStringItem(IsMultiline = true, MaxLength = 40960, Watermark = Prompts.DefaultSystemPrompt)]
     [DefaultValue(null)]
     public partial string? SystemPrompt { get; set; }

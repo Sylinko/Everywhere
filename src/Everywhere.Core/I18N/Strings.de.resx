@@ -917,13 +917,13 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Erstellen</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>Name</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Geben Sie den Namen des Assistenten an, der ausschließlich zu Anzeige- und Unterscheidungszwecken verwendet wird.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>Beschreibung</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

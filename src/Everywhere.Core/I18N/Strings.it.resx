@@ -918,13 +918,13 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Crea</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>Nome</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Specifica il nome dell'assistente, usato solo per scopi di visualizzazione e differenziazione.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>Descrizione</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

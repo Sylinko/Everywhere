@@ -24,6 +24,7 @@ public sealed partial class ShortcutSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ShortcutSettings_ChatWindow_Header,
         LocaleKey.ShortcutSettings_ChatWindow_Desription)]
+    [SettingsItem(Group = "_")]
     [SettingsTemplatedItem]
     public partial KeyboardShortcut ChatWindow { get; set; } = new(Key.E, KeyModifiers.Control | KeyModifiers.Shift);
 
@@ -31,6 +32,7 @@ public sealed partial class ShortcutSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ShortcutSettings_PickVisualElement_Header,
         LocaleKey.ShortcutSettings_PickVisualElement_Desription)]
+    [SettingsItem(Group = "_")]
     [SettingsTemplatedItem]
     public partial KeyboardShortcut PickVisualElement { get; set; }
 
@@ -38,6 +40,7 @@ public sealed partial class ShortcutSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ShortcutSettings_TakeScreenshot_Header,
         LocaleKey.ShortcutSettings_TakeScreenshot_Desription)]
+    [SettingsItem(Group = "_")]
     [SettingsTemplatedItem]
     public partial KeyboardShortcut TakeScreenshot { get; set; }
 }

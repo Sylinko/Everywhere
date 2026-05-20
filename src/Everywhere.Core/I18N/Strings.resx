@@ -918,13 +918,13 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Create</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>Name</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Specify the name of the assistant for display and differentiation purposes.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>Description</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

@@ -918,13 +918,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>作成</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>名前</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>アシスタントの名前を指定します。表示と区別のためにのみ使用されます。</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>説明</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

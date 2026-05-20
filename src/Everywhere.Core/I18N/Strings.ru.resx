@@ -918,13 +918,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Создать</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>Имя</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Укажите имя ассистента, используемое исключительно для отображения и различения.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>Описание</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

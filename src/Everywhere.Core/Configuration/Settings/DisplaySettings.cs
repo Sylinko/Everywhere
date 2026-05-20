@@ -36,6 +36,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.DisplaySettings_Language_Header,
         LocaleKey.DisplaySettings_Language_Description)]
+    [SettingsItem(Group = "_")]
     [TypeConverter(typeof(LocaleNameTypeConverter))]
     public LocaleName Language
     {
@@ -51,6 +52,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.DisplaySettings_Theme_Header,
         LocaleKey.DisplaySettings_Theme_Description)]
+    [SettingsItem(Group = "_")]
     public ThemeMode Theme
     {
         get;
@@ -75,6 +77,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.DisplaySettings_AccentColor_Header,
         LocaleKey.DisplaySettings_AccentColor_Description)]
+    [SettingsItem(Group = "_")]
     public SettingsControl<AccentColorSelector> AccentColorControl => new(new AccentColorSelector
     {
         [!AccentColorSelector.SelectedColorProperty] = new Binding(nameof(AccentColor))
@@ -88,10 +91,11 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     /// <summary>
     /// Application font size.
     /// </summary>
-    [SettingsIntegerItem(Min = -1, Max = 3, IsTextBoxVisible = false)]
     [DynamicResourceKey(
         LocaleKey.DisplaySettings_FontSize_Header,
         LocaleKey.DisplaySettings_FontSize_Description)]
+    [SettingsItem(Group = "_")]
+    [SettingsIntegerItem(Min = -1, Max = 3, IsTextBoxVisible = false)]
     public int FontSize
     {
         get

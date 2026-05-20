@@ -5,11 +5,11 @@
   x:DataType="vm:MainViewModel" x:TypeArguments="vm:MainViewModel">
 
   <v:ReactiveUserControl.Styles>
-    <Style Selector="DockPanel#RootPanel">
-      <Style Selector="^ &gt; TransitioningContentControl">
-        <Setter Property="Margin" Value="0,14,12,16"/>
-      </Style>
-    </Style>
+    <!-- <Style Selector="DockPanel#RootPanel"> -->
+    <!--   <Style Selector="^ &gt; TransitioningContentControl"> -->
+    <!--     <Setter Property="Margin" Value="0,14,12,16"/> -->
+    <!--   </Style> -->
+    <!-- </Style> -->
     <Style Selector="DockPanel#RootPanel.narrow">
       <Style Selector="^ &gt; shadui|NavigationBar">
         <Setter Property="DockPanel.Dock" Value="Bottom"/>
@@ -19,7 +19,7 @@
         <Setter Property="VerticalAlignment" Value="Bottom"/>
       </Style>
       <Style Selector="^ &gt; TransitioningContentControl">
-        <Setter Property="Margin" Value="16,14,16,0"/>
+        <Setter Property="Margin" Value="16,0"/>
       </Style>
     </Style>
   </v:ReactiveUserControl.Styles>

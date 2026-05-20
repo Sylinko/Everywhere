@@ -918,13 +918,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>생성</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>이름</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>표시 및 구분 목적으로만 사용되는 어시스턴트의 이름을 지정하세요.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>설명</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">

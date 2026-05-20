@@ -5,18 +5,19 @@
   xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:CustomAssistantPageViewModel"
   ClipToBounds="False">
   <shadui:NavigationView
-    MaxWidth="1600"
+    Padding="24,0,0,20"
     PageTransition="{x:Null}"
     PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedCustomAssistant, Mode=TwoWay}">
     <shadui:NavigationView.PaneHeader>
-      <DockPanel Margin="0,0,0,8">
+      <DockPanel Margin="0,14,0,8">
         <Button
           Classes="Secondary" DockPanel.Dock="Right"
           VerticalAlignment="Center"
           shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
           Command="{Binding CreateNewCustomAssistantCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CreateNewCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_CreateNewCustomAssistantButton_ToolTip}}"/>
 
         <TextBlock
@@ -83,33 +84,34 @@
 
     <shadui:NavigationView.Header>
       <StackPanel
-        Margin="0,0,12,8" HorizontalAlignment="Right"
+        Margin="0,14,12,14" HorizontalAlignment="Right"
         IsVisible="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
         Orientation="Horizontal" Spacing="6">
         <Button
-          Classes="Secondary" VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Unplug}"
+          Classes="Primary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Zap}"
           shadui:ButtonAssist.ShowProgress="{Binding CheckConnectivityCommand.IsRunning}"
           Command="{Binding CheckConnectivityCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CheckConnectivityButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_CheckConnectivityButton_ToolTip}}"/>
 
-        <shadui:ButtonGroup
-          VerticalAlignment="Center" Orientation="Horizontal">
-          <Button
-            Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
-            Command="{Binding DuplicateCustomAssistantCommand}"
-            Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_Content}}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip}}"/>
-          <Button
-            Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
-            Command="{Binding DeleteCustomAssistantCommand}"
-            Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_Content}}"
-            Foreground="{DynamicResource DestructiveColor}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_ToolTip}}"/>
-        </shadui:ButtonGroup>
+        <Button
+          Classes="Secondary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+          Command="{Binding DuplicateCustomAssistantCommand}"
+          Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip}}"/>
+
+        <Button
+          Classes="Secondary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+          Command="{Binding DeleteCustomAssistantCommand}"
+          Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          Foreground="{DynamicResource DestructiveColor}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_ToolTip}}"/>
       </StackPanel>
     </shadui:NavigationView.Header>
 
@@ -117,7 +119,7 @@
       <DataTemplate DataType="ai:CustomAssistant">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <v:SettingsItemsControl
-            Margin="0,0,12,0"
+            MaxWidth="1000" Margin="0,0,26,0"
             ItemsSource="{Binding SettingsItems, FallbackValue={x:Null}}"/>
         </ScrollViewer>
       </DataTemplate>

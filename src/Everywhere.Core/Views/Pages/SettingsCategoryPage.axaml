@@ -2,9 +2,9 @@
   x:Class="Everywhere.Views.Pages.SettingsCategoryPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:p="clr-namespace:Everywhere.Views.Pages"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  x:Name="Self">
+  x:Name="Self" Margin="0,16,0,0">
   <DockPanel
-    MaxWidth="1080" LastChildFill="True"
+    MaxWidth="1000" LastChildFill="True"
     VerticalSpacing="16">
     <!--  Navigation Bar  -->
     <DockPanel

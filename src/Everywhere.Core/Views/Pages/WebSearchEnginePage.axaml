@@ -4,10 +4,10 @@
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
   xmlns:pages="clr-namespace:Everywhere.Views.Pages" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:WebSearchEnginePageViewModel"
-  ClipToBounds="False">
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" Margin="0,12,0,0"
+  x:DataType="vm:WebSearchEnginePageViewModel" ClipToBounds="False">
   <shadui:NavigationView
-    MaxWidth="1600"
+    HeaderMaxWidth="1000"
     PageTransition="{x:Null}"
     PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedWebSearchEngineProvider, Mode=TwoWay}">
@@ -116,7 +116,7 @@
       <DataTemplate DataType="c:IWebSearchEngineProvider">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <v:SettingsItemsControl
-            Margin="0,0,12,0"
+            MaxWidth="1000" Margin="0,0,12,0"
             ItemsSource="{Binding SettingsItems, FallbackValue={x:Null}}"/>
         </ScrollViewer>
       </DataTemplate>

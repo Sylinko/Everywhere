@@ -28,7 +28,7 @@ public sealed partial class ProxySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ProxySettings_Endpoint_Header,
         LocaleKey.ProxySettings_Endpoint_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled))]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     [SettingsStringItem(Watermark = "http://127.0.0.1:7890")]
     public partial string? Endpoint { get; set; }
 
@@ -36,14 +36,14 @@ public sealed partial class ProxySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ProxySettings_BypassOnLocal_Header,
         LocaleKey.ProxySettings_BypassOnLocal_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled))]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     public partial bool BypassOnLocal { get; set; } = true;
 
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.ProxySettings_BypassList_Header,
         LocaleKey.ProxySettings_BypassList_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled))]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     [SettingsStringItem(Watermark = "www.example.com", IsMultiline = true, Height = 96)]
     public partial string? BypassList { get; set; }
 
@@ -51,21 +51,21 @@ public sealed partial class ProxySettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ProxySettings_UseAuthentication_Header,
         LocaleKey.ProxySettings_UseAuthentication_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled))]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     public partial bool UseAuthentication { get; set; }
 
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.ProxySettings_Username_Header,
         LocaleKey.ProxySettings_Username_Description)]
-    [SettingsItem(IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}")]
+    [SettingsItem(IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}", Group = "_")]
     public partial string? Username { get; set; }
 
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.ProxySettings_Password_Header,
         LocaleKey.ProxySettings_Password_Description)]
-    [SettingsItem(IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}")]
+    [SettingsItem(IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}", Group = "_")]
     [SettingsStringItem(IsPassword = true)]
     public partial string? Password { get; set; }
 }
