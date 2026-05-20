@@ -1439,6 +1439,18 @@
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>Редактирование сообщения...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>Модель текущего помощника больше не поддерживается, запрос может завершиться неудачей</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>Модель текущего помощника была снята с поддержки {0}, рекомендуется как можно скорее перейти на более новую модель</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>Модель текущего помощника ожидается снятие с поддержки {0}</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>Настройки помощника</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>Отменить редактирование (Esc)</value>
     </data>
@@ -2526,6 +2538,9 @@
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>Текущая модель будет снята с поддержки {0}</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>Текущая модель больше не в списке поддерживаемых</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>Эффект появления элементов</value>

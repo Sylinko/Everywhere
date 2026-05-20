@@ -1438,6 +1438,18 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>Mesaj düzenleniyor...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>Mevcut asistan modeli desteklenmiyor, istek başarısız olabilir</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>Mevcut asistan modeli {0} tarihinde kaldırıldı, daha yeni bir modele geçmeniz önerilir</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>Mevcut asistan modelinin {0} tarihinde kaldırılması bekleniyor</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>Asistan Ayarları</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>Düzenlemeyi İptal Et (Esc)</value>
     </data>
@@ -2525,6 +2537,9 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>Mevcut model {0} tarihinde kaldırılması bekleniyor</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>Mevcut model destek listesinde yok</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>Element Uçuş Efekti</value>

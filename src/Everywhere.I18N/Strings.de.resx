@@ -1438,6 +1438,18 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>Nachricht wird bearbeitet...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>Das aktuelle Modell des Assistenten wird nicht mehr unterstützt, Anfragen könnten fehlschlagen.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>Das aktuelle Modell des Assistenten wurde am {0} eingestellt, es wird empfohlen, so schnell wie möglich auf ein neueres Modell zu wechseln.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>Das aktuelle Modell des Assistenten wird voraussichtlich am {0} eingestellt.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>Assistenteneinstellungen</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>Bearbeitung abbrechen (Esc)</value>
     </data>
@@ -2525,6 +2537,9 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>Das aktuelle Modell wird voraussichtlich am {0} eingestellt</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>Das aktuelle Modell steht nicht mehr auf der Unterstützungsliste.</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>Elementeinflugeffekt</value>

@@ -1440,13 +1440,13 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Editing message...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value/>
+        <value>The current assistant model is unsupported, requests may fail.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
-        <value/>
+        <value>The current assistant model was deprecated on {0}, please switch to a newer model soon.</value>
     </data>
     <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
-        <value/>
+        <value>The current assistant model is expected to be deprecated on {0}.</value>
     </data>
     <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
         <value>Open assistant settings</value>

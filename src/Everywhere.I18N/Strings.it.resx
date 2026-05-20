@@ -1439,6 +1439,18 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>Modifica messaggio...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>Il modello attuale dell'assistente non è supportato, la richiesta potrebbe fallire</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>Il modello attuale dell'assistente è stato ritirato il {0}, si consiglia di passare a un modello più recente</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>Il modello attuale dell'assistente sarà ritirato il {0}</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>Impostazioni assistente</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>Annulla modifica (Esc)</value>
     </data>
@@ -2526,6 +2538,9 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>Il modello attuale sarà ritirato il {0}</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>Il modello attuale non è nella lista di supporto</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>Effetto di Entrata Elementi</value>

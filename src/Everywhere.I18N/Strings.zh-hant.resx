@@ -1439,6 +1439,18 @@
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>編輯訊息中...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>當前助手的模型已不受支持，請求可能會失敗</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>當前助手的模型已於 {0} 下架，建議盡快切換到較新的模型</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>當前助手的模型預計於 {0} 下架</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>助手設定</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>取消編輯 (Esc)</value>
     </data>
@@ -2526,6 +2538,9 @@
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>當前模型預計於 {0} 下架</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>當前模型已不在支持列表中</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>元素飛入特效</value>

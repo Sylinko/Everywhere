@@ -1439,6 +1439,18 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
     <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
         <value>Modification du message...</value>
     </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>Le modèle actuel de l'assistant n'est plus pris en charge, la demande pourrait échouer.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>Le modèle actuel de l'assistant a été retiré le {0}, il est conseillé de passer à un modèle plus récent.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>Le modèle actuel de l'assistant sera retiré le {0}.</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>Paramètres de l'assistant</value>
+    </data>
     <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
         <value>Annuler la modification (Échap)</value>
     </data>
@@ -2526,6 +2538,9 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     </data>
     <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
         <value>Le modèle actuel sera retiré le {0}</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>Le modèle actuel n'est plus dans la liste de support.</value>
     </data>
     <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
         <value>Effet d'animation d'élément</value>
