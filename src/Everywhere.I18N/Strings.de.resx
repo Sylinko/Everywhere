@@ -2853,6 +2853,9 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Der aktuelle Shell-Typ wird nicht unterstützt oder wurde nicht gefunden. Bitte stellen Sie sicher, dass mindestens PowerShell, zsh oder bash auf dem Computer installiert ist.</value>
     </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Wählen Sie die benutzerdefinierte Denkintensität. Verschiedene Modelle unterstützen unterschiedliche Optionen, weitere Informationen finden Sie in der entsprechenden Dokumentation. Wenn Sie dieses Feld leer lassen, wird dieser Parameter nicht in die Anfrage aufgenommen.</value>
+    </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
         <value>Denkenstyp (thinking.type)</value>
     </data>
@@ -2891,5 +2894,8 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Hier fortfahren und erneut versuchen, ohne die bisherigen Nachrichten des Assistenten in dieser Runde zu löschen</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>Der tiefgründige Denkinhalt des Modells wurde nicht korrekt zurückgegeben. Wenn Sie im selben Chat das Modell gewechselt haben, kann dies wahrscheinlich zu diesem Problem führen.</value>
     </data>
 </root>

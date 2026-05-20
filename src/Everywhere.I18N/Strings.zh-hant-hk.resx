@@ -2896,4 +2896,7 @@
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>從此處繼續並重試，不會清除本輪次內已有的助手消息</value>
     </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>模型的深度思考內容未正確回傳。如果你在同一個聊天中切換了模型，則很可能會導致此問題。</value>
+    </data>
 </root>

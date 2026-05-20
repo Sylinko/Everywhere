@@ -2897,6 +2897,6 @@ Release date: {2}</value>
         <value>Continue from here and retry without clearing existing assistant messages in this round</value>
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
-        <value />
+        <value>The model's deep reasoning content did not return correctly. This issue may occur if you switched models within the same chat.</value>
     </data>
 </root>

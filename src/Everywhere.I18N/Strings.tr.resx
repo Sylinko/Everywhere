@@ -2853,6 +2853,9 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Geçerli Shell türü desteklenmiyor veya bulunamadı, lütfen bilgisayarınızda en az PowerShell, zsh veya bash yüklü olduğundan emin olun.</value>
     </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Özelleştirilmiş akıl yürütme gücünü seçin. Farklı modellerin desteklediği seçenekler değişiklik gösterir, ayrıntılar için ilgili belgelere bakın. Boş bırakmak, bu parametreyi isteğe dahil etmemek anlamına gelir.</value>
+    </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
         <value>Düşünme Türü (thinking.type)</value>
     </data>
@@ -2891,5 +2894,8 @@ Yayın tarihi: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Buradan devam et ve yeniden dene, bu oturumda mevcut asistan mesajlarını silme</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>Modelin derin düşünme içeriği doğru bir şekilde geri dönmedi. Aynı sohbet içinde model değiştirdiyseniz, bu soruna yol açmış olabilir.</value>
     </data>
 </root>

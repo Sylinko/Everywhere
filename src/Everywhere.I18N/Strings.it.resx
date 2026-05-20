@@ -2854,6 +2854,9 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Il tipo di Shell attuale non è supportato o non trovato, assicurati che almeno PowerShell, zsh o bash siano installati sul computer.</value>
     </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Scegli l'intensità del ragionamento personalizzato. Le opzioni supportate variano a seconda del modello; per ulteriori dettagli, consulta la documentazione corrispondente. Lascia vuoto per non includere questo parametro nella richiesta.</value>
+    </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
         <value>Tipo Di Pensiero (thinking.type)</value>
     </data>
@@ -2892,5 +2895,8 @@ Data di rilascio: {2}</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Continua e riprova da qui, senza cancellare i messaggi dell'assistente già presenti in questo turno</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>Il contenuto del ragionamento profondo del modello non è stato restituito correttamente. Se hai cambiato modello nella stessa chat, è probabile che questo problema si verifichi.</value>
     </data>
 </root>

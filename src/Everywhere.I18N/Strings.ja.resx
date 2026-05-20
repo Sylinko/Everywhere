@@ -2854,6 +2854,9 @@
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>現在のシェルタイプはサポートされていないか、見つかりません。コンピュータにPowerShell、zsh、またはbashが少なくともインストールされていることを確認してください。</value>
     </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>カスタム推論強度を選択します。異なるモデルがサポートするオプションは異なるため、詳細は対応するドキュメントを参照してください。空白の場合、このパラメータはリクエストに含まれません。</value>
+    </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
         <value>思考タイプ (thinking.type)</value>
     </data>
@@ -2892,5 +2895,8 @@
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>ここから続行して再試行します。このラウンド内の既存のアシスタントメッセージは消去されません</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>モデルの深い思考内容が正しく返されませんでした。同じチャット内でモデルを切り替えた場合、この問題が発生する可能性があります。</value>
     </data>
 </root>

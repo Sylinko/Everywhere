@@ -2854,6 +2854,9 @@
     <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
         <value>Текущий тип оболочки не поддерживается или не найден, убедитесь, что на компьютере установлены PowerShell, zsh или bash.</value>
     </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>Выберите уровень усилия для рассуждений. Разные модели поддерживают разные варианты, подробности смотрите в соответствующей документации. Оставьте пустым, чтобы не включать этот параметр в запрос.</value>
+    </data>
     <data name="Assistant_ThinkingType_Header" xml:space="preserve">
         <value>Тип мышления (thinking.type)</value>
     </data>
@@ -2892,5 +2895,8 @@
     </data>
     <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
         <value>Продолжить и повторить с этого места, не очищая уже существующие сообщения помощника в этом раунде</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>Содержимое глубоких размышлений модели не было корректно возвращено. Если вы переключали модели в одном и том же чате, это может вызвать данную проблему.</value>
     </data>
 </root>
