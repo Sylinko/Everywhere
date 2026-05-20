@@ -113,7 +113,7 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
 
     [KernelFunction("search_files")]
     [Description("Search files using Everything search engine.")]
-    [DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header)]
+    [DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header, LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
     private async Task<string> SearchFilesAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Standard search pattern in Everything search engine.")] string searchPattern,

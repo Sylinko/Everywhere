@@ -37,6 +37,7 @@
         <ListBox.Styles>
           <Style Selector="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
             <Style Selector="^:not(:pointerover) LucideIcon#GripIcon">
               <Setter Property="IsVisible" Value="False"/>
             </Style>

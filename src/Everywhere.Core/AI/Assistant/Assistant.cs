@@ -91,7 +91,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_RequestTimeoutSeconds_Header,
         LocaleKey.Assistant_RequestTimeoutSeconds_Description)]
-    [SettingsItem(Group = "Advanced")]
+    [SettingsItem(Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsIntegerItem(IsSliderVisible = false)]
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
@@ -99,14 +99,14 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsDoubleItem(Min = 0.0, Max = 2.0, Step = 0.01)]
     public Customizable<double> Temperature { get; } = new(1.0);
 
     [DynamicResourceKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsDoubleItem(Min = 0.0, Max = 1.0, Step = 0.01)]
     public Customizable<double> TopP { get; } = new(0.9);
 
@@ -115,7 +115,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_OpenAIOptions_Header,
         LocaleKey.Assistant_OpenAIOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsItems]
     public OpenAIOptions OpenAIOptions { get; } = new();
 
@@ -124,7 +124,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_OpenAIResponsesOptions_Header,
         LocaleKey.Assistant_OpenAIResponsesOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsItems]
     public OpenAIResponsesOptions OpenAIResponsesOptions { get; } = new();
 
@@ -133,7 +133,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_AnthropicOptions_Header,
         LocaleKey.Assistant_AnthropicOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsItems]
     public AnthropicOptions AnthropicOptions { get; } = new();
 
@@ -142,7 +142,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicResourceKey(
         LocaleKey.Assistant_GoogleOptions_Header,
         LocaleKey.Assistant_GoogleOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = "Advanced")]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Assistant_ConfiguratorSelector_Advanced)]
     [SettingsItems]
     public GoogleOptions GoogleOptions { get; } = new();
 

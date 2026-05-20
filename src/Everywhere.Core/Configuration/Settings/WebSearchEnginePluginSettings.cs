@@ -84,7 +84,7 @@ public sealed partial class OfficialWebSearchEngineProvider : ObservableObject, 
     public OfficialWebSearchEngineSettings Settings { get; } = new();
 
     [DynamicResourceKey(LocaleKey.Empty)]
-    [SettingsItem(Classes = ["Ghost"])]
+    [SettingsItem(Classes = ["Ghost", "NoHeading"])]
     public SettingsControl<OfficialWebSearchProviderSettingsControl> SettingsControl =>
         new(x => new OfficialWebSearchProviderSettingsControl(x, Settings));
 

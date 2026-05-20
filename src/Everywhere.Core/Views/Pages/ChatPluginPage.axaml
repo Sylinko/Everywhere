@@ -1,13 +1,11 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.Pages.ChatPluginPage" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:in="clr-namespace:Everywhere.Interactions"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:p="clr-namespace:Everywhere.Chat.Plugins"
   xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" d:DesignHeight="450"
-  d:DesignWidth="800" x:Name="Self"
-  x:DataType="vm:ChatPluginPageViewModel" mc:Ignorable="d">
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="vm:ChatPluginPageViewModel">
   <UserControl.Resources>
     <vc:LogLevelToBrushConverter
       x:Key="LogLevelToBrushConverter"
@@ -119,13 +117,13 @@
   </UserControl.Styles>
 
   <shadui:NavigationView
-    MaxWidth="1600"
+    Padding="24,0,24,20"
     PageTransition="{x:Null}"
     PaneWidth="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}">
     <shadui:NavigationView.PaneHeader>
       <DockPanel
-        Height="36" Margin="0,0,0,8">
+        Height="36" Margin="0,14,0,8">
         <TextBlock
           Classes="h4" DockPanel.Dock="Left"
           VerticalAlignment="Center"
@@ -158,7 +156,7 @@
         <TabControl.Template>
           <ControlTemplate TargetType="TabControl">
             <Grid
-              RowDefinitions="Auto,*" RowSpacing="8">
+              RowDefinitions="Auto,*" RowSpacing="12">
               <DockPanel
                 Grid.Row="0" HorizontalSpacing="8"
                 LastChildFill="True">
@@ -226,27 +224,30 @@
 
     <shadui:NavigationView.Header>
       <!--  To fix header height changing issue  -->
-      <Border Height="36">
-        <shadui:ButtonGroup
+      <Border
+        Height="36" Margin="0,14,12,14">
+        <StackPanel
           HorizontalAlignment="Right" VerticalAlignment="Center"
           IsVisible="{Binding SelectedMcpPlugin, Converter={x:Static ObjectConverters.IsNotNull}}"
-          Orientation="Horizontal">
+          Orientation="Horizontal" Spacing="6">
           <Button
-            Classes="Secondary"
+            Classes="Primary"
             shadui:ButtonAssist.Icon="{LucideIconContent Kind=Play}"
             shadui:ButtonAssist.ShowProgress="{Binding IsBusy}"
             Command="{Binding StartMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_StartMcpPluginButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
             Foreground="{DynamicResource SuccessColor}"
             IsVisible="{Binding !SelectedMcpPlugin?.IsRunning, TargetNullValue={x:False}}"/>
           <Button
-            Classes="Secondary"
+            Classes="Primary"
             shadui:ButtonAssist.Icon="{LucideIconContent Kind=Square}"
             shadui:ButtonAssist.ShowProgress="{Binding IsBusy}"
             Command="{Binding StopMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_StopMcpPluginButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
             Foreground="{DynamicResource WarningColor}"
             IsVisible="{Binding SelectedMcpPlugin?.IsRunning, TargetNullValue={x:False}}"/>
 
@@ -255,7 +256,8 @@
             shadui:ButtonAssist.Icon="{LucideIconContent Kind=SquarePen}"
             Command="{Binding EditMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
-            Content="{I18N {x:Static LocaleKey.ChatPluginPage_EditMcpPluginButton_Content}}"/>
+            Content="{I18N {x:Static LocaleKey.ChatPluginPage_EditMcpPluginButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"/>
 
           <Button
             Classes="Secondary"
@@ -263,16 +265,18 @@
             Command="{Binding RemoveMcpPluginCommand}"
             CommandParameter="{Binding SelectedMcpPlugin}"
             Content="{I18N {x:Static LocaleKey.ChatPluginPage_RemoveMcpPluginButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
             Foreground="{DynamicResource DestructiveColor}"/>
-        </shadui:ButtonGroup>
+        </StackPanel>
       </Border>
     </shadui:NavigationView.Header>
 
     <shadui:NavigationView.ContentTemplate>
       <DataTemplate DataType="p:ChatPlugin">
         <Grid
-          Margin="0,12,0,0" ColumnDefinitions="Auto,*"
-          RowDefinitions="Auto,Auto,*" RowSpacing="8">
+          MaxWidth="1000" Margin="0,12,0,0"
+          ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,*"
+          RowSpacing="8">
           <Image
             Grid.Row="0" Grid.Column="0"
             Width="64" Height="64"
@@ -349,7 +353,7 @@
 
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+FunctionsTabItem">
                 <DataGrid
-                  Background="{DynamicResource CardBackgroundColor}"
+                  Background="{DynamicResource SettingsItemBackgroundColor}"
                   BorderBrush="{DynamicResource BorderColor}"
                   BorderThickness="1" CanUserReorderColumns="False"
                   CanUserResizeColumns="True" CanUserSortColumns="True"

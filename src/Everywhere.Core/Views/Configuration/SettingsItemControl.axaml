@@ -277,11 +277,11 @@
                     Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
                     ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
                     <v:ConditionalContentControl.TrueContent>
-                      <ControlTemplate x:DataType="c:SettingsItem">
+                      <DataTemplate x:DataType="c:SettingsItem">
                         <v:SettingsItemsControl
                           Margin="0,16,0,0" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding Children}"/>
-                      </ControlTemplate>
+                      </DataTemplate>
                     </v:ConditionalContentControl.TrueContent>
                   </v:ConditionalContentControl>
                 </shadui:ContentExpandControl>
@@ -333,6 +333,13 @@
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!--  NoHeading  -->
+    <Style Selector="^.NoHeading">
+      <Style Selector="^ DockPanel#PART_ContentDockPanel">
+        <Setter Property="VerticalSpacing" Value="0"/>
+      </Style>
     </Style>
   </ControlTheme>
 </ResourceDictionary>

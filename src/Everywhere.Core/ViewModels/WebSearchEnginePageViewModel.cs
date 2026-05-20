@@ -27,5 +27,6 @@ public sealed partial class WebSearchEnginePageViewModel(Settings settings) : Re
         }
 
         WebSearchEngineSettings.SelectedProviderId = SelectedWebSearchEngineProvider.Id;
+        SetDefaultCommand.NotifyCanExecuteChanged();
     }
 }

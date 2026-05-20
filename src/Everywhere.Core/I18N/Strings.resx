@@ -2716,6 +2716,12 @@ Release date: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Command started at {0}, failed after {1} seconds with exit code {2}</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Search files using Everything search engine.</value>
+    </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Advanced</value>
+    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Terminal No Longer Available</value>
     </data>
