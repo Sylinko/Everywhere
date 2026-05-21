@@ -2569,6 +2569,9 @@
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Текущий</value>
     </data>
+    <data name="SystemAssistantSettings_CommonDesription" xml:space="preserve">
+        <value>Настройте помощника для автоматического именования заголовков диалогов.</value>
+    </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>Помощник по генерации заголовков</value>
     </data>
@@ -2910,5 +2913,11 @@
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Содержимое глубоких размышлений модели не было корректно возвращено. Если вы переключали модели в одном и том же чате, это может вызвать данную проблему.</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+        <value>Помощник по пониманию изображений</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Настройте помощника для понимания изображений, который будет полезен, когда основной помощник не поддерживает ввод изображений. Обратите внимание, что этот помощник должен поддерживать ввод изображений.</value>
     </data>
 </root>

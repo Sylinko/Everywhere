@@ -2569,6 +2569,9 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Actual</value>
     </data>
+    <data name="SystemAssistantSettings_CommonDesription" xml:space="preserve">
+        <value>Configura el asistente para nombrar automáticamente los títulos de las conversaciones.</value>
+    </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>Asistente de Generación de Títulos</value>
     </data>
@@ -2910,5 +2913,11 @@ Fecha de lanzamiento: {2}</value>
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>El contenido de razonamiento profundo del modelo no se ha devuelto correctamente. Si cambiaste de modelo en el mismo chat, es probable que esto cause el problema.</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+        <value>Asistente de comprensión de imágenes</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Configura el asistente para entender imágenes, útil cuando el asistente principal no admite entradas de imagen. Ten en cuenta que este asistente debe admitir entradas de imagen.</value>
     </data>
 </root>

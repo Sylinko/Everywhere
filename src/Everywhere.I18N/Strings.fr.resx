@@ -2569,6 +2569,9 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Actuel</value>
     </data>
+    <data name="SystemAssistantSettings_CommonDesription" xml:space="preserve">
+        <value>Configurer l'assistant pour nommer automatiquement les titres de conversation.</value>
+    </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>Assistant de génération de titres</value>
     </data>
@@ -2910,5 +2913,11 @@ Date de publication : {2}</value>
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Le contenu de réflexion approfondie du modèle n'a pas été renvoyé correctement. Si vous avez changé de modèle dans la même conversation, cela pourrait être la cause du problème.</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+        <value>Assistant de compréhension d'image</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Configurer l'assistant pour comprendre les images, très utile lorsque l'assistant principal ne prend pas en charge les entrées d'image. Veuillez noter que cet assistant doit prendre en charge les entrées d'image.</value>
     </data>
 </root>

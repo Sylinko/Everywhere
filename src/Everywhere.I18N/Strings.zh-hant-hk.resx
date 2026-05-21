@@ -2569,6 +2569,9 @@
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>當前</value>
     </data>
+    <data name="SystemAssistantSettings_CommonDesription" xml:space="preserve">
+        <value>配置用於對話標題自動命名的助手。</value>
+    </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>標題生成助手</value>
     </data>
@@ -2910,5 +2913,11 @@
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>模型的深度思考內容未正確回傳。如果你在同一個聊天中切換了模型，則很可能會導致此問題。</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+        <value>圖像理解助手</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>配置用於理解圖像的助手，當主助手不支持圖像輸入時非常有用。請注意此助手必須支持圖像輸入</value>
     </data>
 </root>

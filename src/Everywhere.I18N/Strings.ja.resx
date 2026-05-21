@@ -2569,6 +2569,9 @@
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>現在</value>
     </data>
+    <data name="SystemAssistantSettings_CommonDesription" xml:space="preserve">
+        <value>対話のタイトルを自動的に命名するためのアシスタントを設定します。</value>
+    </data>
     <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
         <value>タイトル生成アシスタント</value>
     </data>
@@ -2910,5 +2913,11 @@
     </data>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>モデルの深い思考内容が正しく返されませんでした。同じチャット内でモデルを切り替えた場合、この問題が発生する可能性があります。</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+        <value>画像理解アシスタント</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>画像を理解するためのアシスタントを設定します。主なアシスタントが画像入力をサポートしていない場合に非常に便利です。このアシスタントは画像入力をサポートする必要があります。</value>
     </data>
 </root>
