@@ -5,7 +5,7 @@
   xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:CustomAssistantPageViewModel"
   ClipToBounds="False">
   <shadui:NavigationView
-    Padding="24,0,0,20"
+    Padding="24,0,0,20" HeaderMaxWidth="1000"
     PageTransition="{x:Null}"
     PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedCustomAssistant, Mode=TwoWay}">
@@ -85,7 +85,7 @@
 
     <shadui:NavigationView.Header>
       <StackPanel
-        Margin="0,14,12,14" HorizontalAlignment="Right"
+        Margin="0,14,0,14" HorizontalAlignment="Right"
         IsVisible="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
         Orientation="Horizontal" Spacing="6">
         <Button

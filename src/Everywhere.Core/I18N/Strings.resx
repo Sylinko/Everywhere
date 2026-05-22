@@ -2854,4 +2854,16 @@ Release date: {2}</value>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value />
     </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value />
+    </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value />
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value />
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value />
+    </data>
 </root>

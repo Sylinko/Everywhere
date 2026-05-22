@@ -2855,4 +2855,16 @@
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>非稳定版通道包含第一时间推出的新功能和错误修复，但可能不够稳定。</value>
     </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value>附件</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>行为</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value>显示</value>
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>运行以获取工具列表</value>
+    </data>
 </root>

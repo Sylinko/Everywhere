@@ -6,7 +6,7 @@
     TargetType="v:SettingsGroupPanel">
     <Setter Property="Template">
       <ControlTemplate>
-        <StackPanel Spacing="16">
+        <StackPanel Spacing="12">
           <TextBlock
             IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
             Text="{TemplateBinding Header}"/>

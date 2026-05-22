@@ -24,6 +24,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_WindowPinMode_Header,
         LocaleKey.ChatWindowSettings_WindowPinMode_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
     public partial ChatWindowPinMode WindowPinMode { get; set; }
 
     /// <summary>
@@ -33,16 +34,8 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_TemporaryChatMode_Header,
         LocaleKey.ChatWindowSettings_TemporaryChatMode_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
     public partial TemporaryChatMode TemporaryChatMode { get; set; }
-
-    /// <summary>
-    /// When enabled, automatically add focused element as attachment when opening chat window.
-    /// </summary>
-    [ObservableProperty]
-    [DynamicResourceKey(
-        LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Header,
-        LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Description)]
-    public partial bool AutomaticallyAddElement { get; set; } = true;
 
     /// <summary>
     /// When enabled, automatically generate chat title based on the content of the first message.
@@ -51,13 +44,24 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_AutomaticallyGenerateTitle_Header,
         LocaleKey.ChatWindowSettings_AutomaticallyGenerateTitle_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
     public partial bool AutomaticallyGenerateTitle { get; set; } = true;
+
+    /// <summary>
+    /// When enabled, automatically add focused element as attachment when opening chat window.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicResourceKey(
+        LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Header,
+        LocaleKey.ChatWindowSettings_AutomaticallyAddElement_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
+    public partial bool AutomaticallyAddElement { get; set; } = true;
 
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_AutomaticallyAddTextSelection_Header,
         LocaleKey.ChatWindowSettings_AutomaticallyAddTextSelection_Description)]
-    [SettingsItem(IsExperimental = true)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment, IsExperimental = true)]
     public partial bool AutomaticallyAddTextSelection { get; set; }
 
     /// <summary>
@@ -67,6 +71,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Header,
         LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
     public partial bool AlwaysStartNewChat { get; set; }
 
     /// <summary>
@@ -76,11 +81,13 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_ShowChatStatistics_Header,
         LocaleKey.ChatWindowSettings_ShowChatStatistics_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
     public partial bool ShowChatStatistics { get; set; } = true;
 
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_EnableVisualElementPickAnimation_Header,
         LocaleKey.ChatWindowSettings_EnableVisualElementPickAnimation_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
     public bool EnableVisualElementPickAnimation
     {
         get;
@@ -93,6 +100,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.ChatWindowSettings_EnableVisualContextAnimation_Header,
         LocaleKey.ChatWindowSettings_EnableVisualContextAnimation_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Display)]
     public bool EnableVisualContextAnimation
     {
         get;

@@ -41,12 +41,15 @@
                 <Setter Property="CornerRadius" Value="0"/>
                 <Setter Property="Margin" Value="0,-1,0,0"/>
 
-                <Style Selector="^:nth-child(1)">
+                <Style Selector="^:group-first">
                   <Setter Property="CornerRadius" Value="12,12,0,0"/>
                   <Setter Property="Margin" Value="0"/>
                 </Style>
-                <Style Selector="^:nth-last-child(1)">
+                <Style Selector="^:group-last">
                   <Setter Property="CornerRadius" Value="0,0,12,12"/>
+                </Style>
+                <Style Selector="^:group-first:group-last">
+                  <Setter Property="CornerRadius" Value="12"/>
                 </Style>
               </Style>
             </v:SettingsGroupPanel.Styles>

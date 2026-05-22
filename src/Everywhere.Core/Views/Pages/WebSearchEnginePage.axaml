@@ -78,8 +78,8 @@
 
     <shadui:NavigationView.Header>
       <Grid
-        Margin="0,24,0,0" ColumnDefinitions="Auto,Auto,Auto,*,Auto"
-        ColumnSpacing="4"
+        Height="36" Margin="0,14,0,14"
+        ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="4"
         IsVisible="{Binding SelectedWebSearchEngineProvider, Converter={x:Static ObjectConverters.IsNotNull}}">
         <Image
           Grid.Column="0"

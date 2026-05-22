@@ -2,32 +2,31 @@
   x:Class="Everywhere.Views.Pages.SettingsCategoryPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:p="clr-namespace:Everywhere.Views.Pages"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  x:Name="Self" Margin="0,16,0,0">
-  <DockPanel
-    MaxWidth="1000" LastChildFill="True"
-    VerticalSpacing="16">
-    <!--  Navigation Bar  -->
+  x:Name="Self" Margin="0,16,0,0"
+  ClipToBounds="False">
+  <DockPanel VerticalSpacing="16">
     <DockPanel
-      Dock="Top" HorizontalSpacing="4">
+      MaxWidth="1018" Dock="Top"
+      HorizontalSpacing="8">
       <!--  Back Button  -->
       <Button
         Classes="Ghost Compact Uniform" DockPanel.Dock="Left"
         Width="36" Height="36"
-        VerticalAlignment="Center"
+        Margin="-10,0,0,0" VerticalAlignment="Center"
         Command="{Binding $parent[v:MainView].ViewModel.NavigateToTypeCommand}"
         CommandParameter="{x:Type p:SettingsPage}">
         <PathIcon Data="{x:Static shadui:Icons.ChevronLeft}"/>
       </Button>
 
       <TextBlock
-        Classes="h4" DockPanel.Dock="Top"
-        VerticalAlignment="Center" ClipToBounds="False"
+        Classes="h4" VerticalAlignment="Center"
         Text="{Binding #Self.TitleKey^}"/>
     </DockPanel>
 
     <ScrollViewer
       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <v:SettingsItemsControl
+        MaxWidth="1000" Margin="0,0,16,16"
         HorizontalAlignment="Stretch"
         ItemsSource="{Binding #Self.SettingItems}"/>
     </ScrollViewer>
