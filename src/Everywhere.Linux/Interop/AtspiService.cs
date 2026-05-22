@@ -2,13 +2,16 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
-using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.Interop;
+using GObject;
+using GObject.Internal;
+using Microsoft.Extensions.Logging;
+using Functions = GLib.Functions;
 using GObj = GObject.Object;
 using GObjHandle = GObject.Internal.ObjectHandle;
-using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Linux.Interop;
 
@@ -32,7 +35,7 @@ public sealed partial class AtspiService
     public AtspiService(IWindowBackend backend)
     {
         _windowBackend = backend;
-        GObject.Module.Initialize();
+        Module.Initialize();
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AT_SPI_BUS")))
             Environment.SetEnvironmentVariable("AT_SPI_BUS", "session");
 
@@ -126,7 +129,7 @@ public sealed partial class AtspiService
 
         var rectPtr = atspi_component_get_extents(elem.Handle, (int)AtspiCoordType.Screen, IntPtr.Zero);
         var rect = Marshal.PtrToStructure<AtspiRect>(rectPtr);
-        GLib.Functions.Free(rectPtr);
+        Functions.Free(rectPtr);
         return new PixelRect(rect.x, rect.y, rect.width, rect.height);
     }
 
@@ -656,7 +659,7 @@ public sealed partial class AtspiService
             }
         }
 
-        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
+        public Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken)
         {
             var rect = BoundingRectangle;
             if (OwnerWindow != null)
@@ -693,7 +696,7 @@ public sealed partial class AtspiService
     {
         public static T Wrap<T>(IntPtr handle, bool owned) where T : GObj
         {
-            return (T)GObject.Internal.InstanceWrapper.WrapHandle<T>(handle, owned);
+            return (T)InstanceWrapper.WrapHandle<T>(handle, owned);
         }
 
         public static GObj? WrapAllowNull(IntPtr handle, bool owned = true)

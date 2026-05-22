@@ -1,20 +1,20 @@
 ﻿using Avalonia;
 using Avalonia.Platform;
-using Everywhere.Interop;
 using X11;
 
 namespace Everywhere.Linux.Interop.X11Backend;
 
-using System;
-
-public class X11CapturedBitmapData(XImage xImage) : IVisualElement.ICapturedBitmapData
+public class X11CapturedBitmapData(XImage xImage) : ILockedFramebuffer
 {
-    public PixelFormat Format { get; } = DeterminePixelFormat(xImage);
-    public AlphaFormat AlphaFormat { get; } = xImage.depth == 32 ? AlphaFormat.Unpremul : AlphaFormat.Opaque;
-    public nint Data => _xImage.data;
+    public nint Address => _xImage.data;
+
     public PixelSize Size { get; } = new(xImage.width, xImage.height);
+
+    public int RowBytes => _xImage.bytes_per_line;
+
     public Vector Dpi { get; } = new(96, 96);
-    public int Stride => _xImage.bytes_per_line;
+
+    public PixelFormat Format { get; } = DeterminePixelFormat(xImage);
 
     private XImage _xImage = xImage;
     private bool _disposed;

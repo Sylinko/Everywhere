@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Platform;
 using Everywhere.Interop;
 using X11;
 using X11Window = X11.Window;
@@ -31,7 +32,7 @@ public abstract class X11VisualElementBase(X11WindowBackend backend) : IVisualEl
 
     public virtual void SendShortcut(KeyboardShortcut shortcut) { }
 
-    public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken) =>
+    public Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken) =>
         Task.FromResult(_backend.Screenshot.Capture((X11Window)NativeWindowHandle, BoundingRectangle.WithX(0).WithY(0))).WaitAsync(cancellationToken);
 }
 

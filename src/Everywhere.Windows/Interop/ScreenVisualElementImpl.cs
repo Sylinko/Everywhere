@@ -2,6 +2,7 @@
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
+using Avalonia.Platform;
 using Everywhere.Interop;
 
 namespace Everywhere.Windows.Interop;
@@ -101,11 +102,11 @@ public partial class VisualElementContext
 
         public string? GetSelectionText() => null;
 
-        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
+        public Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken)
         {
             return CaptureScreen(BoundingRectangle) is not { } bitmap ?
                 throw new InvalidOperationException("Failed to capture screen.") :
-                Task.FromResult<IVisualElement.ICapturedBitmapData>(bitmap);
+                Task.FromResult<ILockedFramebuffer>(bitmap);
         }
 
         private sealed class SiblingAccessorImpl(ScreenVisualElementImpl visualElement) : VisualElementSiblingAccessor

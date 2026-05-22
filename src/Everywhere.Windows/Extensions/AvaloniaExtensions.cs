@@ -1,9 +1,10 @@
 ﻿using Windows.Win32.UI.Input.KeyboardAndMouse;
+using Avalonia;
 using Avalonia.Input;
 
 namespace Everywhere.Windows.Extensions;
 
-internal static class AvaloniaExtension
+internal static class AvaloniaExtensions
 {
     public static Key ToAvaloniaKey(this VIRTUAL_KEY key) => key switch
     {

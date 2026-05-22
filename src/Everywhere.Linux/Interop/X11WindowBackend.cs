@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Input;
+using Avalonia.Platform;
 using Everywhere.Interop;
 using Everywhere.Linux.Interop.X11Backend;
 using Microsoft.Extensions.Logging;
@@ -89,7 +90,7 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
         return target != X11Window.None ? GetWindowElement(target) : null;
     }
 
-    public IVisualElement.ICapturedBitmapData Capture(IVisualElement? window, PixelRect rect)
+    public ILockedFramebuffer Capture(IVisualElement? window, PixelRect rect)
     {
         var handle = window?.NativeWindowHandle != null ? (X11Window)window.NativeWindowHandle : Context.RootWindow;
         return Screenshot.Capture(handle, rect);

@@ -257,30 +257,7 @@ public interface IVisualElement
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Gets a pointer to the bitmap data of the visual element along with metadata.
-    /// </summary>
-    interface ICapturedBitmapData : IDisposable
-    {
-        PixelFormat Format { get; }
-
-        AlphaFormat AlphaFormat { get; }
-
-        nint Data { get; }
-
-        // TODO: actual bounds to solve ghoat window issues
-
-        /// <summary>
-        /// The actual size of the captured bitmap data. May not equal to CaptureRect.Size due to scaling.
-        /// </summary>
-        PixelSize Size { get; }
-
-        Vector Dpi { get; }
-
-        int Stride { get; }
-    }
+    Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken);
 }
 
 public static class VisualElementExtension
@@ -315,7 +292,7 @@ public static class VisualElementExtension
         }
     }
 
-    extension(IVisualElement.ICapturedBitmapData data)
+    extension(ILockedFramebuffer data)
     {
         /// <summary>
         /// Converts the captured bitmap data into an Avalonia Bitmap object.
@@ -328,11 +305,11 @@ public static class VisualElementExtension
                 null :
                 new Bitmap(
                     data.Format,
-                    data.AlphaFormat,
-                    data.Data,
+                    AlphaFormat.Premul,
+                    data.Address,
                     pixelSize,
                     data.Dpi,
-                    data.Stride);
+                    data.RowBytes);
         }
 
         /// <summary>
@@ -345,9 +322,9 @@ public static class VisualElementExtension
             var pixelSize = data.Size;
             if (pixelSize.Width <= 0 || pixelSize.Height <= 0) return null;
 
-            var info = new SKImageInfo(pixelSize.Width, pixelSize.Height, ToSkColorType(data.Format), ToSkAlphaType(data.AlphaFormat));
-            using var skData = SKData.CreateCopy(data.Data, data.Stride * pixelSize.Height);
-            return SKImage.FromPixels(info, skData, data.Stride);
+            var info = new SKImageInfo(pixelSize.Width, pixelSize.Height, ToSkColorType(data.Format), SKAlphaType.Premul);
+            using var skData = SKData.CreateCopy(data.Address, data.RowBytes * pixelSize.Height);
+            return SKImage.FromPixels(info, skData, data.RowBytes);
 
             static SKColorType ToSkColorType(PixelFormat fmt)
             {
@@ -360,17 +337,6 @@ public static class VisualElementExtension
                 if (fmt == PixelFormat.Rgb32)
                     return SKColorType.Rgb888x;
                 throw new ArgumentException("Unknown pixel format: " + fmt);
-            }
-
-            static SKAlphaType ToSkAlphaType(AlphaFormat fmt)
-            {
-                return fmt switch
-                {
-                    AlphaFormat.Premul => SKAlphaType.Premul,
-                    AlphaFormat.Unpremul => SKAlphaType.Unpremul,
-                    AlphaFormat.Opaque => SKAlphaType.Opaque,
-                    _ => throw new ArgumentException($"Unknown alpha format: {fmt}")
-                };
             }
         }
     }

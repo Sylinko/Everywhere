@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 using Everywhere.Interop;
 
 namespace Everywhere.Linux.Interop;
@@ -29,7 +30,7 @@ public interface IWindowBackend : IWindowHelper, IObservable<TextSelectionData>
     /// <param name="window">capture target, full screen(root window used) if not given</param>
     /// <param name="rect">captured rect relative to window</param>
     /// <returns></returns>
-    IVisualElement.ICapturedBitmapData Capture(IVisualElement? window, PixelRect rect);
+    ILockedFramebuffer Capture(IVisualElement? window, PixelRect rect);
 
     void SetPickerWindow(Window? window);
 }

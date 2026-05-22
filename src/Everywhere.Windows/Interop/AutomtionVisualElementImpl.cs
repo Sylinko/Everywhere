@@ -8,6 +8,7 @@ using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
+using Avalonia.Platform;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 using Interop.UIAutomationClient;
@@ -505,7 +506,7 @@ public partial class VisualElementContext
         }
 
         // BUG: For a minimized window, the captured image is buggy (but child elements are fine).
-        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
+        public Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken)
         {
             var rect = BoundingRectangle;
             if (rect.Width <= 0 || rect.Height <= 0)

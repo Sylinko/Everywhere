@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Platform;
 using CoreFoundation;
 using Everywhere.Interop;
 using ObjCRuntime;
@@ -242,14 +243,14 @@ public partial class AXUIElement : NSObject, IVisualElement
     /// <returns></returns>
     public string? GetSelectionText() => GetAttribute<NSObject>(AXAttributeConstants.SelectedText)?.ToString();
 
-    public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
+    public Task<ILockedFramebuffer> CaptureAsync(CancellationToken cancellationToken)
     {
         var bounds = BoundingRectangle;
         var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
 
         if (rect.Width < 1f && rect.Height < 1f)
         {
-            return Task.FromResult<IVisualElement.ICapturedBitmapData>(CapturedBitmapData.Empty);
+            return Task.FromResult<ILockedFramebuffer>(CapturedBitmapData.Empty);
         }
 
         // we use CGSHWCaptureWindowList because it can screenshot minimized windows, which CGWindowListCreateImage can't
@@ -263,7 +264,7 @@ public partial class AXUIElement : NSObject, IVisualElement
 
         if (cgImage is null)
         {
-            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to capture screen image."));
+            return Task.FromException<ILockedFramebuffer>(new InvalidOperationException("Failed to capture screen image."));
         }
 
         var screen = NSScreen.Screens.FirstOrDefault(s => s.Frame.IntersectsWith(rect));
@@ -313,10 +314,10 @@ public partial class AXUIElement : NSObject, IVisualElement
 
         if (croppedImage is null)
         {
-            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to crop image."));
+            return Task.FromException<ILockedFramebuffer>(new InvalidOperationException("Failed to crop image."));
         }
 
-        return Task.FromResult<IVisualElement.ICapturedBitmapData>(new CapturedBitmapData(croppedImage, scale));
+        return Task.FromResult<ILockedFramebuffer>(new CapturedBitmapData(croppedImage, scale));
     }
 
     public bool SetAttribute(NSString attributeName, NSObject value)

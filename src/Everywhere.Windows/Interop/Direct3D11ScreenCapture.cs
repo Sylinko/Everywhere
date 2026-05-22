@@ -31,14 +31,13 @@ using Visual = Windows.UI.Composition.Visual;
 
 namespace Everywhere.Windows.Interop;
 
-public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBitmapData
+public sealed partial class Direct3D11ScreenCapture : ILockedFramebuffer
 {
-    public PixelFormat Format => PixelFormat.Bgra8888;
-    public AlphaFormat AlphaFormat => AlphaFormat.Premul;
-    public nint Data { get; private set; }
+    public nint Address { get; private set; }
     public PixelSize Size { get; private set; }
+    public int RowBytes { get; private set; }
     public Vector Dpi => new(96, 96);
-    public int Stride { get; private set; }
+    public PixelFormat Format => PixelFormat.Bgra8888;
 
     private readonly ID3D11Device? _d3D11Device;
     private readonly IDirect3DDevice? _direct3DDevice;
@@ -208,8 +207,8 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBi
                     return;
                 }
 
-                Data = mapBox.DataPointer;
-                Stride = (int)mapBox.RowPitch;
+                Address = mapBox.DataPointer;
+                RowBytes = (int)mapBox.RowPitch;
                 Size = new PixelSize((int)desc.Width, (int)desc.Height);
 
                 tcs.TrySetResult();
@@ -231,7 +230,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBi
         if (_disposed) return;
         _disposed = true;
 
-        if (Data != 0 && _d3D11Device is not null && _stagingTexture is not null)
+        if (Address != 0 && _d3D11Device is not null && _stagingTexture is not null)
         {
             _d3D11Device.ImmediateContext.Unmap(_stagingTexture, 0);
         }
@@ -256,7 +255,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBi
         });
     }
 
-    public static async Task<IVisualElement.ICapturedBitmapData> CaptureAsync(
+    public static async Task<ILockedFramebuffer> CaptureAsync(
         nint sourceHWnd,
         PixelRect relativeRect,
         CancellationToken cancellationToken = default)

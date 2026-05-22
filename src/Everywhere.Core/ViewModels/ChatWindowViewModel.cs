@@ -16,11 +16,13 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.Media;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
 using Everywhere.Views;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZLinq;
 
@@ -109,6 +111,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
     private readonly IChatWindowNotificationService _notificationService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
     private readonly DynamicResourceKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_Watermark);
@@ -131,6 +134,7 @@ public sealed partial class ChatWindowViewModel :
         IBlobStorage blobStorage,
         IStrategyEngine strategyEngine,
         IGreetings greetings,
+        IServiceProvider serviceProvider,
         ILogger<ChatWindowViewModel> logger)
     {
         Settings = settings;
@@ -144,6 +148,7 @@ public sealed partial class ChatWindowViewModel :
         _strategyEngine = strategyEngine;
         _greetings = greetings;
         _notificationService = notificationService;
+        _serviceProvider = serviceProvider;
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
@@ -513,12 +518,14 @@ public sealed partial class ChatWindowViewModel :
 
             ToastHost
                 .CreateToast(LocaleResolver.Common_Error)
-                .WithContent(ex.GetFriendlyMessage().ToTextBlock())
+                .WithContent(ex.GetFriendlyMessage())
                 .DismissOnClick()
                 .OnBottomRight()
                 .ShowError();
             return;
         }
+
+        await TryPerformOcrAsync(attachment, cancellationToken);
 
         _chatAttachmentsSource.Add(attachment);
     }
@@ -551,11 +558,45 @@ public sealed partial class ChatWindowViewModel :
         bitmap.Save(memoryStream, 100);
 
         var blob = await _blobStorage.StorageBlobAsync(memoryStream, "image/png", cancellationToken: cancellationToken);
-        return new FileAttachment(
+        var fileAttachment = new FileAttachment(
             new DynamicResourceKey(string.Empty),
             blob.LocalPath,
             blob.Sha256,
             blob.MimeType);
+
+        await TryPerformOcrAsync(fileAttachment, cancellationToken);
+
+        return fileAttachment;
+    }
+
+    private async ValueTask TryPerformOcrAsync(FileAttachment fileAttachment, CancellationToken cancellationToken)
+    {
+        if (fileAttachment.IsImage && _serviceProvider.GetService<IOcrEngine>() is { IsSupported: true } ocrEngine)
+        {
+            try
+            {
+                var ocrResult = await Task.Run(() => ocrEngine.RecognizeAsync(fileAttachment.FilePath, cancellationToken), cancellationToken);
+
+                // var ocrResultBuilder = new StringBuilder().AppendLine("OCR result may be inaccurate:");
+                // foreach (var line in ocrResult.Lines)
+                // {
+                //     ocrResultBuilder
+                //         .Append("<line box=") // Not legal XML but save tokens
+                //         .Append(line.BoundingRect)
+                //         .Append('>')
+                //         .Append(line.Text)
+                //         .AppendLine("</line>");
+                // }
+
+                (fileAttachment.Metadata ??= [])["OCR"] = $"OCR result may be inaccurate:\n{ocrResult.Text}";
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ex = HandledSystemException.Handle(ex);
+                _logger.LogError(ex, "Failed to perform OCR on image attachment {FilePath}", fileAttachment.FilePath);
+            }
+        }
     }
 
     [RelayCommand]

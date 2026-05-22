@@ -239,7 +239,8 @@ public sealed partial class FileAttachment(
     string filePath,
     string sha256,
     string mimeType,
-    string? description = null
+    string? description = null,
+    MetadataDictionary? metadata = null
 ) : ChatAttachment(headerKey)
 {
     public override LucideIconKind Icon => LucideIconKind.File;
@@ -267,6 +268,9 @@ public sealed partial class FileAttachment(
     /// </summary>
     [Key(4)]
     public string? Description { get; set; } = description;
+
+    [Key(5)]
+    public MetadataDictionary? Metadata { get; set; } = metadata;
 
     [JsonIgnore]
     [IgnoreMember]
@@ -355,7 +359,7 @@ public sealed partial class FileAttachment(
         string filePath,
         string? mimeType = null,
         string? description = null,
-        long maxBytesSize = 25L * 1024 * 1024,
+        long maxBytesSize = 10L * 1024 * 1024,
         CancellationToken cancellationToken = default) => Task.Run(
         async () =>
         {

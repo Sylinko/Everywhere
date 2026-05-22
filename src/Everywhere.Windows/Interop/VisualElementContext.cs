@@ -175,14 +175,13 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
     /// A disposable wrapper that holds a System.Drawing.Bitmap and its locked BitmapData.
     /// Exposes the raw memory pointer to be consumed by other rendering engines (like Avalonia or Skia).
     /// </summary>
-    private sealed class Win32CapturedBitmapData : IVisualElement.ICapturedBitmapData
+    private sealed class Win32CapturedBitmapData : ILockedFramebuffer
     {
-        public Avalonia.Platform.PixelFormat Format { get; }
-        public AlphaFormat AlphaFormat { get; }
-        public nint Data => _bitmapData?.Scan0 ?? IntPtr.Zero;
+        public nint Address => _bitmapData?.Scan0 ?? IntPtr.Zero;
         public PixelSize Size { get; }
+        public int RowBytes => _bitmapData?.Stride ?? 0;
         public Vector Dpi { get; }
-        public int Stride => _bitmapData?.Stride ?? 0;
+        public Avalonia.Platform.PixelFormat Format => Avalonia.Platform.PixelFormat.Bgra8888;
 
         private readonly System.Drawing.Bitmap _gdiBitmap;
         private BitmapData? _bitmapData;
@@ -201,10 +200,6 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
 
             Size = new PixelSize(_gdiBitmap.Width, _gdiBitmap.Height);
             Dpi = dpi;
-
-            // Format32bppArgb maps directly to Bgra8888 on little-endian Windows
-            Format = Avalonia.Platform.PixelFormat.Bgra8888;
-            AlphaFormat = AlphaFormat.Opaque;
         }
 
         ~Win32CapturedBitmapData()

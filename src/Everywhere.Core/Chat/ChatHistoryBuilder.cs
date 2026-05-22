@@ -1,4 +1,5 @@
 ﻿using System.Security;
+using System.Text;
 using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Utilities;
@@ -274,6 +275,8 @@ public static class ChatHistoryBuilder
             }
             case FileAttachment file:
             {
+                var contentBuilder = new StringBuilder();
+
                 var fileInfo = new FileInfo(file.FilePath);
                 if (!fileInfo.Exists)
                 {
@@ -285,9 +288,9 @@ public static class ChatHistoryBuilder
                     contents.Add(GetOmittedContent("file is empty"));
                     break;
                 }
-                if (fileInfo.Length > 25 * 1024 * 1024) // TODO: Configurable max file size?
+                if (fileInfo.Length > 10 * 1024 * 1024) // TODO: Configurable max file size?
                 {
-                    contents.Add(GetOmittedContent($"file size {fileInfo.Length} exceeds the maximum supported size 25MB"));
+                    contents.Add(GetOmittedContent($"file size {fileInfo.Length} exceeds the maximum supported size 10MB"));
                     break;
                 }
                 if (!supportedModalities.SupportsMimeType(file.MimeType))
@@ -310,14 +313,19 @@ public static class ChatHistoryBuilder
                     // Just log the error and continue.
                     ex = HandledSystemException.Handle(ex, true); // treat all as expected
                     Log.ForContext(typeof(ChatHistoryBuilder)).Warning(ex, "Failed to read attachment file '{FilePath}'", file.FilePath);
-                    return;
+
+                    contents.Add(GetOmittedContent($"failed to read the file: {ex.Message}"));
+                    break;
                 }
 
                 contents.Add(
                     new TextContent(
-                        $"""
-                         <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-                         """));
+                        AppendMetadata(
+                            contentBuilder
+                                .Append("<Attachment type=\"file\" path=\"").Append(SecurityElement.Escape(file.FilePath))
+                                .Append("\" mimeType=\"").Append(SecurityElement.Escape(file.MimeType))
+                                .Append("\" description=\"").Append(SecurityElement.Escape(file.Description))
+                                .Append("\">")).ToString()));
                 contents.Add(
                     FileUtilities.GetCategory(file.MimeType) switch
                     {
@@ -328,12 +336,30 @@ public static class ChatHistoryBuilder
                 contents.Add(new TextContent("</Attachment>"));
                 break;
 
+                StringBuilder AppendMetadata(StringBuilder stringBuilder)
+                {
+                    if (file.Metadata is not { Count: > 0 } metadata) return stringBuilder;
+
+                    foreach (var (key, value) in metadata)
+                    {
+                        stringBuilder.Append('<').Append(key).Append('>')
+                            .Append(value)
+                            .Append("</").Append(key).Append('>');
+                    }
+
+                    return stringBuilder;
+                }
+
                 TextContent GetOmittedContent(string reason) => new(
-                    $"""
-                     <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
-                     Content omitted because {reason}
-                     </Attachment>
-                     """);
+                    AppendMetadata(
+                            contentBuilder
+                                .Append("<Attachment type=\"file\" path=\"").Append(SecurityElement.Escape(file.FilePath))
+                                .Append("\" mimeType=\"").Append(SecurityElement.Escape(file.MimeType))
+                                .Append("\" description=\"").Append(SecurityElement.Escape(file.Description))
+                                .AppendLine("\">"))
+                        .Append("Content omitted because ").Append(reason)
+                        .Append("</Attachment>")
+                        .ToString());
             }
         }
     }
