@@ -2839,6 +2839,9 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>有効にすると、すべてのターミナル操作が自動的に承認され、手動での承認は不要になります。不適切な呼び出しは深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性があります。このオプションを有効にすることは、リスクを評価し、自己責任で行うことを意味します。</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>ターミナルで実行</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>スクリプトの実行に失敗しました: {0}</value>
     </data>
@@ -2916,5 +2919,11 @@
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>画像を理解するためのアシスタントを設定します。主なアシスタントが画像入力をサポートしていない場合に非常に便利です。このアシスタントは画像入力をサポートする必要があります。</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>コマンドは {0} にて実行を開始し、{1} 秒後に成功しました</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>コマンドは {0} にて実行を開始し、{1} 秒後に失敗しました。終了コードは {2} です</value>
     </data>
 </root>
