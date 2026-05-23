@@ -6,7 +6,9 @@ public interface IOcrEngine
 {
     bool IsSupported { get; }
 
-    Task<OcrResult> RecognizeAsync(string filePath, CancellationToken cancellationToken = default);
+    IReadOnlyList<LocaleName> SupportedLocales { get; }
 
-    Task<OcrResult> RecognizeAsync(Bitmap bitmap, CancellationToken cancellationToken = default);
+    Task<OcrResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default);
+
+    Task<OcrResult> RecognizeAsync(Bitmap bitmap, LocaleName locale, CancellationToken cancellationToken = default);
 }

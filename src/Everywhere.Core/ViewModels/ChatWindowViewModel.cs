@@ -1,6 +1,7 @@
 using System.Diagnostics.Metrics;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Text;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
@@ -575,20 +576,23 @@ public sealed partial class ChatWindowViewModel :
         {
             try
             {
-                var ocrResult = await Task.Run(() => ocrEngine.RecognizeAsync(fileAttachment.FilePath, cancellationToken), cancellationToken);
+                var ocrResult = await Task.Run(
+                    () => ocrEngine.RecognizeAsync(fileAttachment.FilePath, LocaleManager.CurrentLocale, cancellationToken),
+                    cancellationToken);
 
-                // var ocrResultBuilder = new StringBuilder().AppendLine("OCR result may be inaccurate:");
-                // foreach (var line in ocrResult.Lines)
-                // {
-                //     ocrResultBuilder
-                //         .Append("<line box=") // Not legal XML but save tokens
-                //         .Append(line.BoundingRect)
-                //         .Append('>')
-                //         .Append(line.Text)
-                //         .AppendLine("</line>");
-                // }
+                // (fileAttachment.Metadata ??= [])["OCR"] = $"Result may be inaccurate:\n{ocrResult.Text}";
 
-                (fileAttachment.Metadata ??= [])["OCR"] = $"OCR result may be inaccurate:\n{ocrResult.Text}";
+                var ocrResultBuilder = new StringBuilder().AppendLine("Result may be inaccurate:");
+                foreach (var line in ocrResult.Lines)
+                {
+                    ocrResultBuilder
+                        .Append("<line box=") // Not legal XML but save tokens
+                        .Append(line.BoundingRect)
+                        .Append('>')
+                        .Append(line.Text)
+                        .AppendLine("</line>");
+                }
+                (fileAttachment.Metadata ??= [])["OCR"] = ocrResultBuilder.ToString();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)

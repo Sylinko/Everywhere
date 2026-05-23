@@ -1,13 +1,17 @@
-﻿using Windows.Graphics.Imaging;
+﻿using System.Diagnostics.CodeAnalysis;
+using Windows.Globalization;
+using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Everywhere.I18N;
 using Everywhere.Media;
 using Everywhere.Windows.Extensions;
 using Everywhere.Windows.Interop;
+using Serilog;
 using WinRT;
 using ZLinq;
 using OcrLine = Everywhere.Media.OcrLine;
@@ -15,15 +19,39 @@ using OcrResult = Everywhere.Media.OcrResult;
 
 namespace Everywhere.Windows.Media;
 
-public class WindowsOcrEngine : IOcrEngine
+public class WinRTOcrEngine : IOcrEngine
 {
-    private readonly OcrEngine? _engine = OcrEngine.TryCreateFromUserProfileLanguages();
+    [MemberNotNullWhen(true, nameof(_availableLanguages))]
+    public bool IsSupported => _availableLanguages is { Count: > 0 };
 
-    public bool IsSupported => _engine is not null;
+    public IReadOnlyList<LocaleName> SupportedLocales { get; }
 
-    public async Task<OcrResult> RecognizeAsync(string filePath, CancellationToken cancellationToken = default)
+    private readonly IReadOnlyList<Language>? _availableLanguages;
+
+    public WinRTOcrEngine()
     {
-        if (_engine is null) throw new NotSupportedException("OCR is not supported on this system.");
+        try
+        {
+            _availableLanguages = OcrEngine.AvailableRecognizerLanguages;
+        }
+        catch (Exception ex)
+        {
+            Log.ForContext<WinRTOcrEngine>().Error(ex, "Failed to get available OCR recognizer languages. OCR will be unavailable.");
+        }
+
+        if (_availableLanguages is { Count: > 0 })
+        {
+            SupportedLocales = _availableLanguages.AsValueEnumerable().Select(WinRTExtensions.ToLocaleName).ToList();
+        }
+        else
+        {
+            SupportedLocales = [];
+        }
+    }
+
+    public async Task<OcrResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default)
+    {
+        if (!IsSupported) throw new NotSupportedException("OCR is not supported on this system.");
 
         cancellationToken.ThrowIfCancellationRequested();
         using var stream = await FileRandomAccessStream.OpenAsync(filePath, FileAccessMode.Read);
@@ -42,12 +70,12 @@ public class WindowsOcrEngine : IOcrEngine
         softwareBitmap.DpiY = decoder.DpiY;
 
         cancellationToken.ThrowIfCancellationRequested();
-        return await PerformOcrAsync(_engine, softwareBitmap);
+        return await PerformOcrAsync(locale, softwareBitmap);
     }
 
-    public async Task<OcrResult> RecognizeAsync(Bitmap bitmap, CancellationToken cancellationToken = default)
+    public async Task<OcrResult> RecognizeAsync(Bitmap bitmap, LocaleName locale, CancellationToken cancellationToken = default)
     {
-        if (_engine is null) throw new NotSupportedException("OCR is not supported on this system.");
+        if (!IsSupported) throw new NotSupportedException("OCR is not supported on this system.");
 
         // create buffer and copy image bytes
         cancellationToken.ThrowIfCancellationRequested();
@@ -96,11 +124,23 @@ public class WindowsOcrEngine : IOcrEngine
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        return await PerformOcrAsync(_engine, softwareBitmap);
+        return await PerformOcrAsync(locale, softwareBitmap);
     }
 
-    private async static ValueTask<OcrResult> PerformOcrAsync(OcrEngine engine, SoftwareBitmap bitmap)
+    private async ValueTask<OcrResult> PerformOcrAsync(LocaleName locale, SoftwareBitmap bitmap)
     {
+        var engine = OcrEngine.TryCreateFromLanguage(locale.ToWinRTLanguage());
+        if (engine is null)
+        {
+            var fallbackLanguage =
+                _availableLanguages?.FirstOrDefault(l => l.ToLocaleName() == LocaleName.En) ??
+                _availableLanguages?.FirstOrDefault();
+            if (fallbackLanguage is null) throw new NotSupportedException("No available OCR languages found.");
+
+            engine = OcrEngine.TryCreateFromLanguage(fallbackLanguage);
+            if (engine is null) throw new NotSupportedException("OCR is not supported on this system.");
+        }
+
         var result = await engine.RecognizeAsync(bitmap);
         return new OcrResult(
             result.Lines.AsValueEnumerable().Select(line => new OcrLine(

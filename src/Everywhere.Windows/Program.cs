@@ -83,7 +83,7 @@ public static class Program
 
                 #region Media
 
-                .AddSingleton<IOcrEngine, WindowsOcrEngine>()
+                .AddSingleton<IOcrEngine, WinRTOcrEngine>()
 
                 #endregion
 
