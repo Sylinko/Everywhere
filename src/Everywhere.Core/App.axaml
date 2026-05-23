@@ -26,6 +26,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatPluginUserInterfaceHost.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatTextEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ConsentDecisionCard.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/TerminalView.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Cloud/OfficialModelDefinitionForm.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Cloud/OfficialWebSearchProviderSettingsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Cloud/UserProfileCard.axaml"/>

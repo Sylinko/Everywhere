@@ -1,11 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using Everywhere.Common;
 using Everywhere.Interop;
+using Everywhere.Terminal;
 using Lucide.Avalonia;
 using MessagePack;
 using ZLinq;
@@ -27,6 +29,7 @@ namespace Everywhere.Chat.Plugins;
 [Union(8, typeof(ChatPluginSeparatorDisplayBlock))]
 [Union(9, typeof(ChatPluginCodeBlockDisplayBlock))]
 [Union(10, typeof(ChatPluginChatContextDisplayBlock))]
+[Union(11, typeof(ChatPluginTerminalDisplayBlock))]
 public abstract partial class ChatPluginDisplayBlock : ObservableObject
 {
     /// <summary>
@@ -285,4 +288,103 @@ public sealed partial class ChatPluginChatContextDisplayBlock(ChatContext chatCo
 {
     [Key(0)]
     public ChatContext ChatContext { get; } = chatContext;
+}
+
+[MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
+public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBlock
+{
+    [Key(0)]
+    public ShellType ShellType { get; }
+
+    [Key(1)]
+    public string Command { get; }
+
+    [Key(2)]
+    public DateTimeOffset CreatedAt { get; }
+
+    [Key(3)]
+    [ObservableProperty]
+    public partial string? Text { get; private set; }
+
+    [Key(4)]
+    [ObservableProperty]
+    public partial int? ExitCode { get; private set; }
+
+    [Key(5)]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Elapsed))]
+    public partial DateTimeOffset? FinishedAt { get; private set; }
+
+    [IgnoreMember]
+    public TimeSpan Elapsed => (FinishedAt ?? DateTimeOffset.UtcNow) - CreatedAt;
+
+    [IgnoreMember] private TerminalSession? _session;
+
+    public ChatPluginTerminalDisplayBlock(ShellType shellType, string command)
+    {
+        ShellType = shellType;
+        Command = command;
+        CreatedAt = DateTimeOffset.UtcNow;
+    }
+
+    [SerializationConstructor]
+    private ChatPluginTerminalDisplayBlock(ShellType shellType, string command, DateTimeOffset createdAt)
+    {
+        ShellType = shellType;
+        Command = command;
+        CreatedAt = createdAt;
+    }
+
+    public void AttachSession(TerminalSession session)
+    {
+        if (_session is not null)
+        {
+            _session.BufferChanged -= HandleSessionBufferChanged;
+        }
+
+        _session = session;
+        _session.BufferChanged += HandleSessionBufferChanged;
+        UpdateText(session.Buffer.GetText());
+    }
+
+    public async Task WriteInputAsync(string input, CancellationToken cancellationToken = default)
+    {
+        if (_session is null) return;
+        await _session.WriteInputAsync(input, cancellationToken);
+    }
+
+    public async Task WritePasteAsync(string text, CancellationToken cancellationToken = default)
+    {
+        if (_session is null) return;
+        await _session.WritePasteAsync(text, cancellationToken);
+    }
+
+    public void Complete(int? exitCode)
+    {
+        if (_session is not null)
+        {
+            _session.BufferChanged -= HandleSessionBufferChanged;
+            _session = null;
+        }
+
+        ExitCode = exitCode;
+        FinishedAt = DateTimeOffset.UtcNow;
+    }
+
+    private void HandleSessionBufferChanged(TerminalSession session)
+    {
+        UpdateText(session.Buffer.GetText());
+    }
+
+    private void UpdateText(string text)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Text = text;
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(() => Text = text);
+        }
+    }
 }

@@ -2500,7 +2500,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
         <value>Bild detailliert beschreiben</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>Text Extrahieren (OCR)</value>
+        <value>Text Extrahieren</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>Text aus Bildern extrahieren</value>
@@ -2838,9 +2838,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Wenn aktiviert, werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Bestätigung. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu übernehmen.</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Skript Ausführen</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Skript-Ausführung fehlgeschlagen: {0}</value>
     </data>
@@ -2913,10 +2910,10 @@ Veröffentlichungsdatum: {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Der tiefgründige Denkinhalt des Modells wurde nicht korrekt zurückgegeben. Wenn Sie im selben Chat das Modell gewechselt haben, kann dies wahrscheinlich zu diesem Problem führen.</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Bildverständnis-Assistent</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Konfigurieren Sie den Assistenten zur Bildverständnis, der nützlich ist, wenn der Hauptassistent keine Bildeingaben unterstützt. Bitte beachten Sie, dass dieser Assistent Bildeingaben unterstützen muss.</value>
     </data>
 </root>

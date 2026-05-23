@@ -2500,7 +2500,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Görüntüyü detaylı bir şekilde tanımla</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>Metin Çıkarma (OCR)</value>
+        <value>Metin Çıkarma</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>Görüntüden metin çıkar</value>
@@ -2838,9 +2838,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğinizi gösterir.</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Scripti Çalıştır</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Script çalıştırma hatası: {0}</value>
     </data>
@@ -2913,10 +2910,10 @@ Yayın tarihi: {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Modelin derin düşünme içeriği doğru bir şekilde geri dönmedi. Aynı sohbet içinde model değiştirdiyseniz, bu soruna yol açmış olabilir.</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Görüntü anlama asistanı</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Ana asistanın görüntü girişi desteklemediği durumlarda görüntüleri anlamak için asistanı yapılandırın. Bu asistanın görüntü girişini desteklemesi gerektiğini unutmayın.</value>
     </data>
 </root>

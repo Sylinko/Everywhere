@@ -2501,7 +2501,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Describe the image in detail</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>Extract Text (OCR)</value>
+        <value>Extract Text</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>Extract text from the image</value>
@@ -2840,7 +2840,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Execute Script</value>
+        <value />
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Shell script execution failed: {0}</value>
@@ -2914,10 +2914,16 @@ Release date: {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>The model's deep reasoning content did not return correctly. This issue may occur if you switched models within the same chat.</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Image Understanding Assistant</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Configure the assistant for understanding images, useful when the main assistant does not support image input. Note that this assistant must support image input.</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value />
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value />
     </data>
 </root>

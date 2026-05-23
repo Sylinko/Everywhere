@@ -84,19 +84,16 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 showDetails: false);
         }
 
-        // Consent
-        var detailBlock = new ChatPluginContainerDisplayBlock
-        {
-            new ChatPluginTextDisplayBlock(description),
-            new ChatPluginCodeBlockDisplayBlock(script, DetectLanguageHint(shellPath)),
-        };
-
         if (!_pluginSettings.AutoApprove)
         {
             var consent = await userInterface.RequestConsentAsync(
                 null,
                 new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
-                detailBlock,
+                new ChatPluginContainerDisplayBlock
+                {
+                    new ChatPluginTextDisplayBlock(description),
+                    new ChatPluginCodeBlockDisplayBlock(command, DetectLanguageHint(shellPath)),
+                },
                 RequestConsentRememberMasks.AllowOnce | RequestConsentRememberMasks.AllowSession,
                 cancellationToken: cancellationToken);
             if (!consent)
@@ -129,16 +126,22 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             Environment = environment,
         };
 
-        ExecuteResult executeResult;
+        ExecuteResult executeResult = default;
         using (var pty = await PtyProvider.SpawnAsync(options, cancellationToken))
         {
-            var pid = pty.Pid;
+            var session = TerminalSession.FromPtyOptions(pty, options);
 
-            // Register with Watchdog
+            var terminalBlock = new ChatPluginTerminalDisplayBlock(shellType, command);
+            terminalBlock.AttachSession(session);
+
+            var pid = pty.Pid;
             await _watchdogManager.RegisterProcessAsync(pid);
 
             try
             {
+                terminalBlock.AttachSession(session);
+                userInterface.DisplaySink.AppendBlock(terminalBlock);
+
                 // Detect shell integration and choose strategy
                 // If scripts are not available (shellArgs is null), skip detection and use None directly
                 IExecuteStrategy strategy;
@@ -162,12 +165,12 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             }
             finally
             {
+                terminalBlock.Complete(executeResult.ExitCode);
+
                 // Unregister from Watchdog and kill the shell process
                 await _watchdogManager.UnregisterProcessAsync(pid, killIfRunning: true);
             }
         }
-
-        var result = TokenHelper.Omit(executeResult.Output, 8000, "[... OUTPUT OMITTED ...]").Trim();
 
         // Display exit code if non-zero
         if (executeResult.ExitCode is > 0)
@@ -175,8 +178,11 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             _logger.LogInformation("Command exited with code {ExitCode}", executeResult.ExitCode);
         }
 
-        userInterface.DisplaySink.AppendCodeBlock(result, "log");
-        return result;
+        var resultBuilder = new StringBuilder();
+        TokenHelper.OmitTo(executeResult.Output, resultBuilder, 8000, "[... OUTPUT OMITTED ...]");
+        resultBuilder.TrimEnd().AppendLine().Append("Exit code: ").Append(executeResult.ExitCode);
+
+        return resultBuilder.TrimEnd().ToString();
     }
 
     /// <summary>

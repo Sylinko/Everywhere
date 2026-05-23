@@ -36,6 +36,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginTextDisplayBlock">
           <ScrollViewer MaxHeight="300">
             <SelectableTextBlock
@@ -44,15 +45,18 @@
               TextWrapping="Wrap"/>
           </ScrollViewer>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginDynamicResourceKeyDisplayBlock">
           <SelectableTextBlock
             shadui:ControlAssist.ClassName="{Binding ClassName}"
             Text="{Binding Key^}"
             TextWrapping="Wrap"/>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginMarkdownDisplayBlock">
           <md:MarkdownRenderer MarkdownBuilder="{Binding MarkdownBuilder}"/>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginProgressDisplayBlock">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding HeaderKey^}"/>
@@ -62,6 +66,7 @@
               Value="{Binding Progress}"/>
           </StackPanel>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginFileReferencesDisplayBlock">
           <StackPanel Spacing="4">
             <TextBlock
@@ -102,11 +107,13 @@
               Text="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text}}"/>
           </StackPanel>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginFileDifferenceDisplayBlock">
           <v:TextDifferenceSummaryView
             OriginalText="{Binding OriginalText}"
             TextDifference="{Binding Difference}"/>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginUrlsDisplayBlock">
           <StackPanel Spacing="4">
             <TextBlock
@@ -159,16 +166,19 @@
             </ItemsControl>
           </StackPanel>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginSeparatorDisplayBlock">
           <Border
             Height="{Binding Thickness}"
             Background="{DynamicResource BorderColor}"/>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginCodeBlockDisplayBlock">
           <md:CodeBlock
             Code="{Binding Code}"
             Language="{Binding Language}"/>
         </DataTemplate>
+
         <DataTemplate DataType="plugins:ChatPluginChatContextDisplayBlock">
           <ScrollViewer
             MaxHeight="600" HorizontalScrollBarVisibility="Disabled"
@@ -182,6 +192,10 @@
               IsReadonly="True"
               ItemsSource="{Binding ChatContext.DisplayItems}"/>
           </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginTerminalDisplayBlock">
+          <v:TerminalView DisplayBlock="{Binding}"/>
         </DataTemplate>
       </DataTemplates>
     </Setter>

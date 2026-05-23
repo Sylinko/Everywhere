@@ -1,0 +1,141 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:TerminalView}"
+    TargetType="v:TerminalView">
+    <Setter Property="ColorTheme" Value="{DynamicResource ColorTheme}"/>
+    <Setter Property="Focusable" Value="True"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:TerminalView">
+        <Border
+          Background="{DynamicResource CardBackgroundColor}"
+          BorderBrush="{DynamicResource BorderColor}"
+          BorderThickness="1" CornerRadius="4">
+          <Border.Resources>
+            <FontFamily x:Key="CodeFontFamily">Maple Mono, Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
+          </Border.Resources>
+
+          <DockPanel>
+            <Border
+              DockPanel.Dock="Top"
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="0,0,0,1">
+              <Grid
+                Margin="4" ColumnDefinitions="Auto,*,Auto,Auto"
+                ColumnSpacing="4">
+                <v:ConditionalContentControl>
+                  <v:ConditionalContentControl.Condition>
+                    <MultiBinding Converter="{x:Static v:TerminalView.StatusConverter}">
+                      <Binding
+                        Path="DisplayBlock?.FinishedAt"
+                        RelativeSource="{RelativeSource TemplatedParent}"/>
+                      <Binding
+                        Path="DisplayBlock?.ExitCode"
+                        RelativeSource="{RelativeSource TemplatedParent}"/>
+                    </MultiBinding>
+                  </v:ConditionalContentControl.Condition>
+
+                  <v:ConditionalContentControl.TrueContent>
+                    <DataTemplate>
+                      <Border Background="Transparent">
+                        <ToolTip.Tip>
+                          <I18N Key="{I18N {x:Static LocaleKey.TerminalView_SuccessToolTip_Tip}}">
+                            <Binding
+                              Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
+                              Path="$parent[v:TerminalView].DisplayBlock?.CreatedAt"/>
+                            <Binding
+                              Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
+                              ConverterParameter="N" Path="$parent[v:TerminalView].DisplayBlock?.Elapsed"/>
+                          </I18N>
+                        </ToolTip.Tip>
+
+                        <LucideIcon
+                          Foreground="{DynamicResource SuccessColor60}"
+                          Kind="CircleCheck"
+                          Size="{DynamicResource FontSizeM}"/>
+                      </Border>
+                    </DataTemplate>
+                  </v:ConditionalContentControl.TrueContent>
+
+                  <v:ConditionalContentControl.FalseContent>
+                    <DataTemplate>
+                      <Border Background="Transparent">
+                        <ToolTip.Tip>
+                          <I18N Key="{I18N {x:Static LocaleKey.TerminalView_ErrorToolTip_Tip}}">
+                            <Binding
+                              Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
+                              Path="$parent[v:TerminalView].DisplayBlock?.CreatedAt"/>
+                            <Binding
+                              Converter="{x:Static vc:CommonConverters.TimeSpanToSeconds}"
+                              ConverterParameter="N" Path="$parent[v:TerminalView].DisplayBlock?.Elapsed"/>
+                            <Binding
+                              Path="$parent[v:TerminalView].DisplayBlock?.ExitCode" TargetNullValue="null"/>
+                          </I18N>
+                        </ToolTip.Tip>
+
+                        <LucideIcon
+                          Foreground="{DynamicResource ErrorColor60}"
+                          Kind="CircleX"
+                          Size="{DynamicResource FontSizeM}"/>
+                      </Border>
+                    </DataTemplate>
+                  </v:ConditionalContentControl.FalseContent>
+
+                  <v:ConditionalContentControl.NullContent>
+                    <DataTemplate>
+                      <shadui:Loading
+                        Width="{DynamicResource FontSizeM}"
+                        Height="{DynamicResource FontSizeM}"/>
+                    </DataTemplate>
+                  </v:ConditionalContentControl.NullContent>
+                </v:ConditionalContentControl>
+
+                <md:CodeBlock
+                  Grid.Column="1"
+                  Code="{Binding DisplayBlock?.Command, RelativeSource={RelativeSource TemplatedParent}}"
+                  Language="{Binding DisplayBlock?.ShellType, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:CommonConverters.ObjectToString}}">
+                  <md:CodeBlock.Template>
+                    <ControlTemplate TargetType="md:CodeBlock">
+                      <md:MarkdownTextBlock
+                        x:Name="PART_CodeTextBlock"
+                        FontFamily="{StaticResource CodeFontFamily}"
+                        TextWrapping="Wrap"/>
+                    </ControlTemplate>
+                  </md:CodeBlock.Template>
+                </md:CodeBlock>
+              </Grid>
+            </Border>
+
+            <md:CodeBlock
+              Code="{Binding DisplayBlock?.Text, RelativeSource={RelativeSource TemplatedParent}}"
+              Language="log">
+              <md:CodeBlock.Template>
+                <ControlTemplate TargetType="md:CodeBlock">
+                  <Border
+                    Background="{DynamicResource SecondaryCardBackgroundColor}"
+                    CornerRadius="0,0,5,5">
+                    <ScrollViewer
+                      x:Name="PART_ScrollViewer" MaxHeight="480"
+                      HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                      VerticalScrollBarVisibility="Auto">
+                      <Interaction.Behaviors>
+                        <in:AutoScrollBehavior/>
+                      </Interaction.Behaviors>
+
+                      <md:MarkdownTextBlock
+                        x:Name="PART_CodeTextBlock" Margin="8,8,12,8"
+                        FontFamily="{StaticResource CodeFontFamily}"/>
+                    </ScrollViewer>
+                  </Border>
+                </ControlTemplate>
+              </md:CodeBlock.Template>
+            </md:CodeBlock>
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

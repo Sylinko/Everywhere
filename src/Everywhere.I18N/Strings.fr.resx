@@ -2501,7 +2501,7 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
         <value>Décrire en détail l'image</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>Extraire le Texte (OCR)</value>
+        <value>Extraire le Texte</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>Extraire du texte d'une image</value>
@@ -2839,9 +2839,6 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Une fois activé, toutes les opérations terminales seront automatiquement autorisées, sans approbation manuelle. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Activer cette option signifie que vous avez évalué et êtes prêt à assumer les risques.</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Exécuter le Script</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Échec de l'exécution du script : {0}</value>
     </data>
@@ -2914,10 +2911,10 @@ Date de publication : {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Le contenu de réflexion approfondie du modèle n'a pas été renvoyé correctement. Si vous avez changé de modèle dans la même conversation, cela pourrait être la cause du problème.</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Assistant de compréhension d'image</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Configurer l'assistant pour comprendre les images, très utile lorsque l'assistant principal ne prend pas en charge les entrées d'image. Veuillez noter que cet assistant doit prendre en charge les entrées d'image.</value>
     </data>
 </root>

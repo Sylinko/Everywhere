@@ -10,6 +10,8 @@ namespace Everywhere.ValueConverters;
 
 public static class CommonConverters
 {
+    public static IValueConverter ObjectToString { get; } = new FuncValueConverter<object?, string?>(convert: x => x?.ToString());
+
     public static IValueConverter TypeEquals { get; } = new FuncValueConverter<object?, object?, bool>(
         convert: (x, parameter) => x?.GetType() == parameter as Type
     );
@@ -31,6 +33,9 @@ public static class CommonConverters
         convert: (x, p) => x.DateTime.ToLocalTime().ToString(p?.ToString()),
         convertBack: (x, p) => DateTimeOffset.ParseExact(x, p?.ToString() ?? "o", null)
     );
+
+    public static IValueConverter TimeSpanToSeconds { get; } = new FuncValueConverter<TimeSpan, string?, string>(
+        convert: (x, format) => x.TotalSeconds.ToString(format));
 
     public static IValueConverter FullPathToFileName { get; } = new FuncValueConverter<string, string?>(
         convert: x => Path.GetFileName(x) is { Length: > 0 } fileName ? fileName : x // return original if no file name found (e.g. Path root)
@@ -97,7 +102,7 @@ public static class CommonConverters
 
     private class AllEqualsConverter : IMultiValueConverter
     {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+        public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             if (values.AsValueEnumerable().Any(v => v == AvaloniaProperty.UnsetValue)) return AvaloniaProperty.UnsetValue;
             var firstValue = values[0];

@@ -2501,7 +2501,7 @@
         <value>Подробно описывает изображение</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>Извлечение текста (OCR)</value>
+        <value>Извлечение текста</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>Извлечение текста из изображения</value>
@@ -2839,9 +2839,6 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>При включении все терминальные операции будут автоматически разрешены без ручного одобрения. Неправильное использование помощника может привести к серьезным сбоям системы или необратимой потере файлов. Включение этой опции означает, что вы оценили и готовы взять на себя риск.</value>
     </data>
-    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>Выполнить Скрипт</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Ошибка выполнения скрипта: {0}</value>
     </data>
@@ -2914,10 +2911,10 @@
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Содержимое глубоких размышлений модели не было корректно возвращено. Если вы переключали модели в одном и том же чате, это может вызвать данную проблему.</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>Помощник по пониманию изображений</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Настройте помощника для понимания изображений, который будет полезен, когда основной помощник не поддерживает ввод изображений. Обратите внимание, что этот помощник должен поддерживать ввод изображений.</value>
     </data>
 </root>

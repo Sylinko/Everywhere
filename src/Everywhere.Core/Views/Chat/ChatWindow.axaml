@@ -451,7 +451,7 @@
                               Text="{I18N {x:Static LocaleKey.ChatContext_Temporary}}"/>
                             <shadui:EditableTextBlock
                               x:Name="TopicEditableTextBlock" Grid.Column="1"
-                              VerticalAlignment="Center"
+                              VerticalAlignment="Center" Cursor="Arrow"
                               FontSize="{DynamicResource FontSizeM}"
                               IsEditing="{Binding IsRenaming, Mode=TwoWay}"
                               IsVisible="{Binding !IsTemporary}"

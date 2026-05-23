@@ -2502,7 +2502,7 @@
         <value>详细描述图像</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
-        <value>提取文本 (OCR)</value>
+        <value>提取文本</value>
     </data>
     <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
         <value>从图像中提取文本</value>
@@ -2841,7 +2841,7 @@
         <value>开启后，所有终端操作将自动放行，无需手动批准。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value>执行脚本</value>
+        <value>在终端中执行</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>脚本执行失败: {0}</value>
@@ -2915,10 +2915,16 @@
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>模型的深度思考内容没有正确回传。如果你在同一个聊天中切换了模型，则很可能会导致此问题。</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Desription" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
         <value>图像理解助手</value>
     </data>
-    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>配置用于理解图像的助手，当主助手不支持图像输入时非常有用。请注意此助手必须支持图像输入</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>命令于 {0} 开始执行，{1} 秒后成功完成</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>命令于 {0} 开始执行，{1} 秒后失败，退出代码为 {2}</value>
     </data>
 </root>
