@@ -2839,6 +2839,9 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>활성화하면 모든 터미널 작업이 자동으로 승인되어 수동 승인이 필요하지 않습니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구할 수 없는 파일 손실을 초래할 수 있습니다. 이 옵션을 활성화하면 위험을 평가하고 감수할 것에 동의하는 것입니다.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>터미널에서 실행</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>스크립트 실행 실패: {0}</value>
     </data>
@@ -2916,5 +2919,11 @@
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>주 도우미가 이미지 입력을 지원하지 않을 때 유용한 이미지 이해 도우미 설정입니다. 이 도우미는 이미지 입력을 지원해야 합니다.</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>명령이 {0}에 따라 실행되었으며, {1}초 후 성공적으로 완료되었습니다.</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>명령이 {0}에 따라 실행되었으며, {1}초 후 실패하였고, 종료 코드: {2}입니다.</value>
     </data>
 </root>

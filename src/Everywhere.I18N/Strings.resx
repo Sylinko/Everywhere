@@ -2840,7 +2840,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
-        <value />
+        <value>Execute In Terminal</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Shell script execution failed: {0}</value>
@@ -2921,9 +2921,9 @@ Release date: {2}</value>
         <value>Configure the assistant for understanding images, useful when the main assistant does not support image input. Note that this assistant must support image input.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
-        <value />
+        <value>Command started at {0}, completed successfully after {1} seconds</value>
     </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
-        <value />
+        <value>Command started at {0}, failed after {1} seconds with exit code {2}</value>
     </data>
 </root>

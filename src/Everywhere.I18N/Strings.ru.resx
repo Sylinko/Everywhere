@@ -2839,6 +2839,9 @@
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>При включении все терминальные операции будут автоматически разрешены без ручного одобрения. Неправильное использование помощника может привести к серьезным сбоям системы или необратимой потере файлов. Включение этой опции означает, что вы оценили и готовы взять на себя риск.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Выполнить в терминале</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Ошибка выполнения скрипта: {0}</value>
     </data>
@@ -2916,5 +2919,11 @@
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Настройте помощника для понимания изображений, который будет полезен, когда основной помощник не поддерживает ввод изображений. Обратите внимание, что этот помощник должен поддерживать ввод изображений.</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>Команда начата в {0}, успешно завершена через {1} секунд</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>Команда начата в {0}, завершилась с ошибкой через {1} секунд, код выхода {2}</value>
     </data>
 </root>

@@ -2838,6 +2838,9 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Wenn aktiviert, werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Bestätigung. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu übernehmen.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Im Terminal Ausführen</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Skript-Ausführung fehlgeschlagen: {0}</value>
     </data>
@@ -2915,5 +2918,11 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Konfigurieren Sie den Assistenten zur Bildverständnis, der nützlich ist, wenn der Hauptassistent keine Bildeingaben unterstützt. Bitte beachten Sie, dass dieser Assistent Bildeingaben unterstützen muss.</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>Befehl begann um {0}, erfolgreich abgeschlossen nach {1} Sekunden</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>
 </root>

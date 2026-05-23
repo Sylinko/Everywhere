@@ -2839,6 +2839,9 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
         <value>Se attivato, tutte le operazioni del terminale verranno autorizzate automaticamente, senza necessità di approvazione manuale. Chiamate inappropriate dell'assistente possono causare gravi crash di sistema o perdita di file irreversibile. Attivare questa opzione significa che hai valutato e sei disposto ad assumerti i rischi.</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>Esegui nel Terminale</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Esecuzione script fallita: {0}</value>
     </data>
@@ -2916,5 +2919,11 @@ Data di rilascio: {2}</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
         <value>Configura l'assistente per comprendere le immagini, utile quando l'assistente principale non supporta l'input di immagini. Si prega di notare che questo assistente deve supportare l'input di immagini.</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>Il comando è stato avviato il {0} ed è stato completato con successo dopo {1} secondi</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>Il comando è stato avviato il {0} ed è fallito dopo {1} secondi, codice di uscita {2}</value>
     </data>
 </root>
