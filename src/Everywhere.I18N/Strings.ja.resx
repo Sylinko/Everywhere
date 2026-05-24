@@ -2203,6 +2203,9 @@
     <data name="UserProfilePresenter_BonusCreditsTextBlock_Text" xml:space="preserve">
         <value>ボーナスポイント</value>
     </data>
+    <data name="UserProfilePresenter_RemainingTextBlock_Text" xml:space="preserve">
+        <value>残り {0}</value>
+    </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>未払いの支払いがあります。早めに処理してください。</value>
     </data>

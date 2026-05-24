@@ -2203,6 +2203,9 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="UserProfilePresenter_BonusCreditsTextBlock_Text" xml:space="preserve">
         <value>Points de bonus</value>
     </data>
+    <data name="UserProfilePresenter_RemainingTextBlock_Text" xml:space="preserve">
+        <value>Reste {0}</value>
+    </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Un paiement en attente, veuillez le traiter rapidement</value>
     </data>

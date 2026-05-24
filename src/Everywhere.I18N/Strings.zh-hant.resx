@@ -2203,6 +2203,9 @@
     <data name="UserProfilePresenter_BonusCreditsTextBlock_Text" xml:space="preserve">
         <value>加量包積分</value>
     </data>
+    <data name="UserProfilePresenter_RemainingTextBlock_Text" xml:space="preserve">
+        <value>剩餘 {0}</value>
+    </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>有未完成的支付，請盡快處理</value>
     </data>

@@ -2203,6 +2203,9 @@
     <data name="UserProfilePresenter_BonusCreditsTextBlock_Text" xml:space="preserve">
         <value>Бонусные баллы</value>
     </data>
+    <data name="UserProfilePresenter_RemainingTextBlock_Text" xml:space="preserve">
+        <value>Осталось {0}</value>
+    </data>
     <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
         <value>Есть незавершенные платежи, пожалуйста, обработайте их как можно скорее</value>
     </data>
