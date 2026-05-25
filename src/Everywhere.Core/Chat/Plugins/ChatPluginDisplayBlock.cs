@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
@@ -297,20 +296,19 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
     public ShellType ShellType { get; }
 
     [Key(1)]
-    public string Command { get; }
+    public string? Command { get; }
 
     [Key(2)]
     public DateTimeOffset CreatedAt { get; }
 
-    [Key(3)]
-    [ObservableProperty]
-    public partial string? Text { get; private set; }
+    [IgnoreMember]
+    public TerminalRun? Run { get; }
 
-    [Key(4)]
+    [Key(3)]
     [ObservableProperty]
     public partial int? ExitCode { get; private set; }
 
-    [Key(5)]
+    [Key(4)]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Elapsed))]
     public partial DateTimeOffset? FinishedAt { get; private set; }
@@ -320,10 +318,15 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
 
     [IgnoreMember] private TerminalSession? _session;
 
-    public ChatPluginTerminalDisplayBlock(ShellType shellType, string command)
+    public ChatPluginTerminalDisplayBlock(
+        ShellType shellType,
+        TerminalRun run,
+        TerminalSession session)
     {
         ShellType = shellType;
-        Command = command;
+        Command = run.CommandLine;
+        Run = run;
+        _session = session;
         CreatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -335,56 +338,20 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
         CreatedAt = createdAt;
     }
 
-    public void AttachSession(TerminalSession session)
+    public ValueTask WriteInputAsync(string input, CancellationToken cancellationToken = default)
     {
-        if (_session is not null)
-        {
-            _session.BufferChanged -= HandleSessionBufferChanged;
-        }
-
-        _session = session;
-        _session.BufferChanged += HandleSessionBufferChanged;
-        UpdateText(session.Buffer.GetText());
+        return _session?.WriteInputAsync(input, cancellationToken) ?? default;
     }
 
-    public async Task WriteInputAsync(string input, CancellationToken cancellationToken = default)
+    public ValueTask WritePasteAsync(string text, CancellationToken cancellationToken = default)
     {
-        if (_session is null) return;
-        await _session.WriteInputAsync(input, cancellationToken);
-    }
-
-    public async Task WritePasteAsync(string text, CancellationToken cancellationToken = default)
-    {
-        if (_session is null) return;
-        await _session.WritePasteAsync(text, cancellationToken);
+        return _session?.WritePasteAsync(text, cancellationToken) ?? default;
     }
 
     public void Complete(int? exitCode)
     {
-        if (_session is not null)
-        {
-            _session.BufferChanged -= HandleSessionBufferChanged;
-            _session = null;
-        }
-
+        _session = null;
         ExitCode = exitCode;
         FinishedAt = DateTimeOffset.UtcNow;
-    }
-
-    private void HandleSessionBufferChanged(TerminalSession session)
-    {
-        UpdateText(session.Buffer.GetText());
-    }
-
-    private void UpdateText(string text)
-    {
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            Text = text;
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() => Text = text);
-        }
     }
 }

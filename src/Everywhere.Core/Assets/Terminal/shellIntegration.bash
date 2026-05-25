@@ -9,6 +9,17 @@ if [ -n "$EVERYWHERE_SHELL_INTEGRATION" ]; then
 fi
 EVERYWHERE_SHELL_INTEGRATION=1
 
+__everywhere_disable_history() {
+    set +o history
+    set +H
+    HISTFILE=/dev/null
+    HISTSIZE=0
+    HISTFILESIZE=0
+    history -c 2>/dev/null || true
+}
+
+__everywhere_disable_history
+
 __everywhere_last_history_id=""
 __everywhere_in_command_execution=""
 
@@ -49,6 +60,8 @@ __everywhere_update_prompt() {
 }
 
 __everywhere_precmd() {
+    __everywhere_disable_history
+
     local status="$?"
 
     if [ -n "$__everywhere_in_command_execution" ]; then

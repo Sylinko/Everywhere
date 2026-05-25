@@ -1,18 +1,24 @@
 using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Everywhere.Chat.Plugins;
+using Everywhere.Utilities;
+using LiveMarkdown.Avalonia;
 using Serilog;
 using TextMateSharp.Grammars;
 
 namespace Everywhere.Views;
 
+[TemplatePart(Name = OutputCodeBlockPartName, Type = typeof(CodeBlock), IsRequired = true)]
 public sealed class TerminalView : TemplatedControl
 {
+    private const string OutputCodeBlockPartName = "PART_OutputCodeBlock";
+
     private sealed class StatusConverterImpl : IMultiValueConverter
     {
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
@@ -57,10 +63,72 @@ public sealed class TerminalView : TemplatedControl
         set => SetValue(ColorThemeProperty, value);
     }
 
+    private CodeBlock? _outputCodeBlock;
+    private TerminalCodeBlockBridge? _outputBridge;
+
     public TerminalView()
     {
         AddHandler(TextInputEvent, HandleTextInput, RoutingStrategies.Tunnel);
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel);
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+
+        DisposeCollector.DisposeToDefault(ref _outputBridge);
+        _outputCodeBlock = e.NameScope.Find<CodeBlock>("PART_OutputCodeBlock");
+
+        StartOutputBridge();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        StartOutputBridge();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        DisposeCollector.DisposeToDefault(ref _outputBridge);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == DisplayBlockProperty)
+        {
+            DisposeCollector.DisposeToDefault(ref _outputBridge);
+            _outputCodeBlock?.Inlines.Clear();
+            StartOutputBridge();
+        }
+    }
+
+    private void StartOutputBridge()
+    {
+        if (VisualRoot is null ||
+            _outputBridge is not null ||
+            _outputCodeBlock is null ||
+            DisplayBlock is null)
+        {
+            return;
+        }
+
+        if (DisplayBlock.Run is not { } run)
+        {
+            _outputCodeBlock.IsVisible = false;
+            return;
+        }
+
+        _outputCodeBlock.IsVisible = true;
+        _outputBridge = new TerminalCodeBlockBridge(
+            run,
+            _outputCodeBlock,
+            maxVisibleLines: 500);
     }
 
     private async void HandleTextInput(object? sender, TextInputEventArgs e)

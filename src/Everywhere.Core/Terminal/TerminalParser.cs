@@ -4,25 +4,20 @@ namespace Everywhere.Terminal;
 
 public delegate void ShellIntegrationMarkerHandler(in ShellIntegrationMarker marker);
 
-public delegate void TerminalTextHandler(char value);
-
 public delegate void TerminalResponseHandler(string response);
 
 /// <summary>
-/// A minimal VT100/ECMA-48 sequence parser that drives a <see cref="VirtualTerminalBuffer"/>.
+/// A minimal VT100/ECMA-48 sequence parser that tracks terminal cursor state.
 /// Implements the state machine needed to handle ANSI escape sequences from PTY output,
 /// including CSI, OSC, and single-character escape sequences.
 ///
 /// This parser is intentionally minimal — it only handles sequences that affect text layout
 /// (cursor movement, erase, scroll, etc.). Color/style sequences are consumed but ignored.
 /// </summary>
-public sealed class VtSequenceParser(
-    VirtualTerminalBuffer buffer,
+public sealed class TerminalParser(
     ShellIntegrationMarkerHandler? shellIntegrationMarkerHandler = null,
     TerminalResponseHandler? terminalResponseHandler = null,
-    TerminalTextHandler? terminalTextHandler = null,
-    TerminalDimensions? dimensions = null
-)
+    TerminalDimensions? dimensions = null)
 {
     public event ShellIntegrationMarkerHandler? ShellIntegrationMarkerReceived
     {
@@ -34,12 +29,6 @@ public sealed class VtSequenceParser(
     {
         add => _terminalResponseHandler += value;
         remove => _terminalResponseHandler -= value;
-    }
-
-    public event TerminalTextHandler? TerminalTextReceived
-    {
-        add => _terminalTextHandler += value;
-        remove => _terminalTextHandler -= value;
     }
 
     /// <summary>
@@ -82,29 +71,84 @@ public sealed class VtSequenceParser(
     private int _currentParam = -1; // -1 means "no digits accumulated yet"
     private bool _csiPrivateParam; // '?' prefix
     private char _csiPrefix; // '?', '>', '=' or '\0'
-    private char _csiIntermediate; // intermediate character (e.g. '!' for DECSTR)
+    // private char _csiIntermediate; // intermediate character (e.g. '!' for DECSTR)
 
     // OSC string accumulation
     private readonly StringBuilder _oscBuffer = new(64);
 
     // Current terminal dimensions for handling cursor position reports and bounds checking.
     private TerminalDimensions _dimensions = dimensions ?? TerminalDimensions.Default;
+    private int _scrollTop;
+    private int _scrollBottom = -1;
+    private int _savedCursorX;
+    private int _savedCursorY;
 
     // UTF-16 surrogate pair tracking
     private char _highSurrogate;
 
     private ShellIntegrationMarkerHandler? _shellIntegrationMarkerHandler = shellIntegrationMarkerHandler;
     private TerminalResponseHandler? _terminalResponseHandler = terminalResponseHandler;
-    private TerminalTextHandler? _terminalTextHandler = terminalTextHandler;
+    private TerminalLineBuffer? _captureBuffer;
+    private IDisposable? _captureUpdateScope;
+    private int _captureOriginY;
+    private int _feedDepth;
+
+    private int CursorX { get; set; }
+
+    private int CursorY { get; set; }
+
+    private int ScrollBottom => _scrollBottom >= 0 ? _scrollBottom : int.MaxValue;
+
+    public void BeginCapture(TerminalLineBuffer output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+
+        if (!ReferenceEquals(_captureBuffer, output))
+        {
+            EndCaptureBatch();
+            _captureBuffer = output;
+            _captureOriginY = CursorY;
+        }
+
+        if (_feedDepth > 0)
+        {
+            BeginCaptureBatch();
+        }
+    }
+
+    public void EndCapture()
+    {
+        EndCaptureBatch();
+        _captureBuffer = null;
+    }
 
     /// <summary>
     /// Feed a chunk of text (from PTY output) to the parser.
     /// </summary>
     public void Feed(ReadOnlySpan<char> input)
     {
-        foreach (var c in input)
+        if (input.IsEmpty) return;
+
+        _feedDepth++;
+        if (_captureBuffer is not null)
         {
-            FeedChar(c);
+            BeginCaptureBatch();
+        }
+
+        try
+        {
+            foreach (var c in input)
+            {
+                FeedChar(c);
+            }
+        }
+        finally
+        {
+            _feedDepth--;
+            if (_feedDepth == 0)
+            {
+                EndCaptureBatch();
+            }
         }
     }
 
@@ -126,10 +170,10 @@ public sealed class VtSequenceParser(
                 // Complete surrogate pair — write as two chars
                 if (_state == State.Ground)
                 {
-                    buffer.WriteChar(_highSurrogate);
-                    _terminalTextHandler?.Invoke(_highSurrogate);
-                    buffer.WriteChar(c);
-                    _terminalTextHandler?.Invoke(c);
+                    WriteChar(_highSurrogate);
+                    CaptureWrite(_highSurrogate);
+                    WriteChar(c);
+                    CaptureWrite(c);
                 }
                 _highSurrogate = '\0';
             }
@@ -143,8 +187,8 @@ public sealed class VtSequenceParser(
         {
             if (_state == State.Ground)
             {
-                buffer.WriteChar(_highSurrogate);
-                _terminalTextHandler?.Invoke(_highSurrogate);
+                WriteChar(_highSurrogate);
+                CaptureWrite(_highSurrogate);
             }
             _highSurrogate = '\0';
         }
@@ -189,22 +233,22 @@ public sealed class VtSequenceParser(
                 _state = State.Escape;
                 break;
             case '\r': // CR
-                buffer.CarriageReturn();
-                _terminalTextHandler?.Invoke(c);
+                CarriageReturn();
+                CaptureCarriageReturn();
                 break;
             case '\n': // LF
             case '\v': // VT
             case '\f': // FF
-                buffer.LineFeed();
-                _terminalTextHandler?.Invoke(c);
+                LineFeed();
+                CaptureLineFeed();
                 break;
             case '\b': // BS
-                buffer.Backspace();
-                _terminalTextHandler?.Invoke(c);
+                Backspace();
+                CaptureBackspace();
                 break;
             case '\t': // HT
-                buffer.Tab();
-                _terminalTextHandler?.Invoke(c);
+                Tab();
+                CaptureTab();
                 break;
             case '\a': // BEL — ignore
                 break;
@@ -213,8 +257,8 @@ public sealed class VtSequenceParser(
             default:
                 if (c >= 0x20) // Printable character (including Unicode)
                 {
-                    buffer.WriteChar(c);
-                    _terminalTextHandler?.Invoke(c);
+                    WriteChar(c);
+                    CaptureWrite(c);
                 }
                 break;
         }
@@ -237,30 +281,37 @@ public sealed class VtSequenceParser(
                 _state = State.CharsetSelect;
                 break;
             case '7': // DECSC — Save Cursor
-                buffer.SaveCursor();
+                SaveCursor();
                 _state = State.Ground;
                 break;
             case '8': // DECRC — Restore Cursor
-                buffer.RestoreCursor();
+                RestoreCursor();
+                CaptureCursorPositionFromScreen();
                 _state = State.Ground;
                 break;
             case 'D': // IND — Index (move down, scroll if at bottom)
-                buffer.LineFeed();
+                LineFeed();
+                CaptureLineFeed();
                 _state = State.Ground;
                 break;
             case 'E': // NEL — Next Line
-                buffer.CarriageReturn();
-                buffer.LineFeed();
+                CarriageReturn();
+                CaptureCarriageReturn();
+                LineFeed();
+                CaptureLineFeed();
                 _state = State.Ground;
                 break;
             case 'M': // RI — Reverse Index (move up, scroll if at top)
-                if (buffer.CursorY <= 0) buffer.ScrollDown();
-                else buffer.CursorUp();
+                if (CursorY > 0)
+                {
+                    CursorUp();
+                    CaptureCursorUp();
+                }
                 _state = State.Ground;
                 break;
             case 'c': // RIS — Full Reset
-                buffer.EraseDisplay(2);
-                buffer.CursorPosition();
+                CursorPosition();
+                CaptureClear();
                 _state = State.Ground;
                 break;
             case '=': // DECKPAM — Application Keypad Mode
@@ -302,7 +353,7 @@ public sealed class VtSequenceParser(
                 }
                 else if (c >= 0x20 && c <= 0x2F)
                 {
-                    _csiIntermediate = c;
+                    // _csiIntermediate = c;
                     _state = State.CsiIntermediate;
                 }
                 else
@@ -342,7 +393,7 @@ public sealed class VtSequenceParser(
                 }
                 else if (c >= 0x20 && c <= 0x2F)
                 {
-                    _csiIntermediate = c;
+                    // _csiIntermediate = c;
                     _state = State.CsiIntermediate;
                 }
                 else
@@ -417,7 +468,7 @@ public sealed class VtSequenceParser(
     #region CSI Dispatch
 
     /// <summary>
-    /// Dispatch a CSI sequence to the buffer.
+    /// Dispatch a CSI sequence to the 
     /// </summary>
     private void DispatchCsi(char finalByte)
     {
@@ -444,77 +495,78 @@ public sealed class VtSequenceParser(
         switch (finalByte)
         {
             case 'A': // CUU — Cursor Up
-                buffer.CursorUp(Math.Max(p0, 1));
+                CursorUp(Math.Max(p0, 1));
+                CaptureCursorUp(Math.Max(p0, 1));
                 break;
             case 'B': // CUD — Cursor Down
-                buffer.CursorDown(Math.Max(p0, 1));
+                CursorDown(Math.Max(p0, 1));
+                CaptureCursorDown(Math.Max(p0, 1));
                 break;
             case 'C': // CUF — Cursor Forward
-                buffer.CursorForward(Math.Max(p0, 1));
+                CursorForward(Math.Max(p0, 1));
+                CaptureCursorForward(Math.Max(p0, 1));
                 break;
             case 'D': // CUB — Cursor Backward
-                buffer.CursorBackward(Math.Max(p0, 1));
+                CursorBackward(Math.Max(p0, 1));
+                CaptureCursorBackward(Math.Max(p0, 1));
                 break;
             case 'E': // CNL — Cursor Next Line
-                buffer.CursorNextLine(Math.Max(p0, 1));
+                CursorNextLine(Math.Max(p0, 1));
+                CaptureCursorDown(Math.Max(p0, 1));
+                CaptureCarriageReturn();
                 break;
             case 'F': // CPL — Cursor Previous Line
-                buffer.CursorPreviousLine(Math.Max(p0, 1));
+                CursorPreviousLine(Math.Max(p0, 1));
+                CaptureCursorUp(Math.Max(p0, 1));
+                CaptureCarriageReturn();
                 break;
             case 'G': // CHA — Cursor Horizontal Absolute
-                buffer.CursorHorizontalAbsolute(Math.Max(p0, 1));
+                CursorHorizontalAbsolute(Math.Max(p0, 1));
+                CaptureCursorHorizontalAbsoluteFromScreen();
                 break;
             case 'H': // CUP — Cursor Position
             case 'f': // HVP — Horizontal Vertical Position
-                buffer.CursorPosition(Math.Max(p0, 1), Math.Max(p1, 1));
+                CursorPosition(Math.Max(p0, 1), Math.Max(p1, 1));
+                CaptureCursorPositionFromScreen();
                 break;
             case 'J': // ED — Erase in Display
-                buffer.EraseDisplay(p0);
+                CaptureEraseDisplay(p0);
                 break;
             case 'K': // EL — Erase in Line
-                buffer.EraseLine(p0);
-                break;
-            case 'L': // IL — Insert Lines
-                buffer.InsertLines(Math.Max(p0, 1));
-                break;
-            case 'M': // DL — Delete Lines
-                buffer.DeleteLines(Math.Max(p0, 1));
+                CaptureEraseLine(p0);
                 break;
             case 'P': // DCH — Delete Characters
-                buffer.DeleteChars(Math.Max(p0, 1));
-                break;
-            case 'S': // SU — Scroll Up
-                buffer.ScrollUp(Math.Max(p0, 1));
-                break;
-            case 'T': // SD — Scroll Down
-                buffer.ScrollDown(Math.Max(p0, 1));
+                CaptureDeleteChars(Math.Max(p0, 1));
                 break;
             case '@': // ICH — Insert Characters
-                buffer.InsertChars(Math.Max(p0, 1));
+                CaptureInsertChars(Math.Max(p0, 1));
                 break;
             case 'r': // DECSTBM — Set Scrolling Region
-                buffer.SetScrollRegion(Math.Max(p0, 1), p1 > 0 ? p1 : -1);
+                SetScrollRegion(Math.Max(p0, 1), p1 > 0 ? p1 : -1);
                 break;
             case 's': // SCP — Save Cursor Position
-                buffer.SaveCursor();
+                SaveCursor();
                 break;
             case 'u': // RCP — Restore Cursor Position
-                buffer.RestoreCursor();
+                RestoreCursor();
+                CaptureCursorPositionFromScreen();
                 break;
             case 'd': // VPA — Vertical Position Absolute
-                buffer.CursorPosition(Math.Max(p0, 1), buffer.CursorX + 1);
+                CursorPosition(Math.Max(p0, 1), CursorX + 1);
+                CaptureCursorPositionFromScreen();
                 break;
             case 'X': // ECH — Erase Characters
-                if (buffer.CursorY < 0) break;
+                if (CursorY < 0) break;
                 var eraseCount = Math.Max(p0, 1);
-                for (var i = 0; i < eraseCount && buffer.CursorX + i < _dimensions.Columns; i++)
+                for (var i = 0; i < eraseCount && CursorX + i < _dimensions.Columns; i++)
                 {
                     // Write space at cursor + i position
-                    var savedX = buffer.CursorX;
-                    buffer.CursorX += i;
-                    buffer.WriteChar(' ');
-                    buffer.CursorX = savedX;
+                    var savedX = CursorX;
+                    CursorX += i;
+                    WriteChar(' ');
+                    CursorX = savedX;
                 }
+                CaptureEraseChars(eraseCount);
                 break;
             case 'm': // SGR — Select Graphic Rendition (colors/styles) — ignore
                 break;
@@ -586,10 +638,10 @@ public sealed class VtSequenceParser(
                 break;
             }
             case 'J': // DECSED — Selective Erase in Display
-                buffer.EraseDisplay(p0);
+                CaptureEraseDisplay(p0);
                 break;
             case 'K': // DECSEL — Selective Erase in Line
-                buffer.EraseLine(p0);
+                CaptureEraseLine(p0);
                 break;
             case 'm': // SGR with private params — ignore (colors)
                 break;
@@ -639,7 +691,7 @@ public sealed class VtSequenceParser(
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.PromptStart,
-                        Line: buffer.CursorY));
+                        Line: CursorY));
                 break;
             }
             case "B":
@@ -647,7 +699,7 @@ public sealed class VtSequenceParser(
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandReady,
-                        Line: buffer.CursorY));
+                        Line: CursorY));
                 break;
             }
             case "C":
@@ -655,7 +707,7 @@ public sealed class VtSequenceParser(
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandExecuted,
-                        Line: buffer.CursorY));
+                        Line: CursorY));
                 break;
             }
             case "D":
@@ -670,21 +722,68 @@ public sealed class VtSequenceParser(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandFinished,
                         ExitCode: exitCode,
-                        Line: buffer.CursorY));
+                        Line: CursorY));
                 break;
             }
             case "E":
             {
                 // E has command text: 633;E;<command>[;<nonce>]
-                var cmdLine = parts.Length >= 3 ? parts[2] : null;
+                var cmdLine = parts.Length >= 3 ? DecodeOsc633Value(parts[2]) : null;
                 _shellIntegrationMarkerHandler?.Invoke(
                     new ShellIntegrationMarker(
                         ShellIntegrationMarkerType.CommandLine,
                         CommandLine: cmdLine,
-                        Line: buffer.CursorY));
+                        Line: CursorY));
                 break;
             }
         }
+    }
+
+    private static string DecodeOsc633Value(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] != '\\' || i + 1 >= value.Length)
+            {
+                builder.Append(value[i]);
+                continue;
+            }
+
+            var next = value[i + 1];
+            if (next == '\\')
+            {
+                builder.Append('\\');
+                i++;
+                continue;
+            }
+
+            if (next == 'x' &&
+                i + 3 < value.Length &&
+                TryReadHex(value[i + 2], out var high) &&
+                TryReadHex(value[i + 3], out var low))
+            {
+                builder.Append((char)((high << 4) | low));
+                i += 3;
+                continue;
+            }
+
+            builder.Append(value[i]);
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool TryReadHex(char value, out int digit)
+    {
+        digit = value switch
+        {
+            >= '0' and <= '9' => value - '0',
+            >= 'a' and <= 'f' => value - 'a' + 10,
+            >= 'A' and <= 'F' => value - 'A' + 10,
+            _ => -1,
+        };
+        return digit >= 0;
     }
 
     #endregion
@@ -716,6 +815,227 @@ public sealed class VtSequenceParser(
     public void Resize(TerminalDimensions dimensions)
     {
         _dimensions = dimensions;
+        CursorX = Math.Clamp(CursorX, 0, _dimensions.Columns - 1);
+        _savedCursorX = Math.Clamp(_savedCursorX, 0, _dimensions.Columns - 1);
+    }
+
+    private void WriteChar(char _)
+    {
+        if (CursorX >= _dimensions.Columns)
+        {
+            CursorX = 0;
+            CursorY++;
+        }
+
+        CursorX++;
+    }
+
+    private void CarriageReturn()
+    {
+        CursorX = 0;
+    }
+
+    private void LineFeed()
+    {
+        if (_scrollBottom >= 0 && CursorY >= ScrollBottom)
+        {
+            return;
+        }
+
+        CursorY++;
+    }
+
+    private void Backspace()
+    {
+        if (CursorX > 0)
+        {
+            CursorX--;
+        }
+    }
+
+    private void Tab()
+    {
+        CursorX = Math.Min((CursorX / 8 + 1) * 8, _dimensions.Columns - 1);
+    }
+
+    private void CursorUp(int count = 1)
+    {
+        CursorY = Math.Max(CursorY - Math.Max(count, 1), _scrollTop);
+    }
+
+    private void CursorDown(int count = 1)
+    {
+        count = Math.Max(count, 1);
+        CursorY = _scrollBottom >= 0 ? Math.Min(CursorY + count, ScrollBottom) : CursorY + count;
+    }
+
+    private void CursorForward(int count = 1)
+    {
+        CursorX = Math.Min(CursorX + Math.Max(count, 1), _dimensions.Columns - 1);
+    }
+
+    private void CursorBackward(int count = 1)
+    {
+        CursorX = Math.Max(CursorX - Math.Max(count, 1), 0);
+    }
+
+    private void CursorNextLine(int count = 1)
+    {
+        CursorDown(count);
+        CursorX = 0;
+    }
+
+    private void CursorPreviousLine(int count = 1)
+    {
+        CursorUp(count);
+        CursorX = 0;
+    }
+
+    private void CursorHorizontalAbsolute(int column = 1)
+    {
+        CursorX = Math.Clamp(column - 1, 0, _dimensions.Columns - 1);
+    }
+
+    private void CursorPosition(int row = 1, int column = 1)
+    {
+        CursorY = Math.Max(row - 1, 0);
+        CursorX = Math.Clamp(column - 1, 0, _dimensions.Columns - 1);
+    }
+
+    private void SaveCursor()
+    {
+        _savedCursorX = CursorX;
+        _savedCursorY = CursorY;
+    }
+
+    private void RestoreCursor()
+    {
+        CursorX = _savedCursorX;
+        CursorY = _savedCursorY;
+    }
+
+    private void SetScrollRegion(int top = 1, int bottom = -1)
+    {
+        _scrollTop = Math.Max(top - 1, 0);
+        _scrollBottom = bottom > 0 ? bottom - 1 : -1;
+        CursorX = 0;
+        CursorY = 0;
+    }
+
+    private void BeginCaptureBatch()
+    {
+        if (_captureUpdateScope is null && _captureBuffer is not null)
+        {
+            _captureUpdateScope = _captureBuffer.BeginUpdate();
+        }
+    }
+
+    private void EndCaptureBatch()
+    {
+        _captureUpdateScope?.Dispose();
+        _captureUpdateScope = null;
+    }
+
+    private void CaptureWrite(char value)
+    {
+        _captureBuffer?.Write(value);
+    }
+
+    private void CaptureCarriageReturn()
+    {
+        _captureBuffer?.CarriageReturn();
+    }
+
+    private void CaptureLineFeed()
+    {
+        _captureBuffer?.LineFeed();
+    }
+
+    private void CaptureBackspace()
+    {
+        _captureBuffer?.Backspace();
+    }
+
+    private void CaptureTab()
+    {
+        _captureBuffer?.Tab();
+    }
+
+    private void CaptureCursorUp(int count = 1)
+    {
+        _captureBuffer?.CursorUp(count);
+    }
+
+    private void CaptureCursorDown(int count = 1)
+    {
+        _captureBuffer?.CursorDown(count);
+    }
+
+    private void CaptureCursorForward(int count = 1)
+    {
+        _captureBuffer?.CursorForward(count);
+    }
+
+    private void CaptureCursorBackward(int count = 1)
+    {
+        _captureBuffer?.CursorBackward(count);
+    }
+
+    private void CaptureCursorHorizontalAbsoluteFromScreen()
+    {
+        _captureBuffer?.CursorHorizontalAbsolute(CursorX + 1);
+    }
+
+    private void CaptureCursorPositionFromScreen()
+    {
+        if (_captureBuffer is null)
+        {
+            return;
+        }
+
+        var localRow = Math.Max(1, CursorY - _captureOriginY + 1);
+        _captureBuffer.CursorPosition(localRow, CursorX + 1);
+    }
+
+    private void CaptureEraseLine(int mode)
+    {
+        _captureBuffer?.EraseLine(mode);
+    }
+
+    private void CaptureEraseDisplay(int mode)
+    {
+        if (_captureBuffer is null)
+        {
+            return;
+        }
+
+        if (mode is 2 or 3)
+        {
+            _captureBuffer.Clear();
+            return;
+        }
+
+        _captureBuffer.EraseDisplay(mode);
+    }
+
+    private void CaptureDeleteChars(int count)
+    {
+        _captureBuffer?.DeleteChars(count);
+    }
+
+    private void CaptureInsertChars(int count)
+    {
+        _captureBuffer?.InsertChars(count);
+    }
+
+    private void CaptureEraseChars(int count)
+    {
+        _captureBuffer?.EraseChars(count);
+    }
+
+    private void CaptureClear()
+    {
+        _captureBuffer?.Clear();
     }
 
     private void ResetCsi()
@@ -724,7 +1044,7 @@ public sealed class VtSequenceParser(
         _currentParam = -1;
         _csiPrivateParam = false;
         _csiPrefix = '\0';
-        _csiIntermediate = '\0';
+        // _csiIntermediate = '\0';
     }
 
     /// <summary>
@@ -758,8 +1078,8 @@ public sealed class VtSequenceParser(
 
     private string BuildCursorPositionReport(bool isPrivate)
     {
-        var row = Math.Clamp(buffer.CursorY + 1, 1, _dimensions.Rows);
-        var column = Math.Clamp(buffer.CursorX + 1, 1, _dimensions.Columns);
+        var row = Math.Clamp(CursorY + 1, 1, _dimensions.Rows);
+        var column = Math.Clamp(CursorX + 1, 1, _dimensions.Columns);
         return isPrivate ? $"\e[?{row};{column}R" : $"\e[{row};{column}R";
     }
 

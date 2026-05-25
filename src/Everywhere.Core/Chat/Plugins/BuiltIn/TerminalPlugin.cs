@@ -126,25 +126,21 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             Environment = environment,
         };
 
-        ExecuteResult executeResult = default;
+        var terminalRuns = new List<TerminalRun>();
+        var resultBuilder = new StringBuilder();
+
         using (var pty = await PtyProvider.SpawnAsync(options, cancellationToken))
         {
             var session = TerminalSession.FromPtyOptions(pty, options);
-
-            var terminalBlock = new ChatPluginTerminalDisplayBlock(shellType, command);
-            terminalBlock.AttachSession(session);
 
             var pid = pty.Pid;
             await _watchdogManager.RegisterProcessAsync(pid);
 
             try
             {
-                terminalBlock.AttachSession(session);
-                userInterface.DisplaySink.AppendBlock(terminalBlock);
-
                 // Detect shell integration and choose strategy
                 // If scripts are not available (shellArgs is null), skip detection and use None directly
-                IExecuteStrategy strategy;
+                ExecuteStrategy strategy;
                 if (shellArgs is null)
                 {
                     _logger.LogDebug("Shell integration scripts not available for {ShellType}, using None strategy", shellType);
@@ -152,35 +148,43 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 }
                 else
                 {
-                    strategy = await IExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken);
+                    strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken);
                 }
 
-                // Execute the command using the chosen strategy
-                executeResult = await strategy.ExecuteAsync(
-                    session,
-                    command,
-                    shellType,
-                    TimeSpan.FromSeconds(30),
-                    cancellationToken);
+                var execution = strategy.ExecuteAsync(session, command, shellType, TimeSpan.FromSeconds(30), cancellationToken);
+                await foreach (var run in execution)
+                {
+                    terminalRuns.Add(run);
+
+                    var displayBlock = new ChatPluginTerminalDisplayBlock(shellType, run, session);
+                    userInterface.DisplaySink.AppendBlock(displayBlock);
+
+                    try
+                    {
+                        await run.WaitAsync(cancellationToken);
+                    }
+                    finally
+                    {
+                        displayBlock.Complete(run.ExitCode);
+                    }
+                }
             }
             finally
             {
-                terminalBlock.Complete(executeResult.ExitCode);
-
                 // Unregister from Watchdog and kill the shell process
                 await _watchdogManager.UnregisterProcessAsync(pid, killIfRunning: true);
             }
         }
 
-        // Display exit code if non-zero
-        if (executeResult.ExitCode is > 0)
-        {
-            _logger.LogInformation("Command exited with code {ExitCode}", executeResult.ExitCode);
-        }
+        var exitCode = terminalRuns.LastOrDefault()?.ExitCode;
+        var output = string.Join(
+            "\n",
+            terminalRuns
+                .Select(run => run.OutputText)
+                .Where(text => !string.IsNullOrEmpty(text)));
 
-        var resultBuilder = new StringBuilder();
-        TokenHelper.OmitTo(executeResult.Output, resultBuilder, 8000, "[... OUTPUT OMITTED ...]");
-        resultBuilder.TrimEnd().AppendLine().Append("Exit code: ").Append(executeResult.ExitCode);
+        TokenHelper.OmitTo(output, resultBuilder, 8000, "[... OUTPUT OMITTED ...]");
+        resultBuilder.TrimEnd().AppendLine().Append("Exit code: ").Append(exitCode);
 
         return resultBuilder.TrimEnd().ToString();
     }

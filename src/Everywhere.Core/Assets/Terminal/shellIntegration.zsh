@@ -10,6 +10,15 @@ if [ -n "$EVERYWHERE_SHELL_INTEGRATION" ]; then
 fi
 EVERYWHERE_SHELL_INTEGRATION=1
 
+__everywhere_disable_history() {
+	unsetopt BANG_HIST APPEND_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME SHARE_HISTORY 2>/dev/null
+	HISTFILE=/dev/null
+	HISTSIZE=0
+	SAVEHIST=0
+}
+
+__everywhere_disable_history
+
 # Nonce for command verification
 __everywhere_nonce="$EVERYWHERE_NONCE"
 unset EVERYWHERE_NONCE
@@ -18,6 +27,7 @@ __everywhere_in_command_execution="1"
 __everywhere_current_command=""
 __everywhere_prior_prompt=""
 __everywhere_prior_rprompt=""
+__everywhere_prompt_end_armed=""
 
 # Escape value for OSC sequences
 __everywhere_escape_value() {
@@ -65,13 +75,28 @@ __everywhere_command_complete() {
 __everywhere_update_prompt() {
 	__everywhere_prior_prompt="$PS1"
 	__everywhere_in_command_execution=""
-	PS1="%{$(__everywhere_prompt_start)%}$PS1%{$(__everywhere_prompt_end)%}"
+	__everywhere_prompt_end_armed="1"
+	PS1="%{$(__everywhere_prompt_start)%}$PS1"
 	if [ -n "$RPROMPT" ]; then
 		__everywhere_prior_rprompt="$RPROMPT"
 	fi
 }
 
+__everywhere_zle_line_init() {
+	if [ -z "$__everywhere_prompt_end_armed" ]; then
+		return
+	fi
+
+	__everywhere_prompt_end_armed=""
+	if (( ${+zle_bracketed_paste} )) && [[ -n "${zle_bracketed_paste[1]-}" ]]; then
+		builtin printf '%s' "$zle_bracketed_paste[1]"
+	fi
+	__everywhere_prompt_end
+}
+
 __everywhere_precmd() {
+	__everywhere_disable_history
+
 	builtin local __everywhere_status="$?"
 	if [ -z "${__everywhere_in_command_execution-}" ]; then
 		__everywhere_command_output_start
@@ -95,6 +120,13 @@ __everywhere_preexec() {
 	__everywhere_command_output_start
 }
 
+__everywhere_zshaddhistory() {
+	return 1
+}
+
 autoload -Uz add-zsh-hook
+autoload -Uz add-zle-hook-widget
 add-zsh-hook precmd __everywhere_precmd
 add-zsh-hook preexec __everywhere_preexec
+add-zsh-hook zshaddhistory __everywhere_zshaddhistory
+add-zle-hook-widget line-init __everywhere_zle_line_init

@@ -261,20 +261,20 @@ public class PtyExecutionTests
         var strategy = new NoneExecuteStrategy(_logger);
         var script = shellType == ShellType.PowerShell ? "Write-Host \"HELLO_PTY_TEST\"" : "echo \"HELLO_PTY_TEST\"";
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output: {Output}", result.Output);
+        _logger.LogInformation("Output: {Output}", result.OutputText);
         _logger.LogInformation("ExitCode: {ExitCode}", result.ExitCode);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("HELLO_PTY_TEST"),
-            $"Expected output to contain 'HELLO_PTY_TEST'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'HELLO_PTY_TEST'. Actual output:\n{result.OutputText}");
     }
 
     [Test]
@@ -298,23 +298,23 @@ public class PtyExecutionTests
             script = "echo \"LINE_A\"\necho \"LINE_B\"";
         }
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output: {Output}", result.Output);
+        _logger.LogInformation("Output: {Output}", result.OutputText);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_A"),
-            $"Expected output to contain 'LINE_A'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'LINE_A'. Actual output:\n{result.OutputText}");
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_B"),
-            $"Expected output to contain 'LINE_B'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'LINE_B'. Actual output:\n{result.OutputText}");
     }
 
     [Test]
@@ -333,20 +333,17 @@ public class PtyExecutionTests
         // [void]0 is more robust as it's a pure expression with no side effects.
         var script = shellType == ShellType.PowerShell ? "[void]0" : "true";
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output length: {Length}, Output: '{Output}'", result.Output.Length, result.Output);
+        _logger.LogInformation("Output length: {Length}, Output: '{Output}'", result.OutputText.Length, result.OutputText);
 
-        // Output should be empty or only whitespace
-        Assert.That(
-            result.Output.Trim(),
-            Is.EqualTo(string.Empty).Or.Length.LessThanOrEqualTo(5),
-            $"Expected empty or near-empty output. Actual output:\n'{result.Output}'");
+        Assert.That(result.OutputText, Does.Contain(script), "None mode keeps command echo instead of cleaning output.");
+        Assert.That(result.ExitCode, Is.Null);
     }
 
     [Test]
@@ -363,20 +360,20 @@ public class PtyExecutionTests
         // Use a unique marker to identify our output
         var script = shellType == ShellType.PowerShell ? "Write-Host \"SPECIAL_$HOME_TEST\"" : "echo \"SPECIAL_$HOME_TEST\"";
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output: {Output}", result.Output);
+        _logger.LogInformation("Output: {Output}", result.OutputText);
 
         // The $HOME part may or may not be expanded depending on quoting, but our marker should be there
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("SPECIAL_"),
-            $"Expected output to contain 'SPECIAL_'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'SPECIAL_'. Actual output:\n{result.OutputText}");
     }
 
     [Test]
@@ -393,14 +390,14 @@ public class PtyExecutionTests
         var script = shellType == ShellType.PowerShell ? "Start-Sleep -Seconds 60" : "sleep 60";
 
         // Use a very short timeout
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(3),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output after timeout: '{Output}'", result.Output);
+        _logger.LogInformation("Output after timeout: '{Output}'", result.OutputText);
 
         // Should not throw — just return whatever was captured
         Assert.Pass("Timeout handled gracefully");
@@ -425,23 +422,23 @@ public class PtyExecutionTests
         var strategy = new NoneExecuteStrategy(_logger);
         var script = "cat <<'EOF'\nHEREDOC_LINE_1\nHEREDOC_LINE_2\nEOF";
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output: {Output}", result.Output);
+        _logger.LogInformation("Output: {Output}", result.OutputText);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("HEREDOC_LINE_1"),
-            $"Expected output to contain 'HEREDOC_LINE_1'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'HEREDOC_LINE_1'. Actual output:\n{result.OutputText}");
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("HEREDOC_LINE_2"),
-            $"Expected output to contain 'HEREDOC_LINE_2'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'HEREDOC_LINE_2'. Actual output:\n{result.OutputText}");
     }
 
     [TestCaseSource(nameof(ShellExecutionScenarios))]
@@ -462,10 +459,10 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(session, script, shellType, TimeSpan.FromSeconds(20), CancellationToken.None);
+        var result = await ExecuteSingleRunAsync(strategy, session, script, shellType, TimeSpan.FromSeconds(20), CancellationToken.None);
 
-        _logger.LogInformation("[None {Scenario}] Output: {Output}", scenario, result.Output);
-        AssertContainsExpectedOutput(result.Output, expectedOutput);
+        _logger.LogInformation("[None {Scenario}] Output: {Output}", scenario, result.OutputText);
+        AssertContainsExpectedOutput(result.OutputText, expectedOutput);
     }
 
     #endregion
@@ -489,16 +486,92 @@ public class PtyExecutionTests
         using var pty = await PtyProvider.SpawnAsync(options, CancellationToken.None);
         var session = TerminalSession.FromPtyOptions(pty, options);
 
-        var strategy = await IExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, CancellationToken.None);
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, CancellationToken.None);
         Assert.That(
             strategy,
             Is.TypeOf<RichExecuteStrategy>(),
             $"Expected shell integration to be detected for {shellType}");
 
-        var result = await strategy.ExecuteAsync(session, script, shellType, TimeSpan.FromSeconds(20), CancellationToken.None);
+        var result = await ExecuteSingleRunAsync(strategy, session, script, shellType, TimeSpan.FromSeconds(20), CancellationToken.None);
 
-        _logger.LogInformation("[Rich {Scenario}] Output: {Output}", scenario, result.Output);
-        AssertContainsExpectedOutput(result.Output, expectedOutput);
+        _logger.LogInformation("[Rich {Scenario}] Output: {Output}", scenario, result.OutputText);
+        AssertContainsExpectedOutput(result.OutputText, expectedOutput);
+    }
+
+    [Test]
+    public async Task RichStrategy_Zsh_DisablesBangHistoryForDoubleQuotedExclamation()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            Assert.Ignore("Zsh history expansion regression only runs on macOS");
+            return;
+        }
+
+        var shellPath = "/bin/zsh";
+        var shellType = ShellType.Zsh;
+        var options = BuildShellIntegrationPtyOptions(shellPath, shellType);
+        using var pty = await PtyProvider.SpawnAsync(options, CancellationToken.None);
+        var session = TerminalSession.FromPtyOptions(pty, options);
+
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, CancellationToken.None);
+        Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
+
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            "echo \"Process completed!\"",
+            shellType,
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+
+        _logger.LogInformation("[Rich zsh bang history] Output: {Output}", result.OutputText);
+
+        Assert.That(result.OutputText, Does.Contain("Process completed!"));
+        Assert.That(result.OutputText, Does.Not.Contain("dquote>"));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task RichStrategy_Bash_DisablesHistoryAndHistoryExpansion()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Ignore("Bash history regression only runs on Unix shells");
+            return;
+        }
+
+        var shellPath = File.Exists("/bin/bash") ? "/bin/bash" : FindInPath("bash");
+        if (shellPath is null)
+        {
+            Assert.Ignore("Bash is not available");
+            return;
+        }
+
+        var shellType = ShellType.Bash;
+        var options = BuildShellIntegrationPtyOptions(shellPath, shellType);
+        using var pty = await PtyProvider.SpawnAsync(options, CancellationToken.None);
+        var session = TerminalSession.FromPtyOptions(pty, options);
+
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, CancellationToken.None);
+        Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
+
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            "printf 'HISTFILE=%s\\n' \"${HISTFILE-<unset>}\"; printf 'HISTSIZE=%s\\n' \"${HISTSIZE-<unset>}\"; printf 'HISTFILESIZE=%s\\n' \"${HISTFILESIZE-<unset>}\"; set -o | grep -E '^(history|histexpand)'; history; echo \"Process completed!\"",
+            shellType,
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+
+        _logger.LogInformation("[Rich bash history] Output: {Output}", result.OutputText);
+
+        Assert.That(result.OutputText, Does.Contain("HISTFILE=/dev/null"));
+        Assert.That(result.OutputText, Does.Contain("HISTSIZE=0"));
+        Assert.That(result.OutputText, Does.Contain("HISTFILESIZE=0"));
+        Assert.That(result.OutputText, Does.Contain("histexpand").And.Contain("off"));
+        Assert.That(result.OutputText, Does.Contain("history").And.Contain("off"));
+        Assert.That(result.OutputText, Does.Contain("Process completed!"));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
     }
 
     #endregion
@@ -520,14 +593,59 @@ public class PtyExecutionTests
         return (new TerminalSession(pty, TerminalDimensions.Default), writerStream);
     }
 
+    private static TerminalSession CreateMockPty(Stream readerStream)
+    {
+        var writerStream = new MemoryStream();
+        var pty = Substitute.For<IPtyConnection>();
+        pty.ReaderStream.Returns(readerStream);
+        pty.WriterStream.Returns(writerStream);
+        pty.Pid.Returns(12345);
+        return new TerminalSession(pty, TerminalDimensions.Default);
+    }
+
+    private static async Task<TerminalRun> ExecuteSingleRunAsync(
+        ExecuteStrategy strategy,
+        TerminalSession session,
+        string script,
+        ShellType shellType,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var execution = strategy.ExecuteAsync(session, script, shellType, timeout, cancellationToken);
+
+        TerminalRun? lastRun = null;
+        await foreach (var run in execution)
+        {
+            lastRun = run;
+            await run.WaitAsync(cancellationToken);
+        }
+
+        return lastRun ?? throw new InvalidOperationException("Execution produced no terminal runs.");
+    }
+
+    private static async Task DrainExecuteAsync(
+        ExecuteStrategy strategy,
+        TerminalSession session,
+        string script,
+        ShellType shellType,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var execution = strategy.ExecuteAsync(session, script, shellType, timeout, cancellationToken);
+
+        await foreach (var run in execution)
+        {
+            await run.WaitAsync(cancellationToken);
+        }
+    }
+
     [Test]
-    public async Task DetectStrategy_ReusesSessionParserAndBuffer()
+    public async Task DetectStrategy_ReusesSessionParser()
     {
         var (session, _) = CreateMockPty(BuildRichSequence("prompt ready"));
         var parser = session.Parser;
-        var buffer = session.Buffer;
 
-        var strategy = await IExecuteStrategy.DetectStrategyAsync(
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(
             session,
             ShellType.PowerShell,
             _logger,
@@ -535,8 +653,26 @@ public class PtyExecutionTests
 
         Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
         Assert.That(session.Parser, Is.SameAs(parser));
-        Assert.That(session.Buffer, Is.SameAs(buffer));
         Assert.That(session.Parser.HasDetectedShellIntegration, Is.True);
+    }
+
+    [Test]
+    public async Task DetectStrategy_WaitsForCommandReadyBeforeReturningRich()
+    {
+        await using var readerStream = new ChunkedReadStream(
+            "\e]633;D\a"u8.ToArray(),
+            "\e]633;A\aprompt \e[?2004h\e]633;B\a"u8.ToArray());
+        var session = CreateMockPty(readerStream);
+
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(
+            session,
+            ShellType.Zsh,
+            _logger,
+            CancellationToken.None);
+
+        Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
+        Assert.That(session.Parser.HasDetectedShellIntegration, Is.True);
+        Assert.That(session.Parser.IsBracketedPasteModeEnabled, Is.True);
     }
 
     [Test]
@@ -549,7 +685,7 @@ public class PtyExecutionTests
         pty.WriterStream.Returns(writerStream);
         var session = new TerminalSession(pty, new TerminalDimensions(77, 33));
 
-        session.Feed("\e[18t\e[6n");
+        session.Parser.Feed("\e[18t\e[6n");
         await session.FlushTerminalResponsesAsync(CancellationToken.None);
 
         var written = Encoding.ASCII.GetString(writerStream.ToArray());
@@ -594,19 +730,19 @@ public class PtyExecutionTests
         var (session, _) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo test",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain(expectedOutput),
-            $"Expected output to contain '{expectedOutput}'. Actual output:\n{result.Output}");
+            $"Expected output to contain '{expectedOutput}'. Actual output:\n{result.OutputText}");
         Assert.That(result.ExitCode, Is.EqualTo(0));
     }
 
@@ -618,23 +754,23 @@ public class PtyExecutionTests
         var (session, _) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo LINE_A\necho LINE_B",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_A"),
-            $"Expected output to contain 'LINE_A'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'LINE_A'. Actual output:\n{result.OutputText}");
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_B"),
-            $"Expected output to contain 'LINE_B'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'LINE_B'. Actual output:\n{result.OutputText}");
     }
 
     [Test]
@@ -658,16 +794,16 @@ public class PtyExecutionTests
 
         var (session, _) = CreateMockPty(Encoding.UTF8.GetBytes(sb.ToString()));
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "Write-Host 'FIRST'\nWrite-Host 'SECOND'\nWrite-Host 'THIRD'",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich redraw output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich redraw output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
-        Assert.That(result.Output.Replace("\r\n", "\n"), Is.EqualTo("FIRST\nSECOND\nTHIRD"));
+        Assert.That(result.OutputText.Replace("\r\n", "\n"), Is.EqualTo("FIRST\nSECOND\nTHIRD"));
     }
 
     [Test]
@@ -688,17 +824,110 @@ public class PtyExecutionTests
 
         var (session, _) = CreateMockPty(Encoding.UTF8.GetBytes(sb.ToString()));
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo FIRST\necho SECOND",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich multi-C output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich multi-C output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
-        Assert.That(result.Output.Replace("\r\n", "\n"), Is.EqualTo("FIRST\nSECOND"));
+        Assert.That(result.OutputText.Replace("\r\n", "\n"), Is.EqualTo("FIRST\nSECOND"));
         Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task RichStrategy_MultipleFinishedMarkers_ProducesMultipleRuns()
+    {
+        var first = Encoding.UTF8.GetBytes(
+            "\e]633;A\a" +
+            "\e]633;B\a" +
+            "\r\n" +
+            "\e]633;E;first command\a" +
+            "\e]633;C\a" +
+            "FIRST\r\n" +
+            "\e]633;D;0\a" +
+            "\e]633;A\a");
+        var second = Encoding.UTF8.GetBytes(
+            "\e]633;B\a" +
+            "\e]633;E;second command\a" +
+            "\e]633;C\a" +
+            "SECOND\r\n" +
+            "\e]633;D;7\a" +
+            "\e]633;A\a");
+
+        await using var readerStream = new ChunkedReadStream(first, second);
+        var session = CreateMockPty(readerStream);
+        var strategy = new RichExecuteStrategy(_logger);
+        var runs = new List<TerminalRun>();
+
+        var execution = strategy.ExecuteAsync(
+            session,
+            "first command\nsecond command",
+            ShellType.Unknown,
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None);
+
+        await foreach (var run in execution)
+        {
+            runs.Add(run);
+            await run.WaitAsync(CancellationToken.None);
+        }
+
+        Assert.That(runs, Has.Count.EqualTo(2));
+        Assert.That(runs[0].CommandLine, Is.EqualTo("first command"));
+        Assert.That(runs[0].OutputText.Replace("\r\n", "\n"), Is.EqualTo("FIRST"));
+        Assert.That(runs[0].ExitCode, Is.EqualTo(0));
+        Assert.That(runs[1].CommandLine, Is.EqualTo("second command"));
+        Assert.That(runs[1].OutputText.Replace("\r\n", "\n"), Is.EqualTo("SECOND"));
+        Assert.That(runs[1].ExitCode, Is.EqualTo(7));
+    }
+
+    [Test]
+    public async Task RichStrategy_CommandLine_UsesOsc633E()
+    {
+        var ptyData = BuildRichSequence("ok");
+        var (session, _) = CreateMockPty(ptyData);
+
+        var strategy = new RichExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            script: "submitted command",
+            ShellType.Unknown,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        Assert.That(result.CommandLine, Is.EqualTo("mock command"));
+    }
+
+    [Test]
+    public async Task RichStrategy_ClearDisplay_ClearsActiveRunOutput()
+    {
+        var sb = new StringBuilder();
+        sb.Append("\e]633;A\a");
+        sb.Append("\e]633;B\a");
+        sb.Append("\r\n");
+        sb.Append("\e]633;E;clear command\a");
+        sb.Append("\e]633;C\a");
+        sb.Append("BEFORE\r\n");
+        sb.Append("\e[2J");
+        sb.Append("AFTER\r\n");
+        sb.Append("\e]633;D;0\a");
+        sb.Append("\e]633;A\a");
+
+        var (session, _) = CreateMockPty(Encoding.UTF8.GetBytes(sb.ToString()));
+        var strategy = new RichExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            script: "clear command",
+            ShellType.Unknown,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        Assert.That(result.OutputText.Replace("\r\n", "\n"), Is.EqualTo("AFTER"));
     }
 
     [Test]
@@ -708,14 +937,14 @@ public class PtyExecutionTests
         var (session, _) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "exit 42",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
         Assert.That(result.ExitCode, Is.EqualTo(42));
     }
@@ -727,37 +956,72 @@ public class PtyExecutionTests
         var (session, _) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "true",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.Output, result.ExitCode);
+        _logger.LogInformation("Rich output: '{Output}', ExitCode: {ExitCode}", result.OutputText, result.ExitCode);
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
         // Output should be empty or near-empty
-        Assert.That(result.Output.Trim(), Is.EqualTo(string.Empty).Or.Length.LessThanOrEqualTo(5));
+        Assert.That(result.OutputText.Trim(), Is.EqualTo(string.Empty).Or.Length.LessThanOrEqualTo(5));
+    }
+
+    [Test]
+    public async Task RichStrategy_WaitsForCommandFinishedAfterSilentPeriod()
+    {
+        await using var readerStream = new DelayedReadStream(
+            (
+                TimeSpan.Zero,
+                Encoding.UTF8.GetBytes(
+                    "\e]633;A\a\e]633;B\a\r\n" +
+                    "\e]633;E;python3 -c \"import time; time.sleep(10)\"\a" +
+                    "\e]633;C\a" +
+                    "Start\r\n")),
+            (
+                TimeSpan.FromMilliseconds(2600),
+                Encoding.UTF8.GetBytes(
+                    "End\r\n" +
+                    "\e]633;D;0\a" +
+                    "\e]633;A\a\e]633;B\a")));
+        var session = CreateMockPty(readerStream);
+
+        var strategy = new RichExecuteStrategy(_logger);
+        var result = await ExecuteSingleRunAsync(
+            strategy,
+            session,
+            "python3 -c \"import time; time.sleep(10)\"",
+            ShellType.Zsh,
+            timeout: TimeSpan.FromSeconds(10),
+            cancellationToken: CancellationToken.None);
+
+        _logger.LogInformation("[Rich silent period] Output: {Output}", result.OutputText);
+
+        Assert.That(result.OutputText, Does.Contain("Start"));
+        Assert.That(result.OutputText, Does.Contain("End"));
+        Assert.That(result.ExitCode, Is.EqualTo(0));
     }
 
     [Test]
     public async Task RichStrategy_FallbackOutput_UsesCommandStartBaseline()
     {
-        var ptyData = Encoding.UTF8.GetBytes("\r\nWrite-Host 'RESULT'\r\nRESULT\r\nPS C:\\test> ");
+        var ptyData = "\r\nWrite-Host 'RESULT'\r\nRESULT\r\nPS C:\\test> "u8.ToArray();
         var (session, _) = CreateMockPty(ptyData);
-        session.Feed("PS C:\\detect> ");
+        session.Parser.Feed("PS C:\\detect> ");
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "Write-Host 'RESULT'",
             ShellType.PowerShell,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        Assert.That(result.Output, Does.Contain("RESULT"));
-        Assert.That(result.Output, Does.Not.Contain("detect"));
+        Assert.That(result.OutputText, Does.Contain("RESULT"));
+        Assert.That(result.OutputText, Does.Not.Contain("detect"));
     }
 
     [Test]
@@ -767,7 +1031,7 @@ public class PtyExecutionTests
         var (session, writerStream) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        await strategy.ExecuteAsync(
+        await DrainExecuteAsync(strategy, 
             session,
             script: "echo hello",
             ShellType.Unknown,
@@ -791,7 +1055,7 @@ public class PtyExecutionTests
         var (session, writerStream) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        await strategy.ExecuteAsync(
+        await DrainExecuteAsync(strategy, 
             session,
             script: "echo a \\\necho b",
             ShellType.Unknown,
@@ -813,7 +1077,7 @@ public class PtyExecutionTests
         session.Parser.Feed("\e[?2004h");
 
         var strategy = new RichExecuteStrategy(_logger);
-        await strategy.ExecuteAsync(
+        await DrainExecuteAsync(strategy, 
             session,
             script: "echo a\necho b",
             ShellType.Unknown,
@@ -837,7 +1101,7 @@ public class PtyExecutionTests
         var (session, writerStream) = CreateMockPty(ptyData);
 
         var strategy = new RichExecuteStrategy(_logger);
-        await strategy.ExecuteAsync(
+        await DrainExecuteAsync(strategy, 
             session,
             script: "echo a\necho b",
             ShellType.Unknown,
@@ -864,7 +1128,7 @@ public class PtyExecutionTests
         session.Parser.Feed("\e[?2004h");
 
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             ShellType.Unknown,
@@ -879,25 +1143,13 @@ public class PtyExecutionTests
         Assert.That(written, Does.Contain("\e[201~"), "Should end bracketed paste");
         // Verify output contains both lines
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_A"),
-            $"Expected output to contain 'LINE_A'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'LINE_A'. Actual output:\n{result.OutputText}");
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("LINE_B"),
-            $"Expected output to contain 'LINE_B'. Actual output:\n{result.Output}");
-    }
-
-    [Test]
-    public async Task NoneStrategy_SendsLogicalSingleLineNewlinesAsEnterKeys()
-    {
-        var (session, writerStream) = CreateMockPty([]);
-        await NoneExecuteStrategy.SendCommandAsync(session, "echo a \\\necho b", ShellType.Unknown, CancellationToken.None);
-
-        var written = Encoding.UTF8.GetString(writerStream.ToArray());
-        _logger.LogInformation("Written logical single-line to PTY: {Escaped}", OutputCleaner.EscapeForLog(written));
-
-        Assert.That(written, Is.EqualTo("echo a \\\recho b\r"));
+            $"Expected output to contain 'LINE_B'. Actual output:\n{result.OutputText}");
     }
 
     [Test]
@@ -923,23 +1175,23 @@ public class PtyExecutionTests
             script = "echo 'SPLIT_A'\necho 'SPLIT_B'";
         }
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(30),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Output: {Output}", result.Output);
+        _logger.LogInformation("Output: {Output}", result.OutputText);
 
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("SPLIT_A"),
-            $"Expected output to contain 'SPLIT_A'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'SPLIT_A'. Actual output:\n{result.OutputText}");
         Assert.That(
-            result.Output,
+            result.OutputText,
             Does.Contain("SPLIT_B"),
-            $"Expected output to contain 'SPLIT_B'. Actual output:\n{result.Output}");
+            $"Expected output to contain 'SPLIT_B'. Actual output:\n{result.OutputText}");
     }
 
     #endregion
@@ -958,7 +1210,7 @@ public class PtyExecutionTests
         pty.WriterStream.Returns(writerStream);
         var session = new TerminalSession(pty, TerminalDimensions.Default);
 
-        var strategy = await IExecuteStrategy.DetectStrategyAsync(session, ShellType.PowerShell, _logger, CancellationToken.None);
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, ShellType.PowerShell, _logger, CancellationToken.None);
 
         Assert.That(
             strategy,
@@ -977,7 +1229,7 @@ public class PtyExecutionTests
         pty.WriterStream.Returns(writerStream);
         var session = new TerminalSession(pty, TerminalDimensions.Default);
 
-        var strategy = await IExecuteStrategy.DetectStrategyAsync(session, ShellType.PowerShell, _logger, CancellationToken.None);
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, ShellType.PowerShell, _logger, CancellationToken.None);
 
         Assert.That(strategy, Is.TypeOf<RichExecuteStrategy>());
         Assert.That(session.Parser.IsBracketedPasteModeEnabled, Is.True);
@@ -995,7 +1247,7 @@ public class PtyExecutionTests
         pty.WriterStream.Returns(writerStream);
         var session = new TerminalSession(pty, TerminalDimensions.Default);
 
-        var strategy = await IExecuteStrategy.DetectStrategyAsync(session, ShellType.Bash, _logger, CancellationToken.None);
+        var strategy = await ExecuteStrategy.DetectStrategyAsync(session, ShellType.Bash, _logger, CancellationToken.None);
 
         Assert.That(
             strategy,
@@ -1025,15 +1277,15 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "Write-Host \"MATRIX_PS_TEST\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[PowerShell] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("MATRIX_PS_TEST"));
+        _logger.LogInformation("[PowerShell] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("MATRIX_PS_TEST"));
     }
 
     [Test]
@@ -1051,16 +1303,16 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "Write-Host \"PS_LINE1\"\nWrite-Host \"PS_LINE2\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[PowerShell MultiLine] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("PS_LINE1"));
-        Assert.That(result.Output, Does.Contain("PS_LINE2"));
+        _logger.LogInformation("[PowerShell MultiLine] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("PS_LINE1"));
+        Assert.That(result.OutputText, Does.Contain("PS_LINE2"));
     }
 
     [Test]
@@ -1078,15 +1330,15 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo \"MATRIX_BASH_TEST\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[Bash] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("MATRIX_BASH_TEST"));
+        _logger.LogInformation("[Bash] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("MATRIX_BASH_TEST"));
     }
 
     [Test]
@@ -1104,16 +1356,16 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo \"BASH_L1\"\necho \"BASH_L2\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[Bash MultiLine] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("BASH_L1"));
-        Assert.That(result.Output, Does.Contain("BASH_L2"));
+        _logger.LogInformation("[Bash MultiLine] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("BASH_L1"));
+        Assert.That(result.OutputText, Does.Contain("BASH_L2"));
     }
 
     [Test]
@@ -1133,15 +1385,15 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo \"MATRIX_ZSH_TEST\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[Zsh] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("MATRIX_ZSH_TEST"));
+        _logger.LogInformation("[Zsh] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("MATRIX_ZSH_TEST"));
     }
 
     [Test]
@@ -1159,16 +1411,16 @@ public class PtyExecutionTests
         var session = TerminalSession.FromPtyOptions(pty, options);
 
         var strategy = new NoneExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "echo \"ZSH_L1\"\necho \"ZSH_L2\"",
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[Zsh MultiLine] Output: {Output}", result.Output);
-        Assert.That(result.Output, Does.Contain("ZSH_L1"));
-        Assert.That(result.Output, Does.Contain("ZSH_L2"));
+        _logger.LogInformation("[Zsh MultiLine] Output: {Output}", result.OutputText);
+        Assert.That(result.OutputText, Does.Contain("ZSH_L1"));
+        Assert.That(result.OutputText, Does.Contain("ZSH_L2"));
     }
 
     #endregion
@@ -1192,16 +1444,16 @@ public class PtyExecutionTests
 
         var (session, _) = CreateMockPty(Encoding.UTF8.GetBytes(sb.ToString()));
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "seq 1 5",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich order regression output: '{Output}'", result.Output);
+        _logger.LogInformation("Rich order regression output: '{Output}'", result.OutputText);
 
-        var normalized = result.Output.Replace("\r\n", "\n").Replace("\r", "\n");
+        var normalized = result.OutputText.Replace("\r\n", "\n").Replace("\r", "\n");
         Assert.That(
             normalized,
             Does.Contain("1"),
@@ -1251,16 +1503,16 @@ public class PtyExecutionTests
 
         var (session, _) = CreateMockPty(Encoding.UTF8.GetBytes(sb.ToString()));
         var strategy = new RichExecuteStrategy(_logger);
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: "Write-Host 'A'\nWrite-Host 'B'\nWrite-Host 'C'",
             ShellType.Unknown,
             timeout: TimeSpan.FromSeconds(10),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("Rich multi-C order output: '{Output}'", result.Output);
+        _logger.LogInformation("Rich multi-C order output: '{Output}'", result.OutputText);
 
-        var normalized = result.Output.Replace("\r\n", "\n").Replace("\r", "\n");
+        var normalized = result.OutputText.Replace("\r\n", "\n").Replace("\r", "\n");
         var idxA = normalized.IndexOf('A', StringComparison.Ordinal);
         var idxB = normalized.IndexOf('B', StringComparison.Ordinal);
         var idxC = normalized.IndexOf('C', StringComparison.Ordinal);
@@ -1299,47 +1551,50 @@ public class PtyExecutionTests
             script = "seq 1 5";
         }
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(15),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[None Order] Output: {Output}", result.Output);
+        _logger.LogInformation("[None Order] Output: {Output}", result.OutputText);
 
-        var normalized = result.Output.Replace("\r\n", "\n").Replace("\r", "\n");
+        var normalized = result.OutputText.Replace("\r\n", "\n").Replace("\r", "\n");
 
-        // Verify all numbers present
-        Assert.That(normalized, Does.Contain("1"), "Must contain '1'");
-        Assert.That(normalized, Does.Contain("2"), "Must contain '2'");
-        Assert.That(normalized, Does.Contain("3"), "Must contain '3'");
-        Assert.That(normalized, Does.Contain("4"), "Must contain '4'");
-        Assert.That(normalized, Does.Contain("5"), "Must contain '5'");
+        var lines = normalized
+            .Split('\n')
+            .Select(line => line.Trim())
+            .ToArray();
 
-        // Verify order: 1 before 2, 2 before 3, etc.
-        var idx1 = normalized.IndexOf('1', StringComparison.Ordinal);
-        var idx2 = normalized.IndexOf('2', StringComparison.Ordinal);
-        var idx3 = normalized.IndexOf('3', StringComparison.Ordinal);
-        var idx4 = normalized.IndexOf('4', StringComparison.Ordinal);
-        var idx5 = normalized.IndexOf('5', StringComparison.Ordinal);
+        var idx1 = Array.IndexOf(lines, "1");
+        var idx2 = Array.IndexOf(lines, "2");
+        var idx3 = Array.IndexOf(lines, "3");
+        var idx4 = Array.IndexOf(lines, "4");
+        var idx5 = Array.IndexOf(lines, "5");
+
+        Assert.That(idx1, Is.GreaterThanOrEqualTo(0), "Must contain output line '1'");
+        Assert.That(idx2, Is.GreaterThanOrEqualTo(0), "Must contain output line '2'");
+        Assert.That(idx3, Is.GreaterThanOrEqualTo(0), "Must contain output line '3'");
+        Assert.That(idx4, Is.GreaterThanOrEqualTo(0), "Must contain output line '4'");
+        Assert.That(idx5, Is.GreaterThanOrEqualTo(0), "Must contain output line '5'");
 
         Assert.That(
             idx1,
             Is.LessThan(idx2),
-            $"Output order violated: '1' (at {idx1}) should be before '2' (at {idx2}). Output:\n{result.Output}");
+            $"Output order violated: '1' (at {idx1}) should be before '2' (at {idx2}). Output:\n{result.OutputText}");
         Assert.That(
             idx2,
             Is.LessThan(idx3),
-            $"Output order violated: '2' (at {idx2}) should be before '3' (at {idx3}). Output:\n{result.Output}");
+            $"Output order violated: '2' (at {idx2}) should be before '3' (at {idx3}). Output:\n{result.OutputText}");
         Assert.That(
             idx3,
             Is.LessThan(idx4),
-            $"Output order violated: '3' (at {idx3}) should be before '4' (at {idx4}). Output:\n{result.Output}");
+            $"Output order violated: '3' (at {idx3}) should be before '4' (at {idx4}). Output:\n{result.OutputText}");
         Assert.That(
             idx4,
             Is.LessThan(idx5),
-            $"Output order violated: '4' (at {idx4}) should be before '5' (at {idx5}). Output:\n{result.Output}");
+            $"Output order violated: '4' (at {idx4}) should be before '5' (at {idx5}). Output:\n{result.OutputText}");
     }
 
     [Test]
@@ -1368,16 +1623,16 @@ public class PtyExecutionTests
             script = "echo 'FIRST_OUT'\necho 'SECOND_OUT'\necho 'THIRD_OUT'";
         }
 
-        var result = await strategy.ExecuteAsync(
+        var result = await ExecuteSingleRunAsync(strategy, 
             session,
             script: script,
             shellType,
             timeout: TimeSpan.FromSeconds(20),
             cancellationToken: CancellationToken.None);
 
-        _logger.LogInformation("[None MultiCmd Order] Output: {Output}", result.Output);
+        _logger.LogInformation("[None MultiCmd Order] Output: {Output}", result.OutputText);
 
-        var normalized = result.Output.Replace("\r\n", "\n").Replace("\r", "\n");
+        var normalized = result.OutputText.Replace("\r\n", "\n").Replace("\r", "\n");
 
         var idxFirst = normalized.IndexOf("FIRST_OUT", StringComparison.Ordinal);
         var idxSecond = normalized.IndexOf("SECOND_OUT", StringComparison.Ordinal);
@@ -1397,5 +1652,164 @@ public class PtyExecutionTests
     }
 
     #endregion
+
+    private sealed class ChunkedReadStream(params byte[][] chunks) : Stream
+    {
+        private readonly Queue<byte[]> _chunks = new(chunks);
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_chunks.Count == 0)
+            {
+                return ValueTask.FromResult(0);
+            }
+
+            var chunk = _chunks.Dequeue();
+            var bytesToCopy = Math.Min(chunk.Length, buffer.Length);
+            chunk.AsSpan(0, bytesToCopy).CopyTo(buffer.Span);
+
+            if (bytesToCopy < chunk.Length)
+            {
+                _chunks.Enqueue(chunk[bytesToCopy..]);
+            }
+
+            return ValueTask.FromResult(bytesToCopy);
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (_chunks.Count == 0)
+            {
+                return 0;
+            }
+
+            var chunk = _chunks.Dequeue();
+            var bytesToCopy = Math.Min(chunk.Length, count);
+            chunk.AsSpan(0, bytesToCopy).CopyTo(buffer.AsSpan(offset, bytesToCopy));
+
+            if (bytesToCopy < chunk.Length)
+            {
+                _chunks.Enqueue(chunk[bytesToCopy..]);
+            }
+
+            return bytesToCopy;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    private sealed class DelayedReadStream(params (TimeSpan Delay, byte[] Bytes)[] chunks) : Stream
+    {
+        private readonly Queue<(TimeSpan Delay, byte[] Bytes)> _chunks = new(chunks);
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_chunks.Count == 0)
+            {
+                return 0;
+            }
+
+            var (delay, chunk) = _chunks.Dequeue();
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay, cancellationToken);
+            }
+
+            var bytesToCopy = Math.Min(chunk.Length, buffer.Length);
+            chunk.AsSpan(0, bytesToCopy).CopyTo(buffer.Span);
+
+            if (bytesToCopy < chunk.Length)
+            {
+                _chunks.Enqueue((TimeSpan.Zero, chunk[bytesToCopy..]));
+            }
+
+            return bytesToCopy;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (_chunks.Count == 0)
+            {
+                return 0;
+            }
+
+            var (_, chunk) = _chunks.Dequeue();
+            var bytesToCopy = Math.Min(chunk.Length, count);
+            chunk.AsSpan(0, bytesToCopy).CopyTo(buffer.AsSpan(offset, bytesToCopy));
+
+            if (bytesToCopy < chunk.Length)
+            {
+                _chunks.Enqueue((TimeSpan.Zero, chunk[bytesToCopy..]));
+            }
+
+            return bytesToCopy;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+    }
 
 }

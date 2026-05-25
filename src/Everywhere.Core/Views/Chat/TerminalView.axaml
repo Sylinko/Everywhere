@@ -96,12 +96,14 @@
                 <md:CodeBlock
                   Grid.Column="1"
                   Code="{Binding DisplayBlock?.Command, RelativeSource={RelativeSource TemplatedParent}}"
+                  IsCodeWrapped="True"
                   Language="{Binding DisplayBlock?.ShellType, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:CommonConverters.ObjectToString}}">
                   <md:CodeBlock.Template>
                     <ControlTemplate TargetType="md:CodeBlock">
                       <md:MarkdownTextBlock
                         x:Name="PART_CodeTextBlock"
                         FontFamily="{StaticResource CodeFontFamily}"
+                        Foreground="{DynamicResource ForegroundColor}"
                         TextWrapping="Wrap"/>
                     </ControlTemplate>
                   </md:CodeBlock.Template>
@@ -109,30 +111,41 @@
               </Grid>
             </Border>
 
-            <md:CodeBlock
-              Code="{Binding DisplayBlock?.Text, RelativeSource={RelativeSource TemplatedParent}}"
-              Language="log">
-              <md:CodeBlock.Template>
-                <ControlTemplate TargetType="md:CodeBlock">
-                  <Border
-                    Background="{DynamicResource SecondaryCardBackgroundColor}"
-                    CornerRadius="0,0,5,5">
-                    <ScrollViewer
-                      x:Name="PART_ScrollViewer" MaxHeight="480"
-                      HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
-                      VerticalScrollBarVisibility="Auto">
-                      <Interaction.Behaviors>
-                        <in:AutoScrollBehavior/>
-                      </Interaction.Behaviors>
+            <Border
+              Background="{DynamicResource SecondaryCardBackgroundColor}"
+              CornerRadius="0,0,5,5">
+              <Panel>
+                <md:CodeBlock
+                  x:Name="PART_OutputCodeBlock" AutoSyntaxHighlight="False"
+                  ColorTheme="{Binding ColorTheme, RelativeSource={RelativeSource TemplatedParent}}"
+                  IsCodeWrapped="False" Language="log">
+                  <md:CodeBlock.Template>
+                    <ControlTemplate TargetType="md:CodeBlock">
+                      <ScrollViewer
+                        x:Name="PART_ScrollViewer" MaxHeight="480"
+                        HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <Interaction.Behaviors>
+                          <in:AutoScrollBehavior/>
+                        </Interaction.Behaviors>
 
-                      <md:MarkdownTextBlock
-                        x:Name="PART_CodeTextBlock" Margin="8,8,12,8"
-                        FontFamily="{StaticResource CodeFontFamily}"/>
-                    </ScrollViewer>
-                  </Border>
-                </ControlTemplate>
-              </md:CodeBlock.Template>
-            </md:CodeBlock>
+                        <md:MarkdownTextBlock
+                          x:Name="PART_CodeTextBlock" Margin="4,4,8,4"
+                          FontFamily="{StaticResource CodeFontFamily}"
+                          Foreground="{DynamicResource ForegroundColor}"
+                          TextWrapping="{TemplateBinding TextWrapping}"/>
+                      </ScrollViewer>
+                    </ControlTemplate>
+                  </md:CodeBlock.Template>
+                </md:CodeBlock>
+
+                <TextBlock
+                  Margin="4"
+                  Foreground="{DynamicResource WarningColor60}"
+                  IsVisible="{Binding !#PART_OutputCodeBlock.IsVisible}"
+                  Text="{I18N {x:Static LocaleKey.TerminalView_TerminalNoLongerAvailable}}"
+                  TextWrapping="Wrap"/>
+              </Panel>
+            </Border>
           </DockPanel>
         </Border>
       </ControlTemplate>

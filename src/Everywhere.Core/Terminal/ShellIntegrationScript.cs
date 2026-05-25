@@ -87,7 +87,10 @@ public static class ShellIntegrationScript
         {
             ["NO_COLOR"] = "1",
             ["TERM"] = "xterm-256color",
-            ["HISTFILE"] = "/dev/null"
+            ["HISTFILE"] = "/dev/null",
+            ["HISTSIZE"] = "0",
+            ["HISTFILESIZE"] = "0",
+            ["SAVEHIST"] = "0"
         };
 
         switch (shellType)

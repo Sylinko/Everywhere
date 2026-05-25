@@ -37,7 +37,7 @@ public enum ShellIntegrationMarkerType
 /// <param name="Type">The marker type.</param>
 /// <param name="ExitCode">Exit code (only for D markers).</param>
 /// <param name="CommandLine">Command text (only for E markers).</param>
-/// <param name="Line">The buffer line number where the marker was detected.</param>
+/// <param name="Line">The logical cursor line where the marker was detected.</param>
 public readonly record struct ShellIntegrationMarker(
     ShellIntegrationMarkerType Type,
     int? ExitCode = null,

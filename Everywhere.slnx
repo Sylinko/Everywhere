@@ -68,6 +68,7 @@
     <Project Path="3rd/WritableJsonConfiguration/src/WritableJsonConfiguration.Tests/WritableJsonConfiguration.Tests.csproj" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
+    <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <File Path="tools/build_vcproj.ps1" />

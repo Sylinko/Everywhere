@@ -1,8 +1,14 @@
 using System.Text;
-using Everywhere.Common;
 using Porta.Pty;
 
 namespace Everywhere.Terminal;
+
+internal enum TerminalReadOutcome
+{
+    Data,
+    Idle,
+    EndOfStream,
+}
 
 /// <summary>
 /// Shared state and IO helpers for a single PTY-backed terminal session.
@@ -13,17 +19,13 @@ public sealed class TerminalSession
 
     public TerminalDimensions Dimensions { get; private set; }
 
-    public VirtualTerminalBuffer Buffer { get; }
-
-    public VtSequenceParser Parser { get; }
+    public TerminalParser Parser { get; }
 
     public PtyTextDecoder TextDecoder { get; }
 
     public TerminalResponseWriter ResponseWriter { get; }
 
     public byte[] ReadBuffer { get; } = new byte[ReadBufferSize];
-
-    public event Action<TerminalSession>? BufferChanged;
 
     private const int ReadBufferSize = 4096;
 
@@ -33,11 +35,9 @@ public sealed class TerminalSession
     {
         Pty = pty;
         Dimensions = dimensions;
-        Buffer = new VirtualTerminalBuffer(dimensions.Columns);
         TextDecoder = new PtyTextDecoder(ReadBufferSize);
         ResponseWriter = new TerminalResponseWriter(pty);
-        Parser = new VtSequenceParser(
-            Buffer,
+        Parser = new TerminalParser(
             terminalResponseHandler: ResponseWriter.Queue,
             dimensions: dimensions);
     }
@@ -47,54 +47,49 @@ public sealed class TerminalSession
         return new TerminalSession(pty, TerminalDimensions.FromPtyOptions(options));
     }
 
-    public Task<int> BeginReadAsync(CancellationToken cancellationToken)
+    internal async ValueTask<TerminalReadOutcome> ReadOrIdleAsync(
+        TimeSpan idlePeriod,
+        CancellationToken cancellationToken)
     {
-        return _pendingReadTask ??= Pty.ReaderStream.ReadAsync(ReadBuffer, cancellationToken).AsTask();
-    }
-
-    public async ValueTask<int> CompleteReadAsync(CancellationToken cancellationToken)
-    {
-        if (_pendingReadTask is not { } readTask)
+        cancellationToken.ThrowIfCancellationRequested();
+        var readTask = _pendingReadTask ??= Pty.ReaderStream.ReadAsync(ReadBuffer, CancellationToken.None).AsTask();
+        if (readTask.IsCompleted)
         {
-            throw new InvalidOperationException("No pending PTY read exists.");
+            return await CompleteReadAsync(readTask, cancellationToken);
         }
 
-        try
+        var delayTask = Task.Delay(idlePeriod, cancellationToken);
+        var completedTask = await Task.WhenAny(readTask, delayTask);
+        if (completedTask != readTask)
         {
-            var bytesRead = await readTask;
-            if (bytesRead == 0)
-            {
-                Feed(TextDecoder.Flush());
-            }
-            else
-            {
-                Feed(TextDecoder.Decode(ReadBuffer.AsSpan(0, bytesRead)));
-            }
+            await delayTask;
+            return TerminalReadOutcome.Idle;
+        }
 
-            await FlushTerminalResponsesAsync(cancellationToken);
-            return bytesRead;
-        }
-        finally
-        {
-            if (ReferenceEquals(_pendingReadTask, readTask))
-            {
-                _pendingReadTask = null;
-            }
-        }
+        return await CompleteReadAsync(readTask, cancellationToken);
     }
 
-    public async ValueTask<int> ReadAsync(CancellationToken cancellationToken)
+    internal async Task WaitForIdleAsync(
+        TimeSpan maxWait,
+        TimeSpan quietPeriod,
+        CancellationToken cancellationToken)
     {
-        BeginReadAsync(cancellationToken).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-        return await CompleteReadAsync(cancellationToken);
-    }
+        var startedAt = DateTimeOffset.UtcNow;
+        while (DateTimeOffset.UtcNow - startedAt < maxWait)
+        {
+            var remaining = maxWait - (DateTimeOffset.UtcNow - startedAt);
+            if (remaining <= TimeSpan.Zero)
+            {
+                break;
+            }
 
-    public void Feed(ReadOnlySpan<char> text)
-    {
-        if (text.Length == 0) return;
-
-        Parser.Feed(text);
-        BufferChanged?.Invoke(this);
+            var idlePeriod = remaining < quietPeriod ? remaining : quietPeriod;
+            var outcome = await ReadOrIdleAsync(idlePeriod, cancellationToken);
+            if (outcome != TerminalReadOutcome.Data)
+            {
+                break;
+            }
+        }
     }
 
     public ValueTask FlushTerminalResponsesAsync(CancellationToken cancellationToken)
@@ -134,15 +129,35 @@ public sealed class TerminalSession
 
         Pty.Resize(dimensions.Columns, dimensions.Rows);
         Dimensions = dimensions;
-        Buffer.Resize(dimensions.Columns);
         Parser.Resize(dimensions);
-        BufferChanged?.Invoke(this);
 
         await FlushTerminalResponsesAsync(cancellationToken);
     }
 
-    public string GetTextFromLine(int startLine)
+    private async ValueTask<TerminalReadOutcome> CompleteReadAsync(
+        Task<int> readTask,
+        CancellationToken cancellationToken)
     {
-        return Buffer.GetTextBetween(startLine, -1);
+        try
+        {
+            var bytesRead = await readTask;
+            if (bytesRead == 0)
+            {
+                Parser.Feed(TextDecoder.Flush());
+                await FlushTerminalResponsesAsync(cancellationToken);
+                return TerminalReadOutcome.EndOfStream;
+            }
+
+            Parser.Feed(TextDecoder.Decode(ReadBuffer.AsSpan(0, bytesRead)));
+            await FlushTerminalResponsesAsync(cancellationToken);
+            return TerminalReadOutcome.Data;
+        }
+        finally
+        {
+            if (ReferenceEquals(_pendingReadTask, readTask))
+            {
+                _pendingReadTask = null;
+            }
+        }
     }
 }
