@@ -77,7 +77,7 @@ public sealed class TerminalView : TemplatedControl
         base.OnApplyTemplate(e);
 
         DisposeCollector.DisposeToDefault(ref _outputBridge);
-        _outputCodeBlock = e.NameScope.Find<CodeBlock>("PART_OutputCodeBlock");
+        _outputCodeBlock = e.NameScope.Find<CodeBlock>(OutputCodeBlockPartName);
 
         StartOutputBridge();
     }

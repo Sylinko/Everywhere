@@ -855,7 +855,7 @@ public sealed class TerminalParser(
 
     private void Tab()
     {
-        CursorX = Math.Min((CursorX / 8 + 1) * 8, _dimensions.Columns - 1);
+        CursorX = Math.Min((CursorX / 4 + 1) * 4, _dimensions.Columns - 1);
     }
 
     private void CursorUp(int count = 1)

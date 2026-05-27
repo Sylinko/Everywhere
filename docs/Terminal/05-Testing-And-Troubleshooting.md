@@ -67,7 +67,7 @@ dotnet run --no-restore --project tests/Everywhere.Terminal.TestApp/Everywhere.T
 文件：
 
 ```text
-tests/Everywhere.Core.Tests/Terminal/VtParserTests.cs
+tests/Everywhere.Core.Tests/Terminal/TerminalParserTests.cs
 ```
 
 覆盖：

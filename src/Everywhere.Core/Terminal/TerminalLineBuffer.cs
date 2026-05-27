@@ -11,7 +11,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 {
     public const int DefaultMaxLines = 2000;
 
-    private readonly object _gate = new();
+    private readonly Lock _lock = new();
     private readonly List<TerminalLine> _lines = [];
     private readonly StringBuilder _scratch = new();
     private int _updateDepth;
@@ -40,7 +40,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     {
         get
         {
-            lock (_gate)
+            lock (_lock)
             {
                 return _version;
             }
@@ -51,7 +51,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     {
         get
         {
-            lock (_gate)
+            lock (_lock)
             {
                 return _lines.Count;
             }
@@ -62,7 +62,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
     {
         get
         {
-            lock (_gate)
+            lock (_lock)
             {
                 return _lines[index];
             }
@@ -71,7 +71,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public IDisposable BeginUpdate()
     {
-        Monitor.Enter(_gate);
+        _lock.Enter();
         _updateDepth++;
         return new UpdateScope(this);
     }
@@ -139,7 +139,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void CarriageReturn()
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             _cursorColumn = 0;
@@ -157,7 +157,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void Backspace()
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             if (_cursorColumn > 0)
@@ -169,13 +169,16 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void Tab()
     {
-        using var _ = BeginUpdate();
-        WriteText("    ");
+        lock (_lock)
+        {
+            EnsureCurrentLine();
+            _cursorColumn = (_cursorColumn / 4 + 1) * 4;
+        }
     }
 
     public void CursorUp(int count = 1)
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             _cursorLineIndex = Math.Max(0, _cursorLineIndex - Math.Max(count, 1));
@@ -192,7 +195,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void CursorForward(int count = 1)
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             _cursorColumn += Math.Max(count, 1);
@@ -201,7 +204,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void CursorBackward(int count = 1)
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             _cursorColumn = Math.Max(0, _cursorColumn - Math.Max(count, 1));
@@ -218,7 +221,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public void CursorHorizontalAbsolute(int column = 1)
     {
-        lock (_gate)
+        lock (_lock)
         {
             EnsureCurrentLine();
             _cursorColumn = Math.Max(column, 1) - 1;
@@ -329,7 +332,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     public string GetText()
     {
-        lock (_gate)
+        lock (_lock)
         {
             return GetTextCore();
         }
@@ -337,7 +340,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     internal string GetLastNonEmptyLine()
     {
-        lock (_gate)
+        lock (_lock)
         {
             for (var i = _lines.Count - 1; i >= 0; i--)
             {
@@ -359,7 +362,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
             throw new ArgumentOutOfRangeException(nameof(maxVisibleLines), maxVisibleLines, "Max visible lines must be positive.");
         }
 
-        lock (_gate)
+        lock (_lock)
         {
             version = _version;
             if (_lines.Count == 0)
@@ -477,7 +480,7 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
         }
         finally
         {
-            Monitor.Exit(_gate);
+            _lock.Exit();
         }
 
         if (changed)
@@ -615,17 +618,14 @@ public sealed class TerminalLineBuffer : IReadOnlyList<TerminalLine>
 
     private sealed class UpdateScope(TerminalLineBuffer owner) : IDisposable
     {
-        private bool _disposed;
+        private int _disposed;
 
         public void Dispose()
         {
-            if (_disposed)
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
             {
-                return;
+                owner.EndUpdate();
             }
-
-            _disposed = true;
-            owner.EndUpdate();
         }
     }
 }

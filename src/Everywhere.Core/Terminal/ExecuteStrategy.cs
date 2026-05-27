@@ -138,7 +138,7 @@ public abstract class ExecuteStrategy
             });
 
         var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var scope = CreateExecutionScope(channel.Writer, session, script, shellType, timeout, cancellationToken);
+        var scope = CreateExecutionScope(channel.Writer, session, script, shellType, timeout, linkedCancellationTokenSource.Token);
         var scopeTask = RunScopeAsync();
 
         try
