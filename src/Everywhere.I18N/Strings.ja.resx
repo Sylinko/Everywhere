@@ -2914,6 +2914,12 @@
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>モデルの深い思考内容が正しく返されませんでした。同じチャット内でモデルを切り替えた場合、この問題が発生する可能性があります。</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>画像理解サブアシスタント</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>主アシスタントが必要に応じて呼び出す視覚の専門家です。主アシスタントが必要と判断した場合、「新しいアシスタントを割り当てる」ツールを通じて画像を分析させます。選択したモデルが視覚認識能力を持っていることを確認してください。</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>コマンドは {0} にて実行を開始し、{1} 秒後に成功しました</value>
     </data>
@@ -2922,5 +2928,11 @@
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>ターミナルはもはや利用できません</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>デフォルトサブアシスタント</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>主アシスタントが必要に応じて呼び出すデフォルトのアシスタントです。主アシスタントが「新しいアシスタントを割り当てる」ツールを使って一般的なタスクを委任する際、独立したコンテキストで処理し結果を返します。「自動選択」は主アシスタントと同じサブアシスタントを使用することを意味します。</value>
     </data>
 </root>

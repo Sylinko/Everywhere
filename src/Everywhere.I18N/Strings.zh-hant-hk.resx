@@ -2914,6 +2914,12 @@
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>模型的深度思考內容未正確回傳。如果你在同一個聊天中切換了模型，則很可能會導致此問題。</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>圖像理解子助手</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過&quot;指派新助手&quot;工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>命令於 {0} 開始執行，{1} 秒後成功完成</value>
     </data>
@@ -2922,5 +2928,11 @@
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>終端不再可用</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>默認子助手</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>供主助手按需調用的默認助手。當主助手通過“指派新助手”工具委派常規任務時，默認由它在獨立上下文中處理並返回結果。“自動選擇”表示使用和主助手一樣的子助手。</value>
     </data>
 </root>

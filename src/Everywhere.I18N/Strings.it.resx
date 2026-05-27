@@ -2914,6 +2914,12 @@ Data di rilascio: {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Il contenuto del ragionamento profondo del modello non è stato restituito correttamente. Se hai cambiato modello nella stessa chat, è probabile che questo problema si verifichi.</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Sottogruppo di Comprensione Immagini</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>Esperto visivo chiamato dal principale assistente all'occorrenza. Quando il principale assistente ritiene necessario, analizzerà le immagini tramite lo strumento &quot;Assegna Nuovo Assistente&quot;. Assicurati che il modello selezionato abbia capacità di riconoscimento visivo.</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Il comando è stato avviato il {0} ed è stato completato con successo dopo {1} secondi</value>
     </data>
@@ -2922,5 +2928,11 @@ Data di rilascio: {2}</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Il terminale non è più disponibile</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>Sottogruppo Predefinito</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>Assistente predefinito chiamato dal principale assistente all'occorrenza. Quando il principale assistente delega compiti generali tramite lo strumento &quot;Assegna Nuovo Assistente&quot;, questo gestisce e restituisce i risultati in un contesto indipendente. &quot;Selezione Automatica&quot; indica l'uso dello stesso sottogruppo del principale assistente.</value>
     </data>
 </root>

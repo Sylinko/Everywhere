@@ -2918,7 +2918,7 @@ Release date: {2}</value>
         <value>Image Understanding Subagent</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value />
+        <value>A visual expert called upon by the main assistant as needed. When the main assistant deems it necessary, it will use the 'Assign New Assistant' tool to have it analyze images. Please ensure the selected model has visual recognition capabilities.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Command started at {0}, completed successfully after {1} seconds</value>
@@ -2930,9 +2930,9 @@ Release date: {2}</value>
         <value>Terminal No Longer Available</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
-        <value />
+        <value>Default Subagent</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value />
+        <value>The default assistant called upon by the main assistant as needed. When the main assistant assigns routine tasks through the 'Assign New Assistant' tool, it is handled and results are returned by this assistant in an independent context. 'Auto-select' means using the same subagent as the main assistant.</value>
     </data>
 </root>

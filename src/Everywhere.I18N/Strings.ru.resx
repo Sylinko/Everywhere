@@ -2572,6 +2572,9 @@
     <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
         <value>Настройте помощника для автоматического именования заголовков диалогов.</value>
     </data>
+    <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
+        <value>Генерация Заголовков</value>
+    </data>
     <data name="SystemAssistant_AutoSelectToggle_Content" xml:space="preserve">
         <value>Автовыбор</value>
     </data>
@@ -2911,6 +2914,12 @@
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Содержимое глубоких размышлений модели не было корректно возвращено. Если вы переключали модели в одном и том же чате, это может вызвать данную проблему.</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Подассистент Понимания Изображений</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>Визуальный эксперт, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент считает это необходимым, он передает изображение для анализа с помощью инструмента &quot;Назначить нового ассистента&quot;. Убедитесь, что выбранная модель обладает способностями визуального распознавания.</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, успешно завершена через {1} секунд</value>
     </data>
@@ -2919,5 +2928,11 @@
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Терминал больше недоступен</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>Стандартный Подассистент</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>Стандартный ассистент, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент назначает рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, он обрабатывается и возвращается в независимом контексте. &quot;Автоматический выбор&quot; означает использование того же подассистента, что и у основного ассистента.</value>
     </data>
 </root>

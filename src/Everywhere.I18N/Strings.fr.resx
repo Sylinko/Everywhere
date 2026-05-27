@@ -2914,6 +2914,12 @@ Date de publication : {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Le contenu de réflexion approfondie du modèle n'a pas été renvoyé correctement. Si vous avez changé de modèle dans la même conversation, cela pourrait être la cause du problème.</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Sous-assistant Compréhension d'Image</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>Expert visuel à la demande du principal assistant. Lorsqu'il juge nécessaire, le principal assistant analysera l'image via l'outil &quot;Assigner un nouveau sous-assistant&quot;. Assurez-vous que le modèle sélectionné possède des capacités de reconnaissance visuelle.</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>La commande a commencé à s'exécuter à {0} et a réussi après {1} secondes</value>
     </data>
@@ -2922,5 +2928,11 @@ Date de publication : {2}</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Le terminal n'est plus disponible</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>Sous-assistant par Défaut</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>Sous-assistant par défaut à la demande du principal assistant. Lorsqu'il délègue des tâches courantes via l'outil &quot;Assigner un nouveau sous-assistant&quot;, il est traité et renvoyé par celui-ci dans un contexte indépendant. &quot;Sélection automatique&quot; signifie utiliser le même sous-assistant que le principal assistant.</value>
     </data>
 </root>

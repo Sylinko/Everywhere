@@ -2913,6 +2913,12 @@ Yayın tarihi: {2}</value>
     <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
         <value>Modelin derin düşünme içeriği doğru bir şekilde geri dönmedi. Aynı sohbet içinde model değiştirdiyseniz, bu soruna yol açmış olabilir.</value>
     </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>Görüntü Anlama Alt Asistanı</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>Ana asistanın ihtiyaç duyduğunda çağırabileceği görsel uzman. Ana asistan, gerektiğinde resmi analiz etmesi için onu &quot;Yeni Asistan Atama&quot; aracıyla görevlendirir. Seçilen modelin görsel tanıma yeteneğine sahip olduğundan emin olun.</value>
+    </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Komut {0} tarihinde başladı, {1} saniye sonra başarıyla tamamlandı</value>
     </data>
@@ -2921,5 +2927,11 @@ Yayın tarihi: {2}</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Terminal Artık Kullanılamıyor</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>Varsayılan Alt Asistan</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>Ana asistanın ihtiyaç duyduğunda çağırabileceği varsayılan asistan. Ana asistan, &quot;Yeni Asistan Atama&quot; aracıyla rutin görevleri devrettiğinde, varsayılan olarak bağımsız bir bağlamda bunu işleyip sonuçları döndürür. &quot;Otomatik Seçim&quot; ana asistanla aynı alt asistanı kullanmak anlamına gelir.</value>
     </data>
 </root>
