@@ -2926,4 +2926,7 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令於 {0} 開始執行，{1} 秒後失敗，退出代碼為 {2}</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>終端不再可用</value>
+    </data>
 </root>

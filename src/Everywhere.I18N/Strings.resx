@@ -2927,6 +2927,6 @@ Release date: {2}</value>
         <value>Command started at {0}, failed after {1} seconds with exit code {2}</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
-        <value />
+        <value>Terminal No Longer Available</value>
     </data>
 </root>

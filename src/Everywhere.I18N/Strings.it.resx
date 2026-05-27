@@ -2926,4 +2926,7 @@ Data di rilascio: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Il comando è stato avviato il {0} ed è fallito dopo {1} secondi, codice di uscita {2}</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>Il terminale non è più disponibile</value>
+    </data>
 </root>

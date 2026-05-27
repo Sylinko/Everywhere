@@ -2926,4 +2926,7 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>명령이 {0}에 따라 실행되었으며, {1}초 후 실패하였고, 종료 코드: {2}입니다.</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>터미널을 더 이상 사용할 수 없습니다.</value>
+    </data>
 </root>

@@ -2925,4 +2925,7 @@ Yayın tarihi: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Komut {0} tarihinde başladı, {1} saniye sonra başarısız oldu, çıkış kodu {2}</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>Terminal Artık Kullanılamıyor</value>
+    </data>
 </root>

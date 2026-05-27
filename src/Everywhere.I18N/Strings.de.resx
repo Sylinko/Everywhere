@@ -2925,4 +2925,7 @@ Veröffentlichungsdatum: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>Terminal nicht mehr verfügbar</value>
+    </data>
 </root>

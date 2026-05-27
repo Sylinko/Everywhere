@@ -2926,4 +2926,7 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>コマンドは {0} にて実行を開始し、{1} 秒後に失敗しました。終了コードは {2} です</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>ターミナルはもはや利用できません</value>
+    </data>
 </root>

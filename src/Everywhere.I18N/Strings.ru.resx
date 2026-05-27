@@ -2926,4 +2926,7 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, завершилась с ошибкой через {1} секунд, код выхода {2}</value>
     </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>Терминал больше недоступен</value>
+    </data>
 </root>
