@@ -12,9 +12,8 @@
   x:DataType="vm:ChatWindowViewModel" x:TypeArguments="vm:ChatWindowViewModel"
   Background="{DynamicResource AcrylicWindowBackgroundColor}"
   BorderBrush="{DynamicResource BorderColor}"
-  ExtendClientAreaChromeHints="NoChrome" ExtendClientAreaToDecorationsHint="True"
-  SizeToContent="WidthAndHeight" TransparencyLevelHint="AcrylicBlur"
-  WindowStartupLocation="CenterScreen">
+  ExtendClientAreaToDecorationsHint="True" SizeToContent="WidthAndHeight"
+  TransparencyLevelHint="AcrylicBlur" WindowStartupLocation="CenterScreen">
 
   <v:ReactiveShadWindow.BorderThickness>
     <OnPlatform
@@ -23,9 +22,7 @@
   </v:ReactiveShadWindow.BorderThickness>
 
   <v:ReactiveShadWindow.Hosts>
-    <shadui:DialogHost
-      x:Name="PART_DialogHost"
-      Owner="{Binding RelativeSource={RelativeSource AncestorType=v:ChatWindow}}"/>
+    <shadui:DialogHost x:Name="PART_DialogHost"/>
     <shadui:ToastHost
       x:Name="PART_ToastHost" Margin="0,36,0,0"/>
   </v:ReactiveShadWindow.Hosts>
@@ -456,9 +453,9 @@
                               FontSize="{DynamicResource FontSizeM}"
                               IsEditing="{Binding IsRenaming, Mode=TwoWay}"
                               IsVisible="{Binding !IsTemporary}"
+                              PlaceholderText="{I18N {x:Static LocaleKey.ChatContext_Metadata_Topic_Default}}"
                               Text="{Binding Topic, Mode=TwoWay}"
-                              TextTrimming="CharacterEllipsis"
-                              Watermark="{I18N {x:Static LocaleKey.ChatContext_Metadata_Topic_Default}}"/>
+                              TextTrimming="CharacterEllipsis"/>
 
                             <TextBlock
                               x:Name="DateColumn" Grid.Column="2"

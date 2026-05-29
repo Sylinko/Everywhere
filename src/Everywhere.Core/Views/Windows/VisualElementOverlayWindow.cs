@@ -15,7 +15,7 @@ public class VisualElementOverlayWindow : Window
         CanResize = false;
         ShowInTaskbar = false;
         ShowActivated = false;
-        SystemDecorations = SystemDecorations.None;
+        WindowDecorations = WindowDecorations.None;
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         IsHitTestVisible = false;
         Background = null;

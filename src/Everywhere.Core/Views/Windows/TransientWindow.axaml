@@ -9,9 +9,7 @@
   Version="{x:Static ew:App.Version}">
 
   <shadui:ShadWindow.Hosts>
-    <shadui:DialogHost
-      x:Name="PART_DialogHost"
-      Owner="{Binding RelativeSource={RelativeSource AncestorType=shadui:ShadWindow}}"/>
+    <shadui:DialogHost x:Name="PART_DialogHost"/>
     <shadui:ToastHost x:Name="PART_ToastHost"/>
   </shadui:ShadWindow.Hosts>
 </shadui:ShadWindow>

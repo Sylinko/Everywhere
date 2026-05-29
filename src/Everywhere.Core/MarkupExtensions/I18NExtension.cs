@@ -46,7 +46,7 @@ public class I18NExtension : MarkupExtension
     {
         var target = serviceProvider.GetService<IProvideValueTarget>();
 
-        if (Key is IBinding binding)
+        if (Key is BindingBase binding)
         {
             return new MultiBinding
             {
@@ -62,7 +62,7 @@ public class I18NExtension : MarkupExtension
                 Key,
                 args.AsValueEnumerable().Select(arg => arg switch
                 {
-                    IBinding b => new BindingResourceKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
+                    BindingBase b => new BindingResourceKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
                     IDynamicResourceKey key => key,
                     _ => new DynamicResourceKey(arg)
                 }).ToList()),
@@ -122,24 +122,28 @@ public class I18NExtension : MarkupExtension
     /// <param name="binding"></param>
     /// <param name="target"></param>
     /// <param name="property"></param>
-    private sealed class BindingResourceKey(IBinding binding, AvaloniaObject? target, AvaloniaProperty? property)
-        : IDynamicResourceKey, IObserver<object?>
+    private sealed class BindingResourceKey(
+        BindingBase binding,
+        AvaloniaObject? target,
+        AvaloniaProperty? property
+    ) : IDynamicResourceKey, IObserver<object?>
     {
         public IDynamicResourceKey Self => this;
 
-#pragma warning disable CS0618
-        private readonly InstancedBinding? _bindingInstance = binding.Initiate(target ?? new AvaloniaObject(), property);
-#pragma warning restore CS0618
+// #pragma warning disable CS0618
+//         private readonly BindingExpressionBase? _bindingInstance = binding.Initiate(target ?? new AvaloniaObject(), property);
+// #pragma warning restore CS0618
 
         private IDisposable? _selfSubscription;
         private object? _value;
 
         public IDisposable Subscribe(IObserver<object?> observer)
         {
-            DisposeHelper.DisposeToDefault(ref _selfSubscription);
-            _selfSubscription = _bindingInstance?.Source.Subscribe(this); // Subscribe to the binding so that we can get updates.
-
-            return _bindingInstance?.Source.Subscribe(observer) ?? Disposable.Empty;
+            return Disposable.Empty;
+            // DisposeHelper.DisposeToDefault(ref _selfSubscription);
+            // _selfSubscription = _bindingInstance?.Source.Subscribe(this); // Subscribe to the binding so that we can get updates.
+            //
+            // return _bindingInstance?.Source.Subscribe(observer) ?? Disposable.Empty;
         }
 
         public override string ToString() => _value?.ToString() ?? string.Empty;

@@ -7,10 +7,10 @@
     <SemanticKernelVersion>1.75.0</SemanticKernelVersion>
     <OpenTelemetryVersion>1.15.3</OpenTelemetryVersion>
     <SentryVersion>6.5.0</SentryVersion>
-    <AvaloniaVersion>11.3.12</AvaloniaVersion>
-    <AvaloniaEditVersion>11.4.1</AvaloniaEditVersion>
-    <LiveMarkdownVersion>1.11.1</LiveMarkdownVersion>
-    <SkiaSharpVersion>3.119.2</SkiaSharpVersion>
+    <AvaloniaVersion>12.0.4</AvaloniaVersion>
+    <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
+    <LiveMarkdownVersion>2.2.0</LiveMarkdownVersion>
+    <SkiaSharpVersion>3.119.4</SkiaSharpVersion>
     <XamlBehaviorsVersion>11.3.9.5</XamlBehaviorsVersion>
     <TikTokenVersion>6.0.0</TikTokenVersion>
   </PropertyGroup>
@@ -52,7 +52,6 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="SharpYaml" Version="3.10.0" />
-    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="11.3.9.4" />
     <PackageVersion Include="System.Drawing.Common" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="System.Text.Json" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="ZLinq" Version="1.5.6" />
@@ -77,13 +76,13 @@
     <PackageVersion Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Controls.ColorPicker" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Controls.DataGrid" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.HtmlRenderer" Version="11.3.0" />
+    <PackageVersion Include="Avalonia.HtmlRenderer" Version="12.0.0" />
     <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="$(AvaloniaEditVersion)" />
+    <PackageVersion Include="ClassicDiagnostics.Avalonia" Version="0.0.2-preview" />
     <PackageVersion Include="LiveMarkdown.Avalonia" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Math" Version="$(LiveMarkdownVersion)" />
     <PackageVersion Include="LiveMarkdown.Avalonia.Mermaid" Version="$(LiveMarkdownVersion)" />
@@ -93,7 +92,8 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="$(SkiaSharpVersion)" />
-    <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="11.3.1" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.11" />
+    <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="12.0.0" />
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.3" />
     <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="$(XamlBehaviorsVersion)" />
   </ItemGroup>
@@ -122,7 +122,7 @@
   </ItemGroup>
   <ItemGroup Label="ShadUI">
     <PackageVersion Include="Jab" Version="0.11.0" />
-    <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
+    <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.1.0-dev-570" />
     <PackageVersion Include="MinVer" Version="7.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

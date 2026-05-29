@@ -15,7 +15,7 @@
             ItemsSource="{Binding ConfiguratorModels, RelativeSource={RelativeSource TemplatedParent}}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
             SelectedValue="{Binding Assistant.ConfiguratorType, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"
-            SelectedValueBinding="{Binding Type, DataType=v:AssistantConfiguratorSelector+ConfiguratorModel}">
+            SelectedValueBinding="{Binding Type, x:DataType=v:AssistantConfiguratorSelector+ConfiguratorModel}">
             <ListBox.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid

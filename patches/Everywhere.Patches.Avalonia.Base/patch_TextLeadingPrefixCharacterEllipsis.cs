@@ -125,9 +125,6 @@ public sealed class patch_TextLeadingPrefixCharacterEllipsis : TextCollapsingPro
                                 out var suffixCount,
                                 out var suffixWidth))
                         {
-                            if (endShapedRun.IsReversed)
-                                endShapedRun.Reverse();
-
                             availableSuffixWidth -= suffixWidth;
 
                             if (suffixCount >= innerRun.Length)

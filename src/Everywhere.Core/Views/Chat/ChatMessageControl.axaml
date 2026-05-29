@@ -239,12 +239,12 @@
                     <md:MarkdownRenderer.LinkContextMenu>
                       <ContextMenu>
                         <MenuItem
-                          Command="{Binding OpenCommand, DataType=md:Link}"
+                          Command="{Binding OpenCommand, x:DataType=md:Link}"
                           Cursor="Hand"
                           Header="{I18N {x:Static LocaleKey.ChatMessageControl_ContextFlyout_OpenLink}}"
                           Icon="{LucideIconContent ExternalLink}"/>
                         <MenuItem
-                          Command="{Binding CopyCommand, DataType=md:Link}"
+                          Command="{Binding CopyCommand, x:DataType=md:Link}"
                           Cursor="Hand"
                           Header="{I18N {x:Static LocaleKey.ChatMessageControl_ContextFlyout_CopyLink}}"
                           Icon="{LucideIconContent Link}"/>

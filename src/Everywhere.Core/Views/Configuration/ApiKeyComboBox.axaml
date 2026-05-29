@@ -13,7 +13,7 @@
           ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
           MaxDropDownHeight="320"
           SelectedValue="{Binding SelectedId, Mode=TwoWay, FallbackValue={x:Static system:Guid.Empty}, RelativeSource={RelativeSource TemplatedParent}}"
-          SelectedValueBinding="{Binding Id, DataType=c:ApiKey, FallbackValue={x:Static system:Guid.Empty}}">
+          SelectedValueBinding="{Binding Id, x:DataType=c:ApiKey, FallbackValue={x:Static system:Guid.Empty}}">
           <shadui:ControlAssist.Footer>
             <Border
               BorderBrush="{DynamicResource BorderColor}"

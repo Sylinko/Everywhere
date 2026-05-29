@@ -19,13 +19,10 @@
     <PackageReference Include="Anthropic"/>
     <PackageReference Include="Avalonia"/>
     <PackageReference Include="Avalonia.Fonts.Inter"/>
-    <PackageReference Include="Avalonia.Diagnostics">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Avalonia.AvaloniaEdit"/>
     <PackageReference Include="Avalonia.HtmlRenderer" />
     <PackageReference Include="AvaloniaEdit.TextMate"/>
+    <PackageReference Include="ClassicDiagnostics.Avalonia" />
     <PackageReference Include="FuzzySharp"/>
     <PackageReference Include="GnomeStack.Os.Secrets"/>
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="JetBrains.Profiler.Api"/>

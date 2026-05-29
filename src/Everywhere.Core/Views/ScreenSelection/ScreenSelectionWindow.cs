@@ -3,7 +3,6 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Everywhere.Interop;
 
 namespace Everywhere.Views;
@@ -36,7 +35,7 @@ public class ScreenSelectionTransparentWindow : ScreenSelectionWindow
         Background = Brushes.Transparent;
         Cursor = new Cursor(StandardCursorType.Cross);
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        SystemDecorations = SystemDecorations.None;
+        WindowDecorations = WindowDecorations.None;
         SizeToContent = SizeToContent.Manual;
     }
 
@@ -124,8 +123,7 @@ public sealed class ScreenSelectionToolTipWindow : ScreenSelectionWindow
             Mode = mode
         };
         SizeToContent = SizeToContent.WidthAndHeight;
-        SystemDecorations = SystemDecorations.BorderOnly;
-        ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.NoChrome;
+        WindowDecorations = WindowDecorations.BorderOnly;
         ExtendClientAreaToDecorationsHint = true;
     }
 }

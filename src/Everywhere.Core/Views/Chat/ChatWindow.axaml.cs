@@ -236,7 +236,7 @@ public partial class ChatWindow :
         return new Size(width, height);
     }
 
-    protected override void OnLostFocus(RoutedEventArgs e)
+    protected override void OnLostFocus(FocusChangedEventArgs e)
     {
         base.OnLostFocus(e);
 
