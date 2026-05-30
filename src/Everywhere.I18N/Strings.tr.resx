@@ -2934,4 +2934,7 @@ Yayın tarihi: {2}</value>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>Ana asistanın ihtiyaç duyduğunda çağırabileceği varsayılan asistan. Ana asistan, &quot;Yeni Asistan Atama&quot; aracıyla rutin görevleri devrettiğinde, varsayılan olarak bağımsız bir bağlamda bunu işleyip sonuçları döndürür. &quot;Otomatik Seçim&quot; ana asistanla aynı alt asistanı kullanmak anlamına gelir.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>API Anahtarı (Opsiyonel)</value>
+    </data>
 </root>

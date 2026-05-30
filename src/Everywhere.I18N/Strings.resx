@@ -2936,6 +2936,6 @@ Release date: {2}</value>
         <value>The default assistant called upon by the main assistant as needed. When the main assistant assigns routine tasks through the 'Assign New Assistant' tool, it is handled and results are returned by this assistant in an independent context. 'Auto-select' means using the same subagent as the main assistant.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
-        <value />
+        <value>API Key (Optional)</value>
     </data>
 </root>

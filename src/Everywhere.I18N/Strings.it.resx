@@ -2935,4 +2935,7 @@ Data di rilascio: {2}</value>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>Assistente predefinito chiamato dal principale assistente all'occorrenza. Quando il principale assistente delega compiti generali tramite lo strumento &quot;Assegna Nuovo Assistente&quot;, questo gestisce e restituisce i risultati in un contesto indipendente. &quot;Selezione Automatica&quot; indica l'uso dello stesso sottogruppo del principale assistente.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>Chiave API (opzionale)</value>
+    </data>
 </root>

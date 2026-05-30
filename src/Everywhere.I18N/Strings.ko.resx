@@ -2935,4 +2935,7 @@
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>주 어시스턴트가 필요에 따라 호출하는 기본 어시스턴트입니다. 주 어시스턴트가 &quot;새 어시스턴트 할당&quot; 도구를 통해 일반 작업을 위임할 때, 기본적으로 독립적인 맥락에서 이를 처리하고 결과를 반환합니다. &quot;자동 선택&quot;은 주 어시스턴트와 동일한 서브 어시스턴트를 사용함을 의미합니다.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>API 키 (선택 사항)</value>
+    </data>
 </root>

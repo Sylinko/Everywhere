@@ -2935,4 +2935,7 @@ Date de publication : {2}</value>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>Sous-assistant par défaut à la demande du principal assistant. Lorsqu'il délègue des tâches courantes via l'outil &quot;Assigner un nouveau sous-assistant&quot;, il est traité et renvoyé par celui-ci dans un contexte indépendant. &quot;Sélection automatique&quot; signifie utiliser le même sous-assistant que le principal assistant.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>Clé API (optionnelle)</value>
+    </data>
 </root>

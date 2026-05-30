@@ -2935,4 +2935,7 @@
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>主アシスタントが必要に応じて呼び出すデフォルトのアシスタントです。主アシスタントが「新しいアシスタントを割り当てる」ツールを使って一般的なタスクを委任する際、独立したコンテキストで処理し結果を返します。「自動選択」は主アシスタントと同じサブアシスタントを使用することを意味します。</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>APIキー（任意）</value>
+    </data>
 </root>

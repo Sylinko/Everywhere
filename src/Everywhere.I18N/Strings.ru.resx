@@ -2935,4 +2935,7 @@
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>Стандартный ассистент, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент назначает рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, он обрабатывается и возвращается в независимом контексте. &quot;Автоматический выбор&quot; означает использование того же подассистента, что и у основного ассистента.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>API-ключ (необязательно)</value>
+    </data>
 </root>

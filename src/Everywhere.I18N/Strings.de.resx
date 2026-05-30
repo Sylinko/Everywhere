@@ -2934,4 +2934,7 @@ Veröffentlichungsdatum: {2}</value>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
         <value>Der Standardassistent, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; Routineaufgaben delegiert, wird dieser standardmäßig in einem unabhängigen Kontext bearbeitet und gibt Ergebnisse zurück. &quot;Automatische Auswahl&quot; bedeutet, dass der gleiche Subassistent wie der Hauptassistent verwendet wird.</value>
     </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>API-Schlüssel (optional)</value>
+    </data>
 </root>
