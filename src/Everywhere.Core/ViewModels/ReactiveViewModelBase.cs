@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Disposables;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
@@ -84,9 +84,8 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
         {
             try
             {
-                if (_isDisposed || _isLoaded) return;
+                if (_isLoaded) return;
 
-                _isLoaded = true;
                 _topLevel = TopLevel.GetTopLevel(target);
 
                 if (_topLevel is IReactiveHost reactiveHost)
@@ -95,6 +94,9 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
                     ToastHost = reactiveHost.ToastHost;
                 }
 
+                if (_isDisposed) return;
+
+                _isLoaded = true;
                 await ViewLoaded(cancellationSource.Token);
             }
             catch (Exception e)
