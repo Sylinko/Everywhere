@@ -55,8 +55,7 @@ class I18nSync:
         self.api_key = config.api_key
         self.model_id = config.model_id
         self.batch_size = config.batch_size
-        self.i18n_path = os.path.abspath(config.i18n_path)
-        self.base_resx_path = os.path.join(self.i18n_path, "Strings.zh-hans.resx")
+        self.i18n_paths = [os.path.abspath(path) for path in config.i18n_paths]
 
         # Initialize the OpenAI client
         self.client = OpenAI(
@@ -202,25 +201,34 @@ Translation Guidelines:
         log("=== Everywhere i18n Synchronization (Python) ===")
         log(f"Base URL: {self.base_url}")
         log(f"Model: {self.model_id}")
-        log(f"I18N Path: {self.i18n_path}\n")
+        log(f"I18N Paths: {', '.join(self.i18n_paths)}\n")
 
-        if not os.path.exists(self.base_resx_path):
-            log(f"[x] Error: Base resource file not found: {self.base_resx_path}")
+        for i18n_path in self.i18n_paths:
+            self._run_directory(i18n_path)
+
+        log("=== Synchronization Complete ===")
+
+    def _run_directory(self, i18n_path: str):
+        """Synchronizes one project-local I18N directory."""
+        base_resx_path = os.path.join(i18n_path, "Strings.zh-hans.resx")
+
+        if not os.path.exists(base_resx_path):
+            log(f"[x] Error: Base resource file not found: {base_resx_path}")
             return
 
-        log(f"Reading base resources from {self.base_resx_path}...")
-        base_resources_ordered = self._read_resx_ordered(self.base_resx_path)
+        log(f"Reading base resources from {base_resx_path}...")
+        base_resources_ordered = self._read_resx_ordered(base_resx_path)
         base_resources = dict(base_resources_ordered)
         base_resource_keys = [key for key, _ in base_resources_ordered]
         log(f"Found {len(base_resources)} base resources.\n")
 
         # Explicitly exclude the base resx file from the list of files to process
-        all_files = os.listdir(self.i18n_path)
-        base_filename = os.path.basename(self.base_resx_path)
+        all_files = os.listdir(i18n_path)
+        base_filename = os.path.basename(base_resx_path)
         localized_files = [f for f in all_files if f.startswith('Strings.') and f.endswith('.resx') and f != base_filename]
 
         for filename in localized_files:
-            file_path = os.path.join(self.i18n_path, filename)
+            file_path = os.path.join(i18n_path, filename)
             lang_comment = self._get_language_comment(file_path)
             lang_name = lang_comment
 
@@ -286,8 +294,6 @@ Translation Guidelines:
             self._write_resx(file_path, all_resources, base_resource_keys, lang_comment)
             log(f"  [OK] {filename} updated.\n")
 
-        log("=== Synchronization Complete ===")
-
 def main():
     """Main function to parse arguments and run the sync process."""
     parser = argparse.ArgumentParser(description="Synchronize i18n .resx files using AI translation.")
@@ -300,9 +306,17 @@ def main():
     parser.add_argument('--model-id', default=env_model_id, help="The model ID to use for translation.")
     parser.add_argument('--batch-size', type=int, default=20, help="Number of resources to translate per batch.")
     parser.add_argument('--max-retries', type=int, default=3, help="Maximum retries for failed API calls.")
-    parser.add_argument('--i18n-path', default=os.path.join(os.path.dirname(__file__), '..', 'src', 'Everywhere.I18N'), help="Path to the I18N directory.")
+    parser.add_argument('--i18n-path', dest='i18n_paths', action='append', help="Path to an I18N directory. Can be specified multiple times.")
 
     args = parser.parse_args()
+
+    if not args.i18n_paths:
+        src_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+        args.i18n_paths = [
+            os.path.join(src_root, project, 'I18N')
+            for project in os.listdir(src_root)
+            if os.path.exists(os.path.join(src_root, project, 'I18N', 'Strings.zh-hans.resx'))
+        ]
 
     if not all([args.base_url, args.api_key, args.model_id]):
         log("Error: --base-url, --api-key, and --model-id are required.")

@@ -1,0 +1,2728 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Traditional Chinese - Hong Kong (繁體中文 - 香港) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="SettingsPage_Saved_Toast_Title" xml:space="preserve">
+        <value>設定已儲存</value>
+    </data>
+    <data name="DisplaySettings_Language_Header" xml:space="preserve">
+        <value>語言</value>
+    </data>
+    <data name="SettingsPage_Title" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="DisplaySettings_Language_Description" xml:space="preserve">
+        <value>選擇軟件的顯示語言。</value>
+    </data>
+    <data name="LocaleName_ZhHans" xml:space="preserve">
+        <value>中文 (简体)</value>
+    </data>
+    <data name="LocaleName_En" xml:space="preserve">
+        <value>English (United States)</value>
+    </data>
+    <data name="DisplaySettings_Theme_Description" xml:space="preserve">
+        <value>選擇軟件的顯示主題。</value>
+    </data>
+    <data name="ThemeMode_System" xml:space="preserve">
+        <value>跟隨系統</value>
+    </data>
+    <data name="ThemeMode_Dark" xml:space="preserve">
+        <value>深色</value>
+    </data>
+    <data name="ThemeMode_Light" xml:space="preserve">
+        <value>淺色</value>
+    </data>
+    <data name="ProxySettings_IsEnabled_Header" xml:space="preserve">
+        <value>使用自訂代理</value>
+    </data>
+    <data name="ProxySettings_IsEnabled_Description" xml:space="preserve">
+        <value>以應用程式專用代理覆蓋系統代理。</value>
+    </data>
+    <data name="ProxySettings_Endpoint_Header" xml:space="preserve">
+        <value>代理伺服器</value>
+    </data>
+    <data name="ProxySettings_Endpoint_Description" xml:space="preserve">
+        <value>輸入代理 URI，例如 http://127.0.0.1:7890。</value>
+    </data>
+    <data name="ProxySettings_BypassOnLocal_Header" xml:space="preserve">
+        <value>本地地址繞過代理</value>
+    </data>
+    <data name="ProxySettings_BypassOnLocal_Description" xml:space="preserve">
+        <value>直接發送請求到內聯網和回送地址。</value>
+    </data>
+    <data name="ProxySettings_BypassList_Header" xml:space="preserve">
+        <value>繞過清單</value>
+    </data>
+    <data name="ProxySettings_BypassList_Description" xml:space="preserve">
+        <value>可選。每行一個模式；匹配的主機將繞過代理。</value>
+    </data>
+    <data name="ProxySettings_UseAuthentication_Header" xml:space="preserve">
+        <value>代理驗證</value>
+    </data>
+    <data name="ProxySettings_UseAuthentication_Description" xml:space="preserve">
+        <value>當代理需要驗證時啟用憑證。</value>
+    </data>
+    <data name="ProxySettings_Username_Header" xml:space="preserve">
+        <value>用戶名</value>
+    </data>
+    <data name="ProxySettings_Username_Description" xml:space="preserve">
+        <value>代理伺服器的用戶名稱。</value>
+    </data>
+    <data name="ProxySettings_Password_Header" xml:space="preserve">
+        <value>密碼</value>
+    </data>
+    <data name="ProxySettings_Password_Description" xml:space="preserve">
+        <value>代理伺服器的密碼。</value>
+    </data>
+    <data name="SettingsCategory_Settings_ChatWindow_Header" xml:space="preserve">
+        <value>聊天窗口</value>
+    </data>
+    <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
+        <value>聊天窗口</value>
+    </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>設定快捷鍵以隨時調出聊天視窗。</value>
+    </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature（“創意活躍度”）</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>通常情況下，數值越高，回答越具創造力和想像力，數值越低，則越趨嚴謹。部分模型數值超過 1.0 可能導致輸出亂碼。通常建議不要同時更改 top_p。如果遇到錯誤，請嘗試還原默認值。</value>
+    </data>
+    <data name="Assistant_TopP_Header" xml:space="preserve">
+        <value>top_p（“思維開放度”）</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>用於控制模型輸出文本的多樣性。通常情況下，數值越高，模型會接受更多潛在回答，數值越低，則更傾向於最可能的回答。通常建議不要同時更改 temperature。如果遇到錯誤，請嘗試還原默認值。</value>
+    </data>
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+        <value>選擇網頁搜尋引擎的服務提供者。</value>
+    </data>
+    <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
+        <value>API 網址</value>
+    </data>
+    <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
+        <value>如果不確定該怎麼做，請保持預設值。必須以 "http(s)://" 開頭。</value>
+    </data>
+    <data name="ChatInputArea_Watermark" xml:space="preserve">
+        <value>詢問 Everywhere，或只是聊天</value>
+    </data>
+    <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
+        <value>新增附件至目前會話</value>
+    </data>
+    <data name="ChatInputArea_AddAttachmentMenuItem_Header" xml:space="preserve">
+        <value>新增附件</value>
+    </data>
+    <data name="ChatInputArea_ImageButton_ToolTip" xml:space="preserve">
+        <value>允許存取以感知您的螢幕</value>
+    </data>
+    <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
+        <value>圖片</value>
+    </data>
+    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+        <value>使用工具增強助手功能 (Ctrl+T)</value>
+    </data>
+    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+        <value>工具</value>
+    </data>
+    <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
+        <value>發送</value>
+    </data>
+    <data name="ChatInputArea_CancelButton_ToolTip" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="ActionChatMessage_Header_AnalyzingContext" xml:space="preserve">
+        <value>分析上下文</value>
+    </data>
+    <data name="ActionChatMessage_Header_WebSearching" xml:space="preserve">
+        <value>網頁搜尋</value>
+    </data>
+    <data name="ChatMessageControl_RetryButton_Content" xml:space="preserve">
+        <value>重新生成</value>
+    </data>
+    <data name="MainTrayIcon_Menu_OpenMainWindow" xml:space="preserve">
+        <value>開啟視窗</value>
+    </data>
+    <data name="MainTrayIcon_Menu_Exit" xml:space="preserve">
+        <value>退出</value>
+    </data>
+    <data name="MainTrayIcon_Menu_OpenDebugWindow" xml:space="preserve">
+        <value>開啟除錯視窗</value>
+    </data>
+    <data name="ChatWindow_History_ToolTip" xml:space="preserve">
+        <value>聊天記錄 (Ctrl+H)</value>
+    </data>
+    <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
+        <value>建立新聊天 (Ctrl+N)</value>
+    </data>
+    <data name="ChatWindow_Close_ToolTip" xml:space="preserve">
+        <value>關閉 (Esc)</value>
+    </data>
+    <data name="ChatWindow_DragDrop_Overlay_DropFilesHere" xml:space="preserve">
+        <value>將檔案拖放在這裡</value>
+    </data>
+    <data name="ChatWindow_DragDrop_Overlay_DropTextHere" xml:space="preserve">
+        <value>將文本拖放在這裡以插入</value>
+    </data>
+    <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
+        <value>此項目類型不受支持</value>
+    </data>
+    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+        <value>選擇視覺元素</value>
+    </data>
+    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+        <value>從剪貼簿貼上</value>
+    </data>
+    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+        <value>附加檔案</value>
+    </data>
+    <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
+        <value>翻譯</value>
+    </data>
+    <data name="ChatWindowViewModel_QuickActions_Verify" xml:space="preserve">
+        <value>驗證真實性</value>
+    </data>
+    <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
+        <value>摘要</value>
+    </data>
+    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+        <value>點擊以設定快捷鍵</value>
+    </data>
+    <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
+        <value>輸入快捷鍵...</value>
+    </data>
+    <data name="ChatContext_Metadata_Topic_Default" xml:space="preserve">
+        <value>未命名會話</value>
+    </data>
+    <data name="ChatAttachment_RemoveButton_ToolTip" xml:space="preserve">
+        <value>移除</value>
+    </data>
+    <data name="VisualElementType_Unknown" xml:space="preserve">
+        <value>未知</value>
+    </data>
+    <data name="VisualElementType_Label" xml:space="preserve">
+        <value>標籤</value>
+    </data>
+    <data name="VisualElementType_TextEdit" xml:space="preserve">
+        <value>文字框</value>
+    </data>
+    <data name="VisualElementType_Document" xml:space="preserve">
+        <value>文件</value>
+    </data>
+    <data name="VisualElementType_Button" xml:space="preserve">
+        <value>按鈕</value>
+    </data>
+    <data name="VisualElementType_Hyperlink" xml:space="preserve">
+        <value>超連結</value>
+    </data>
+    <data name="VisualElementType_Image" xml:space="preserve">
+        <value>圖片</value>
+    </data>
+    <data name="VisualElementType_CheckBox" xml:space="preserve">
+        <value>核取方塊</value>
+    </data>
+    <data name="VisualElementType_RadioButton" xml:space="preserve">
+        <value>單選按鈕</value>
+    </data>
+    <data name="VisualElementType_ComboBox" xml:space="preserve">
+        <value>下拉式選單</value>
+    </data>
+    <data name="VisualElementType_ListView" xml:space="preserve">
+        <value>清單</value>
+    </data>
+    <data name="VisualElementType_ListViewItem" xml:space="preserve">
+        <value>清單項目</value>
+    </data>
+    <data name="VisualElementType_TreeView" xml:space="preserve">
+        <value>樹狀結構</value>
+    </data>
+    <data name="VisualElementType_TreeViewItem" xml:space="preserve">
+        <value>樹狀結構項目</value>
+    </data>
+    <data name="VisualElementType_DataGrid" xml:space="preserve">
+        <value>表格</value>
+    </data>
+    <data name="VisualElementType_DataGridItem" xml:space="preserve">
+        <value>表格項目</value>
+    </data>
+    <data name="VisualElementType_TabControl" xml:space="preserve">
+        <value>標籤</value>
+    </data>
+    <data name="VisualElementType_TabItem" xml:space="preserve">
+        <value>標籤</value>
+    </data>
+    <data name="VisualElementType_Table" xml:space="preserve">
+        <value>表格</value>
+    </data>
+    <data name="VisualElementType_TableRow" xml:space="preserve">
+        <value>表格</value>
+    </data>
+    <data name="VisualElementType_Menu" xml:space="preserve">
+        <value>選單</value>
+    </data>
+    <data name="VisualElementType_MenuItem" xml:space="preserve">
+        <value>選單項目</value>
+    </data>
+    <data name="VisualElementType_Slider" xml:space="preserve">
+        <value>滑桿</value>
+    </data>
+    <data name="VisualElementType_ScrollBar" xml:space="preserve">
+        <value>捲軸</value>
+    </data>
+    <data name="VisualElementType_ProgressBar" xml:space="preserve">
+        <value>進度條</value>
+    </data>
+    <data name="VisualElementType_Panel" xml:space="preserve">
+        <value>面板</value>
+    </data>
+    <data name="VisualElementType_TopLevel" xml:space="preserve">
+        <value>視窗</value>
+    </data>
+    <data name="VisualElementType_Screen" xml:space="preserve">
+        <value>螢幕</value>
+    </data>
+    <data name="HumanizedDate_Today" xml:space="preserve">
+        <value>今天</value>
+    </data>
+    <data name="HumanizedDate_Yesterday" xml:space="preserve">
+        <value>昨天</value>
+    </data>
+    <data name="HumanizedDate_LastWeek" xml:space="preserve">
+        <value>上星期</value>
+    </data>
+    <data name="HumanizedDate_LastMonth" xml:space="preserve">
+        <value>上個月</value>
+    </data>
+    <data name="HumanizedDate_LastYear" xml:space="preserve">
+        <value>去年</value>
+    </data>
+    <data name="HumanizedDate_Earlier" xml:space="preserve">
+        <value>更早</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest" xml:space="preserve">
+        <value>HTTP 請求錯誤 ({0})：{1}</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
+        <value>錯誤的請求，可能是因為 API 金鑰不正確或不支援的網絡/地區。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
+        <value>未經授權的請求，可能是因為 API 金鑰不正確或不支援的網絡/地區。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
+        <value>請求被禁止，可能是因為 API 金鑰不正確或不支援的網絡/地區。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
+        <value>找不到結果。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_InternalServerError" xml:space="preserve">
+        <value>伺服器發生錯誤，請稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_ServiceUnavailable" xml:space="preserve">
+        <value>伺服器不可用，請稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_GatewayTimeout" xml:space="preserve">
+        <value>閘道連接逾時，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_RequestTimeout" xml:space="preserve">
+        <value>請求連接逾時，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_BadGateway" xml:space="preserve">
+        <value>閘道連接錯誤，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_HttpRequest_0" xml:space="preserve">
+        <value>未知錯誤，請稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket" xml:space="preserve">
+        <value>Socket 錯誤 ({0})：{1}</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket_HostNotFound" xml:space="preserve">
+        <value>無法解析主機名稱，請檢查您的 DNS 設定或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket_ConnectionRefused" xml:space="preserve">
+        <value>連線被拒絕，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket_ConnectionReset" xml:space="preserve">
+        <value>連線已重置，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket_ConnectionAborted" xml:space="preserve">
+        <value>連線已中止，請檢查您的網絡或稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Socket_0" xml:space="preserve">
+        <value>未知錯誤，請稍後再試。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
+        <value>發生一個或多個錯誤。
+{0}</value>
+    </data>
+    <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
+        <value>任務已取消。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_OperationCanceled" xml:space="preserve">
+        <value>操作已取消。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Timeout" xml:space="preserve">
+        <value>已超過最大等待時間。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Json" xml:space="preserve">
+        <value>無法解析 JSON 資料。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Format" xml:space="preserve">
+        <value>格式錯誤。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Argument" xml:space="preserve">
+        <value>參數錯誤。</value>
+    </data>
+    <data name="LocaleName_De" xml:space="preserve">
+        <value>Deutsch</value>
+    </data>
+    <data name="LocaleName_Es" xml:space="preserve">
+        <value>Español</value>
+    </data>
+    <data name="LocaleName_Fr" xml:space="preserve">
+        <value>Français</value>
+    </data>
+    <data name="LocaleName_It" xml:space="preserve">
+        <value>Italiano</value>
+    </data>
+    <data name="LocaleName_Ja" xml:space="preserve">
+        <value>日本語</value>
+    </data>
+    <data name="LocaleName_Ko" xml:space="preserve">
+        <value>한국어</value>
+    </data>
+    <data name="LocaleName_Ru" xml:space="preserve">
+        <value>Русский</value>
+    </data>
+    <data name="DisplaySettings_Theme_Header" xml:space="preserve">
+        <value>主題</value>
+    </data>
+    <data name="LocaleName_ZhHant" xml:space="preserve">
+        <value>中文 (繁體)</value>
+    </data>
+    <data name="LocaleName_ZhHantHk" xml:space="preserve">
+        <value>中文 (繁體 香港特別行政區)</value>
+    </data>
+    <data name="AboutPage_Title" xml:space="preserve">
+        <value>關於</value>
+    </data>
+    <data name="AboutPage_Description" xml:space="preserve">
+        <value>即時感知您的屏幕內容，打破應用程式的障礙，提供真正符合當前情境的智能協助，將您的桌面轉變為無縫的智能工作空間。</value>
+    </data>
+    <data name="AboutPage_Version" xml:space="preserve">
+        <value>版本：</value>
+    </data>
+    <data name="AboutPage_GitHubRepo" xml:space="preserve">
+        <value>GitHub Repo</value>
+    </data>
+    <data name="AboutPage_OpenSourceLicenses" xml:space="preserve">
+        <value>開源許可證</value>
+    </data>
+    <data name="App_EverywhereIsAlreadyRunning" xml:space="preserve">
+        <value>Everywhere 已在運行，請檢查系統托盤圖示。</value>
+    </data>
+    <data name="Common_Info" xml:space="preserve">
+        <value>資訊</value>
+    </data>
+    <data name="MainView_EverywhereHasMinimizedToTray" xml:space="preserve">
+        <value>Everywhere 已最小化到系統托盤</value>
+    </data>
+    <data name="ChatWindow_HistoryAction_Rename" xml:space="preserve">
+        <value>重新命名</value>
+    </data>
+    <data name="Common_Delete" xml:space="preserve">
+        <value>刪除</value>
+    </data>
+    <data name="AboutPage_WelcomePage" xml:space="preserve">
+        <value>歡迎頁面</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message1" xml:space="preserve">
+        <value>👋 歡迎來到 Everywhere</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message2" xml:space="preserve">
+        <value>很高興認識你！讓我成為你的助手，幫助你解決問題！</value>
+    </data>
+    <data name="WelcomeView_DiscordHyperlinkButton_Content" xml:space="preserve">
+        <value>Discord</value>
+    </data>
+    <data name="ChatWindow_TogglePin_ToolTip" xml:space="preserve">
+        <value>固定視窗 (Ctrl+D)</value>
+    </data>
+    <data name="ChatWindowPinMode_RememberPrevious" xml:space="preserve">
+        <value>記住先前狀態</value>
+    </data>
+    <data name="ChatWindowPinMode_AlwaysPinned" xml:space="preserve">
+        <value>總是固定</value>
+    </data>
+    <data name="ChatWindowPinMode_AlwaysUnpinned" xml:space="preserve">
+        <value>總是不固定</value>
+    </data>
+    <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
+        <value>輸入時固定</value>
+    </data>
+    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
+        <value>詳細</value>
+    </data>
+    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
+        <value>精簡 (推薦)</value>
+    </data>
+    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
+        <value>極簡</value>
+    </data>
+    <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
+        <value>視窗固定模式</value>
+    </data>
+    <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
+        <value>指定聊天視窗開啟時的固定模式。當視窗未固定時，失去焦點會自動隱藏。</value>
+    </data>
+    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
+        <value>視覺上下文詳細程度</value>
+    </data>
+    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
+        <value>如果添加了視覺元素附件，發送給助手前 Everywhere 會將它和周圍的元素採集為結構化文本。此選項控制了採集的豐富程度和信息量。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
+        <value>客戶端錯誤。</value>
+    </data>
+    <data name="CustomAssistant_PresencePenalty_Header" xml:space="preserve">
+        <value>表達差異 (presence_penalty)</value>
+    </data>
+    <data name="CustomAssistant_PresencePenalty_Description" xml:space="preserve">
+        <value>數值越高，越傾向使用不同的表達方式，避免重複概念；數值越低，越傾向使用重複的概念或敘述，表達更一致。此設定僅對某些模型有效。如遇錯誤，請嘗試恢復預設值。</value>
+    </data>
+    <data name="CustomAssistant_FrequencyPenalty_Header" xml:space="preserve">
+        <value>詞彙豐富度 (frequency_penalty)</value>
+    </data>
+    <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>數值越高，詞彙越多樣豐富；數值越低，語言越簡單直接。此設定僅對某些模型有效。如遇錯誤，請嘗試恢復預設值。</value>
+    </data>
+    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+        <value>URL</value>
+    </data>
+    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+        <value>以 http:// 或 https:// 開頭。在末尾添加 # 來避免自動添加版本號後綴。</value>
+    </data>
+    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+        <value>API Key</value>
+    </data>
+    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+        <value>如果是線上模型，需要從對應的官方獲取，詳情請參考文檔。</value>
+    </data>
+    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+        <value>輸入模態</value>
+    </data>
+    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+        <value>模型支持的輸入模態，選擇錯誤可能導致調用失敗。</value>
+    </data>
+    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+        <value>支援工具使用</value>
+    </data>
+    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+        <value>模型支持使用已配置的工具。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。</value>
+    </data>
+    <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
+        <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的“啟用思考”選項作進一步調整。</value>
+    </data>
+    <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
+        <value>深度思考</value>
+    </data>
+    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+        <value>圖像輸入支援</value>
+    </data>
+    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+        <value>對話的最大上下文長度。此項會影響構建視覺上下文的策略，請盡可能設為真實值。</value>
+    </data>
+    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+        <value>最大上下文長度 (context_limit)</value>
+    </data>
+    <data name="Common_Reset" xml:space="preserve">
+        <value>重設</value>
+    </data>
+    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+        <value>API 架構</value>
+    </data>
+    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+        <value>選擇 API 協議。請注意此項並不總是和模型相關聯，例如 Gemini 會提供 OpenAI 兼容協議，具體請詳閱對應模型的官方使用說明。</value>
+    </data>
+    <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
+        <value>開機時啟動</value>
+    </data>
+    <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
+        <value>Everywhere 會在開機後自動運行。如果啟用了「以管理員身份啟動」，則只能在管理員模式下禁用此選項。</value>
+    </data>
+    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
+        <value>以管理員方式自啟動</value>
+    </data>
+    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
+        <value>開機時 Everywhere 會以管理員身份自啟動。只有在管理員模式下才能開關當前選項。</value>
+    </data>
+    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
+        <value>由於操作系統的限制，當以管理員（提升權限）運行任何應用程式時，Everywhere 可能在提升權限的應用程式聚焦或嘗試與 Everywhere 功能（如「選擇元素」）互動時無法正常運作。這可以通過以管理員身份運行 Everywhere 來解決。</value>
+    </data>
+    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
+        <value>以管理員身份重新啟動</value>
+    </data>
+    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
+        <value>重新啟動</value>
+    </data>
+    <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
+        <value>除錯功能</value>
+    </data>
+    <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
+        <value>訪問和管理應用程式設置文件和日誌。</value>
+    </data>
+    <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
+        <value>編輯設置文件</value>
+    </data>
+    <data name="DebugFeaturesControl_OpenLogsFolderButton_Content" xml:space="preserve">
+        <value>打開日誌文件夾</value>
+    </data>
+    <data name="Common_Error" xml:space="preserve">
+        <value>錯誤</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text" xml:space="preserve">
+        <value>版本</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_LastUpdateCheckTitle_Text" xml:space="preserve">
+        <value>最後檢查時間：</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_NeverChecked_Text" xml:space="preserve">
+        <value>從未檢查</value>
+    </data>
+    <data name="Common_Unknown" xml:space="preserve">
+        <value>未知</value>
+    </data>
+    <data name="SoftwareSettings_SoftwareUpdate_Header" xml:space="preserve">
+        <value>軟件更新</value>
+    </data>
+    <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
+        <value>如果有更新可用，請點擊更新，Everywhere 將自動下載並安裝最新版本。在過程中，您可能需要在彈出窗口中選擇「是」。</value>
+    </data>
+    <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
+        <value>自動更新</value>
+    </data>
+    <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
+        <value>如果啟用，Everywhere 將定期檢查更新（僅在 Everywhere 運行時，不會增加系統負擔）。</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
+        <value>正在下載更新...</value>
+    </data>
+    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+        <value>模型 ID</value>
+    </data>
+    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+        <value>用於 API 調用的模型標識，例如 gpt-4o。</value>
+    </data>
+    <data name="ChatPluginPage_Title" xml:space="preserve">
+        <value>聊天工具</value>
+    </data>
+    <data name="ChatPluginPage_Description" xml:space="preserve">
+        <value>聊天插件包括內置插件和 MCP 插件。支援工具呼叫的 LLMs 會在適當時使用這些插件（例如搜尋網頁或存取本地檔案），以獲得更強大的功能。</value>
+    </data>
+    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>網頁搜尋引擎提供者</value>
+    </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
+        <value>API 金鑰</value>
+    </data>
+    <data name="WebSearchEngineProvider_ApiKey_Description" xml:space="preserve">
+        <value>需要從對應的官方獲取，詳情請參考文檔。</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Header" xml:space="preserve">
+        <value>搜尋引擎 ID</value>
+    </data>
+    <data name="WebSearchEngineProvider_SearchEngineId_Description" xml:space="preserve">
+        <value>提供可編程搜索引擎 ID，詳情請參考文檔。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
+        <value>網頁</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
+        <value>提供瀏覽網頁的能力。各家大模型在發布之後的知識往往已固定且在處理時效性問題時容易出現幻覺。此插件允許助手實時瀏覽網頁內容從而提高助手能力。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
+        <value>檔案系統</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
+        <value>提供存取檔案的能力，例如列舉、創建、刪除、重命名、讀取或寫入。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
+        <value>無效操作。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
+        <value>Windows 系統錯誤。{0}</value>
+    </data>
+    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
+        <value>內建</value>
+    </data>
+    <data name="ChatPluginPage_TabItem_Settings_Header" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
+        <value>功能</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
+        <value>視覺上下文</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
+        <value>提供感知和操作螢幕內容的能力。</value>
+    </data>
+    <data name="ChangeLogView_ViewOnGitHubHyperlinkButton_Content" xml:space="preserve">
+        <value>在 GitHub 查看</value>
+    </data>
+    <data name="MainViewModel_UpgradeSuccessfulToast_Title" xml:space="preserve">
+        <value>Everywhere 已更新至最新版本 🎉</value>
+    </data>
+    <data name="ChangeLogView_Title" xml:space="preserve">
+        <value>更新日誌</value>
+    </data>
+    <data name="WelcomeView_QQGroupHyperlinkButton_Content" xml:space="preserve">
+        <value>QQ 群組</value>
+    </data>
+    <data name="WelcomeView_OfficialDocsHyperlinkButton_Content" xml:space="preserve">
+        <value>官方文件</value>
+    </data>
+    <data name="AboutPage_WhatsNew" xml:space="preserve">
+        <value>有什麼新功能</value>
+    </data>
+    <data name="WelcomeViewModel_ValidateApiKey_FailedToast_Title" xml:space="preserve">
+        <value>驗證失敗</value>
+    </data>
+    <data name="WelcomeView_LetsStartButton_Content" xml:space="preserve">
+        <value>開始吧！</value>
+    </data>
+    <data name="WelcomeView_SkipButton_Content" xml:space="preserve">
+        <value>跳過全部引導</value>
+    </data>
+    <data name="WelcomeView_PreviousStepButton_Content" xml:space="preserve">
+        <value>上一步</value>
+    </data>
+    <data name="WelcomeView_NextStepButton_Content" xml:space="preserve">
+        <value>下一步</value>
+    </data>
+    <data name="WelcomeView_ConfiguratorStep_Message1" xml:space="preserve">
+        <value>現在讓我們進行第一步：為我選擇一個“大腦”！
+我的智能由大語言模型提供，需要拜託你幫我配置好。我為你提供了幾種配置模式，選擇最適合你的即可。</value>
+    </data>
+    <data name="WelcomeView_ConfiguratorStep_Message2" xml:space="preserve">
+        <value>別擔心，如果不合適，你可以隨時返回重新選擇。</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_PresetBased_Message1" xml:space="preserve">
+        <value>歡迎使用預設模式。只需要選擇你想用的大模型提供商，之後獲取 API 密鑰並填寫，最後選擇模型就可以開始使用啦！</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_PresetBased_Message2" xml:space="preserve">
+        <value>別擔心，你的密鑰將會被加密存儲，我無法讀取。</value>
+    </data>
+    <data name="WelcomeView_SelectModelProviderStep_OfficialWebsiteHyperlinkButton_Content" xml:space="preserve">
+        <value>👉 官方網站</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message6" xml:space="preserve">
+        <value>提示：你可以點擊「關於 - 歡迎頁面」重新打開此訊息。</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message5" xml:space="preserve">
+        <value>有用的連結：</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message3" xml:space="preserve">
+        <value>你可以隨時隨地喚醒我。我能理解你當前的工作上下文——無論是電郵、文章還是網頁——並更智能地幫助你解決問題！</value>
+    </data>
+    <data name="WelcomeView_IntroStep_Message4" xml:space="preserve">
+        <value>如果這是你第一次使用，我會引導你完成三個簡單步驟的初始設置。</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_PresetBased_Message3" xml:space="preserve">
+        <value>如果你不知道如何選擇或者如何獲取 API 密鑰，請參考這裡的教學</value>
+    </data>
+    <data name="WelcomeView_EnterApiKeyStep_HowToGetApiKeyHyperlinkButton_Content" xml:space="preserve">
+        <value>👉 點擊打開</value>
+    </data>
+    <data name="WelcomeView_CheckConnectivityButton_Content" xml:space="preserve">
+        <value>測試助手可用性</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
+        <value>完成選擇後，請點擊“測試助手可用性”，我會檢查配置是否正確。</value>
+    </data>
+    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+        <value>在此輸入 API 金鑰...</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
+        <value>🎉 驗證成功！讓我們進入最後一步！</value>
+    </data>
+    <data name="WelcomeView_ShortcutStep_Message1" xml:space="preserve">
+        <value>恭喜！一切已完成。你可以使用下面的快捷鍵隨時喚醒我。</value>
+    </data>
+    <data name="WelcomeView_ShortcutStep_Message2" xml:space="preserve">
+        <value>如果沒有回應，可能已被其他軟件佔用。您可以點擊更改快捷鍵。</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Authentication" xml:space="preserve">
+        <value>身份驗證錯誤。</value>
+    </data>
+    <data name="WelcomeView_TelemetryStep_Message1" xml:space="preserve">
+        <value>為了幫助我成長，我們誠邀您加入用戶體驗計劃。我們會收集您的使用數據，這些數據僅用於分析，不包含也無法從中推斷出任何和您個人有關的數據。</value>
+    </data>
+    <data name="WelcomeView_TelemetryStep_Message2" xml:space="preserve">
+        <value>如果不加入，將只會發送必要數據。請放心，此選擇不會影響核心功能。</value>
+    </data>
+    <data name="WelcomeView_SendOnlyNecessaryDataButton_Content" xml:space="preserve">
+        <value>不加入</value>
+    </data>
+    <data name="WelcomeView_EnableTelemetryButton_Content" xml:space="preserve">
+        <value>加入</value>
+    </data>
+    <data name="SoftwareSettings_DiagnosticData_Header" xml:space="preserve">
+        <value>加入用戶體驗計劃</value>
+    </data>
+    <data name="SoftwareSettings_DiagnosticData_Description" xml:space="preserve">
+        <value>為了幫助我們改進，我們誠邀您加入用戶體驗計劃。我們會收集您的使用數據，這些數據僅用於分析，不包含也無法從中推斷出任何和您個人有關的數據。如果不加入，將只會發送必要數據。此選擇不會影響核心功能。</value>
+    </data>
+    <data name="ChatWindowSettings_ShowChatStatistics_Header" xml:space="preserve">
+        <value>顯示聊天統計</value>
+    </data>
+    <data name="ChatWindowSettings_ShowChatStatistics_Description" xml:space="preserve">
+        <value>啟用後，使用數據將在每輪對話結束時顯示於聊天窗口中。</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_InputTokenCountRun" xml:space="preserve">
+        <value>輸入</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_OutputTokenCountRun" xml:space="preserve">
+        <value>輸出</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun" xml:space="preserve">
+        <value>總計</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun" xml:space="preserve">
+        <value>總用時</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
+        <value>模型配置不正確，模型提供商或模型 ID 缺失或無效，或當前模型不支持圖像輸入/工具調用。</value>
+    </data>
+    <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
+        <value>API密鑰缺失或無效。</value>
+    </data>
+    <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
+        <value>超出 API 使用配額，這通常表示餘額不足或當前模型的訪問權限不足。</value>
+    </data>
+    <data name="HandledChatException_RateLimit" xml:space="preserve">
+        <value>請求過於頻繁、帳戶金額不足或者網路或地區不受支援。</value>
+    </data>
+    <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
+        <value>服務端點無法訪問。請檢查您的網絡連接。</value>
+    </data>
+    <data name="HandledChatException_InvalidEndpoint" xml:space="preserve">
+        <value>提供的服務端點無效。</value>
+    </data>
+    <data name="HandledChatException_EmptyResponse" xml:space="preserve">
+        <value>服務返回空白回應，可能表示網絡或服務問題。</value>
+    </data>
+    <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
+        <value>所選模型不支援請求的功能。</value>
+    </data>
+    <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
+        <value>選擇的模型不支持圖像輸入。</value>
+    </data>
+    <data name="HandledChatException_Timeout" xml:space="preserve">
+        <value>向服務發出的請求已超時。請再試一次。</value>
+    </data>
+    <data name="HandledChatException_NetworkError" xml:space="preserve">
+        <value>發生網絡錯誤。請檢查您的網絡或代理設置，或者您的服務提供商可能不支持您的地區。</value>
+    </data>
+    <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
+        <value>服務目前不可用。請稍後再試。</value>
+    </data>
+    <data name="HandledChatException_Unknown" xml:space="preserve">
+        <value>發生未知錯誤。</value>
+    </data>
+    <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
+        <value>不支援的模型提供者 API 架構。</value>
+    </data>
+    <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
+        <value>解決</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyAddElement_Header" xml:space="preserve">
+        <value>自動添加元素</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyAddElement_Description" xml:space="preserve">
+        <value>啟用時，開啟聊天窗口時自動將焦點元素作為附件添加。</value>
+    </data>
+    <data name="HandledChatException_OperationCanceled" xml:space="preserve">
+        <value>操作已取消。</value>
+    </data>
+    <data name="ChatPluginPage_SelectToViewDetails" xml:space="preserve">
+        <value>在左側選擇一個項目以查看詳細信息</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_UpdateFailed_Content" xml:space="preserve">
+        <value>更新失敗。</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content" xml:space="preserve">
+        <value>檢查更新失敗。</value>
+    </data>
+    <data name="SoftwareUpdater_PerformUpdate_FailedToast_Message" xml:space="preserve">
+        <value>更新失敗。</value>
+    </data>
+    <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
+        <value>設定</value>
+    </data>
+    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+        <value>視覺上下文長度預算</value>
+    </data>
+    <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
+        <value>深入思考</value>
+    </data>
+    <data name="ChatFunctionPermissions_ScreenRead" xml:space="preserve">
+        <value>讀取螢幕</value>
+    </data>
+    <data name="ChatFunctionPermissions_ScreenAccess" xml:space="preserve">
+        <value>存取螢幕</value>
+    </data>
+    <data name="ChatFunctionPermissions_NetworkAccess" xml:space="preserve">
+        <value>存取網絡</value>
+    </data>
+    <data name="ChatFunctionPermissions_ClipboardRead" xml:space="preserve">
+        <value>讀取剪貼簿</value>
+    </data>
+    <data name="ChatFunctionPermissions_ClipboardAccess" xml:space="preserve">
+        <value>存取剪貼簿</value>
+    </data>
+    <data name="ChatFunctionPermissions_FileRead" xml:space="preserve">
+        <value>讀取檔案</value>
+    </data>
+    <data name="ChatFunctionPermissions_FileAccess" xml:space="preserve">
+        <value>存取檔案</value>
+    </data>
+    <data name="ChatFunctionPermissions_ShellExecute" xml:space="preserve">
+        <value>執行 Shell 指令</value>
+    </data>
+    <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
+        <value>上下文長度超過限制。請嘗試創建新的聊天或切換到具有更長上下文的模型。</value>
+    </data>
+    <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
+        <value>存取程序</value>
+    </data>
+    <data name="CustomAssistant_Name_Default" xml:space="preserve">
+        <value>預設助手</value>
+    </data>
+    <data name="CustomAssistantPage_Title" xml:space="preserve">
+        <value>助手</value>
+    </data>
+    <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
+        <value>建立</value>
+    </data>
+    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+        <value>名稱</value>
+    </data>
+    <data name="CustomAssistant_Name_Description" xml:space="preserve">
+        <value>指定助手的名稱，僅用於顯示和區分。</value>
+    </data>
+    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+        <value>描述</value>
+    </data>
+    <data name="CustomAssistant_Description_Description" xml:space="preserve">
+        <value>指定助手的描述，僅用於顯示和區分。</value>
+    </data>
+    <data name="CustomAssistant_SystemPrompt_Description" xml:space="preserve">
+        <value>系統提示詞會在對話的開頭發送給模型，每次發送消息時都會保持最新。
+提示詞中可以使用佔位符，包含在 {} 中，在發送給模型前會被替換成對應的內容。</value>
+    </data>
+    <data name="CustomAssistant_SystemPrompt_Header" xml:space="preserve">
+        <value>系統提示</value>
+    </data>
+    <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
+        <value>刪除</value>
+    </data>
+    <data name="Common_Warning" xml:space="preserve">
+        <value>警告</value>
+    </data>
+    <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
+        <value>你確定要刪除「{0}」嗎？</value>
+    </data>
+    <data name="Common_Yes" xml:space="preserve">
+        <value>是</value>
+    </data>
+    <data name="Common_No" xml:space="preserve">
+        <value>否</value>
+    </data>
+    <data name="CustomAssistant_ModelProviderTemplate_Header" xml:space="preserve">
+        <value>模型提供商</value>
+    </data>
+    <data name="CustomAssistant_ModelDefinitionTemplate_Header" xml:space="preserve">
+        <value>模型名稱</value>
+    </data>
+    <data name="CustomAssistant_ModelDefinitionTemplate_Description" xml:space="preserve">
+        <value>選擇一個預設的模型名稱。</value>
+    </data>
+    <data name="CustomAssistant_ModelProviderTemplate_Description" xml:space="preserve">
+        <value>選擇一個預設的模型提供商。</value>
+    </data>
+    <data name="HandledSystemException_IOException" xml:space="preserve">
+        <value>發生了一般的 I/O 錯誤。這可能是由於讀取或寫入檔案時出現問題。</value>
+    </data>
+    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
+        <value>訪問所需資源被拒。請檢查檔案權限或以管理員身份運行應用程式。</value>
+    </data>
+    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
+        <value>指定的檔案或目錄路徑過長。請嘗試使用較短的路徑。</value>
+    </data>
+    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
+        <value>操作已取消。</value>
+    </data>
+    <data name="HandledSystemException_Timeout" xml:space="preserve">
+        <value>操作超時。請檢查系統性能並重試。</value>
+    </data>
+    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
+        <value>找不到指定的檔案。請確保檔案存在且路徑正確。</value>
+    </data>
+    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
+        <value>找不到指定的目錄。請確保目錄存在且路徑正確。</value>
+    </data>
+    <data name="HandledSystemException_NotSupported" xml:space="preserve">
+        <value>請求的操作在您的系統上不受支持。</value>
+    </data>
+    <data name="HandledSystemException_Security" xml:space="preserve">
+        <value>發生安全錯誤。應用程式可能沒有必要的權限。</value>
+    </data>
+    <data name="HandledSystemException_COMException" xml:space="preserve">
+        <value>發生系統組件 (COM) 錯誤。這可能表示操作系統或相依性出現問題。</value>
+    </data>
+    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
+        <value>發生 Windows 系統錯誤。請檢查應用程式日誌以獲取更多詳情。</value>
+    </data>
+    <data name="HandledSystemException_Socket" xml:space="preserve">
+        <value>發生網絡插座錯誤。請檢查您的網絡連接和防火牆設定。</value>
+    </data>
+    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
+        <value>應用程式記憶體不足。請關閉其他程式然後再試。</value>
+    </data>
+    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
+        <value>找不到指定的磁碟。請確保磁碟已連接並可存取。</value>
+    </data>
+    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
+        <value>到達數據流的意外結尾。這可能表示檔案損壞或網絡問題。</value>
+    </data>
+    <data name="HandledSystemException_InvalidData" xml:space="preserve">
+        <value>處理中的數據無效或已損壞。請檢查來源檔案或數據。</value>
+    </data>
+    <data name="HandledSystemException_Unknown" xml:space="preserve">
+        <value>發生意外的系統錯誤。請再試一次或檢查應用程式日誌。</value>
+    </data>
+    <data name="CustomAssistantPage_CheckConnectivityButton_Content" xml:space="preserve">
+        <value>檢查連接</value>
+    </data>
+    <data name="CustomAssistantPageViewModel_CheckConnectivity_SuccessToast_Title" xml:space="preserve">
+        <value>檢查成功</value>
+    </data>
+    <data name="CustomAssistantPageViewModel_CheckConnectivity_FailedToast_Title" xml:space="preserve">
+        <value>檢查失敗</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantsMenuItem_ToolTip" xml:space="preserve">
+        <value>選擇助手</value>
+    </data>
+    <data name="CustomAssistant_Icon_Description" xml:space="preserve">
+        <value>點擊以自訂助手圖示。</value>
+    </data>
+    <data name="CustomAssistant_Icon_Header" xml:space="preserve">
+        <value>圖示</value>
+    </data>
+    <data name="IconEditor_BackgroundTabItem_Header" xml:space="preserve">
+        <value>背景</value>
+    </data>
+    <data name="IconEditor_ForegroundTabItem_Header" xml:space="preserve">
+        <value>前景</value>
+    </data>
+    <data name="IconEditor_IconTabItem_Header" xml:space="preserve">
+        <value>圖示</value>
+    </data>
+    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
+        <value>操作無效。請確保設定正確。</value>
+    </data>
+    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
+        <value>參數無效。請確保設定正確。</value>
+    </data>
+    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
+        <value>格式無效。請確保設定正確。</value>
+    </data>
+    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
+        <value>參數為空。請確保設定正確。</value>
+    </data>
+    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
+        <value>參數超出有效範圍。請確保配置正確。</value>
+    </data>
+    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
+        <value>無法建立 SSL 連接。請檢查您的網絡設置或證書。</value>
+    </data>
+    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
+        <value>連接被伺服器拒絕，請檢查網絡連接和代理設置。</value>
+    </data>
+    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
+        <value>找不到主機。請檢查地址和您的網絡連接。</value>
+    </data>
+    <data name="CustomAssistantPage_CheckConnectivityButton_ToolTip" xml:space="preserve">
+        <value>確認模型服務的可用性</value>
+    </data>
+    <data name="CustomAssistantPage_CreateNewCustomAssistantButton_ToolTip" xml:space="preserve">
+        <value>創建一個新的助手</value>
+    </data>
+    <data name="CustomAssistantPage_DeleteCustomAssistantButton_ToolTip" xml:space="preserve">
+        <value>永久刪除所選的助理</value>
+    </data>
+    <data name="ChatInputArea_ContextFlyout_CutMenuItem_Header" xml:space="preserve">
+        <value>剪下</value>
+    </data>
+    <data name="ChatInputArea_ContextFlyout_PasteMenuItem_Header" xml:space="preserve">
+        <value>貼上</value>
+    </data>
+    <data name="Common_OK" xml:space="preserve">
+        <value>確定</value>
+    </data>
+    <data name="Common_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="Common_Abort" xml:space="preserve">
+        <value>中止</value>
+    </data>
+    <data name="Common_Retry" xml:space="preserve">
+        <value>重試</value>
+    </data>
+    <data name="Common_Ignore" xml:space="preserve">
+        <value>忽略</value>
+    </data>
+    <data name="ConsentDecision_Deny" xml:space="preserve">
+        <value>拒絕</value>
+    </data>
+    <data name="ConsentDecision_AllowOnce" xml:space="preserve">
+        <value>允許一次</value>
+    </data>
+    <data name="ConsentDecision_AllowSession" xml:space="preserve">
+        <value>允許此會話</value>
+    </data>
+    <data name="ConsentDecision_AlwaysAllow" xml:space="preserve">
+        <value>總是允許</value>
+    </data>
+    <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
+        <value>接受</value>
+    </data>
+    <data name="TextDifferenceEditor_RevertButton_Content" xml:space="preserve">
+        <value>還原</value>
+    </data>
+    <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
+        <value> 行已新增</value>
+    </data>
+    <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
+        <value> 行已刪除</value>
+    </data>
+    <data name="TextDifferenceSummaryView_AcceptAllButton_Content" xml:space="preserve">
+        <value>全部接受</value>
+    </data>
+    <data name="TextDifferenceSummaryView_EditButton_Content" xml:space="preserve">
+        <value>編輯</value>
+    </data>
+    <data name="TextDifferenceSummaryView_DiscardAllButton_Content" xml:space="preserve">
+        <value>全部捨棄</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header" xml:space="preserve">
+        <value>{0} 個檔案或資料夾將被刪除</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
+        <value>系統檔案或目錄將被刪除</value>
+    </data>
+    <data name="TextDifferenceEditor_DiscardButton_Content" xml:space="preserve">
+        <value>捨棄</value>
+    </data>
+    <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
+        <value>是否允許「{0}」執行？它需要「{1}」權限。</value>
+    </data>
+    <data name="Common_Comma" xml:space="preserve">
+        <value>、</value>
+    </data>
+    <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
+        <value>滾動至底部</value>
+    </data>
+    <data name="ChatContext_Temporary" xml:space="preserve">
+        <value>臨時聊天</value>
+    </data>
+    <data name="TemporaryChatMode_Never" xml:space="preserve">
+        <value>從不</value>
+    </data>
+    <data name="TemporaryChatMode_RememberLast" xml:space="preserve">
+        <value>記住上次</value>
+    </data>
+    <data name="TemporaryChatMode_Always" xml:space="preserve">
+        <value>總是</value>
+    </data>
+    <data name="ChatWindowSettings_TemporaryChatMode_Header" xml:space="preserve">
+        <value>臨時聊天模式</value>
+    </data>
+    <data name="ChatWindowSettings_TemporaryChatMode_Description" xml:space="preserve">
+        <value>創建新聊天時是否使用臨時聊天。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Header" xml:space="preserve">
+        <value>搜尋檔案</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_GetFileInformation_Header" xml:space="preserve">
+        <value>獲取檔案資訊</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Header" xml:space="preserve">
+        <value>搜尋檔案內容</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_Header" xml:space="preserve">
+        <value>讀取檔案</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_MoveFile_Header" xml:space="preserve">
+        <value>移動或重新命名檔案</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Header" xml:space="preserve">
+        <value>刪除檔案</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Header" xml:space="preserve">
+        <value>建立目錄</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Header" xml:space="preserve">
+        <value>寫入檔案</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header" xml:space="preserve">
+        <value>編輯檔案內容</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
+        <value>🔎 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebSearch_Header" xml:space="preserve">
+        <value>網頁搜尋</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_FileReferences_TotalCountTextBlock_Text" xml:space="preserve">
+        <value>{0} 個檔案或資料夾</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_FileReferences_HasMoreReferencesTextBlock_Text" xml:space="preserve">
+        <value>等等</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Header" xml:space="preserve">
+        <value>提取網頁內容</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Visiting" xml:space="preserve">
+        <value>🧐 {0}</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_Urls_TotalCountTextBlock_Text" xml:space="preserve">
+        <value>{0} 個網址</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
+        <value>擷取 UI 元素</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
+        <value>自動化操作</value>
+    </data>
+    <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Documents" xml:space="preserve">
+        <value>文件</value>
+    </data>
+    <data name="FilePickerFileType_SupportedFiles" xml:space="preserve">
+        <value>支援的檔案</value>
+    </data>
+    <data name="ChatWindowViewModel_AddFile_FilePickerFileType_Images" xml:space="preserve">
+        <value>圖片</value>
+    </data>
+    <data name="FilePickerFileType_AllFiles" xml:space="preserve">
+        <value>所有檔案</value>
+    </data>
+    <data name="ChatContext_Metadata_Topic_Header" xml:space="preserve">
+        <value>主題</value>
+    </data>
+    <data name="ChatContext_Metadata_DateModified_Header" xml:space="preserve">
+        <value>日期</value>
+    </data>
+    <data name="ChatWindow_ChatHistory_RenameMenuItem_Header" xml:space="preserve">
+        <value>重新命名對話</value>
+    </data>
+    <data name="ChatWindow_ChatHistory_DeleteMenuItem_Header" xml:space="preserve">
+        <value>刪除對話</value>
+    </data>
+    <data name="LocaleName_Tr" xml:space="preserve">
+        <value>Türkçe</value>
+    </data>
+    <data name="ChatContextManager_LoadChatContextFailedToast_Content" xml:space="preserve">
+        <value>載入對話失敗: {0}</value>
+    </data>
+    <data name="ChatWindow_ViewAllHistoryButton_Content" xml:space="preserve">
+        <value>查看全部</value>
+    </data>
+    <data name="ChatWindow_ChatHistory_DeleteSelectedMenuItem_Header" xml:space="preserve">
+        <value>刪除選取項目</value>
+    </data>
+    <data name="ChatWindow_BackAllHistoryButton_Content" xml:space="preserve">
+        <value>返回</value>
+    </data>
+    <data name="SettingsCategory_Settings_Proxy_Header" xml:space="preserve">
+        <value>網絡代理</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Description" xml:space="preserve">
+        <value>在指定路徑中搜索符合給定模式的文件或目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_GetFileInformation_Description" xml:space="preserve">
+        <value>獲取指定路徑下文件或目錄的信息。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
+        <value>在文件中搜索特定文本並返回匹配的行。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
+        <value>讀取指定路徑下文件的內容。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_MoveFile_Description" xml:space="preserve">
+        <value>移動或重命名文件或目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Description" xml:space="preserve">
+        <value>刪除指定路徑下的文件或目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
+        <value>在指定路徑下創建新目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Description" xml:space="preserve">
+        <value>在指定路徑下將內容寫入文本文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description" xml:space="preserve">
+        <value>替換文本文件中的內容。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
+        <value>文件大小超過 10 MB；不支持讀取操作。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
+        <value>創建目錄失敗。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
+        <value>無法刪除根目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
+        <value>無法刪除系統文件或目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage" xml:space="preserve">
+        <value>無法寫入二進制文件。</value>
+    </data>
+    <data name="HandledFunctionInvokingException_ArgumentError" xml:space="preserve">
+        <value>模型為參數 '{0}' 提供了無效的值，可能是由於幻覺。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage" xml:space="preserve">
+        <value>文件大小超過 10 MB，無法進行替換操作。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>無法替換二進制文件中的內容。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
+        <value>指定的路徑是一個文件，而不是目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathNotExist_ErrorMessage" xml:space="preserve">
+        <value>指定的路徑不是有效的文件或目錄。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage" xml:space="preserve">
+        <value>指定的路徑是一個目錄，而不是文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathNotExist_ErrorMessage" xml:space="preserve">
+        <value>指定的文件或目錄未找到。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage" xml:space="preserve">
+        <value>指定的路徑不存在。</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
+        <value>捕捉視覺元素的截圖。</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
+        <value>執行一組自動化操作，如點擊、輸入或發送快捷鍵。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebSearch_Description" xml:space="preserve">
+        <value>執行網頁搜索。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
+        <value>提取網頁的主要內容。這會在後台通過 Puppeteer 運行一個隱藏的網絡瀏覽器，並通過此瀏覽器訪問網頁。出於兼容性考慮，首次打開可能會自動下載網絡瀏覽器，視網絡情況可能需要較長的時間。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
+        <value>未選擇網頁搜索引擎提供者。請在插件設置的網頁瀏覽器中配置。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
+        <value>提供的端點無效；請確保它是一個有效的絕對 URI。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
+        <value>Google 搜索引擎 ID 未設置。請在插件設置中配置。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
+        <value>不支持的網頁搜索引擎提供者。請在插件設置中切換。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
+        <value>API 密鑰未設置。請在插件設置中配置。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
+        <value>無法連接到 Puppeteer 瀏覽器下載 URL。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
+        <value>無法啟動 Puppeteer 瀏覽器。</value>
+    </data>
+    <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
+        <value>左鍵單擊以選擇，右鍵單擊或按 Esc 以取消
+滾輪或數字鍵切換選擇模式</value>
+    </data>
+    <data name="ScreenSelectionMode_Screen" xml:space="preserve">
+        <value>螢幕</value>
+    </data>
+    <data name="ScreenSelectionMode_Window" xml:space="preserve">
+        <value>視窗</value>
+    </data>
+    <data name="ScreenSelectionMode_Element" xml:space="preserve">
+        <value>元素</value>
+    </data>
+    <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
+        <value>無</value>
+    </data>
+    <data name="Common_None" xml:space="preserve">
+        <value>無</value>
+    </data>
+    <data name="ModelProviderSchema_OpenAI" xml:space="preserve">
+        <value>OpenAI (Chat Completions)</value>
+    </data>
+    <data name="ModelProviderSchema_Anthropic" xml:space="preserve">
+        <value>Anthropic</value>
+    </data>
+    <data name="ModelProviderSchema_Google" xml:space="preserve">
+        <value>Google</value>
+    </data>
+    <data name="ModelProviderSchema_Ollama" xml:space="preserve">
+        <value>Ollama</value>
+    </data>
+    <data name="Assistant_RequestTimeoutSeconds_Description" xml:space="preserve">
+        <value>設置模型返回結果的等待時間，以秒為單位。對於較慢的模型（如思考模型和本地模型），請適當延長此時間。</value>
+    </data>
+    <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
+        <value>請求超時持續時間</value>
+    </data>
+    <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
+        <value>需要代理伺服器地址。</value>
+    </data>
+    <data name="DynamicWebProxy_CreateProxy_EndpointInvalid_ErrorMessage" xml:space="preserve">
+        <value>代理伺服器地址無效。</value>
+    </data>
+    <data name="DynamicWebProxy_CreateProxy_EndpointSchemeUnsupported_ErrorMessage" xml:space="preserve">
+        <value>不支援代理伺服器方案 '{0}'。</value>
+    </data>
+    <data name="FileAttachment_Create_FileTooLarge" xml:space="preserve">
+        <value>檔案大小 ({0}) 超過了允許的最大大小 ({1})。</value>
+    </data>
+    <data name="DisplaySettings_FontSize_Header" xml:space="preserve">
+        <value>字體大小</value>
+    </data>
+    <data name="DisplaySettings_FontSize_Description" xml:space="preserve">
+        <value>調整全局字體顯示大小。</value>
+    </data>
+    <data name="CustomAssistantPage_DuplicateCustomAssistantButton_Content" xml:space="preserve">
+        <value>複製</value>
+    </data>
+    <data name="CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip" xml:space="preserve">
+        <value>複製所選的助手</value>
+    </data>
+    <data name="Common_Copy" xml:space="preserve">
+        <value>複製</value>
+    </data>
+    <data name="ChatMessageControl_EditButton_Content" xml:space="preserve">
+        <value>編輯</value>
+    </data>
+    <data name="ChatWindow_EditingTextBlock_Text" xml:space="preserve">
+        <value>編輯訊息中...</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
+        <value>當前助手的模型已不受支持，請求可能會失敗</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
+        <value>當前助手的模型已於 {0} 下架，建議儘快切換到較新的模型</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_DeprecatingSoon" xml:space="preserve">
+        <value>當前助手的模型預計於 {0} 下架</value>
+    </data>
+    <data name="ChatWindow_ModelWarning_OpenAssistantSettings" xml:space="preserve">
+        <value>助手設定</value>
+    </data>
+    <data name="ChatWindow_CancelEditingButton_ToolTip" xml:space="preserve">
+        <value>取消編輯 (Esc)</value>
+    </data>
+    <data name="ChatWindow_Title" xml:space="preserve">
+        <value>聊天</value>
+    </data>
+    <data name="ChatPluginPage_TabItem_MCP_Header" xml:space="preserve">
+        <value>MCP 伺服器</value>
+    </data>
+    <data name="McpTransportConfiguration_Name_ValidationErrorMessage_Regex" xml:space="preserve">
+        <value>僅允許數字、字母及字符“-”、“_”。</value>
+    </data>
+    <data name="ValidationErrorMessage_Required" xml:space="preserve">
+        <value>此字段為必填。</value>
+    </data>
+    <data name="ValidationErrorMessage_MaxLength" xml:space="preserve">
+        <value>長度不得超過 {0} 個字符。</value>
+    </data>
+    <data name="ValidationErrorMessage_Url" xml:space="preserve">
+        <value>必須是有效的 URL。</value>
+    </data>
+    <data name="McpTransportConfiguration_Name_ValidationErrorMessage_Exists" xml:space="preserve">
+        <value>不能重複現有條目。</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
+        <value>“{0}” 是一個 MCP 工具。Everywhere 無法驗證其所需的權限。請確保它來自可信來源，Everywhere 對其後果不承擔任何責任。</value>
+    </data>
+    <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
+        <value>不允許重複條目。</value>
+    </data>
+    <data name="ValidationErrorMessage_NullKey" xml:space="preserve">
+        <value>項目鍵不能為空。</value>
+    </data>
+    <data name="ValidationErrorMessage_NullValue" xml:space="preserve">
+        <value>項目值不能為空。</value>
+    </data>
+    <data name="HttpTransportMode_AutoDetect" xml:space="preserve">
+        <value>自動檢測</value>
+    </data>
+    <data name="HttpTransportMode_StreamableHttp" xml:space="preserve">
+        <value>Streamable HTTP</value>
+    </data>
+    <data name="HttpTransportMode_Sse" xml:space="preserve">
+        <value>SSE</value>
+    </data>
+    <data name="HandledFunctionInvokingException_FunctionNotFound" xml:space="preserve">
+        <value>模型嘗試調用不存在的工具 '{0}'，可能是由於幻覺。</value>
+    </data>
+    <data name="McpTransportConfigurationForm_NameTextBox_Label" xml:space="preserve">
+        <value>* 名稱</value>
+    </data>
+    <data name="McpTransportConfigurationForm_DescriptionTextBox_Label" xml:space="preserve">
+        <value>描述（僅用於顯示和區分目的）</value>
+    </data>
+    <data name="McpTransportConfigurationForm_SchemeTabControl_Label" xml:space="preserve">
+        <value>* 協議</value>
+    </data>
+    <data name="McpTransportConfigurationForm_CommandTextBox_Label" xml:space="preserve">
+        <value>* 命令</value>
+    </data>
+    <data name="McpTransportConfigurationForm_ArgumentsTextBox_Label" xml:space="preserve">
+        <value>命令列參數</value>
+    </data>
+    <data name="McpTransportConfigurationForm_WorkingDirectoryTextBox_Label" xml:space="preserve">
+        <value>工作目錄</value>
+    </data>
+    <data name="McpTransportConfigurationForm_EnvironmentVariablesDataList_Label" xml:space="preserve">
+        <value>環境變量</value>
+    </data>
+    <data name="McpTransportConfigurationForm_EndpointTextBox_Label" xml:space="preserve">
+        <value>* URL</value>
+    </data>
+    <data name="McpTransportConfigurationForm_TransportModeComboBox_Label" xml:space="preserve">
+        <value>傳輸模式</value>
+    </data>
+    <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
+        <value>請求標頭</value>
+    </data>
+    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+        <value>* 請輸入金鑰</value>
+    </data>
+    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+        <value>* 值</value>
+    </data>
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+        <value>值</value>
+    </data>
+    <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
+        <value>編輯 MCP 插件 (帶 * 的字段為必填)</value>
+    </data>
+    <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
+        <value>添加 MCP 插件 (帶 * 的字段為必填)</value>
+    </data>
+    <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
+        <value>您確定要移除 “{0}” 嗎？</value>
+    </data>
+    <data name="ChatPluginPage_AddMcpPluginButton_Content" xml:space="preserve">
+        <value>添加</value>
+    </data>
+    <data name="ChatPluginPage_CopyLogsButton_ToolTip" xml:space="preserve">
+        <value>將所有日誌複製到剪貼板</value>
+    </data>
+    <data name="ChatPluginPage_ShowTimestampTextBlock_Text" xml:space="preserve">
+        <value>顯示時間戳</value>
+    </data>
+    <data name="ChatPluginManager_Common_InvalidMcpTransportConfiguration" xml:space="preserve">
+        <value>無效的 MCP 配置。</value>
+    </data>
+    <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
+        <value>無法啟動 MCP 插件 "{0}"</value>
+    </data>
+    <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
+        <value>這個 MCP 伺服器需要 {0}，但 Everywhere 沒有找到它。</value>
+    </data>
+    <data name="ChatPluginPage_ResolveRuntimeDependencyButton_Content" xml:space="preserve">
+        <value>解決</value>
+    </data>
+    <data name="ChatPluginPage_WarningActionButton_Content" xml:space="preserve">
+        <value>解決</value>
+    </data>
+    <data name="RuntimeManager_InstallRuntime_Toast_Content" xml:space="preserve">
+        <value>正在下載並安裝 {0}...</value>
+    </data>
+    <data name="RuntimeManager_InstallRuntime_SuccessToast_Title" xml:space="preserve">
+        <value>{0} 已準備就緒</value>
+    </data>
+    <data name="RuntimeManager_InstallRuntime_FailedToast_Content" xml:space="preserve">
+        <value>無法安裝 {0}。</value>
+    </data>
+    <data name="ChatPluginManager_McpPluginMissingRuntime_StartFailure" xml:space="preserve">
+        <value>這個 MCP 伺服器需要 {0}。請先安裝它再啟動伺服器。</value>
+    </data>
+    <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
+        <value>找不到 MCP 命令 "{0}"。請安裝它，或者修改命令路徑。</value>
+    </data>
+    <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
+        <value>日誌</value>
+    </data>
+    <data name="ChatPluginPage_PluginStatus_NotRunning_ToolTip" xml:space="preserve">
+        <value>未運行</value>
+    </data>
+    <data name="ChatPluginPage_PluginStatus_Running_ToolTip" xml:space="preserve">
+        <value>運行中</value>
+    </data>
+    <data name="ChatContext_BusyMessage_StartingMcp" xml:space="preserve">
+        <value>正在啟動 MCP</value>
+    </data>
+    <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
+        <value>工具調用正在生成</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
+        <value>無法加載聊天上下文。</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_FilePickerFileType_Markdown" xml:space="preserve">
+        <value>Markdown 文件</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_DateCreated" xml:space="preserve">
+        <value>創建日期</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_DateModified" xml:space="preserve">
+        <value>修改日期</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_UserRole" xml:space="preserve">
+        <value>用戶</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_UserAttachments" xml:space="preserve">
+        <value>附件</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_AssistantRole" xml:space="preserve">
+        <value>助手</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_ErrorMessage" xml:space="preserve">
+        <value>錯誤</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_FailedToSaveFile" xml:space="preserve">
+        <value>無法保存文件</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_ExportSuccess" xml:space="preserve">
+        <value>導出成功</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_FunctionCall" xml:space="preserve">
+        <value>工具調用</value>
+    </data>
+    <data name="ChatWindow_ChatHistory_ExportMarkdownMenuItem_Header" xml:space="preserve">
+        <value>導出為 Markdown</value>
+    </data>
+    <data name="ChatMessageControl_ContextFlyout_CopyLink" xml:space="preserve">
+        <value>複製連結</value>
+    </data>
+    <data name="ChatMessageControl_ContextFlyout_OpenLink" xml:space="preserve">
+        <value>打開連結</value>
+    </data>
+    <data name="DebugFeaturesControl_CreateDumpButton_Content" xml:space="preserve">
+        <value>創建進程轉儲</value>
+    </data>
+    <data name="DebugFeaturesControl_CreateDumpToast_Content" xml:space="preserve">
+        <value>請稍候，轉儲正在創建中。在此期間，Everywhere 將無法響應。</value>
+    </data>
+    <data name="ModelProviderSchema_OpenAIResponses" xml:space="preserve">
+        <value>OpenAI (Responses API)</value>
+    </data>
+    <data name="Entrance_EverywhereAlreadyRunning" xml:space="preserve">
+        <value>Everywhere 已經在運行中。請檢查系統托盤中的應用程式視窗。</value>
+    </data>
+    <data name="HandledFunctionInvokingException_ArgumentMissing" xml:space="preserve">
+        <value>工具調用中缺少必需的參數 '{0}'，可能是由於幻覺。</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text" xml:space="preserve">
+        <value>可用更新</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text" xml:space="preserve">
+        <value>正在檢查更新</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_UpdateNotAvailableTitle_Text" xml:space="preserve">
+        <value>您已是最新版本</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_CheckingUpdateDescription_Text" xml:space="preserve">
+        <value>請稍候...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_UpdatingTitle_Text" xml:space="preserve">
+        <value>正在更新</value>
+    </data>
+    <data name="ChatPluginPage_StartMcpPluginButton_Content" xml:space="preserve">
+        <value>運行</value>
+    </data>
+    <data name="ChatPluginPage_StopMcpPluginButton_Content" xml:space="preserve">
+        <value>停止</value>
+    </data>
+    <data name="ChatPluginPage_EditMcpPluginButton_Content" xml:space="preserve">
+        <value>編輯</value>
+    </data>
+    <data name="ChatPluginPage_RemoveMcpPluginButton_Content" xml:space="preserve">
+        <value>移除</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_RunSubagent_Header" xml:space="preserve">
+        <value>指派新助手</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_RunSubagent_Description" xml:space="preserve">
+        <value>允許助手指派全新的助手執行子任務，有助於在各個模型中保持上下文，同時更好地處理複雜任務。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Header" xml:space="preserve">
+        <value>管理待辦清單</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
+        <value>允許助手維護簡潔的待辦清單，這在處理複雜任務時非常有用。請注意，該清單是臨時的，並且在切換對話或退出Everywhere時會消失。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
+        <value>基本功能</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_Description" xml:space="preserve">
+        <value>提供一套基本功能，使助手能更好地處理複雜任務。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Empty" xml:space="preserve">
+        <value>待辦清單為空。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_RunSubagent_Title" xml:space="preserve">
+        <value>🤖 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_RunSubagent_TokenCount" xml:space="preserve">
+        <value>{0} 輸入 · {1} 輸出 · {2} 總計</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
+        <value>詢問用戶</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
+        <value>允許助手通過互動式對話框向用戶提問並收集輸入。</value>
+    </data>
+    <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
+        <value>下一個</value>
+    </data>
+    <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
+        <value>上一個</value>
+    </data>
+    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
+        <value>輸入你的回答…</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
+        <value>📂 {0}</value>
+    </data>
+    <data name="Assistant_ConfiguratorSelector_Header" xml:space="preserve">
+        <value>服務提供商</value>
+    </data>
+    <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
+        <value>添加 API 密鑰</value>
+    </data>
+    <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
+        <value>管理 API 密鑰</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
+        <value>你確定要刪除 {0} 個 API 密鑰嗎？此操作無法撤銷！</value>
+    </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>已複製</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
+        <value>你確定要刪除嗎？此操作無法撤銷！</value>
+    </data>
+    <data name="ManageApiKeyForm_SecretKeyDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>密鑰</value>
+    </data>
+    <data name="ManageApiKeyForm_NameDataGridTextColumn_Header" xml:space="preserve">
+        <value>名稱</value>
+    </data>
+    <data name="CustomAssistantInformationForm_IconButton_ToolTip" xml:space="preserve">
+        <value>點擊更換圖標</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_AdvancedConfiguratorModel_Header" xml:space="preserve">
+        <value>進階模式</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_AdvancedConfiguratorModel_Description" xml:space="preserve">
+        <value>自由配置所有的模型參數，兼容第三方模型</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Header" xml:space="preserve">
+        <value>預設模式</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Description" xml:space="preserve">
+        <value>在預設中選擇常見模型並快速上手</value>
+    </data>
+    <data name="CreateApiKeyForm_NameTextBox_Label" xml:space="preserve">
+        <value>名稱 (僅用於顯示和區分)</value>
+    </data>
+    <data name="CreateApiKeyForm_SecretKeyTextBox_Label" xml:space="preserve">
+        <value>密鑰</value>
+    </data>
+    <data name="ManageApiKeyForm_AddApiKeyButton_Content" xml:space="preserve">
+        <value>添加</value>
+    </data>
+    <data name="ManageApiKeyForm_DeleteApiKeysButton_Content" xml:space="preserve">
+        <value>刪除選中項</value>
+    </data>
+    <data name="WelcomeView_ModelProviderHyperlinkButton_Content" xml:space="preserve">
+        <value>點我查看</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_Advanced_Message1" xml:space="preserve">
+        <value>歡迎使用進階模式。你可以自行配置 API 協議支持的第三方模型。</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_Advanced_Message2" xml:space="preserve">
+        <value>請注意，我無法保證完美兼容所有第三方模型。</value>
+    </data>
+    <data name="AdvancedAssistantConfigurator_InvalidEndpoint" xml:space="preserve">
+        <value>必須是 http:// 或 https:// 開頭的有效 URL</value>
+    </data>
+    <data name="VisualElementType_Spinner" xml:space="preserve">
+        <value>下拉列表</value>
+    </data>
+    <data name="VisualElementType_Splitter" xml:space="preserve">
+        <value>分隔線</value>
+    </data>
+    <data name="VisualElementType_StatusBar" xml:space="preserve">
+        <value>狀態欄</value>
+    </data>
+    <data name="VisualElementType_ToolBar" xml:space="preserve">
+        <value>工具欄</value>
+    </data>
+    <data name="VisualElementType_Header" xml:space="preserve">
+        <value>標題</value>
+    </data>
+    <data name="VisualElementType_HeaderItem" xml:space="preserve">
+        <value>標題項</value>
+    </data>
+    <data name="ApiKey_EmptyName" xml:space="preserve">
+        <value>(空)</value>
+    </data>
+    <data name="ChatWindowSettings_AlwaysStartNewChat_Header" xml:space="preserve">
+        <value>始終開始新對話</value>
+    </data>
+    <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
+        <value>當通過快捷鍵召喚應用程式時，自動開始一個全新的會話，跳過之前的對話。</value>
+    </data>
+    <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
+        <value>從 JSON 匯入</value>
+    </data>
+    <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
+        <value>導入 MCP 插件</value>
+    </data>
+    <data name="McpImportForm_Description" xml:space="preserve">
+        <value>在下面粘貼您的 MCP 配置 JSON，或從本地文件導入。</value>
+    </data>
+    <data name="McpImportForm_OpenButton_Content" xml:space="preserve">
+        <value>打開</value>
+    </data>
+    <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
+        <value>已導入 {0} 個 MCP 插件</value>
+    </data>
+    <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
+        <value>導入 MCP 插件失敗</value>
+    </data>
+    <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
+        <value>未找到有效的 MCP 插件</value>
+    </data>
+    <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
+        <value>MCP 伺服器</value>
+    </data>
+    <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
+        <value>成功導入 {0} 個插件，{1} 個失敗</value>
+    </data>
+    <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
+        <value>打開聊天窗口</value>
+    </data>
+    <data name="ScreenSelectionMode_Free" xml:space="preserve">
+        <value>自由</value>
+    </data>
+    <data name="ScreenSelectionToolTip_TipText_Free" xml:space="preserve">
+        <value>按住左鍵框選，右鍵或 Esc 退出
+滾輪或數字鍵切換選擇模式</value>
+    </data>
+    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+        <value>捕獲屏幕截圖</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
+        <value>自動添加選取文字</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
+        <value>啟用後，選取的文字將自動被添加為附件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
+        <value>列出窗口</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ListWindows_Description" xml:space="preserve">
+        <value>列出所有螢幕上的所有窗口。</value>
+    </data>
+    <data name="ExperimentalBadge_Content" xml:space="preserve">
+        <value>實驗性</value>
+    </data>
+    <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
+        <value>此項為實驗性功能，可能會導致意外的錯誤和結果。</value>
+    </data>
+    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
+        <value>開機時啟動</value>
+    </data>
+    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
+        <value>Everywhere 會在開機後自動運行。</value>
+    </data>
+    <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
+        <value>DeepSeek</value>
+    </data>
+    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
+        <value>更多設定</value>
+    </data>
+    <data name="HandledSystemException_Serialization" xml:space="preserve">
+        <value>解析數據時出錯。</value>
+    </data>
+    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
+        <value>工具調用時出錯。</value>
+    </data>
+    <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
+        <value>深度思考</value>
+    </data>
+    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+        <value>採集視覺上下文的長度上限，單位為詞元。此項為估算，無法保證精確限制。對於簡單的上下文，消耗的詞元往往會小於這個數；對於複雜的上下文，超出的部分會被截斷。</value>
+    </data>
+    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
+        <value>開啟工具調用</value>
+    </data>
+    <data name="Greetings_Tip1" xml:space="preserve">
+        <value>💡你可以使用 Ctrl + 數字鍵 快速切換助手</value>
+    </data>
+    <data name="Greetings_Tip2" xml:space="preserve">
+        <value>💡你可以在左下角助手圖標上使用滾輪快速切換</value>
+    </data>
+    <data name="Greetings_Tip3" xml:space="preserve">
+        <value>💡你可以將 Copilot 按鍵設為 Everywhere 快捷鍵</value>
+    </data>
+    <data name="ChatContextManager_RemoveSelectedDialog_Title" xml:space="preserve">
+        <value>確認刪除</value>
+    </data>
+    <data name="ChatContextManager_RemoveSelectedDialog_Content" xml:space="preserve">
+        <value>你確認要刪除選中的 {0} 項聊天嗎？</value>
+    </data>
+    <data name="ReasoningEffortLevel_Default" xml:space="preserve">
+        <value>默認</value>
+    </data>
+    <data name="ReasoningEffortLevel_Detailed" xml:space="preserve">
+        <value>詳細</value>
+    </data>
+    <data name="ReasoningEffortLevel_Minimal" xml:space="preserve">
+        <value>最小</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
+        <value>推理強度 (reasoning_effort)</value>
+    </data>
+    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+        <value>最大上下文輪次</value>
+    </data>
+    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
+        <value>限制保留到上下文中的最近用戶消息輪次。一問一答視為一個輪次。</value>
+    </data>
+    <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
+        <value>僅當前消息</value>
+    </data>
+    <data name="PersistentState_MaxContextRounds_Value_Unlimited" xml:space="preserve">
+        <value>無限制</value>
+    </data>
+    <data name="VisualContextLengthLimit_Balanced" xml:space="preserve">
+        <value>平衡 (~4096，推薦)</value>
+    </data>
+    <data name="VisualContextLengthLimit_Unlimited" xml:space="preserve">
+        <value>無限制 (⚠️)</value>
+    </data>
+    <data name="VisualContextLengthLimit_Minimal" xml:space="preserve">
+        <value>最小 (~1024)</value>
+    </data>
+    <data name="VisualContextLengthLimit_Ultimate" xml:space="preserve">
+        <value>極致 (~40960)</value>
+    </data>
+    <data name="VisualContextLengthLimit_Detailed" xml:space="preserve">
+        <value>詳細 (~10240)</value>
+    </data>
+    <data name="ChatService_Error_CustomAssistantNotSelected" xml:space="preserve">
+        <value>請在左下角選擇一個助手。如果沒有，請在設定中配置。</value>
+    </data>
+    <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>啟用</value>
+    </data>
+    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>自動批准</value>
+    </data>
+    <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
+        <value>預覽: {0}</value>
+    </data>
+    <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
+        <value>是否允許「{0}」執行？</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
+        <value>讀取視覺樹</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
+        <value>讀取螢幕上窗口或元素的視覺樹。</value>
+    </data>
+    <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
+        <value>註冊即享免費積分，獲得開箱即用的主流模型。更有雲同步等功能持續上線中……</value>
+    </data>
+    <data name="UserProfilePresenter_LoginButton_Content" xml:space="preserve">
+        <value>登入</value>
+    </data>
+    <data name="UserProfilePresenter_LoginToCloudTextBlock_Text" xml:space="preserve">
+        <value>Everywhere 雲服務</value>
+    </data>
+    <data name="UserProfilePresenter_LogoutButton_Content" xml:space="preserve">
+        <value>退出帳號</value>
+    </data>
+    <data name="UserProfilePresenter_PlanCreditsTextBlock_Text" xml:space="preserve">
+        <value>訂閱積分</value>
+    </data>
+    <data name="UserProfilePresenter_ManageSubscriptionButton_Content" xml:space="preserve">
+        <value>管理訂閱</value>
+    </data>
+    <data name="UserProfilePresenter_GetSupportButton_Content" xml:space="preserve">
+        <value>獲取支持</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Header" xml:space="preserve">
+        <value>原生模式</value>
+    </data>
+    <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Description" xml:space="preserve">
+        <value>官方托管服務。無需 API 密鑰，開箱即用</value>
+    </data>
+    <data name="Common_CriticalError" xml:space="preserve">
+        <value>嚴重錯誤</value>
+    </data>
+    <data name="Entrance_FailedToInitializeRuntimeConstants" xml:space="preserve">
+        <value>初始化數據目錄失敗，請確保你有對數據目錄的寫入權限。
+{0}</value>
+    </data>
+    <data name="Modalities_Audio" xml:space="preserve">
+        <value>音頻</value>
+    </data>
+    <data name="Modalities_Image" xml:space="preserve">
+        <value>圖像</value>
+    </data>
+    <data name="Modalities_Pdf" xml:space="preserve">
+        <value>PDF</value>
+    </data>
+    <data name="Modalities_Text" xml:space="preserve">
+        <value>文本</value>
+    </data>
+    <data name="Modalities_Video" xml:space="preserve">
+        <value>視頻</value>
+    </data>
+    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+        <value>最大輸出長度</value>
+    </data>
+    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+        <value>對話的最大輸出長度 (output_limit)。此項會影響模型請求的參數（尤其是 Anthropic），請盡可能設為真實值。</value>
+    </data>
+    <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">
+        <value>請在瀏覽器繼續</value>
+    </data>
+    <data name="UserProfilePresenter_RenewsOnTextBlock_Text" xml:space="preserve">
+        <value>{0} 重置訂閱積分</value>
+    </data>
+    <data name="UserProfilePresenter_TrialUntilTextBlock_Text" xml:space="preserve">
+        <value>試用至 {0}</value>
+    </data>
+    <data name="UserProfilePresenter_EndsOnTextBlock_Text" xml:space="preserve">
+        <value>有效至 {0}</value>
+    </data>
+    <data name="UserProfilePresenter_ExpiredDaysAgoTextBlock_Text" xml:space="preserve">
+        <value>已過期 {0} 天</value>
+    </data>
+    <data name="UserProfilePresenter_BonusCreditsTextBlock_Text" xml:space="preserve">
+        <value>加量包積分</value>
+    </data>
+    <data name="UserProfilePresenter_RemainingTextBlock_Text" xml:space="preserve">
+        <value>剩餘 {0}</value>
+    </data>
+    <data name="UserProfilePresenter_OpenDashboardButton_Content" xml:space="preserve">
+        <value>個人主頁</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggleTextBlock_Text" xml:space="preserve">
+        <value>對話雲同步</value>
+    </data>
+    <data name="UserProfilePresenter_CloudSyncToggle_Tip" xml:space="preserve">
+        <value>開啟後將會自動在多個設備間同步你的聊天記錄</value>
+    </data>
+    <data name="UserProfilePresenter_LastSynchronizedTextBlock_Text" xml:space="preserve">
+        <value>上次成功同步 {0}</value>
+    </data>
+    <data name="UserProfilePresenter_LastSynchronizationErrorTextBlock_Text" xml:space="preserve">
+        <value>最近一次同步出錯</value>
+    </data>
+    <data name="UserProfilePresenter_SynchronizingTextBlock_Text" xml:space="preserve">
+        <value>正在同步...</value>
+    </data>
+    <data name="WelcomeView_SoftLoginStep_SkipButton_Content" xml:space="preserve">
+        <value>我要自己配置模型</value>
+    </data>
+    <data name="HandledChatException_RegionNotSupport" xml:space="preserve">
+        <value>服務不支持當前所在區域或位置的請求。</value>
+    </data>
+    <data name="HandledChatException_JsonError" xml:space="preserve">
+        <value>解析伺服器響應時出錯，通常意味著意料之外的 JSON 格式或內容。</value>
+    </data>
+    <data name="Common_Refresh" xml:space="preserve">
+        <value>刷新</value>
+    </data>
+    <data name="CustomAssistant_OutputModalities_Header" xml:space="preserve">
+        <value>輸出模態</value>
+    </data>
+    <data name="CustomAssistant_ReleaseDate_Header" xml:space="preserve">
+        <value>發佈日期</value>
+    </data>
+    <data name="CustomAssistant_KnowledgeCutoff_Header" xml:space="preserve">
+        <value>知識截止日期</value>
+    </data>
+    <data name="CustomAssistant_InputPrice_Header" xml:space="preserve">
+        <value>輸入價格</value>
+    </data>
+    <data name="CustomAssistant_OutputPrice_Header" xml:space="preserve">
+        <value>輸出價格</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_SelectModelTextBlock_Text" xml:space="preserve">
+        <value>模型</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_DetailsTextBlock_Text" xml:space="preserve">
+        <value>模型詳情</value>
+    </data>
+    <data name="CustomAssistant_OutputPrice_ToolTip" xml:space="preserve">
+        <value>包含思考詞元</value>
+    </data>
+    <data name="Common_Undo" xml:space="preserve">
+        <value>撤銷</value>
+    </data>
+    <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
+        <value>已刪除「{0}」</value>
+    </data>
+    <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
+        <value>顯示</value>
+    </data>
+    <data name="SettingsCategory_Settings_Common_Header" xml:space="preserve">
+        <value>通用</value>
+    </data>
+    <data name="SettingsCategory_Settings_Shortcut_Header" xml:space="preserve">
+        <value>快捷鍵</value>
+    </data>
+    <data name="SettingsCategory_Settings_SystemAssistant_Header" xml:space="preserve">
+        <value>系統助手</value>
+    </data>
+    <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
+        <value>配置 Everywhere 所需的關鍵助手，用於標題總結、上下文壓縮等。如果沒有配置，Everywhere 會使用當前最佳模型作為所需助手。</value>
+    </data>
+    <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
+        <value>配置 Everywhere 如何顯示界面內容，如語言、主題、字體大小等。</value>
+    </data>
+    <data name="SettingsCategory_Settings_Proxy_Description" xml:space="preserve">
+        <value>配置網絡代理，配置之後 Everywhere 的所有網絡請求都會經過此代理。</value>
+    </data>
+    <data name="SettingsCategory_Settings_Shortcut_Description" xml:space="preserve">
+        <value>配置 Everywhere 所使用的全局快捷鍵，自定義符合個人習慣的體驗。</value>
+    </data>
+    <data name="SettingsCategory_Settings_Common_Description" xml:space="preserve">
+        <value>配置和 Everywhere 運行相關的設置。</value>
+    </data>
+    <data name="SettingsCategory_Settings_ChatWindow_Description" xml:space="preserve">
+        <value>配置聊天窗口的行為。</value>
+    </data>
+    <data name="ChatWindowPinMode_AlwaysTopmost" xml:space="preserve">
+        <value>總是置頂</value>
+    </data>
+    <data name="ChatWindowPinMode_TopmostOnInput" xml:space="preserve">
+        <value>輸入時置頂</value>
+    </data>
+    <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
+        <value>選擇視覺元素</value>
+    </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>設置一個快捷鍵，在任何時候按下即可選擇視覺元素，之後會喚起聊天窗口。</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
+        <value>捕獲螢幕截圖</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>設置一個快捷鍵，在任何時候按下即可捕獲螢幕截圖，之後會喚起聊天窗口。</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
+        <value>瀏覽器助手</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_Description" xml:space="preserve">
+        <value>網頁瀏覽器上下文命令</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_TranslateCommand_Name" xml:space="preserve">
+        <value>翻譯</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_TranslateCommand_Description" xml:space="preserve">
+        <value>翻譯當前頁面的內容</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_SummarizePageCommand_Name" xml:space="preserve">
+        <value>總結</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_SummarizePageCommand_Description" xml:space="preserve">
+        <value>對頁面進行快速總結</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_ExtractInfoCommand_Name" xml:space="preserve">
+        <value>提取要點信息</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_ExtractInfoCommand_Description" xml:space="preserve">
+        <value>提取並總結關鍵信息</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_ExplainCommand_Name" xml:space="preserve">
+        <value>解釋</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_ExplainCommand_Description" xml:space="preserve">
+        <value>解釋當前頁面的內容</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_FactCheckCommand_Name" xml:space="preserve">
+        <value>事實核查</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_FactCheckCommand_Description" xml:space="preserve">
+        <value>核查頁面中的聲明</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_Name" xml:space="preserve">
+        <value>代碼編輯器助手</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_Description" xml:space="preserve">
+        <value>代碼編輯器上下文命令</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_ExplainCommand_Name" xml:space="preserve">
+        <value>解釋</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_ExplainCommand_Description" xml:space="preserve">
+        <value>解釋當前代碼的功能</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_ReviewCommand_Name" xml:space="preserve">
+        <value>審查</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_ReviewCommand_Description" xml:space="preserve">
+        <value>審查當前代碼並給出建議</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_DocumentCommand_Name" xml:space="preserve">
+        <value>生成文檔</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_DocumentCommand_Description" xml:space="preserve">
+        <value>為當前代碼生成文檔註釋</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_FindBugsCommand_Name" xml:space="preserve">
+        <value>查找 bug</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_FindBugsCommand_Description" xml:space="preserve">
+        <value>查找當前代碼中的潛在 bug 或問題</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_OptimizeCommand_Name" xml:space="preserve">
+        <value>優化</value>
+    </data>
+    <data name="Strategy_BuiltIn_CodeEditor_OptimizeCommand_Description" xml:space="preserve">
+        <value>優化當前代碼的性能</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_Name" xml:space="preserve">
+        <value>劃詞助手</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_Description" xml:space="preserve">
+        <value>劃詞文本命令</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_TranslateCommand_Name" xml:space="preserve">
+        <value>翻譯</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_TranslateCommand_Description" xml:space="preserve">
+        <value>翻譯選中的文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_ExplainCommand_Name" xml:space="preserve">
+        <value>解釋/定義</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_ExplainCommand_Description" xml:space="preserve">
+        <value>解釋或定義選中的文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_SummarizeCommand_Name" xml:space="preserve">
+        <value>總結</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_SummarizeCommand_Description" xml:space="preserve">
+        <value>總結選中的文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_RewriteCommand_Name" xml:space="preserve">
+        <value>改寫/改進</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_RewriteCommand_Description" xml:space="preserve">
+        <value>改寫或改進選中的文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_ResearchCommand_Name" xml:space="preserve">
+        <value>調查</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_ResearchCommand_Description" xml:space="preserve">
+        <value>調查選中的文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_GrammarCommand_Name" xml:space="preserve">
+        <value>檢查語法</value>
+    </data>
+    <data name="Strategy_BuiltIn_TextSelection_GrammarCommand_Description" xml:space="preserve">
+        <value>檢查並糾正選中文本中的語法錯誤</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_Name" xml:space="preserve">
+        <value>全局助手</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_Description" xml:space="preserve">
+        <value>在所有上下文都可用的命令</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_WhatIsThisCommand_Name" xml:space="preserve">
+        <value>這是什麼？</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_WhatIsThisCommand_Description" xml:space="preserve">
+        <value>解釋當前選中的內容或上下文</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_SummarizeCommand_Name" xml:space="preserve">
+        <value>總結</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_SummarizeCommand_Description" xml:space="preserve">
+        <value>總結當前內容</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_HelpCommand_Name" xml:space="preserve">
+        <value>幫我解決這個問題</value>
+    </data>
+    <data name="Strategy_BuiltIn_Global_HelpCommand_Description" xml:space="preserve">
+        <value>獲取當前上下文的幫助</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_Name" xml:space="preserve">
+        <value>文件助手</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_Description" xml:space="preserve">
+        <value>文件附件命令</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_SummarizeCommand_Name" xml:space="preserve">
+        <value>總結文件</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_SummarizeCommand_Description" xml:space="preserve">
+        <value>總結文件內容</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_ExtractKeyPointsCommand_Name" xml:space="preserve">
+        <value>提取要點</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_ExtractKeyPointsCommand_Description" xml:space="preserve">
+        <value>提取並列出文檔中的主要觀點</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_TranslateDocumentCommand_Name" xml:space="preserve">
+        <value>翻譯文檔</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_TranslateDocumentCommand_Description" xml:space="preserve">
+        <value>翻譯文檔內容</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_DescribeImageCommand_Name" xml:space="preserve">
+        <value>描述圖像</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_DescribeImageCommand_Description" xml:space="preserve">
+        <value>詳細描述圖像</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_ExtractTextCommand_Name" xml:space="preserve">
+        <value>提取文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_ExtractTextCommand_Description" xml:space="preserve">
+        <value>從圖像中提取文本</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_AnalyzeDataCommand_Name" xml:space="preserve">
+        <value>分析數據</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_AnalyzeDataCommand_Description" xml:space="preserve">
+        <value>分析數據並提供見解</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_VisualizeDataCommand_Name" xml:space="preserve">
+        <value>提供可視化建議</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_VisualizeDataCommand_Description" xml:space="preserve">
+        <value>建議如何可視化這些數據</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_CompareCommand_Name" xml:space="preserve">
+        <value>比較文件</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_CompareCommand_Description" xml:space="preserve">
+        <value>比較這些文件的內容</value>
+    </data>
+    <data name="WelcomeView_SoftLoginStep_Message1" xml:space="preserve">
+        <value>為了方便你立即開始體驗，我為你準備了一些免費額度。</value>
+    </data>
+    <data name="WelcomeView_HardLoginStep_Message1" xml:space="preserve">
+        <value>歡迎使用原生模式。你需要先進行身份驗證以使用我們提供的雲服務。</value>
+    </data>
+    <data name="WelcomeView_HardLoginStep_Message2" xml:space="preserve">
+        <value>請登入以獲取你的積分數據，或返回上一步選擇其他模式。</value>
+    </data>
+    <data name="WelcomeView_AssistantStep_Official_Message1" xml:space="preserve">
+        <value>請選擇一個模型來查看詳細信息。我會持續更新來跟進最新模型。</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_DeprecationToast_Text" xml:space="preserve">
+        <value>當前模型預計於 {0} 下架</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_ModelUnavailableToast_Text" xml:space="preserve">
+        <value>當前模型已不在支持列表中</value>
+    </data>
+    <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Header" xml:space="preserve">
+        <value>元素飛入特效</value>
+    </data>
+    <data name="ChatWindowSettings_EnableVisualElementPickAnimation_Description" xml:space="preserve">
+        <value>在聊天窗口拾取螢幕視覺元素時，使用帶有物理反饋的動畫將其拋入聊天窗口。</value>
+    </data>
+    <data name="ChatWindowSettings_EnableVisualContextAnimation_Header" xml:space="preserve">
+        <value>上下文分析特效</value>
+    </data>
+    <data name="ChatWindowSettings_EnableVisualContextAnimation_Description" xml:space="preserve">
+        <value>分析上下文時，使用掃描動畫高亮顯示被處理的元素。</value>
+    </data>
+    <data name="HandledFunctionInvokingException_InvalidResult" xml:space="preserve">
+        <value>工具的返回結果有誤：{0}</value>
+    </data>
+    <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
+        <value>臨時聊天：開啟後當前聊天不會被保存，切換或新建對話時即刪除。</value>
+    </data>
+    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+        <value>(可選) {0}</value>
+    </data>
+    <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
+        <value>更新到最新版本</value>
+    </data>
+    <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
+        <value>當前</value>
+    </data>
+    <data name="SystemAssistantSettings_TitleGeneration_Desription" xml:space="preserve">
+        <value>配置用於對話標題自動命名的助手。</value>
+    </data>
+    <data name="SystemAssistantSettings_TitleGeneration_Header" xml:space="preserve">
+        <value>標題生成</value>
+    </data>
+    <data name="SystemAssistant_AutoSelectToggle_Content" xml:space="preserve">
+        <value>自動選擇</value>
+    </data>
+    <data name="ChatWindow_TodoList_Header" xml:space="preserve">
+        <value>待辦事項 ({0}/{1})</value>
+    </data>
+    <data name="ChatPlugin_MultiSelectHint" xml:space="preserve">
+        <value>(多選)</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyGenerateTitle_Header" xml:space="preserve">
+        <value>自動總結標題</value>
+    </data>
+    <data name="ChatWindowSettings_AutomaticallyGenerateTitle_Description" xml:space="preserve">
+        <value>啟用後，自動根據第一條消息總結對話標題。</value>
+    </data>
+    <data name="Strategy_BuiltIn_Browser_TranslateCommand_ArgumentHint" xml:space="preserve">
+        <value>翻譯的目標語言，默認為當前語言</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Name" xml:space="preserve">
+        <value>分析代碼</value>
+    </data>
+    <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Description" xml:space="preserve">
+        <value>解釋代碼並分析潛在問題</value>
+    </data>
+    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
+        <value>你尚未登入，請登入後再使用 Everywhere 雲服務。</value>
+    </data>
+    <data name="ConsentDecisionCard_DenyWithReasonMenuItem_Header" xml:space="preserve">
+        <value>拒絕並輸入原因</value>
+    </data>
+    <data name="Common_Submit" xml:space="preserve">
+        <value>提交</value>
+    </data>
+    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+        <value>輸入拒絕原因</value>
+    </data>
+    <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
+        <value>模型不支持 temperature 參數，或者參數超出模型範圍。恢復到默認值可以解決此問題。</value>
+    </data>
+    <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
+        <value>模型不支持 top_p 參數，或者參數超出模型範圍。恢復到默認值可以解決此問題。</value>
+    </data>
+    <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>在左側選擇一個項目查看詳情</value>
+    </data>
+    <data name="CustomAssistantPage_EmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>助手列表為空，創建一個並開始使用</value>
+    </data>
+    <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>在左側選擇一個項目查看詳情</value>
+    </data>
+    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+        <value>搜索...</value>
+    </data>
+    <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
+        <value>無法登入到雲服務</value>
+    </data>
+    <data name="UserProfilePresenter_LoggingInTextBlock_Text" xml:space="preserve">
+        <value>正在登入</value>
+    </data>
+    <data name="OfficialModelDefinitionForm_PricingTextBlock_Text" xml:space="preserve">
+        <value>查看定價詳情</value>
+    </data>
+    <data name="ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip" xml:space="preserve">
+        <value>此附件類型不被模型支持，但模型仍可看到元數據並被提示使用工具處理</value>
+    </data>
+    <data name="HandledFunctionInvokingException_FunctionCallingDisabled" xml:space="preserve">
+        <value>已阻止模型調用工具。</value>
+    </data>
+    <data name="ReasoningEffortLevel_Disabled" xml:space="preserve">
+        <value>禁用</value>
+    </data>
+    <data name="PersistentState_ReasoningEffortLevel_Description" xml:space="preserve">
+        <value>只對部分模型有效，如有錯誤請還原至默認值。</value>
+    </data>
+    <data name="DisplaySettings_AccentColor_Header" xml:space="preserve">
+        <value>主題色</value>
+    </data>
+    <data name="AccentColorSelector_UseSystemAccentColorToolTip_Tip" xml:space="preserve">
+        <value>使用系統主題色</value>
+    </data>
+    <data name="AccentColorSelector_CustomColorToolTip_Tip" xml:space="preserve">
+        <value>自定義顏色</value>
+    </data>
+    <data name="DisplaySettings_AccentColor_Description" xml:space="preserve">
+        <value>選擇軟件的高亮顏色。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Prompt" xml:space="preserve">
+        <value>提出了 {0} 個問題</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Read" xml:space="preserve">
+        <value>讀取了 {0} 條待辦事項</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Reset" xml:space="preserve">
+        <value>設置了 {0} 條待辦事項</value>
+    </data>
+    <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
+        <value>找到 {0} 個窗口</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
+        <value>讀取了 {0} 個視覺元素</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
+        <value>點擊 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_SendKey" xml:space="preserve">
+        <value>在 {0} 上按下 {1} 鍵</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_SetText" xml:space="preserve">
+        <value>將 {0} 的文本設置為 {1}</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
+        <value>等待 {0} 毫秒</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
+        <value>窗口 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
+        <value>元素 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
+        <value>是否允許執行下列自動化操作？</value>
+    </data>
+    <data name="WebSearchPage_Title" xml:space="preserve">
+        <value>網絡搜索</value>
+    </data>
+    <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
+        <value>博查</value>
+    </data>
+    <data name="WebSearchEngineProvider_Official" xml:space="preserve">
+        <value>Everywhere 雲搜索</value>
+    </data>
+    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
+        <value>查看文檔</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>默認</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
+        <value>設為默認</value>
+    </data>
+    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
+        <value>已設默認</value>
+    </data>
+    <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
+        <value>API 密鑰不能为空。</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Header" xml:space="preserve">
+        <value>在前台顯示瀏覽器</value>
+    </data>
+    <data name="WebBrowserSettings_ShowBrowser_Description" xml:space="preserve">
+        <value>開啟後，提取網頁內容時將會顯示瀏覽器，通常不建議開啟。需重啟軟件生效。</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Header" xml:space="preserve">
+        <value>打開瀏覽器</value>
+    </data>
+    <data name="WebBrowserSettings_OpenBrowser_Description" xml:space="preserve">
+        <value>打開一個提取網頁所用的網絡瀏覽器實例，可以提前登錄常用網站以減少提取網頁時被當作機器人而攔截的機率。出於兼容性考慮，首次打開可能會自動下載網絡瀏覽器，視網絡情況可能需要較長的時間。</value>
+    </data>
+    <data name="OpenWebBrowserControl_OpenButton_Content" xml:space="preserve">
+        <value>打開</value>
+    </data>
+    <data name="BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage" xml:space="preserve">
+        <value>網絡瀏覽器正在後台運行，無法打開。</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Day" xml:space="preserve">
+        <value>一日內</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Basic" xml:space="preserve">
+        <value>基礎</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_Fast" xml:space="preserve">
+        <value>快速</value>
+    </data>
+    <data name="OfficialConnector_SearchDepth_UltraFast" xml:space="preserve">
+        <value>最快</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Month" xml:space="preserve">
+        <value>一個月內</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Week" xml:space="preserve">
+        <value>一周內</value>
+    </data>
+    <data name="OfficialConnector_SearchTimeRange_Year" xml:space="preserve">
+        <value>一年內</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_Finance" xml:space="preserve">
+        <value>財經</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_General" xml:space="preserve">
+        <value>通用</value>
+    </data>
+    <data name="OfficialConnector_SearchTopic_News" xml:space="preserve">
+        <value>新聞</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Header" xml:space="preserve">
+        <value>搜索深度</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Header" xml:space="preserve">
+        <value>時間範圍</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Header" xml:space="preserve">
+        <value>限定領域</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_TimeRange_Description" xml:space="preserve">
+        <value>從當前日期向回的時間範圍，用於根據發佈日期或最後更新日期過濾結果。在尋找已發佈或更新數據的來源時非常有用。此選項不影響調用成本。</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Topic_Description" xml:space="preserve">
+        <value>搜索的類別。例如“新聞”對於獲取實時更新非常有用，特別是關於體育和主流媒體報導的重大時事。“通用”則用於更廣泛的通用搜索，可能包括各種來源。此選項不影響調用成本。</value>
+    </data>
+    <data name="OfficialWebSearchEngineProvider_Depth_Description" xml:space="preserve">
+        <value>控制延遲與相關性之間的權衡，此選項不影響調用成本。</value>
+    </data>
+    <data name="ChatInputArea_WebSearchButton_ToolTip" xml:space="preserve">
+        <value>使用網絡搜索提高助手回答的時效性</value>
+    </data>
+    <data name="UserProfilePresenter_WebSearchTextBlock_Text" xml:space="preserve">
+        <value>雲搜索</value>
+    </data>
+    <data name="Greetings_NotLoginTip1" xml:space="preserve">
+        <value>💡 Everywhere 的雲端服務接入均為官方純血大模型</value>
+    </data>
+    <data name="Greetings_NotLoginTip2" xml:space="preserve">
+        <value>💡 註冊 Everywhere 雲端服務可享加量包和免費試用</value>
+    </data>
+    <data name="Greetings_Tip4" xml:space="preserve">
+        <value>💡 即使添加單個視覺元素附件，Everywhere 也會智能提取整個上下文</value>
+    </data>
+    <data name="Greetings_Tip5" xml:space="preserve">
+        <value>💡 Everywhere 的核心開發只有兩個人，歡迎貢獻代碼或提出寶貴意見</value>
+    </data>
+    <data name="Greetings_Tip6" xml:space="preserve">
+        <value>💡 歡迎在關於頁面加入官方社群與我們交流互動~</value>
+    </data>
+    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
+        <value>終端工具的自動批准已開啟，助手的不當調用可能會造成嚴重的系統崩潰或不可恢復的文件遺失，請自行承擔風險。</value>
+    </data>
+    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
+        <value>自動批准</value>
+    </data>
+    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
+        <value>開啟後，所有終端操作將自動放行，無需手動批准。助手的不當調用可能會造成嚴重的系統崩潰或不可恢復的文件遺失。開啟此選項意味著你已評估並願意自行承擔風險。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
+        <value>在終端中執行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
+        <value>腳本執行失敗: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
+        <value>即將執行以下腳本</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage" xml:space="preserve">
+        <value>用戶拒絕了腳本執行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Header" xml:space="preserve">
+        <value>終端</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_Description" xml:space="preserve">
+        <value>提供在終端中執行腳本的能力，允許直接與系統互動，但也很危險，可能造成誤刪文件或系統崩潰。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Description" xml:space="preserve">
+        <value>調用系統終端執行腳本。</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Header" xml:space="preserve">
+        <value>終端路徑</value>
+    </data>
+    <data name="TerminalPluginSettings_ShellPath_Description" xml:space="preserve">
+        <value>自定義終端可執行文件的路徑，只支持 PowerShell、zsh 和 bash。如果留空則會自動檢測。</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_UnsupportedShell" xml:space="preserve">
+        <value>當前 Shell 類型不受支持或未找到，請確保計算機上至少安裝了 PowerShell、zsh 或者 bash。</value>
+    </data>
+    <data name="Assistant_ReasoningEffort_Description" xml:space="preserve">
+        <value>選擇自定義推理強度。不同的模型支持的選項不同，詳情請參考對應文檔。留空表示不在請求中包含此參數。</value>
+    </data>
+    <data name="Assistant_ThinkingType_Header" xml:space="preserve">
+        <value>思考類型 (thinking.type)</value>
+    </data>
+    <data name="Assistant_ThinkingType_Description" xml:space="preserve">
+        <value>對於支持動態開關思考的模型，可以使用此選項關閉模型思考。留空表示不在請求中包含此參數。</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
+        <value>思考預算 (thinking_budget)</value>
+    </data>
+    <data name="Assistant_ThinkingBudget_Description" xml:space="preserve">
+        <value>設置思考輸出的預算，單位為 token。</value>
+    </data>
+    <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
+        <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+        <value>新版本已準備好，點擊立即更新。
+當前版本: {0}
+最新版本: {1}
+發佈日期: {2}</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
+        <value>繼續並重試</value>
+    </data>
+    <data name="ChatMessageControl_ContinueButton_ToolTip" xml:space="preserve">
+        <value>從此處繼續並重試，不會清除本輪次內已有的助手消息</value>
+    </data>
+    <data name="HandledChatException_InvalidReasoningContent" xml:space="preserve">
+        <value>模型的深度思考內容未正確回傳。如果你在同一個聊天中切換了模型，則很可能會導致此問題。</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Header" xml:space="preserve">
+        <value>圖像理解子助手</value>
+    </data>
+    <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
+        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過"指派新助手"工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
+    </data>
+    <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
+        <value>命令於 {0} 開始執行，{1} 秒後成功完成</value>
+    </data>
+    <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
+        <value>命令於 {0} 開始執行，{1} 秒後失敗，退出代碼為 {2}</value>
+    </data>
+    <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
+        <value>終端不再可用</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Header" xml:space="preserve">
+        <value>默認子助手</value>
+    </data>
+    <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
+        <value>供主助手按需調用的默認助手。當主助手通過“指派新助手”工具委派常規任務時，默認由它在獨立上下文中處理並返回結果。“自動選擇”表示使用和主助手一樣的子助手。</value>
+    </data>
+    <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
+        <value>API 密鑰 (選填)</value>
+    </data>
+</root>

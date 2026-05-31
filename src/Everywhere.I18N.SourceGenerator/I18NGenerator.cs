@@ -1,30 +1,55 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
+using System.Collections.Immutable;
 using System.Security;
 using System.Text;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Everywhere.I18N.SourceGenerator;
 
 [Generator]
-public class I18NSourceGenerator : IIncrementalGenerator
+public sealed class I18NSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Register the additional file provider for RESX files
         var resxFiles = context.AdditionalTextsProvider
-            .Where(file => Path.GetExtension(file.Path).Equals(".resx", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetFileName(file.Path).StartsWith("Strings.", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetDirectoryName(file.Path)?.EndsWith("I18N", StringComparison.OrdinalIgnoreCase) == true)
+            .Where(file =>
+            {
+                var fileName = Path.GetFileName(file.Path);
+                return Path.GetExtension(file.Path).Equals(".resx", StringComparison.OrdinalIgnoreCase) &&
+                    (fileName.Equals("Strings.resx", StringComparison.OrdinalIgnoreCase) ||
+                        (fileName.StartsWith("Strings.", StringComparison.OrdinalIgnoreCase) &&
+                            fileName.EndsWith(".resx", StringComparison.OrdinalIgnoreCase)));
+            })
             .Collect();
 
-        // Register the output source
-        context.RegisterSourceOutput(resxFiles, GenerateI18NCode);
+        var options = context.AnalyzerConfigOptionsProvider.Select(static (provider, _) => BuildOptions(provider));
+
+        context.RegisterSourceOutput(
+            resxFiles.Combine(options),
+            static (context, tuple) =>
+                GenerateI18NCode(context, tuple.Left, tuple.Right));
     }
 
-    private static void GenerateI18NCode(SourceProductionContext context, ImmutableArray<AdditionalText> resxFiles)
+    private static GeneratorOptions BuildOptions(AnalyzerConfigOptionsProvider provider)
+    {
+        var globalOptions = provider.GlobalOptions;
+        globalOptions.TryGetValue("build_property.EverywhereI18NNamespace", out var configuredNamespace);
+        globalOptions.TryGetValue("build_property.AssemblyName", out var assemblyName);
+        globalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
+
+        var baseNamespace =
+            !string.IsNullOrWhiteSpace(configuredNamespace) ? configuredNamespace! :
+            !string.IsNullOrWhiteSpace(assemblyName) ? assemblyName! + ".I18N" :
+            !string.IsNullOrWhiteSpace(rootNamespace) ? rootNamespace! + ".I18N" :
+            "Everywhere.I18N.Generated";
+
+        return new GeneratorOptions(baseNamespace);
+    }
+
+    private static void GenerateI18NCode(SourceProductionContext context, ImmutableArray<AdditionalText> resxFiles, GeneratorOptions options)
     {
         if (resxFiles.Length == 0)
         {
@@ -42,7 +67,7 @@ public class I18NSourceGenerator : IIncrementalGenerator
                         new DiagnosticDescriptor(
                             "I18N001",
                             "Missing Default RESX File",
-                            "Could not find the default Strings.resx file in I18N directory",
+                            "Could not find the default Strings.resx file",
                             "I18N",
                             DiagnosticSeverity.Error,
                             isEnabledByDefault: true),
@@ -64,64 +89,49 @@ public class I18NSourceGenerator : IIncrementalGenerator
                 return;
             }
 
-            // Generate LocaleKey.g.cs based on all available keys
-            var localeKeySource = GenerateLocaleKeyClass(defaultResxFile.Path, defaultEntries);
-            context.AddSource("LocaleKey.g.cs", SourceText.From(localeKeySource, Encoding.UTF8));
-
-            // Generate LocaleResolver.g.cs based on all available keys
-            var localeResolverSource = GenerateLocaleResolverClass(defaultResxFile.Path, defaultEntries);
-            context.AddSource("LocaleResolver.g.cs", SourceText.From(localeResolverSource, Encoding.UTF8));
-
-            // A map for locale name to enum locale name
-            // Default -> default
-            // En -> default
-            // De -> de
-            // ZhHans -> zh-hans
             var localeNamesMap = new Dictionary<string, string>
             {
-                { "En", "default" }
+                { "En", "default" },
             };
 
-            foreach (var resxFile in resxFiles)
+            var localeSources = new List<string>();
+            foreach (var resxFile in resxFiles.OrderBy(f => Path.GetFileName(f.Path), StringComparer.OrdinalIgnoreCase))
             {
-                if (Path.GetFileName(resxFile.Path).Equals("Strings.resx", StringComparison.OrdinalIgnoreCase) &&
-                    resxFile.GetText(context.CancellationToken)?.ToString() is { Length: > 0 } content)
+                var content = resxFile.GetText(context.CancellationToken)?.ToString();
+                if (content is not { Length: > 0 }) continue;
+
+                if (Path.GetFileName(resxFile.Path).Equals("Strings.resx", StringComparison.OrdinalIgnoreCase))
                 {
-                    var localeSource = GenerateLocaleClass(resxFile.Path, "default", ParseResxEntries(content));
-                    context.AddSource("default.g.cs", SourceText.From(localeSource, Encoding.UTF8));
+                    localeSources.Add(GenerateLocaleClass(options.Namespace, resxFile.Path, "default", ParseResxEntries(content)));
                     continue;
                 }
 
                 var fileName = Path.GetFileNameWithoutExtension(resxFile.Path);
                 var localeName = fileName.Substring(fileName.IndexOf('.') + 1);
-
-                var enumName = string.Join("", localeName.Split('-').Select(p => p.Length == 0 ? p : char.ToUpper(p[0]) + p.Substring(1)));
+                var enumName = ToLocaleEnumName(localeName);
                 localeNamesMap[enumName] = localeName;
-
-                content = resxFile.GetText(context.CancellationToken)?.ToString();
-                if (content is not { Length: > 0 }) continue;
-
-                {
-                    var localeSource = GenerateLocaleClass(resxFile.Path, localeName.Replace('-', '_'), ParseResxEntries(content));
-                    context.AddSource($"{localeName}.g.cs", SourceText.From(localeSource, Encoding.UTF8));
-                }
+                localeSources.Add(GenerateLocaleClass(options.Namespace, resxFile.Path, localeName.Replace('-', '_'), ParseResxEntries(content)));
             }
 
-            var localeManagerSource = GenerateLocaleManagerClass(defaultResxFile.Path, localeNamesMap);
-            context.AddSource("LocaleManager.g.cs", SourceText.From(localeManagerSource, Encoding.UTF8));
+            context.AddSource(
+                "LocaleKey.g.cs",
+                SourceText.From(GenerateLocaleKeyClass(options.Namespace, defaultResxFile.Path, defaultEntries), Encoding.UTF8));
+            context.AddSource(
+                "LocaleResolver.g.cs",
+                SourceText.From(GenerateLocaleResolverClass(options.Namespace, defaultResxFile.Path, defaultEntries), Encoding.UTF8));
 
-            var localeNameTypeConverterSource = GenerateLocaleNameTypeConverterClass();
-            context.AddSource("LocaleNameTypeConverter.g.cs", SourceText.From(localeNameTypeConverterSource, Encoding.UTF8));
+            foreach (var localeSource in localeSources)
+            {
+                var hintName = localeSource.Split('\n').FirstOrDefault(l => l.StartsWith("// HintName:", StringComparison.Ordinal))?
+                    .Substring("// HintName:".Length)
+                    .Trim();
+                context.AddSource(hintName ?? Guid.NewGuid().ToString("N") + ".g.cs", SourceText.From(localeSource, Encoding.UTF8));
+            }
 
-            var localeNameSource = GenerateLocaleNameClass(defaultResxFile.Path, localeNamesMap);
-            context.AddSource("LocaleName.g.cs", SourceText.From(localeNameSource, Encoding.UTF8));
-
-            var localeNameExtensionSource = GenerateLocaleNameExtensionClass(defaultResxFile.Path, localeNamesMap);
-            context.AddSource("LocaleNameExtensions.g.cs", SourceText.From(localeNameExtensionSource, Encoding.UTF8));
+            context.AddSource("LocaleProvider.g.cs", SourceText.From(GenerateLocaleProvider(options.Namespace, localeNamesMap), Encoding.UTF8));
         }
         catch (Exception ex)
         {
-            // Report diagnostic for any errors
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     new DiagnosticDescriptor(
@@ -144,21 +154,20 @@ public class I18NSourceGenerator : IIncrementalGenerator
             var doc = XDocument.Parse(resxContent);
             var dataNodes = doc.Root?.Elements("data");
 
-            if (dataNodes != null)
-            {
-                foreach (var dataNode in dataNodes)
-                {
-                    var nameAttr = dataNode.Attribute("name");
-                    var valueNode = dataNode.Element("value");
+            if (dataNodes == null) return entries;
 
-                    if (nameAttr != null && valueNode != null)
-                    {
-                        entries[nameAttr.Value] = valueNode.Value;
-                    }
+            foreach (var dataNode in dataNodes)
+            {
+                var nameAttr = dataNode.Attribute("name");
+                var valueNode = dataNode.Element("value");
+
+                if (nameAttr != null && valueNode != null)
+                {
+                    entries[nameAttr.Value] = valueNode.Value;
                 }
             }
         }
-        catch (Exception)
+        catch
         {
             // Silently fail and return an empty dictionary
             return new Dictionary<string, string>();
@@ -167,7 +176,7 @@ public class I18NSourceGenerator : IIncrementalGenerator
         return entries;
     }
 
-    private static string GenerateLocaleKeyClass(string resxPath, Dictionary<string, string> entries)
+    private static string GenerateLocaleKeyClass(string ns, string resxPath, Dictionary<string, string> entries)
     {
         var sb = new StringBuilder();
 
@@ -178,34 +187,24 @@ public class I18NSourceGenerator : IIncrementalGenerator
 
               #nullable enable
 
-              namespace Everywhere.I18N;
+              namespace {{ns}};
 
               /// <summary>
               ///     Provides strongly-typed keys for localized strings.
               /// </summary>
-              partial class LocaleKey
+              public static partial class LocaleKey
               {
+                  /// <summary>
+                  /// An empty string constant for special use.
+                  /// </summary>
+                  public const string Empty = "";
               """);
 
         foreach (var entry in entries)
         {
-            var escapedSummary = SecurityElement.Escape(entry.Value);
-            if (escapedSummary is not null && escapedSummary.Contains('\n'))
-            {
-                sb.AppendLine("    /// <summary>");
-                foreach (var summaryLine in escapedSummary.Split('\n'))
-                {
-                    sb.AppendLine($"    /// {summaryLine}");
-                }
-                sb.AppendLine("    /// </summary>");
-            }
-            else
-            {
-                sb.AppendLine($"    /// <summary>{escapedSummary}</summary>");
-            }
-
+            AppendSummary(sb, entry.Value);
             var escapedKey = EscapeVariableName(entry.Key);
-            sb.AppendLine($"    public const string {escapedKey} = \"{entry.Key}\";");
+            sb.AppendLine($"    public const string {escapedKey} = {ToCSharpString(entry.Key)};");
         }
 
         sb.AppendLine("}");
@@ -213,7 +212,7 @@ public class I18NSourceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static string GenerateLocaleResolverClass(string resxPath, Dictionary<string, string> entries)
+    private static string GenerateLocaleResolverClass(string ns, string resxPath, Dictionary<string, string> entries)
     {
         var sb = new StringBuilder();
 
@@ -224,42 +223,33 @@ public class I18NSourceGenerator : IIncrementalGenerator
 
               #nullable enable
 
-              namespace Everywhere.I18N;
+              namespace {{ns}};
 
               /// <summary>
               ///     Provides strongly-typed access to localized strings.
               /// </summary>
-              partial class LocaleResolver
+              public static partial class LocaleResolver
               {
-                  [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-                  [System.Diagnostics.DebuggerNonUserCode]
-                  [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                  /// <summary>
+                  /// An empty string constant for special use.
+                  /// </summary>
+                  public const string Empty = "";
+
+                  [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+                  [global::System.Diagnostics.DebuggerNonUserCode]
+                  [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
                   private static string Resolve(string key)
                   {
-                      return LocaleManager.Shared[key]?.ToString() ?? string.Empty;
+                      return global::Everywhere.I18N.DynamicResourceKey.Resolve(key);
                   }
 
               """);
 
         foreach (var entry in entries)
         {
-            var escapedSummary = SecurityElement.Escape(entry.Value);
-            if (escapedSummary is not null && escapedSummary.Contains('\n'))
-            {
-                sb.AppendLine("    /// <summary>");
-                foreach (var summaryLine in escapedSummary.Split('\n'))
-                {
-                    sb.AppendLine($"    /// {summaryLine}");
-                }
-                sb.AppendLine("    /// </summary>");
-            }
-            else
-            {
-                sb.AppendLine($"    /// <summary>{escapedSummary}</summary>");
-            }
-
+            AppendSummary(sb, entry.Value);
             var escapedKey = EscapeVariableName(entry.Key);
-            sb.AppendLine($"    public static string {escapedKey} => Resolve(\"{entry.Key}\");");
+            sb.AppendLine($"    public static string {escapedKey} => Resolve({ToCSharpString(entry.Key)});");
         }
 
         sb.AppendLine("}");
@@ -267,21 +257,10 @@ public class I18NSourceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static string EscapeVariableName(string s)
-    {
-        // Replace invalid characters with underscores, and ensure it starts with a letter
-        var escaped = new string(s.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
-        if (escaped.Length > 0 && char.IsDigit(escaped[0]))
-        {
-            escaped = "_" + escaped; // Ensure it starts with a letter or underscore
-        }
-        return escaped;
-    }
-
-    private static string GenerateLocaleClass(string resxPath, string escapedLocaleName, Dictionary<string, string> entries)
+    private static string GenerateLocaleClass(string ns, string resxPath, string escapedLocaleName, Dictionary<string, string> entries)
     {
         var sb = new StringBuilder();
-
+        sb.AppendLine($"// HintName: Locale_{escapedLocaleName}.g.cs");
         sb.AppendLine(
             $$"""
               // Generated by Everywhere.I18N.SourceGenerator, do not edit manually
@@ -289,12 +268,9 @@ public class I18NSourceGenerator : IIncrementalGenerator
 
               #nullable enable
 
-              namespace Everywhere.I18N;
+              namespace {{ns}};
 
-              partial class LocaleManager
-              {
-              
-              private class __{{escapedLocaleName}} : global::Avalonia.Controls.ResourceDictionary
+              internal sealed class __{{escapedLocaleName}} : global::Avalonia.Controls.ResourceDictionary
               {
                   public __{{escapedLocaleName}}()
                   {
@@ -303,19 +279,8 @@ public class I18NSourceGenerator : IIncrementalGenerator
 
         foreach (var entry in entries)
         {
-            var key = entry.Key;
-            var value = entry.Value;
-
-            // Escape quotes in the value
-            value = value
-                .Replace("\"", "\\\"")
-#pragma warning disable RS1035 // Do not use APIs banned for analyzers
-                .Replace(Environment.NewLine, "\\n")
-#pragma warning restore RS1035 // Do not use APIs banned for analyzers
-                .Replace("\r", "\\n")
-                .Replace("\n", "\\n");
-
-            sb.AppendLine($"            new KeyValuePair<object, object?>(\"{key}\", \"{value}\"),");
+            sb.AppendLine(
+                $"            new global::System.Collections.Generic.KeyValuePair<object, object?>({ToCSharpString(entry.Key)}, {ToCSharpString(entry.Value)}),");
         }
 
         sb.AppendLine(
@@ -323,150 +288,53 @@ public class I18NSourceGenerator : IIncrementalGenerator
                     ]);
                 }
             }
-            
-            }
             """);
 
         return sb.ToString();
     }
 
-    private static string GenerateLocaleManagerClass(string resxPath, Dictionary<string, string> localeNamesMap)
+    private static string GenerateLocaleProvider(string ns, Dictionary<string, string> localeNamesMap)
     {
         var sb = new StringBuilder();
-
         sb.AppendLine(
             $$"""
               // Generated by Everywhere.I18N.SourceGenerator, do not edit manually
-              // Edit {{Path.GetFileName(resxPath)}} instead, run the generator or build project to update this file
 
               #nullable enable
 
-              using global::System.Diagnostics.CodeAnalysis;
-              using global::System.Globalization;
-              using global::System.Reflection;
-              using global::Avalonia.Controls;
-              using global::Avalonia.Styling;
-              using global::CommunityToolkit.Mvvm.Messaging;
+              namespace {{ns}};
 
-              namespace Everywhere.I18N;
-
-              public partial class LocaleManager : ResourceDictionary
+              internal sealed class __I18NLocaleProvider : global::Everywhere.I18N.ILocaleResourceProvider
               {
-                  public static partial LocaleManager Shared => shared ?? throw new InvalidOperationException("LocaleManager is not initialized.");
+                  public static readonly __I18NLocaleProvider Shared = new();
 
-                  private static LocaleManager? shared;
-                  
-                  private static readonly Dictionary<LocaleName, ResourceDictionary> Locales;
-
-                  static LocaleManager()
+                  private static readonly global::System.Collections.Generic.Dictionary<global::Everywhere.I18N.LocaleName, global::Avalonia.Controls.ResourceDictionary> Locales = new()
                   {
-                      Locales = new Dictionary<LocaleName, ResourceDictionary>({{localeNamesMap.Count}})
-                      {
               """);
 
         foreach (var kvp in localeNamesMap)
         {
             var escapedLocaleName = kvp.Value.Replace("-", "_");
-            sb.AppendLine($"            {{ LocaleName.{kvp.Key}, new __{escapedLocaleName}() }},");
+            sb.AppendLine($"        {{ global::Everywhere.I18N.LocaleName.{kvp.Key}, new __{escapedLocaleName}() }},");
         }
 
         sb.AppendLine(
             """
-                    };
-                }
-                
-                public LocaleManager()
+                };
+
+                public global::Avalonia.Controls.ResourceDictionary GetResources(global::Everywhere.I18N.LocaleName locale)
                 {
-                    if (shared is not null) throw new InvalidOperationException("LocaleManager is already initialized.");
-                    shared = this;
-                    
-                    var cultureInfo = CultureInfo.CurrentUICulture;
-                    LocaleName? currentLocale = null;
-                    while (!string.IsNullOrEmpty(cultureInfo.Name))
-                    {
-                        if (Enum.TryParse<LocaleName>(cultureInfo.Name.Replace("-", ""), true, out var localeEnum))
-                        {
-                            currentLocale = localeEnum;
-                            break;
-                        }
-
-                        cultureInfo = cultureInfo.Parent;
-                    }
-                    
-                    CurrentLocale = currentLocale ?? default(LocaleName);
+                    if (Locales.TryGetValue(locale, out var resources)) return resources;
+                    return Locales.TryGetValue(global::Everywhere.I18N.LocaleName.En, out resources) ? resources : global::System.Linq.Enumerable.First(Locales).Value;
                 }
-
-                public static LocaleName CurrentLocale
-                {
-                    get => _currentLocale.GetValueOrDefault();
-                    set
-                    {
-                        var dispatcher = Avalonia.Threading.Dispatcher.UIThread;
-                    
-                        if (dispatcher.CheckAccess())
-                        {
-                            SetField();
-                            return;
-                        }
-                        
-                        dispatcher.Invoke(SetField);
-                        
-                        void SetField()
-                        {
-                            if (_currentLocale == value) return;
-                            
-                            var oldLocale = _currentLocale;
-                            if (!Locales.TryGetValue(value, out var newLocale))
-                            {
-                                (value, newLocale) = Locales.First();
-                            }
-                            
-                            _currentLocale = value;
-                            Shared.SetItems(newLocale);
-                        
-                            WeakReferenceMessenger.Default.Send(new LocaleChangedMessage(oldLocale, value));
-                        }
-                    }
-                }
-
-                private static LocaleName? _currentLocale;
             }
-            """);
 
-        return sb.ToString();
-    }
-
-    private static string GenerateLocaleNameTypeConverterClass()
-    {
-        var sb = new StringBuilder();
-
-        sb.AppendLine(
-            """
-            // Generated by Everywhere.I18N.SourceGenerator, do not edit manually
-
-            #nullable enable
-
-            using System;
-            using System.ComponentModel;
-            using System.Globalization;
-
-            namespace Everywhere.I18N;
-
-            public class LocaleNameTypeConverter : TypeConverter
+            internal static class __I18NModuleInitializer
             {
-                public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+                [global::System.Runtime.CompilerServices.ModuleInitializer]
+                internal static void Register()
                 {
-                    return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-                }
-
-                public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
-                {
-                    if (value is string strValue)
-                    {
-                        return Enum.TryParse<LocaleName>(strValue, true, out var locale) ? locale : default(LocaleName);
-                    }
-
-                    return base.ConvertFrom(context, culture, value);
+                    global::Everywhere.I18N.LocaleManager.RegisterProvider(static () => __I18NLocaleProvider.Shared);
                 }
             }
             """);
@@ -474,97 +342,56 @@ public class I18NSourceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static string GenerateLocaleNameClass(string resxPath, Dictionary<string, string> localeNamesMap)
+    private static void AppendSummary(StringBuilder sb, string value)
     {
-        var sb = new StringBuilder();
-
-        sb.AppendLine(
-            $$"""
-              // Generated by Everywhere.I18N.SourceGenerator, do not edit manually
-              // Edit {{Path.GetFileName(resxPath)}} instead, run the generator or build project to update this file
-
-              #nullable enable
-
-              namespace Everywhere.I18N;
-
-              [global::System.ComponentModel.TypeConverter(typeof(LocaleNameTypeConverter))]
-              public enum LocaleName
-              {
-              """);
-
-        foreach (var kvp in localeNamesMap)
+        var escapedSummary = SecurityElement.Escape(value);
+        if (escapedSummary is not null && escapedSummary.Contains('\n'))
         {
-            sb.AppendLine($"    [DynamicResourceKey(LocaleKey.LocaleName_{kvp.Key})]");
-            sb.AppendLine($"    {kvp.Key},");
+            sb.AppendLine("    /// <summary>");
+            foreach (var summaryLine in escapedSummary.Split('\n'))
+            {
+                sb.AppendLine($"    /// {summaryLine}");
+            }
+            sb.AppendLine("    /// </summary>");
         }
-
-        sb.AppendLine("}");
-        return sb.ToString();
+        else
+        {
+            sb.AppendLine($"    /// <summary>{escapedSummary}</summary>");
+        }
     }
 
-    private static string GenerateLocaleNameExtensionClass(string resxPath, Dictionary<string, string> localeNamesMap)
+    private static string EscapeVariableName(string s)
     {
-        var sb = new StringBuilder();
-
-        sb.AppendLine(
-            $$"""
-              // Generated by Everywhere.I18N.SourceGenerator, do not edit manually
-              // Edit {{Path.GetFileName(resxPath)}} instead, run the generator or build project to update this file
-
-              #nullable enable
-
-              namespace Everywhere.I18N;
-
-              public static class LocaleNameExtensions
-              {
-                  /// <summary>
-                  /// Converts the LocaleName enum to a human-readable display name in the respective language.
-                  /// </summary>
-                  public static string ToNativeName(this LocaleName localeName)
-                  {
-                      return localeName switch
-                      {
-              """);
-
-        foreach (var kvp in localeNamesMap)
+        var escaped = new string(s.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
+        if (escaped.Length > 0 && char.IsDigit(escaped[0]))
         {
-            var nativeName = kvp.Value == "default" ? "English" : new CultureInfo(kvp.Value).NativeName;
-            sb.AppendLine($"            LocaleName.{kvp.Key} => \"{nativeName}\",");
+            escaped = "_" + escaped;
+        }
+        return escaped;
+    }
+
+    private static string ToCSharpString(string value)
+    {
+        return "\"" + value
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r\n", "\\n")
+            .Replace("\r", "\\n")
+            .Replace("\n", "\\n") + "\"";
+    }
+
+    private static string ToLocaleEnumName(string localeName)
+    {
+        return string.Join("", localeName.Split('-').Select(p => p.Length == 0 ? p : char.ToUpperInvariant(p[0]) + p.Substring(1)));
+    }
+
+    private sealed class GeneratorOptions
+    {
+        public GeneratorOptions(string ns)
+        {
+            Namespace = ns;
         }
 
-        sb.AppendLine(
-            """
-                        _ => "English",
-                    };
-                }
-
-            """);
-
-        sb.AppendLine(
-            """
-                /// <summary>
-                /// Converts the LocaleName enum to a human-readable display name in English.
-                /// </summary>
-                public static string ToEnglishName(this LocaleName localeName)
-                {
-                    return localeName switch
-                    {
-            """);
-
-        foreach (var kvp in localeNamesMap)
-        {
-            var englishName = kvp.Value == "default" ? "English" : new CultureInfo(kvp.Value).EnglishName;
-            sb.AppendLine($"            LocaleName.{kvp.Key} => \"{englishName}\",");
-        }
-
-        sb.AppendLine(
-            """
-                        _ => "English",
-                    };
-                }
-            }
-            """);
-
-        return sb.ToString();
+        public string Namespace { get; }
     }
 }

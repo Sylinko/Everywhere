@@ -5,6 +5,17 @@
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack\MessagePack.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EverywhereI18NNamespace>Everywhere.Cloud.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <Import Project="..\Build.Generate.Cloud.targets"/>

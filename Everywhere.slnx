@@ -51,6 +51,10 @@
     <File Path="Settings.XamlStyler" />
     <File Path="ThirdPartyNotices.txt" />
   </Folder>
+  <Folder Name="/I18N/">
+    <Project Path="src/Everywhere.I18N.Abstractions/Everywhere.I18N.Abstractions.csproj" />
+    <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
+  </Folder>
   <Folder Name="/patches/">
     <Project Path="patches/Everywhere.BuildTask.Patcher/Everywhere.BuildTask.Patcher.csproj" />
     <Project Path="patches/Everywhere.Patches.Avalonia.Base/Everywhere.Patches.Avalonia.Base.csproj" />
@@ -80,8 +84,6 @@
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />
   <Project Path="src/Everywhere.Core/Everywhere.Core.csproj" />
-  <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
-  <Project Path="src/Everywhere.I18N/Everywhere.I18N.csproj" />
   <Project Path="src/Everywhere.Linux/Everywhere.Linux.csproj" />
   <Project Path="src/Everywhere.Mac/Everywhere.Mac.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />

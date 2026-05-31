@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- German (Deutsch) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
+        <value>Es gibt ausstehende Zahlungen, bitte schnellstmöglich erledigen</value>
+    </data>
+    <data name="OAuthCloudClient_OAuthError" xml:space="preserve">
+        <value>Autorisierung fehlgeschlagen ({0}): Möglicherweise haben Sie die Aktion abgebrochen oder der Server hat die Anfrage abgelehnt. {1}</value>
+    </data>
+    <data name="OAuthCloudClient_InvalidState" xml:space="preserve">
+        <value>Die Anmeldesitzung ist abgelaufen oder es liegt ein Sicherheitsrisiko vor. Bitte schließen Sie die Seite und starten Sie die Anmeldung erneut, um die Sicherheit Ihres Kontos zu gewährleisten.</value>
+    </data>
+    <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
+        <value>Es konnte kein gültiges Autorisierungstoken abgerufen werden. Bitte versuchen Sie es erneut.</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Die lokal gespeicherten Anmeldedaten sind ungültig oder wurden an anderer Stelle aktualisiert. Bitte melden Sie sich erneut an. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Der Anmeldeservice hat die OAuth-Clientkonfiguration dieser Anwendung abgelehnt. Bitte aktualisieren Sie die Anwendung oder kontaktieren Sie den Support. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Der Anmeldeservice ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Der Anmeldeservice hat die Tokenanforderung abgelehnt. Bitte versuchen Sie es erneut. Serverantwort: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Du wurdest aufgrund eines Verstoßes gegen unsere Nutzungsbedingungen gesperrt. Bitte kontaktiere den Support für weitere Informationen.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Du hast über 80 % deiner Credits verwendet. Du könntest in Erwägung ziehen, ein kostengünstigeres Modell zu verwenden.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Du hast über 80 % deiner kostenlosen Cloud-Suchanfragen verwendet. Über die kostenlosen Anfragen hinausgehende Cloud-Suchen werden Credits abziehen.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Du hast deine kostenlosen Cloud-Suchanfragen aufgebraucht. Cloud-Suchen werden Credits abziehen.</value>
+    </data>
+</root>

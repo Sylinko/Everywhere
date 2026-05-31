@@ -1,5 +1,5 @@
-﻿<ResourceDictionary
-  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Everywhere.Core.I18N;assembly=Everywhere.Core"
   xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
   xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:common="clr-namespace:Everywhere.Common"
   xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
@@ -91,8 +91,8 @@
     <ToggleSwitch
       Margin="6"
       IsChecked="{Binding ((ai:SystemAssistant)Value).AutoSelect, FallbackValue={x:True}, Mode=TwoWay}"
-      OffContent="{I18N {x:Static LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"
-      OnContent="{I18N {x:Static LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"/>
+      OffContent="{I18N {x:Static i18n:LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"
+      OnContent="{I18N {x:Static i18n:LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"/>
   </DataTemplate>
 
   <DataTemplate
@@ -137,29 +137,29 @@
         <shadui:Badge
           Background="Chocolate"
           IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsImage_Header}}">
+          ToolTip.Tip="{I18N {x:Static i18n:LocaleKey.CustomAssistant_SupportsImage_Header}}">
           <LucideIcon Kind="Eye"/>
         </shadui:Badge>
         <shadui:Badge
           Background="CadetBlue"
           IsVisible="{Binding SupportsToolCall}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsToolCall_Header}}">
+          ToolTip.Tip="{I18N {x:Static i18n:LocaleKey.CustomAssistant_SupportsToolCall_Header}}">
           <LucideIcon Kind="Hammer"/>
         </shadui:Badge>
         <shadui:Badge
           Background="ForestGreen"
           IsVisible="{Binding SupportsReasoning}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsReasoning_Header}}">
+          ToolTip.Tip="{I18N {x:Static i18n:LocaleKey.CustomAssistant_SupportsReasoning_Header}}">
           <LucideIcon Kind="Brain"/>
         </shadui:Badge>
         <shadui:Badge
           Padding="6,0" Background="MediumSlateBlue">
           <ToolTip.Tip>
             <TextBlock>
-              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
+              <Run Text="{I18N {x:Static i18n:LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
               <Run Text="{Binding ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
               <LineBreak/>
-              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputLimit_Header}}"/>
+              <Run Text="{I18N {x:Static i18n:LocaleKey.CustomAssistant_OutputLimit_Header}}"/>
               <Run Text="{Binding OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
             </TextBlock>
           </ToolTip.Tip>

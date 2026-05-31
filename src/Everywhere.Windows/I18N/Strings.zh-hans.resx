@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simplified Chinese (简体中文) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
+        <value>提供执行 PowerShell 脚本的能力，允许直接和系统交互，但也很危险，可能造成误删文件或系统崩溃。</value>
+    </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
+        <value>Everything</value>
+    </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
+        <value>使用 Everything (一个高性能本地文件搜索引擎) 搜索计算机上的文件。</value>
+    </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
+        <value>使用 Everything 搜索文件</value>
+    </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
+        <value>找到了 {0} 个项目</value>
+    </data>
+</root>

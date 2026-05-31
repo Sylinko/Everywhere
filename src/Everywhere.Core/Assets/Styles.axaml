@@ -1,5 +1,5 @@
-﻿<Styles
-  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+<Styles
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:i18n="clr-namespace:Everywhere.Core.I18N;assembly=Everywhere.Core"
   xmlns:grammars="clr-namespace:TextMateSharp.Grammars;assembly=TextMateSharp.Grammars" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
   xmlns:mermaid="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Mermaid" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views">
@@ -243,7 +243,7 @@ ul, ol { padding-left: 2em; }
 
   <Style Selector="v|PreviewEndpointTextBox">
     <Setter Property="shadui:ControlAssist.Hint">
-      <I18N Key="{x:Static LocaleKey.PreviewEndpointTextBox_Hint}">
+      <I18N Key="{x:Static i18n:LocaleKey.PreviewEndpointTextBox_Hint}">
         <TemplateBinding Property="PreviewEndpoint"/>
       </I18N>
     </Setter>

@@ -17,6 +17,10 @@
     <LocalPackageOutputPath>$(MSBuildThisFileDirectory)3rd/Porta.Pty/nuget</LocalPackageOutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EverywhereI18NNamespace" />
+  </ItemGroup>
+
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <IsWindows>true</IsWindows>
     <DefineConstants>$(DefineConstants);WINDOWS;IsWindows</DefineConstants>

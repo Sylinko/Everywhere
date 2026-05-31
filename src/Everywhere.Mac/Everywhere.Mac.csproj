@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>Everywhere</AssemblyName>
+    <EverywhereI18NNamespace>Everywhere.Mac.I18N</EverywhereI18NNamespace>
     <ApplicationTitle>Everywhere</ApplicationTitle>
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
@@ -148,6 +149,13 @@
   <ItemGroup>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj" />
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <Import Project="..\Build.Watchdog.targets"/>

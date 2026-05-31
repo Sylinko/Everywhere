@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish (Español) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
+        <value>Tienes un pago pendiente, por favor, resuélvelo pronto</value>
+    </data>
+    <data name="OAuthCloudClient_OAuthError" xml:space="preserve">
+        <value>Error de autorización ({0}): Puede que haya cancelado la operación o que el servidor haya rechazado la solicitud. {1}</value>
+    </data>
+    <data name="OAuthCloudClient_InvalidState" xml:space="preserve">
+        <value>La sesión de inicio de sesión ha expirado o hay un riesgo de seguridad. Para la seguridad de su cuenta, cierre la página y vuelva a iniciar sesión.</value>
+    </data>
+    <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
+        <value>No se pudo obtener un código de autorización válido, por favor intente de nuevo.</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Las credenciales de inicio de sesión guardadas localmente han expirado o se han actualizado en otro lugar. Por favor, vuelve a iniciar sesión. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>El servicio de inicio de sesión rechazó la configuración del cliente OAuth de esta aplicación. Actualiza la aplicación o contacta con soporte. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>El servicio de inicio de sesión no está disponible temporalmente, por favor intenta de nuevo más tarde. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>El servicio de inicio de sesión rechazó la solicitud de token. Intenta volver a iniciar sesión. El servidor respondió: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Has sido prohibido por violar nuestros términos de servicio, para más detalles contacta con soporte.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Has usado más del 80% de tus créditos, considera cambiar a un modelo más económico.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Has usado más del 80% de tus búsquedas web gratuitas, las búsquedas adicionales descontarán créditos.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Has agotado tus búsquedas web gratuitas, las búsquedas descontarán créditos.</value>
+    </data>
+</root>

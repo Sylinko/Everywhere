@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>Everywhere</RootNamespace>
+    <EverywhereI18NNamespace>Everywhere.Core.I18N</EverywhereI18NNamespace>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <NoWarn>$(NoWarn);SCME0001;SENTRY0001</NoWarn>
     <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
@@ -76,6 +77,8 @@
     <ProjectReference Include="..\..\3rd\WritableJsonConfiguration\src\WritableJsonConfiguration\WritableJsonConfiguration.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
 
   </ItemGroup>
 
@@ -95,8 +98,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="I18N\*.resx"/>
-    <AdditionalFiles Include="I18N\*.resx"/>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <ItemGroup>

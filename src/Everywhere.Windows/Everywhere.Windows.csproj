@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <AssemblyName>Everywhere</AssemblyName>
+    <EverywhereI18NNamespace>Everywhere.Windows.I18N</EverywhereI18NNamespace>
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -33,6 +34,13 @@
     <ProjectReference Include="..\..\3rd\EverythingNetCore\EverythingNet\EverythingNet.csproj"/>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -62,7 +70,7 @@
     <TrimmerRootAssembly Include="Everywhere.Abstractions"/>
     <TrimmerRootAssembly Include="Everywhere.Core"/>
     <TrimmerRootAssembly Include="Everywhere.Cloud"/>
-    <TrimmerRootAssembly Include="Everywhere.I18N"/>
+    <TrimmerRootAssembly Include="Everywhere.I18N.Abstractions"/>
     <TrimmerRootAssembly Include="Anthropic"/>
     <TrimmerRootAssembly Include="CSharpMath.Avalonia"/>
     <TrimmerRootAssembly Include="DirectWriteForwarder"/>

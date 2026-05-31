@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian (Русский) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
+        <value>Есть незавершенные платежи, пожалуйста, обработайте их как можно скорее</value>
+    </data>
+    <data name="OAuthCloudClient_OAuthError" xml:space="preserve">
+        <value>Ошибка авторизации ({0}): Вы могли отменить операцию или сервер отклонил запрос. {1}</value>
+    </data>
+    <data name="OAuthCloudClient_InvalidState" xml:space="preserve">
+        <value>Сессия входа истекла или существует риск безопасности. Для безопасности вашего аккаунта закройте страницу и повторно начните вход.</value>
+    </data>
+    <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
+        <value>Не удалось получить действительные учетные данные для авторизации, пожалуйста, попробуйте снова.</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>Сохраненные учетные данные для входа недействительны или были обновлены в другом месте. Пожалуйста, войдите снова. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>Служба входа отклонила конфигурацию OAuth клиента этого приложения. Пожалуйста, обновите приложение или свяжитесь с поддержкой. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>Служба входа временно недоступна, пожалуйста, попробуйте позже. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>Служба входа отклонила запрос на токен. Пожалуйста, попробуйте войти снова. Сервер вернул: {0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>Вы заблокированы за нарушение наших условий обслуживания. Для получения информации свяжитесь с поддержкой.</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>Вы использовали более 80% кредитов, рассмотрите возможность перехода на более экономичную модель.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>Вы использовали более 80% бесплатных поисковых запросов в облаке, превышение бесплатного лимита будет списываться с кредитов.</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>Вы исчерпали бесплатные поисковые запросы в облаке, дальнейшие поиски будут списываться с кредитов.</value>
+    </data>
+</root>
