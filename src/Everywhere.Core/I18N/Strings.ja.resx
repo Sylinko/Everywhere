@@ -941,7 +941,7 @@
         <value>警告</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>"{0}"を削除してもよろしいですか？</value>
+        <value>&quot;{0}&quot;を削除してもよろしいですか？</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>はい</value>
@@ -1572,7 +1572,7 @@
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>ログ</value>

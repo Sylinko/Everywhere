@@ -113,7 +113,7 @@
         <value>URL de l'API</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Laissez par défaut si vous ne savez pas quoi faire. Doit commencer par "http(s)://".</value>
+        <value>Laissez par défaut si vous ne savez pas quoi faire. Doit commencer par &quot;http(s)://&quot;.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Demandez à Everywhere, ou discutez simplement</value>
@@ -531,7 +531,7 @@
         <value>Le modèle prend en charge l'utilisation des outils configurés. Si le modèle ne prend pas en charge cette option, l'activer peut entraîner des erreurs lors des conversations.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
-        <value>Le modèle prend en charge la réflexion avant de répondre. Si le modèle ne prend pas en charge cette fonctionnalité, activer cette option peut entraîner des erreurs lors de la conversation. Notez que cette option n'affecte que la façon dont Everywhere traite les réponses du modèle et ne peut pas contrôler si le modèle active réellement la réflexion. Pour les modèles pouvant activer ou désactiver la réflexion dynamiquement, activez cette option, puis ajustez l'option "Activer la réflexion" ci-dessous.</value>
+        <value>Le modèle prend en charge la réflexion avant de répondre. Si le modèle ne prend pas en charge cette fonctionnalité, activer cette option peut entraîner des erreurs lors de la conversation. Notez que cette option n'affecte que la façon dont Everywhere traite les réponses du modèle et ne peut pas contrôler si le modèle active réellement la réflexion. Pour les modèles pouvant activer ou désactiver la réflexion dynamiquement, activez cette option, puis ajustez l'option &quot;Activer la réflexion&quot; ci-dessous.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Réflexion approfondie</value>
@@ -941,7 +941,7 @@ Le prompt peut contenir des espaces réservés, inclus dans {}, qui seront rempl
         <value>Avertissement</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Êtes-vous sûr de vouloir supprimer "{0}" ?</value>
+        <value>Êtes-vous sûr de vouloir supprimer &quot;{0}&quot; ?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Oui</value>
@@ -1548,7 +1548,7 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
         <value>Configuration MCP invalide.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Échec du démarrage du plugin MCP "{0}"</value>
+        <value>Échec du démarrage du plugin MCP &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1572,7 +1572,7 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Journaux</value>
@@ -2705,7 +2705,7 @@ Date de publication : {2}</value>
         <value>Sous-assistant Compréhension d'Image</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Expert visuel à la demande du principal assistant. Lorsqu'il juge nécessaire, le principal assistant analysera l'image via l'outil "Assigner un nouveau sous-assistant". Assurez-vous que le modèle sélectionné possède des capacités de reconnaissance visuelle.</value>
+        <value>Expert visuel à la demande du principal assistant. Lorsqu'il juge nécessaire, le principal assistant analysera l'image via l'outil &quot;Assigner un nouveau sous-assistant&quot;. Assurez-vous que le modèle sélectionné possède des capacités de reconnaissance visuelle.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>La commande a commencé à s'exécuter à {0} et a réussi après {1} secondes</value>
@@ -2720,7 +2720,7 @@ Date de publication : {2}</value>
         <value>Sous-assistant par Défaut</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Sous-assistant par défaut à la demande du principal assistant. Lorsqu'il délègue des tâches courantes via l'outil "Assigner un nouveau sous-assistant", il est traité et renvoyé par celui-ci dans un contexte indépendant. "Sélection automatique" signifie utiliser le même sous-assistant que le principal assistant.</value>
+        <value>Sous-assistant par défaut à la demande du principal assistant. Lorsqu'il délègue des tâches courantes via l'outil &quot;Assigner un nouveau sous-assistant&quot;, il est traité et renvoyé par celui-ci dans un contexte indépendant. &quot;Sélection automatique&quot; signifie utiliser le même sous-assistant que le principal assistant.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Clé API (optionnelle)</value>

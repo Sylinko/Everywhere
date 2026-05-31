@@ -113,7 +113,7 @@
         <value>API Url</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Оставьте это значение по умолчанию, если не знаете, что делать. Должно начинаться с "http(s)://".</value>
+        <value>Оставьте это значение по умолчанию, если не знаете, что делать. Должно начинаться с &quot;http(s)://&quot;.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Спросите Everywhere или просто общайтесь</value>
@@ -941,7 +941,7 @@
         <value>Предупреждение</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Вы уверены, что хотите удалить "{0}"?</value>
+        <value>Вы уверены, что хотите удалить &quot;{0}&quot;?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Да</value>
@@ -1548,7 +1548,7 @@
         <value>Недействительная конфигурация MCP.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Не удалось запустить MCP плагин "{0}"</value>
+        <value>Не удалось запустить MCP плагин &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1572,7 +1572,7 @@
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Логи</value>
@@ -2705,7 +2705,7 @@
         <value>Подассистент Понимания Изображений</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Визуальный эксперт, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент считает это необходимым, он передает изображение для анализа с помощью инструмента "Назначить нового ассистента". Убедитесь, что выбранная модель обладает способностями визуального распознавания.</value>
+        <value>Визуальный эксперт, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент считает это необходимым, он передает изображение для анализа с помощью инструмента &quot;Назначить нового ассистента&quot;. Убедитесь, что выбранная модель обладает способностями визуального распознавания.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, успешно завершена через {1} секунд</value>
@@ -2720,7 +2720,7 @@
         <value>Стандартный Подассистент</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Стандартный ассистент, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент назначает рутинные задачи с помощью инструмента "Назначить нового ассистента", он обрабатывается и возвращается в независимом контексте. "Автоматический выбор" означает использование того же подассистента, что и у основного ассистента.</value>
+        <value>Стандартный ассистент, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент назначает рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, он обрабатывается и возвращается в независимом контексте. &quot;Автоматический выбор&quot; означает использование того же подассистента, что и у основного ассистента.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API-ключ (необязательно)</value>

@@ -113,7 +113,7 @@
         <value>API-URL</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Belassen Sie dies bei der Standardeinstellung, wenn Sie nicht wissen, was Sie tun sollen. Muss mit "http(s)://" beginnen.</value>
+        <value>Belassen Sie dies bei der Standardeinstellung, wenn Sie nicht wissen, was Sie tun sollen. Muss mit &quot;http(s)://&quot; beginnen.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Fragen Sie Everywhere oder chatten Sie einfach</value>
@@ -566,7 +566,7 @@
         <value>Everywhere wird beim Hochfahren als Administrator gestartet. Diese Option kann nur im Administratormodus ein- oder ausgeschaltet werden.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Aufgrund von Betriebssystembeschränkungen kann Everywhere nicht korrekt funktionieren, wenn Anwendungen mit Administratorrechten (erhöhte Berechtigungen) im Fokus sind oder versuchen, mit einer Everywhere-Funktion wie "Element auswählen" zu interagieren. Dies kann behoben werden, indem Everywhere als Administrator ausgeführt wird.</value>
+        <value>Aufgrund von Betriebssystembeschränkungen kann Everywhere nicht korrekt funktionieren, wenn Anwendungen mit Administratorrechten (erhöhte Berechtigungen) im Fokus sind oder versuchen, mit einer Everywhere-Funktion wie &quot;Element auswählen&quot; zu interagieren. Dies kann behoben werden, indem Everywhere als Administrator ausgeführt wird.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
         <value>Neu starten als Administrator</value>
@@ -940,7 +940,7 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
         <value>Warnung</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Möchten Sie "{0}" wirklich löschen?</value>
+        <value>Möchten Sie &quot;{0}&quot; wirklich löschen?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Ja</value>
@@ -1571,7 +1571,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Protokolle</value>
@@ -2704,7 +2704,7 @@ Veröffentlichungsdatum: {2}</value>
         <value>Bildverständnis-Subassistent</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Ein visueller Experte, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent es für notwendig hält, wird er über das Werkzeug "Neuen Assistenten zuweisen" mit der Analyse von Bildern beauftragt. Bitte stellen Sie sicher, dass das gewählte Modell über visuelle Erkennungsfähigkeiten verfügt.</value>
+        <value>Ein visueller Experte, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent es für notwendig hält, wird er über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; mit der Analyse von Bildern beauftragt. Bitte stellen Sie sicher, dass das gewählte Modell über visuelle Erkennungsfähigkeiten verfügt.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, erfolgreich abgeschlossen nach {1} Sekunden</value>
@@ -2719,7 +2719,7 @@ Veröffentlichungsdatum: {2}</value>
         <value>Standard-Subassistent</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Der Standardassistent, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent über das Werkzeug "Neuen Assistenten zuweisen" Routineaufgaben delegiert, wird dieser standardmäßig in einem unabhängigen Kontext bearbeitet und gibt Ergebnisse zurück. "Automatische Auswahl" bedeutet, dass der gleiche Subassistent wie der Hauptassistent verwendet wird.</value>
+        <value>Der Standardassistent, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; Routineaufgaben delegiert, wird dieser standardmäßig in einem unabhängigen Kontext bearbeitet und gibt Ergebnisse zurück. &quot;Automatische Auswahl&quot; bedeutet, dass der gleiche Subassistent wie der Hauptassistent verwendet wird.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API-Schlüssel (optional)</value>

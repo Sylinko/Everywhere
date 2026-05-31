@@ -113,7 +113,7 @@
         <value>API 網址</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>如果不確定該如何設定，請保持預設。必須以 "http(s)://" 開頭。</value>
+        <value>如果不確定該如何設定，請保持預設。必須以 &quot;http(s)://&quot; 開頭。</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>詢問 Everywhere，或只是聊天</value>
@@ -941,7 +941,7 @@
         <value>警告</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>您確定要刪除 "{0}" 嗎？</value>
+        <value>您確定要刪除 &quot;{0}&quot; 嗎？</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>是</value>
@@ -1548,7 +1548,7 @@
         <value>無效的 MCP 配置。</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>無法啟動 MCP 插件 "{0}"</value>
+        <value>無法啟動 MCP 插件 &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>這個 MCP 伺服器需要 {0}，但 Everywhere 沒有找到它。</value>
@@ -1572,7 +1572,7 @@
         <value>這個 MCP 伺服器需要 {0}。請先安裝它再啟動伺服器。</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>找不到 MCP 命令 "{0}"。請安裝它，或者修改命令路徑。</value>
+        <value>找不到 MCP 命令 &quot;{0}&quot;。請安裝它，或者修改命令路徑。</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>日誌</value>
@@ -2705,7 +2705,7 @@
         <value>圖像理解子助手</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過"指派新助手"工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
+        <value>供主助手按需調用的視覺專家。當主助手認為有必要時，會通過&quot;指派新助手&quot;工具將圖片交由它分析。請確保所選模型具備視覺識別能力。</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>命令於 {0} 開始執行，{1} 秒後成功完成</value>

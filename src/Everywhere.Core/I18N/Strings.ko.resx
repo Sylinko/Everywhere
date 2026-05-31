@@ -113,7 +113,7 @@
         <value>API Url</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>무엇을 해야 할지 모른다면 기본값으로 두세요. "http(s)://"로 시작해야 합니다.</value>
+        <value>무엇을 해야 할지 모른다면 기본값으로 두세요. &quot;http(s)://&quot;로 시작해야 합니다.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Everywhere에게 물어보거나 그냥 채팅하세요</value>
@@ -558,7 +558,7 @@
         <value>시작 시 실행</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere는 시작 후 자동으로 실행됩니다. "관리자 권한으로 시작"이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
+        <value>Everywhere는 시작 후 자동으로 실행됩니다. &quot;관리자 권한으로 시작&quot;이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
         <value>관리자 모드로 자동 시작</value>
@@ -567,7 +567,7 @@
         <value>시작 시 Everywhere가 관리자 권한으로 자동 시작됩니다. 현재 옵션을 켜거나 끄려면 관리자 모드여야 합니다.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>운영 체제의 제한으로 인해, 관리자 권한(승격된 권한)으로 애플리케이션을 실행할 때, Everywhere가 포커스된 승격된 애플리케이션이나 "요소 선택"과 같은 Everywhere 기능과 상호작용하려고 할 때 제대로 작동하지 않을 수 있습니다. 이는 Everywhere를 관리자 권한으로 실행하여 해결할 수 있습니다.</value>
+        <value>운영 체제의 제한으로 인해, 관리자 권한(승격된 권한)으로 애플리케이션을 실행할 때, Everywhere가 포커스된 승격된 애플리케이션이나 &quot;요소 선택&quot;과 같은 Everywhere 기능과 상호작용하려고 할 때 제대로 작동하지 않을 수 있습니다. 이는 Everywhere를 관리자 권한으로 실행하여 해결할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
         <value>관리자 권한으로 다시 시작</value>
@@ -606,7 +606,7 @@
         <value>소프트웨어 업데이트</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>업데이트가 가능한 경우, 업데이트를 클릭하면 Everywhere가 최신 버전을 자동으로 다운로드하고 설치합니다. 과정 중 팝업 창에서 "예"를 선택해야 할 수 있습니다.</value>
+        <value>업데이트가 가능한 경우, 업데이트를 클릭하면 Everywhere가 최신 버전을 자동으로 다운로드하고 설치합니다. 과정 중 팝업 창에서 &quot;예&quot;를 선택해야 할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>자동 업데이트</value>
@@ -727,7 +727,7 @@
         <value>👉 공식 웹사이트</value>
     </data>
     <data name="WelcomeView_IntroStep_Message6" xml:space="preserve">
-        <value>팁: "정보 - 환영 페이지"를 클릭하여 이 메시지를 다시 열 수 있습니다.</value>
+        <value>팁: &quot;정보 - 환영 페이지&quot;를 클릭하여 이 메시지를 다시 열 수 있습니다.</value>
     </data>
     <data name="WelcomeView_IntroStep_Message5" xml:space="preserve">
         <value>유용한 링크: </value>
@@ -941,7 +941,7 @@
         <value>경고</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>"{0}"을(를) 삭제하시겠습니까?</value>
+        <value>&quot;{0}&quot;을(를) 삭제하시겠습니까?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>예</value>
@@ -1548,7 +1548,7 @@
         <value>잘못된 MCP 구성입니다.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>MCP 플러그인 "{0}" 시작 실패</value>
+        <value>MCP 플러그인 &quot;{0}&quot; 시작 실패</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1572,7 +1572,7 @@
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>로그</value>
@@ -2705,7 +2705,7 @@
         <value>이미지 이해 서브 어시스턴트</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>주 어시스턴트가 필요에 따라 호출하는 비주얼 전문가입니다. 주 어시스턴트가 필요하다고 판단할 때 "새 어시스턴트 할당" 도구를 통해 이미지를 분석하도록 요청합니다. 선택한 모델이 시각 인식 기능을 갖추었는지 확인하세요.</value>
+        <value>주 어시스턴트가 필요에 따라 호출하는 비주얼 전문가입니다. 주 어시스턴트가 필요하다고 판단할 때 &quot;새 어시스턴트 할당&quot; 도구를 통해 이미지를 분석하도록 요청합니다. 선택한 모델이 시각 인식 기능을 갖추었는지 확인하세요.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>명령이 {0}에 따라 실행되었으며, {1}초 후 성공적으로 완료되었습니다.</value>
@@ -2720,7 +2720,7 @@
         <value>기본 서브 어시스턴트</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>주 어시스턴트가 필요에 따라 호출하는 기본 어시스턴트입니다. 주 어시스턴트가 "새 어시스턴트 할당" 도구를 통해 일반 작업을 위임할 때, 기본적으로 독립적인 맥락에서 이를 처리하고 결과를 반환합니다. "자동 선택"은 주 어시스턴트와 동일한 서브 어시스턴트를 사용함을 의미합니다.</value>
+        <value>주 어시스턴트가 필요에 따라 호출하는 기본 어시스턴트입니다. 주 어시스턴트가 &quot;새 어시스턴트 할당&quot; 도구를 통해 일반 작업을 위임할 때, 기본적으로 독립적인 맥락에서 이를 처리하고 결과를 반환합니다. &quot;자동 선택&quot;은 주 어시스턴트와 동일한 서브 어시스턴트를 사용함을 의미합니다.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 키 (선택 사항)</value>

@@ -113,7 +113,7 @@
         <value>API Url</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Leaving this to default if you don't know what to do. Must starts with "http(s)://".</value>
+        <value>Leaving this to default if you don't know what to do. Must starts with &quot;http(s)://&quot;.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Ask Everywhere, or just chat</value>
@@ -567,7 +567,7 @@
         <value>Everywhere will start automatically as an administrator at boot. This option can only be toggled in administrator mode.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Due to operating system restrictions, when running any application as an administrator (elevated permissions), Everywhere may not work correctly when the elevated applications are in focus or trying to interact with a Everywhere feature like "Pick Element". This can be addressed by running Everywhere as administrator.</value>
+        <value>Due to operating system restrictions, when running any application as an administrator (elevated permissions), Everywhere may not work correctly when the elevated applications are in focus or trying to interact with a Everywhere feature like &quot;Pick Element&quot;. This can be addressed by running Everywhere as administrator.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
         <value>Restart as Administrator</value>
@@ -941,7 +941,7 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
         <value>Warning</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Are you sure you want to delete the "{0}"?</value>
+        <value>Are you sure you want to delete the &quot;{0}&quot;?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Yes</value>
@@ -1548,7 +1548,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Invalid MCP configuration.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Failed to start MCP plugin "{0}"</value>
+        <value>Failed to start MCP plugin &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1572,7 +1572,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Logs</value>
@@ -2102,7 +2102,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Undo</value>
     </data>
     <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
-        <value>"{0}" is deleted</value>
+        <value>&quot;{0}&quot; is deleted</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Header" xml:space="preserve">
         <value>Display</value>

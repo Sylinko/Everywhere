@@ -113,7 +113,7 @@
         <value>API Url</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
-        <value>Lasciare questo valore predefinito se non si sa cosa fare. Deve iniziare con "http(s)://".</value>
+        <value>Lasciare questo valore predefinito se non si sa cosa fare. Deve iniziare con &quot;http(s)://&quot;.</value>
     </data>
     <data name="ChatInputArea_Watermark" xml:space="preserve">
         <value>Chiedi a Everywhere, o semplicemente chatta</value>
@@ -567,7 +567,7 @@
         <value>Everywhere si avvia automaticamente come amministratore all'accensione. Solo in modalità amministratore è possibile attivare o disattivare questa opzione.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>A causa delle restrizioni del sistema operativo, quando si esegue un'applicazione come amministratore (permessi elevati), Everywhere potrebbe non funzionare correttamente quando le applicazioni elevate sono in primo piano o tentano di interagire con una funzione di Everywhere come "Seleziona elemento". Questo può essere risolto eseguendo Everywhere come amministratore.</value>
+        <value>A causa delle restrizioni del sistema operativo, quando si esegue un'applicazione come amministratore (permessi elevati), Everywhere potrebbe non funzionare correttamente quando le applicazioni elevate sono in primo piano o tentano di interagire con una funzione di Everywhere come &quot;Seleziona elemento&quot;. Questo può essere risolto eseguendo Everywhere come amministratore.</value>
     </data>
     <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
         <value>Riavvia come amministratore</value>
@@ -941,7 +941,7 @@ Nel prompt possono essere utilizzati segnaposto, racchiusi in {}, che verranno s
         <value>Avviso</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Sei sicuro di voler eliminare "{0}"?</value>
+        <value>Sei sicuro di voler eliminare &quot;{0}&quot;?</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Sì</value>
@@ -1548,7 +1548,7 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
         <value>Configurazione MCP non valida.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Impossibile avviare il plugin MCP "{0}"</value>
+        <value>Impossibile avviare il plugin MCP &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1572,7 +1572,7 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
         <value>This MCP server requires {0}. Install it before starting the server.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>The MCP command "{0}" was not found. Install it or update the command path.</value>
+        <value>The MCP command &quot;{0}&quot; was not found. Install it or update the command path.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Log</value>
@@ -2705,7 +2705,7 @@ Data di rilascio: {2}</value>
         <value>Sottogruppo di Comprensione Immagini</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Esperto visivo chiamato dal principale assistente all'occorrenza. Quando il principale assistente ritiene necessario, analizzerà le immagini tramite lo strumento "Assegna Nuovo Assistente". Assicurati che il modello selezionato abbia capacità di riconoscimento visivo.</value>
+        <value>Esperto visivo chiamato dal principale assistente all'occorrenza. Quando il principale assistente ritiene necessario, analizzerà le immagini tramite lo strumento &quot;Assegna Nuovo Assistente&quot;. Assicurati che il modello selezionato abbia capacità di riconoscimento visivo.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>Il comando è stato avviato il {0} ed è stato completato con successo dopo {1} secondi</value>
@@ -2720,7 +2720,7 @@ Data di rilascio: {2}</value>
         <value>Sottogruppo Predefinito</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Assistente predefinito chiamato dal principale assistente all'occorrenza. Quando il principale assistente delega compiti generali tramite lo strumento "Assegna Nuovo Assistente", questo gestisce e restituisce i risultati in un contesto indipendente. "Selezione Automatica" indica l'uso dello stesso sottogruppo del principale assistente.</value>
+        <value>Assistente predefinito chiamato dal principale assistente all'occorrenza. Quando il principale assistente delega compiti generali tramite lo strumento &quot;Assegna Nuovo Assistente&quot;, questo gestisce e restituisce i risultati in un contesto indipendente. &quot;Selezione Automatica&quot; indica l'uso dello stesso sottogruppo del principale assistente.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Chiave API (opzionale)</value>
