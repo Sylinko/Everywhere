@@ -10,7 +10,7 @@ public sealed partial class AboutPage : ReactiveUserControl<AboutPageViewModel>,
 
     public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.AboutPage_Title);
 
-    public AboutPage(IServiceProvider serviceProvider) : base(serviceProvider)
+    public AboutPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }

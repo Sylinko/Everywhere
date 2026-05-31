@@ -8,10 +8,10 @@ public abstract class ReactiveUserControl<TViewModel> : UserControl where TViewM
 {
     public TViewModel ViewModel { get; }
 
-    protected ReactiveUserControl(IServiceProvider serviceProvider)
+    protected ReactiveUserControl(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {
         ViewModel = serviceProvider.GetRequiredService<TViewModel>();
-        ViewModel.Bind(this, disposeOnUnloaded: true);
+        ViewModel.Bind(this, disposeOnUnloaded);
     }
 }
 
@@ -19,10 +19,10 @@ public abstract class ReactiveShadWindow<TViewModel> : ShadWindow where TViewMod
 {
     public TViewModel ViewModel { get; }
 
-    protected ReactiveShadWindow(IServiceProvider serviceProvider)
+    protected ReactiveShadWindow(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {
         ViewModel = serviceProvider.GetRequiredService<TViewModel>();
-        ViewModel.Bind(this);
+        ViewModel.Bind(this, disposeOnUnloaded);
     }
 
     protected override void OnClosed(EventArgs e)

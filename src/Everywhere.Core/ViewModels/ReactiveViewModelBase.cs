@@ -84,8 +84,9 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
         {
             try
             {
-                if (_isLoaded) return;
+                if (_isDisposed || _isLoaded) return;
 
+                _isLoaded = true;
                 _topLevel = TopLevel.GetTopLevel(target);
 
                 if (_topLevel is IReactiveHost reactiveHost)
@@ -93,10 +94,6 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
                     DialogManager = reactiveHost.DialogHost.Manager;
                     ToastHost = reactiveHost.ToastHost;
                 }
-
-                if (_isDisposed) return;
-
-                _isLoaded = true;
                 await ViewLoaded(cancellationSource.Token);
             }
             catch (Exception e)

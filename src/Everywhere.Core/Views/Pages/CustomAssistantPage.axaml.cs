@@ -10,7 +10,7 @@ public partial class CustomAssistantPage : ReactiveUserControl<CustomAssistantPa
 
     public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.CustomAssistantPage_Title);
 
-    public CustomAssistantPage(IServiceProvider serviceProvider) : base(serviceProvider)
+    public CustomAssistantPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }

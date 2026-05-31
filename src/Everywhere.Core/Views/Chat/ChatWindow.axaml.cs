@@ -73,7 +73,7 @@ public partial class ChatWindow :
         IWindowHelper windowHelper,
         INativeHelper nativeHelper,
         Settings settings,
-        PersistentState persistentState) : base(serviceProvider)
+        PersistentState persistentState) : base(serviceProvider, disposeOnUnloaded: false)
     {
         _windowHelper = windowHelper;
         _nativeHelper = nativeHelper;

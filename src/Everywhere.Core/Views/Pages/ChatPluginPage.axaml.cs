@@ -10,7 +10,7 @@ public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewMode
 
     public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.ChatPluginPage_Title);
 
-    public ChatPluginPage(IServiceProvider serviceProvider) : base(serviceProvider)
+    public ChatPluginPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }

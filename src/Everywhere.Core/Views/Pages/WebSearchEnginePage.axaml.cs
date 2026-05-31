@@ -10,7 +10,7 @@ public partial class WebSearchEnginePage : ReactiveUserControl<WebSearchEnginePa
 
     public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.WebSearchPage_Title);
 
-    public WebSearchEnginePage(IServiceProvider serviceProvider) : base(serviceProvider)
+    public WebSearchEnginePage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }
