@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
-using System.Text.RegularExpressions;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using DynamicData;
@@ -1103,16 +1102,12 @@ public sealed partial class ChatService : IChatService
     #endregion
 
     // TODO: this is shit
-    private sealed partial class ScopedPromptRenderer(
+    private sealed class ScopedPromptRenderer(
         IDictionary<string, Func<string>> promptVariables
     ) : IPromptRenderer
     {
-        public static string RenderPrompt(string prompt, Func<string, string?> resolver)
-        {
-            return PromptTemplateRegex().Replace(
-                prompt,
-                m => resolver(m.Groups[1].Value) ?? m.Value);
-        }
+        public static string RenderPrompt(string prompt, Func<string, string?> resolver) =>
+            PromptTemplateRenderer.Render(prompt, resolver);
 
         public string RenderSystemPrompt(string prompt)
         {
@@ -1140,8 +1135,5 @@ public sealed partial class ChatService : IChatService
                 .Append(userInput)
                 .ToString();
         }
-
-        [GeneratedRegex(@"(?<!\{)\{(\w+)\}(?!\})")]
-        private static partial Regex PromptTemplateRegex();
     }
 }

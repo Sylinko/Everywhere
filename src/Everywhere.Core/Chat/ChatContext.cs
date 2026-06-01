@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using DynamicData;
+using Everywhere.AI;
 using Everywhere.Collections;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
@@ -496,6 +497,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             new KeyValuePair<string, Func<string>>("OS", () => Environment.OSVersion.ToString()),
             new KeyValuePair<string, Func<string>>("SystemLanguage", () => LocaleManager.CurrentLocale.ToEnglishName()),
             new KeyValuePair<string, Func<string>>("WorkingDirectory", EnsureWorkingDirectory),
+            new KeyValuePair<string, Func<string>>("DefaultSystemPrompt", () => Prompts.DefaultSystemPrompt),
         ]);
     }
 }
