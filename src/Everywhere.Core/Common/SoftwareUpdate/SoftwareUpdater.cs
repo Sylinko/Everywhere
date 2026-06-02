@@ -12,6 +12,7 @@ using Everywhere.Utilities;
 namespace Everywhere.Common;
 
 public sealed partial class SoftwareUpdater(
+    Settings settings,
     IPlatformUpdateHandler platformHandler,
     IHttpClientFactory httpClientFactory,
     IFileDownloadService fileDownloadService,
@@ -19,10 +20,20 @@ public sealed partial class SoftwareUpdater(
     ILogger<SoftwareUpdater> logger
 ) : ObservableObject, ISoftwareUpdater, IDisposable
 {
-    private const string CustomUpdateServiceBaseUrl = "https://download.sylinko.com";
-    private const string ApiUrl = $"{CustomUpdateServiceBaseUrl}/api?product=everywhere";
-    private readonly string _downloadUrlBase = $"{CustomUpdateServiceBaseUrl}/download?product=everywhere&os={platformHandler.OsIdentifier}";
+    private const string UpdateServiceBaseUrl = "https://download.sylinko.com";
     private const string GitHubDirectUrlBase = "https://github.com/Sylinko/Everywhere/releases/download";
+
+    private UpdateChannel UpdateChannel => settings.Common.UpdateChannel switch
+    {
+        UpdateChannel.Unknown => RuntimeConstants.Version.Channel switch
+        {
+            UpdateChannel.Unknown => UpdateChannel.Stable,
+            _ => RuntimeConstants.Version.Channel
+        },
+        _ => settings.Common.UpdateChannel
+    };
+
+    private string DownloadUrlBase => $"{UpdateServiceBaseUrl}/download?product=everywhere&os={platformHandler.OsIdentifier}&channel={UpdateChannel}";
 
     /// <summary>
     /// Minimum age of a release before auto-download is triggered (24 hours).
@@ -49,8 +60,6 @@ public sealed partial class SoftwareUpdater(
     private Task? _updateTask;
     private Task? _autoDownloadTask;
     private int _autoDownloadRetryCount;
-
-    public Version CurrentVersion { get; } = typeof(SoftwareUpdater).Assembly.GetName().Version ?? new Version(0, 0, 0);
 
     [ObservableProperty]
     public partial DateTimeOffset? LastCheckTime { get; private set; }
@@ -100,7 +109,8 @@ public sealed partial class SoftwareUpdater(
             if (_updateTask is not null) return;
 
             using var httpClient = httpClientFactory.CreateClient(Options.DefaultName);
-            var response = await httpClient.GetAsync(ApiUrl, cancellationToken);
+            var targetChannel = UpdateChannel;
+            var response = await httpClient.GetAsync($"{UpdateServiceBaseUrl}/api?product=everywhere&channel={targetChannel}", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
@@ -110,14 +120,25 @@ public sealed partial class SoftwareUpdater(
             if (latestTag is null) return;
 
             var versionString = latestTag.StartsWith('v') ? latestTag[1..] : latestTag;
-            if (!Version.TryParse(versionString, out var latestVersion))
+            if (!SemanticVersion.TryParse(versionString, out var latestVersion))
             {
                 logger.LogWarning("Could not parse version from tag: {Tag}", latestTag);
                 return;
             }
 
+            if (latestVersion.Channel != targetChannel)
+            {
+                logger.LogInformation(
+                    "Skipping update {RemoteVersion} from channel {RemoteChannel} because the selected update channel is {TargetChannel}.",
+                    latestVersion,
+                    latestVersion.Channel,
+                    targetChannel);
+                LatestUpdate = null;
+                return;
+            }
+
             // Only proceed if the remote version is actually newer.
-            if (latestVersion <= CurrentVersion)
+            if (latestVersion <= RuntimeConstants.Version)
             {
                 LatestUpdate = null;
                 return;
@@ -139,7 +160,7 @@ public sealed partial class SoftwareUpdater(
                     assetMetadata.Name,
                     assetMetadata.Digest,
                     assetMetadata.Size,
-                    $"{_downloadUrlBase}&type={platformHandler.GetDownloadType()}",
+                    $"{DownloadUrlBase}&type={platformHandler.GetDownloadType()}",
                     $"{GitHubDirectUrlBase}/{latestTag}/{assetMetadata.Name}"
                 );
             }

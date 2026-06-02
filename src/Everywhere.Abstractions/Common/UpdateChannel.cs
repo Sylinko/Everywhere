@@ -2,7 +2,7 @@
 
 public enum UpdateChannel
 {
-    Unknown,
+    Unknown = 0,
     Canary = 1,
     Alpha = 2,
     Beta = 3,

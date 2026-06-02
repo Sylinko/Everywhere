@@ -33,7 +33,7 @@ public static partial class Telemetry
             o.TracesSampleRate = 0.2;
             o.Environment = "stable";
 #endif
-            o.Release = typeof(Entrance).Assembly.GetName().Version?.ToString();
+            o.Release = RuntimeConstants.Version.ToString();
 
             o.UseOpenTelemetry();
             o.SetBeforeSend(evt =>

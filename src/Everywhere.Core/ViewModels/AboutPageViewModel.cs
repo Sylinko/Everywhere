@@ -1,13 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using Everywhere.Configuration;
 using Everywhere.Views;
-using Everywhere.Views.Pages;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.ViewModels;
 
 public partial class AboutPageViewModel(IServiceProvider serviceProvider) : ReactiveViewModelBase
 {
-    public static string Version => typeof(AboutPage).Assembly.GetName().Version?.ToString() ?? "Unknown Version";
+    public static string Version => RuntimeConstants.Version.ToString();
 
     [RelayCommand]
     private void OpenWelcomeDialog()

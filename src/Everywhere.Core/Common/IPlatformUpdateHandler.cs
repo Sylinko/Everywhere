@@ -27,7 +27,7 @@ public interface IPlatformUpdateHandler
     /// <summary>
     /// Checks if a file from the updates folder matches a platform-specific update package and returns its version.
     /// </summary>
-    bool TryParseUpdatePackageVersion(string fileName, out Version? version);
+    bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version);
 }
 
 [Serializable]

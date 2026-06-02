@@ -23,7 +23,7 @@ namespace Everywhere;
 
 public class App : Application, IRecipient<ApplicationMessage>
 {
-    public static string Version => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    public static string Version => RuntimeConstants.Version.ToString();
 
     public static IClipboard Clipboard =>
         _topLevel?.Clipboard ?? throw new InvalidOperationException("Clipboard is not available.");
@@ -201,11 +201,11 @@ public class App : Application, IRecipient<ApplicationMessage>
     /// </summary>
     private void ShowMainWindowOnNeeded()
     {
-        var currentVersion = typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0);
+        var currentVersion = RuntimeConstants.Version;
         var persistentState = ServiceLocator.Resolve<PersistentState>();
-        if (!System.Version.TryParse(persistentState.PreviousLaunchVersion, out var previousVersion))
+        if (!SemanticVersion.TryParse(persistentState.PreviousLaunchVersion, out var previousVersion))
         {
-            previousVersion = new Version(0, 0, 0);
+            previousVersion = new SemanticVersion(0);
         }
 
         // If the --ui command line argument is present, show the main window.

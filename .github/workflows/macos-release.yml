@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 jobs:
   build-mac:
@@ -29,24 +28,13 @@ jobs:
         submodules: true
         lfs: true
 
-    - name: Verify Tag (Manual Trigger)
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        TAG=$(git describe --exact-match --tags HEAD 2>/dev/null || echo "")
-        if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-          echo "Error: Current commit is not tagged with a valid version (vX.X.X)."
-          echo "Current tag: $TAG"
-          exit 1
-        fi
-        echo "Found valid tag: $TAG"
-        echo "VERSION=${TAG#v}" >> $GITHUB_ENV
-        echo "GITHUB_REF=refs/tags/$TAG" >> $GITHUB_ENV
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
 
-    - name: Get version from tag
-      if: github.event_name != 'workflow_dispatch'
-      id: get_version
-      run: |
-        echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    - name: Resolve version
+      run: node scripts/resolve-release-tag.mjs "$GITHUB_REF_NAME"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
@@ -105,7 +93,8 @@ jobs:
           /p:RuntimeIdentifier=${{ matrix.runtime }} \
           /p:CodesignKey="$CODE_SIGN_KEY" \
           /p:PackageSigningKey="$PACKAGE_SIGNING_KEY" \
-          /p:Version="$VERSION" \
+          /p:Version="$VERSION_PREFIX" \
+          /p:SemanticVersion="$SEMANTIC_VERSION" \
           /p:SentryDsn="$SENTRY_DSN" \
           /p:ClientId="$CLIENT_ID" \
           /p:AIGatewayBaseUrl="$AI_GATEWAY_BASE_URL" \
@@ -150,5 +139,7 @@ jobs:
       with:
         draft: true
         make_latest: false
-        tag_name: v${{ env.VERSION }}
+        prerelease: ${{ env.PRERELEASE }}
+        generate_release_notes: ${{ env.PRERELEASE }}
+        tag_name: ${{ env.RELEASE_TAG }}
         files: ./release_assets/*.pkg

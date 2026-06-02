@@ -169,10 +169,10 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         }
         else
         {
-            var currentVersion = typeof(MainViewModel).Assembly.GetName().Version ?? new Version(0, 0, 0);
-            if (!Version.TryParse(PersistentState.PreviousLaunchVersion, out var previousVersion))
+            var currentVersion = RuntimeConstants.Version;
+            if (!SemanticVersion.TryParse(PersistentState.PreviousLaunchVersion, out var previousVersion))
             {
-                previousVersion = new Version(0, 0, 0);
+                previousVersion = new SemanticVersion(0);
             }
 
             if (previousVersion < currentVersion)

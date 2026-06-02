@@ -6,27 +6,32 @@ namespace Everywhere.Common;
 /// Represents metadata about an available software update, including version,
 /// release date, release notes, download asset, and download state.
 /// </summary>
-public sealed partial class SoftwareUpdateMetadata : ObservableObject
+public sealed partial class SoftwareUpdateMetadata(
+    SemanticVersion version,
+    DateTimeOffset publishedAt,
+    string? releaseNotes,
+    SoftwareUpdateMetadata.UpdateAsset? asset
+) : ObservableObject
 {
     /// <summary>
     /// The latest version available for update.
     /// </summary>
-    public Version Version { get; }
+    public SemanticVersion Version { get; } = version;
 
     /// <summary>
     /// The publication date of the release.
     /// </summary>
-    public DateTimeOffset PublishedAt { get; }
+    public DateTimeOffset PublishedAt { get; } = publishedAt;
 
     /// <summary>
     /// The release notes (Markdown body) from the GitHub release, or <see langword="null"/> if unavailable.
     /// </summary>
-    public string? ReleaseNotes { get; }
+    public string? ReleaseNotes { get; } = releaseNotes;
 
     /// <summary>
     /// The download asset associated with this update.
     /// </summary>
-    public UpdateAsset? Asset { get; }
+    public UpdateAsset? Asset { get; } = asset;
 
     /// <summary>
     /// Gets the download progress as a normalized value (0.0 to 1.0).
@@ -39,14 +44,6 @@ public sealed partial class SoftwareUpdateMetadata : ObservableObject
     /// </summary>
     [ObservableProperty]
     public partial bool IsReady { get; set; }
-
-    public SoftwareUpdateMetadata(Version version, DateTimeOffset publishedAt, string? releaseNotes, UpdateAsset? asset)
-    {
-        Version = version;
-        PublishedAt = publishedAt;
-        ReleaseNotes = releaseNotes;
-        Asset = asset;
-    }
 
     /// <summary>
     /// Represents a downloadable asset (installer or archive) for a release.

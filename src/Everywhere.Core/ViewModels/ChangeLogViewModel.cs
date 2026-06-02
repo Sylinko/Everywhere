@@ -10,6 +10,7 @@ using DynamicData;
 using DynamicData.Binding;
 using Everywhere.Collections;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.Logging;
 
@@ -68,7 +69,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                 out var releaseInfos,
                 SortExpressionComparer<ReleaseInfo>
                     .Descending(r => r.PublishedDate)
-                    .ThenByDescending(r => Version.TryParse(r.Tag?.TrimStart('v'), out var v) ? v : new Version(0, 0))
+                    .ThenByDescending(r => SemanticVersion.TryParse(r.Tag?.TrimStart('v'), out var v) ? v : new SemanticVersion(0))
             )
             .Subscribe()
             .AddTo(LifetimeDisposables);
@@ -105,7 +106,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                             Tag = tag,
                             HtmlUrl = new Uri(match.Groups["url"].Value, UriKind.RelativeOrAbsolute),
                             PublishedDate = DateTimeOffset.Parse(match.Groups["date"].Value),
-                            IsCurrent = tag.EndsWith(SoftwareUpdater.CurrentVersion.ToString(3), StringComparison.OrdinalIgnoreCase)
+                            IsCurrent = SemanticVersion.TryParse(tag.TrimStart('v'), out var version) && version == RuntimeConstants.Version
                         };
                         currentNotes.Clear();
                     }

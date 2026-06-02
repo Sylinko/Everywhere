@@ -201,6 +201,7 @@ public static class Program
 #endif
     }
 
+#if LINUX || MACOS
     private static void TerminateUnixProcessTree(int pid)
     {
         try
@@ -311,4 +312,5 @@ public static class Program
 
         return map;
     }
+#endif
 }

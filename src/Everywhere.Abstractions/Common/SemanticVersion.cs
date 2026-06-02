@@ -1,10 +1,16 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using ZLinq;
 
 namespace Everywhere.Common;
 
-public sealed partial record SemanticVersion(int Major, int Minor = 0, int Build = 0, int Revision = 0, string? Suffix = null) : IComparable<SemanticVersion>, IComparable<Version>
+public sealed partial record SemanticVersion(
+    int Major,
+    int Minor = 0,
+    int Build = 0,
+    int Revision = 0,
+    string? Suffix = null
+) : IComparable, IComparable<SemanticVersion>, IComparable<Version>
 {
     public UpdateChannel Channel
     {
@@ -29,7 +35,12 @@ public sealed partial record SemanticVersion(int Major, int Minor = 0, int Build
         }
 
         if (major < 0 || minor < 0 || build < 0 || revision < 0 ||
-            suffix is not null && (suffix.Length > 64 || suffix.AsValueEnumerable().Any(c => !char.IsLetterOrDigit(c) && c != '-')))
+            suffix is not null && (
+                suffix.Length > 64 ||
+                suffix.StartsWith('.') ||
+                suffix.EndsWith('.') ||
+                suffix.Contains("..", StringComparison.Ordinal) ||
+                suffix.AsValueEnumerable().Any(c => !char.IsLetterOrDigit(c) && c != '-' && c != '.')))
         {
             version = null;
             return false;
@@ -84,6 +95,18 @@ public sealed partial record SemanticVersion(int Major, int Minor = 0, int Build
         return TryParse(input, out var version) ? version : defaultValue;
     }
 
+    /// <summary>
+    /// Compares this instance to another SemanticVersion instance. The comparison is based on the Major, Minor, Build, Revision, and Suffix properties, in that order. The Suffix is compared based on the UpdateChannel it represents, and if both are unknown, they are compared as strings.
+    /// </summary>
+    /// <example>
+    /// 1.6.0                     > 1.6.0-canary.999
+    /// 1.6.0-canary.12           > 1.6.0-canary.2
+    /// 1.6.0-canary.20260530     > 1.6.0-canary.20260529
+    /// 1.6.0-canary.20260530.12  > 1.6.0-canary.20260530.2
+    /// 1.6.0-canary.20260530.12  > 1.6.0-canary.20260530
+    /// </example>
+    /// <param name="other"></param>
+    /// <returns></returns>
     public int CompareTo(SemanticVersion? other)
     {
         if (other is null) return 1;
@@ -123,22 +146,78 @@ public sealed partial record SemanticVersion(int Major, int Minor = 0, int Build
         // If not equal, just compare channel. If equal, compare suffix number (e.g. canary.12 > canary.2)
         if (channel != otherChannel)
         {
-            return channel.CompareTo(otherChannel);
+            return channel < otherChannel ? -1 : 1;
         }
 
-        return GetSuffixNumber(Suffix.AsSpan()).CompareTo(GetSuffixNumber(other.Suffix.AsSpan()));
+        // canary.12 > canary.2
+        // canary.20260530 > canary.20260529
+        // canary.20260530.12 > canary.20260530.2
+        return CompareChannelSuffix(Suffix.AsSpan(), other.Suffix.AsSpan());
+    }
 
-        // If suffix is canary.12, returns 12
-        static int GetSuffixNumber(ReadOnlySpan<char> suffix)
+    private static int CompareChannelSuffix(ReadOnlySpan<char> left, ReadOnlySpan<char> right)
+    {
+        left = GetChannelSuffixParts(left);
+        right = GetChannelSuffixParts(right);
+
+        while (true)
         {
-            var dotIndex = suffix.IndexOf('.');
-            return dotIndex >= 0 && int.TryParse(suffix[(dotIndex + 1)..], out var num) ? num : 0;
+            if (left.IsEmpty) return right.IsEmpty ? 0 : -1;
+            if (right.IsEmpty) return 1;
+
+            var leftDot = left.IndexOf('.');
+            var rightDot = right.IndexOf('.');
+
+            var leftPart = leftDot < 0 ? left : left[..leftDot];
+            var rightPart = rightDot < 0 ? right : right[..rightDot];
+
+            var leftNumeric = leftPart.AsValueEnumerable().All(static c => (uint)(c - '0') <= 9);
+            var rightNumeric = rightPart.AsValueEnumerable().All(static c => (uint)(c - '0') <= 9);
+
+            int result;
+            if (leftNumeric && rightNumeric)
+            {
+                leftPart = leftPart.TrimStart('0');
+                rightPart = rightPart.TrimStart('0');
+
+                result = leftPart.Length != rightPart.Length ? leftPart.Length.CompareTo(rightPart.Length) : leftPart.SequenceCompareTo(rightPart);
+            }
+            else if (leftNumeric != rightNumeric)
+            {
+                result = leftNumeric ? -1 : 1;
+            }
+            else
+            {
+                result = leftPart.CompareTo(rightPart, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (result != 0) return result < 0 ? -1 : 1;
+
+            left = leftDot < 0 ? ReadOnlySpan<char>.Empty : left[(leftDot + 1)..];
+            right = rightDot < 0 ? ReadOnlySpan<char>.Empty : right[(rightDot + 1)..];
         }
+    }
+
+    private static ReadOnlySpan<char> GetChannelSuffixParts(ReadOnlySpan<char> suffix)
+    {
+        var dotIndex = suffix.IndexOf('.');
+        return dotIndex < 0 ? ReadOnlySpan<char>.Empty : suffix[(dotIndex + 1)..];
     }
 
     public int CompareTo(Version? other)
     {
         return other is null ? 1 : CompareTo((SemanticVersion)other);
+    }
+
+    public int CompareTo(object? obj)
+    {
+        return obj switch
+        {
+            null => 1,
+            SemanticVersion version => CompareTo(version),
+            Version version => CompareTo(version),
+            _ => throw new ArgumentException($"Object must be of type {nameof(SemanticVersion)} or {nameof(Version)}.", nameof(obj))
+        };
     }
 
     public static implicit operator SemanticVersion(Version version)
@@ -167,11 +246,10 @@ public sealed partial record SemanticVersion(int Major, int Minor = 0, int Build
 
     public override string ToString()
     {
-        return Suffix.IsNullOrWhiteSpace() ?
-            $"{Major}.{Minor}.{Build}.{Revision}" :
-            $"{Major}.{Minor}.{Build}.{Revision}-{Suffix}";
+        var version = Revision == 0 ? $"{Major}.{Minor}.{Build}" : $"{Major}.{Minor}.{Build}.{Revision}";
+        return Suffix.IsNullOrWhiteSpace() ? version : $"{version}-{Suffix}";
     }
 
-    [GeneratedRegex(@"^(\d+)\.(\d+)(?:\.(\d+)(?:\.(\d+))?)?(?:-([A-Za-z0-9.]+))?$")]
+    [GeneratedRegex(@"^(\d+)\.(\d+)(?:\.(\d+)(?:\.(\d+))?)?(?:-([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))?$")]
     private static partial Regex ParseRegex();
 }
