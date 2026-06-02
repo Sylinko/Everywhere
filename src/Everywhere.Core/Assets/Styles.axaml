@@ -218,10 +218,7 @@ ul, ol { padding-left: 2em; }
     </Style>
 
     <Style Selector="^ md|CodeBlock">
-      <Style Selector="^ /template/ StackPanel">
-        <Setter Property="Spacing" Value="0"/>
-        <Setter Property="Margin" Value="0,0,0,4"/>
-      </Style>
+      <Setter Property="Margin" Value="0,8"/>
     </Style>
 
     <Style Selector="^ mermaid|MermaidPresenter">
@@ -235,10 +232,87 @@ ul, ol { padding-left: 2em; }
       <Setter Property="NodeFill" Value="{DynamicResource DialogBackgroundColor}"/>
       <Setter Property="NodeStroke" Value="{DynamicResource BorderColor}"/>
     </Style>
+
+    <Style Selector="^ md|MarkdownTextBlock">
+      <Setter Property="SelectionBrush" Value="#0078D7"/>
+      <Setter Property="SelectionForegroundBrush" Value="#E5E5E5"/>
+    </Style>
   </Style>
 
   <Style Selector="md|CodeBlock">
     <Setter Property="ColorTheme" Value="{DynamicResource ColorTheme}"/>
+
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="md:CodeBlock">
+          <Border
+            Background="{DynamicResource CardBackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" CornerRadius="4">
+            <Border.Resources>
+              <FontFamily x:Key="CodeFontFamily">Maple Mono, Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
+            </Border.Resources>
+
+            <DockPanel>
+              <Border
+                DockPanel.Dock="Top"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="0,0,0,1">
+                <DockPanel
+                  Margin="4,2" LastChildFill="True">
+                  <TextBlock
+                    x:Name="PART_LanguageTextBlock" DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Text="{TemplateBinding Language}"/>
+
+                  <StackPanel
+                    DockPanel.Dock="Right" HorizontalAlignment="Right"
+                    Orientation="Horizontal" Spacing="0">
+                    <ToggleButton
+                      x:Name="PART_ToggleTextWrapButton" Classes="Compact Uniform"
+                      Width="{DynamicResource FontSize2Xl}"
+                      Height="{DynamicResource FontSize2Xl}"
+                      shadui:ButtonAssist.CheckedBackground="{DynamicResource TransparentColor}"
+                      shadui:ButtonAssist.CheckedForeground="{DynamicResource PrimaryColor}"
+                      Background="{DynamicResource TransparentColor}"
+                      BorderThickness="0" Focusable="False"
+                      IsChecked="{TemplateBinding IsCodeWrapped, Mode=TwoWay}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.CodeBlock_ToggleTextWrap_Tip}}">
+                      <LucideIcon
+                        Kind="TextWrap"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </ToggleButton>
+                    <Button
+                      x:Name="PART_CopyButton" Classes="Ghost Compact Uniform"
+                      Width="{DynamicResource FontSize2Xl}"
+                      Height="{DynamicResource FontSize2Xl}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
+                      <LucideIcon
+                        Kind="Copy"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </Button>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <ScrollViewer
+                x:Name="PART_ScrollViewer"
+                Background="{DynamicResource SecondaryCardBackgroundColor}"
+                CornerRadius="0,0,5,5"
+                HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                VerticalScrollBarVisibility="Auto">
+                <md:MarkdownTextBlock
+                  x:Name="PART_CodeTextBlock" Margin="6,4,10,4"
+                  FontFamily="{StaticResource CodeFontFamily}"
+                  Foreground="{DynamicResource ForegroundColor}"
+                  TextWrapping="{TemplateBinding TextWrapping}"/>
+              </ScrollViewer>
+            </DockPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
   <Style Selector="v|PreviewEndpointTextBox">

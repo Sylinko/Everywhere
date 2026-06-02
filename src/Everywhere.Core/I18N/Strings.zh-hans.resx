@@ -2867,4 +2867,7 @@
     <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
         <value>运行以获取工具列表</value>
     </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>切换文本换行</value>
+    </data>
 </root>

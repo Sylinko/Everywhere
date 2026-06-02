@@ -129,7 +129,7 @@
                         </Interaction.Behaviors>
 
                         <md:MarkdownTextBlock
-                          x:Name="PART_CodeTextBlock" Margin="4,4,8,4"
+                          x:Name="PART_CodeTextBlock" Margin="6,4,10,4"
                           FontFamily="{StaticResource CodeFontFamily}"
                           Foreground="{DynamicResource ForegroundColor}"
                           TextWrapping="{TemplateBinding TextWrapping}"/>

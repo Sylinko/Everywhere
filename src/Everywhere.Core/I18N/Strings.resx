@@ -2866,4 +2866,7 @@ Release date: {2}</value>
     <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
         <value />
     </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>Toggle Text Wrap</value>
+    </data>
 </root>
