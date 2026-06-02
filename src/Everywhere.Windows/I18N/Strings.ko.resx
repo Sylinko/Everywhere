@@ -28,4 +28,7 @@
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
         <value>{0} 항목 발견</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Everything을 사용하여 파일 검색.</value>
+    </data>
 </root>

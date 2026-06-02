@@ -28,4 +28,7 @@
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
         <value>{0} Elemente gefunden</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Verwenden Sie Everything, um Dateien zu suchen.</value>
+    </data>
 </root>
