@@ -39,5 +39,7 @@ public sealed partial class Settings : SettingsBase
 
     public ChatWindowSettings ChatWindow { get; set; } = new();
 
+    public SpeechRecognitionSettings SpeechRecognition { get; set; } = new();
+
     public PluginSettings Plugin { get; set; } = new();
 }

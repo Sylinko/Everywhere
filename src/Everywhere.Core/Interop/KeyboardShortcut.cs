@@ -1,6 +1,9 @@
-﻿using System.Text;
+﻿using System.ComponentModel;
+using System.Globalization;
+using System.Text;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
+using ZLinq;
 
 namespace Everywhere.Interop;
 
@@ -9,6 +12,7 @@ namespace Everywhere.Interop;
 /// </summary>
 /// <param name="Key"></param>
 /// <param name="Modifiers"></param>
+[TypeConverter(typeof(KeyboardShortcutTypeConverter))]
 public readonly record struct KeyboardShortcut(Key Key, KeyModifiers Modifiers)
 {
     [JsonIgnore]
@@ -43,5 +47,34 @@ public readonly record struct KeyboardShortcut(Key Key, KeyModifiers Modifiers)
         if (Modifiers.HasFlag(KeyModifiers.Alt)) sb.Append(alt);
         if (Key != Key.None) sb.Append(Key);
         return sb.ToString();
+    }
+}
+
+public sealed class KeyboardShortcutTypeConverter : TypeConverter
+{
+    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+    {
+        return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    }
+
+    public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
+    {
+        if (value is not string str) return base.ConvertFrom(context, culture, value);
+
+        var modifiers = KeyModifiers.None;
+        var key = Key.None;
+        foreach (var part in str.Split('+', StringSplitOptions.RemoveEmptyEntries).AsValueEnumerable().Select(p => p.Trim()))
+        {
+            if (Enum.TryParse<KeyModifiers>(part, true, out var m))
+            {
+                modifiers |= m;
+            }
+            else if (Enum.TryParse<Key>(part, true, out var k))
+            {
+                key = k;
+            }
+        }
+
+        return new KeyboardShortcut(key, modifiers);
     }
 }

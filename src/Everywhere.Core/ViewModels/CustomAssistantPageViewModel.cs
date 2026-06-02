@@ -26,15 +26,6 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
     [ObservableProperty]
     public partial CustomAssistant? SelectedCustomAssistant { get; set; }
 
-    public CustomAssistantPageViewModel(IKernelMixinFactory kernelMixinFactory, Settings settings)
-    {
-        _kernelMixinFactory = kernelMixinFactory;
-        _settings = settings;
-        SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
-
-        WeakReferenceMessenger.Default.Register(this);
-    }
-
     private static Color[] RandomAssistantIconBackgrounds { get; } =
     [
         Colors.MediumPurple,
@@ -64,6 +55,25 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
         Colors.SeaGreen,
         Colors.SteelBlue,
     ];
+
+    public CustomAssistantPageViewModel(IKernelMixinFactory kernelMixinFactory, Settings settings)
+    {
+        _kernelMixinFactory = kernelMixinFactory;
+        _settings = settings;
+        SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
+
+        WeakReferenceMessenger.Default.Register(this);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+        }
+
+        base.Dispose(disposing);
+    }
 
     [RelayCommand]
     private void CreateNewCustomAssistant()

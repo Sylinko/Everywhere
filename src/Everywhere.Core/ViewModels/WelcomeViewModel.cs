@@ -6,6 +6,7 @@ using Everywhere.AI.Configurator;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Interop;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,7 +73,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
             new WelcomeViewModelConfiguratorStep(this),
             new WelcomeViewModelHardLoginStep(this),
             new WelcomeViewModelAssistantStep(this, serviceProvider),
-            new WelcomeViewModelShortcutStep(this),
+            new WelcomeViewModelShortcutStep(this, serviceProvider),
             new WelcomeViewModelTelemetryStep(this)
         ];
 
@@ -242,7 +243,10 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
     }
 }
 
-public sealed class WelcomeViewModelShortcutStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel);
+public sealed class WelcomeViewModelShortcutStep(WelcomeViewModel viewModel, IServiceProvider serviceProvider) : WelcomeViewModelStep(viewModel)
+{
+    public IShortcutListener ShortcutListener { get; } = serviceProvider.GetRequiredService<IShortcutListener>();
+}
 
 public sealed partial class WelcomeViewModelTelemetryStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel)
 {

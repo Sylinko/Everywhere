@@ -6,6 +6,7 @@ using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
+using Everywhere.Media;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Everywhere.Views.Pages;
@@ -73,6 +74,9 @@ public static class ServiceExtensions
             services
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
+                .AddSingleton<SpeechRecognitionService>()
+                .AddSingleton<ISpeechRecognitionService>(xx => xx.GetRequiredService<SpeechRecognitionService>())
+                .AddSingleton<IAsyncInitializer>(xx => xx.GetRequiredService<SpeechRecognitionService>())
                 .AddSingleton<IChatWindowNotificationService, ChatWindowNotificationService>()
                 .AddSingleton<IChatService, ChatService>()
                 .AddSingleton<IGreetings, Greetings>()

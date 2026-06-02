@@ -2870,4 +2870,22 @@
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>切换文本换行</value>
     </data>
+    <data name="SpeechRecognitionSettings_IsEnabled_Header" xml:space="preserve">
+        <value>启用语音识别</value>
+    </data>
+    <data name="SpeechRecognitionSettings_IsEnabled_Description" xml:space="preserve">
+        <value>允许 Everywhere 使用选定的语音识别引擎。</value>
+    </data>
+    <data name="SpeechRecognitionSettings_SelectedEngineId_Header" xml:space="preserve">
+        <value>语音识别引擎</value>
+    </data>
+    <data name="SpeechRecognitionSettings_SelectedEngineId_Description" xml:space="preserve">
+        <value>将语音输入转换为文字时使用的语音识别引擎。</value>
+    </data>
+    <data name="SpeechRecognitionButton_Start_ToolTip" xml:space="preserve">
+        <value>点击按钮或长按快捷键开始听写</value>
+    </data>
+    <data name="SpeechRecognitionButton_Stop_ToolTip" xml:space="preserve">
+        <value>点击按钮或松开快捷键停止听写</value>
+    </data>
 </root>

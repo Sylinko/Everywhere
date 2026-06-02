@@ -52,9 +52,10 @@
     </DataTemplate.DataType>
 
     <v:KeyboardShortcutInputBox
-      MinWidth="320" MinHeight="32"
-      HorizontalAlignment="Left"
-      Shortcut="{Binding Value, Mode=TwoWay}"/>
+      Classes="Compact" MinWidth="320"
+      MinHeight="32" HorizontalAlignment="Left"
+      Shortcut="{Binding Value, Mode=TwoWay}"
+      ShortcutListener="{ServiceLocator {x:Type interop:IShortcutListener}}"/>
   </DataTemplate>
 
   <DataTemplate x:Key="{x:Type common:ColoredIcon}">

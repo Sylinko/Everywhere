@@ -7,22 +7,33 @@ using Windows.Storage.Streams;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Everywhere.I18N;
-using Everywhere.Media;
+using Everywhere.Collections;
+using Everywhere.Common;
+using Everywhere.Media.Ocr;
 using Everywhere.Windows.Extensions;
 using Everywhere.Windows.Interop;
 using Serilog;
 using WinRT;
 using ZLinq;
-using OcrLine = Everywhere.Media.OcrLine;
-using OcrResult = Everywhere.Media.OcrResult;
+using OcrLine = Everywhere.Media.Ocr.OcrLine;
+using OcrResult = Everywhere.Media.Ocr.OcrResult;
 
 namespace Everywhere.Windows.Media;
 
-public class WinRTOcrEngine : IOcrEngine
+public sealed class WinRTOcrEngine : IOcrEngine
 {
+    public string Id => "winrt";
+
     [MemberNotNullWhen(true, nameof(_availableLanguages))]
     public bool IsSupported => _availableLanguages is { Count: > 0 };
+
+    public OcrEngineDescriptor Descriptor { get; } = new(
+        new DirectResourceKey("Windows OCR"),
+        new DirectResourceKey(""),
+        true,
+        true);
+
+    public IReadOnlyBindableList<DynamicNotification> Notifications { get; set; } = new BindableList<DynamicNotification>();
 
     public IReadOnlyList<LocaleName> SupportedLocales { get; }
 

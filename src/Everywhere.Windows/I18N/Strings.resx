@@ -31,4 +31,40 @@
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Search files using Everything search engine.</value>
     </data>
+    <data name="WinRTSpeechRecognitionEngine_Name" xml:space="preserve">
+        <value>Windows Speech Recognition</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Description" xml:space="preserve">
+        <value>Use the built-in Windows speech recognition engine for offline dictation.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NoSupportedLanguages" xml:space="preserve">
+        <value>No Windows speech recognition languages are installed. Add a speech language in Windows settings to use voice input.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_UnsupportedLocale" xml:space="preserve">
+        <value>Windows speech recognition does not support {0}. Install the matching speech language in Windows settings.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_ConstraintCompilationFailed" xml:space="preserve">
+        <value>Windows speech recognition could not be prepared: {0}</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_MicrophoneUnavailable" xml:space="preserve">
+        <value>The microphone is unavailable. Check microphone permissions and device settings.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_TopicLanguageNotSupported" xml:space="preserve">
+        <value>The selected Windows speech language is not available for dictation.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NetworkFailure" xml:space="preserve">
+        <value>Windows speech recognition reported a network failure. Check Windows speech settings.</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_OpenSettings" xml:space="preserve">
+        <value>Open Settings</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_EnableSpeechPrivacyPolicy" xml:space="preserve">
+        <value />
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_CheckSpeechPrivacyPolicy" xml:space="preserve">
+        <value />
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NoMicrophone" xml:space="preserve">
+        <value />
+    </data>
 </root>

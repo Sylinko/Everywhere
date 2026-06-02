@@ -75,7 +75,7 @@ public sealed partial class LinuxUpdateHandler : IPlatformUpdateHandler
                 case "deb":
                     Process.Start(
                         new ProcessStartInfo("sudo", $"dpkg -i \"{assetPath}\"") { UseShellExecute = true }
-                        )?.WaitForExit();
+                    )?.WaitForExit();
                     break;
                 case "rpm":
                     // Todo: Needs rpm installation implementation
@@ -103,6 +103,9 @@ public sealed partial class LinuxUpdateHandler : IPlatformUpdateHandler
         return false;
     }
 
-    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(deb|rpm)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
+    [GeneratedRegex(
+        @"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(deb|rpm)$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        "zh-CN")]
     private static partial Regex VersionRegex();
 }

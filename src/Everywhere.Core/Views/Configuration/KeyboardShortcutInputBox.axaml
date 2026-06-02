@@ -1,23 +1,32 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:v="clr-namespace:Everywhere.Views" d:DesignHeight="450"
-  d:DesignWidth="800" mc:Ignorable="d">
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  d:DesignHeight="450" d:DesignWidth="800"
+  mc:Ignorable="d">
 
   <ControlTheme
     x:Key="{x:Type v:KeyboardShortcutInputBox}"
     TargetType="v:KeyboardShortcutInputBox">
     <Setter Property="Focusable" Value="True"/>
+    <Setter Property="Padding" Value="12,4"/>
+    <Setter Property="Background" Value="{DynamicResource SelectionColor}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="MinHeight" Value="36"/>
+
     <Setter Property="Template">
       <ControlTemplate TargetType="v:KeyboardShortcutInputBox">
         <Border
-          x:Name="PART_InputBox" MinHeight="36"
-          Padding="12,4"
-          Background="{DynamicResource SelectionColor}"
-          BorderBrush="{DynamicResource BorderColor}"
-          BorderThickness="1"
-          CornerRadius="{DynamicResource LgCornerRadius}"
-          Cursor="Hand">
+          x:Name="PART_InputBox"
+          Padding="{TemplateBinding Padding}"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}"
+          Cursor="{TemplateBinding Cursor}">
           <Grid ColumnDefinitions="*, Auto">
             <Panel
               Grid.Column="0" VerticalAlignment="Center">
@@ -38,60 +47,69 @@
 
               <!--  Shortcut Items  -->
               <ItemsControl
+                x:Name="PART_ItemsControl"
                 IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}"
                 ItemsSource="{TemplateBinding ShortcutParts}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
                     <StackPanel
-                      Orientation="Horizontal" Spacing="5"/>
+                      Orientation="Horizontal" Spacing="4"/>
                   </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <ContentControl Content="{Binding}">
-                      <ContentControl.DataTemplates>
-                        <DataTemplate DataType="v:TextShortcutPart">
-                          <Border
-                            Padding="6,2"
-                            Background="{DynamicResource PrimaryColor}"
-                            CornerRadius="4">
-                            <TextBlock
-                              FontSize="{DynamicResource FontSizeM}"
-                              FontWeight="SemiBold"
-                              Text="{Binding Text}">
-                              <TextBlock.Foreground>
-                                <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
-                              </TextBlock.Foreground>
-                            </TextBlock>
-                          </Border>
-                        </DataTemplate>
-                        <DataTemplate DataType="v:IconShortcutPart">
-                          <Border
-                            Padding="6,2"
-                            Background="{DynamicResource PrimaryColor}"
-                            CornerRadius="4">
-                            <PathIcon
-                              Width="{DynamicResource FontSizeM}"
-                              Height="{DynamicResource LineHeightM}"
-                              Data="{Binding Icon}">
-                              <PathIcon.Foreground>
-                                <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
-                              </PathIcon.Foreground>
-                            </PathIcon>
-                          </Border>
-                        </DataTemplate>
-                      </ContentControl.DataTemplates>
-                    </ContentControl>
+
+                <ItemsControl.DataTemplates>
+                  <DataTemplate DataType="v:TextShortcutPart">
+                    <Border
+                      Padding="6,2"
+                      Background="{DynamicResource PrimaryColor}"
+                      CornerRadius="4">
+                      <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Text}">
+                        <TextBlock.Foreground>
+                          <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
+                        </TextBlock.Foreground>
+                      </TextBlock>
+                    </Border>
                   </DataTemplate>
-                </ItemsControl.ItemTemplate>
+
+                  <DataTemplate DataType="v:IconShortcutPart">
+                    <Border
+                      x:Name="PART_IconShortcutBorder" Padding="6,2"
+                      Background="{DynamicResource PrimaryColor}"
+                      CornerRadius="4">
+                      <PathIcon
+                        Width="{DynamicResource FontSizeM}"
+                        Height="{DynamicResource FontSizeM}"
+                        Data="{Binding Icon}">
+                        <PathIcon.Foreground>
+                          <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
+                        </PathIcon.Foreground>
+                      </PathIcon>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.DataTemplates>
               </ItemsControl>
             </Panel>
 
             <Button
               x:Name="PART_ClearButton" Classes="Ghost Compact"
               Grid.Column="1" Margin="4,0,0,0"
-              Padding="2" Focusable="False"
-              IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}">
+              Padding="2" Focusable="False">
+              <Button.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding
+                    Path="!IsReadOnly"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="!!ShortcutParts.Count"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="!IsRecording"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                </MultiBinding>
+              </Button.IsVisible>
+
               <LucideIcon
                 Foreground="{DynamicResource ForegroundColor}"
                 Kind="X" Size="18"/>
@@ -103,6 +121,56 @@
 
     <Style Selector="^[IsRecording=True] /template/ Border#PART_InputBox">
       <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+
+    <Style Selector="^.Compact">
+      <Setter Property="Padding" Value="2"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="CornerRadius" Value="4"/>
+
+      <Style Selector="^ /template/ ItemsControl#PART_ItemsControl">
+        <Setter Property="ItemsPanel">
+          <ItemsPanelTemplate>
+            <StackPanel
+              Orientation="Horizontal" Spacing="2"/>
+          </ItemsPanelTemplate>
+        </Setter>
+
+        <Setter Property="shadui:BindingAssist.DataTemplates">
+          <DataTemplates>
+            <DataTemplate DataType="v:TextShortcutPart">
+              <Border
+                Padding="2,0"
+                Background="{DynamicResource PrimaryColor}"
+                CornerRadius="2">
+                <TextBlock
+                  FontSize="{DynamicResource FontSizeS}"
+                  Text="{Binding Text}">
+                  <TextBlock.Foreground>
+                    <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
+                  </TextBlock.Foreground>
+                </TextBlock>
+              </Border>
+            </DataTemplate>
+
+            <DataTemplate DataType="v:IconShortcutPart">
+              <Border
+                Padding="2,0"
+                Background="{DynamicResource PrimaryColor}"
+                CornerRadius="2">
+                <PathIcon
+                  Width="{DynamicResource FontSizeS}"
+                  Height="{DynamicResource FontSizeS}"
+                  Data="{Binding Icon}">
+                  <PathIcon.Foreground>
+                    <SolidColorBrush Color="{DynamicResource ForegroundColor}"/>
+                  </PathIcon.Foreground>
+                </PathIcon>
+              </Border>
+            </DataTemplate>
+          </DataTemplates>
+        </Setter>
+      </Style>
     </Style>
   </ControlTheme>
 </ResourceDictionary>

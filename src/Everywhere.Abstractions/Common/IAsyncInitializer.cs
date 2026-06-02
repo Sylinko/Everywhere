@@ -13,6 +13,8 @@ public enum AsyncInitializerIndex
 
     Network = 200,
 
+    Media = 1000,
+
     Startup = int.MaxValue,
 }
 

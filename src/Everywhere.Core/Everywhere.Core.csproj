@@ -77,6 +77,7 @@
     <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.Media.Abstractions\Everywhere.Media.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.Terminal\Everywhere.Terminal.csproj" />
 
   </ItemGroup>

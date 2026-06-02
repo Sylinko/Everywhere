@@ -1,12 +1,12 @@
 <UserControl
   x:Class="Everywhere.Views.WelcomeView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:configurator="clr-namespace:Everywhere.AI.Configurator"
-  xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  xmlns:common="clr-namespace:Everywhere.Common"
-  d:DesignHeight="450" d:DesignWidth="800"
-  x:DataType="vm:WelcomeViewModel" mc:Ignorable="d">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:configurator="clr-namespace:Everywhere.AI.Configurator" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" d:DesignHeight="450"
+  d:DesignWidth="800" x:DataType="vm:WelcomeViewModel"
+  mc:Ignorable="d">
   <Grid
     Width="800" MinHeight="600"
     Margin="0,0,0,16" ColumnDefinitions="Auto,*"
@@ -200,7 +200,8 @@
               MinWidth="160" MinHeight="32"
               Margin="-10,-6" Background="Transparent"
               BorderThickness="0"
-              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow, Mode=TwoWay}"/>
+              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow, Mode=TwoWay}"
+              ShortcutListener="{Binding ShortcutListener}"/>
             <TextBlock
               Classes="Muted"
               Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message2}}"/>

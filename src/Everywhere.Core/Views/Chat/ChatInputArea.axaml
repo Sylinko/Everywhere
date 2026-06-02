@@ -38,14 +38,17 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Grid
+          Margin="{TemplateBinding Padding}"
           ColumnDefinitions="*,Auto" RowDefinitions="*,Auto,Auto"
           RowSpacing="4">
           <v:ChatTextEditor
             x:Name="PART_ChatTextEditor" Grid.Row="0"
             Grid.Column="0" Grid.ColumnSpan="2"
+            Margin="0,0,-6,0"
             LeadingContent="{TemplateBinding LeadingContent, Mode=TwoWay}"
             LeadingContentTemplate="{TemplateBinding LeadingContentTemplate}"
             MaxLength="{TemplateBinding MaxLength}"
+            SpeechRecognitionInputState="{TemplateBinding SpeechRecognitionInputState}"
             Text="{TemplateBinding Text, Mode=TwoWay}"
             Watermark="{TemplateBinding Watermark}"/>
 
@@ -300,6 +303,11 @@
             Grid.Row="2" Grid.Column="1"
             Margin="8,0,0,0" Orientation="Horizontal"
             Spacing="4">
+            <v:SpeechRecognitionButton
+              x:Name="PART_SpeechRecognitionButton"
+              Command="{TemplateBinding SpeechRecognitionCommand}"
+              Status="{TemplateBinding SpeechRecognitionStatus}"/>
+
             <Button
               x:Name="PART_SendButton" Classes="Primary Rounded"
               IsVisible="{Binding !IsVisible, ElementName=PART_CancelButton}"

@@ -9,8 +9,9 @@
       <ControlTemplate>
         <Panel>
           <avaloniaEdit:TextEditor
-            x:Name="PART_TextEditor" Focusable="True"
-            HorizontalScrollBarVisibility="Disabled" ShowLineNumbers="False"
+            x:Name="PART_TextEditor" Padding="0,0,12,0"
+            Focusable="True" HorizontalScrollBarVisibility="Disabled"
+            ShowLineNumbers="False"
             SyntaxHighlighting="{x:Null}"
             WordWrap="True">
             <avaloniaEdit:TextEditor.Options>

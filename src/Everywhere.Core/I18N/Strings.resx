@@ -2869,4 +2869,22 @@ Release date: {2}</value>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Toggle Text Wrap</value>
     </data>
+    <data name="SpeechRecognitionSettings_IsEnabled_Header" xml:space="preserve">
+        <value>Enable Speech Recognition</value>
+    </data>
+    <data name="SpeechRecognitionSettings_IsEnabled_Description" xml:space="preserve">
+        <value>Allow Everywhere to use the selected speech recognition engine.</value>
+    </data>
+    <data name="SpeechRecognitionSettings_SelectedEngineId_Header" xml:space="preserve">
+        <value>Speech Recognition Engine</value>
+    </data>
+    <data name="SpeechRecognitionSettings_SelectedEngineId_Description" xml:space="preserve">
+        <value>The speech recognition engine used when converting voice input to text.</value>
+    </data>
+    <data name="SpeechRecognitionButton_Start_ToolTip" xml:space="preserve">
+        <value />
+    </data>
+    <data name="SpeechRecognitionButton_Stop_ToolTip" xml:space="preserve">
+        <value />
+    </data>
 </root>

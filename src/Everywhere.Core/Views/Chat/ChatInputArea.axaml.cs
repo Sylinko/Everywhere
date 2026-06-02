@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Windows.Input;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
@@ -12,6 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Common;
+using Everywhere.Media;
 using Everywhere.Utilities;
 
 namespace Everywhere.Views;
@@ -79,6 +81,15 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<ISoftwareUpdater?> SoftwareUpdaterProperty =
         AvaloniaProperty.Register<ChatInputArea, ISoftwareUpdater?>(nameof(SoftwareUpdater));
+
+    public static readonly StyledProperty<SpeechRecognitionStatus> SpeechRecognitionStatusProperty =
+        AvaloniaProperty.Register<ChatInputArea, SpeechRecognitionStatus>(nameof(SpeechRecognitionStatus), SpeechRecognitionStatus.NotAvailable);
+
+    public static readonly StyledProperty<SpeechRecognitionInputState?> SpeechRecognitionInputStateProperty =
+        AvaloniaProperty.Register<ChatInputArea, SpeechRecognitionInputState?>(nameof(SpeechRecognitionInputState));
+
+    public static readonly StyledProperty<ICommand?> SpeechRecognitionCommandProperty =
+        AvaloniaProperty.Register<ChatInputArea, ICommand?>(nameof(SpeechRecognitionCommand));
 
     public static readonly StyledProperty<bool> IsSendButtonEnabledProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsSendButtonEnabled), true);
@@ -206,6 +217,24 @@ public sealed partial class ChatInputArea : TemplatedControl
     {
         get => GetValue(SoftwareUpdaterProperty);
         set => SetValue(SoftwareUpdaterProperty, value);
+    }
+
+    public SpeechRecognitionStatus SpeechRecognitionStatus
+    {
+        get => GetValue(SpeechRecognitionStatusProperty);
+        set => SetValue(SpeechRecognitionStatusProperty, value);
+    }
+
+    public SpeechRecognitionInputState? SpeechRecognitionInputState
+    {
+        get => GetValue(SpeechRecognitionInputStateProperty);
+        set => SetValue(SpeechRecognitionInputStateProperty, value);
+    }
+
+    public ICommand? SpeechRecognitionCommand
+    {
+        get => GetValue(SpeechRecognitionCommandProperty);
+        set => SetValue(SpeechRecognitionCommandProperty, value);
     }
 
     public bool IsSendButtonEnabled

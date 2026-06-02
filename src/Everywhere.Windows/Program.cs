@@ -12,6 +12,8 @@ using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Media;
+using Everywhere.Media.Ocr;
+using Everywhere.Media.SpeechRecognition;
 using Everywhere.Messages;
 using Everywhere.StrategyEngine;
 using Everywhere.Windows.Chat.Plugins;
@@ -84,6 +86,7 @@ public static class Program
                 #region Media
 
                 .AddSingleton<IOcrEngine, WinRTOcrEngine>()
+                .AddSingleton<ISpeechRecognitionEngine, WinRTSpeechRecognitionEngine>()
 
                 #endregion
 

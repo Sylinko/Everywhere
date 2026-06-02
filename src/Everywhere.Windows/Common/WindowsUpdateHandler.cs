@@ -84,6 +84,9 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
         Environment.Exit(0);
     }
 
-    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
+    [GeneratedRegex(
+        @"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        "zh-CN")]
     private static partial Regex VersionRegex();
 }

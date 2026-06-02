@@ -18,6 +18,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Media;
+using Everywhere.Media.Ocr;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
@@ -106,6 +107,14 @@ public sealed partial class ChatWindowViewModel :
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
+    public ISpeechRecognitionService SpeechRecognitionService { get; }
+
+    /// <summary>
+    /// The state of the current speech recognition input, or null if speech recognition is not active.
+    /// </summary>
+    [ObservableProperty]
+    public partial SpeechRecognitionInputState? SpeechRecognitionInputState { get; set; }
+
     private readonly IChatService _chatService;
     private readonly IVisualElementContext _visualElementContext;
     private readonly IBlobStorage _blobStorage;
@@ -128,13 +137,14 @@ public sealed partial class ChatWindowViewModel :
         PersistentState persistentState,
         IChatContextManager chatContextManager,
         IChatPluginManager chatPluginManager,
-        IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
+        ISpeechRecognitionService speechRecognitionService,
         IChatService chatService,
         IVisualElementContext visualElementContext,
         IBlobStorage blobStorage,
         IStrategyEngine strategyEngine,
         IGreetings greetings,
+        IChatWindowNotificationService notificationService,
         IServiceProvider serviceProvider,
         ILogger<ChatWindowViewModel> logger)
     {
@@ -142,6 +152,7 @@ public sealed partial class ChatWindowViewModel :
         PersistentState = persistentState;
         ChatContextManager = chatContextManager;
         SoftwareUpdater = softwareUpdater;
+        SpeechRecognitionService = speechRecognitionService;
 
         _chatService = chatService;
         _visualElementContext = visualElementContext;
@@ -201,6 +212,13 @@ public sealed partial class ChatWindowViewModel :
     {
         if (disposing)
         {
+            if (SpeechRecognitionInputState is not null)
+            {
+                SpeechRecognitionService
+                    .StopSpeechRecognitionAsync(SpeechRecognitionInputState)
+                    .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+            }
+
             WeakReferenceMessenger.Default.UnregisterAll(this);
         }
 
@@ -579,6 +597,7 @@ public sealed partial class ChatWindowViewModel :
                 var ocrResult = await Task.Run(
                     () => ocrEngine.RecognizeAsync(fileAttachment.FilePath, LocaleManager.CurrentLocale, cancellationToken),
                     cancellationToken);
+                if (ocrResult.Lines is not { Count: > 0 }) return;
 
                 // (fileAttachment.Metadata ??= [])["OCR"] = $"Result may be inaccurate:\n{ocrResult.Text}";
 
@@ -607,6 +626,42 @@ public sealed partial class ChatWindowViewModel :
     private void RemoveAttachment(ChatAttachment attachment)
     {
         _chatAttachmentsSource.Remove(attachment);
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task ToggleSpeechRecognitionAsync()
+    {
+        var state = SpeechRecognitionInputState;
+        if (state is { ActivationKind: SpeechRecognitionActivationKind.Hold }) return;
+
+        if (state is not null)
+        {
+            await SpeechRecognitionService.StopSpeechRecognitionAsync(state);
+            if (ReferenceEquals(SpeechRecognitionInputState, state))
+            {
+                SpeechRecognitionInputState = null;
+            }
+
+            return;
+        }
+
+        state = SpeechRecognitionService.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
+        if (state is null)
+        {
+            ToastHost
+                .CreateToast(LocaleResolver.Common_Warning)
+                .WithContent("Speech recognition is already active or unavailable.")
+                .DismissOnClick()
+                .ShowWarning();
+            return;
+        }
+
+        SpeechRecognitionInputState = state;
+        await SpeechRecognitionService.StartSpeechRecognitionAsync(state);
+        if (ReferenceEquals(SpeechRecognitionInputState, state) && !state.IsActive)
+        {
+            SpeechRecognitionInputState = null;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]

@@ -12,10 +12,12 @@ using Everywhere.AttachedProperties;
 using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.Media;
 using Everywhere.Messages;
 using Everywhere.Utilities;
 using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
 
@@ -55,6 +57,7 @@ public partial class ChatWindow :
 
     private readonly IWindowHelper _windowHelper;
     private readonly INativeHelper _nativeHelper;
+    private readonly ISpeechRecognitionService _speechRecognitionService;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
 
@@ -67,6 +70,7 @@ public partial class ChatWindow :
     /// Indicates whether the window can be closed.
     /// </summary>
     private bool _canCloseWindow;
+    private Guid? _holdSpeechRecognitionActivationId;
 
     public ChatWindow(
         IServiceProvider serviceProvider,
@@ -77,11 +81,13 @@ public partial class ChatWindow :
     {
         _windowHelper = windowHelper;
         _nativeHelper = nativeHelper;
+        _speechRecognitionService = serviceProvider.GetRequiredService<ISpeechRecognitionService>();
         _settings = settings;
         _persistentState = persistentState;
 
         InitializeComponent();
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
+        AddHandler(KeyUpEvent, HandleKeyUp, RoutingStrategies.Tunnel, true);
 
         ChatInputArea.AddDisposableHandler(TextBox.TextChangedEvent, HandleChatInputAreaTextChanged);
         ChatInputArea.AddDisposableHandler(TextBox.PastingFromClipboardEvent, HandleChatInputAreaPastingFromClipboard);
@@ -149,6 +155,56 @@ public partial class ChatWindow :
                 e.Handled = true;
                 break;
             }
+            case { Key: Key.R, KeyModifiers: KeyModifiers.Control }:
+            {
+                StartSpeechRecognitionAsync().Detach(ToastHost.ToExceptionHandler());
+                e.Handled = true;
+                break;
+            }
+        }
+    }
+
+    private void HandleKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.R) return;
+
+        StopSpeechRecognitionAsync().Detach(ToastHost.ToExceptionHandler());
+        e.Handled = true;
+    }
+
+    public async Task StartSpeechRecognitionAsync(CancellationToken cancellationToken = default)
+    {
+        if (ViewModel.SpeechRecognitionInputState is not null) return;
+
+        var state = _speechRecognitionService.TryCreateInputState(SpeechRecognitionActivationKind.Hold);
+        if (state is null) return;
+
+        ViewModel.SpeechRecognitionInputState = state;
+        _holdSpeechRecognitionActivationId = state.ActivationId;
+
+        await _speechRecognitionService.StartSpeechRecognitionAsync(state, cancellationToken: cancellationToken);
+
+        if (ReferenceEquals(ViewModel.SpeechRecognitionInputState, state) && !state.IsActive)
+        {
+            ViewModel.SpeechRecognitionInputState = null;
+        }
+
+        if (_holdSpeechRecognitionActivationId == state.ActivationId)
+        {
+            _holdSpeechRecognitionActivationId = null;
+        }
+    }
+
+    public async Task StopSpeechRecognitionAsync(CancellationToken cancellationToken = default)
+    {
+        var state = ViewModel.SpeechRecognitionInputState;
+        if (state is not { ActivationKind: SpeechRecognitionActivationKind.Hold }) return;
+        if (_holdSpeechRecognitionActivationId != state.ActivationId) return;
+
+        await _speechRecognitionService.StopSpeechRecognitionAsync(state, cancellationToken);
+        if (ReferenceEquals(ViewModel.SpeechRecognitionInputState, state) && !state.IsActive)
+        {
+            ViewModel.SpeechRecognitionInputState = null;
         }
     }
 

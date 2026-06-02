@@ -1,0 +1,90 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:SpeechRecognitionButton}"
+    TargetType="v:SpeechRecognitionButton">
+
+    <Style Selector="^ /template/ Button#PART_Button">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Focusable" Value="False"/>
+
+      <Style Selector="^.NotAvailable">
+        <Setter Property="IsVisible" Value="False"/>
+      </Style>
+
+      <Style Selector="^.Standby">
+        <Setter Property="ToolTip.Tip">
+          <Template>
+            <StackPanel
+              Orientation="Horizontal" Spacing="4">
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.SpeechRecognitionButton_Start_ToolTip}}"/>
+              <v:KeyboardShortcutInputBox
+                Classes="Compact" Padding="0"
+                VerticalAlignment="Center"
+                Background="{x:Null}"
+                BorderThickness="0" IsReadOnly="True"
+                Shortcut="Control+R"/>
+            </StackPanel>
+          </Template>
+        </Setter>
+        <Setter Property="Content">
+          <Template>
+            <LucideIcon
+              Foreground="{DynamicResource PrimaryColor}"
+              Kind="Mic"
+              Size="{DynamicResource FontSizeL}"/>
+          </Template>
+        </Setter>
+      </Style>
+
+      <Style Selector="^.Busy">
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Content">
+          <Template>
+            <shadui:Loading
+              Width="{DynamicResource FontSizeL}"
+              Height="{DynamicResource FontSizeL}"/>
+          </Template>
+        </Setter>
+      </Style>
+
+      <Style Selector="^.Recording">
+        <Setter Property="ToolTip.Tip">
+          <Template>
+            <StackPanel
+              Orientation="Horizontal" Spacing="4">
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.SpeechRecognitionButton_Stop_ToolTip}}"/>
+              <v:KeyboardShortcutInputBox
+                Classes="Compact" Padding="0"
+                VerticalAlignment="Center"
+                Background="{x:Null}"
+                BorderThickness="0" IsReadOnly="True"
+                Shortcut="Control+R"/>
+            </StackPanel>
+          </Template>
+        </Setter>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Content">
+          <Template>
+            <v:RecordingWaveform
+              Height="{DynamicResource FontSize2Xl}"
+              WaveBrush="#D44054"/>
+          </Template>
+        </Setter>
+      </Style>
+    </Style>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Button
+          x:Name="PART_Button" Classes="Ghost Rounded"
+          Command="{TemplateBinding Command}"/>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

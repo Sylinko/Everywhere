@@ -31,4 +31,40 @@
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>使用 Everything 搜索文件。</value>
     </data>
+    <data name="WinRTSpeechRecognitionEngine_Name" xml:space="preserve">
+        <value>Windows 语音识别</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Description" xml:space="preserve">
+        <value>使用 Windows 内置语音识别引擎进行离线听写。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NoSupportedLanguages" xml:space="preserve">
+        <value>未安装可用的 Windows 语音识别语言。请在 Windows 设置中添加语音语言后再使用语音输入。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_UnsupportedLocale" xml:space="preserve">
+        <value>Windows 语音识别不支持 {0}。请在 Windows 设置中安装匹配的语音语言。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_ConstraintCompilationFailed" xml:space="preserve">
+        <value>Windows 语音识别准备失败：{0}</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_MicrophoneUnavailable" xml:space="preserve">
+        <value>麦克风不可用。请检查麦克风权限和设备设置。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_TopicLanguageNotSupported" xml:space="preserve">
+        <value>当前选择的 Windows 语音语言不可用于听写。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NetworkFailure" xml:space="preserve">
+        <value>Windows 语音识别报告网络失败。请检查 Windows 语音设置。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_OpenSettings" xml:space="preserve">
+        <value>打开设置</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_CheckSpeechPrivacyPolicy" xml:space="preserve">
+        <value>为了更好的 Windows 语音识别效果，请在“系统设置-时间和语言-语言和区域-当前语言选项“中安装”增强的语音识别“，并在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_EnableSpeechPrivacyPolicy" xml:space="preserve">
+        <value>Windows 语音识别不可用，需要你在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。</value>
+    </data>
+    <data name="WinRTSpeechRecognitionEngine_Notification_NoMicrophone" xml:space="preserve">
+        <value>未检测到麦克风，语音识别可能无法使用。</value>
+    </data>
 </root>

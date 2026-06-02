@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Everywhere.Media</RootNamespace>
+    <IsDeploymentTarget>true</IsDeploymentTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
