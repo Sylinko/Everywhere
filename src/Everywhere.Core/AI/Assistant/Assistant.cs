@@ -116,7 +116,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [JsonIgnore]
     [SettingsItemIgnore]
 #pragma warning disable CA1822 // Required non-static for binding, TODO: make source generator more robust, use ActualType.StaticProperty instead of Path
-    public string?[] ReasoningEnabledOptions { get; } = [null, "enabled", "disabled"];
+    public string?[] ReasoningEnabledOptions { get; } = [null, "adaptive", "enabled", "disabled"];
 #pragma warning restore CA1822
 
     [ObservableProperty]

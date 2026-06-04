@@ -2675,7 +2675,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Thinking Type (thinking.type)</value>
     </data>
     <data name="Assistant_ThinkingType_Description" xml:space="preserve">
-        <value>For models that support dynamic reasoning toggling, this option can be used to disable model reasoning. Leaving it blank means this parameter will not be included in the request.</value>
+        <value>Sets thinking.type. Leave blank to auto-select by model ID (adaptive for Claude Opus 4.6/4.7/4.8 and Sonnet 4.6, otherwise manual budget). Choose adaptive, enabled, or disabled to force a mode — needed for custom or proxied model names that cannot be auto-detected. Claude Opus 4.7/4.8 only support adaptive.</value>
     </data>
     <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
         <value>Thinking Budget (thinking_budget)</value>

@@ -2676,7 +2676,7 @@
         <value>思考类型 (thinking.type)</value>
     </data>
     <data name="Assistant_ThinkingType_Description" xml:space="preserve">
-        <value>对于支持动态开关思考的模型，可以使用此选项关闭模型思考。留空表示不在请求中包含此参数。</value>
+        <value>设置 thinking.type。留空则按模型 ID 自动选择（Claude Opus 4.6/4.7/4.8 与 Sonnet 4.6 使用 adaptive，其余使用固定预算 manual）。选择 adaptive、enabled 或 disabled 可强制指定模式——适用于无法自动识别的自定义或中转模型名。Claude Opus 4.7/4.8 仅支持 adaptive。</value>
     </data>
     <data name="Assistant_ThinkingBudget_Header" xml:space="preserve">
         <value>思考预算 (thinking_budget)</value>
