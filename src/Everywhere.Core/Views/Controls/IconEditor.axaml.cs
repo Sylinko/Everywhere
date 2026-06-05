@@ -226,7 +226,7 @@ public sealed class IconEditor : TemplatedControl
                     }
                     if (locale == LocaleName.En)
                     {
-                        return null;
+                        return defaultData;
                     }
 
                     var localizedUri = new Uri(
