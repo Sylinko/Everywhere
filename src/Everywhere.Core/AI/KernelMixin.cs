@@ -21,8 +21,6 @@ public abstract class KernelMixin(Assistant assistant, ModelConnection connectio
             new InvalidOperationException("Model ID cannot be empty."),
             HandledChatExceptionType.InvalidConfiguration);
 
-    public bool SupportsReasoning { get; } = assistant.SupportsReasoning;
-
     public bool SupportsToolCall { get; } = assistant.SupportsToolCall;
 
     public bool SupportsTemperature { get; } = assistant.SupportsTemperature;
@@ -44,12 +42,6 @@ public abstract class KernelMixin(Assistant assistant, ModelConnection connectio
 
     protected double? TopP { get; } =
         assistant is { SupportsTemperature: true, TopP.IsCustomValueSet: true } ? assistant.TopP.ActualValue : null;
-
-    protected string? ThinkingType { get; } = assistant.ThinkingType;
-
-    protected string? ReasoningEffort { get; } = assistant.ReasoningEffort;
-
-    protected string? ThinkingBudget { get; } = assistant.ThinkingBudget;
 
     public abstract IChatCompletionService ChatCompletionService { get; }
 

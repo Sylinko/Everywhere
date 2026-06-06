@@ -506,28 +506,28 @@
     <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
         <value>Чем выше значение, тем разнообразнее и богаче словарный запас; чем ниже значение, тем проще и прямолинейнее язык. Эта настройка эффективна только для некоторых моделей. Если возникает ошибка, попробуйте восстановить значение по умолчанию.</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+    <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+    <data name="Assistant_Endpoint_Description" xml:space="preserve">
         <value>Должен начинаться с http:// или https://. Добавьте # в конце, чтобы избежать автоматического добавления суффикса версии.</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+    <data name="Assistant_ApiKey_Header" xml:space="preserve">
         <value>API Key</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+    <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>Если это онлайн-модель, необходимо получить ключ от соответствующего официального источника, подробности смотрите в документации.</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+    <data name="Assistant_InputModalities_Header" xml:space="preserve">
         <value>Входные Модальности</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+    <data name="Assistant_InputModalities_Description" xml:space="preserve">
         <value>Поддерживаемые моделью входные модальности. Неправильный выбор может привести к сбоям.</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Header" xml:space="preserve">
         <value>Поддержка использования инструментов</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Модель поддерживает использование настроенных инструментов. Если модель не поддерживает, включение этой опции может привести к ошибкам в диалоге.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
@@ -536,22 +536,22 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Глубокое Мышление</value>
     </data>
-    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+    <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Поддержка Ввода Изображения</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Description" xml:space="preserve">
         <value>Максимальная длина контекста диалога (context_limit). Это повлияет на стратегию построения визуального контекста, постарайтесь установить реальное значение.</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Максимальный Контекст</value>
     </data>
     <data name="Common_Reset" xml:space="preserve">
         <value>Сброс</value>
     </data>
-    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+    <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>Схема API</value>
     </data>
-    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+    <data name="Assistant_Schema_Description" xml:space="preserve">
         <value>Выберите API протокол. Обратите внимание, что это не всегда связано с моделью, например, Gemini предоставляет совместимый с OpenAI протокол, подробности смотрите в официальной документации соответствующей модели.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
@@ -617,10 +617,10 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Загрузка обновления...</value>
     </data>
-    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+    <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>ID модели</value>
     </data>
-    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+    <data name="Assistant_ModelId_Description" xml:space="preserve">
         <value>Идентификатор модели для вызова API, например, gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
@@ -2017,10 +2017,10 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>Видео</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Header" xml:space="preserve">
         <value>Максимальная длина вывода</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Description" xml:space="preserve">
         <value>Максимальная длина вывода для диалога (output_limit). Это повлияет на параметры запроса модели (особенно Anthropic), пожалуйста, установите максимально точное значение.</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">

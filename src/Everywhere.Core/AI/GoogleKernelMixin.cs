@@ -13,19 +13,22 @@ public sealed class GoogleKernelMixin : KernelMixin
 {
     public override IChatCompletionService ChatCompletionService { get; }
 
+    private readonly GoogleOptions _options;
+
     public GoogleKernelMixin(
         Assistant assistant,
         ModelConnection connection,
         ILoggerFactory loggerFactory
     ) : base(assistant, connection)
     {
+        _options = assistant.GoogleOptions;
+
         var service = new GoogleAIGeminiChatCompletionService(
             ModelId,
             ApiKey ?? "NO_API_KEY",
             httpClient: connection.HttpClient,
             loggerFactory: loggerFactory,
             customEndpoint: new Uri(Endpoint, UriKind.Absolute));
-
         ChatCompletionService = new OptimizedGeminiChatCompletionService(service);
     }
 
@@ -51,15 +54,15 @@ public sealed class GoogleKernelMixin : KernelMixin
         // https://ai.google.dev/gemini-api/docs/thinking
         GeminiThinkingConfig? GetThinkingConfig()
         {
-            if (ThinkingType?.Equals("disabled", StringComparison.OrdinalIgnoreCase) is true) return null;
+            if (!_options.IncludeThoughts) return null;
 
             var thinkingConfig = new GeminiThinkingConfig
             {
                 IncludeThoughts = true
             };
 
-            if (int.TryParse(ThinkingBudget, out var thinkingBudget)) thinkingConfig.ThinkingBudget = thinkingBudget;
-            thinkingConfig.ThinkingLevel = ReasoningEffort;
+            if (int.TryParse(_options.ThinkingBudget, out var thinkingBudget)) thinkingConfig.ThinkingBudget = thinkingBudget;
+            thinkingConfig.ThinkingLevel = _options.ThinkingLevel;
             return thinkingConfig;
         }
     }

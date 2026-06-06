@@ -505,28 +505,28 @@
     <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
         <value>Değer ne kadar yüksekse kelime hazinesi o kadar çeşitli ve zengin olur; değer ne kadar düşükse dil daha basit ve doğrudan olur. Bu ayar yalnızca bazı modeller için etkilidir. Hata alırsanız, varsayılan değeri geri yüklemeyi deneyin.</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+    <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+    <data name="Assistant_Endpoint_Description" xml:space="preserve">
         <value>http:// veya https:// ile başlamalı. Versiyon numarası eklenmesini önlemek için sonuna # ekleyin.</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+    <data name="Assistant_ApiKey_Header" xml:space="preserve">
         <value>API Anahtarı</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+    <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>Çevrimiçi modelse, ilgili resmi kaynaktan alınmalıdır, ayrıntılar için belgeleri kontrol edin.</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+    <data name="Assistant_InputModalities_Header" xml:space="preserve">
         <value>Giriş Modları</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+    <data name="Assistant_InputModalities_Description" xml:space="preserve">
         <value>Modelin desteklediği giriş modları, yanlış seçim çağrının başarısız olmasına neden olabilir.</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Header" xml:space="preserve">
         <value>Araç Kullanım Desteği</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Model yapılandırılmış araçları kullanmayı destekler. Model desteklemiyorsa, bu seçeneği açmak sohbet sırasında hatalara neden olabilir.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
@@ -535,22 +535,22 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Derin Düşünme</value>
     </data>
-    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+    <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Görsel Giriş Desteği</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Description" xml:space="preserve">
         <value>Sohbetin maksimum bağlam uzunluğu (context_limit). Bu, görsel bağlam oluşturma stratejisini etkiler, mümkünse gerçek bir değer olarak ayarlayın.</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Maksimum Bağlam</value>
     </data>
     <data name="Common_Reset" xml:space="preserve">
         <value>Sıfırla</value>
     </data>
-    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+    <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>API Şeması</value>
     </data>
-    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+    <data name="Assistant_Schema_Description" xml:space="preserve">
         <value>API protokolünü seçin. Bu seçeneğin her zaman modelle ilişkili olmadığını unutmayın; örneğin, Gemini OpenAI uyumlu protokol sunar, detaylar için ilgili modelin resmi kullanım kılavuzuna bakın.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
@@ -616,10 +616,10 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Güncelleme indiriliyor...</value>
     </data>
-    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+    <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>Model Kimliği</value>
     </data>
-    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+    <data name="Assistant_ModelId_Description" xml:space="preserve">
         <value>API çağrıları için model kimliği, örneğin gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
@@ -2016,10 +2016,10 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Modalities_Video" xml:space="preserve">
         <value>Video</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Header" xml:space="preserve">
         <value>Maksimum Çıktı Uzunluğu</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Description" xml:space="preserve">
         <value>Diyalogun maksimum çıktı uzunluğu (output_limit). Bu, model isteklerinin parametrelerini (özellikle Anthropic için) etkiler, mümkünse gerçek bir değer olarak ayarlayın.</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">

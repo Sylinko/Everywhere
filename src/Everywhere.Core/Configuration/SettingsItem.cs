@@ -22,6 +22,8 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 
     public bool IsExperimental { get; set; }
 
+    public string? DocumentUrl { get; set; }
+
     public static readonly StyledProperty<object?> ValueProperty =
         AvaloniaProperty.Register<SettingsItem, object?>(nameof(Value), enableDataValidation: true);
 

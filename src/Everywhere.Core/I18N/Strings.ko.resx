@@ -506,28 +506,28 @@
     <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
         <value>값이 높을수록 어휘가 다양하고 풍부해지며, 값이 낮을수록 언어가 단순하고 직관적입니다. 이 설정은 일부 모델에서만 효과적입니다. 오류가 발생하면 기본값으로 복원해 보세요.</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+    <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+    <data name="Assistant_Endpoint_Description" xml:space="preserve">
         <value>http:// 또는 https:// 로 시작해야 하며, 버전 번호가 자동으로 추가되는 것을 방지하려면 끝에 #를 추가하세요.</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+    <data name="Assistant_ApiKey_Header" xml:space="preserve">
         <value>API 키</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+    <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>온라인 모델의 경우, 해당 공식 사이트에서 받아야 합니다. 자세한 내용은 문서를 참조하세요.</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+    <data name="Assistant_InputModalities_Header" xml:space="preserve">
         <value>입력 모달</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+    <data name="Assistant_InputModalities_Description" xml:space="preserve">
         <value>모델이 지원하는 입력 모달입니다. 잘못 선택하면 호출이 실패할 수 있습니다.</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Header" xml:space="preserve">
         <value>도구 사용 지원</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
         <value>모델은 구성된 도구를 사용하여 기능 호출을 지원합니다. 모델이 지원하지 않는 경우 이 옵션을 활성화하면 대화 중 오류가 발생할 수 있습니다.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
@@ -536,22 +536,22 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>심층 사고</value>
     </data>
-    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+    <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>이미지 입력 지원</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Description" xml:space="preserve">
         <value>대화의 최대 컨텍스트 길이 (context_limit). 이 값은 시각적 컨텍스트를 구축하는 전략에 영향을 미치므로 가능한 실제 값으로 설정하세요.</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>최대 컨텍스트</value>
     </data>
     <data name="Common_Reset" xml:space="preserve">
         <value>초기화</value>
     </data>
-    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+    <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>API 스키마</value>
     </data>
-    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+    <data name="Assistant_Schema_Description" xml:space="preserve">
         <value>API 프로토콜을 선택하세요. 이 항목은 항상 모델과 관련이 없으므로, 예를 들어 Gemini는 OpenAI 호환 프로토콜을 제공하며, 구체적인 내용은 해당 모델의 공식 사용 설명서를 참조하세요.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
@@ -617,10 +617,10 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>업데이트 다운로드 중...</value>
     </data>
-    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+    <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>모델 ID</value>
     </data>
-    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+    <data name="Assistant_ModelId_Description" xml:space="preserve">
         <value>API 호출에 사용할 모델 식별자입니다. 예: gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
@@ -2017,10 +2017,10 @@
     <data name="Modalities_Video" xml:space="preserve">
         <value>비디오</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Header" xml:space="preserve">
         <value>최대 출력 길이</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Description" xml:space="preserve">
         <value>대화의 최대 출력 길이 (output_limit). 이 항목은 모델 요청의 매개변수에 영향을 미칩니다 (특히 Anthropic). 가능한 실제 값으로 설정하세요.</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">

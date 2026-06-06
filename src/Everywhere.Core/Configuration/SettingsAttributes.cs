@@ -37,6 +37,11 @@ public class SettingsItemAttribute : Attribute
     /// Marks this settings item as experimental.
     /// </summary>
     public bool IsExperimental { get; set; }
+
+    /// <summary>
+    /// Optional documentation URL for this settings item.
+    /// </summary>
+    public string? DocumentUrl { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]

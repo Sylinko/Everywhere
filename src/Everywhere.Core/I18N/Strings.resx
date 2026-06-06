@@ -506,28 +506,28 @@
     <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
         <value>The higher the value, the more diverse and rich the vocabulary; the lower the value, the simpler and more straightforward the language. This setting is only effective for some models. If you encounter an error, try restoring the default value.</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+    <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+    <data name="Assistant_Endpoint_Description" xml:space="preserve">
         <value>Starts with http:// or https://. Add # at the end to prevent automatic version suffix.</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+    <data name="Assistant_ApiKey_Header" xml:space="preserve">
         <value>API Key</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+    <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>If using an online model, obtain it from the respective official source. Please refer to the documentation for details.</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+    <data name="Assistant_InputModalities_Header" xml:space="preserve">
         <value>Input Modalities</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+    <data name="Assistant_InputModalities_Description" xml:space="preserve">
         <value>Supported input modalities for the model; selecting incorrectly may lead to invocation failure.</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Header" xml:space="preserve">
         <value>Tools Usage Support</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
         <value>The model supports using configured tools. Enabling this option may cause errors during conversation if the model does not support it.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
@@ -536,22 +536,22 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Deep Thinking</value>
     </data>
-    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+    <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Image Input Support</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Description" xml:space="preserve">
         <value>Maximum context length for the conversation (context_limit). This will affect the strategy for building visual context, so please set it to a realistic value.</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Context Length</value>
     </data>
     <data name="Common_Reset" xml:space="preserve">
         <value>Reset</value>
     </data>
-    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+    <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>API Schema</value>
     </data>
-    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+    <data name="Assistant_Schema_Description" xml:space="preserve">
         <value>Select the API protocol. Note that this is not always associated with the model; for example, Gemini provides an OpenAI-compatible protocol, please refer to the official usage instructions for the corresponding model.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
@@ -617,10 +617,10 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Downloading update...</value>
     </data>
-    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+    <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>Model ID</value>
     </data>
-    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+    <data name="Assistant_ModelId_Description" xml:space="preserve">
         <value>The model identifier for API calls, such as gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
@@ -2017,10 +2017,10 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Modalities_Video" xml:space="preserve">
         <value>Video</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Header" xml:space="preserve">
         <value>Maximum Output Length</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Description" xml:space="preserve">
         <value>Maximum output length for the conversation (output_limit). This will affect the parameters for model requests (especially Anthropic), so please set it to a realistic value.</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">
@@ -2724,5 +2724,119 @@ Release date: {2}</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API Key (Optional)</value>
+    </data>
+    <data name="SettingsItem_DocumentHyperlinkButton_ToolTip" xml:space="preserve">
+        <value>Open documentation</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
+        <value>OpenAI-compatible Options</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
+        <value>Configure Chat Completions parameters for OpenAI-compatible providers.</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
+        <value>OpenAI Responses Options</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
+        <value>Configure Responses API reasoning parameters.</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
+        <value>Anthropic Options</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
+        <value>Configure Anthropic Messages API thinking and cache behavior.</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
+        <value>Google Gemini Options</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
+        <value>Configure Gemini thinking parameters.</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Preserve reasoning_content</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Include assistant reasoning_content in later OpenAI-compatible chat messages when the provider requires reasoning state to be returned.</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Header" xml:space="preserve">
+        <value>Thinking Type (thinking.type)</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
+        <value>Optional non-standard OpenAI-compatible switch such as enabled or disabled. Leave blank for default.</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Header" xml:space="preserve">
+        <value>Reasoning Effort (reasoning_effort)</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Description" xml:space="preserve">
+        <value>Optional effort level for reasoning models. Supported values are model-dependent; Leave blank for default.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Reasoning Effort (reasoning.effort)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Guides how much a Responses reasoning model thinks. Values are model-dependent; Leave blank for default.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
+        <value>Reasoning Summary (reasoning.summary)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
+        <value>Request a reasoning summary, such as auto, for models that support summaries. Leave blank for default.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Header" xml:space="preserve">
+        <value>Thinking Mode</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Description" xml:space="preserve">
+        <value>Choose whether to disable thinking, force adaptive thinking, or use Everywhere's default model-aware mode.</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Default" xml:space="preserve">
+        <value>Default</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Disabled" xml:space="preserve">
+        <value>Disabled</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Adaptive" xml:space="preserve">
+        <value>Adaptive</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Header" xml:space="preserve">
+        <value>Thinking Budget Tokens</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Description" xml:space="preserve">
+        <value>Token budget used when Anthropic manual extended thinking is enabled. It must be less than max_tokens.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Header" xml:space="preserve">
+        <value>Thinking Effort</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
+        <value>Soft guidance for Anthropic adaptive thinking depth, such as low, medium, high, xhigh, or max. Leave blank for default.</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
+        <value>Prompt Cache</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Description" xml:space="preserve">
+        <value>Add Anthropic cache_control to reuse stable prompt prefixes and reduce latency/cost on repeated context.</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_Ephemeral" xml:space="preserve">
+        <value>Ephemeral</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_NoCache" xml:space="preserve">
+        <value>No Cache</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>Include Thoughts</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>Return Gemini thought summaries when available.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Header" xml:space="preserve">
+        <value>Thinking Budget</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
+        <value>For Gemini 2.5 models, set thinking token guidance; 0 disables thinking where supported and -1 enables dynamic thinking.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>Thinking Level</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>For Gemini 3 models, set thinking depth such as minimal, low, medium, or high.</value>
     </data>
 </root>

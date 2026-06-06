@@ -506,28 +506,28 @@
     <data name="CustomAssistant_FrequencyPenalty_Description" xml:space="preserve">
         <value>Più alto è il valore, più il vocabolario è vario e ricco; più basso è il valore, più il linguaggio è semplice e diretto. Questa impostazione è efficace solo per alcuni modelli. Se riscontri un errore, prova a ripristinare il valore predefinito.</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Header" xml:space="preserve">
+    <data name="Assistant_Endpoint_Header" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="CustomAssistant_Endpoint_Description" xml:space="preserve">
+    <data name="Assistant_Endpoint_Description" xml:space="preserve">
         <value>Inizia con http:// o https://. Aggiungi # alla fine per evitare l'aggiunta automatica del suffisso della versione.</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Header" xml:space="preserve">
+    <data name="Assistant_ApiKey_Header" xml:space="preserve">
         <value>Chiave API</value>
     </data>
-    <data name="CustomAssistant_ApiKey_Description" xml:space="preserve">
+    <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>Se si tratta di un modello online, è necessario ottenerlo dall'ufficiale corrispondente. Per ulteriori dettagli, consultare la documentazione.</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Header" xml:space="preserve">
+    <data name="Assistant_InputModalities_Header" xml:space="preserve">
         <value>Modalità di Input</value>
     </data>
-    <data name="CustomAssistant_InputModalities_Description" xml:space="preserve">
+    <data name="Assistant_InputModalities_Description" xml:space="preserve">
         <value>Modalità di input supportate dal modello, una selezione errata potrebbe causare il fallimento della chiamata.</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Header" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Header" xml:space="preserve">
         <value>Supporto per Uso Strumenti</value>
     </data>
-    <data name="CustomAssistant_SupportsToolCall_Description" xml:space="preserve">
+    <data name="Assistant_SupportsToolCall_Description" xml:space="preserve">
         <value>Il modello supporta l'uso degli strumenti configurati. Se il modello non lo supporta, attivare questa opzione potrebbe causare errori durante la conversazione.</value>
     </data>
     <data name="CustomAssistant_SupportsReasoning_Description" xml:space="preserve">
@@ -536,22 +536,22 @@
     <data name="CustomAssistant_SupportsReasoning_Header" xml:space="preserve">
         <value>Pensiero Profondo</value>
     </data>
-    <data name="CustomAssistant_SupportsImage_Header" xml:space="preserve">
+    <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Supporto Input Immagine</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Description" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Description" xml:space="preserve">
         <value>Lunghezza massima del contesto della conversazione (context_limit). Questo influenzerà la strategia per costruire il contesto visivo, impostalo il più possibile su un valore reale.</value>
     </data>
-    <data name="CustomAssistant_ContextLimit_Header" xml:space="preserve">
+    <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Massimo Contesto</value>
     </data>
     <data name="Common_Reset" xml:space="preserve">
         <value>Ripristina</value>
     </data>
-    <data name="CustomAssistant_Schema_Header" xml:space="preserve">
+    <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>Schema API</value>
     </data>
-    <data name="CustomAssistant_Schema_Description" xml:space="preserve">
+    <data name="Assistant_Schema_Description" xml:space="preserve">
         <value>Seleziona il protocollo API. Tieni presente che questo non è sempre associato al modello, ad esempio Gemini fornirà un protocollo compatibile con OpenAI, per dettagli consulta le istruzioni ufficiali del modello corrispondente.</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Header" xml:space="preserve">
@@ -617,10 +617,10 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Scaricamento aggiornamento...</value>
     </data>
-    <data name="CustomAssistant_ModelId_Header" xml:space="preserve">
+    <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>ID Modello</value>
     </data>
-    <data name="CustomAssistant_ModelId_Description" xml:space="preserve">
+    <data name="Assistant_ModelId_Description" xml:space="preserve">
         <value>Identificatore del modello per le chiamate API, ad esempio gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
@@ -2017,10 +2017,10 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="Modalities_Video" xml:space="preserve">
         <value>Video</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Header" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Header" xml:space="preserve">
         <value>Limite Di Output Massimo</value>
     </data>
-    <data name="CustomAssistant_OutputLimit_Description" xml:space="preserve">
+    <data name="Assistant_OutputLimit_Description" xml:space="preserve">
         <value>Lunghezza massima dell'output della conversazione (output_limit). Questo influenzerà i parametri della richiesta del modello (soprattutto per Anthropic), impostalo su un valore realistico se possibile.</value>
     </data>
     <data name="UserProfilePresenter_CancelLoginButton_Content" xml:space="preserve">

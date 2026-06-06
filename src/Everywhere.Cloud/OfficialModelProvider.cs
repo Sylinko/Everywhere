@@ -9,7 +9,6 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Microsoft.Extensions.Logging;
 using ZLinq;
 
@@ -150,7 +149,6 @@ public sealed partial class OfficialModelProvider :
     /// </summary>
     /// <param name="ModelId"></param>
     /// <param name="Name"></param>
-    /// <param name="SupportsReasoning"></param>
     /// <param name="SupportsToolCall"></param>
     /// <param name="Modalities"></param>
     /// <param name="LimitInfo"></param>
@@ -159,7 +157,6 @@ public sealed partial class OfficialModelProvider :
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("icon")] string Icon,
         [property: JsonPropertyName("description")] JsonDynamicResourceKey? DescriptionKey,
-        [property: JsonPropertyName("reasoning")] bool SupportsReasoning,
         [property: JsonPropertyName("toolCall")] bool SupportsToolCall,
         [property: JsonPropertyName("temperature")] bool SupportsTemperature,
         [property: JsonPropertyName("knowledge")] string? KnowledgeCutoff,
@@ -176,7 +173,6 @@ public sealed partial class OfficialModelProvider :
             {
                 ModelId = ModelId,
                 Name = Name,
-                SupportsReasoning = SupportsReasoning,
                 SupportsToolCall = SupportsToolCall,
                 KnowledgeCutoff = DateOnly.TryParse(KnowledgeCutoff, out var knowledgeDate) ? knowledgeDate : null,
                 ReleaseDate = DateOnly.TryParse(ReleaseDate, out var releaseDate) ? releaseDate : null,

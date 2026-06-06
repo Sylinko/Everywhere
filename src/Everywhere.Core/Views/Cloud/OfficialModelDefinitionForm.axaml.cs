@@ -302,7 +302,6 @@ public partial class OfficialModelDefinitionForm(IServiceProvider serviceProvide
         {
             ModelId = modelId,
             Name = modelId,
-            SupportsReasoning = assistant.SupportsReasoning,
             SupportsToolCall = assistant.SupportsToolCall,
             SupportsTemperature = assistant.SupportsTemperature,
             InputModalities = assistant.InputModalities,

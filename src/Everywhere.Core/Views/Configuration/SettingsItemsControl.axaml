@@ -227,6 +227,15 @@
                     Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
                     IsVisible="{Binding IsExperimental}"
                     ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
+                  <HyperlinkButton
+                    MinHeight="0" Padding="0"
+                    IsVisible="{Binding DocumentUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    NavigateUri="{Binding DocumentUrl}"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.SettingsItem_DocumentHyperlinkButton_ToolTip}}">
+                    <LucideIcon
+                      VerticalAlignment="Center" Kind="ExternalLink"
+                      Size="{DynamicResource FontSizeM}"/>
+                  </HyperlinkButton>
                 </StackPanel>
                 <TextBlock
                   x:Name="DescriptionTextBlock" Classes="Muted Caption"

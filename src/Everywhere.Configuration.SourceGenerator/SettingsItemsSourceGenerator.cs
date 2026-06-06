@@ -421,6 +421,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine("});");
 
             ApplyHeaderAndDescription(sb, wrapperItemName, metadata);
+            ApplySettingsItemDocumentUrl(sb, wrapperItemName, metadata);
 
             // Replace itemName with the wrapper
             itemName = wrapperItemName;
@@ -572,6 +573,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine($"{itemName}.IsExperimental = {isExperimental.ToString().ToLowerInvariant()};");
         }
 
+        ApplySettingsItemDocumentUrl(sb, itemName, metadata);
+
         if (settingsItemAttribute.GetNamedArgument("IsEnabledBindingPath") is { IsNull: false, Value: string isEnabledBindingPath })
         {
             sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsEnabledProperty] = ");
@@ -583,6 +586,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsVisibleProperty] = ");
             EmitBinding(sb, isVisibleBindingPath, BindingMode.OneWay).AppendLine(";");
         }
+    }
+
+    private static void ApplySettingsItemDocumentUrl(
+        IndentedStringBuilder sb,
+        string itemName,
+        in PropertyMetadata metadata)
+    {
+        if (metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsItem) is not { } settingsItemAttribute) return;
+        if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is not { IsNull: false, Value: string documentUrl }) return;
+
+        sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
     }
 
     private static void ApplySettingsItems(

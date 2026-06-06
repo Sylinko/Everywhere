@@ -22,12 +22,16 @@ public class OpenAIKernelMixin : KernelMixin
 {
     public override IChatCompletionService ChatCompletionService { get; }
 
+    private readonly OpenAIOptions _options;
+
     public OpenAIKernelMixin(
         Assistant assistant,
         ModelConnection connection,
         ILoggerFactory loggerFactory
     ) : base(assistant, connection)
     {
+        _options = assistant.OpenAIOptions;
+
         // Some models don't need API key (e.g. LM Studio, Official mode)
         AuthenticationPolicy authenticationPolicy = ApiKey.IsNullOrWhiteSpace() ?
             new NoneAuthenticationPolicy() :
@@ -110,8 +114,7 @@ public class OpenAIKernelMixin : KernelMixin
         /// </summary>
         private void BeforeStreamingRequestHook(List<ChatMessage> messages, ref ChatOptions? options)
         {
-            // If deep thinking is not supported, skip processing.
-            if (!owner.SupportsReasoning) return;
+            if (!owner._options.IncludeReasoningContent) return;
 
             options ??= new ChatOptions();
             options.AdditionalProperties ??= new AdditionalPropertiesDictionary();
@@ -133,17 +136,19 @@ public class OpenAIKernelMixin : KernelMixin
 
         private ChatCompletionOptions RawRepresentationFactory(IChatClient _)
         {
+            var options = owner._options;
+
             var thinkingPatch = new JsonPatch();
-            if (owner.ThinkingType is { Length: > 0 })
+            if (options.ThinkingType is { Length: > 0 })
             {
                 thinkingPatch.Set(
                     "$.thinking"u8,
-                    Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { type = owner.ThinkingType })));
+                    Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { type = options.ThinkingType })));
             }
 
             return new ChatCompletionOptions
             {
-                ReasoningEffortLevel = owner.ReasoningEffort switch
+                ReasoningEffortLevel = options.ReasoningEffortLevel switch
                 {
                     { Length: > 0 } reasoningEffort => new ChatReasoningEffortLevel?(reasoningEffort),
                     _ => null

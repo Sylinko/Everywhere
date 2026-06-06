@@ -28,7 +28,6 @@ public static class TelemetryExtensions
                 new KeyValuePair<string, object?>("gen_ai.operation.name", operationName),
                 new KeyValuePair<string, object?>("gen_ai.request.model", modelDefinition.ModelId),
                 new KeyValuePair<string, object?>("gen_ai.request.supports_image", modelDefinition.InputModalities.SupportsImage),
-                new KeyValuePair<string, object?>("gen_ai.request.supports_reasoning", modelDefinition.SupportsReasoning),
                 new KeyValuePair<string, object?>("gen_ai.request.supports_tool", modelDefinition.SupportsToolCall),
                 new KeyValuePair<string, object?>("gen_ai.request.context_limit", modelDefinition.ContextLimit),
             ];

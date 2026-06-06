@@ -9,11 +9,6 @@ public interface IModelDefinition
     string? ModelId { get; }
 
     /// <summary>
-    /// Whether the model is capable of reasoning (deep thinking).
-    /// </summary>
-    bool SupportsReasoning { get; }
-
-    /// <summary>
     /// Whether the model supports function/tool calling.
     /// </summary>
     bool SupportsToolCall { get; }

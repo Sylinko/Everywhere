@@ -14,6 +14,7 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
 {
     public override IChatCompletionService ChatCompletionService { get; }
 
+    private readonly AnthropicOptions _options;
     private readonly OptimizedChatClient _client;
 
     /// <summary>
@@ -21,6 +22,8 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
     /// </summary>
     public AnthropicKernelMixin(Assistant assistant, ModelConnection connection) : base(assistant, connection)
     {
+        _options = assistant.AnthropicOptions;
+
         _client = new OptimizedChatClient(
             new AnthropicClient(
                 new ClientOptions
@@ -45,15 +48,13 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
     {
         private readonly AnthropicKernelMixin _owner;
         private readonly bool _isClaude;
-        private readonly bool _isClaude46;
-        private readonly bool _isClaude47;
+        private readonly bool _isAdaptiveReasoningSupported;
 
         public OptimizedChatClient(IChatClient originalClient, AnthropicKernelMixin owner) : base(originalClient)
         {
             _owner = owner;
             _isClaude = owner.ModelId.Contains("claude", StringComparison.OrdinalIgnoreCase);
-            _isClaude46 = _isClaude && Claude46Regex().IsMatch(owner.ModelId);
-            _isClaude47 = _isClaude && Claude47Regex().IsMatch(owner.ModelId);
+            _isAdaptiveReasoningSupported = IsAdaptiveReasoningSupported(_isClaude, owner.ModelId);
         }
 
         private void BuildOptions(ref ChatOptions? options)
@@ -67,56 +68,47 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
 
         private MessageCreateParams RawRepresentationFactory(IChatClient _)
         {
-            var maxTokens = _owner.OutputLimit switch
-            {
-                > 0 => _owner.OutputLimit,
-                _ => 4096,
-            };
+            var options = _owner._options;
 
             ThinkingConfigParam thinkingConfigParam;
-            if (_owner.ThinkingType?.Equals("disabled", StringComparison.OrdinalIgnoreCase) is true)
+            if (options.ThinkingConfig == AnthropicRequestThinkingConfig.Disabled)
             {
                 thinkingConfigParam = new ThinkingConfigParam(new ThinkingConfigDisabled());
             }
+            else if (options.ThinkingConfig == AnthropicRequestThinkingConfig.Adaptive || _isAdaptiveReasoningSupported)
+            {
+                thinkingConfigParam = new ThinkingConfigParam(new ThinkingConfigAdaptive());
+            }
             else
             {
-                // Only Claude 4.6 and 4.7 supports adaptive and don't support budgetTokens so we ignore ThinkingBudget for them.
-                if (_isClaude46 || _isClaude47)
-                {
-                    thinkingConfigParam = new ThinkingConfigParam(new ThinkingConfigAdaptive());
-                }
-                else
-                {
-                    if (!long.TryParse(_owner.ThinkingBudget, out var budgetTokens))
+                thinkingConfigParam = new ThinkingConfigParam(
+                    new ThinkingConfigEnabled
                     {
-                        budgetTokens = -1L;
-                    }
-
-                    thinkingConfigParam = new ThinkingConfigParam(
-                        new ThinkingConfigEnabled
-                        {
-                            BudgetTokens = Math.Max(budgetTokens, 2048)
-                        });
-                }
+                        BudgetTokens = Math.Max(options.BudgetTokens, 2048)
+                    });
             }
 
             OutputConfig? outputConfig = null;
-            if (_owner.ReasoningEffort is { Length: > 0 } reasoningEffort)
+            if (options.ThinkingEffort is { Length: > 0 } effort)
             {
                 outputConfig = new OutputConfig
                 {
-                    Effort = reasoningEffort
+                    Effort = effort
                 };
             }
 
             return new MessageCreateParams
             {
-                MaxTokens = maxTokens,
+                MaxTokens = _owner.OutputLimit switch
+                {
+                    > 0 => _owner.OutputLimit,
+                    _ => 4096,
+                },
                 Messages = [], // Leave empty and underlying implementation will handle it
                 Model = _owner.ModelId,
                 Thinking = thinkingConfigParam,
                 OutputConfig = outputConfig,
-                CacheControl = new CacheControlEphemeral()
+                CacheControl = options.CacheControl is AnthropicRequestCacheControl.Ephemeral ? new CacheControlEphemeral() : null
             };
         }
 
@@ -159,22 +151,19 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
             return base.GetStreamingResponseAsync(PreprocessMessages(messages), options, cancellationToken);
         }
 
-        /// <summary>
-        /// Check if the model is Claude Opus 4.6
-        /// Supports various formats including:
-        /// - Direct API: claude-opus-4-6
-        /// - AWS Bedrock: anthropic.claude-opus-4-6-v1
-        /// - GCP Vertex AI: claude-opus-4-6
-        /// </summary>
-        [GeneratedRegex(@"(?:anthropic\.)?claude-(?:opus|sonnet)-4[.-]6(?:[@\-:][\w\-:]+)?$")]
-        private static partial Regex Claude46Regex();
-        
-        /// <summary>
-        /// Check if the model is Claude Opus 4.7.
-        /// 4.7 rejects temperature/top_p/top_k and natively supports xhigh reasoning effort.
-        /// </summary>
-        /// <returns></returns>
-        [GeneratedRegex(@"(?:anthropic\.)?claude-opus-4[.-]7(?:[@\-:][\w\-:]+)?$")]
-        private static partial Regex Claude47Regex();
+        private static bool IsAdaptiveReasoningSupported(bool isClaude, string modelId)
+        {
+            if (!isClaude) return false;
+
+            var match = ClaudeVersionRegex().Match(modelId);
+            if (!match.Success) return true;
+
+            var major = int.Parse(match.Groups["major"].Value);
+            var minor = match.Groups["minor"].Success ? int.Parse(match.Groups["minor"].Value) : 0;
+            return major > 4 || major == 4 && minor >= 6;
+        }
+
+        [GeneratedRegex(@"claude-(?:(?:opus|sonnet|haiku)-)?(?<major>\d+)(?:[.-](?<minor>\d)(?=$|[@\-:.]))?(?:-(?:opus|sonnet|haiku))?", RegexOptions.IgnoreCase)]
+        private static partial Regex ClaudeVersionRegex();
     }
 }

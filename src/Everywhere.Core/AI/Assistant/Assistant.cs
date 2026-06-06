@@ -22,15 +22,12 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     [ObservableProperty]
     [SettingsItemIgnore]
+    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic))]
     public partial ModelProviderSchema Schema { get; set; }
 
     [ObservableProperty]
     [SettingsItemIgnore]
     public partial string? ModelId { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial bool SupportsReasoning { get; set; }
 
     [ObservableProperty]
     [SettingsItemIgnore]
@@ -97,56 +94,55 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
-    [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature))]
     [SettingsDoubleItem(Min = 0.0, Max = 2.0, Step = 0.01)]
-    public partial Customizable<double> Temperature { get; set; } = 1.0;
+    public Customizable<double> Temperature { get; } = new(1.0);
 
-    [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(SupportsTemperature))]
     [SettingsDoubleItem(Min = 0.0, Max = 1.0, Step = 0.01)]
-    public partial Customizable<double> TopP { get; set; } = 0.9;
+    public Customizable<double> TopP { get; } = new(0.9);
 
-    [JsonIgnore]
-    [SettingsItemIgnore]
-#pragma warning disable CA1822 // Required non-static for binding, TODO: make source generator more robust, use ActualType.StaticProperty instead of Path
-    public string?[] ReasoningEnabledOptions { get; } = [null, "enabled", "disabled"];
-#pragma warning restore CA1822
+    public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
 
-    [ObservableProperty]
     [DynamicResourceKey(
-        LocaleKey.Assistant_ThinkingType_Header,
-        LocaleKey.Assistant_ThinkingType_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(SupportsReasoning))]
-    [SettingsSelectionItem(nameof(ReasoningEnabledOptions))]
-    public partial string? ThinkingType { get; set; }
+        LocaleKey.Assistant_OpenAIOptions_Header,
+        LocaleKey.Assistant_OpenAIOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI))]
+    [SettingsItems]
+    public OpenAIOptions OpenAIOptions { get; } = new();
 
-    [JsonIgnore]
-    [SettingsItemIgnore]
-#pragma warning disable CA1822 // Required non-static for binding
-    public string?[] DefaultReasoningEffortOptions { get; } = [null, "auto", "minimal", "low", "medium", "high", "xhigh", "max"];
-#pragma warning restore CA1822
+    public bool IsOpenAIResponses => Schema == ModelProviderSchema.OpenAIResponses;
 
-    [ObservableProperty]
     [DynamicResourceKey(
-        LocaleKey.Assistant_ReasoningEffort_Header,
-        LocaleKey.Assistant_ReasoningEffort_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(SupportsReasoning))]
-    [SettingsSelectionItem(nameof(DefaultReasoningEffortOptions), IsEditable = true)]
-    public partial string? ReasoningEffort { get; set; }
+        LocaleKey.Assistant_OpenAIResponsesOptions_Header,
+        LocaleKey.Assistant_OpenAIResponsesOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses))]
+    [SettingsItems]
+    public OpenAIResponsesOptions OpenAIResponsesOptions { get; } = new();
 
-    [ObservableProperty]
+    public bool IsAnthropic => Schema == ModelProviderSchema.Anthropic;
+
     [DynamicResourceKey(
-        LocaleKey.Assistant_ThinkingBudget_Header,
-        LocaleKey.Assistant_ThinkingBudget_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(SupportsReasoning))]
-    public partial string? ThinkingBudget { get; set; }
+        LocaleKey.Assistant_AnthropicOptions_Header,
+        LocaleKey.Assistant_AnthropicOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic))]
+    [SettingsItems]
+    public AnthropicOptions AnthropicOptions { get; } = new();
+
+    public bool IsGoogle => Schema == ModelProviderSchema.Google;
+
+    [DynamicResourceKey(
+        LocaleKey.Assistant_GoogleOptions_Header,
+        LocaleKey.Assistant_GoogleOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle))]
+    [SettingsItems]
+    public GoogleOptions GoogleOptions { get; } = new();
 
     private readonly OfficialAssistantConfigurator _officialConfigurator;
     private readonly PresetBasedAssistantConfigurator _presetBasedConfigurator;
@@ -187,7 +183,6 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
         if (modelDefinitionTemplate is not null)
         {
             ModelId = modelDefinitionTemplate.ModelId;
-            SupportsReasoning = modelDefinitionTemplate.SupportsReasoning;
             SupportsToolCall = modelDefinitionTemplate.SupportsToolCall;
             SupportsTemperature = modelDefinitionTemplate.SupportsTemperature;
             InputModalities = modelDefinitionTemplate.InputModalities;
@@ -200,7 +195,6 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
         else
         {
             ModelId = string.Empty;
-            SupportsReasoning = false;
             SupportsToolCall = false;
             SupportsTemperature = true;
             InputModalities = default;

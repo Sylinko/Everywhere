@@ -1,5 +1,4 @@
-﻿using Everywhere.I18N;
-using MessagePack;
+﻿using MessagePack;
 
 namespace Everywhere.AI;
 
@@ -14,9 +13,6 @@ public sealed partial record ModelDefinitionTemplate : IModelDefinition
 
     [Key(1)]
     public required string? Name { get; init; }
-
-    [Key(2)]
-    public required bool SupportsReasoning { get; init; }
 
     [Key(3)]
     public required bool SupportsToolCall { get; init; }

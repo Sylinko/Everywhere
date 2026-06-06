@@ -29,8 +29,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     }
 
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_Endpoint_Header,
-        LocaleKey.CustomAssistant_Endpoint_Description)]
+        LocaleKey.Assistant_Endpoint_Header,
+        LocaleKey.Assistant_Endpoint_Description)]
     public SettingsControl<PreviewEndpointTextBox> PreviewEndpointControl => new(
         new PreviewEndpointTextBox
         {
@@ -62,8 +62,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
 
     [JsonIgnore]
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_ApiKey_Header,
-        LocaleKey.CustomAssistant_ApiKey_Description)]
+        LocaleKey.Assistant_ApiKey_Header,
+        LocaleKey.Assistant_ApiKey_Description)]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
@@ -75,8 +75,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
         });
 
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_Schema_Header,
-        LocaleKey.CustomAssistant_Schema_Description)]
+        LocaleKey.Assistant_Schema_Header,
+        LocaleKey.Assistant_Schema_Description)]
     public ModelProviderSchema Schema
     {
         get => owner.Schema;
@@ -90,8 +90,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     }
 
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_ModelId_Header,
-        LocaleKey.CustomAssistant_ModelId_Description)]
+        LocaleKey.Assistant_ModelId_Header,
+        LocaleKey.Assistant_ModelId_Description)]
     [Required, MinLength(1)]
     public string? ModelId
     {
@@ -100,17 +100,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     }
 
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_SupportsReasoning_Header,
-        LocaleKey.CustomAssistant_SupportsReasoning_Description)]
-    public bool SupportsReasoning
-    {
-        get => owner.SupportsReasoning;
-        set => owner.SupportsReasoning = value;
-    }
-
-    [DynamicResourceKey(
-        LocaleKey.CustomAssistant_SupportsToolCall_Header,
-        LocaleKey.CustomAssistant_SupportsToolCall_Description)]
+        LocaleKey.Assistant_SupportsToolCall_Header,
+        LocaleKey.Assistant_SupportsToolCall_Description)]
     public bool SupportsToolCall
     {
         get => owner.SupportsToolCall;
@@ -118,8 +109,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     }
 
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_InputModalities_Header,
-        LocaleKey.CustomAssistant_InputModalities_Description)]
+        LocaleKey.Assistant_InputModalities_Header,
+        LocaleKey.Assistant_InputModalities_Description)]
     public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(
         new ModalitiesSelector
         {
@@ -134,8 +125,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     /// Maximum number of tokens that the model can process in a single request.
     /// </summary>
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_ContextLimit_Header,
-        LocaleKey.CustomAssistant_ContextLimit_Description)]
+        LocaleKey.Assistant_ContextLimit_Header,
+        LocaleKey.Assistant_ContextLimit_Description)]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int ContextLimit
     {
@@ -147,8 +138,8 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     /// Maximum number of tokens that the model can output in a single request.
     /// </summary>
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_OutputLimit_Header,
-        LocaleKey.CustomAssistant_OutputLimit_Description)]
+        LocaleKey.Assistant_OutputLimit_Header,
+        LocaleKey.Assistant_OutputLimit_Description)]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int OutputLimit
     {
@@ -162,7 +153,6 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
         Backup(Endpoint);
         Backup(ModelId);
         Backup(SupportsToolCall);
-        Backup(SupportsReasoning);
         Backup(owner.InputModalities);
         Backup(owner.OutputModalities);
         Backup(ContextLimit);
@@ -178,7 +168,6 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
         Endpoint = Restore(Endpoint);
         ModelId = Restore(ModelId);
         SupportsToolCall = Restore(SupportsToolCall);
-        SupportsReasoning = Restore(SupportsReasoning);
         owner.InputModalities = Restore(owner.InputModalities);
         owner.OutputModalities = Restore(owner.OutputModalities);
         ContextLimit = Restore(ContextLimit);

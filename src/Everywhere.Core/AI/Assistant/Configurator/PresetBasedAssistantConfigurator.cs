@@ -63,8 +63,8 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
 
     [JsonIgnore]
     [DynamicResourceKey(
-        LocaleKey.CustomAssistant_ApiKey_Header,
-        LocaleKey.CustomAssistant_ApiKey_Description)]
+        LocaleKey.Assistant_ApiKey_Header,
+        LocaleKey.Assistant_ApiKey_Description)]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {

@@ -98,10 +98,6 @@ public class PresetModelProviderTemplatesTest
     {
         var diff = new List<string>();
 
-        // Boolean: reasoning
-        if (remote.Reasoning is not null && local.SupportsReasoning != remote.Reasoning.Value)
-            diff.Add($"SupportsReasoning: {local.SupportsReasoning}, Expected {remote.Reasoning.Value}");
-
         // Boolean: tool_call
         if (remote.ToolCall is not null && local.SupportsToolCall != remote.ToolCall.Value)
             diff.Add($"SupportsToolCall: {local.SupportsToolCall}, Expected {remote.ToolCall.Value}");

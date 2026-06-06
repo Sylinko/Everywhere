@@ -137,29 +137,23 @@
         <shadui:Badge
           Background="Chocolate"
           IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsImage_Header}}">
+          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
           <LucideIcon Kind="Eye"/>
         </shadui:Badge>
         <shadui:Badge
           Background="CadetBlue"
           IsVisible="{Binding SupportsToolCall}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsToolCall_Header}}">
+          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
           <LucideIcon Kind="Hammer"/>
-        </shadui:Badge>
-        <shadui:Badge
-          Background="ForestGreen"
-          IsVisible="{Binding SupportsReasoning}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsReasoning_Header}}">
-          <LucideIcon Kind="Brain"/>
         </shadui:Badge>
         <shadui:Badge
           Padding="6,0" Background="MediumSlateBlue">
           <ToolTip.Tip>
             <TextBlock>
-              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
+              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
               <Run Text="{Binding ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
               <LineBreak/>
-              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputLimit_Header}}"/>
+              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
               <Run Text="{Binding OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
             </TextBlock>
           </ToolTip.Tip>

@@ -17,12 +17,16 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
 {
     public override IChatCompletionService ChatCompletionService { get; }
 
+    private readonly OpenAIResponsesOptions _options;
+
     public OpenAIResponsesKernelMixin(
         Assistant assistant,
         ModelConnection connection,
         ILoggerFactory loggerFactory
     ) : base(assistant, connection)
     {
+        _options = assistant.OpenAIResponsesOptions;
+
         ChatCompletionService = new OptimizedChatClient(
             new ResponsesClient(
                 new ApiKeyCredential(ApiKey ?? "NO_API_KEY"),
@@ -76,19 +80,29 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
 
         private CreateResponseOptions? RawRepresentationFactory(IChatClient _)
         {
-            if (!owner.SupportsReasoning) return null;
-            if (owner.ThinkingType?.Equals("disabled", StringComparison.OrdinalIgnoreCase) is true) return null;
+            var options = owner._options;
+            var reasoningEffortLevel = options.ReasoningEffort switch
+            {
+                { Length: > 0 } => new ResponseReasoningEffortLevel(options.ReasoningEffort),
+                _ => (ResponseReasoningEffortLevel?)null
+            };
+            var reasoningSummaryVerbosity = options.ReasoningSummary switch
+            {
+                { Length: > 0 } => new ResponseReasoningSummaryVerbosity(options.ReasoningSummary),
+                _ => (ResponseReasoningSummaryVerbosity?)null
+            };
+
+            if (reasoningEffortLevel is null && reasoningSummaryVerbosity is null)
+            {
+                return null;
+            }
 
             return new CreateResponseOptions
             {
                 ReasoningOptions = new ResponseReasoningOptions
                 {
-                    ReasoningEffortLevel = owner.ReasoningEffort switch
-                    {
-                        { Length: > 0 } reasoningEffort => new ResponseReasoningEffortLevel(reasoningEffort),
-                        _ => (ResponseReasoningEffortLevel?)null
-                    },
-                    ReasoningSummaryVerbosity = ResponseReasoningSummaryVerbosity.Auto
+                    ReasoningEffortLevel = reasoningEffortLevel,
+                    ReasoningSummaryVerbosity = reasoningSummaryVerbosity
                 }
             };
         }

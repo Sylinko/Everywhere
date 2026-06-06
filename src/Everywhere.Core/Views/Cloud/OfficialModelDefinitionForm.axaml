@@ -144,29 +144,23 @@
                           <shadui:Badge
                             Background="Chocolate"
                             IsVisible="{Binding Model.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
-                            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsImage_Header}}">
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
                             <LucideIcon Kind="Eye"/>
                           </shadui:Badge>
                           <shadui:Badge
                             Background="CadetBlue"
                             IsVisible="{Binding Model.SupportsToolCall}"
-                            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsToolCall_Header}}">
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
                             <LucideIcon Kind="Hammer"/>
-                          </shadui:Badge>
-                          <shadui:Badge
-                            Background="ForestGreen"
-                            IsVisible="{Binding Model.SupportsReasoning}"
-                            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_SupportsReasoning_Header}}">
-                            <LucideIcon Kind="Brain"/>
                           </shadui:Badge>
                           <shadui:Badge
                             Padding="6,0" Background="MediumSlateBlue">
                             <ToolTip.Tip>
                               <TextBlock>
-                                <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
+                                <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
                                 <Run Text="{Binding Model.ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
                                 <LineBreak/>
-                                <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputLimit_Header}}"/>
+                                <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
                                 <Run Text="{Binding Model.OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
                               </TextBlock>
                             </ToolTip.Tip>
@@ -278,20 +272,11 @@
                     <Border
                       Classes="Header" Grid.Row="0"
                       Grid.Column="0">
-                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_InputModalities_Header}}"/>
+                      <TextBlock Text="{I18N {x:Static LocaleKey.Assistant_InputModalities_Header}}"/>
                     </Border>
                     <Border
                       Grid.Row="0" Grid.Column="1">
                       <v:ModalitiesPresenter Modalities="{Binding SelectedItem.InputModalities, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
-                    </Border>
-                    <Border
-                      Classes="Header" Grid.Row="1"
-                      Grid.Column="0">
-                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_SupportsReasoning_Header}}"/>
-                    </Border>
-                    <Border
-                      Grid.Row="1" Grid.Column="1">
-                      <TextBlock Text="{Binding SelectedItem.SupportsReasoning, Converter={x:Static vc:BooleanToEmojiConverter.Shared}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
                     </Border>
                     <Border
                       Classes="Header" Grid.Row="2"
@@ -332,7 +317,7 @@
                     <Border
                       Classes="Header" Grid.Row="1"
                       Grid.Column="0">
-                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
+                      <TextBlock Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
                     </Border>
                     <Border
                       Grid.Row="1" Grid.Column="1">
@@ -346,10 +331,10 @@
                           ToolTip.Placement="Top">
                           <ToolTip.Tip>
                             <TextBlock>
-                              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_ContextLimit_Header}}"/>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
                               <Run Text="{Binding SelectedItem.ContextLimit, RelativeSource={RelativeSource TemplatedParent}, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
                               <LineBreak/>
-                              <Run Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputLimit_Header}}"/>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
                               <Run Text="{Binding SelectedItem.OutputLimit, RelativeSource={RelativeSource TemplatedParent}, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
                             </TextBlock>
                           </ToolTip.Tip>
@@ -372,7 +357,6 @@
                         Orientation="Horizontal" Spacing="4">
                         <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputPrice_Header}}"/>
                         <LucideIcon
-                          IsVisible="{Binding SelectedItem.SupportsReasoning, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:False}}"
                           Kind="CircleQuestionMark"
                           Size="{DynamicResource FontSizeS}"
                           ToolTip.Placement="Top"
