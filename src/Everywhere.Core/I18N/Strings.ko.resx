@@ -2725,4 +2725,118 @@
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 키 (선택 사항)</value>
     </data>
+    <data name="SettingsItem_DocumentHyperlinkButton_ToolTip" xml:space="preserve">
+        <value>문서 열기</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
+        <value>OpenAI 호환 옵션</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
+        <value>OpenAI 호환 제공자의 Chat Completions 매개변수를 구성합니다.</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
+        <value>OpenAI 응답 옵션</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
+        <value>Responses API의 추론 매개변수를 구성합니다.</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
+        <value>Anthropic 옵션</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
+        <value>Anthropic Messages API의 사고 및 캐시 동작을 구성합니다.</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
+        <value>Google Gemini 옵션</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
+        <value>Gemini 사고 매개변수를 구성합니다.</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>reasoning_content 유지</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>제공자가 추론 상태를 반환하도록 요청할 때, 후속 OpenAI 호환 채팅 메시지에 assistant의 reasoning_content를 포함합니다.</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Header" xml:space="preserve">
+        <value>사고 유형 (thinking.type)</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
+        <value>선택적 OpenAI 호환 비표준 스위치, 예: enabled 또는 disabled. 기본값은 비워 두세요.</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Header" xml:space="preserve">
+        <value>추론 강도 (reasoning_effort)</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Description" xml:space="preserve">
+        <value>추론 모델의 선택적 강도 수준. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>추론 강도 (reasoning.effort)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Responses 추론 모델이 얼마나 많은 사고를 할지 안내합니다. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
+        <value>추론 요약 (reasoning.summary)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
+        <value>지원되는 모델에 대해 추론 요약을 요청합니다. 예: auto. 기본값은 비워 두세요.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Header" xml:space="preserve">
+        <value>사고 모드</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Description" xml:space="preserve">
+        <value>생각을 비활성화하거나, 적응형 생각을 강제하거나, Everywhere의 모델 인식 기본 모드를 사용하세요.</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Default" xml:space="preserve">
+        <value>기본값</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Disabled" xml:space="preserve">
+        <value>생각 비활성화</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Adaptive" xml:space="preserve">
+        <value>적응형 생각</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Header" xml:space="preserve">
+        <value>생각 예산 토큰</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Description" xml:space="preserve">
+        <value>Anthropic 수동 확장 생각이 활성화될 때 사용하는 토큰 예산으로, max_tokens보다 작아야 합니다.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Header" xml:space="preserve">
+        <value>생각 강도</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
+        <value>Anthropic 적응형 생각 깊이에 대한 부드러운 안내로, low, medium, high, xhigh 또는 max를 사용할 수 있습니다. 기본값은 비워두세요.</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
+        <value>프롬프트 캐시</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Description" xml:space="preserve">
+        <value>안정적인 프롬프트 접두사를 재사용하기 위해 Anthropic cache_control을 추가하여 반복적인 컨텍스트의 지연과 비용을 줄이세요.</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_Ephemeral" xml:space="preserve">
+        <value>임시 캐시</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_NoCache" xml:space="preserve">
+        <value>캐시 없음</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>생각 포함</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>사용 가능한 경우 Gemini의 생각 요약을 반환합니다.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Header" xml:space="preserve">
+        <value>생각 예산</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
+        <value>Gemini 2.5 모델의 생각 토큰 안내; 사용 시 0은 생각을 끄고, -1은 동적 생각을 의미합니다.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>생각 수준</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다.</value>
+    </data>
 </root>

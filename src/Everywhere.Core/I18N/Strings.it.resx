@@ -2725,4 +2725,118 @@ Data di rilascio: {2}</value>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Chiave API (opzionale)</value>
     </data>
+    <data name="SettingsItem_DocumentHyperlinkButton_ToolTip" xml:space="preserve">
+        <value>Apri documento</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
+        <value>Opzioni Compatibili OpenAI</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
+        <value>Configura i parametri delle Chat Completions per il fornitore compatibile OpenAI.</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
+        <value>Opzioni Risposte OpenAI</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
+        <value>Configura i parametri di inferenza per l'API Risposte.</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
+        <value>Opzioni Anthropic</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
+        <value>Configura il comportamento di pensiero e caching per l'API Messages di Anthropic.</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
+        <value>Opzioni Google Gemini</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
+        <value>Configura i parametri di pensiero di Gemini.</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Mantieni reasoning_content</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Includi il reasoning_content dell'assistente nei messaggi di chat OpenAI compatibili successivi quando il fornitore richiede di restituire lo stato di inferenza.</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Header" xml:space="preserve">
+        <value>Tipo di Pensiero (thinking.type)</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
+        <value>Interruttore non standard compatibile OpenAI opzionale, ad esempio abilitato o disabilitato. Lasciare vuoto per il valore predefinito.</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Header" xml:space="preserve">
+        <value>Intensità di Inferenza (reasoning_effort)</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Description" xml:space="preserve">
+        <value>Livello di intensità opzionale per il modello di inferenza. I valori supportati dipendono dal modello, lasciare vuoto per il valore predefinito.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensità di Inferenza (reasoning.effort)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Guida il modello di inferenza delle Risposte su quanto pensare. I valori supportati dipendono dal modello, lasciare vuoto per il valore predefinito.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
+        <value>Riepilogo di Inferenza (reasoning.summary)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
+        <value>Richiedi un riepilogo di inferenza per i modelli supportati, ad esempio auto. Lasciare vuoto per il valore predefinito.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Header" xml:space="preserve">
+        <value>Modalità di Pensiero</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Description" xml:space="preserve">
+        <value>Scegli di disabilitare il pensiero, forzare il pensiero adattivo o utilizzare la modalità predefinita di percezione del modello di Everywhere.</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Default" xml:space="preserve">
+        <value>Predefinito</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Disabled" xml:space="preserve">
+        <value>Pensiero Disabilitato</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Adaptive" xml:space="preserve">
+        <value>Pensiero Adattivo</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Header" xml:space="preserve">
+        <value>Token di Budget per il Pensiero</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Description" xml:space="preserve">
+        <value>Budget di token utilizzato quando il pensiero esteso di Anthropic è abilitato, deve essere inferiore a max_tokens.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Header" xml:space="preserve">
+        <value>Intensità del Pensiero</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
+        <value>Guida morbida alla profondità del pensiero adattivo di Anthropic, ad esempio basso, medio, alto, molto alto o massimo. Lascia vuoto per predefinito.</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
+        <value>Cache dei Prompt</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Description" xml:space="preserve">
+        <value>Aggiungi cache_control di Anthropic per riutilizzare prefissi di prompt stabili, riducendo la latenza e i costi del contesto ripetuto.</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_Ephemeral" xml:space="preserve">
+        <value>Cache Temporanea</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_NoCache" xml:space="preserve">
+        <value>Nessuna Cache</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>Includi Pensieri</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>Restituisci un riepilogo dei pensieri di Gemini quando disponibile.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Header" xml:space="preserve">
+        <value>Budget per il Pensiero</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
+        <value>Guida ai token di pensiero per il modello Gemini 2.5; 0 per disabilitare il pensiero, -1 per pensiero dinamico quando supportato.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>Livello di Pensiero</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Profondità del pensiero per il modello Gemini 3, ad esempio minimo, basso, medio o alto.</value>
+    </data>
 </root>

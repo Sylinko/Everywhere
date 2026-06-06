@@ -2724,4 +2724,118 @@ Yayın tarihi: {2}</value>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API Anahtarı (Opsiyonel)</value>
     </data>
+    <data name="SettingsItem_DocumentHyperlinkButton_ToolTip" xml:space="preserve">
+        <value>Belgeyi Aç</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
+        <value>OpenAI Uyumluluk Seçenekleri</value>
+    </data>
+    <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
+        <value>OpenAI uyumlu sağlayıcının Chat Completions parametrelerini yapılandırın.</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
+        <value>OpenAI Yanıt Seçenekleri</value>
+    </data>
+    <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
+        <value>Yanıt API'sinin çıkarım parametrelerini yapılandırın.</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
+        <value>Anthropic Seçenekleri</value>
+    </data>
+    <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
+        <value>Anthropic Messages API'sinin düşünme ve önbellek davranışını yapılandırın.</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
+        <value>Google Gemini Seçenekleri</value>
+    </data>
+    <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
+        <value>Gemini düşünme parametrelerini yapılandırın.</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>reasoning_content'ı Koruyun</value>
+    </data>
+    <data name="OpenAIOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Sağlayıcıdan çıkarım durumu geri döndüğünde, sonraki OpenAI uyumlu sohbet mesajlarında asistanın reasoning_content'ını dahil edin.</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Header" xml:space="preserve">
+        <value>Düşünme Türü (thinking.type)</value>
+    </data>
+    <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
+        <value>OpenAI uyumlu isteğe bağlı standart dışı anahtarlar, örneğin enabled veya disabled. Varsayılan olarak boş bırakın.</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Header" xml:space="preserve">
+        <value>Çıkarım Gücü (reasoning_effort)</value>
+    </data>
+    <data name="OpenAIOptions_ReasoningEffortLevel_Description" xml:space="preserve">
+        <value>Çıkarım modelinin isteğe bağlı güç seviyesi. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Çıkarım Gücü (reasoning.effort)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Yanıt çıkarım modelinin ne kadar düşünce harcaması gerektiğini yönlendirin. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın.</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
+        <value>Çıkarım Özeti (reasoning.summary)</value>
+    </data>
+    <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
+        <value>Desteklenen modeller için çıkarım özeti talep edin, örneğin auto. Varsayılan olarak boş bırakın.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Header" xml:space="preserve">
+        <value>Düşünme Modu</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingConfig_Description" xml:space="preserve">
+        <value>Düşünmeyi devre dışı bırakmayı, adaptif düşünmeyi zorlamayı veya Everywhere'ın model algılama varsayılan modunu kullanmayı seçin.</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Default" xml:space="preserve">
+        <value>Varsayılan</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Disabled" xml:space="preserve">
+        <value>Düşünmeyi Devre Dışı Bırak (Disabled)</value>
+    </data>
+    <data name="AnthropicRequestThinkingConfig_Adaptive" xml:space="preserve">
+        <value>Adaptif Düşünme (Adaptive)</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Header" xml:space="preserve">
+        <value>Düşünme Bütçesi Token'ları</value>
+    </data>
+    <data name="AnthropicOptions_BudgetTokens_Description" xml:space="preserve">
+        <value>Anthropic manuel genişletilmiş düşünme etkin olduğunda kullanılan token bütçesi, max_tokens'tan küçük olmalıdır.</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Header" xml:space="preserve">
+        <value>Düşünme Yoğunluğu</value>
+    </data>
+    <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
+        <value>Anthropic adaptif düşünme derinliğinin yumuşak rehberliği, örneğin düşük, orta, yüksek, çok yüksek veya maksimum. Varsayılan olarak boş bırakın.</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
+        <value>İpucu Önbelleği</value>
+    </data>
+    <data name="AnthropicOptions_CacheControl_Description" xml:space="preserve">
+        <value>Tekrar eden bağlamın gecikmesini ve maliyetini azaltmak için kararlı ipucu ön eklerini yeniden kullanmak üzere Anthropic cache_control ekleyin.</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_Ephemeral" xml:space="preserve">
+        <value>Geçici Önbellek (Ephemeral)</value>
+    </data>
+    <data name="AnthropicRequestCacheControl_NoCache" xml:space="preserve">
+        <value>Önbellek Yok</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Header" xml:space="preserve">
+        <value>Düşünceleri Dahil Et</value>
+    </data>
+    <data name="GoogleOptions_IncludeThoughts_Description" xml:space="preserve">
+        <value>Mevcut olduğunda Gemini'nin düşünce özetini döndürün.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Header" xml:space="preserve">
+        <value>Düşünme Bütçesi</value>
+    </data>
+    <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
+        <value>Gemini 2.5 modelinin düşünme token yönlendirmesi; destekleniyorsa 0 düşünmeyi kapatır, -1 dinamik düşünmeyi ifade eder.</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
+        <value>Düşünme Seviyesi</value>
+    </data>
+    <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
+        <value>Gemini 3 modelinin düşünme derinliği, örneğin minimal, düşük, orta veya yüksek.</value>
+    </data>
 </root>
