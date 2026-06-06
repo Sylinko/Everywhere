@@ -14,21 +14,21 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
-        <value />
+        <value>Permite a execução de scripts PowerShell, permitindo interações diretas com o sistema, mas também é perigoso e pode causar exclusões acidentais de arquivos ou falhas no sistema.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value />
+        <value>Everything</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value />
+        <value>Use o Everything (um mecanismo de busca de arquivos local de alto desempenho) para procurar arquivos no computador.</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value />
+        <value>Pesquisar Arquivos com Everything</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value />
+        <value>Encontrados {0} itens</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value />
+        <value>Pesquise arquivos usando o Everything.</value>
     </data>
 </root>

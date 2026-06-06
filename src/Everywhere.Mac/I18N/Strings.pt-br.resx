@@ -14,126 +14,126 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="MacOS_PermissionHelper_PleaseGrantAccessibilityPermission" xml:space="preserve">
-        <value />
+        <value>Por favor, conceda permissão ao Everywhere em 'Configurações do Sistema &gt; Privacidade e Segurança &gt; Acessibilidade' e reinicie o aplicativo.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Header" xml:space="preserve">
-        <value />
+        <value>Sistema macOS</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Description" xml:space="preserve">
-        <value />
+        <value>Controle aplicativos do macOS e execute tarefas do sistema.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action" xml:space="preserve">
-        <value />
+        <value>Ação: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Create" xml:space="preserve">
-        <value />
+        <value>Criar</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_List" xml:space="preserve">
-        <value />
+        <value>Listar tudo</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Update" xml:space="preserve">
-        <value />
+        <value>Modificar</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Delete" xml:space="preserve">
-        <value />
+        <value>Excluir</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Complete" xml:space="preserve">
-        <value />
+        <value>Completar</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_Header" xml:space="preserve">
-        <value />
+        <value>Gerenciar Lembretes</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_Detail_Action" xml:space="preserve">
-        <value />
+        <value>Ação: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_Detail_Title" xml:space="preserve">
-        <value />
+        <value>Título: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_Consent_Header" xml:space="preserve">
-        <value />
+        <value>Permitir gerenciar lembretes?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage" xml:space="preserve">
-        <value />
+        <value>Você negou a solicitação para gerenciar lembretes.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Header" xml:space="preserve">
-        <value />
+        <value>Gerenciar Calendário</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Title" xml:space="preserve">
-        <value />
+        <value>Título: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Time" xml:space="preserve">
-        <value />
+        <value>Hora: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Location" xml:space="preserve">
-        <value />
+        <value>Local: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Notes" xml:space="preserve">
-        <value />
+        <value>Notas: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header" xml:space="preserve">
-        <value />
+        <value>Permitir gerenciar calendário?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage" xml:space="preserve">
-        <value />
+        <value>Você recusou o pedido para gerenciar o calendário.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_Header" xml:space="preserve">
-        <value />
+        <value>Gerenciar Notas</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_Detail_Title" xml:space="preserve">
-        <value />
+        <value>Título: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_Detail_Content" xml:space="preserve">
-        <value />
+        <value>Conteúdo: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_Consent_Header" xml:space="preserve">
-        <value />
+        <value>Permitir gerenciar notas?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage" xml:space="preserve">
-        <value />
+        <value>Você recusou o pedido para gerenciar notas.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Header" xml:space="preserve">
-        <value />
+        <value>Enviar Email</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Recipient" xml:space="preserve">
-        <value />
+        <value>Destinatário: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Subject" xml:space="preserve">
-        <value />
+        <value>Assunto: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Consent_Header" xml:space="preserve">
-        <value />
+        <value>Permitir enviar email?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_DenyMessage" xml:space="preserve">
-        <value />
+        <value>Você recusou o pedido para enviar email.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_OpenMaps_Header" xml:space="preserve">
-        <value />
+        <value>Abrir Mapas</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query" xml:space="preserve">
-        <value />
+        <value>Pesquisar: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_OpenUrl_Header" xml:space="preserve">
-        <value />
+        <value>Abrir Link</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url" xml:space="preserve">
-        <value />
+        <value>Link: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_Header" xml:space="preserve">
-        <value />
+        <value>Executar AppleScript</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header" xml:space="preserve">
-        <value />
+        <value>Permitir executar AppleScript?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value />
+        <value>Você recusou o pedido para executar AppleScript.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value />
+        <value>Falha ao executar AppleScript: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Header" xml:space="preserve">
-        <value />
+        <value>Terminal zsh</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
-        <value />
+        <value>Permite a execução de scripts zsh, permitindo interagir diretamente com o sistema, mas também é arriscado e pode causar exclusão de arquivos ou falhas no sistema.</value>
     </data>
 </root>

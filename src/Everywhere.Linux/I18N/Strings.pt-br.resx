@@ -14,27 +14,27 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
-        <value />
+        <value>Não foi possível registrar o atalho. Essa combinação de teclas pode já estar em uso.</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
-        <value />
+        <value>fd-find</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_Description" xml:space="preserve">
-        <value />
+        <value>Use o fd-find (uma ferramenta de busca de arquivos local de alto desempenho) para procurar arquivos no computador. Essa ferramenta precisa ser instalada para uso.</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
-        <value />
+        <value>Buscar Arquivos</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Description" xml:space="preserve">
-        <value />
+        <value>Use o fd-find no Linux para buscar arquivos ou diretórios.</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage" xml:space="preserve">
-        <value />
+        <value>Encontrados {0} arquivos</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
-        <value />
+        <value>Oferece a capacidade de executar scripts bash, permitindo interação direta com o sistema. No entanto, isso também apresenta riscos, podendo resultar em exclusão acidental de arquivos ou falhas no sistema.</value>
     </data>
     <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
-        <value />
+        <value>Bash Shell</value>
     </data>
 </root>
