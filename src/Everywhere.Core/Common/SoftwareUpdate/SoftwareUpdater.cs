@@ -23,7 +23,7 @@ public sealed partial class SoftwareUpdater(
     private const string UpdateServiceBaseUrl = "https://download.sylinko.com";
     private const string GitHubDirectUrlBase = "https://github.com/Sylinko/Everywhere/releases/download";
 
-    private UpdateChannel UpdateChannel => settings.Common.UpdateChannel switch
+    public UpdateChannel UpdateChannel => settings.Common.UpdateChannel switch
     {
         UpdateChannel.Unknown => RuntimeConstants.Version.Channel switch
         {

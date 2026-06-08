@@ -28,4 +28,7 @@
     <data name="ModelPricing_GreaterThanTierDescription" xml:space="preserve">
         <value>詞元數 &gt; {1} 時，{0}</value>
     </data>
+    <data name="UpdateChannel_Canary" xml:space="preserve">
+        <value>Canary</value>
+    </data>
 </root>

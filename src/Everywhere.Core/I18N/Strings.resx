@@ -2842,4 +2842,10 @@ Release date: {2}</value>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>For Gemini 3 models, set thinking depth such as minimal, low, medium, or high.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value />
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value />
+    </data>
 </root>

@@ -6,15 +6,15 @@ using Everywhere.Interop;
 
 namespace Everywhere.Windows.Common;
 
-public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatformUpdateHandler
+public sealed class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatformUpdateHandler
 {
-    public string OsIdentifier => "win-x64";
+    public string OsIdentifier => "Windows-x64";
 
     public UpdateAssetMetadata? SelectAsset(IEnumerable<UpdateAssetMetadata> assets, string versionString)
     {
         var assetNameSuffix = nativeHelper.IsInstalled ?
-            $"-Windows-x64-Setup-v{versionString}.exe" :
-            $"-Windows-x64-v{versionString}.zip";
+            $"-{OsIdentifier}-Setup-v{versionString}.exe" :
+            $"-{OsIdentifier}-v{versionString}.zip";
 
         return assets.FirstOrDefault(a => a.Name.EndsWith(assetNameSuffix, StringComparison.OrdinalIgnoreCase));
     }
@@ -34,18 +34,6 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
         Process.Start(new ProcessStartInfo(assetPath) { UseShellExecute = true });
         Environment.Exit(0);
         return Task.CompletedTask;
-    }
-
-    public bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version)
-    {
-        var match = VersionRegex().Match(fileName);
-        if (match.Success && SemanticVersion.TryParse(match.Groups["version"].Value, out version))
-        {
-            return true;
-        }
-
-        version = null;
-        return false;
     }
 
     private static async Task UpdateViaPortableAsync(string zipPath, CancellationToken cancellationToken = default)
@@ -83,7 +71,4 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
         Process.Start(new ProcessStartInfo(scriptPath) { UseShellExecute = true, Verb = "runas" });
         Environment.Exit(0);
     }
-
-    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
-    private static partial Regex VersionRegex();
 }

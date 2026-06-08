@@ -38,13 +38,71 @@ public sealed class ReleaseInfo
     public ObservableStringBuilder MarkdownBuilder => field ??= new ObservableStringBuilder().Append(ReleaseNotes);
 }
 
+public sealed class VersionHistoryResponse
+{
+    [JsonPropertyName("schemaVersion")]
+    public int SchemaVersion { get; set; }
+
+    [JsonPropertyName("product")]
+    public string? Product { get; set; }
+
+    [JsonPropertyName("channel")]
+    public string? Channel { get; set; }
+
+    // [JsonPropertyName("latestVersion")]
+    // public string? LatestVersion { get; set; }
+
+    // [JsonPropertyName("generatedAt")]
+    // public DateTimeOffset GeneratedAt { get; set; }
+
+    // [JsonPropertyName("limit")]
+    // public int Limit { get; set; }
+
+    [JsonPropertyName("releases")]
+    public List<VersionHistoryRelease> Releases { get; set; } = [];
+}
+
+public sealed class VersionHistoryRelease
+{
+    [JsonPropertyName("version")]
+    public string? Version { get; set; }
+
+    [JsonPropertyName("channel")]
+    public string? Channel { get; set; }
+
+    [JsonPropertyName("tagName")]
+    public string? TagName { get; set; }
+
+    [JsonPropertyName("publishedAt")]
+    public DateTimeOffset PublishedAt { get; set; }
+
+    // [JsonPropertyName("releaseId")]
+    // public long? ReleaseId { get; set; }
+
+    [JsonPropertyName("releaseUrl")]
+    public Uri? ReleaseUrl { get; set; }
+
+    [JsonPropertyName("releaseNotes")]
+    public string? ReleaseNotes { get; set; }
+
+    // [JsonPropertyName("isLatest")]
+    // public bool IsLatest { get; set; }
+
+    // [JsonPropertyName("assetCount")]
+    // public int AssetCount { get; set; }
+}
+
+[JsonSerializable(typeof(VersionHistoryResponse))]
 [JsonSerializable(typeof(List<ReleaseInfo>))]
-public sealed partial class ReleaseInfoJsonSerializerContext : JsonSerializerContext;
+public sealed partial class ChangeLogViewModelJsonSerializerContext : JsonSerializerContext;
 
 public sealed partial class ChangeLogViewModel : BusyViewModelBase
 {
     [GeneratedRegex(@"^##\s+\[(?<tag>v[0-9.]+)\]\((?<url>[^\)]+)\)\s+-\s+(?<date>\d{4}-\d{2}-\d{2})")]
     private static partial Regex VersionHeaderRegex();
+
+    private const string UpdateServiceBaseUrl = "https://download.sylinko.com";
+    private const int VersionHistoryLimit = 50;
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -80,81 +138,33 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
     protected internal override Task ViewLoaded(CancellationToken cancellationToken) => ExecuteBusyTaskAsync(
         async token =>
         {
+            var updateChannel = SoftwareUpdater.UpdateChannel;
+            _releaseInfosSource.Clear();
+            SelectedReleaseInfo = null;
+
+            if (updateChannel == UpdateChannel.Stable)
+            {
+                try
+                {
+                    var releases = await LoadLocalChangeLogAsync(token);
+                    _releaseInfosSource.AddOrUpdate(releases);
+                    SelectFirstReleaseInfo();
+                }
+                catch (Exception ex)
+                {
+                    ex = HandledSystemException.Handle(ex);
+                    _logger.LogError(ex, "Failed to load local changelog.");
+
+                    // ReSharper disable once PossibleIntendedRethrow
+                    throw ex;
+                }
+            }
+
             try
             {
-                var releases = new List<ReleaseInfo>();
-                await using var changeLogStream = AssetLoader.Open(new Uri("avares://Everywhere.Core/Assets/CHANGELOG.md", UriKind.Absolute));
-                using var changeLogReader = new StreamReader(changeLogStream);
-
-                ReleaseInfo? currentRelease = null;
-                var currentNotes = new StringBuilder();
-
-                while (await changeLogReader.ReadLineAsync(token) is { } line)
-                {
-                    var match = VersionHeaderRegex().Match(line);
-                    if (match.Success)
-                    {
-                        if (currentRelease != null)
-                        {
-                            currentRelease.ReleaseNotes = currentNotes.ToString().Trim();
-                            releases.Add(currentRelease);
-                        }
-
-                        var tag = match.Groups["tag"].Value; // e.g. v0.7.0
-                        currentRelease = new ReleaseInfo
-                        {
-                            Tag = tag,
-                            HtmlUrl = new Uri(match.Groups["url"].Value, UriKind.RelativeOrAbsolute),
-                            PublishedDate = DateTimeOffset.Parse(match.Groups["date"].Value),
-                            IsCurrent = SemanticVersion.TryParse(tag.TrimStart('v'), out var version) && version == RuntimeConstants.Version
-                        };
-                        currentNotes.Clear();
-                    }
-                    else if (currentRelease != null)
-                    {
-                        currentNotes.AppendLine(line);
-                    }
-                }
-
-                if (currentRelease != null)
-                {
-                    currentRelease.ReleaseNotes = currentNotes.ToString().Trim();
-                    releases.Add(currentRelease);
-                }
-
+                var releases = await LoadRemoteVersionHistoryAsync(updateChannel, token);
                 _releaseInfosSource.AddOrUpdate(releases);
-
-                if (SelectedReleaseInfo == null && ReleaseInfos.Count > 0)
-                {
-                    SelectedReleaseInfo = ReleaseInfos[0];
-                }
-            }
-            catch (Exception ex)
-            {
-                ex = HandledSystemException.Handle(ex);
-                _logger.LogError(ex, "Failed to load local changelog.");
-
-                // ReSharper disable once PossibleIntendedRethrow
-                throw ex;
-            }
-
-            try
-            {
-                using var httpClient = _httpClientFactory.CreateClient();
-                var response = await httpClient.GetAsync("https://api.github.com/repos/Sylinko/Everywhere/releases?per_page=20", token);
-                if (response.IsSuccessStatusCode)
-                {
-                    await using var jsonStream = await response.Content.ReadAsStreamAsync(token);
-                    var githubReleases = await JsonSerializer.DeserializeAsync(
-                        jsonStream,
-                        ReleaseInfoJsonSerializerContext.Default.ListReleaseInfo,
-                        token);
-                    if (githubReleases != null)
-                    {
-                        var newReleases = githubReleases.Where(r => !_releaseInfosSource.Lookup(r.Tag ?? string.Empty).HasValue);
-                        _releaseInfosSource.AddOrUpdate(newReleases);
-                    }
-                }
+                SelectFirstReleaseInfo();
             }
             catch (OperationCanceledException) { }
             catch (TimeoutException ex)
@@ -163,14 +173,14 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                     ex,
                     HandledSystemExceptionType.Timeout,
                     new DynamicResourceKey(LocaleKey.FriendlyExceptionMessage_HttpRequest_RequestTimeout));
-                _logger.LogError(handledException, "Failed to load GitHub releases.");
+                _logger.LogError(handledException, "Failed to load version history.");
 
                 throw handledException;
             }
             catch (Exception ex)
             {
                 ex = HandledSystemException.Handle(ex);
-                _logger.LogError(ex, "Failed to load GitHub releases.");
+                _logger.LogError(ex, "Failed to load version history.");
 
                 // ReSharper disable once PossibleIntendedRethrow
                 throw ex;
@@ -178,6 +188,105 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         },
         ToastExceptionHandler,
         cancellationToken);
+
+    private async static Task<List<ReleaseInfo>> LoadLocalChangeLogAsync(CancellationToken cancellationToken)
+    {
+        var releases = new List<ReleaseInfo>();
+        await using var changeLogStream = AssetLoader.Open(new Uri("avares://Everywhere.Core/Assets/CHANGELOG.md", UriKind.Absolute));
+        using var changeLogReader = new StreamReader(changeLogStream);
+
+        ReleaseInfo? currentRelease = null;
+        var currentNotes = new StringBuilder();
+
+        while (await changeLogReader.ReadLineAsync(cancellationToken) is { } line)
+        {
+            var match = VersionHeaderRegex().Match(line);
+            if (match.Success)
+            {
+                if (currentRelease != null)
+                {
+                    currentRelease.ReleaseNotes = currentNotes.ToString().Trim();
+                    releases.Add(currentRelease);
+                }
+
+                var tag = match.Groups["tag"].Value; // e.g. v0.7.0
+                currentRelease = new ReleaseInfo
+                {
+                    Tag = tag,
+                    HtmlUrl = new Uri(match.Groups["url"].Value, UriKind.RelativeOrAbsolute),
+                    PublishedDate = DateTimeOffset.Parse(match.Groups["date"].Value),
+                    IsCurrent = IsCurrentVersion(tag)
+                };
+                currentNotes.Clear();
+            }
+            else if (currentRelease != null)
+            {
+                currentNotes.AppendLine(line);
+            }
+        }
+
+        if (currentRelease != null)
+        {
+            currentRelease.ReleaseNotes = currentNotes.ToString().Trim();
+            releases.Add(currentRelease);
+        }
+
+        return releases;
+    }
+
+    private async Task<IEnumerable<ReleaseInfo>> LoadRemoteVersionHistoryAsync(UpdateChannel channel, CancellationToken cancellationToken)
+    {
+        using var httpClient = _httpClientFactory.CreateClient();
+        var channelName = channel.ToString();
+        var response = await httpClient.GetAsync(
+            $"{UpdateServiceBaseUrl}/versions?product=everywhere&channel={channelName}&limit={VersionHistoryLimit}",
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var versionHistory = await JsonSerializer.DeserializeAsync(
+            jsonStream,
+            ChangeLogViewModelJsonSerializerContext.Default.VersionHistoryResponse,
+            cancellationToken);
+
+        if (versionHistory is not { SchemaVersion: 1 })
+            throw new InvalidDataException("Unsupported version history response.");
+
+        if (!string.Equals(versionHistory.Product, "everywhere", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Unexpected version history product.");
+
+        if (!string.Equals(versionHistory.Channel, channelName, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Unexpected version history channel.");
+
+        if (versionHistory.Releases is null)
+            throw new InvalidDataException("Version history releases field is missing.");
+
+        return versionHistory.Releases
+            .Where(r =>
+                r.Channel?.Equals(channelName, StringComparison.OrdinalIgnoreCase) is true &&
+                !r.Version.IsNullOrWhiteSpace() &&
+                !r.TagName.IsNullOrWhiteSpace() &&
+                r.PublishedAt != default &&
+                r.ReleaseUrl != null)
+            .Select(r => new ReleaseInfo
+            {
+                Tag = r.TagName,
+                HtmlUrl = r.ReleaseUrl,
+                PublishedDate = r.PublishedAt,
+                ReleaseNotes = r.ReleaseNotes,
+                IsCurrent = IsCurrentVersion(r.TagName)
+            });
+    }
+
+    private static bool IsCurrentVersion(string? tag)
+    {
+        return SemanticVersion.TryParse(tag?.TrimStart('v', 'V'), out var version) && version == RuntimeConstants.Version;
+    }
+
+    private void SelectFirstReleaseInfo()
+    {
+        SelectedReleaseInfo = ReleaseInfos.Count > 0 ? ReleaseInfos[0] : null;
+    }
 
     [RelayCommand]
     private async Task PerformUpdateAsync(CancellationToken cancellationToken)

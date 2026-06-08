@@ -2843,4 +2843,10 @@
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Gemini 3 模型的思考深度，例如 minimal、low、medium 或 high。</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>更新通道</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>非稳定版通道包含第一时间推出的新功能和错误修复，但可能不够稳定。</value>
+    </data>
 </root>
