@@ -6,6 +6,7 @@
   ClipToBounds="False">
   <shadui:NavigationView
     Padding="24,0,0,20" HeaderMaxWidth="1000"
+    HeaderPadding="0,0,12,0"
     PageTransition="{x:Null}"
     PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedCustomAssistant, Mode=TwoWay}">

@@ -63,10 +63,9 @@
       x:Name="TransitioningContentControl" ClipToBounds="False"
       Content="{Binding SelectedItem.Route, FallbackValue={x:Null}}">
       <TransitioningContentControl.PageTransition>
-        <shadui:BetterPageSlide
-          FadeDuration="0:0:0.4" FadeEasing="CubicEaseInOut"
-          Orientation="Vertical" SlideDuration="0:0:0.6"
-          SlideEasing="{x:Static shadui:PageSlideEase.Shared}"/>
+        <CrossFade
+          FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
+          Duration="0:0:0.4"/>
       </TransitioningContentControl.PageTransition>
     </TransitioningContentControl>
   </DockPanel>
