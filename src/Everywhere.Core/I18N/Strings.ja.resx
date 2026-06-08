@@ -2842,4 +2842,10 @@
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Gemini 3 モデルの思考の深さ。例：minimal、low、medium または high。</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>更新チャネル</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>非安定版チャネルには、新機能やバグ修正が最初に提供されますが、安定性に欠ける場合があります。</value>
+    </data>
 </root>

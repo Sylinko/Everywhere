@@ -2843,9 +2843,9 @@ Release date: {2}</value>
         <value>For Gemini 3 models, set thinking depth such as minimal, low, medium, or high.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
-        <value />
+        <value>Update Channel</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
-        <value />
+        <value>The unstable channel includes new features and bug fixes released first, but may not be stable.</value>
     </data>
 </root>

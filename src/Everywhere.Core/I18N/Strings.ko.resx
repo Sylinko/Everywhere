@@ -2842,4 +2842,10 @@
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>업데이트 채널</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>비안정 버전 채널은 새로운 기능과 버그 수정을 가장 먼저 제공하지만 안정성이 떨어질 수 있습니다.</value>
+    </data>
 </root>

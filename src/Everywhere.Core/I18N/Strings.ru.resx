@@ -2842,4 +2842,10 @@
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Глубина мышления модели Gemini 3, например minimal, low, medium или high.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>Канал обновлений</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>Нестабильный канал содержит новые функции и исправления ошибок, которые выходят первыми, но могут быть менее стабильными.</value>
+    </data>
 </root>

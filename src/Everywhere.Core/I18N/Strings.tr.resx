@@ -2841,4 +2841,10 @@ Yayın tarihi: {2}</value>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Gemini 3 modelinin düşünme derinliği, örneğin minimal, düşük, orta veya yüksek.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>Güncelleme Kanalı</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>Kararlı olmayan kanal, yeni özelliklerin ve hata düzeltmelerinin ilk kez sunulduğu yerdir, ancak yeterince stabil olmayabilir.</value>
+    </data>
 </root>

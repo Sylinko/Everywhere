@@ -35,6 +35,6 @@
         <value>Stable</value>
     </data>
     <data name="UpdateChannel_Unknown" xml:space="preserve">
-        <value />
+        <value>Current Channel</value>
     </data>
 </root>

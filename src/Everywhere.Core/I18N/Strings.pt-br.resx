@@ -2843,4 +2843,10 @@ Data de lançamento: {2}</value>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Profundidade de pensamento do modelo Gemini 3, como minimal, baixo, médio ou alto.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>Canal de Atualização</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>O canal de versão não estável inclui novos recursos e correções de bugs lançados primeiro, mas pode não ser totalmente estável.</value>
+    </data>
 </root>

@@ -28,4 +28,13 @@
     <data name="ModelPricing_GreaterThanTierDescription" xml:space="preserve">
         <value>Когда количество токенов &gt; {1}, {0}</value>
     </data>
+    <data name="UpdateChannel_Canary" xml:space="preserve">
+        <value>Canary</value>
+    </data>
+    <data name="UpdateChannel_Stable" xml:space="preserve">
+        <value>Стабильная версия</value>
+    </data>
+    <data name="UpdateChannel_Unknown" xml:space="preserve">
+        <value>Текущий канал</value>
+    </data>
 </root>

@@ -2841,4 +2841,10 @@ Veröffentlichungsdatum: {2}</value>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
         <value>Denktiefe des Gemini 3 Modells, z. B. minimal, niedrig, mittel oder hoch.</value>
     </data>
+    <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
+        <value>Aktualisierungskanal</value>
+    </data>
+    <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
+        <value>Der instabile Kanal enthält neue Funktionen und Fehlerbehebungen, die zuerst veröffentlicht werden, könnte jedoch weniger stabil sein.</value>
+    </data>
 </root>
