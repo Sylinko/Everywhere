@@ -918,13 +918,13 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Criar</value>
     </data>
-    <data name="CustomAssistant_Name_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
         <value>Nome</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Defina o nome do assistente, usado apenas para exibição e distinção.</value>
     </data>
-    <data name="CustomAssistant_Description_Header" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
         <value>Descrição</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
@@ -2717,6 +2717,12 @@ Data de lançamento: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>O comando foi iniciado em {0} e falhou após {1} segundos, código de saída {2}</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Use o Everything para buscar arquivos.</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Avançado</value>
+    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>O terminal não está mais disponível</value>
     </data>
@@ -2848,5 +2854,20 @@ Data de lançamento: {2}</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>O canal de versão não estável inclui novos recursos e correções de bugs lançados primeiro, mas pode não ser totalmente estável.</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value>Anexos</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>Comportamento</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value>Exibição</value>
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>Execute para obter a lista de ferramentas</value>
+    </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>Alternar quebra de texto</value>
     </data>
 </root>

@@ -2716,6 +2716,12 @@ Date de publication : {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>La commande a commencé à s'exécuter à {0} et a échoué après {1} secondes, code de sortie {2}</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Recherchez des fichiers avec Everything.</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Avancé</value>
+    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Le terminal n'est plus disponible</value>
     </data>
@@ -2847,5 +2853,20 @@ Date de publication : {2}</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>Le canal de version instable comprend les nouvelles fonctionnalités et corrections de bugs dès leur sortie, mais peut ne pas être suffisamment stable.</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value>Pièce jointe</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>Comportement</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value>Affichage</value>
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>Exécutez pour obtenir la liste des outils</value>
+    </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>Basculer le retour à la ligne du texte</value>
     </data>
 </root>

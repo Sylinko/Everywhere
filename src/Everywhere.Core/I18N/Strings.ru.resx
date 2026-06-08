@@ -2716,6 +2716,12 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, завершилась с ошибкой через {1} секунд, код выхода {2}</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Искать файлы с помощью Everything.</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Расширенные</value>
+    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Терминал больше недоступен</value>
     </data>
@@ -2847,5 +2853,20 @@
     </data>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>Нестабильный канал содержит новые функции и исправления ошибок, которые выходят первыми, но могут быть менее стабильными.</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value>Вложения</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>Поведение</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value>Отображение</value>
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>Запустите, чтобы получить список инструментов</value>
+    </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>Переключить перенос текста</value>
     </data>
 </root>

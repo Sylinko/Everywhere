@@ -2716,6 +2716,12 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>명령이 {0}에 따라 실행되었으며, {1}초 후 실패하였고, 종료 코드: {2}입니다.</value>
     </data>
+    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
+        <value>Everything을 사용하여 파일 검색.</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>고급</value>
+    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>터미널을 더 이상 사용할 수 없습니다.</value>
     </data>
@@ -2847,5 +2853,20 @@
     </data>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>비안정 버전 채널은 새로운 기능과 버그 수정을 가장 먼저 제공하지만 안정성이 떨어질 수 있습니다.</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
+        <value>첨부파일</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>동작</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
+        <value>디스플레이</value>
+    </data>
+    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
+        <value>도구 목록을 가져오려면 실행하세요.</value>
+    </data>
+    <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
+        <value>텍스트 줄 바꿈 전환</value>
     </data>
 </root>

@@ -2854,17 +2854,17 @@ Release date: {2}</value>
     <data name="SoftwareSettings_UpdateChannel_Description" xml:space="preserve">
         <value>The unstable channel includes new features and bug fixes released first, but may not be stable.</value>
     </data>
-    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
-        <value />
-    </data>
     <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
-        <value />
+        <value>Attachments</value>
+    </data>
+    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
+        <value>Behavior</value>
     </data>
     <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
-        <value />
+        <value>Display</value>
     </data>
     <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
-        <value />
+        <value>Run to get the tool list</value>
     </data>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Toggle Text Wrap</value>
