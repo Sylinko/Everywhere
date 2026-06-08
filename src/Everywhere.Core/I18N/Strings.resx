@@ -2719,7 +2719,7 @@ Release date: {2}</value>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Search files using Everything search engine.</value>
     </data>
-    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+    <data name="Common_Advanced" xml:space="preserve">
         <value>Advanced</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">

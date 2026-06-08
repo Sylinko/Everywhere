@@ -2720,7 +2720,7 @@
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>使用 Everything 搜索文件。</value>
     </data>
-    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+    <data name="Common_Advanced" xml:space="preserve">
         <value>高级</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">

@@ -12,6 +12,7 @@ public sealed partial class OpenAIOptions : ObservableObject
     [DynamicResourceKey(
         LocaleKey.OpenAIOptions_IncludeReasoningContent_Header,
         LocaleKey.OpenAIOptions_IncludeReasoningContent_Description)]
+    [SettingsItem(Group = "_")]
     public partial bool IncludeReasoningContent { get; set; } = true;
 
     // Non-standard OpenAI-compatible request body used by several reasoning model providers.
@@ -19,12 +20,13 @@ public sealed partial class OpenAIOptions : ObservableObject
     [DynamicResourceKey(
         LocaleKey.OpenAIOptions_ThinkingType_Header,
         LocaleKey.OpenAIOptions_ThinkingType_Description)]
+    [SettingsItem(Group = "_")]
     public partial string? ThinkingType { get; set; }
 
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.OpenAIOptions_ReasoningEffortLevel_Header,
         LocaleKey.OpenAIOptions_ReasoningEffortLevel_Description)]
-    [SettingsItem(DocumentUrl = "https://platform.openai.com/docs/api-reference/chat/create-chat-completion")]
+    [SettingsItem(Group = "_", DocumentUrl = "https://platform.openai.com/docs/api-reference/chat/create-chat-completion")]
     public partial string? ReasoningEffortLevel { get; set; }
 }

@@ -453,7 +453,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine("});");
 
             ApplyHeaderAndDescription(sb, wrapperItemName, metadata);
-            ApplySettingsItemDocumentUrl(sb, wrapperItemName, metadata);
             ApplySettingsItemAttributes(sb, wrapperItemName, metadata);
 
             // Replace itemName with the wrapper
@@ -494,6 +493,13 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         @"DynamicResourceKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
+    /// <summary>
+    /// Matches group name in SettingsItem(Group = LocaleKey.SomeGroup)
+    /// </summary>
+    private static readonly Regex GroupKeyRegex = new(
+        @"Group\s*=\s*LocaleKey\.(?<groupKey>\w+)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+
     private static PropertyMetadata BuildPropertyMetadata(ISymbol symbol, ISymbol attributeOwner, string name, ITypeSymbol? type = null)
     {
         type ??= ((IPropertySymbol)symbol).Type;
@@ -503,8 +509,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         var match = code is not null ? DynamicResourceKeyRegex.Match(code) : null;
         var headerKey = match?.Groups["headerKey"].Value.Trim() ?? string.Empty;
         var descriptionKey = match?.Groups["descriptionKey"].Success == true ? match.Groups["descriptionKey"].Value.Trim() : null;
-        var group = attributeOwner.GetAttribute(KnownAttributes.SettingsItem)?.GetNamedArgument("Group") switch
+        var settingsItemAttribute = attributeOwner.GetAttribute(KnownAttributes.SettingsItem);
+        var group = settingsItemAttribute?.GetNamedArgument("Group") switch
         {
+            { Kind: TypedConstantKind.Error } => settingsItemAttribute.ApplicationSyntaxReference?.GetSyntax().ToString() switch
+            {
+                { } syntax => GroupKeyRegex.Match(syntax) switch
+                {
+                    { Success: true } groupMatch => groupMatch.Groups["groupKey"].Value.Trim().Trim('"'),
+                    _ => null
+                },
+                _ => null,
+            },
             { IsNull: false, Value: string g } => g,
             _ => null
         };
@@ -601,8 +617,9 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         if (settingsItemAttribute.GetNamedArgument("Classes") is { IsNull: false, Values: { Length: > 0 } classesArray })
         {
             var classes = classesArray
-                .Where(c => c.Value is string)
-                .Select(c => $"\"{c.Value!.ToString()!.Replace("\"", "\\\"")}\"");
+                .Select(c => c.Value?.ToString())
+                .OfType<string>()
+                .Select(v => $"\"{v.Replace("\"", "\\\"")}\"");
             sb.AppendLine($"{itemName}.Classes.AddRange(new string[] {{ {string.Join(", ", classes)} }});");
         }
 
@@ -611,7 +628,10 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine($"{itemName}.IsExperimental = {isExperimental.ToString().ToLowerInvariant()};");
         }
 
-        ApplySettingsItemDocumentUrl(sb, itemName, metadata);
+        if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string documentUrl })
+        {
+            sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
+        }
 
         if (settingsItemAttribute.GetNamedArgument("IsEnabledBindingPath") is { IsNull: false, Value: string isEnabledBindingPath })
         {
@@ -624,17 +644,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsVisibleProperty] = ");
             EmitBinding(sb, isVisibleBindingPath, BindingMode.OneWay).AppendLine(";");
         }
-    }
-
-    private static void ApplySettingsItemDocumentUrl(
-        IndentedStringBuilder sb,
-        string itemName,
-        in PropertyMetadata metadata)
-    {
-        if (metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsItem) is not { } settingsItemAttribute) return;
-        if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is not { IsNull: false, Value: string documentUrl }) return;
-
-        sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
     }
 
     private static void ApplySettingsItems(

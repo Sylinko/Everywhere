@@ -49,6 +49,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.SoftwareSettings_UpdateChannel_Header,
         LocaleKey.SoftwareSettings_UpdateChannel_Description)]
+    [SettingsItem(Group = LocaleKey.Common_Advanced)]
     public partial UpdateChannel UpdateChannel { get; set; } = UpdateChannel.Unknown;
 
 #if WINDOWS
@@ -178,6 +179,6 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     [DynamicResourceKey(
         LocaleKey.SoftwareSettings_DebugFeatures_Header,
         LocaleKey.SoftwareSettings_DebugFeatures_Description)]
-    [SettingsItem(Group = "_")]
+    [SettingsItem(Group = LocaleKey.Common_Advanced)]
     public SettingsControl<DebugFeaturesControl> DebugFeatures { get; } = new();
 }
