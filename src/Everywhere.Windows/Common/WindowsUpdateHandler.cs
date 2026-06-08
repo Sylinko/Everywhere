@@ -6,7 +6,7 @@ using Everywhere.Interop;
 
 namespace Everywhere.Windows.Common;
 
-public sealed class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatformUpdateHandler
+public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatformUpdateHandler
 {
     public string OsIdentifier => "Windows-x64";
 
@@ -34,6 +34,18 @@ public sealed class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatform
         Process.Start(new ProcessStartInfo(assetPath) { UseShellExecute = true });
         Environment.Exit(0);
         return Task.CompletedTask;
+    }
+
+    public bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version)
+    {
+        var match = VersionRegex().Match(fileName);
+        if (match.Success && SemanticVersion.TryParse(match.Groups["version"].Value, out version))
+        {
+            return true;
+        }
+
+        version = null;
+        return false;
     }
 
     private static async Task UpdateViaPortableAsync(string zipPath, CancellationToken cancellationToken = default)
@@ -71,4 +83,7 @@ public sealed class WindowsUpdateHandler(INativeHelper nativeHelper) : IPlatform
         Process.Start(new ProcessStartInfo(scriptPath) { UseShellExecute = true, Verb = "runas" });
         Environment.Exit(0);
     }
+
+    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
+    private static partial Regex VersionRegex();
 }

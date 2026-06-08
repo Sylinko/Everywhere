@@ -137,7 +137,7 @@ public sealed partial record SemanticVersion(
         var channel = Channel;
         var otherChannel = other.Channel;
 
-        // If both unknown, compare directly by suffix string (e.g. "alpha" > "beta")
+        // If both unknown, compare directly by suffix string (e.g. "beta" > "alpha" for OrdinalIgnoreCase)
         if (channel == UpdateChannel.Unknown && otherChannel == UpdateChannel.Unknown)
         {
             return string.Compare(Suffix, other.Suffix, StringComparison.OrdinalIgnoreCase);

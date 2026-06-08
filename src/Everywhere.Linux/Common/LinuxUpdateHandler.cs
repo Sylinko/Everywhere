@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Everywhere.Common;
 
 namespace Everywhere.Linux.Common;
 
-public sealed class LinuxUpdateHandler : IPlatformUpdateHandler
+public sealed partial class LinuxUpdateHandler : IPlatformUpdateHandler
 {
     public string OsIdentifier => RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "Linux-arm64" : "Linux-x64";
 
@@ -89,4 +90,19 @@ public sealed class LinuxUpdateHandler : IPlatformUpdateHandler
         Environment.Exit(0);
         return Task.CompletedTask;
     }
+
+    public bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version)
+    {
+        var match = VersionRegex().Match(fileName);
+        if (match.Success && SemanticVersion.TryParse(match.Groups["version"].Value, out version))
+        {
+            return true;
+        }
+
+        version = null;
+        return false;
+    }
+
+    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(deb|rpm)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
+    private static partial Regex VersionRegex();
 }

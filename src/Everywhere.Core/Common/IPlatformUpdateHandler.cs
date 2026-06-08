@@ -23,6 +23,11 @@ public interface IPlatformUpdateHandler
     /// Executes the downloaded asset to perform the update.
     /// </summary>
     Task ExecuteUpdateAsync(string assetPath, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Checks if a file from the updates folder matches a platform-specific update package and returns its version.
+    /// </summary>
+    bool TryParseUpdatePackageVersion(string fileName, out SemanticVersion? version);
 }
 
 [Serializable]

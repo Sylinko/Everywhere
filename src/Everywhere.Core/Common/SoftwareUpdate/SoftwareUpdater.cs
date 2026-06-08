@@ -245,7 +245,7 @@ public sealed partial class SoftwareUpdater(
                 if (!platformHandler.TryParseUpdatePackageVersion(fileName, out var fileVersion) || fileVersion is null) continue;
 
                 // Delete if the package version is older than or same as the current running version.
-                if (fileVersion > CurrentVersion) continue;
+                if (fileVersion > RuntimeConstants.Version) continue;
 
                 try
                 {
