@@ -1,4 +1,4 @@
-﻿using Everywhere.Media.Microphone;
+﻿using Everywhere.Media.Audio;
 
 namespace Everywhere.Media.SpeechRecognition;
 

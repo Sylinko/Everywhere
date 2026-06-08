@@ -18,7 +18,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Media;
-using Everywhere.Media.Ocr;
+using Everywhere.Media.ImageRecognition;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
@@ -590,7 +590,7 @@ public sealed partial class ChatWindowViewModel :
 
     private async ValueTask TryPerformOcrAsync(FileAttachment fileAttachment, CancellationToken cancellationToken)
     {
-        if (fileAttachment.IsImage && _serviceProvider.GetService<IOcrEngine>() is { IsSupported: true } ocrEngine)
+        if (fileAttachment.IsImage && _serviceProvider.GetService<IImageTextRecognitionEngine>() is { IsSupported: true } ocrEngine)
         {
             try
             {

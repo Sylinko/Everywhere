@@ -9,25 +9,23 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Media.Ocr;
+using Everywhere.Media.ImageRecognition;
 using Everywhere.Windows.Extensions;
 using Everywhere.Windows.Interop;
 using Serilog;
 using WinRT;
 using ZLinq;
-using OcrLine = Everywhere.Media.Ocr.OcrLine;
-using OcrResult = Everywhere.Media.Ocr.OcrResult;
 
 namespace Everywhere.Windows.Media;
 
-public sealed class WinRTOcrEngine : IOcrEngine
+public sealed class WinRTImageTextRecognitionEngine : IImageTextRecognitionEngine
 {
     public string Id => "winrt";
 
     [MemberNotNullWhen(true, nameof(_availableLanguages))]
     public bool IsSupported => _availableLanguages is { Count: > 0 };
 
-    public OcrEngineDescriptor Descriptor { get; } = new(
+    public ImageTextRecognitionEngineDescriptor Descriptor { get; } = new(
         new DirectResourceKey("Windows OCR"),
         new DirectResourceKey(""),
         true,
@@ -39,7 +37,7 @@ public sealed class WinRTOcrEngine : IOcrEngine
 
     private readonly IReadOnlyList<Language>? _availableLanguages;
 
-    public WinRTOcrEngine()
+    public WinRTImageTextRecognitionEngine()
     {
         try
         {
@@ -47,7 +45,7 @@ public sealed class WinRTOcrEngine : IOcrEngine
         }
         catch (Exception ex)
         {
-            Log.ForContext<WinRTOcrEngine>().Error(ex, "Failed to get available OCR recognizer languages. OCR will be unavailable.");
+            Log.ForContext<WinRTImageTextRecognitionEngine>().Error(ex, "Failed to get available OCR recognizer languages. OCR will be unavailable.");
         }
 
         if (_availableLanguages is { Count: > 0 })
@@ -60,7 +58,7 @@ public sealed class WinRTOcrEngine : IOcrEngine
         }
     }
 
-    public async Task<OcrResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default)
+    public async Task<ImageTextRecognitionResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default)
     {
         if (!IsSupported) throw new NotSupportedException("OCR is not supported on this system.");
 
@@ -84,7 +82,7 @@ public sealed class WinRTOcrEngine : IOcrEngine
         return await PerformOcrAsync(locale, softwareBitmap);
     }
 
-    public async Task<OcrResult> RecognizeAsync(Bitmap bitmap, LocaleName locale, CancellationToken cancellationToken = default)
+    public async Task<ImageTextRecognitionResult> RecognizeAsync(Bitmap bitmap, LocaleName locale, CancellationToken cancellationToken = default)
     {
         if (!IsSupported) throw new NotSupportedException("OCR is not supported on this system.");
 
@@ -138,7 +136,7 @@ public sealed class WinRTOcrEngine : IOcrEngine
         return await PerformOcrAsync(locale, softwareBitmap);
     }
 
-    private async ValueTask<OcrResult> PerformOcrAsync(LocaleName locale, SoftwareBitmap bitmap)
+    private async ValueTask<ImageTextRecognitionResult> PerformOcrAsync(LocaleName locale, SoftwareBitmap bitmap)
     {
         var engine = OcrEngine.TryCreateFromLanguage(locale.ToWinRTLanguage());
         if (engine is null)
@@ -153,8 +151,8 @@ public sealed class WinRTOcrEngine : IOcrEngine
         }
 
         var result = await engine.RecognizeAsync(bitmap);
-        return new OcrResult(
-            result.Lines.AsValueEnumerable().Select(line => new OcrLine(
+        return new ImageTextRecognitionResult(
+            result.Lines.AsValueEnumerable().Select(line => new ImageTextRecognitionLine(
                 line.Words.AsValueEnumerable().Select(word => new PixelRect(
                     (int)word.BoundingRect.X,
                     (int)word.BoundingRect.Y,

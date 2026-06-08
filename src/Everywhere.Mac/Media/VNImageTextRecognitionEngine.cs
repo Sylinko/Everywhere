@@ -1,20 +1,19 @@
 ﻿using Avalonia;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.I18N;
-using Everywhere.Media.Ocr;
+using Everywhere.Media.ImageRecognition;
 using Vision;
 using ZLinq;
 
 namespace Everywhere.Mac.Media;
 
-public sealed class VNOcrEngine : IOcrEngine
+public sealed class VNImageTextRecognitionEngine : IImageTextRecognitionEngine
 {
     public string Id => "apple.vision";
     public bool IsSupported { get; }
 
-    public OcrEngineDescriptor Descriptor { get; } = new(
-        new DirectResourceKey("Apple Vision OCR"),
+    public ImageTextRecognitionEngineDescriptor Descriptor { get; } = new(
+        new DirectResourceKey("Apple Vision OCR"), // No need to i18n
         new DynamicResourceKey(""),
         true,
         true);
@@ -23,7 +22,7 @@ public sealed class VNOcrEngine : IOcrEngine
 
     public IReadOnlyList<LocaleName> SupportedLocales { get; set; } = [];
 
-    public VNOcrEngine()
+    public VNImageTextRecognitionEngine()
     {
         if (!OperatingSystem.IsMacOSVersionAtLeast(10, 15))
         {
@@ -41,7 +40,7 @@ public sealed class VNOcrEngine : IOcrEngine
         }
     }
 
-    public Task<OcrResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default)
+    public Task<ImageTextRecognitionResult> RecognizeAsync(string filePath, LocaleName locale, CancellationToken cancellationToken = default)
     {
         if (!IsSupported)
         {
@@ -62,7 +61,7 @@ public sealed class VNOcrEngine : IOcrEngine
             cancellationToken);
     }
 
-    private static OcrResult Recognize(CGImage cgImage, LocaleName locale, CancellationToken cancellationToken)
+    private static ImageTextRecognitionResult Recognize(CGImage cgImage, LocaleName locale, CancellationToken cancellationToken)
     {
         VNRecognizedTextObservation[]? observations = null;
 
@@ -95,14 +94,14 @@ public sealed class VNOcrEngine : IOcrEngine
         return ConvertToOcrResult(observations, (int)cgImage.Width, (int)cgImage.Height);
     }
 
-    private static OcrResult ConvertToOcrResult(VNRecognizedTextObservation[]? observations, int imagePixelWidth, int imagePixelHeight)
+    private static ImageTextRecognitionResult ConvertToOcrResult(VNRecognizedTextObservation[]? observations, int imagePixelWidth, int imagePixelHeight)
     {
         if (observations is not { Length: > 0 })
         {
-            return OcrResult.Empty;
+            return ImageTextRecognitionResult.Empty;
         }
 
-        var lines = new List<OcrLine>(observations.Length);
+        var lines = new List<ImageTextRecognitionLine>(observations.Length);
 
         foreach (var observation in observations)
         {
@@ -121,15 +120,14 @@ public sealed class VNOcrEngine : IOcrEngine
                 imagePixelWidth,
                 imagePixelHeight);
 
-            lines.Add(new OcrLine(
+            lines.Add(new ImageTextRecognitionLine(
                 BoundingRect: rect,
-                Text: text,
-                Confidence: candidate.Confidence
+                Text: text
             ));
         }
 
         if (lines.Count == 0)
-            return OcrResult.Empty;
+            return ImageTextRecognitionResult.Empty;
 
         var sortedLines = SortLinesByReadingOrder(lines);
 
@@ -137,7 +135,7 @@ public sealed class VNOcrEngine : IOcrEngine
             Environment.NewLine,
             sortedLines.Select(x => x.Text));
 
-        return new OcrResult(sortedLines, fullText);
+        return new ImageTextRecognitionResult(sortedLines, fullText);
     }
 
     private static PixelRect ConvertVisionBoundingBoxToPixelRect(CGRect box, int imagePixelWidth, int imagePixelHeight)
@@ -172,18 +170,18 @@ public sealed class VNOcrEngine : IOcrEngine
     /// </summary>
     /// <param name="lines"></param>
     /// <returns></returns>
-    private static List<OcrLine> SortLinesByReadingOrder(List<OcrLine> lines)
+    private static List<ImageTextRecognitionLine> SortLinesByReadingOrder(List<ImageTextRecognitionLine> lines)
     {
         if (lines.Count <= 1)
             return lines;
 
-        var result = new List<OcrLine>(lines.Count);
-        var groups = new List<List<OcrLine>>();
+        var result = new List<ImageTextRecognitionLine>(lines.Count);
+        var groups = new List<List<ImageTextRecognitionLine>>();
 
         foreach (var line in lines.AsValueEnumerable().OrderBy(line => line.BoundingRect.Y + line.BoundingRect.Height / 2.0))
         {
             var centerY = GetCenterY(line.BoundingRect);
-            List<OcrLine>? targetGroup = null;
+            List<ImageTextRecognitionLine>? targetGroup = null;
 
             foreach (var group in groups)
             {

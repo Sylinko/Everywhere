@@ -1,8 +1,8 @@
 ﻿using Everywhere.I18N;
 
-namespace Everywhere.Media.Ocr;
+namespace Everywhere.Media.ImageRecognition;
 
-public sealed record OcrEngineDescriptor(
+public sealed record ImageTextRecognitionEngineDescriptor(
     IDynamicResourceKey NameKey,
     IDynamicResourceKey? DescriptionKey,
     bool IsOffline,

@@ -1,4 +1,4 @@
-﻿namespace Everywhere.Media.Microphone;
+﻿namespace Everywhere.Media.Audio;
 
 public sealed record MicrophoneCaptureOptions(
     string? DeviceId,
