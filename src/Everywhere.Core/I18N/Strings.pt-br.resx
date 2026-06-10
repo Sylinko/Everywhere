@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>Defina um atalho para abrir a janela de chat a qualquer momento.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>Valores mais altos (como 0.8) tornam os resultados mais aleatórios, enquanto valores mais baixos (como 0.2) tornam-nos mais focados e certos. Geralmente, recomendamos ajustar este parâmetro ou o parâmetro top_p, mas não ambos ao mesmo tempo.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2861,16 +2867,25 @@ Data de lançamento: {2}</value>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Alternar quebra de texto</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>Valores positivos penalizam novas palavras com base em sua presença no texto atual, aumentando a probabilidade do modelo discutir novos tópicos.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>Um método alternativo de amostragem de temperatura é chamado de 'amostragem de núcleo', onde o modelo considera apenas os tokens que estão entre os top_p em termos de massa de probabilidade. Assim, 0.1 significa considerar apenas os tokens que estão entre os 10% mais altos.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>Valores positivos penalizam novas palavras com base na frequência de sua ocorrência no texto atual, reduzindo a probabilidade do modelo repetir a mesma linha.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>Para cada token subsequente, a amostragem é feita apenas entre as opções classificadas entre os K melhores.</value>
     </data>
 </root>

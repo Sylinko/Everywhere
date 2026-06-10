@@ -94,14 +94,14 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>Set a shortcut to invoke the chat window at any time.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
     <data name="Assistant_Temperature_Description" xml:space="preserve">
         <value>Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.</value>
     </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
-    </data>
-    <data name="Assistant_TopP_Description" xml:space="preserve">
-        <value>An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Select the service provider for web search engines.</value>
@@ -2869,11 +2869,11 @@ Release date: {2}</value>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
         <value>Positive values penalize new tokens based on whether they appear in the text so far, increasing the model’s likelihood to talk about new topics.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>

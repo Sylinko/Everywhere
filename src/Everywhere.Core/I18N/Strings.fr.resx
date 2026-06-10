@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>Définissez un raccourci pour invoquer la fenêtre de chat à tout moment.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>Une valeur plus élevée (comme 0.8) rendra les résultats plus aléatoires, tandis qu'une valeur plus basse (comme 0.2) les rendra plus ciblés et déterministes. Nous recommandons généralement d'ajuster ce paramètre ou le paramètre top_p, mais pas les deux en même temps.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2860,16 +2866,25 @@ Date de publication : {2}</value>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Basculer le retour à la ligne du texte</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>Une valeur positive pénalise les nouveaux mots en fonction de leur présence dans le texte actuel, augmentant ainsi la probabilité que le modèle aborde de nouveaux sujets.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>Une méthode alternative d'échantillonnage de température est appelée « échantillonnage nucleus », où le modèle ne considère que les jetons dont la masse de probabilité est dans le top_p. Ainsi, 0.1 signifie que seuls les jetons dans le top 10 % de la masse de probabilité sont pris en compte.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>Une valeur positive pénalise les nouveaux mots en fonction de leur fréquence d'apparition dans le texte actuel, réduisant ainsi la probabilité que le modèle répète la même ligne.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>Pour chaque jeton suivant, l'échantillonnage se fait uniquement parmi les K meilleures options.</value>
     </data>
 </root>

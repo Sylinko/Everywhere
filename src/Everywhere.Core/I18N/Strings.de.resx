@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>Legen Sie eine Tastenkombination fest, um das Chatfenster jederzeit aufzurufen.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>Höhere Werte (z. B. 0,8) machen die Ausgabe zufälliger, während niedrigere Werte (z. B. 0,2) gezielter und bestimmter sind. Wir empfehlen normalerweise, diesen Parameter oder den top_p-Parameter anzupassen, jedoch nicht beide gleichzeitig.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2859,16 +2865,25 @@ Veröffentlichungsdatum: {2}</value>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Textumbruch umschalten</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>Ein positiver Wert bestraft neue Wörter basierend darauf, ob sie im aktuellen Text erscheinen, wodurch die Wahrscheinlichkeit erhöht wird, dass das Modell neue Themen diskutiert.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>Eine alternative Methode zur Temperatursampling wird als „Kernsampling“ bezeichnet, bei der das Modell nur die Token berücksichtigt, die in der Wahrscheinlichkeitssumme der obersten top_p liegen. Daher bedeutet 0,1, dass nur die Token in den obersten 10 % der Wahrscheinlichkeitssumme berücksichtigt werden.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>Ein positiver Wert bestraft neue Wörter basierend auf ihrer Häufigkeit im aktuellen Text, wodurch die Wahrscheinlichkeit verringert wird, dass das Modell dieselbe Zeile wiederholt.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>Für jedes nachfolgende Token wird nur aus den obersten K Optionen ausgewählt.</value>
     </data>
 </root>

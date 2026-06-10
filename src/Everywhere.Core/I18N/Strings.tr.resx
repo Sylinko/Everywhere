@@ -97,6 +97,9 @@
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>temperature</value>
     </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>Daha yüksek bir değer (örneğin 0.8), çıktının daha rastgele olmasını sağlarken, daha düşük bir değer (örneğin 0.2) daha hedefli ve belirgin sonuçlar verir. Genellikle bu parametreyi veya top_p parametresini ayarlamanızı öneririz, ancak ikisini aynı anda ayarlamayın.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2865,10 +2868,22 @@ Yayın tarihi: {2}</value>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
     </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>Pozitif bir değer, yeni kelimelerin mevcut metinde ne sıklıkla geçtiğine bağlı olarak cezalandırma yaparak modelin yeni konular hakkında konuşma olasılığını artırır.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>Sıcaklık örneklemesine alternatif bir yöntem olan 'çekirdek örnekleme' yönteminde, model yalnızca top_p sıralamasındaki olasılık kütlesini dikkate alır. Bu nedenle, 0.1, yalnızca olasılık kütlesinin en üst %10'unu dikkate alır.</value>
+    </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>Pozitif bir değer, yeni kelimelerin mevcut metindeki sıklığına göre cezalandırma yaparak modelin aynı satırı tekrar etme olasılığını azaltır.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>Her bir sonraki token için yalnızca en üst K seçeneklerinden örnekleme yapılır.</value>
     </data>
 </root>

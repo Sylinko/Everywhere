@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>언제든지 채팅 창을 호출할 수 있는 단축키를 설정합니다.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>높은 값(예: 0.8)은 출력 결과를 더 무작위적으로 만들고, 낮은 값(예: 0.2)은 더 집중적이고 확실하게 만듭니다. 일반적으로 이 매개변수나 top_p 매개변수를 조정할 것을 권장하지만 두 가지를 동시에 조정하지는 마세요.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2860,16 +2866,25 @@
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>텍스트 줄 바꿈 전환</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>양수 값은 현재 텍스트에 새로운 단어가 나타나는지 여부에 따라 벌점을 부여하여 모델이 새로운 주제를 논의할 가능성을 높입니다.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>온도 샘플링의 대안 방법인 '핵심 샘플링'에서는 모델이 확률 질량이 상위 top_p에 해당하는 토큰만 고려합니다. 따라서 0.1은 확률 질량이 상위 10%에 해당하는 토큰만 고려함을 의미합니다.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>양수 값은 현재 텍스트에서 새로운 단어의 출현 빈도에 따라 벌점을 부여하여 모델이 동일한 줄을 반복할 확률을 낮춥니다.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>후속 각 토큰에 대해 상위 K의 옵션 중에서만 샘플링합니다.</value>
     </data>
 </root>

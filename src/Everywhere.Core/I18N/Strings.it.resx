@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>Imposta una scorciatoia per richiamare la finestra di chat in qualsiasi momento.</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>Valori più alti (come 0.8) rendono l'output più casuale, mentre valori più bassi (come 0.2) lo rendono più mirato e certo. Si consiglia di regolare questo parametro o il parametro top_p, ma non entrambi contemporaneamente.</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2860,16 +2866,25 @@ Data di rilascio: {2}</value>
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>Attiva/disattiva il ritorno a capo</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>Un valore positivo penalizza le nuove parole in base alla loro presenza nel testo corrente, aumentando la probabilità che il modello discuta nuovi argomenti.</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>Un metodo alternativo di campionamento della temperatura è chiamato 'campionamento nucleare', in cui il modello considera solo i token con probabilità cumulative superiori a top_p. Quindi, 0.1 significa considerare solo i token con le prime 10% di probabilità.</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>Un valore positivo penalizza le nuove parole in base alla loro frequenza nel testo corrente, riducendo la probabilità che il modello ripeta la stessa riga.</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>Per ogni token successivo, si campiona solo dalle prime K opzioni.</value>
     </data>
 </root>

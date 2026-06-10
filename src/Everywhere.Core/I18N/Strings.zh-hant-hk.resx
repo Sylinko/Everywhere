@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>設定快捷鍵以隨時調出聊天視窗。</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>較高的數值（如 0.8）會使輸出結果更具隨機性，而較低的數值（如 0.2）則會使其更具針對性且更具確定性。我們通常建議調整此參數或 top_p 參數，但不要同時調整兩者。</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2860,16 +2866,25 @@
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>切換文本換行</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>正值會根據新詞是否出現在當前文本中對其進行懲罰，從而提高模型討論新主題的可能性。</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>一種替代溫度採樣的方法稱為“核心採樣”，該方法中模型僅考慮概率質量排名前 top_p 的令牌。因此，0.1 表示僅考慮概率質量排名前 10% 的令牌。</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>正值會根據新詞在當前文本中的出現頻率對其進行懲罰，從而降低模型原封不動重複同一行的概率。</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>對於後續的每個令牌，僅從排名前 K 的選項中進行採樣。</value>
     </data>
 </root>

@@ -94,6 +94,12 @@
     <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
         <value>いつでもチャットウィンドウを呼び出すためのショートカットを設定します。</value>
     </data>
+    <data name="Assistant_Temperature_Header" xml:space="preserve">
+        <value>temperature</value>
+    </data>
+    <data name="Assistant_Temperature_Description" xml:space="preserve">
+        <value>高い値（例：0.8）は出力をよりランダムにし、低い値（例：0.2）はより特定的で確定的にします。このパラメータまたは top_p パラメータを調整することをお勧めしますが、両方を同時に調整しないでください。</value>
+    </data>
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
@@ -2860,16 +2866,25 @@
     <data name="CodeBlock_ToggleTextWrap_Tip" xml:space="preserve">
         <value>テキストの折り返しを切り替え</value>
     </data>
-    <data name="Assistant_Temperature_Header" xml:space="preserve">
-        <value>temperature</value>
-    </data>
     <data name="Assistant_PresencePenalty_Header" xml:space="preserve">
         <value>presence_penalty</value>
+    </data>
+    <data name="Assistant_PresencePenalty_Description" xml:space="preserve">
+        <value>正の値は新しい単語が現在のテキストに出現するかどうかに基づいて罰則を与え、新しいテーマについてのモデルの議論の可能性を高めます。</value>
+    </data>
+    <data name="Assistant_TopP_Description" xml:space="preserve">
+        <value>温度サンプリングの代替手法は「コアサンプリング」と呼ばれ、モデルは確率質量が上位 top_p のトークンのみを考慮します。したがって、0.1 は確率質量が上位 10% のトークンのみを考慮することを意味します。</value>
     </data>
     <data name="Assistant_FrequencyPenalty_Header" xml:space="preserve">
         <value>frequency_penalty</value>
     </data>
+    <data name="Assistant_FrequencyPenalty_Description" xml:space="preserve">
+        <value>正の値は新しい単語の現在のテキスト内での出現頻度に基づいて罰則を与え、モデルが同じ行を繰り返す可能性を減らします。</value>
+    </data>
     <data name="Assistant_TopK_Header" xml:space="preserve">
         <value>top_k</value>
+    </data>
+    <data name="Assistant_TopK_Description" xml:space="preserve">
+        <value>次の各トークンについて、上位 K のオプションからのみサンプリングします。</value>
     </data>
 </root>
