@@ -50,7 +50,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [DynamicResourceKey(
         LocaleKey.SoftwareSettings_UpdateChannel_Header,
         LocaleKey.SoftwareSettings_UpdateChannel_Description)]
-    [SettingsItem(Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(Group = AbstractionsLocaleKey.Common_Advanced)]
     public partial UpdateChannel UpdateChannel { get; set; } = UpdateChannel.Unknown;
 
 #if WINDOWS
@@ -75,17 +75,23 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [SupportedOSPlatform("windows")]
     public bool IsStartupEnabled
     {
-        get => NativeHelper.IsUserStartupEnabled || NativeHelper.IsAdministratorStartupEnabled;
+        get
+        {
+            var nativeHelper = NativeHelper;
+            return nativeHelper.IsUserStartupEnabled || nativeHelper.IsAdministratorStartupEnabled;
+        }
         set
         {
             try
             {
+                var nativeHelper = NativeHelper;
+
                 // If disabling user startup while admin startup is enabled, also disable admin startup.
-                if (!value && NativeHelper.IsAdministratorStartupEnabled)
+                if (!value && nativeHelper.IsAdministratorStartupEnabled)
                 {
-                    if (IsAdministrator)
+                    if (nativeHelper.IsAdministrator)
                     {
-                        NativeHelper.IsAdministratorStartupEnabled = false;
+                        nativeHelper.IsAdministratorStartupEnabled = false;
                         OnPropertyChanged(nameof(IsAdministratorStartupEnabled));
                     }
                     else
@@ -94,14 +100,14 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
                     }
                 }
 
-                NativeHelper.IsUserStartupEnabled = value;
+                nativeHelper.IsUserStartupEnabled = value;
                 OnPropertyChanged();
             }
             catch (Exception ex)
             {
                 ex = HandledSystemException.Handle(ex); // maybe blocked by UAC or antivirus, handle it gracefully
                 Log.ForContext<CommonSettings>().Error(ex, "Failed to set user startup enabled.");
-                ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+                ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
             }
         }
     }
@@ -119,17 +125,18 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
         {
             try
             {
-                if (!IsAdministrator) return;
+                var nativeHelper = NativeHelper;
+                if (!nativeHelper.IsAdministrator) return;
 
                 // If enabling admin startup while user startup is disabled, also enable user startup.
-                NativeHelper.IsUserStartupEnabled = !value;
-                NativeHelper.IsAdministratorStartupEnabled = value;
+                nativeHelper.IsUserStartupEnabled = !value;
+                nativeHelper.IsAdministratorStartupEnabled = value;
             }
             catch (Exception ex)
             {
                 ex = HandledSystemException.Handle(ex); // maybe blocked by UAC or antivirus, handle it gracefully
                 Log.ForContext<CommonSettings>().Error(ex, "Failed to set administrator startup enabled.");
-                ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+                ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
             }
 
             OnPropertyChanged();
@@ -180,6 +187,6 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [DynamicResourceKey(
         LocaleKey.SoftwareSettings_DebugFeatures_Header,
         LocaleKey.SoftwareSettings_DebugFeatures_Description)]
-    [SettingsItem(Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(Group = AbstractionsLocaleKey.Common_Advanced)]
     public SettingsControl<DebugFeaturesControl> DebugFeatures { get; } = new();
 }

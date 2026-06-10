@@ -31,5 +31,7 @@ public interface ISystemHostedSpeechRecognitionSession : ISpeechRecognitionSessi
 /// </summary>
 public interface ICustomHostedSpeechRecognitionSession : ISpeechRecognitionSession
 {
+    MicrophoneCaptureOptions MicrophoneCaptureOptions { get; }
+
     IAsyncEnumerable<SpeechRecognitionUpdate> RecognizeAsync(IAsyncEnumerable<AudioFrame> input, CancellationToken cancellationToken = default);
 }

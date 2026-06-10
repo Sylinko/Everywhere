@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsDeploymentTarget>true</IsDeploymentTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\3rd\shad-ui\src\ShadUI\ShadUI.csproj"/>
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.Media.Abstractions\Everywhere.Media.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="org.k2fsa.portaudio.runtime.osx-arm64" />
+    <PackageReference Include="org.k2fsa.portaudio.runtime.osx-x64" />
+    <PackageReference Include="org.k2fsa.portaudio.runtime.win-x64" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.osx-arm64" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.osx-x64" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.win-x64" />
+    <PackageReference Include="PortAudioSharp2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\MicrophoneDeviceComboBox.axaml.cs">
+      <DependentUpon>MicrophoneDeviceComboBox.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\Sherpa\SherpaOnnxModelSelector.axaml.cs">
+      <DependentUpon>SherpaOnnxModelSelector.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>

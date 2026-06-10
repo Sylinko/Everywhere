@@ -37,4 +37,161 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>Текущий канал</value>
     </data>
+    <data name="Common_Abort" xml:space="preserve">
+        <value>Прервать</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Расширенные</value>
+    </data>
+    <data name="Common_Cancel" xml:space="preserve">
+        <value>Отмена</value>
+    </data>
+    <data name="Common_Comma" xml:space="preserve">
+        <value>, </value>
+    </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>Скопировано</value>
+    </data>
+    <data name="Common_Copy" xml:space="preserve">
+        <value>Копировать</value>
+    </data>
+    <data name="Common_Unknown" xml:space="preserve">
+        <value>Неизвестно</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
+        <value>Произошла одна или несколько ошибок.
+{0}</value>
+    </data>
+    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
+        <value>Аргумент пуст. Пожалуйста, убедитесь, что конфигурация правильная.</value>
+    </data>
+    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
+        <value>Аргумент выходит за пределы допустимого диапазона. Пожалуйста, убедитесь, что конфигурация правильная.</value>
+    </data>
+    <data name="HandledSystemException_COMException" xml:space="preserve">
+        <value>Произошла ошибка системного компонента (COM). Это может указывать на проблему с ОС или зависимостью.</value>
+    </data>
+    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
+        <value>Подключение отклонено сервером, проверьте сетевое соединение и настройки прокси.</value>
+    </data>
+    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
+        <value>Указанная директория не найдена. Пожалуйста, убедитесь, что директория существует и путь указан правильно.</value>
+    </data>
+    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
+        <value>Указанный диск не найден. Пожалуйста, убедитесь, что диск подключен и доступен.</value>
+    </data>
+    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
+        <value>Достигнут неожиданный конец потока данных. Это может указывать на поврежденный файл или сетевую проблему.</value>
+    </data>
+    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
+        <value>Указанный файл не найден. Пожалуйста, убедитесь, что файл существует и путь указан правильно.</value>
+    </data>
+    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
+        <value>Ошибка при вызове инструмента.</value>
+    </data>
+    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
+        <value>Хост не найден. Пожалуйста, проверьте адрес и соединение с сетью.</value>
+    </data>
+    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
+        <value>Аргумент недействителен. Пожалуйста, убедитесь, что конфигурация правильная.</value>
+    </data>
+    <data name="HandledSystemException_InvalidData" xml:space="preserve">
+        <value>Обрабатываемые данные недействительны или повреждены. Пожалуйста, проверьте исходный файл или данные.</value>
+    </data>
+    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
+        <value>Формат недействителен. Пожалуйста, убедитесь, что конфигурация правильная.</value>
+    </data>
+    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
+        <value>Операция недействительна. Пожалуйста, убедитесь, что конфигурация правильная.</value>
+    </data>
+    <data name="HandledSystemException_IOException" xml:space="preserve">
+        <value>Произошла общая ошибка ввода-вывода. Это может быть связано с проблемой чтения или записи файла.</value>
+    </data>
+    <data name="HandledSystemException_NotSupported" xml:space="preserve">
+        <value>Запрашиваемая операция не поддерживается на вашей системе.</value>
+    </data>
+    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
+        <value>Операция была отменена.</value>
+    </data>
+    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
+        <value>Приложению не хватает памяти. Пожалуйста, закройте другие программы и попробуйте снова.</value>
+    </data>
+    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
+        <value>Указанный путь к файлу или директории слишком длинный. Пожалуйста, попробуйте использовать более короткий путь.</value>
+    </data>
+    <data name="HandledSystemException_Security" xml:space="preserve">
+        <value>Произошла ошибка безопасности. Приложение может не иметь необходимых разрешений.</value>
+    </data>
+    <data name="HandledSystemException_Serialization" xml:space="preserve">
+        <value>Ошибка при разборе данных.</value>
+    </data>
+    <data name="HandledSystemException_Socket" xml:space="preserve">
+        <value>Произошла ошибка сетевого сокета. Пожалуйста, проверьте ваше сетевое подключение и настройки брандмауэра.</value>
+    </data>
+    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
+        <value>Не удалось установить SSL-соединение. Пожалуйста, проверьте настройки сети или сертификат.</value>
+    </data>
+    <data name="HandledSystemException_Timeout" xml:space="preserve">
+        <value>Время выполнения операции истекло. Пожалуйста, проверьте производительность системы и попробуйте снова.</value>
+    </data>
+    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
+        <value>Доступ к необходимому ресурсу был запрещён. Пожалуйста, проверьте разрешения на файлы или запустите приложение от имени администратора.</value>
+    </data>
+    <data name="HandledSystemException_Unknown" xml:space="preserve">
+        <value>Произошла неожиданная системная ошибка. Пожалуйста, попробуйте снова или проверьте журналы приложения.</value>
+    </data>
+    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
+        <value>Вы еще не вошли в систему, пожалуйста, войдите, чтобы использовать облачные сервисы Everywhere.</value>
+    </data>
+    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
+        <value>Произошла ошибка системы Windows. Пожалуйста, проверьте журналы приложения для получения более подробной информации.</value>
+    </data>
+    <data name="Common_CriticalError" xml:space="preserve">
+        <value>Критическая Ошибка</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>По умолчанию</value>
+    </data>
+    <data name="Common_Delete" xml:space="preserve">
+        <value>Удалить</value>
+    </data>
+    <data name="Common_Error" xml:space="preserve">
+        <value>Ошибка</value>
+    </data>
+    <data name="Common_Ignore" xml:space="preserve">
+        <value>Игнорировать</value>
+    </data>
+    <data name="Common_Info" xml:space="preserve">
+        <value>Информация</value>
+    </data>
+    <data name="Common_No" xml:space="preserve">
+        <value>Нет</value>
+    </data>
+    <data name="Common_None" xml:space="preserve">
+        <value>Нет</value>
+    </data>
+    <data name="Common_OK" xml:space="preserve">
+        <value>ОК</value>
+    </data>
+    <data name="Common_Refresh" xml:space="preserve">
+        <value>Обновить</value>
+    </data>
+    <data name="Common_Reset" xml:space="preserve">
+        <value>Сброс</value>
+    </data>
+    <data name="Common_Retry" xml:space="preserve">
+        <value>Повторить</value>
+    </data>
+    <data name="Common_Submit" xml:space="preserve">
+        <value>Отправить</value>
+    </data>
+    <data name="Common_Undo" xml:space="preserve">
+        <value>Отменить</value>
+    </data>
+    <data name="Common_Warning" xml:space="preserve">
+        <value>Предупреждение</value>
+    </data>
+    <data name="Common_Yes" xml:space="preserve">
+        <value>Да</value>
+    </data>
 </root>

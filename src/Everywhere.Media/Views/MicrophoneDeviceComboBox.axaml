@@ -1,0 +1,42 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:ex="clr-namespace:Everywhere.Media.MarkupExtensions" xmlns:m18="clr-namespace:Everywhere.Media.I18N"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:views="clr-namespace:Everywhere.Media.Views"
+  x:CompileBindings="False">
+
+  <ControlTheme
+    x:Key="{x:Type views:MicrophoneDeviceComboBox}"
+    TargetType="views:MicrophoneDeviceComboBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ComboBox
+          x:Name="PART_ComboBox" MinWidth="280"
+          MinHeight="32"
+          ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
+          MaxDropDownHeight="320"
+          SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+          SelectedValueBinding="{Binding Id}">
+          <shadui:ControlAssist.Footer>
+            <Border
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="0,1,0,0">
+              <Button
+                Margin="4" Padding="12,6"
+                shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+                BorderThickness="0"
+                Command="{Binding $parent[views:MicrophoneDeviceComboBox].RefreshCommand}"
+                Content="{ex:I18N {x:Static m18:LocaleKey.MicrophoneDeviceComboBox_Refresh}}"
+                CornerRadius="6"/>
+            </Border>
+          </shadui:ControlAssist.Footer>
+
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding NameKey^}"/>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

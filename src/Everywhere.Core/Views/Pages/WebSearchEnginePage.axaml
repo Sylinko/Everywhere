@@ -1,11 +1,11 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.Pages.WebSearchEnginePage" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:c="clr-namespace:Everywhere.Configuration"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
-  xmlns:pages="clr-namespace:Everywhere.Views.Pages" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:WebSearchEnginePageViewModel"
-  ClipToBounds="False">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions"
+  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:pages="clr-namespace:Everywhere.Views.Pages"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:DataType="vm:WebSearchEnginePageViewModel" ClipToBounds="False">
   <shadui:NavigationView
     Padding="24,0,24,20" HeaderMaxWidth="1000"
     PageTransition="{x:Null}"
@@ -47,7 +47,7 @@
               <shadui:Badge
                 DockPanel.Dock="Right" VerticalAlignment="Center"
                 Background="{DynamicResource SuccessColor60}"
-                Content="{I18N {x:Static LocaleKey.Common_Default}}"
+                Content="{I18N {x:Static a18:LocaleKey.Common_Default}}"
                 CornerRadius="{DynamicResource FullCornerRadius}"
                 Foreground="{DynamicResource BadgeForegroundColor}">
                 <shadui:Badge.IsVisible>

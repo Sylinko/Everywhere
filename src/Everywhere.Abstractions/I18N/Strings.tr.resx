@@ -37,4 +37,160 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>Bilinmeyen Kanal</value>
     </data>
+    <data name="Common_Abort" xml:space="preserve">
+        <value>Durdur</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Gelişmiş</value>
+    </data>
+    <data name="Common_Cancel" xml:space="preserve">
+        <value>İptal</value>
+    </data>
+    <data name="Common_Comma" xml:space="preserve">
+        <value>, </value>
+    </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>Kopyalandı</value>
+    </data>
+    <data name="Common_Copy" xml:space="preserve">
+        <value>Kopyala</value>
+    </data>
+    <data name="Common_Unknown" xml:space="preserve">
+        <value>Bilinmeyen</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
+        <value>Bir veya birden fazla hata oluştu.\n{0}</value>
+    </data>
+    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
+        <value>Argüman boş. Lütfen yapılandırmanın doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
+        <value>Argüman geçerli aralık dışında. Lütfen yapılandırmanın doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_COMException" xml:space="preserve">
+        <value>Sistem bileşeni (COM) hatası oluştu. Bu, işletim sistemi veya bağımlılıkta bir sorun olduğunu gösterebilir.</value>
+    </data>
+    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
+        <value>Bağlantı sunucu tarafından reddedildi, lütfen ağ bağlantınızı ve proxy ayarlarını kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
+        <value>Belirtilen dizin bulunamadı. Dizin mevcut olup yolun doğru olduğunu kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
+        <value>Belirtilen sürücü bulunamadı. Sürücünün bağlı olduğundan ve erişilebilir olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
+        <value>Beklenmeyen bir veri akışının sonuna ulaşıldı. Bu, bozuk dosya veya ağ sorunu gösterebilir.</value>
+    </data>
+    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
+        <value>Belirtilen dosya bulunamadı. Dosyanın var olduğundan ve yolun doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
+        <value>Araç çağrılırken hata oluştu.</value>
+    </data>
+    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
+        <value>Host bulunamadı. Lütfen adresi ve ağ bağlantınızı kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
+        <value>Argüman geçersizdir. Lütfen yapılandırmanın doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_InvalidData" xml:space="preserve">
+        <value>İşlenen veriler geçersiz veya bozulmuş. Kaynak dosyayı veya veriyi kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
+        <value>Biçim geçersizdir. Lütfen yapılandırmanın doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
+        <value>İşlem geçersizdir. Lütfen yapılandırmanın doğru olduğundan emin olun.</value>
+    </data>
+    <data name="HandledSystemException_IOException" xml:space="preserve">
+        <value>A genel G/Ç hatası oluştu. Bu, dosya okuma veya yazma sorunu nedeniyle olabilir.</value>
+    </data>
+    <data name="HandledSystemException_NotSupported" xml:space="preserve">
+        <value>İstenen işlem sisteminizde desteklenmiyor.</value>
+    </data>
+    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
+        <value>İşlem iptal edildi.</value>
+    </data>
+    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
+        <value>Uygulama bellekten çıktı. Diğer programları kapatın ve tekrar deneyin.</value>
+    </data>
+    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
+        <value>Belirtilen dosya veya klasör yolu çok uzun. Kısa bir yol kullanmayı deneyin.</value>
+    </data>
+    <data name="HandledSystemException_Security" xml:space="preserve">
+        <value>Bir güvenlik hatası oluştu. Uygulamanın gerekli izinlere sahip olmayabilir.</value>
+    </data>
+    <data name="HandledSystemException_Serialization" xml:space="preserve">
+        <value>Veri ayrıştırılırken hata oluştu.</value>
+    </data>
+    <data name="HandledSystemException_Socket" xml:space="preserve">
+        <value>Ağ soketi hatası oluştu. Ağ bağlantınızı ve güvenlik duvarı ayarlarını kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
+        <value>SSL bağlantısı kurulamadı. Lütfen ağ ayarlarınızı veya sertifikanızı kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_Timeout" xml:space="preserve">
+        <value>İşlem zaman aşımına uğradı. Sistem performansınızı kontrol edin ve tekrar deneyin.</value>
+    </data>
+    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
+        <value>Gerekli kaynağa erişim reddedildi. Dosya izinlerini kontrol edin veya uygulamayı yönetici olarak çalıştırın.</value>
+    </data>
+    <data name="HandledSystemException_Unknown" xml:space="preserve">
+        <value>Beklenmeyen bir sistem hatası oluştu. Tekrar deneyin veya uygulama günlüklerini kontrol edin.</value>
+    </data>
+    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
+        <value>Henüz giriş yapmadınız, lütfen Everywhere bulut hizmetini kullanmadan önce giriş yapın.</value>
+    </data>
+    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
+        <value>Bir Windows sistem hatası meydana geldi. Daha fazla ayrıntı için uygulama günlüklerini kontrol edin.</value>
+    </data>
+    <data name="Common_CriticalError" xml:space="preserve">
+        <value>Kritik Hata</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>Varsayılan</value>
+    </data>
+    <data name="Common_Delete" xml:space="preserve">
+        <value>Sil</value>
+    </data>
+    <data name="Common_Error" xml:space="preserve">
+        <value>Hata</value>
+    </data>
+    <data name="Common_Ignore" xml:space="preserve">
+        <value>Yoksay</value>
+    </data>
+    <data name="Common_Info" xml:space="preserve">
+        <value>Bilgi</value>
+    </data>
+    <data name="Common_No" xml:space="preserve">
+        <value>Hayır</value>
+    </data>
+    <data name="Common_None" xml:space="preserve">
+        <value>Yok</value>
+    </data>
+    <data name="Common_OK" xml:space="preserve">
+        <value>Tamam</value>
+    </data>
+    <data name="Common_Refresh" xml:space="preserve">
+        <value>Yenile</value>
+    </data>
+    <data name="Common_Reset" xml:space="preserve">
+        <value>Sıfırla</value>
+    </data>
+    <data name="Common_Retry" xml:space="preserve">
+        <value>Yeniden Dene</value>
+    </data>
+    <data name="Common_Submit" xml:space="preserve">
+        <value>Gönder</value>
+    </data>
+    <data name="Common_Undo" xml:space="preserve">
+        <value>Geri Al</value>
+    </data>
+    <data name="Common_Warning" xml:space="preserve">
+        <value>Uyarı</value>
+    </data>
+    <data name="Common_Yes" xml:space="preserve">
+        <value>Evet</value>
+    </data>
 </root>

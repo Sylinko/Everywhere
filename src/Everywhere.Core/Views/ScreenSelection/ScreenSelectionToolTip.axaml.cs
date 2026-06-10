@@ -63,7 +63,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
     private string? GetElementDescription(IVisualElement? element)
     {
-        if (element is null) return LocaleResolver.Common_None;
+        if (element is null) return AbstractionsLocaleResolver.Common_None;
 
         DynamicResourceKey key;
         var elementTypeKey = new DynamicResourceKey($"VisualElementType_{element.Type}");

@@ -1,8 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:chat="clr-namespace:Everywhere.Chat"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ChatMessageControl}"
     TargetType="v:ChatMessageControl">
@@ -229,7 +230,7 @@
                           x:Name="MarkdownRendererContextFlyoutCopyItem"
                           Command="{Binding $parent[md:MarkdownRenderer].Copy}"
                           Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.Common_Copy}}"
+                          Header="{I18N {x:Static a18:LocaleKey.Common_Copy}}"
                           InputGesture="{Binding $parent[md:MarkdownRenderer].CopyGesture}"
                           IsEnabled="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
                       </MenuFlyout>
@@ -250,7 +251,7 @@
                         <MenuItem
                           Command="{Binding $parent[md:MarkdownRenderer].Copy}"
                           Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.Common_Copy}}"
+                          Header="{I18N {x:Static a18:LocaleKey.Common_Copy}}"
                           Icon="{LucideIconContent Copy}"
                           InputGesture="{Binding $parent[md:MarkdownRenderer].CopyGesture}"
                           IsVisible="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
@@ -432,7 +433,7 @@
                 CommandParameter="{Binding}"
                 Content="{LucideIconContent Copy}"
                 Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Copy}}"/>
             </StackPanel>
           </StackPanel>
         </DataTemplate>
@@ -500,7 +501,7 @@
                 CommandParameter="{Binding}"
                 Content="{LucideIconContent Copy}"
                 Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Copy}}"/>
             </StackPanel>
           </StackPanel>
         </DataTemplate>
@@ -556,7 +557,7 @@
                 CommandParameter="{Binding}"
                 Content="{LucideIconContent Copy}"
                 Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Copy}}"/>
             </StackPanel>
           </StackPanel>
         </DataTemplate>

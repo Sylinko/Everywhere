@@ -79,7 +79,7 @@ public partial class McpImportForm : TemplatedControl
         catch (Exception e)
         {
             e = HandledSystemException.Handle(e);
-            ToastManager.Error(LocaleResolver.Common_Error, e.GetFriendlyMessage());
+            ToastManager.Error(AbstractionsLocaleResolver.Common_Error, e.GetFriendlyMessage());
             Log.ForContext<McpImportForm>().Error(e, "Failed to open MCP JSON file");
         }
     }

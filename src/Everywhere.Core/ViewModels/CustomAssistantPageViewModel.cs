@@ -108,7 +108,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
         var duplicatedAssistant = JsonSerializer.Deserialize<CustomAssistant>(json, options).NotNull();
 
         duplicatedAssistant.Id = Guid.CreateVersion7();
-        duplicatedAssistant.Name += " - " + LocaleResolver.Common_Copy;
+        duplicatedAssistant.Name += " - " + AbstractionsLocaleResolver.Common_Copy;
         _settings.Model.CustomAssistants.Insert(_settings.Model.CustomAssistants.IndexOf(customAssistant) + 1, duplicatedAssistant);
         SelectedCustomAssistant = duplicatedAssistant;
     }
@@ -155,9 +155,9 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
         if (SelectedCustomAssistant is not { } customAssistant) return;
         var result = await DialogManager.CreateDialog(
                 LocaleResolver.CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message.Format(customAssistant.Name),
-                LocaleResolver.Common_Warning)
-            .WithPrimaryButton(LocaleResolver.Common_Yes)
-            .WithCancelButton(LocaleResolver.Common_No)
+                AbstractionsLocaleResolver.Common_Warning)
+            .WithPrimaryButton(AbstractionsLocaleResolver.Common_Yes)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_No)
             .ShowAsync();
         if (result != DialogResult.Primary) return;
 

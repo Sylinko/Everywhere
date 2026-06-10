@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.Common.Downloads;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Microsoft.Extensions.Logging;

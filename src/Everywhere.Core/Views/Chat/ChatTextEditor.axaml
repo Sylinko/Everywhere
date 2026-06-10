@@ -1,7 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit" xmlns:system="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ChatTextEditor}"
     TargetType="v:ChatTextEditor">
@@ -44,7 +45,7 @@
                   x:Name="TextBoxContextFlyoutCopyItem"
                   Command="{Binding $parent[v:ChatTextEditor].Copy}"
                   Cursor="Hand"
-                  Header="{I18N {x:Static LocaleKey.Common_Copy}}"
+                  Header="{I18N {x:Static a18:LocaleKey.Common_Copy}}"
                   InputGesture="{x:Static TextBox.CopyGesture}"
                   IsEnabled="{Binding #PART_TextEditor.CanCopy}"/>
                 <MenuItem

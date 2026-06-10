@@ -1,0 +1,163 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.Pages.SpeechRecognitionPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions"
+  xmlns:asr="clr-namespace:Everywhere.Media.SpeechRecognition;assembly=Everywhere.Media.Abstractions" xmlns:c="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions"
+  xmlns:pages="clr-namespace:Everywhere.Views.Pages" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:SpeechRecognitionPageViewModel"
+  ClipToBounds="False">
+  <UserControl.Styles>
+    <Style Selector="shadui|NavigationView#RootNavigationView.Busy">
+      <Setter Property="Effect">
+        <BlurEffect Radius="11"/>
+      </Setter>
+    </Style>
+  </UserControl.Styles>
+
+  <Panel>
+    <shadui:NavigationView
+      x:Name="RootNavigationView" Padding="24,0,24,20"
+      Classes.Busy="{Binding !SpeechRecognitionService.IsInitialized}"
+      HeaderMaxWidth="1000"
+      PageTransition="{x:Null}"
+      PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+      SelectedItem="{Binding SelectedSpeechRecognitionEngine, Mode=TwoWay}">
+      <shadui:NavigationView.Styles>
+        <Style Selector="Button#SetDefaultButton">
+          <Setter Property="Content" Value="{I18N {x:Static LocaleKey.WebSearchPage_SetDefaultButton_Content}}"/>
+          <Style Selector="^:disabled">
+            <Setter Property="Content" Value="{I18N {x:Static LocaleKey.WebSearchPage_SetDefaultButton_AlreadyDefaultContent}}"/>
+          </Style>
+        </Style>
+      </shadui:NavigationView.Styles>
+
+      <shadui:NavigationView.PaneHeader>
+        <TextBlock
+          Classes="h4" Margin="0,18,0,8"
+          VerticalAlignment="Center"
+          Text="{I18N {x:Static LocaleKey.SpeechRecognitionPage_Title}}"
+          TextTrimming="CharacterEllipsis"/>
+      </shadui:NavigationView.PaneHeader>
+
+      <shadui:NavigationView.PaneContent>
+        <ListBox
+          Padding="0" BorderThickness="0"
+          ItemsSource="{Binding SpeechRecognitionService.Engines}"
+          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+          SelectedItem="{Binding SelectedSpeechRecognitionEngine, Mode=TwoWay}">
+          <ListBox.Styles>
+            <Style Selector="ListBoxItem">
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            </Style>
+          </ListBox.Styles>
+
+          <ListBox.DataTemplates>
+            <DataTemplate DataType="asr:ISpeechRecognitionEngine">
+              <DockPanel
+                HorizontalSpacing="10" LastChildFill="True">
+                <shadui:Badge
+                  DockPanel.Dock="Right" VerticalAlignment="Center"
+                  Background="{DynamicResource SuccessColor60}"
+                  Content="{I18N {x:Static a18:LocaleKey.Common_Default}}"
+                  CornerRadius="{DynamicResource FullCornerRadius}"
+                  Foreground="{DynamicResource BadgeForegroundColor}">
+                  <shadui:Badge.IsVisible>
+                    <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
+                      <Binding Path="Id"/>
+                      <Binding Path="$parent[pages:SpeechRecognitionPage].ViewModel.SpeechRecognitionSettings.SelectedEngineId"/>
+                    </MultiBinding>
+                  </shadui:Badge.IsVisible>
+                </shadui:Badge>
+
+                <TextBlock
+                  Classes="p" VerticalAlignment="Center"
+                  Text="{Binding Descriptor.NameKey^}"
+                  TextTrimming="CharacterEllipsis"/>
+              </DockPanel>
+            </DataTemplate>
+          </ListBox.DataTemplates>
+        </ListBox>
+      </shadui:NavigationView.PaneContent>
+
+      <shadui:NavigationView.Header>
+        <Grid
+          Height="36" Margin="0,14,0,14"
+          ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4"
+          IsVisible="{Binding SelectedSpeechRecognitionEngine, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <TextBlock
+            Classes="p" Grid.Column="0"
+            VerticalAlignment="Center"
+            Text="{Binding SelectedSpeechRecognitionEngine?.Descriptor.NameKey^}"
+            TextTrimming="CharacterEllipsis"/>
+
+          <Button
+            x:Name="SetDefaultButton" Classes="Primary"
+            Grid.Column="2" VerticalAlignment="Center"
+            shadui:ButtonAssist.Icon="{LucideIconContent CircleCheck}"
+            Command="{Binding SetDefaultCommand}"
+            CornerRadius="{DynamicResource FullCornerRadius}"/>
+        </Grid>
+      </shadui:NavigationView.Header>
+
+      <shadui:NavigationView.ContentTemplate>
+        <DataTemplate DataType="asr:ISpeechRecognitionEngine">
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <StackPanel
+              MaxWidth="1000" Margin="0,16,0,0"
+              Spacing="8">
+              <TextBlock
+                IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Text="{Binding Descriptor.DescriptionKey^, FallbackValue={x:Null}}"/>
+
+              <shadui:Toast
+                Margin="0" Padding="12,8"
+                HorizontalAlignment="Stretch" CanDismiss="False"
+                CanDismissByClicking="False"
+                IsVisible="{Binding !IsSupported}"
+                Notification="Warning">
+                <TextBlock Text="{I18N {x:Static LocaleKey.SpeechRecognitionPage_Notification_NotSupported}}"/>
+              </shadui:Toast>
+
+              <ItemsControl ItemsSource="{Binding Notifications}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel
+                      Orientation="Vertical" Spacing="4"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="c:DynamicNotification">
+                    <shadui:Toast
+                      Margin="0" Padding="12,8"
+                      HorizontalAlignment="Stretch"
+                      CanDismiss="{Binding CanDismiss, Mode=OneTime}"
+                      CanDismissByClicking="False"
+                      Command="{Binding DismissCommand, Mode=OneTime}"
+                      Notification="{Binding Type, Converter={x:Static shadui:NotificationTypeToNotificationConverter.Shared}}">
+                      <TextBlock Text="{Binding ContentKey^, FallbackValue={x:Null}}"/>
+                    </shadui:Toast>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <v:SettingsItemsControl ItemsSource="{Binding $parent[pages:SpeechRecognitionPage].ViewModel.SettingsItems, FallbackValue={x:Null}}"/>
+            </StackPanel>
+          </ScrollViewer>
+        </DataTemplate>
+      </shadui:NavigationView.ContentTemplate>
+    </shadui:NavigationView>
+
+    <StackPanel
+      HorizontalAlignment="Center" VerticalAlignment="Center"
+      IsVisible="{Binding !SpeechRecognitionService.IsInitialized}"
+      Spacing="4">
+      <shadui:Loading
+        Width="{DynamicResource FontSizeL}"
+        Height="{DynamicResource FontSizeL}"/>
+      <TextBlock
+        Classes="p" HorizontalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.SpeechRecognitionPage_LoadingTextBlock_Text}}"/>
+    </StackPanel>
+  </Panel>
+</UserControl>

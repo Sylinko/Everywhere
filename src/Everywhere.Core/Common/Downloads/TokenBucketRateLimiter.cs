@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Everywhere.Common;
+namespace Everywhere.Common.Downloads;
 
 /// <summary>
 /// A token-bucket based bandwidth rate limiter that produces smooth, non-bursty throttling.

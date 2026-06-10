@@ -4,35 +4,21 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
-using Everywhere.Media;
+using Everywhere.Media.Audio;
 using Everywhere.Media.SpeechRecognition;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
-namespace Everywhere.Core.Tests;
+namespace Everywhere.Media.Tests;
 
 [TestFixture]
 public class SpeechRecognitionServiceTests
 {
     [Test]
-    public async Task TryCreateInputState_WhenDisabled_ReturnsNull()
-    {
-        var engine = new FakeSpeechRecognitionEngine();
-        var settings = new Settings();
-        settings.SpeechRecognition.IsEnabled = false;
-        var service = CreateService(settings, engine);
-        await service.InitializeAsync();
-
-        var state = service.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
-
-        Assert.That(state, Is.Null);
-    }
-
-    [Test]
     public async Task TryCreateInputState_WhenAlreadyActive_ReturnsNull()
     {
-        var service = CreateService(new Settings(), new FakeSpeechRecognitionEngine());
+        var service = CreateService(CreateSettings(), new FakeSpeechRecognitionEngine());
         await service.InitializeAsync();
 
         var first = service.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
@@ -49,7 +35,7 @@ public class SpeechRecognitionServiceTests
     public async Task StartSpeechRecognitionAsync_ProcessesHypothesisAndFinal()
     {
         var session = new FakeSpeechRecognitionSession();
-        var service = CreateService(new Settings(), new FakeSpeechRecognitionEngine(session));
+        var service = CreateService(CreateSettings(), new FakeSpeechRecognitionEngine(session));
         await service.InitializeAsync();
         var maybeState = service.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
         Assert.That(maybeState, Is.Not.Null);
@@ -79,7 +65,7 @@ public class SpeechRecognitionServiceTests
     public async Task StopSpeechRecognitionAsync_CompletesSessionAndReleasesActiveSlot()
     {
         var session = new FakeSpeechRecognitionSession();
-        var service = CreateService(new Settings(), new FakeSpeechRecognitionEngine(session));
+        var service = CreateService(CreateSettings(), new FakeSpeechRecognitionEngine(session));
         await service.InitializeAsync();
         var maybeState = service.TryCreateInputState(SpeechRecognitionActivationKind.Hold);
         Assert.That(maybeState, Is.Not.Null);
@@ -105,7 +91,7 @@ public class SpeechRecognitionServiceTests
     public async Task StopSpeechRecognitionAsync_CommitsPendingHypothesis()
     {
         var session = new FakeSpeechRecognitionSession();
-        var service = CreateService(new Settings(), new FakeSpeechRecognitionEngine(session));
+        var service = CreateService(CreateSettings(), new FakeSpeechRecognitionEngine(session));
         await service.InitializeAsync();
         var maybeState = service.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
         Assert.That(maybeState, Is.Not.Null);
@@ -136,7 +122,7 @@ public class SpeechRecognitionServiceTests
         {
             CreateSessionException = new InvalidOperationException("boom")
         };
-        var service = CreateService(new Settings(), engine);
+        var service = CreateService(CreateSettings(), engine);
         await service.InitializeAsync();
         var maybeState = service.TryCreateInputState(SpeechRecognitionActivationKind.Toggle);
         Assert.That(maybeState, Is.Not.Null);
@@ -152,7 +138,39 @@ public class SpeechRecognitionServiceTests
         }
     }
 
-    private static SpeechRecognitionService CreateService(Settings settings, params ISpeechRecognitionEngine[] engines)
+    [Test]
+    public async Task StartSpeechRecognitionAsync_WithCustomHostedSession_ConsumesMicrophoneFrames()
+    {
+        var session = new FakeCustomHostedSpeechRecognitionSession();
+        var microphoneDeviceManager = new FakeMicrophoneDeviceManager();
+        var service = CreateService(CreateSettings(), microphoneDeviceManager, new FakeSpeechRecognitionEngine(session));
+        await service.InitializeAsync();
+        var maybeState = service.TryCreateInputState(SpeechRecognitionActivationKind.Hold);
+        Assert.That(maybeState, Is.Not.Null);
+        var state = maybeState!;
+        List<string> commits = [];
+        state.CommitRequested += (_, text) => commits.Add(text);
+
+        await service.StartSpeechRecognitionAsync(state);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(microphoneDeviceManager.Capture.StartCount, Is.EqualTo(1));
+            Assert.That(session.ConsumedFrames, Is.EqualTo(1));
+            Assert.That(commits, Is.EqualTo(["hello"]));
+            Assert.That(state.IsActive, Is.False);
+        }
+    }
+
+    private static Settings CreateSettings() => new(new ServiceCollection().BuildServiceProvider());
+
+    private static SpeechRecognitionService CreateService(Settings settings, params ISpeechRecognitionEngine[] engines) =>
+        CreateService(settings, new FakeMicrophoneDeviceManager(), engines);
+
+    private static SpeechRecognitionService CreateService(
+        Settings settings,
+        IMicrophoneDeviceManager microphoneDeviceManager,
+        params ISpeechRecognitionEngine[] engines)
     {
         var services = new ServiceCollection();
         foreach (var engine in engines)
@@ -163,6 +181,7 @@ public class SpeechRecognitionServiceTests
         return new SpeechRecognitionService(
             settings,
             services.BuildServiceProvider(),
+            microphoneDeviceManager,
             Substitute.For<ILogger<SpeechRecognitionService>>());
     }
 
@@ -176,16 +195,11 @@ public class SpeechRecognitionServiceTests
         }
     }
 
-    private sealed class FakeSpeechRecognitionEngine : ISpeechRecognitionEngine
+    private sealed class FakeSpeechRecognitionEngine(ISpeechRecognitionSession? session = null) : ISpeechRecognitionEngine
     {
-        private readonly FakeSpeechRecognitionSession _session;
+        private readonly ISpeechRecognitionSession _session = session ?? new FakeSpeechRecognitionSession();
 
-        public FakeSpeechRecognitionEngine(FakeSpeechRecognitionSession? session = null)
-        {
-            _session = session ?? new FakeSpeechRecognitionSession();
-        }
-
-        public string Id { get; } = "fake";
+        public string Id => "fake";
 
         public SpeechRecognitionEngineDescriptor Descriptor { get; } = new(
             new DirectResourceKey("Fake"),
@@ -206,7 +220,7 @@ public class SpeechRecognitionServiceTests
         public Task<ISpeechRecognitionSession> CreateSessionAsync(LocaleName locale, CancellationToken cancellationToken = default)
         {
             if (CreateSessionException is not null) throw CreateSessionException;
-            return Task.FromResult<ISpeechRecognitionSession>(_session);
+            return Task.FromResult(_session);
         }
     }
 
@@ -240,6 +254,80 @@ public class SpeechRecognitionServiceTests
         public ValueTask DisposeAsync()
         {
             _updates.Writer.TryComplete();
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class FakeCustomHostedSpeechRecognitionSession : ICustomHostedSpeechRecognitionSession
+    {
+        public int ConsumedFrames { get; private set; }
+
+        public MicrophoneCaptureOptions MicrophoneCaptureOptions => new(
+            DeviceId: null,
+            SampleRate: 16000,
+            Channels: 1,
+            FramesPerBuffer: 1600);
+
+        public ValueTask CompleteAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+
+        public async IAsyncEnumerable<SpeechRecognitionUpdate> RecognizeAsync(
+            IAsyncEnumerable<AudioFrame> input,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            yield return new SpeechRecognitionUpdate.Started();
+            await foreach (var _ in input.WithCancellation(cancellationToken))
+            {
+                ConsumedFrames++;
+                yield return new SpeechRecognitionUpdate.Hypothesis("hel");
+                yield return new SpeechRecognitionUpdate.Final("hello");
+                break;
+            }
+
+            yield return new SpeechRecognitionUpdate.Completed();
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class FakeMicrophoneDeviceManager : IMicrophoneDeviceManager
+    {
+        public FakeMicrophoneCapture Capture { get; } = new();
+
+        public IReadOnlyList<MicrophoneDeviceDescriptor> GetInputDevices() => [];
+
+        public string? GetDefaultInputDeviceId() => null;
+
+        public IMicrophoneCapture CreateCapture(string? deviceId = null) => Capture;
+    }
+
+    private sealed class FakeMicrophoneCapture : IMicrophoneCapture
+    {
+        private readonly Channel<AudioFrame> _frames = Channel.CreateUnbounded<AudioFrame>();
+
+        public int StartCount { get; private set; }
+
+        public int StopCount { get; private set; }
+
+        public IAsyncEnumerable<AudioFrame> Frames => _frames.Reader.ReadAllAsync();
+
+        public Task StartAsync(MicrophoneCaptureOptions options, CancellationToken cancellationToken)
+        {
+            StartCount++;
+            _frames.Writer.TryWrite(new AudioFrame(16000, 1, new float[160]));
+            _frames.Writer.TryComplete();
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            StopCount++;
+            _frames.Writer.TryComplete();
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            _frames.Writer.TryComplete();
             return ValueTask.CompletedTask;
         }
     }

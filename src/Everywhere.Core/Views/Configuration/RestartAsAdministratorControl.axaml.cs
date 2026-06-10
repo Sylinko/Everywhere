@@ -22,7 +22,7 @@ public partial class RestartAsAdministratorControl(INativeHelper nativeHelper, I
         {
             ex = HandledSystemException.Handle(ex); // maybe blocked by UAC or antivirus, handle it gracefully
             logger.LogInformation(ex, "Failed to restart as administrator.");
-            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+            ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 }

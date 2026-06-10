@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Media.Audio;
 using Everywhere.Media.SpeechRecognition;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,9 @@ namespace Everywhere.Media;
 /// </summary>
 public sealed partial class SpeechRecognitionService : ObservableObject, ISpeechRecognitionService, IAsyncInitializer, IDisposable
 {
-    public bool IsAvailable => _speechRecognitionSettings.IsEnabled && SelectedEngine is { IsSupported: true };
+    public bool IsInitialized { get; private set; }
+
+    public bool IsAvailable => IsInitialized && SelectedEngine is { IsSupported: true };
 
     [ObservableProperty]
     public partial SpeechRecognitionStatus Status { get; private set; } = SpeechRecognitionStatus.NotAvailable;
@@ -43,6 +46,7 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
 
     private readonly SpeechRecognitionSettings _speechRecognitionSettings;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IMicrophoneDeviceManager _microphoneDeviceManager;
     private readonly ILogger<SpeechRecognitionService> _logger;
 
     private readonly ObservableList<ISpeechRecognitionEngine> _enginesSource = [];
@@ -50,10 +54,15 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
 
     private ActiveRun? _activeRun;
 
-    public SpeechRecognitionService(Settings settings, IServiceProvider serviceProvider, ILogger<SpeechRecognitionService> logger)
+    public SpeechRecognitionService(
+        Settings settings,
+        IServiceProvider serviceProvider,
+        IMicrophoneDeviceManager microphoneDeviceManager,
+        ILogger<SpeechRecognitionService> logger)
     {
         _speechRecognitionSettings = settings.SpeechRecognition;
         _serviceProvider = serviceProvider;
+        _microphoneDeviceManager = microphoneDeviceManager;
         _logger = logger;
 
         Engines = _enginesSource.ToNotifyCollectionChangedSlim().ToReadOnlyBindableList(out _enginesSourceSubscription);
@@ -79,6 +88,7 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
         SelectedEngine =
             _enginesSource.FirstOrDefault(engine => engine.Id == _speechRecognitionSettings.SelectedEngineId && engine.IsSupported) ??
             _enginesSource.FirstOrDefault(engine => engine.IsSupported);
+        IsInitialized = true;
     });
 
     public SpeechRecognitionInputState? TryCreateInputState(SpeechRecognitionActivationKind activationKind)
@@ -135,10 +145,8 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
                         if (!HandleSpeechRecognitionUpdate(run, update)) break;
                     }
                     break;
-                case ICustomHostedSpeechRecognitionSession:
-                    _logger.LogWarning(
-                        "Speech recognition engine {EngineId} returned a custom-hosted session, which is not supported by the chat input flow yet.",
-                        engine.Id);
+                case ICustomHostedSpeechRecognitionSession customHosted:
+                    await RunCustomHostedSessionAsync(run, customHosted, linkedCancellationToken).ConfigureAwait(false);
                     break;
             }
         }
@@ -151,6 +159,7 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
         }
         finally
         {
+            await DisposeCaptureAsync(run).ConfigureAwait(false);
             CleanupActiveRun(run);
         }
     }
@@ -166,6 +175,11 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
             var session = run.Session;
             if (session is not null)
             {
+                if (run.Capture is { } capture)
+                {
+                    await capture.StopAsync(cancellationToken).ConfigureAwait(false);
+                }
+
                 await session.CompleteAsync(cancellationToken).ConfigureAwait(false);
             }
             else
@@ -199,6 +213,51 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
     {
         var run = Volatile.Read(ref _activeRun);
         return run is not null && ReferenceEquals(run.State, state) ? run : null;
+    }
+
+    private async Task RunCustomHostedSessionAsync(
+        ActiveRun run,
+        ICustomHostedSpeechRecognitionSession session,
+        CancellationToken cancellationToken)
+    {
+        await using var capture = _microphoneDeviceManager.CreateCapture();
+        run.Capture = capture;
+        await capture.StartAsync(session.MicrophoneCaptureOptions, cancellationToken).ConfigureAwait(false);
+
+        if (run.StopRequested)
+        {
+            await capture.StopAsync(CancellationToken.None).ConfigureAwait(false);
+            await session.CompleteAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        await foreach (var update in session.RecognizeAsync(capture.Frames, cancellationToken).ConfigureAwait(false))
+        {
+            if (!ReferenceEquals(Volatile.Read(ref _activeRun), run)) break;
+            if (!HandleSpeechRecognitionUpdate(run, update)) break;
+        }
+    }
+
+    private async ValueTask DisposeCaptureAsync(ActiveRun run)
+    {
+        if (run.Capture is null) return;
+
+        try
+        {
+            await run.Capture.StopAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to stop microphone capture during cleanup.");
+        }
+
+        try
+        {
+            await run.Capture.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to dispose microphone capture during cleanup.");
+        }
     }
 
     private bool HandleSpeechRecognitionUpdate(ActiveRun run, SpeechRecognitionUpdate update)
@@ -267,6 +326,12 @@ public sealed partial class SpeechRecognitionService : ObservableObject, ISpeech
         public CancellationTokenSource CancellationTokenSource { get; } = new();
 
         public ISpeechRecognitionSession? Session
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)] get => Volatile.Read(ref field);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)] set => Volatile.Write(ref field, value);
+        }
+
+        public IMicrophoneCapture? Capture
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)] get => Volatile.Read(ref field);
             [MethodImpl(MethodImplOptions.AggressiveInlining)] set => Volatile.Write(ref field, value);

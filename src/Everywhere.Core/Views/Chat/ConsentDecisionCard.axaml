@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <Design.PreviewWith>
     <v:ConsentDecisionCard/>
   </Design.PreviewWith>
@@ -127,13 +127,13 @@
                     Classes="Secondary Compact" DockPanel.Dock="Left"
                     Command="{Binding SetIsReasonInputVisibleCommand, RelativeSource={RelativeSource TemplatedParent}}"
                     CommandParameter="{x:False}"
-                    Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
+                    Content="{I18N {x:Static a18:LocaleKey.Common_Cancel}}"/>
 
                   <Button
                     Classes="Primary Compact" DockPanel.Dock="Right"
                     Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
                     CommandParameter="{x:Static permissions:ConsentDecision.Deny}"
-                    Content="{I18N {x:Static LocaleKey.Common_Submit}}"/>
+                    Content="{I18N {x:Static a18:LocaleKey.Common_Submit}}"/>
 
                   <TextBox
                     Classes="Compact" VerticalAlignment="Stretch"

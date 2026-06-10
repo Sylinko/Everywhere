@@ -73,6 +73,7 @@
     <Project Path="3rd/WritableJsonConfiguration/src/WritableJsonConfiguration.Tests/WritableJsonConfiguration.Tests.csproj" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
+    <Project Path="tests/Everywhere.Media.Tests/Everywhere.Media.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
     <Project Path="tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj" />
   </Folder>
@@ -89,6 +90,7 @@
   <Project Path="src/Everywhere.Linux/Everywhere.Linux.csproj" />
   <Project Path="src/Everywhere.Mac/Everywhere.Mac.csproj" />
   <Project Path="src/Everywhere.Media.Abstractions/Everywhere.Media.Abstractions.csproj" />
+  <Project Path="src/Everywhere.Media/Everywhere.Media.csproj" />
   <Project Path="src/Everywhere.Terminal/Everywhere.Terminal.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
   <Project Path="src/Everywhere.Windows/Everywhere.Windows.csproj" />

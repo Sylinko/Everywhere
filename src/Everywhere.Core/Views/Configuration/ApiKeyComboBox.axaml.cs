@@ -67,9 +67,9 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
         var result = await ServiceLocator.Resolve<DialogManager>()
             .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
             .WithPrimaryButton(
-                LocaleResolver.Common_OK,
+                AbstractionsLocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.ApiKey.ValidateAndSave())
-            .WithCancelButton(LocaleResolver.Common_Cancel)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
             .ShowAsync(cancellationToken);
         if (result != DialogResult.Primary) return;
 
@@ -84,7 +84,7 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
         using var form = new ManageApiKeyForm(_itemsSource, DefaultName);
         await ServiceLocator.Resolve<DialogManager>()
             .CreateDialog(form, LocaleResolver.ApiKeyComboBox_ManageApiKey)
-            .WithPrimaryButton(LocaleResolver.Common_OK)
+            .WithPrimaryButton(AbstractionsLocaleResolver.Common_OK)
             .ShowAsync(cancellationToken);
     }
 

@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Pipes;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using MessagePack;
@@ -187,7 +186,7 @@ public static class Entrance
                 if (message is ShowWindowMessage)
                 {
                     NativeMessageBox.Show(
-                        LocaleResolver.Common_Info,
+                        AbstractionsLocaleResolver.Common_Info,
                         LocaleResolver.Entrance_EverywhereAlreadyRunning,
                         NativeMessageBoxButtons.Ok,
                         NativeMessageBoxIcon.Information);
@@ -206,7 +205,7 @@ public static class Entrance
         catch (Exception ex)
         {
             NativeMessageBox.Show(
-                LocaleResolver.Common_CriticalError,
+                AbstractionsLocaleResolver.Common_CriticalError,
                 string.Format(LocaleResolver.Entrance_FailedToInitializeRuntimeConstants, ex),
                 NativeMessageBoxButtons.Ok,
                 NativeMessageBoxIcon.Error);

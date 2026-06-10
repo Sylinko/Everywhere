@@ -19,11 +19,14 @@ using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Media;
 using Everywhere.Media.ImageRecognition;
+using Everywhere.Media.SpeechRecognition;
+using Everywhere.Media.SpeechRecognition.Sherpa;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
 using Everywhere.Views;
+using Everywhere.Views.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZLinq;
@@ -536,7 +539,7 @@ public sealed partial class ChatWindowViewModel :
             _logger.LogError(ex, "Failed to create file attachment for {FilePath}", filePath);
 
             ToastHost
-                .CreateToast(LocaleResolver.Common_Error)
+                .CreateToast(AbstractionsLocaleResolver.Common_Error)
                 .WithContent(ex.GetFriendlyMessage())
                 .DismissOnClick()
                 .OnBottomRight()
@@ -649,7 +652,7 @@ public sealed partial class ChatWindowViewModel :
         if (state is null)
         {
             ToastHost
-                .CreateToast(LocaleResolver.Common_Warning)
+                .CreateToast(AbstractionsLocaleResolver.Common_Warning)
                 .WithContent("Speech recognition is already active or unavailable.")
                 .DismissOnClick()
                 .ShowWarning();
@@ -658,10 +661,40 @@ public sealed partial class ChatWindowViewModel :
 
         SpeechRecognitionInputState = state;
         await SpeechRecognitionService.StartSpeechRecognitionAsync(state);
+        await ShowSpeechRecognitionModelUnavailableDialogIfNeededAsync(state);
         if (ReferenceEquals(SpeechRecognitionInputState, state) && !state.IsActive)
         {
             SpeechRecognitionInputState = null;
         }
+    }
+
+    private async Task ShowSpeechRecognitionModelUnavailableDialogIfNeededAsync(SpeechRecognitionInputState state)
+    {
+        if (FindException<SherpaOnnxModelUnavailableException>(state.LastException) is null) return;
+
+        var result = await DialogManager
+            .CreateDialog(
+                LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Content,
+                LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Title)
+            .WithPrimaryButton(LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_OpenSettingsButton)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
+            .ShowAsync();
+        if (result != ShadUI.DialogResult.Primary) return;
+
+        _serviceProvider
+            .GetRequiredService<MainViewModel>()
+            .NavigateTo(_serviceProvider.GetRequiredService<SpeechRecognitionPage>());
+    }
+
+    private static TException? FindException<TException>(Exception? exception) where TException : Exception
+    {
+        while (exception is not null)
+        {
+            if (exception is TException typedException) return typedException;
+            exception = exception.InnerException;
+        }
+
+        return null;
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -786,7 +819,7 @@ public sealed partial class ChatWindowViewModel :
         if (chatContext is null)
         {
             ToastHost
-                .CreateToast(LocaleResolver.Common_Error)
+                .CreateToast(AbstractionsLocaleResolver.Common_Error)
                 .WithContent(LocaleResolver.ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext)
                 .DismissOnClick()
                 .OnBottomRight()

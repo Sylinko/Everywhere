@@ -32,10 +32,10 @@
         <value>使用 Everything 搜索文件。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Name" xml:space="preserve">
-        <value>Windows 语音识别</value>
+        <value>Windows 语音输入</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Description" xml:space="preserve">
-        <value>使用 Windows 内置语音识别引擎进行离线听写。</value>
+        <value>使用 Windows 内置的识别引擎进行语音输入。需要连接到网络。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_NoSupportedLanguages" xml:space="preserve">
         <value>未安装可用的 Windows 语音识别语言。请在 Windows 设置中添加语音语言后再使用语音输入。</value>
@@ -53,16 +53,16 @@
         <value>当前选择的 Windows 语音语言不可用于听写。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_NetworkFailure" xml:space="preserve">
-        <value>Windows 语音识别报告网络失败。请检查 Windows 语音设置。</value>
+        <value>Windows 语音识别报告网络错误。请检查 Windows 语音设置。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_OpenSettings" xml:space="preserve">
         <value>打开设置</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_CheckSpeechPrivacyPolicy" xml:space="preserve">
-        <value>为了更好的 Windows 语音识别效果，请在“系统设置-时间和语言-语言和区域-当前语言选项“中安装”增强的语音识别“，并在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。</value>
+        <value>为了使用 Windows 语音识别，请在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。如已完成设置请忽略。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_EnableSpeechPrivacyPolicy" xml:space="preserve">
-        <value>Windows 语音识别不可用，需要你在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。</value>
+        <value>Windows 语音识别不可用，需要在“系统设置-隐私与安全性-语音”中开启“在线语音识别”。</value>
     </data>
     <data name="WinRTSpeechRecognitionEngine_Notification_NoMicrophone" xml:space="preserve">
         <value>未检测到麦克风，语音识别可能无法使用。</value>

@@ -361,10 +361,6 @@
     <data name="FriendlyExceptionMessage_Socket_0" xml:space="preserve">
         <value>Неизвестная ошибка, попробуйте позже.</value>
     </data>
-    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Произошла одна или несколько ошибок.
-{0}</value>
-    </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Задача отменена.</value>
     </data>
@@ -379,9 +375,6 @@
     </data>
     <data name="FriendlyExceptionMessage_Format" xml:space="preserve">
         <value>Ошибка формата.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Argument" xml:space="preserve">
-        <value>Ошибка аргумента.</value>
     </data>
     <data name="LocaleName_De" xml:space="preserve">
         <value>Deutsch</value>
@@ -434,17 +427,11 @@
     <data name="App_EverywhereIsAlreadyRunning" xml:space="preserve">
         <value>Everywhere уже запущен, проверьте иконку в трее.</value>
     </data>
-    <data name="Common_Info" xml:space="preserve">
-        <value>Информация</value>
-    </data>
     <data name="MainView_EverywhereHasMinimizedToTray" xml:space="preserve">
         <value>Everywhere свернут в трей</value>
     </data>
     <data name="ChatWindow_HistoryAction_Rename" xml:space="preserve">
         <value>Переименовать</value>
-    </data>
-    <data name="Common_Delete" xml:space="preserve">
-        <value>Удалить</value>
     </data>
     <data name="AboutPage_WelcomePage" xml:space="preserve">
         <value>Стартовая страница</value>
@@ -548,9 +535,6 @@
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Максимальный Контекст</value>
     </data>
-    <data name="Common_Reset" xml:space="preserve">
-        <value>Сброс</value>
-    </data>
     <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>Схема API</value>
     </data>
@@ -590,9 +574,6 @@
     <data name="DebugFeaturesControl_OpenLogsFolderButton_Content" xml:space="preserve">
         <value>Открыть папку журналов</value>
     </data>
-    <data name="Common_Error" xml:space="preserve">
-        <value>Ошибка</value>
-    </data>
     <data name="CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text" xml:space="preserve">
         <value>Версия</value>
     </data>
@@ -601,9 +582,6 @@
     </data>
     <data name="CommonSettings_SoftwareUpdate_NeverChecked_Text" xml:space="preserve">
         <value>Никогда не проверялось</value>
-    </data>
-    <data name="Common_Unknown" xml:space="preserve">
-        <value>Неизвестно</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Header" xml:space="preserve">
         <value>Обновление программного обеспечения</value>
@@ -764,9 +742,6 @@
     </data>
     <data name="WelcomeView_ShortcutStep_Message2" xml:space="preserve">
         <value>Если нет ответа, возможно, он занят другим программным обеспечением. Вы можете нажать, чтобы изменить горячую клавишу.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Authentication" xml:space="preserve">
-        <value>Ошибка аутентификации.</value>
     </data>
     <data name="WelcomeView_TelemetryStep_Message1" xml:space="preserve">
         <value>Чтобы помочь мне развиваться, мы приглашаем вас присоединиться к программе пользовательского опыта. Мы будем собирать ваши данные использования, которые будут использоваться только для анализа и не будут содержать и не смогут быть использованы для вывода каких-либо данных, относящихся к вам лично.</value>
@@ -940,17 +915,8 @@
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
         <value>Удалить</value>
     </data>
-    <data name="Common_Warning" xml:space="preserve">
-        <value>Предупреждение</value>
-    </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
         <value>Вы уверены, что хотите удалить &quot;{0}&quot;?</value>
-    </data>
-    <data name="Common_Yes" xml:space="preserve">
-        <value>Да</value>
-    </data>
-    <data name="Common_No" xml:space="preserve">
-        <value>Нет</value>
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Header" xml:space="preserve">
         <value>Поставщик модели</value>
@@ -963,57 +929,6 @@
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Description" xml:space="preserve">
         <value>Выберите предустановленного поставщика модели.</value>
-    </data>
-    <data name="HandledSystemException_IOException" xml:space="preserve">
-        <value>Произошла общая ошибка ввода-вывода. Это может быть связано с проблемой чтения или записи файла.</value>
-    </data>
-    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
-        <value>Доступ к необходимому ресурсу был запрещён. Пожалуйста, проверьте разрешения на файлы или запустите приложение от имени администратора.</value>
-    </data>
-    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
-        <value>Указанный путь к файлу или директории слишком длинный. Пожалуйста, попробуйте использовать более короткий путь.</value>
-    </data>
-    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
-        <value>Операция была отменена.</value>
-    </data>
-    <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>Время выполнения операции истекло. Пожалуйста, проверьте производительность системы и попробуйте снова.</value>
-    </data>
-    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
-        <value>Указанный файл не найден. Пожалуйста, убедитесь, что файл существует и путь указан правильно.</value>
-    </data>
-    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
-        <value>Указанная директория не найдена. Пожалуйста, убедитесь, что директория существует и путь указан правильно.</value>
-    </data>
-    <data name="HandledSystemException_NotSupported" xml:space="preserve">
-        <value>Запрашиваемая операция не поддерживается на вашей системе.</value>
-    </data>
-    <data name="HandledSystemException_Security" xml:space="preserve">
-        <value>Произошла ошибка безопасности. Приложение может не иметь необходимых разрешений.</value>
-    </data>
-    <data name="HandledSystemException_COMException" xml:space="preserve">
-        <value>Произошла ошибка системного компонента (COM). Это может указывать на проблему с ОС или зависимостью.</value>
-    </data>
-    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
-        <value>Произошла ошибка системы Windows. Пожалуйста, проверьте журналы приложения для получения более подробной информации.</value>
-    </data>
-    <data name="HandledSystemException_Socket" xml:space="preserve">
-        <value>Произошла ошибка сетевого сокета. Пожалуйста, проверьте ваше сетевое подключение и настройки брандмауэра.</value>
-    </data>
-    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
-        <value>Приложению не хватает памяти. Пожалуйста, закройте другие программы и попробуйте снова.</value>
-    </data>
-    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
-        <value>Указанный диск не найден. Пожалуйста, убедитесь, что диск подключен и доступен.</value>
-    </data>
-    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
-        <value>Достигнут неожиданный конец потока данных. Это может указывать на поврежденный файл или сетевую проблему.</value>
-    </data>
-    <data name="HandledSystemException_InvalidData" xml:space="preserve">
-        <value>Обрабатываемые данные недействительны или повреждены. Пожалуйста, проверьте исходный файл или данные.</value>
-    </data>
-    <data name="HandledSystemException_Unknown" xml:space="preserve">
-        <value>Произошла неожиданная системная ошибка. Пожалуйста, попробуйте снова или проверьте журналы приложения.</value>
     </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_Content" xml:space="preserve">
         <value>Проверить подключение</value>
@@ -1042,30 +957,6 @@
     <data name="IconEditor_IconTabItem_Header" xml:space="preserve">
         <value>Значок</value>
     </data>
-    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
-        <value>Операция недействительна. Пожалуйста, убедитесь, что конфигурация правильная.</value>
-    </data>
-    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
-        <value>Аргумент недействителен. Пожалуйста, убедитесь, что конфигурация правильная.</value>
-    </data>
-    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
-        <value>Формат недействителен. Пожалуйста, убедитесь, что конфигурация правильная.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
-        <value>Аргумент пуст. Пожалуйста, убедитесь, что конфигурация правильная.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
-        <value>Аргумент выходит за пределы допустимого диапазона. Пожалуйста, убедитесь, что конфигурация правильная.</value>
-    </data>
-    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
-        <value>Не удалось установить SSL-соединение. Пожалуйста, проверьте настройки сети или сертификат.</value>
-    </data>
-    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
-        <value>Подключение отклонено сервером, проверьте сетевое соединение и настройки прокси.</value>
-    </data>
-    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
-        <value>Хост не найден. Пожалуйста, проверьте адрес и соединение с сетью.</value>
-    </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_ToolTip" xml:space="preserve">
         <value>Подтвердите доступность сервиса модели</value>
     </data>
@@ -1080,21 +971,6 @@
     </data>
     <data name="ChatInputArea_ContextFlyout_PasteMenuItem_Header" xml:space="preserve">
         <value>Вставить</value>
-    </data>
-    <data name="Common_OK" xml:space="preserve">
-        <value>ОК</value>
-    </data>
-    <data name="Common_Cancel" xml:space="preserve">
-        <value>Отмена</value>
-    </data>
-    <data name="Common_Abort" xml:space="preserve">
-        <value>Прервать</value>
-    </data>
-    <data name="Common_Retry" xml:space="preserve">
-        <value>Повторить</value>
-    </data>
-    <data name="Common_Ignore" xml:space="preserve">
-        <value>Игнорировать</value>
     </data>
     <data name="ConsentDecision_Deny" xml:space="preserve">
         <value>Запретить</value>
@@ -1140,9 +1016,6 @@
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>Разрешить «{0}» выполнять? Это требует разрешения «{1}».</value>
-    </data>
-    <data name="Common_Comma" xml:space="preserve">
-        <value>, </value>
     </data>
     <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
         <value>Прокрутить вниз</value>
@@ -1376,9 +1249,6 @@
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>Нет</value>
     </data>
-    <data name="Common_None" xml:space="preserve">
-        <value>Нет</value>
-    </data>
     <data name="ModelProviderSchema_OpenAI" xml:space="preserve">
         <value>OpenAI (Chat Completions)</value>
     </data>
@@ -1420,9 +1290,6 @@
     </data>
     <data name="CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip" xml:space="preserve">
         <value>Дублировать выбранного помощника</value>
-    </data>
-    <data name="Common_Copy" xml:space="preserve">
-        <value>Копировать</value>
     </data>
     <data name="ChatMessageControl_EditButton_Content" xml:space="preserve">
         <value>Редактировать</value>
@@ -1733,9 +1600,6 @@
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Вы уверены, что хотите удалить {0} API ключей? Это действие нельзя отменить!</value>
     </data>
-    <data name="Common_Copied" xml:space="preserve">
-        <value>Скопировано</value>
-    </data>
     <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
         <value>Вы уверены, что хотите удалить? Это действие нельзя отменить!</value>
     </data>
@@ -1881,12 +1745,6 @@
     <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
         <value>Больше Настроек</value>
     </data>
-    <data name="HandledSystemException_Serialization" xml:space="preserve">
-        <value>Ошибка при разборе данных.</value>
-    </data>
-    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
-        <value>Ошибка при вызове инструмента.</value>
-    </data>
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Глубокое мышление</value>
     </data>
@@ -1998,9 +1856,6 @@
     <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Description" xml:space="preserve">
         <value>Официальный управляемый сервис. Не требуется API-ключ, готов к использованию.</value>
     </data>
-    <data name="Common_CriticalError" xml:space="preserve">
-        <value>Критическая Ошибка</value>
-    </data>
     <data name="Entrance_FailedToInitializeRuntimeConstants" xml:space="preserve">
         <value>Не удалось инициализировать каталог данных, убедитесь, что у вас есть права на запись в каталог данных.
 {0}</value>
@@ -2074,9 +1929,6 @@
     <data name="HandledChatException_JsonError" xml:space="preserve">
         <value>Ошибка при разборе ответа сервера, обычно это означает неожиданный формат или содержимое JSON.</value>
     </data>
-    <data name="Common_Refresh" xml:space="preserve">
-        <value>Обновить</value>
-    </data>
     <data name="CustomAssistant_OutputModalities_Header" xml:space="preserve">
         <value>Выходные Модальности</value>
     </data>
@@ -2100,9 +1952,6 @@
     </data>
     <data name="CustomAssistant_OutputPrice_ToolTip" xml:space="preserve">
         <value>Включает токены размышления</value>
-    </data>
-    <data name="Common_Undo" xml:space="preserve">
-        <value>Отменить</value>
     </data>
     <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
         <value>Удалено «{0}»</value>
@@ -2422,14 +2271,8 @@
     <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Description" xml:space="preserve">
         <value>Объясняет код и анализирует потенциальные проблемы</value>
     </data>
-    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
-        <value>Вы еще не вошли в систему, пожалуйста, войдите, чтобы использовать облачные сервисы Everywhere.</value>
-    </data>
     <data name="ConsentDecisionCard_DenyWithReasonMenuItem_Header" xml:space="preserve">
         <value>Отказать и ввести причину</value>
-    </data>
-    <data name="Common_Submit" xml:space="preserve">
-        <value>Отправить</value>
     </data>
     <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
         <value>Введите причину отказа</value>
@@ -2532,9 +2375,6 @@
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Смотреть документацию</value>
-    </data>
-    <data name="Common_Default" xml:space="preserve">
-        <value>По умолчанию</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
         <value>Установить по умолчанию</value>
@@ -2718,9 +2558,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Искать файлы с помощью Everything.</value>
-    </data>
-    <data name="Common_Advanced" xml:space="preserve">
-        <value>Расширенные</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Терминал больше недоступен</value>

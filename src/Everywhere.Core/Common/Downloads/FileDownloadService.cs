@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Everywhere.Common;
+namespace Everywhere.Common.Downloads;
 
 public sealed class FileDownloadService(
     IHttpClientFactory httpClientFactory,

@@ -1,0 +1,133 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:ex="clr-namespace:Everywhere.Media.MarkupExtensions" xmlns:m18="clr-namespace:Everywhere.Media.I18N"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:sherpa="clr-namespace:Everywhere.Media.SpeechRecognition.Sherpa"
+  xmlns:sherpa1="clr-namespace:Everywhere.Media.Views.Sherpa" xmlns:vc="clr-namespace:Everywhere.Media.ValueConverters">
+
+  <ControlTheme
+    x:Key="{x:Type sherpa1:SherpaOnnxModelSelector}"
+    TargetType="sherpa1:SherpaOnnxModelSelector">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel
+          IsEnabled="{Binding !IsInstalling, RelativeSource={RelativeSource TemplatedParent}}"
+          Spacing="8">
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition
+                Width="*" MaxWidth="480"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox
+              Grid.Column="0" MaxWidth="480"
+              ItemsSource="{Binding Models, RelativeSource={RelativeSource TemplatedParent}}"
+              SelectedValue="{TemplateBinding SelectedModelId, Mode=TwoWay}"
+              SelectedValueBinding="{Binding Id, x:DataType=sherpa:SherpaOnnxModelMetadata}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="sherpa:SherpaOnnxModelMetadata">
+                  <TextBlock
+                    Text="{Binding DisplayName}"
+                    TextTrimming="CharacterEllipsis"/>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button
+              Classes="Outline" Grid.Column="1"
+              shadui:ButtonAssist.Icon="{LucideIconContent Download}"
+              shadui:ButtonAssist.ShowProgress="{Binding IsInstalling, RelativeSource={RelativeSource TemplatedParent}}"
+              Command="{Binding InstallModelCommand, RelativeSource={RelativeSource TemplatedParent}}"
+              Content="{Binding ActionContentKey^, RelativeSource={RelativeSource TemplatedParent}}">
+              <Button.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                  <Binding
+                    Path="IsInstalling"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="CanInstall"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                </MultiBinding>
+              </Button.IsVisible>
+            </Button>
+          </Grid>
+
+          <shadui:Toast
+            CanDismiss="False" CanDismissByClicking="False"
+            Content="{ex:I18N {x:Static m18:LocaleKey.SherpaOnnxModelSelector_InstallationRequiredToast_Content}}"
+            Notification="Warning">
+            <shadui:Toast.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding
+                  Path="IsInstalling"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="CanInstall"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+              </MultiBinding>
+            </shadui:Toast.IsVisible>
+          </shadui:Toast>
+
+          <Border
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" ClipToBounds="True"
+            CornerRadius="{DynamicResource MdCornerRadius}">
+            <Grid
+              Margin="0,0,-1,-1" ColumnDefinitions="Auto,*"
+              RowDefinitions="Auto,Auto,Auto">
+              <Grid.Styles>
+                <Style Selector="Border">
+                  <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                  <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                  <Setter Property="Padding" Value="12,8"/>
+
+                  <Style Selector="^.Header">
+                    <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
+                  </Style>
+                </Style>
+
+                <Style Selector="TextBlock">
+                  <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+              </Grid.Styles>
+
+              <Border
+                Classes="Header" Grid.Row="0"
+                Grid.Column="0">
+                <TextBlock Text="{ex:I18N {x:Static m18:LocaleKey.SherpaOnnxModelSelector_ModelId_Header}}"/>
+              </Border>
+              <Border
+                Grid.Row="0" Grid.Column="1">
+                <TextBlock
+                  Text="{Binding SelectedModel?.Id, RelativeSource={RelativeSource TemplatedParent}}"
+                  TextWrapping="Wrap"/>
+              </Border>
+
+              <Border
+                Classes="Header" Grid.Row="1"
+                Grid.Column="0">
+                <TextBlock Text="{ex:I18N {x:Static m18:LocaleKey.SherpaOnnxModelSelector_Size_Header}}"/>
+              </Border>
+              <Border
+                Grid.Row="1" Grid.Column="1">
+                <TextBlock Text="{Binding SelectedModel?.ArchiveSize, Converter={x:Static vc:HumanizeBytesValueConverter.Shared}, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </Border>
+
+              <Border
+                Classes="Header" Grid.Row="2"
+                Grid.Column="0">
+                <TextBlock Text="{ex:I18N {x:Static m18:LocaleKey.SherpaOnnxModelSelector_SupportedLocales_Header}}"/>
+              </Border>
+              <Border
+                Grid.Row="2" Grid.Column="1">
+                <TextBlock
+                  Text="{Binding SupportedLocalesText, RelativeSource={RelativeSource TemplatedParent}}"
+                  TextWrapping="Wrap"/>
+              </Border>
+            </Grid>
+          </Border>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

@@ -37,4 +37,160 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>Aktueller Kanal</value>
     </data>
+    <data name="Common_Abort" xml:space="preserve">
+        <value>Abbrechen</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>Erweitert</value>
+    </data>
+    <data name="Common_Cancel" xml:space="preserve">
+        <value>Abbrechen</value>
+    </data>
+    <data name="Common_Comma" xml:space="preserve">
+        <value>, </value>
+    </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>Kopiert</value>
+    </data>
+    <data name="Common_Copy" xml:space="preserve">
+        <value>Kopieren</value>
+    </data>
+    <data name="Common_Unknown" xml:space="preserve">
+        <value>Unbekannt</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
+        <value>Ein oder mehrere Fehler sind aufgetreten.</value>
+    </data>
+    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
+        <value>Das Argument ist leer. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
+        <value>Das Argument liegt außerhalb des gültigen Bereichs. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_COMException" xml:space="preserve">
+        <value>Ein Fehler bei einer Systemkomponente (COM) ist aufgetreten. Dies kann auf ein Problem mit dem Betriebssystem oder einer Abhängigkeit hinweisen.</value>
+    </data>
+    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
+        <value>Verbindung vom Server abgelehnt, bitte überprüfen Sie die Netzwerkverbindung und die Proxy-Einstellungen.</value>
+    </data>
+    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
+        <value>Das angegebene Verzeichnis konnte nicht gefunden werden. Stellen Sie sicher, dass das Verzeichnis existiert und der Pfad korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
+        <value>Das angegebene Laufwerk konnte nicht gefunden werden. Stellen Sie sicher, dass das Laufwerk verbunden und zugänglich ist.</value>
+    </data>
+    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
+        <value>Ein unerwartetes Ende eines Datenstroms wurde erreicht. Dies könnte auf eine beschädigte Datei oder ein Netzwerkproblem hinweisen.</value>
+    </data>
+    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
+        <value>Die angegebene Datei konnte nicht gefunden werden. Bitte stellen Sie sicher, dass die Datei existiert und der Pfad korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
+        <value>Fehler beim Aufrufen des Tools.</value>
+    </data>
+    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
+        <value>Der Host konnte nicht gefunden werden. Bitte überprüfen Sie die Adresse und Ihre Netzwerkverbindung.</value>
+    </data>
+    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
+        <value>Das Argument ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_InvalidData" xml:space="preserve">
+        <value>Die verarbeiteten Daten sind ungültig oder beschädigt. Bitte überprüfen Sie die Quelldatei oder die Daten.</value>
+    </data>
+    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
+        <value>Das Format ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
+        <value>Die Operation ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
+    </data>
+    <data name="HandledSystemException_IOException" xml:space="preserve">
+        <value>Ein allgemeiner E/A-Fehler ist aufgetreten. Dies könnte an einem Problem beim Lesen oder Schreiben einer Datei liegen.</value>
+    </data>
+    <data name="HandledSystemException_NotSupported" xml:space="preserve">
+        <value>Der angeforderte Vorgang wird auf Ihrem System nicht unterstützt.</value>
+    </data>
+    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
+        <value>Der Vorgang wurde abgebrochen.</value>
+    </data>
+    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
+        <value>Die Anwendung hat keinen Arbeitsspeicher mehr. Schließen Sie bitte andere Programme und versuchen Sie es erneut.</value>
+    </data>
+    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
+        <value>Der angegebene Pfad zur Datei oder zum Verzeichnis ist zu lang. Bitte versuchen Sie, einen kürzeren Pfad zu verwenden.</value>
+    </data>
+    <data name="HandledSystemException_Security" xml:space="preserve">
+        <value>Ein Sicherheitsfehler ist aufgetreten. Die Anwendung verfügt möglicherweise nicht über die erforderlichen Berechtigungen.</value>
+    </data>
+    <data name="HandledSystemException_Serialization" xml:space="preserve">
+        <value>Fehler beim Parsen der Daten.</value>
+    </data>
+    <data name="HandledSystemException_Socket" xml:space="preserve">
+        <value>Ein Netzwerk-Socket-Fehler ist aufgetreten. Bitte überprüfen Sie Ihre Netzwerkverbindung und Firewall-Einstellungen.</value>
+    </data>
+    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
+        <value>Die SSL-Verbindung konnte nicht hergestellt werden. Bitte überprüfen Sie Ihre Netzwerkeinstellungen oder das Zertifikat.</value>
+    </data>
+    <data name="HandledSystemException_Timeout" xml:space="preserve">
+        <value>Der Vorgang ist abgelaufen. Bitte überprüfen Sie Ihre Systemleistung und versuchen Sie es erneut.</value>
+    </data>
+    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
+        <value>Zugriff auf eine erforderliche Ressource wurde verweigert. Bitte überprüfen Sie die Dateiberechtigungen oder führen Sie die Anwendung als Administrator aus.</value>
+    </data>
+    <data name="HandledSystemException_Unknown" xml:space="preserve">
+        <value>Ein unerwarteter Systemfehler ist aufgetreten. Bitte versuchen Sie es erneut oder überprüfen Sie die Anwendungsprotokolle.</value>
+    </data>
+    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
+        <value>Sie sind noch nicht eingeloggt. Bitte melden Sie sich an, um den Everywhere Cloud-Dienst zu nutzen.</value>
+    </data>
+    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
+        <value>Ein Windows-Systemfehler ist aufgetreten. Bitte überprüfen Sie die Anwendungslogs für weitere Details.</value>
+    </data>
+    <data name="Common_CriticalError" xml:space="preserve">
+        <value>Kritischer Fehler</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>Standard</value>
+    </data>
+    <data name="Common_Delete" xml:space="preserve">
+        <value>Löschen</value>
+    </data>
+    <data name="Common_Error" xml:space="preserve">
+        <value>Fehler</value>
+    </data>
+    <data name="Common_Ignore" xml:space="preserve">
+        <value>Ignorieren</value>
+    </data>
+    <data name="Common_Info" xml:space="preserve">
+        <value>Info</value>
+    </data>
+    <data name="Common_No" xml:space="preserve">
+        <value>Nein</value>
+    </data>
+    <data name="Common_None" xml:space="preserve">
+        <value>Keines</value>
+    </data>
+    <data name="Common_OK" xml:space="preserve">
+        <value>OK</value>
+    </data>
+    <data name="Common_Refresh" xml:space="preserve">
+        <value>Aktualisieren</value>
+    </data>
+    <data name="Common_Reset" xml:space="preserve">
+        <value>Standard</value>
+    </data>
+    <data name="Common_Retry" xml:space="preserve">
+        <value>Wiederholen</value>
+    </data>
+    <data name="Common_Submit" xml:space="preserve">
+        <value>Einreichen</value>
+    </data>
+    <data name="Common_Undo" xml:space="preserve">
+        <value>Rückgängig</value>
+    </data>
+    <data name="Common_Warning" xml:space="preserve">
+        <value>Warnung</value>
+    </data>
+    <data name="Common_Yes" xml:space="preserve">
+        <value>Ja</value>
+    </data>
 </root>

@@ -1,8 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:c="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:c="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions"
+  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:UserProfileCard}"
     TargetType="v:UserProfileCard">
@@ -476,7 +477,7 @@
                 Classes="Primary" HorizontalAlignment="Stretch"
                 shadui:ButtonAssist.Icon="{LucideIconContent RefreshCcw}"
                 Command="{Binding LoginCommand, Mode=OneTime}"
-                Content="{I18N {x:Static LocaleKey.Common_Retry}}"
+                Content="{I18N {x:Static a18:LocaleKey.Common_Retry}}"
                 IsVisible="{Binding !LoginCommand.IsRunning}"/>
 
               <Button
@@ -491,7 +492,7 @@
                 shadui:ButtonAssist.Icon="{LucideIconContent LogIn}"
                 shadui:ButtonAssist.ShowProgress="True"
                 Command="{Binding LoginCommand.Cancel, Mode=OneTime}"
-                Content="{I18N {x:Static LocaleKey.Common_Cancel}}"
+                Content="{I18N {x:Static a18:LocaleKey.Common_Cancel}}"
                 IsVisible="{Binding LoginCommand.IsRunning}"/>
             </StackPanel>
           </ControlTemplate>

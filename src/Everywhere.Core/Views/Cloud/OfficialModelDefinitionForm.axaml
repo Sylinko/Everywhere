@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:common="clr-namespace:Everywhere.Common"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions"
+  xmlns:common="clr-namespace:Everywhere.Common" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:OfficialModelDefinitionForm}"
     TargetType="v:OfficialModelDefinitionForm">
@@ -60,7 +60,7 @@
                   Padding="0"
                   Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
                   IsEnabled="{Binding !OfficialModelProvider.IsBusy, RelativeSource={RelativeSource TemplatedParent}}"
-                  ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
+                  ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Refresh}}">
                   <LucideIcon
                     Kind="RefreshCcw"
                     Size="{DynamicResource FontSizeL}"/>

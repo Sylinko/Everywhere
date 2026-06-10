@@ -37,4 +37,161 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>当前通道</value>
     </data>
+    <data name="Common_Abort" xml:space="preserve">
+        <value>终止</value>
+    </data>
+    <data name="Common_Advanced" xml:space="preserve">
+        <value>高级</value>
+    </data>
+    <data name="Common_Cancel" xml:space="preserve">
+        <value>取消</value>
+    </data>
+    <data name="Common_Comma" xml:space="preserve">
+        <value>，</value>
+    </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>已复制</value>
+    </data>
+    <data name="Common_Copy" xml:space="preserve">
+        <value>复制</value>
+    </data>
+    <data name="Common_Unknown" xml:space="preserve">
+        <value>未知</value>
+    </data>
+    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
+        <value>发生一个或多个错误。
+{0}</value>
+    </data>
+    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
+        <value>参数是空的。请确保配置正确。</value>
+    </data>
+    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
+        <value>参数超出有效范围。请确保配置正确。</value>
+    </data>
+    <data name="HandledSystemException_COMException" xml:space="preserve">
+        <value>发生系统组件 (COM) 错误。这可能表示操作系统或依赖项存在问题。</value>
+    </data>
+    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
+        <value>连接被服务器拒绝，请检查网络连接和代理设置。</value>
+    </data>
+    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
+        <value>找不到指定的目录。请确保目录存在且路径正确。</value>
+    </data>
+    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
+        <value>找不到指定的驱动器。请确保驱动器已连接且可访问。</value>
+    </data>
+    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
+        <value>意外到达数据流的末尾。这可能表示文件损坏或网络问题。</value>
+    </data>
+    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
+        <value>找不到指定的文件。请确保文件存在且路径正确。</value>
+    </data>
+    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
+        <value>工具调用时出错。</value>
+    </data>
+    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
+        <value>找不到主机。请检查地址和您的网络连接。</value>
+    </data>
+    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
+        <value>参数错误。请确保配置正确。</value>
+    </data>
+    <data name="HandledSystemException_InvalidData" xml:space="preserve">
+        <value>正在处理的数据无效或已损坏。请检查源文件或数据。</value>
+    </data>
+    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
+        <value>格式无效。请确保配置正确。</value>
+    </data>
+    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
+        <value>操作无效。请确保配置正确。</value>
+    </data>
+    <data name="HandledSystemException_IOException" xml:space="preserve">
+        <value>发生通用 I/O 错误。可能是读写文件时出现问题。</value>
+    </data>
+    <data name="HandledSystemException_NotSupported" xml:space="preserve">
+        <value>您的系统不支持所请求的操作。</value>
+    </data>
+    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
+        <value>操作已取消。</value>
+    </data>
+    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
+        <value>应用程序内存不足。请关闭其他程序后重试。</value>
+    </data>
+    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
+        <value>指定的文件或目录路径过长。请尝试使用更短的路径。</value>
+    </data>
+    <data name="HandledSystemException_Security" xml:space="preserve">
+        <value>发生安全错误。应用程序可能没有必要的权限。</value>
+    </data>
+    <data name="HandledSystemException_Serialization" xml:space="preserve">
+        <value>解析数据时出错。</value>
+    </data>
+    <data name="HandledSystemException_Socket" xml:space="preserve">
+        <value>发生网络套接字错误。请检查您的网络连接和防火墙设置。</value>
+    </data>
+    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
+        <value>无法建立 SSL 连接。请检查您的网络设置或证书。</value>
+    </data>
+    <data name="HandledSystemException_Timeout" xml:space="preserve">
+        <value>操作超时。请检查您的系统性能，然后重试。</value>
+    </data>
+    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
+        <value>访问所需资源被拒绝。请检查文件权限或以管理员身份运行应用程序。</value>
+    </data>
+    <data name="HandledSystemException_Unknown" xml:space="preserve">
+        <value>发生意外的系统错误。请重试或检查应用程序日志。</value>
+    </data>
+    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
+        <value>你尚未登录，请登录后再使用 Everywhere 云服务。</value>
+    </data>
+    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
+        <value>发生 Windows 系统错误。请检查应用程序日志以获取更多详细信息。</value>
+    </data>
+    <data name="Common_CriticalError" xml:space="preserve">
+        <value>严重错误</value>
+    </data>
+    <data name="Common_Default" xml:space="preserve">
+        <value>默认</value>
+    </data>
+    <data name="Common_Delete" xml:space="preserve">
+        <value>删除</value>
+    </data>
+    <data name="Common_Error" xml:space="preserve">
+        <value>错误</value>
+    </data>
+    <data name="Common_Ignore" xml:space="preserve">
+        <value>忽略</value>
+    </data>
+    <data name="Common_Info" xml:space="preserve">
+        <value>提示</value>
+    </data>
+    <data name="Common_No" xml:space="preserve">
+        <value>否</value>
+    </data>
+    <data name="Common_None" xml:space="preserve">
+        <value>无</value>
+    </data>
+    <data name="Common_OK" xml:space="preserve">
+        <value>确定</value>
+    </data>
+    <data name="Common_Refresh" xml:space="preserve">
+        <value>刷新</value>
+    </data>
+    <data name="Common_Reset" xml:space="preserve">
+        <value>重置</value>
+    </data>
+    <data name="Common_Retry" xml:space="preserve">
+        <value>重试</value>
+    </data>
+    <data name="Common_Submit" xml:space="preserve">
+        <value>提交</value>
+    </data>
+    <data name="Common_Undo" xml:space="preserve">
+        <value>撤销</value>
+    </data>
+    <data name="Common_Warning" xml:space="preserve">
+        <value>警告</value>
+    </data>
+    <data name="Common_Yes" xml:space="preserve">
+        <value>是</value>
+    </data>
 </root>

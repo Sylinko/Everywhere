@@ -252,7 +252,7 @@ public partial class OfficialModelDefinitionForm(IServiceProvider serviceProvide
 
     void IExceptionHandler.HandleException(Exception exception, string? message, object? source, int lineNumber)
     {
-        ToastManager.Error(message ?? LocaleResolver.Common_Error, exception.GetFriendlyMessage());
+        ToastManager.Error(message ?? AbstractionsLocaleResolver.Common_Error, exception.GetFriendlyMessage());
     }
 
     internal sealed record ReconcileResult(

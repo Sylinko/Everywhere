@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Everywhere.Common;
+using Everywhere.Common.Downloads;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,7 +61,7 @@ public sealed class NetworkInitializer : IAsyncInitializer
 
             if (notifyOnError)
             {
-                ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage().ToTextBlock());
+                ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
             }
         }
     }

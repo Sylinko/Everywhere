@@ -361,15 +361,8 @@
     <data name="FriendlyExceptionMessage_Socket_0" xml:space="preserve">
         <value>不明なエラーが発生しました。後でもう一度お試しください。</value>
     </data>
-    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>1つ以上のエラーが発生しました。
-{0}</value>
-    </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>タスクがキャンセルされました。</value>
-    </data>
-    <data name="FriendlyExceptionMessage_OperationCanceled" xml:space="preserve">
-        <value>操作がキャンセルされました。</value>
     </data>
     <data name="FriendlyExceptionMessage_Timeout" xml:space="preserve">
         <value>最大待機時間を超えました。</value>
@@ -379,9 +372,6 @@
     </data>
     <data name="FriendlyExceptionMessage_Format" xml:space="preserve">
         <value>フォーマットエラー。</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Argument" xml:space="preserve">
-        <value>引数エラー。</value>
     </data>
     <data name="LocaleName_De" xml:space="preserve">
         <value>Deutsch</value>
@@ -434,17 +424,11 @@
     <data name="App_EverywhereIsAlreadyRunning" xml:space="preserve">
         <value>Everywhereはすでに実行中です。トレイアイコンを確認してください。</value>
     </data>
-    <data name="Common_Info" xml:space="preserve">
-        <value>情報</value>
-    </data>
     <data name="MainView_EverywhereHasMinimizedToTray" xml:space="preserve">
         <value>Everywhereはトレイに最小化されました</value>
     </data>
     <data name="ChatWindow_HistoryAction_Rename" xml:space="preserve">
         <value>名前を変更</value>
-    </data>
-    <data name="Common_Delete" xml:space="preserve">
-        <value>削除</value>
     </data>
     <data name="AboutPage_WelcomePage" xml:space="preserve">
         <value>ウェルカムページ</value>
@@ -548,9 +532,6 @@
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大コンテキスト長</value>
     </data>
-    <data name="Common_Reset" xml:space="preserve">
-        <value>リセット</value>
-    </data>
     <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>APIスキーマ</value>
     </data>
@@ -590,9 +571,6 @@
     <data name="DebugFeaturesControl_OpenLogsFolderButton_Content" xml:space="preserve">
         <value>ログフォルダーを開く</value>
     </data>
-    <data name="Common_Error" xml:space="preserve">
-        <value>エラー</value>
-    </data>
     <data name="CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text" xml:space="preserve">
         <value>バージョン</value>
     </data>
@@ -601,9 +579,6 @@
     </data>
     <data name="CommonSettings_SoftwareUpdate_NeverChecked_Text" xml:space="preserve">
         <value>未確認</value>
-    </data>
-    <data name="Common_Unknown" xml:space="preserve">
-        <value>不明</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Header" xml:space="preserve">
         <value>ソフトウェア更新</value>
@@ -764,9 +739,6 @@
     </data>
     <data name="WelcomeView_ShortcutStep_Message2" xml:space="preserve">
         <value>反応がない場合は、他のソフトウェアが使用している可能性があります。ショートカットキーを変更するにはクリックしてください。</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Authentication" xml:space="preserve">
-        <value>認証エラー。</value>
     </data>
     <data name="WelcomeView_TelemetryStep_Message1" xml:space="preserve">
         <value>私が成長するために、ユーザーエクスペリエンスプログラムに参加していただくことをお勧めします。使用データを収集しますが、これらのデータは分析のみに使用され、個人に関する情報は含まれず、推測することもできません。</value>
@@ -940,17 +912,8 @@
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
         <value>削除</value>
     </data>
-    <data name="Common_Warning" xml:space="preserve">
-        <value>警告</value>
-    </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
         <value>&quot;{0}&quot;を削除してもよろしいですか？</value>
-    </data>
-    <data name="Common_Yes" xml:space="preserve">
-        <value>はい</value>
-    </data>
-    <data name="Common_No" xml:space="preserve">
-        <value>いいえ</value>
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Header" xml:space="preserve">
         <value>モデルプロバイダー</value>
@@ -963,57 +926,6 @@
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Description" xml:space="preserve">
         <value>プリセットのモデルプロバイダーを選択します。</value>
-    </data>
-    <data name="HandledSystemException_IOException" xml:space="preserve">
-        <value>一般的なI/Oエラーが発生しました。これはファイルの読み書きに問題がある可能性があります。</value>
-    </data>
-    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
-        <value>必要なリソースへのアクセスが拒否されました。ファイルの権限を確認するか、管理者としてアプリケーションを実行してください。</value>
-    </data>
-    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
-        <value>指定されたファイルまたはディレクトリのパスが長すぎます。短いパスを試してください。</value>
-    </data>
-    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
-        <value>操作がキャンセルされました。</value>
-    </data>
-    <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>操作がタイムアウトしました。システムのパフォーマンスを確認して再試行してください。</value>
-    </data>
-    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
-        <value>指定されたファイルが見つかりません。ファイルが存在し、パスが正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
-        <value>指定されたディレクトリが見つかりません。ディレクトリが存在し、パスが正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_NotSupported" xml:space="preserve">
-        <value>要求された操作はシステムでサポートされていません。</value>
-    </data>
-    <data name="HandledSystemException_Security" xml:space="preserve">
-        <value>セキュリティエラーが発生しました。アプリケーションに必要な権限がない可能性があります。</value>
-    </data>
-    <data name="HandledSystemException_COMException" xml:space="preserve">
-        <value>システムコンポーネント（COM）エラーが発生しました。これはOSまたは依存関係に問題があることを示している可能性があります。</value>
-    </data>
-    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
-        <value>Windowsシステムエラーが発生しました。詳細についてはアプリケーションログを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_Socket" xml:space="preserve">
-        <value>ネットワークソケットエラーが発生しました。ネットワーク接続とファイアウォール設定を確認してください。</value>
-    </data>
-    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
-        <value>アプリケーションのメモリが不足しています。他のプログラムを閉じて、もう一度お試しください。</value>
-    </data>
-    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
-        <value>指定されたドライブが見つかりません。ドライブが接続されていることを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
-        <value>データストリームの予期しない終わりに達しました。これはファイルの破損やネットワークの問題を示している可能性があります。</value>
-    </data>
-    <data name="HandledSystemException_InvalidData" xml:space="preserve">
-        <value>処理中のデータが無効または破損しています。ソースファイルまたはデータを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_Unknown" xml:space="preserve">
-        <value>予期しないシステムエラーが発生しました。もう一度試すか、アプリケーションログを確認してください。</value>
     </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_Content" xml:space="preserve">
         <value>接続を確認</value>
@@ -1042,30 +954,6 @@
     <data name="IconEditor_IconTabItem_Header" xml:space="preserve">
         <value>アイコン</value>
     </data>
-    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
-        <value>操作が無効です。設定が正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
-        <value>引数が無効です。設定が正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
-        <value>形式が無効です。設定が正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
-        <value>引数が空です。設定が正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
-        <value>引数が有効な範囲外です。設定が正しいことを確認してください。</value>
-    </data>
-    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
-        <value>SSL接続を確立できませんでした。ネットワーク設定または証明書を確認してください。</value>
-    </data>
-    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
-        <value>サーバーによって接続が拒否されました。サービスが実行中でアクセス可能か確認してください。</value>
-    </data>
-    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
-        <value>ホストが見つかりませんでした。アドレスとネットワーク接続を確認してください。</value>
-    </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_ToolTip" xml:space="preserve">
         <value>モデルサービスの利用可能性を確認します</value>
     </data>
@@ -1080,21 +968,6 @@
     </data>
     <data name="ChatInputArea_ContextFlyout_PasteMenuItem_Header" xml:space="preserve">
         <value>貼り付け</value>
-    </data>
-    <data name="Common_OK" xml:space="preserve">
-        <value>OK</value>
-    </data>
-    <data name="Common_Cancel" xml:space="preserve">
-        <value>キャンセル</value>
-    </data>
-    <data name="Common_Abort" xml:space="preserve">
-        <value>中止</value>
-    </data>
-    <data name="Common_Retry" xml:space="preserve">
-        <value>再試行</value>
-    </data>
-    <data name="Common_Ignore" xml:space="preserve">
-        <value>無視</value>
     </data>
     <data name="ConsentDecision_Deny" xml:space="preserve">
         <value>拒否</value>
@@ -1140,9 +1013,6 @@
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>「{0}」の実行を許可しますか？「{1}」の権限が必要です。</value>
-    </data>
-    <data name="Common_Comma" xml:space="preserve">
-        <value>、</value>
     </data>
     <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
         <value>一番下までスクロール</value>
@@ -1376,9 +1246,6 @@
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>なし</value>
     </data>
-    <data name="Common_None" xml:space="preserve">
-        <value>なし</value>
-    </data>
     <data name="ModelProviderSchema_OpenAI" xml:space="preserve">
         <value>OpenAI (Chat Completions)</value>
     </data>
@@ -1420,9 +1287,6 @@
     </data>
     <data name="CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip" xml:space="preserve">
         <value>選択したアシスタントを複製します</value>
-    </data>
-    <data name="Common_Copy" xml:space="preserve">
-        <value>コピー</value>
     </data>
     <data name="ChatMessageControl_EditButton_Content" xml:space="preserve">
         <value>編集</value>
@@ -1733,9 +1597,6 @@
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 個のAPIキーを削除してもよろしいですか？この操作は元に戻せません！</value>
     </data>
-    <data name="Common_Copied" xml:space="preserve">
-        <value>コピーしました</value>
-    </data>
     <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
         <value>削除してもよろしいですか？この操作は元に戻せません！</value>
     </data>
@@ -1881,12 +1742,6 @@
     <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
         <value>さらに設定</value>
     </data>
-    <data name="HandledSystemException_Serialization" xml:space="preserve">
-        <value>データの解析中にエラーが発生しました。</value>
-    </data>
-    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
-        <value>ツールの呼び出し中にエラーが発生しました。</value>
-    </data>
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>深い思考</value>
     </data>
@@ -1998,9 +1853,6 @@
     <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Description" xml:space="preserve">
         <value>公式ホスティングサービス。APIキーは不要で、すぐに使えます</value>
     </data>
-    <data name="Common_CriticalError" xml:space="preserve">
-        <value>重大なエラー</value>
-    </data>
     <data name="Entrance_FailedToInitializeRuntimeConstants" xml:space="preserve">
         <value>データディレクトリの初期化に失敗しました。データディレクトリへの書き込み権限があることを確認してください。
 {0}</value>
@@ -2074,9 +1926,6 @@
     <data name="HandledChatException_JsonError" xml:space="preserve">
         <value>サーバーの応答を解析中にエラーが発生しました。通常、予期しないJSON形式または内容を意味します。</value>
     </data>
-    <data name="Common_Refresh" xml:space="preserve">
-        <value>更新</value>
-    </data>
     <data name="CustomAssistant_OutputModalities_Header" xml:space="preserve">
         <value>出力モダリティ</value>
     </data>
@@ -2100,9 +1949,6 @@
     </data>
     <data name="CustomAssistant_OutputPrice_ToolTip" xml:space="preserve">
         <value>思考トークンを含む</value>
-    </data>
-    <data name="Common_Undo" xml:space="preserve">
-        <value>元に戻す</value>
     </data>
     <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
         <value>「{0}」を削除しました</value>
@@ -2422,14 +2268,8 @@
     <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Description" xml:space="preserve">
         <value>コードを解釈し、潜在的な問題を分析します</value>
     </data>
-    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
-        <value>まだログインしていません。Everywhereクラウドサービスを使用するにはログインしてください。</value>
-    </data>
     <data name="ConsentDecisionCard_DenyWithReasonMenuItem_Header" xml:space="preserve">
         <value>拒否して理由を入力</value>
-    </data>
-    <data name="Common_Submit" xml:space="preserve">
-        <value>送信</value>
     </data>
     <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
         <value>拒否理由を入力</value>
@@ -2532,9 +2372,6 @@
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>ドキュメントを見る</value>
-    </data>
-    <data name="Common_Default" xml:space="preserve">
-        <value>デフォルト</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
         <value>デフォルトに設定</value>
@@ -2718,9 +2555,6 @@
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Everything を使用してファイルを検索します。</value>
-    </data>
-    <data name="Common_Advanced" xml:space="preserve">
-        <value>詳細</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>ターミナルはもはや利用できません</value>

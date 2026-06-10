@@ -13,8 +13,11 @@ using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Media;
+using Everywhere.Media.SpeechRecognition;
+using Everywhere.Media.SpeechRecognition.Sherpa;
 using Everywhere.Messages;
 using Everywhere.Utilities;
+using Everywhere.Views.Pages;
 using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +60,7 @@ public partial class ChatWindow :
 
     private readonly IWindowHelper _windowHelper;
     private readonly INativeHelper _nativeHelper;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ISpeechRecognitionService _speechRecognitionService;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
@@ -79,6 +83,7 @@ public partial class ChatWindow :
         Settings settings,
         PersistentState persistentState) : base(serviceProvider, disposeOnUnloaded: false)
     {
+        _serviceProvider = serviceProvider;
         _windowHelper = windowHelper;
         _nativeHelper = nativeHelper;
         _speechRecognitionService = serviceProvider.GetRequiredService<ISpeechRecognitionService>();
@@ -183,6 +188,7 @@ public partial class ChatWindow :
         _holdSpeechRecognitionActivationId = state.ActivationId;
 
         await _speechRecognitionService.StartSpeechRecognitionAsync(state, cancellationToken: cancellationToken);
+        await ShowSpeechRecognitionModelUnavailableDialogIfNeededAsync(state);
 
         if (ReferenceEquals(ViewModel.SpeechRecognitionInputState, state) && !state.IsActive)
         {
@@ -193,6 +199,35 @@ public partial class ChatWindow :
         {
             _holdSpeechRecognitionActivationId = null;
         }
+    }
+
+    private async Task ShowSpeechRecognitionModelUnavailableDialogIfNeededAsync(SpeechRecognitionInputState state)
+    {
+        if (FindException<SherpaOnnxModelUnavailableException>(state.LastException) is null) return;
+
+        var result = await DialogHost.Manager
+            .CreateDialog(
+                LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Content,
+                LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Title)
+            .WithPrimaryButton(LocaleResolver.ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_OpenSettingsButton)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
+            .ShowAsync();
+        if (result != DialogResult.Primary) return;
+
+        _serviceProvider
+            .GetRequiredService<MainViewModel>()
+            .NavigateTo(_serviceProvider.GetRequiredService<SpeechRecognitionPage>());
+    }
+
+    private static TException? FindException<TException>(Exception? exception) where TException : Exception
+    {
+        while (exception is not null)
+        {
+            if (exception is TException typedException) return typedException;
+            exception = exception.InnerException;
+        }
+
+        return null;
     }
 
     public async Task StopSpeechRecognitionAsync(CancellationToken cancellationToken = default)

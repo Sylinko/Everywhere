@@ -43,7 +43,7 @@ public partial class SoftwareUpdateControl(
         catch (Exception ex)
         {
             ex = new HandledException(ex, new DynamicResourceKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content));
-            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+            ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 }

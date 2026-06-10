@@ -271,7 +271,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update recent chat context history");
-            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+            ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 
@@ -290,7 +290,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load more chat context history");
-            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+            ToastManager.Error(AbstractionsLocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 
@@ -363,7 +363,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
                                 new DirectResourceKey(metadata.ActualTopic ?? string.Empty)).ToString())
                         .WithProgress(progress)
                         .WithDurationSeconds(5d)
-                        .WithAction(DynamicResourceKey.Resolve(LocaleKey.Common_Undo), ButtonStyle.Ghost)
+                        .WithAction(AbstractionsLocaleResolver.Common_Undo, ButtonStyle.Ghost)
                         .OnBottomLeft()
                         .ShowInfoAsync()
                         .ContinueWith(
@@ -466,7 +466,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
             {
                 ToastManager
                     .Error(
-                        LocaleResolver.Common_Error,
+                        AbstractionsLocaleResolver.Common_Error,
                         new FormattedDynamicResourceKey(
                             LocaleKey.ChatContextManager_LoadChatContextFailedToast_Content,
                             ex.GetFriendlyMessage()));

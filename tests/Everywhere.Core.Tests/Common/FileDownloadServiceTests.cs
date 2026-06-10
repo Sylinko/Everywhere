@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Everywhere.Common;
+using Everywhere.Common.Downloads;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Everywhere.Core.Tests.Common;

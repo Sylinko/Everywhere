@@ -7,6 +7,9 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Media;
+using Everywhere.Media.Audio;
+using Everywhere.Media.SpeechRecognition;
+using Everywhere.Media.SpeechRecognition.Sherpa;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Everywhere.Views.Pages;
@@ -45,6 +48,8 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, CustomAssistantPage>()
                 .AddSingleton<ChatPluginPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
+                .AddSingleton<SpeechRecognitionPageViewModel>()
+                .AddSingleton<IMainViewNavigationItem, SpeechRecognitionPage>()
                 .AddSingleton<WebSearchEnginePageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, WebSearchEnginePage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
@@ -72,6 +77,7 @@ public static class ServiceExtensions
 
         public IServiceCollection AddChatEssentials() =>
             services
+                .AddEverywhereMedia()
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SpeechRecognitionService>()
@@ -91,5 +97,15 @@ public static class ServiceExtensions
                 .AddTransient<BuiltInChatPlugin, WebPlugin>()
                 .AddTransient<BuiltInChatPlugin, TerminalPlugin>();
 
+        private IServiceCollection AddEverywhereMedia() => services
+            .AddSingleton<IMicrophoneDeviceManager, PortAudioMicrophoneDeviceManager>()
+            .AddSingleton<SherpaOnnxModelRegistry>()
+            .AddSingleton<SherpaOnnxModelInstaller>()
+            .AddSingleton<ISpeechRecognitionEngine>(x => new SherpaOnnxSpeechRecognitionEngine(
+                x.GetRequiredService<Settings>().SpeechRecognition.SherpaOnnx,
+                x.GetRequiredService<SherpaOnnxModelRegistry>(),
+                x.GetRequiredService<SherpaOnnxModelInstaller>(),
+                x.GetRequiredService<IKeyValueStorage>(),
+                x.GetRequiredService<ILogger<SherpaOnnxSpeechRecognitionEngine>>()));
     }
 }

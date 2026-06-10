@@ -51,7 +51,7 @@ public sealed partial class OfficialConnector(
             throw new HandledException(
                 new UserNotLoginException(
                     "Everywhere cloud search service requires user login. Please instruct the user to login or configure 3rd-party search services"),
-                new DynamicResourceKey(LocaleKey.HandledSystemException_UserNotLogin),
+                new DynamicResourceKey(AbstractionsLocaleKey.HandledSystemException_UserNotLogin),
                 showDetails: false);
         }
 
@@ -83,7 +83,7 @@ public sealed partial class OfficialConnector(
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchTimeRange
     {
-        [DynamicResourceKey(LocaleKey.Common_Default)]
+        [DynamicResourceKey(AbstractionsLocaleKey.Common_Default)]
         Default,
         [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Day)]
         Day,

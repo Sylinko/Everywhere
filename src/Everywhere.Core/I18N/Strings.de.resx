@@ -361,14 +361,8 @@
     <data name="FriendlyExceptionMessage_Socket_0" xml:space="preserve">
         <value>Unbekannter Fehler, bitte versuchen Sie es später erneut.</value>
     </data>
-    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Ein oder mehrere Fehler sind aufgetreten.</value>
-    </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Aufgabe abgebrochen.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_OperationCanceled" xml:space="preserve">
-        <value>Vorgang abgebrochen.</value>
     </data>
     <data name="FriendlyExceptionMessage_Timeout" xml:space="preserve">
         <value>Maximale Wartezeit überschritten.</value>
@@ -378,9 +372,6 @@
     </data>
     <data name="FriendlyExceptionMessage_Format" xml:space="preserve">
         <value>Formatfehler.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Argument" xml:space="preserve">
-        <value>Argumentfehler.</value>
     </data>
     <data name="LocaleName_De" xml:space="preserve">
         <value>Deutsch</value>
@@ -433,17 +424,11 @@
     <data name="App_EverywhereIsAlreadyRunning" xml:space="preserve">
         <value>Everywhere läuft bereits, bitte überprüfen Sie das Tray-Icon.</value>
     </data>
-    <data name="Common_Info" xml:space="preserve">
-        <value>Info</value>
-    </data>
     <data name="MainView_EverywhereHasMinimizedToTray" xml:space="preserve">
         <value>Everywhere wurde in den Tray minimiert</value>
     </data>
     <data name="ChatWindow_HistoryAction_Rename" xml:space="preserve">
         <value>Umbenennen</value>
-    </data>
-    <data name="Common_Delete" xml:space="preserve">
-        <value>Löschen</value>
     </data>
     <data name="AboutPage_WelcomePage" xml:space="preserve">
         <value>Willkommensseite</value>
@@ -547,9 +532,6 @@
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Maximale Kontextlänge</value>
     </data>
-    <data name="Common_Reset" xml:space="preserve">
-        <value>Standard</value>
-    </data>
     <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>API-Schema</value>
     </data>
@@ -589,9 +571,6 @@
     <data name="DebugFeaturesControl_OpenLogsFolderButton_Content" xml:space="preserve">
         <value>Protokollordner öffnen</value>
     </data>
-    <data name="Common_Error" xml:space="preserve">
-        <value>Fehler</value>
-    </data>
     <data name="CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text" xml:space="preserve">
         <value>Version</value>
     </data>
@@ -600,9 +579,6 @@
     </data>
     <data name="CommonSettings_SoftwareUpdate_NeverChecked_Text" xml:space="preserve">
         <value>Nie geprüft</value>
-    </data>
-    <data name="Common_Unknown" xml:space="preserve">
-        <value>Unbekannt</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Header" xml:space="preserve">
         <value>Software-Aktualisierung</value>
@@ -763,9 +739,6 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     </data>
     <data name="WelcomeView_ShortcutStep_Message2" xml:space="preserve">
         <value>Falls keine Reaktion erfolgt, könnte die Tastenkombination von anderer Software belegt sein. Klicken Sie, um die Tastenkombination zu ändern.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Authentication" xml:space="preserve">
-        <value>Authentifizierungsfehler.</value>
     </data>
     <data name="WelcomeView_TelemetryStep_Message1" xml:space="preserve">
         <value>Um mir beim Wachsen zu helfen, laden wir Sie ein, am Nutzererfahrungsprogramm teilzunehmen. Wir werden Ihre Nutzungsdaten sammeln, diese Daten dienen ausschließlich der Analyse und enthalten keine personenbezogenen Daten oder können nicht auf Sie zurückgeführt werden.</value>
@@ -939,17 +912,8 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
         <value>Löschen</value>
     </data>
-    <data name="Common_Warning" xml:space="preserve">
-        <value>Warnung</value>
-    </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
         <value>Möchten Sie &quot;{0}&quot; wirklich löschen?</value>
-    </data>
-    <data name="Common_Yes" xml:space="preserve">
-        <value>Ja</value>
-    </data>
-    <data name="Common_No" xml:space="preserve">
-        <value>Nein</value>
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Header" xml:space="preserve">
         <value>Modellanbieter</value>
@@ -962,57 +926,6 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Description" xml:space="preserve">
         <value>Wählen Sie einen vordefinierten Modellanbieter aus.</value>
-    </data>
-    <data name="HandledSystemException_IOException" xml:space="preserve">
-        <value>Ein allgemeiner E/A-Fehler ist aufgetreten. Dies könnte an einem Problem beim Lesen oder Schreiben einer Datei liegen.</value>
-    </data>
-    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
-        <value>Zugriff auf eine erforderliche Ressource wurde verweigert. Bitte überprüfen Sie die Dateiberechtigungen oder führen Sie die Anwendung als Administrator aus.</value>
-    </data>
-    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
-        <value>Der angegebene Pfad zur Datei oder zum Verzeichnis ist zu lang. Bitte versuchen Sie, einen kürzeren Pfad zu verwenden.</value>
-    </data>
-    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
-        <value>Der Vorgang wurde abgebrochen.</value>
-    </data>
-    <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>Der Vorgang ist abgelaufen. Bitte überprüfen Sie Ihre Systemleistung und versuchen Sie es erneut.</value>
-    </data>
-    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
-        <value>Die angegebene Datei konnte nicht gefunden werden. Bitte stellen Sie sicher, dass die Datei existiert und der Pfad korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
-        <value>Das angegebene Verzeichnis konnte nicht gefunden werden. Stellen Sie sicher, dass das Verzeichnis existiert und der Pfad korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_NotSupported" xml:space="preserve">
-        <value>Der angeforderte Vorgang wird auf Ihrem System nicht unterstützt.</value>
-    </data>
-    <data name="HandledSystemException_Security" xml:space="preserve">
-        <value>Ein Sicherheitsfehler ist aufgetreten. Die Anwendung verfügt möglicherweise nicht über die erforderlichen Berechtigungen.</value>
-    </data>
-    <data name="HandledSystemException_COMException" xml:space="preserve">
-        <value>Ein Fehler bei einer Systemkomponente (COM) ist aufgetreten. Dies kann auf ein Problem mit dem Betriebssystem oder einer Abhängigkeit hinweisen.</value>
-    </data>
-    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
-        <value>Ein Windows-Systemfehler ist aufgetreten. Bitte überprüfen Sie die Anwendungslogs für weitere Details.</value>
-    </data>
-    <data name="HandledSystemException_Socket" xml:space="preserve">
-        <value>Ein Netzwerk-Socket-Fehler ist aufgetreten. Bitte überprüfen Sie Ihre Netzwerkverbindung und Firewall-Einstellungen.</value>
-    </data>
-    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
-        <value>Die Anwendung hat keinen Arbeitsspeicher mehr. Schließen Sie bitte andere Programme und versuchen Sie es erneut.</value>
-    </data>
-    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
-        <value>Das angegebene Laufwerk konnte nicht gefunden werden. Stellen Sie sicher, dass das Laufwerk verbunden und zugänglich ist.</value>
-    </data>
-    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
-        <value>Ein unerwartetes Ende eines Datenstroms wurde erreicht. Dies könnte auf eine beschädigte Datei oder ein Netzwerkproblem hinweisen.</value>
-    </data>
-    <data name="HandledSystemException_InvalidData" xml:space="preserve">
-        <value>Die verarbeiteten Daten sind ungültig oder beschädigt. Bitte überprüfen Sie die Quelldatei oder die Daten.</value>
-    </data>
-    <data name="HandledSystemException_Unknown" xml:space="preserve">
-        <value>Ein unerwarteter Systemfehler ist aufgetreten. Bitte versuchen Sie es erneut oder überprüfen Sie die Anwendungsprotokolle.</value>
     </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_Content" xml:space="preserve">
         <value>Verbindung prüfen</value>
@@ -1041,30 +954,6 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     <data name="IconEditor_IconTabItem_Header" xml:space="preserve">
         <value>Symbol</value>
     </data>
-    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
-        <value>Die Operation ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
-        <value>Das Argument ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
-        <value>Das Format ist ungültig. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
-        <value>Das Argument ist leer. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
-        <value>Das Argument liegt außerhalb des gültigen Bereichs. Bitte stellen Sie sicher, dass die Konfiguration korrekt ist.</value>
-    </data>
-    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
-        <value>Die SSL-Verbindung konnte nicht hergestellt werden. Bitte überprüfen Sie Ihre Netzwerkeinstellungen oder das Zertifikat.</value>
-    </data>
-    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
-        <value>Verbindung vom Server abgelehnt, bitte überprüfen Sie die Netzwerkverbindung und die Proxy-Einstellungen.</value>
-    </data>
-    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
-        <value>Der Host konnte nicht gefunden werden. Bitte überprüfen Sie die Adresse und Ihre Netzwerkverbindung.</value>
-    </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_ToolTip" xml:space="preserve">
         <value>Verfügbarkeit des Modelldienstes bestätigen</value>
     </data>
@@ -1079,21 +968,6 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     </data>
     <data name="ChatInputArea_ContextFlyout_PasteMenuItem_Header" xml:space="preserve">
         <value>Einfügen</value>
-    </data>
-    <data name="Common_OK" xml:space="preserve">
-        <value>OK</value>
-    </data>
-    <data name="Common_Cancel" xml:space="preserve">
-        <value>Abbrechen</value>
-    </data>
-    <data name="Common_Abort" xml:space="preserve">
-        <value>Abbrechen</value>
-    </data>
-    <data name="Common_Retry" xml:space="preserve">
-        <value>Wiederholen</value>
-    </data>
-    <data name="Common_Ignore" xml:space="preserve">
-        <value>Ignorieren</value>
     </data>
     <data name="ConsentDecision_Deny" xml:space="preserve">
         <value>Ablehnen</value>
@@ -1139,9 +1013,6 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>Darf „{0}“ ausgeführt werden? Es benötigt die Berechtigung „{1}“.</value>
-    </data>
-    <data name="Common_Comma" xml:space="preserve">
-        <value>, </value>
     </data>
     <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
         <value>Nach unten scrollen</value>
@@ -1375,9 +1246,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>Keines</value>
     </data>
-    <data name="Common_None" xml:space="preserve">
-        <value>Keines</value>
-    </data>
     <data name="ModelProviderSchema_OpenAI" xml:space="preserve">
         <value>OpenAI (Chat Completions)</value>
     </data>
@@ -1419,9 +1287,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     </data>
     <data name="CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip" xml:space="preserve">
         <value>Den ausgewählten Assistenten duplizieren</value>
-    </data>
-    <data name="Common_Copy" xml:space="preserve">
-        <value>Kopieren</value>
     </data>
     <data name="ChatMessageControl_EditButton_Content" xml:space="preserve">
         <value>Bearbeiten</value>
@@ -1732,9 +1597,6 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
     </data>
-    <data name="Common_Copied" xml:space="preserve">
-        <value>Kopiert</value>
-    </data>
     <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
     </data>
@@ -1880,12 +1742,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
         <value>Weitere Einstellungen</value>
     </data>
-    <data name="HandledSystemException_Serialization" xml:space="preserve">
-        <value>Fehler beim Parsen der Daten.</value>
-    </data>
-    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
-        <value>Fehler beim Aufrufen des Tools.</value>
-    </data>
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Tiefes Nachdenken</value>
     </data>
@@ -1997,9 +1853,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Description" xml:space="preserve">
         <value>Offizieller gehosteter Dienst. Kein API-Schlüssel erforderlich, sofort einsatzbereit</value>
     </data>
-    <data name="Common_CriticalError" xml:space="preserve">
-        <value>Kritischer Fehler</value>
-    </data>
     <data name="Entrance_FailedToInitializeRuntimeConstants" xml:space="preserve">
         <value>Fehler beim Initialisieren des Datenverzeichnisses. Bitte stellen Sie sicher, dass Sie Schreibzugriff auf das Datenverzeichnis haben.
 {0}</value>
@@ -2073,9 +1926,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="HandledChatException_JsonError" xml:space="preserve">
         <value>Fehler beim Parsen der Serverantwort, was normalerweise auf ein unerwartetes JSON-Format oder -Inhalt hinweist.</value>
     </data>
-    <data name="Common_Refresh" xml:space="preserve">
-        <value>Aktualisieren</value>
-    </data>
     <data name="CustomAssistant_OutputModalities_Header" xml:space="preserve">
         <value>Ausgabemodalitäten</value>
     </data>
@@ -2099,9 +1949,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="CustomAssistant_OutputPrice_ToolTip" xml:space="preserve">
         <value>Inklusive Denk-Tokens</value>
-    </data>
-    <data name="Common_Undo" xml:space="preserve">
-        <value>Rückgängig</value>
     </data>
     <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
         <value>„{0}“ wurde gelöscht</value>
@@ -2421,14 +2268,8 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Description" xml:space="preserve">
         <value>Code erklären und potenzielle Probleme analysieren</value>
     </data>
-    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
-        <value>Sie sind noch nicht eingeloggt. Bitte melden Sie sich an, um den Everywhere Cloud-Dienst zu nutzen.</value>
-    </data>
     <data name="ConsentDecisionCard_DenyWithReasonMenuItem_Header" xml:space="preserve">
         <value>Ablehnen und Grund eingeben</value>
-    </data>
-    <data name="Common_Submit" xml:space="preserve">
-        <value>Einreichen</value>
     </data>
     <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
         <value>Geben Sie den Ablehnungsgrund ein</value>
@@ -2531,9 +2372,6 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>Dokumentation anzeigen</value>
-    </data>
-    <data name="Common_Default" xml:space="preserve">
-        <value>Standard</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
         <value>Als Standard festlegen</value>
@@ -2717,9 +2555,6 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Verwenden Sie Everything, um Dateien zu suchen.</value>
-    </data>
-    <data name="Common_Advanced" xml:space="preserve">
-        <value>Erweitert</value>
     </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Terminal nicht mehr verfügbar</value>

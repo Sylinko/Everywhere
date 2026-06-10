@@ -1,5 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using Everywhere.I18N;
 using Everywhere.Interop;
 
 namespace Everywhere.Mac.Interop;
@@ -23,7 +22,7 @@ public static partial class PermissionHelper
         if (isTrusted) return;
 
         NativeMessageBox.Show(
-            CoreLocaleResolver.Common_Info,
+            AbstractionsLocaleResolver.Common_Info,
             LocaleResolver.MacOS_PermissionHelper_PleaseGrantAccessibilityPermission);
         Environment.Exit(0);
     }

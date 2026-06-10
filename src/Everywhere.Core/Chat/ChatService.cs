@@ -869,7 +869,7 @@ public sealed partial class ChatService : IChatService
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        functionCallChatMessage.ErrorMessageKey ??= new DynamicResourceKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
+                        functionCallChatMessage.ErrorMessageKey ??= new DynamicResourceKey(AbstractionsLocaleKey.HandledSystemException_OperationCancelled);
                     }
                 }
             }
@@ -979,7 +979,7 @@ public sealed partial class ChatService : IChatService
                     headerKey = new FormattedDynamicResourceKey(
                         LocaleKey.ChatPluginConsentRequest_Common_Header,
                         context.ChatFunction.HeaderKey,
-                        new DirectResourceKey(context.ChatFunction.Permissions.I18N(LocaleResolver.Common_Comma, true)));
+                        new DirectResourceKey(context.ChatFunction.Permissions.I18N(AbstractionsLocaleResolver.Common_Comma, true)));
                 }
             }
 

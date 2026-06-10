@@ -1,6 +1,10 @@
-﻿namespace Everywhere.Media.Audio;
+namespace Everywhere.Media.Audio;
 
-public class IMicrophoneDeviceManager
+public interface IMicrophoneDeviceManager
 {
-    
+    IReadOnlyList<MicrophoneDeviceDescriptor> GetInputDevices();
+
+    string? GetDefaultInputDeviceId();
+
+    IMicrophoneCapture CreateCapture(string? deviceId = null);
 }

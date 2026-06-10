@@ -57,6 +57,8 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceSummaryView.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/ScreenSelection/ScreenSelectionToolTip.axaml"/>
+
+        <ResourceInclude Source="avares://Everywhere.Media/Resources.axaml"/>
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

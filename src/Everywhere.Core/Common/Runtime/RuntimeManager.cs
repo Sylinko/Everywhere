@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using Everywhere.Common.Downloads;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Microsoft.Extensions.Logging;

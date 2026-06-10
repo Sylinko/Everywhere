@@ -91,39 +91,39 @@ public static class Program
         {
             case NativeMessageBoxButtons.OkCancel:
             {
-                alert.AddButton(CoreLocaleResolver.Common_OK);
-                alert.AddButton(CoreLocaleResolver.Common_Cancel);
+                alert.AddButton(AbstractionsLocaleResolver.Common_OK);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.YesNo:
             {
-                alert.AddButton(CoreLocaleResolver.Common_Yes);
-                alert.AddButton(CoreLocaleResolver.Common_No);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Yes);
+                alert.AddButton(AbstractionsLocaleResolver.Common_No);
                 break;
             }
             case NativeMessageBoxButtons.YesNoCancel:
             {
-                alert.AddButton(CoreLocaleResolver.Common_Yes);
-                alert.AddButton(CoreLocaleResolver.Common_No);
-                alert.AddButton(CoreLocaleResolver.Common_Cancel);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Yes);
+                alert.AddButton(AbstractionsLocaleResolver.Common_No);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.RetryCancel:
             {
-                alert.AddButton(CoreLocaleResolver.Common_Retry);
-                alert.AddButton(CoreLocaleResolver.Common_Cancel);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Retry);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.AbortRetryIgnore:
             {
-                alert.AddButton(CoreLocaleResolver.Common_Abort);
-                alert.AddButton(CoreLocaleResolver.Common_Retry);
-                alert.AddButton(CoreLocaleResolver.Common_Ignore);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Abort);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Retry);
+                alert.AddButton(AbstractionsLocaleResolver.Common_Ignore);
                 break;
             }
             default:
             {
-                alert.AddButton(CoreLocaleResolver.Common_OK);
+                alert.AddButton(AbstractionsLocaleResolver.Common_OK);
                 break;
             }
         }

@@ -1,0 +1,7 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceInclude Source="avares://Everywhere.Media/Views/MicrophoneDeviceComboBox.axaml"/>
+    <ResourceInclude Source="avares://Everywhere.Media/Views/Sherpa/SherpaOnnxModelSelector.axaml"/>
+  </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

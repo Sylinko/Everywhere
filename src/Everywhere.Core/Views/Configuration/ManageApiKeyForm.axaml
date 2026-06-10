@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:ManageApiKeyForm}"
     TargetType="v:ManageApiKeyForm">
@@ -95,14 +96,14 @@
                       <Button
                         Classes="Ghost Compact Uniform" Margin="2,0,0,0"
                         Command="{Binding CopyApiKeyToClipboardCommand}"
-                        ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
+                        ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Copy}}">
                         <LucideIcon
                           Kind="Copy"
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
                       <Button
                         x:Name="DeleteApiKeyButton" Classes="Ghost Compact Uniform"
-                        ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}">
+                        ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Delete}}">
                         <LucideIcon
                           Foreground="{DynamicResource DestructiveColor}"
                           Kind="Trash2"
@@ -118,7 +119,7 @@
                                 Spacing="4">
                                 <Button
                                   Classes="Secondary Compact" MinWidth="48"
-                                  Content="{I18N {x:Static LocaleKey.Common_Cancel}}">
+                                  Content="{I18N {x:Static a18:LocaleKey.Common_Cancel}}">
                                   <Interaction.Behaviors>
                                     <ButtonClickEventTriggerBehavior>
                                       <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>
@@ -127,7 +128,7 @@
                                 </Button>
                                 <Button
                                   Classes="Destructive Compact" MinWidth="48"
-                                  Content="{I18N {x:Static LocaleKey.Common_Yes}}">
+                                  Content="{I18N {x:Static a18:LocaleKey.Common_Yes}}">
                                   <Interaction.Behaviors>
                                     <ButtonClickEventTriggerBehavior>
                                       <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>

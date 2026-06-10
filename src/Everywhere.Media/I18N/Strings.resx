@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="SherpaOnnxSpeechRecognitionEngine_Name" xml:space="preserve">
+        <value>sherpa-onnx</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngine_Description" xml:space="preserve">
+        <value>Local streaming speech recognition powered by sherpa-onnx.</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngine_Notification_UnsupportedRuntime" xml:space="preserve">
+        <value>sherpa-onnx speech recognition is not supported on this OS or CPU architecture.</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngine_Notification_NativeLoadFailed" xml:space="preserve">
+        <value>Failed to load the sherpa-onnx native runtime.</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_MicrophoneDeviceId_Header" xml:space="preserve">
+        <value>Microphone</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_MicrophoneDeviceId_Description" xml:space="preserve">
+        <value>The input device used for local speech recognition.</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_ModelId_Header" xml:space="preserve">
+        <value>Speech Model</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_ModelId_Description" xml:space="preserve">
+        <value>The local sherpa-onnx model used for streaming speech recognition.</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_ThreadCount_Header" xml:space="preserve">
+        <value>Recognition Threads</value>
+    </data>
+    <data name="SherpaOnnxSpeechRecognitionEngineSettings_ThreadCount_Description" xml:space="preserve">
+        <value>The number of CPU threads used by the local recognizer.</value>
+    </data>
+    <data name="MicrophoneDeviceComboBox_DefaultDevice" xml:space="preserve">
+        <value>System default microphone</value>
+    </data>
+    <data name="MicrophoneDeviceComboBox_UnavailableDevice" xml:space="preserve">
+        <value>Unavailable device ({0})</value>
+    </data>
+    <data name="MicrophoneDeviceComboBox_Refresh" xml:space="preserve">
+        <value>Refresh devices</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_DownloadButton_Content" xml:space="preserve">
+        <value>Download and Install</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_RetryButton_Content" xml:space="preserve">
+        <value>Retry</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_RepairButton_Content" xml:space="preserve">
+        <value>Repair</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_DownloadingButton_Content" xml:space="preserve">
+        <value>Downloading...</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_VerifyingButton_Content" xml:space="preserve">
+        <value>Verifying...</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_InstallingButton_Content" xml:space="preserve">
+        <value>Installing...</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_InstalledButton_Content" xml:space="preserve">
+        <value>Installed</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_UnsupportedButton_Content" xml:space="preserve">
+        <value>Unsupported</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_DownloadingToast_Content" xml:space="preserve">
+        <value>Downloading and installing {0}...</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_InstalledToast_Content" xml:space="preserve">
+        <value>{0} is installed.</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_ModelId_Header" xml:space="preserve">
+        <value>Model ID</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_Size_Header" xml:space="preserve">
+        <value>Size</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_SupportedLocales_Header" xml:space="preserve">
+        <value>Supported languages</value>
+    </data>
+    <data name="SherpaOnnxModelSelector_InstallationRequiredToast_Content" xml:space="preserve">
+        <value>The current model has not been installed yet. Please install it before using it.</value>
+    </data>
+</root>

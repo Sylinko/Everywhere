@@ -83,9 +83,9 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
         var result = await DialogManager
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_AddMcpPlugin_DialogTitle)
             .WithPrimaryButton(
-                LocaleResolver.Common_OK,
+                AbstractionsLocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.Configuration.Validate())
-            .WithCancelButton(LocaleResolver.Common_Cancel)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
             .ShowAsync(cancellationToken);
         if (result != DialogResult.Primary) return;
         if (form.Configuration.HasErrors) return;
@@ -109,8 +109,8 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
         var form = new McpImportForm();
         var result = await DialogManager
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle)
-            .WithPrimaryButton(LocaleResolver.Common_OK)
-            .WithCancelButton(LocaleResolver.Common_Cancel)
+            .WithPrimaryButton(AbstractionsLocaleResolver.Common_OK)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
             .ShowAsync();
         if (result != DialogResult.Primary) return;
         if (string.IsNullOrWhiteSpace(form.McpJson)) return;
@@ -339,9 +339,9 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
                 var result = await DialogManager
                     .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_EditMcpPlugin_DialogTitle)
                     .WithPrimaryButton(
-                        LocaleResolver.Common_OK,
+                        AbstractionsLocaleResolver.Common_OK,
                         (_, e) => e.Cancel = !form.Configuration.Validate())
-                    .WithCancelButton(LocaleResolver.Common_Cancel)
+                    .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
                     .ShowAsync(token);
                 if (result != DialogResult.Primary) return;
                 if (form.Configuration.HasErrors) return;
@@ -362,8 +362,8 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
             {
                 var result = await DialogManager
                     .CreateDialog(LocaleResolver.ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage.Format(plugin.HeaderKey))
-                    .WithPrimaryButton(LocaleResolver.Common_Yes)
-                    .WithCancelButton(LocaleResolver.Common_No)
+                    .WithPrimaryButton(AbstractionsLocaleResolver.Common_Yes)
+                    .WithCancelButton(AbstractionsLocaleResolver.Common_No)
                     .ShowAsync(token);
                 if (result != DialogResult.Primary) return;
 

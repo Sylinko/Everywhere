@@ -6,6 +6,8 @@ namespace Everywhere.Media;
 
 public interface ISpeechRecognitionService : INotifyPropertyChanged
 {
+    bool IsInitialized { get; }
+
     bool IsAvailable { get; }
 
     SpeechRecognitionStatus Status { get; }

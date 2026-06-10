@@ -361,15 +361,8 @@
     <data name="FriendlyExceptionMessage_Socket_0" xml:space="preserve">
         <value>Unknown error, please try again later.</value>
     </data>
-    <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>One or more errors occurred.
-{0}</value>
-    </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Task canceled.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_OperationCanceled" xml:space="preserve">
-        <value>Operation canceled.</value>
     </data>
     <data name="FriendlyExceptionMessage_Timeout" xml:space="preserve">
         <value>Maximum wait time exceeded.</value>
@@ -379,9 +372,6 @@
     </data>
     <data name="FriendlyExceptionMessage_Format" xml:space="preserve">
         <value>Format error.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Argument" xml:space="preserve">
-        <value>Argument error.</value>
     </data>
     <data name="LocaleName_De" xml:space="preserve">
         <value>Deutsch</value>
@@ -434,17 +424,11 @@
     <data name="App_EverywhereIsAlreadyRunning" xml:space="preserve">
         <value>Everywhere is already running, please check Tray Icon.</value>
     </data>
-    <data name="Common_Info" xml:space="preserve">
-        <value>Info</value>
-    </data>
     <data name="MainView_EverywhereHasMinimizedToTray" xml:space="preserve">
         <value>Everywhere has minimized to tray</value>
     </data>
     <data name="ChatWindow_HistoryAction_Rename" xml:space="preserve">
         <value>Rename</value>
-    </data>
-    <data name="Common_Delete" xml:space="preserve">
-        <value>Delete</value>
     </data>
     <data name="AboutPage_WelcomePage" xml:space="preserve">
         <value>Welcome Page</value>
@@ -548,9 +532,6 @@
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Context Length</value>
     </data>
-    <data name="Common_Reset" xml:space="preserve">
-        <value>Reset</value>
-    </data>
     <data name="Assistant_Schema_Header" xml:space="preserve">
         <value>API Schema</value>
     </data>
@@ -590,9 +571,6 @@
     <data name="DebugFeaturesControl_OpenLogsFolderButton_Content" xml:space="preserve">
         <value>Open Logs Folder</value>
     </data>
-    <data name="Common_Error" xml:space="preserve">
-        <value>Error</value>
-    </data>
     <data name="CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text" xml:space="preserve">
         <value>Version</value>
     </data>
@@ -601,9 +579,6 @@
     </data>
     <data name="CommonSettings_SoftwareUpdate_NeverChecked_Text" xml:space="preserve">
         <value>Never checked</value>
-    </data>
-    <data name="Common_Unknown" xml:space="preserve">
-        <value>Unknown</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Header" xml:space="preserve">
         <value>Software Update</value>
@@ -764,9 +739,6 @@ My intelligence is powered by large language models, and I need your help to con
     </data>
     <data name="WelcomeView_ShortcutStep_Message2" xml:space="preserve">
         <value>If there's no response, it might be occupied by other software. You can click to change the shortcut key.</value>
-    </data>
-    <data name="FriendlyExceptionMessage_Authentication" xml:space="preserve">
-        <value>Authentication error.</value>
     </data>
     <data name="WelcomeView_TelemetryStep_Message1" xml:space="preserve">
         <value>To help me grow, we invite you to join the user experience program. We will collect your usage data, which will only be used for analysis and does not contain or allow for any inference of personal data about you.</value>
@@ -940,17 +912,8 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
         <value>Delete</value>
     </data>
-    <data name="Common_Warning" xml:space="preserve">
-        <value>Warning</value>
-    </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
         <value>Are you sure you want to delete the &quot;{0}&quot;?</value>
-    </data>
-    <data name="Common_Yes" xml:space="preserve">
-        <value>Yes</value>
-    </data>
-    <data name="Common_No" xml:space="preserve">
-        <value>No</value>
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Header" xml:space="preserve">
         <value>Model Provider</value>
@@ -963,57 +926,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     </data>
     <data name="CustomAssistant_ModelProviderTemplate_Description" xml:space="preserve">
         <value>Select a preset model provider.</value>
-    </data>
-    <data name="HandledSystemException_IOException" xml:space="preserve">
-        <value>A general I/O error occurred. This might be due to a problem with reading or writing a file.</value>
-    </data>
-    <data name="HandledSystemException_UnauthorizedAccess" xml:space="preserve">
-        <value>Access to a required resource was denied. Please check file permissions or run the application as an administrator.</value>
-    </data>
-    <data name="HandledSystemException_PathTooLong" xml:space="preserve">
-        <value>Specified file or directory path is too long. Please try using a shorter path.</value>
-    </data>
-    <data name="HandledSystemException_OperationCancelled" xml:space="preserve">
-        <value>Operation was cancelled.</value>
-    </data>
-    <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>Operation timed out. Please check your system performance and try again.</value>
-    </data>
-    <data name="HandledSystemException_FileNotFound" xml:space="preserve">
-        <value>Specified file not found. Please ensure the file exists and the path is correct.</value>
-    </data>
-    <data name="HandledSystemException_DirectoryNotFound" xml:space="preserve">
-        <value>Specified directory not found. Please ensure the directory exists and the path is correct.</value>
-    </data>
-    <data name="HandledSystemException_NotSupported" xml:space="preserve">
-        <value>Requested operation is not supported on your system.</value>
-    </data>
-    <data name="HandledSystemException_Security" xml:space="preserve">
-        <value>A security error occurred. The application may not have the necessary permissions.</value>
-    </data>
-    <data name="HandledSystemException_COMException" xml:space="preserve">
-        <value>System component (COM) error occurred. This may indicate an issue with the OS or a dependency.</value>
-    </data>
-    <data name="HandledSystemException_Win32Exception" xml:space="preserve">
-        <value>A Windows system error occurred. Please check the application logs for more details.</value>
-    </data>
-    <data name="HandledSystemException_Socket" xml:space="preserve">
-        <value>A network socket error occurred. Please check your network connection and firewall settings.</value>
-    </data>
-    <data name="HandledSystemException_OutOfMemory" xml:space="preserve">
-        <value>Application ran out of memory. Please close other programs and try again.</value>
-    </data>
-    <data name="HandledSystemException_DriveNotFound" xml:space="preserve">
-        <value>Specified drive not found. Please ensure the drive is connected and accessible.</value>
-    </data>
-    <data name="HandledSystemException_EndOfStream" xml:space="preserve">
-        <value>An unexpected end of a data stream was reached. This might indicate a corrupted file or network issue.</value>
-    </data>
-    <data name="HandledSystemException_InvalidData" xml:space="preserve">
-        <value>Data being processed is invalid or corrupted. Please check the source file or data.</value>
-    </data>
-    <data name="HandledSystemException_Unknown" xml:space="preserve">
-        <value>An unexpected system error occurred. Please try again or check the application logs.</value>
     </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_Content" xml:space="preserve">
         <value>Check Connectivity</value>
@@ -1042,30 +954,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     <data name="IconEditor_IconTabItem_Header" xml:space="preserve">
         <value>Icon</value>
     </data>
-    <data name="HandledSystemException_InvalidOperation" xml:space="preserve">
-        <value>Operation is invalid. Please ensure the configuration is correct.</value>
-    </data>
-    <data name="HandledSystemException_InvalidArgument" xml:space="preserve">
-        <value>Argument is invalid. Please ensure the configuration is correct.</value>
-    </data>
-    <data name="HandledSystemException_InvalidFormat" xml:space="preserve">
-        <value>Format is invalid. Please ensure the configuration is correct.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentNull" xml:space="preserve">
-        <value>Argument is empty. Please ensure the configuration is correct.</value>
-    </data>
-    <data name="HandledSystemException_ArgumentOutOfRange" xml:space="preserve">
-        <value>Argument is out of valid range. Please ensure the configuration is correct.</value>
-    </data>
-    <data name="HandledSystemException_SSLConnectionError" xml:space="preserve">
-        <value>The SSL connection could not be established. Please check your network settings or certificate.</value>
-    </data>
-    <data name="HandledSystemException_ConnectionRefused" xml:space="preserve">
-        <value>Connection was refused by the server. Please check your network connection and proxy settings.</value>
-    </data>
-    <data name="HandledSystemException_HostNotFound" xml:space="preserve">
-        <value>The host could not be found. Please check the address and your network connection.</value>
-    </data>
     <data name="CustomAssistantPage_CheckConnectivityButton_ToolTip" xml:space="preserve">
         <value>Confirm the availability of the model service</value>
     </data>
@@ -1080,21 +968,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     </data>
     <data name="ChatInputArea_ContextFlyout_PasteMenuItem_Header" xml:space="preserve">
         <value>Paste</value>
-    </data>
-    <data name="Common_OK" xml:space="preserve">
-        <value>OK</value>
-    </data>
-    <data name="Common_Cancel" xml:space="preserve">
-        <value>Cancel</value>
-    </data>
-    <data name="Common_Abort" xml:space="preserve">
-        <value>Abort</value>
-    </data>
-    <data name="Common_Retry" xml:space="preserve">
-        <value>Retry</value>
-    </data>
-    <data name="Common_Ignore" xml:space="preserve">
-        <value>Ignore</value>
     </data>
     <data name="ConsentDecision_Deny" xml:space="preserve">
         <value>Deny</value>
@@ -1140,9 +1013,6 @@ Placeholders can be used in the prompt, enclosed in {}, which will be replaced w
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>Do you allow '{0}' to execute? It requires '{1}' permission.</value>
-    </data>
-    <data name="Common_Comma" xml:space="preserve">
-        <value>, </value>
     </data>
     <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
         <value>Scroll to bottom</value>
@@ -1376,9 +1246,6 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>None</value>
     </data>
-    <data name="Common_None" xml:space="preserve">
-        <value>None</value>
-    </data>
     <data name="ModelProviderSchema_OpenAI" xml:space="preserve">
         <value>OpenAI (Chat Completions)</value>
     </data>
@@ -1420,9 +1287,6 @@ Scroll wheel or number keys to switch pick modes</value>
     </data>
     <data name="CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip" xml:space="preserve">
         <value>Duplicate the selected assistant</value>
-    </data>
-    <data name="Common_Copy" xml:space="preserve">
-        <value>Copy</value>
     </data>
     <data name="ChatMessageControl_EditButton_Content" xml:space="preserve">
         <value>Edit</value>
@@ -1733,9 +1597,6 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Are you sure to delete {0} API key(s)? This action cannot be undone.</value>
     </data>
-    <data name="Common_Copied" xml:space="preserve">
-        <value>Copied</value>
-    </data>
     <data name="ManageApiKeyForm_DeleteApiKey_Flyout_Content" xml:space="preserve">
         <value>Are you sure to delete? This action cannot be undone.</value>
     </data>
@@ -1881,12 +1742,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
         <value>More Settings</value>
     </data>
-    <data name="HandledSystemException_Serialization" xml:space="preserve">
-        <value>Error parsing data.</value>
-    </data>
-    <data name="HandledSystemException_FunctionInvoking" xml:space="preserve">
-        <value>Error invoking tool.</value>
-    </data>
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Deep Thinking</value>
     </data>
@@ -1998,9 +1853,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="AssistantConfiguratorSelector_OfficialConfiguratorModel_Description" xml:space="preserve">
         <value>Official service. No API key setup needed—it's ready when you are.</value>
     </data>
-    <data name="Common_CriticalError" xml:space="preserve">
-        <value>Critical Error</value>
-    </data>
     <data name="Entrance_FailedToInitializeRuntimeConstants" xml:space="preserve">
         <value>Failed to initialize data directory; please ensure you have write permissions for the data directory.
 {0}</value>
@@ -2074,9 +1926,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="HandledChatException_JsonError" xml:space="preserve">
         <value>An error occurred while parsing the response from the service, indicating an unexpected JSON format or content.</value>
     </data>
-    <data name="Common_Refresh" xml:space="preserve">
-        <value>Refresh</value>
-    </data>
     <data name="CustomAssistant_OutputModalities_Header" xml:space="preserve">
         <value>Output Modalities</value>
     </data>
@@ -2100,9 +1949,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="CustomAssistant_OutputPrice_ToolTip" xml:space="preserve">
         <value>Includes thinking tokens</value>
-    </data>
-    <data name="Common_Undo" xml:space="preserve">
-        <value>Undo</value>
     </data>
     <data name="ChatContextManager_DeletingToast_Content" xml:space="preserve">
         <value>&quot;{0}&quot; is deleted</value>
@@ -2422,14 +2268,8 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Strategy_BuiltIn_File_AnalyzeCodeCommand_Description" xml:space="preserve">
         <value>Explains code and analyzes potential issues</value>
     </data>
-    <data name="HandledSystemException_UserNotLogin" xml:space="preserve">
-        <value>You are not logged in. Please log in to use Everywhere cloud services.</value>
-    </data>
     <data name="ConsentDecisionCard_DenyWithReasonMenuItem_Header" xml:space="preserve">
         <value>Deny and Enter Reason</value>
-    </data>
-    <data name="Common_Submit" xml:space="preserve">
-        <value>Submit</value>
     </data>
     <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
         <value>Enter denial reason</value>
@@ -2532,9 +2372,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
         <value>View Documentation</value>
-    </data>
-    <data name="Common_Default" xml:space="preserve">
-        <value>Default</value>
     </data>
     <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
         <value>Set as Default</value>
@@ -2719,9 +2556,6 @@ Release date: {2}</value>
     <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
         <value>Search files using Everything search engine.</value>
     </data>
-    <data name="Common_Advanced" xml:space="preserve">
-        <value>Advanced</value>
-    </data>
     <data name="TerminalView_TerminalNoLongerAvailable" xml:space="preserve">
         <value>Terminal No Longer Available</value>
     </data>
@@ -2882,9 +2716,27 @@ Release date: {2}</value>
         <value>The speech recognition engine used when converting voice input to text.</value>
     </data>
     <data name="SpeechRecognitionButton_Start_ToolTip" xml:space="preserve">
-        <value />
+        <value>Start dictation</value>
     </data>
     <data name="SpeechRecognitionButton_Stop_ToolTip" xml:space="preserve">
-        <value />
+        <value>Stop dictation</value>
+    </data>
+    <data name="SpeechRecognitionPage_Title" xml:space="preserve">
+        <value>Speech Recognition</value>
+    </data>
+    <data name="SpeechRecognitionPage_LoadingTextBlock_Text" xml:space="preserve">
+        <value>Loading speech recognition engines...</value>
+    </data>
+    <data name="SpeechRecognitionPage_Notification_NotSupported" xml:space="preserve">
+        <value>This speech recognition engine is not supported on the current device.</value>
+    </data>
+    <data name="ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Title" xml:space="preserve">
+        <value>Speech model required</value>
+    </data>
+    <data name="ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_Content" xml:space="preserve">
+        <value>The selected local speech recognition model is not installed or needs repair. Open Speech Recognition settings to download it.</value>
+    </data>
+    <data name="ChatWindowViewModel_SpeechRecognitionModelUnavailableDialog_OpenSettingsButton" xml:space="preserve">
+        <value>Open Settings</value>
     </data>
 </root>

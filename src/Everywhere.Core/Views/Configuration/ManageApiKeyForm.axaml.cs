@@ -74,7 +74,7 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
             if (SecretKey is not { Length: > 0 } secretKey) return;
 
             await App.Clipboard.SetTextAsync(secretKey);
-            ToastManager.Success(LocaleResolver.Common_Copied);
+            ToastManager.Success(AbstractionsLocaleResolver.Common_Copied);
         }
     }
 
@@ -170,9 +170,9 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
         var result = await ServiceLocator.Resolve<DialogManager>()
             .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
             .WithPrimaryButton(
-                LocaleResolver.Common_OK,
+                AbstractionsLocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.ApiKey.ValidateAndSave())
-            .WithCancelButton(LocaleResolver.Common_Cancel)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_Cancel)
             .ShowAsync(cancellationToken);
         if (result != DialogResult.Primary) return;
 
@@ -198,9 +198,9 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
 
         var result = await ServiceLocator.Resolve<DialogManager>().CreateDialog(
                 LocaleResolver.ManageApiKeyForm_DeleteApiKeys_Dialog_Message.Format(keysToDelete.Count),
-                LocaleResolver.Common_Warning)
-            .WithPrimaryButton(LocaleResolver.Common_Yes)
-            .WithCancelButton(LocaleResolver.Common_No)
+                AbstractionsLocaleResolver.Common_Warning)
+            .WithPrimaryButton(AbstractionsLocaleResolver.Common_Yes)
+            .WithCancelButton(AbstractionsLocaleResolver.Common_No)
             .ShowAsync();
 
         if (result != DialogResult.Primary) return;

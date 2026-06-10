@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:SettingsItemControl}"
     TargetType="v:SettingsItemControl">
@@ -175,7 +175,7 @@
                             <Button
                               Classes="Ghost Compact Uniform" DockPanel.Dock="Right"
                               Command="{Binding ResetCommand}"
-                              ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Reset}}">
+                              ToolTip.Tip="{I18N {x:Static a18:LocaleKey.Common_Reset}}">
                               <LucideIcon
                                 Kind="RotateCcw"
                                 Size="{DynamicResource FontSizeL}"/>

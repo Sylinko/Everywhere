@@ -24,7 +24,7 @@ public sealed class WinRTSpeechRecognitionEngine : ISpeechRecognitionEngine, IDi
     public SpeechRecognitionEngineDescriptor Descriptor { get; } = new(
         new DynamicResourceKey(LocaleKey.WinRTSpeechRecognitionEngine_Name),
         new DynamicResourceKey(LocaleKey.WinRTSpeechRecognitionEngine_Description),
-        true,
+        false,
         true);
 
     public bool IsSupported => SupportedLocales.Count > 0;

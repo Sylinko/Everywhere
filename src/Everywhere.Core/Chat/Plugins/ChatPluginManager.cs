@@ -631,7 +631,7 @@ public class ChatPluginManager : IChatPluginManager
             var progress = new Progress<double>();
             var cancellationTokenSource = new CancellationTokenSource();
             ToastManager
-                .Create(LocaleResolver.Common_Info)
+                .Create(AbstractionsLocaleResolver.Common_Info)
                 .WithContent(LocaleResolver.RuntimeManager_InstallRuntime_Toast_Content.Format(dependency.DisplayName))
                 .WithProgress(progress)
                 .WithCancellationTokenSource(cancellationTokenSource)

@@ -1,6 +1,7 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  xmlns:a18="clr-namespace:Everywhere.Abstractions.I18N;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:AskQuestionCard}"
     TargetType="v:AskQuestionCard">
@@ -110,7 +111,7 @@
                   <Button
                     Classes="Primary Compact" Grid.Column="2"
                     Command="{Binding NextPageCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    Content="{I18N {x:Static LocaleKey.Common_Submit}}"
+                    Content="{I18N {x:Static a18:LocaleKey.Common_Submit}}"
                     CornerRadius="{DynamicResource SmCornerRadius}"
                     IsVisible="{TemplateBinding HasNextPage, Converter={x:Static BoolConverters.Not}}"/>
                 </Grid>
