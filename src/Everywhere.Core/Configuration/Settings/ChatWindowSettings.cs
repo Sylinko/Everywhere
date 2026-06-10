@@ -115,7 +115,7 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     private readonly Gauge<int> _enableVisualContextAnimationGauge =
         Meter.CreateGauge<int>($"settings.{nameof(EnableVisualContextAnimation)}");
 
-    public ChatWindowSettings()
+    public ChatWindowSettings(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         // TODO: make these ugly codes better
         _enableVisualElementPickAnimationGauge.Record(EnableVisualElementPickAnimation ? 1 : 0);

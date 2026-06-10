@@ -5,7 +5,7 @@ using Everywhere.AI;
 
 namespace Everywhere.Configuration;
 
-public sealed partial class ModelSettings : SettingsBase
+public sealed partial class ModelSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
     [ObservableProperty]
     public partial ObservableCollection<CustomAssistant> CustomAssistants { get; set; } = [];

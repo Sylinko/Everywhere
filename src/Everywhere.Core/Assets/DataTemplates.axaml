@@ -1,7 +1,7 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:common="clr-namespace:Everywhere.Common"
   xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
   xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
@@ -52,8 +52,8 @@
     </DataTemplate.DataType>
 
     <v:KeyboardShortcutInputBox
-      Classes="Compact" MinWidth="320"
-      MinHeight="32" HorizontalAlignment="Left"
+      MinWidth="320" MinHeight="32"
+      HorizontalAlignment="Left"
       Shortcut="{Binding Value, Mode=TwoWay}"
       ShortcutListener="{ServiceLocator {x:Type interop:IShortcutListener}}"/>
   </DataTemplate>

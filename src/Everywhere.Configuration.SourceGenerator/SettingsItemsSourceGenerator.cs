@@ -334,7 +334,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             case ItemKind.SettingsControl:
             {
                 // In this case, we need to call the property itself to get the ISettingsControl instance
-                // Then cast it to ISettingsControl and call CreateControl()
+                // Then cast it to ISettingsControl and call CreateControl(serviceProvider)
                 // Next, set the DataContext of the created control to 'this'
                 // Finally, assign it to a new SettingsControlItem
 
@@ -349,11 +349,11 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     return;
                 }
 
-                sb.AppendLine($"global::System.Func<global::Avalonia.Controls.Control> control_{itemName}_factory = () =>").AppendLine("{");
+                sb.AppendLine($"global::System.Func<global::System.IServiceProvider, global::Avalonia.Controls.Control> control_{itemName}_factory = serviceProvider =>").AppendLine("{");
                 using (sb.Indent())
                 {
                     sb.AppendLine(
-                        $"var control_{itemName} = ((global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name}).CreateControl();");
+                        $"var control_{itemName} = ((global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name}).CreateControl(serviceProvider);");
                     sb.AppendLine($"control_{itemName}.DataContext = this;");
                     sb.AppendLine($"return control_{itemName};");
                 }

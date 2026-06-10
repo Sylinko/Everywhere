@@ -4,10 +4,10 @@ using Lucide.Avalonia;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class ProxySettings : SettingsBase, ISettingsCategory
+public sealed partial class ProxySettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
 {
     [SettingsItemIgnore]
-    public int Index => 3;
+    public int Index => 4;
 
     [SettingsItemIgnore]
     public LucideIconKind Icon => LucideIconKind.WifiCog;

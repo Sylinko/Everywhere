@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.Common;
 using ShadUI;
 
 namespace Everywhere.Configuration;
