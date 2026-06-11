@@ -249,10 +249,6 @@ ul, ol { padding-left: 2em; }
             Background="{DynamicResource CardBackgroundColor}"
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="1" CornerRadius="4">
-            <Border.Resources>
-              <FontFamily x:Key="CodeFontFamily">Maple Mono, Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
-            </Border.Resources>
-
             <DockPanel>
               <Border
                 DockPanel.Dock="Top"
@@ -304,7 +300,7 @@ ul, ol { padding-left: 2em; }
                 VerticalScrollBarVisibility="Auto">
                 <md:MarkdownTextBlock
                   x:Name="PART_CodeTextBlock" Margin="6,4,10,4"
-                  FontFamily="{StaticResource CodeFontFamily}"
+                  FontFamily="{StaticResource MonospaceFontFamily}"
                   Foreground="{DynamicResource ForegroundColor}"
                   TextWrapping="{TemplateBinding TextWrapping}"/>
               </ScrollViewer>

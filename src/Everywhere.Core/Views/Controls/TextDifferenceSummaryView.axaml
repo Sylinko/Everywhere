@@ -15,7 +15,7 @@
         <StackPanel Orientation="Vertical">
           <StackPanel.Styles>
             <Style Selector="Run.Monospace">
-              <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Menlo, 'Courier New', monospace"/>
+              <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
             </Style>
           </StackPanel.Styles>
 

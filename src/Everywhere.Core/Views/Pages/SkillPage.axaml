@@ -1,54 +1,56 @@
 <UserControl
   x:Class="Everywhere.Views.Pages.SkillPage" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:skills="clr-namespace:Everywhere.Skills" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  x:Name="Self" x:DataType="vm:SkillPageViewModel">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:skills="clr-namespace:Everywhere.Skills"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="vm:SkillPageViewModel">
   <UserControl.Styles>
-    <Style Selector="ListBox.SkillListBox">
+    <Style Selector="ListBox#SkillListBox">
       <Setter Property="Padding" Value="0"/>
       <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource TransparentColor}"/>
       <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
       <Style Selector="^ ListBoxItem">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Margin" Value="0,2"/>
       </Style>
       <Setter Property="ItemTemplate">
-        <DataTemplate DataType="skills:SkillDescriptor">
+        <DataTemplate DataType="vm:SkillPageViewModel+SkillDescriptorWrapper">
           <Grid
-            ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-            <LucideIcon
-              Grid.Column="0" Margin="0,0,8,0"
-              Kind="Sparkles"/>
-
+            ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
             <StackPanel
-              Grid.Column="1" VerticalAlignment="Center"
-              Spacing="4">
+              Grid.Column="0" VerticalAlignment="Center"
+              Spacing="3">
               <TextBlock
                 Classes="p" IsHitTestVisible="False"
-                Text="{Binding Name}"
-                TextTrimming="CharacterEllipsis"/>
+                Text="{Binding Skill.Name}"
+                TextTrimming="CharacterEllipsis"
+                ToolTip.Tip="{Binding Skill.Name}"/>
               <TextBlock
                 Classes="Muted Caption" IsHitTestVisible="False"
-                IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                MaxLines="2"
-                Text="{Binding Description}"
-                TextTrimming="CharacterEllipsis"/>
+                IsVisible="{Binding Skill.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Text="{Binding Skill.Description}"
+                TextTrimming="CharacterEllipsis"
+                ToolTip.Tip="{Binding Skill.Description}"/>
             </StackPanel>
 
             <LucideIcon
-              Grid.Column="2"
+              Grid.Column="1"
               Foreground="{DynamicResource WarningColor}"
-              IsVisible="{Binding !!Diagnostics.Count}"
+              IsVisible="{Binding !!Skill.Diagnostics.Count}"
               Kind="TriangleAlert"
               Size="{DynamicResource FontSizeL}"
               ToolTip.Placement="Top"
-              ToolTip.Tip="{Binding FirstDiagnosticContentKey^}"/>
+              ToolTip.Tip="{Binding Skill.FirstDiagnosticContentKey^, FallbackValue={x:Null}}"/>
 
             <ToggleSwitch
-              Grid.Column="3" Margin="0,0,4,0"
-              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-              IsEnabled="{Binding IsValid}"
-              ToolTip.Tip="Only affects how Everywhere assembles {SkillsPrompt}."/>
+              Grid.Column="2" Margin="0,0,4,0"
+              VerticalAlignment="Center"
+              IsChecked="{Binding Skill.IsEnabled, Mode=TwoWay}"
+              IsEnabled="{Binding Skill.IsValid}"
+              ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_EnableSwitch_ToolTip}}"/>
           </Grid>
         </DataTemplate>
       </Setter>
@@ -58,141 +60,352 @@
   <shadui:NavigationView
     Padding="24,0,24,20" HeaderMaxWidth="1000"
     PageTransition="{x:Null}"
-    PaneWidth="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-    SelectedItem="{Binding SelectedSkill, Mode=TwoWay}">
+    PaneWidth="400"
+    SelectedItem="{Binding SelectedSkillWrapper, Mode=TwoWay}">
     <shadui:NavigationView.PaneHeader>
-      <DockPanel
-        Height="36" Margin="0,14,0,8">
-        <TextBlock
-          Classes="h4" DockPanel.Dock="Left"
-          VerticalAlignment="Center" Text="Skills"/>
+      <StackPanel
+        Margin="0,14,0,12" Spacing="12">
+        <Grid
+          Height="36" ColumnDefinitions="Auto,*,Auto"
+          ColumnSpacing="8">
+          <TextBlock
+            Classes="h4" Grid.Column="0"
+            DockPanel.Dock="Left" VerticalAlignment="Center"
+            Text="{I18N {x:Static LocaleKey.SkillPage_Title}}"
+            TextTrimming="CharacterEllipsis"/>
+          <shadui:Badge
+            Grid.Column="1" HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Background="{DynamicResource WarningColor60}"
+            Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
 
-        <Button
-          Classes="Ghost Compact Uniform" DockPanel.Dock="Right"
-          Width="32" HorizontalAlignment="Right"
-          Command="{Binding RefreshCommand}"
-          Content="{LucideIconContent RefreshCw, Size=16}"
-          ToolTip.Tip="Refresh skills"/>
-      </DockPanel>
+          <Button
+            Classes="Ghost Compact Uniform" Grid.Column="2"
+            Width="32" HorizontalAlignment="Right"
+            Command="{Binding RefreshCommand}"
+            Content="{LucideIconContent RefreshCw, Size=16}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_RescanButton_ToolTip}}"/>
+        </Grid>
+
+        <TextBlock
+          Classes="Muted Caption"
+          Text="{I18N {x:Static LocaleKey.SkillPage_Description}}"
+          TextWrapping="Wrap"/>
+
+        <DockPanel>
+          <ComboBox
+            DockPanel.Dock="Left" HorizontalAlignment="Stretch"
+            CornerRadius="6,0,0,6"
+            ItemsSource="{Binding SourceFilterItems}"
+            SelectedItem="{Binding SelectedSourceFilter, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate DataType="vm:SkillPageViewModel+SkillSourceFilterItem">
+                <TextBlock Text="{Binding Name^}"/>
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+
+          <TextBox
+            Classes="Clearable" Margin="-1,0,0,0"
+            CornerRadius="0,6,6,0" FontWeight="Normal"
+            Text="{Binding SearchText, Mode=TwoWay, Delay=500}"
+            Watermark="{I18N {x:Static LocaleKey.SkillPage_SearchBox_Watermark}}"/>
+        </DockPanel>
+      </StackPanel>
     </shadui:NavigationView.PaneHeader>
 
     <shadui:NavigationView.PaneContent>
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <ItemsControl ItemsSource="{Binding SkillManager.SourceGroups}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="skills:SkillSourceGroup">
-              <StackPanel
-                Margin="0,0,0,16" Spacing="8">
-                <Grid
-                  ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                  <StackPanel
-                    Grid.Column="0" Spacing="2">
-                    <TextBlock
-                      Classes="p"
-                      Text="{Binding Name}"
-                      TextTrimming="CharacterEllipsis"/>
-                    <TextBlock
-                      Classes="Muted Caption"
-                      Text="{Binding DirectoryPath}"
-                      TextTrimming="CharacterEllipsis"
-                      ToolTip.Tip="{Binding DirectoryPath}"/>
-                  </StackPanel>
+      <Grid
+        RowDefinitions="Auto,*" RowSpacing="10">
+        <TextBlock
+          Classes="Muted Caption" Grid.Row="0"
+          Text="{Binding FilteredSkillCountKey^}"/>
 
-                  <Button
-                    Classes="Ghost Compact Uniform" Grid.Column="1"
-                    Width="32" VerticalAlignment="Center"
-                    Command="{Binding #Self.ViewModel.OpenSourceFolderCommand}"
-                    CommandParameter="{Binding}"
-                    Content="{LucideIconContent FolderOpen, Size=16}"
-                    ToolTip.Tip="Open folder"/>
-                </Grid>
+        <ScrollViewer
+          Grid.Row="1" Margin="0,0,-12,8"
+          HorizontalScrollBarVisibility="Disabled">
+          <Panel>
+            <ItemsControl ItemsSource="{Binding FilteredSourceGroups}">
+              <ItemsControl.Styles>
+                <Style Selector="Expander.Compact">
+                  <Setter Property="CornerRadius" Value="0,0,6,6"/>
+                </Style>
+                <Style Selector="ContentPresenter:nth-last-child(n+2) Expander.Compact">
+                  <Setter Property="CornerRadius" Value="0"/>
+                  <Setter Property="BorderThickness" Value="1,1,1,0"/>
+                </Style>
+                <Style Selector="ContentPresenter:nth-child(1) Expander.Compact">
+                  <Setter Property="CornerRadius" Value="6,6,0,0"/>
+                  <Setter Property="BorderThickness" Value="1,1,1,0"/>
+                </Style>
+              </ItemsControl.Styles>
 
-                <TextBlock
-                  Classes="Muted Caption" Margin="8,0"
-                  IsVisible="{Binding !Skills.Count}"
-                  Text="No skills found in this folder."/>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:SkillPageViewModel+SkillSourceGroupItem">
+                  <Expander
+                    Classes="Compact" Margin="0,0,12,0"
+                    Padding="0,0,8,0"
+                    IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                    <Expander.Header>
+                      <DockPanel
+                        Margin="12,4,0,4" HorizontalSpacing="8">
+                        <TextBlock
+                          Classes="Muted Caption" DockPanel.Dock="Right"
+                          VerticalAlignment="Center"
+                          Text="{Binding Count}"/>
+                        <TextBlock
+                          Classes="p" VerticalAlignment="Center"
+                          Text="{Binding Name}"
+                          TextTrimming="CharacterEllipsis"/>
+                      </DockPanel>
+                    </Expander.Header>
 
-                <ListBox
-                  Classes="SkillListBox"
-                  ItemsSource="{Binding Skills}"
-                  SelectedItem="{Binding #Self.ViewModel.SelectedSkill, Mode=TwoWay}"/>
-              </StackPanel>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
+                    <ListBox
+                      x:Name="SkillListBox" Margin="4,0,0,4"
+                      ItemsSource="{Binding Items}">
+                      <Interaction.Behaviors>
+                        <shadui:FixSelectedItemBehavior SelectedItem="{Binding #Self.ViewModel.SelectedSkillWrapper}"/>
+                      </Interaction.Behaviors>
+                    </ListBox>
+                  </Expander>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              IsVisible="{Binding !FilteredSkillCount}"
+              Spacing="12">
+              <Image
+                Height="96" HorizontalAlignment="Center"
+                Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+              <TextBlock
+                Classes="p"
+                IsVisible="{Binding HasAnySkills}"
+                Text="{I18N {x:Static LocaleKey.SkillPage_NoMatchingSkills}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
+              <TextBlock
+                Classes="p"
+                IsVisible="{Binding !HasAnySkills}"
+                Text="{I18N {x:Static LocaleKey.SkillPage_NoSkillsFound}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Panel>
+        </ScrollViewer>
+      </Grid>
     </shadui:NavigationView.PaneContent>
 
+    <shadui:NavigationView.Header>
+      <Grid
+        Height="36" Margin="0,14,0,14"
+        ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+        IsVisible="{Binding SelectedSkillWrapper, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel
+          Grid.Column="0" VerticalAlignment="Center"
+          Orientation="Horizontal" Spacing="8">
+          <TextBlock
+            Classes="h4"
+            Text="{Binding SelectedSkillWrapper?.Skill.Name}"
+            TextTrimming="CharacterEllipsis"
+            ToolTip.Tip="{Binding SelectedSkillWrapper?.Skill.Name}"/>
+
+          <shadui:Badge
+            VerticalAlignment="Center"
+            Background="{DynamicResource SuccessColor60}"
+            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Enabled}}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
+            IsVisible="{Binding SelectedSkillWrapper?.Skill.IsEnabled, TargetNullValue={x:False}}"/>
+          <shadui:Badge
+            VerticalAlignment="Center"
+            Background="{DynamicResource SecondaryColor}"
+            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Disabled}}"
+            Foreground="{DynamicResource SecondaryForegroundColor}"
+            IsVisible="{Binding !SelectedSkillWrapper?.Skill.IsEnabled, TargetNullValue={x:False}}"/>
+          <shadui:Badge
+            VerticalAlignment="Center"
+            Background="{DynamicResource ErrorColor60}"
+            Content="{I18N {x:Static LocaleKey.SkillPage_Status_Error}}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
+            IsVisible="{Binding !SelectedSkillWrapper?.Skill.IsValid, TargetNullValue={x:False}}"/>
+        </StackPanel>
+
+        <Button
+          Classes="Secondary" Grid.Column="2"
+          VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent FolderOpen}"
+          Command="{Binding OpenSelectedSkillFolderCommand}"
+          Content="{I18N {x:Static LocaleKey.SkillPage_OpenButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_OpenFileLocationButton_ToolTip}}"/>
+      </Grid>
+    </shadui:NavigationView.Header>
+
     <shadui:NavigationView.ContentTemplate>
-      <DataTemplate DataType="skills:SkillDescriptor">
-        <Grid
-          MaxWidth="1000" Margin="0,14,0,0"
-          RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14">
-          <Grid
-            Grid.Row="0" ColumnDefinitions="Auto,*"
-            ColumnSpacing="16">
-            <LucideIcon
-              Grid.Column="0" VerticalAlignment="Top"
-              Kind="Sparkles" Size="64"/>
-            <StackPanel
-              Grid.Column="1" Spacing="4">
-              <TextBlock
-                Classes="h3"
-                Text="{Binding Name}"
-                TextTrimming="CharacterEllipsis"/>
-              <TextBlock
-                Classes="Muted"
-                Text="{Binding Description}"
-                TextWrapping="Wrap"/>
-            </StackPanel>
-          </Grid>
+      <DataTemplate DataType="vm:SkillPageViewModel+SkillDescriptorWrapper">
+        <DockPanel
+          MaxWidth="1000" VerticalSpacing="12">
+          <ItemsControl
+            DockPanel.Dock="Top"
+            IsVisible="{Binding !!Skill.Diagnostics.Count}"
+            ItemsSource="{Binding Skill.Diagnostics}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="8"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="skills:SkillDiagnostic">
+                <shadui:Toast
+                  Title="{Binding ContentKey^}"
+                  HorizontalAlignment="Stretch" CanDismiss="False"
+                  CanDismissByClicking="False" Notification="Warning"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
 
-          <shadui:Toast
-            Title="{Binding FirstDiagnosticContentKey^}"
-            Grid.Row="1" HorizontalAlignment="Stretch"
-            CanDismiss="False" CanDismissByClicking="False"
-            IsVisible="{Binding !IsValid}"
-            Notification="Warning"/>
+          <TabControl>
+            <TabItem Header="{I18N {x:Static LocaleKey.SkillPage_Tab_Overview}}">
+              <StackPanel Spacing="12">
+                <Border
+                  Padding="14"
+                  Background="{DynamicResource SettingsItemBackgroundColor}"
+                  BorderBrush="{DynamicResource BorderColor}"
+                  BorderThickness="1"
+                  CornerRadius="{DynamicResource MdCornerRadius}">
+                  <StackPanel Spacing="8">
+                    <TextBlock
+                      Classes="p"
+                      Text="{I18N {x:Static LocaleKey.SkillPage_BasicInformationCard_Title}}"/>
+                    <ItemsControl
+                      Grid.IsSharedSizeScope="True"
+                      ItemsSource="{Binding #Self.ViewModel.SelectedSkillInformationFields}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:SkillPageViewModel+SkillInformationField">
+                          <Grid
+                            Margin="0,3" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition
+                                Width="Auto" SharedSizeGroup="Key"/>
+                              <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.Styles>
+                              <Style Selector="SelectableTextBlock.Monospace">
+                                <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
+                              </Style>
+                            </Grid.Styles>
 
-          <Grid
-            Grid.Row="2" Margin="0"
-            Background="{DynamicResource SettingsItemBackgroundColor}"
-            ColumnDefinitions="Auto,*" ColumnSpacing="12"
-            RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-            <TextBlock
-              Classes="Muted Caption" Grid.Row="0"
-              Grid.Column="0" VerticalAlignment="Center"
-              Text="ID"/>
-            <SelectableTextBlock
-              Grid.Row="0" Grid.Column="1"
-              Text="{Binding Id}"/>
+                            <TextBlock
+                              Classes="Muted Caption" Grid.Column="0"
+                              VerticalAlignment="Center"
+                              Text="{Binding Label^}"/>
+                            <SelectableTextBlock
+                              Grid.Column="1" HorizontalAlignment="Left"
+                              Classes.Monospace="{Binding IsMonospace}"
+                              FontFamily="{StaticResource MonospaceFontFamily}"
+                              Text="{Binding Value}"
+                              TextTrimming="CharacterEllipsis"
+                              ToolTip.Tip="{Binding Value}"/>
+                          </Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Border>
 
-            <TextBlock
-              Classes="Muted Caption" Grid.Row="1"
-              Grid.Column="0" VerticalAlignment="Center"
-              Text="Source"/>
-            <SelectableTextBlock
-              Grid.Row="1" Grid.Column="1"
-              Text="{Binding SourceName}"/>
+                <Border
+                  Padding="14"
+                  Background="{DynamicResource SettingsItemBackgroundColor}"
+                  BorderBrush="{DynamicResource BorderColor}"
+                  BorderThickness="1"
+                  CornerRadius="{DynamicResource MdCornerRadius}">
+                  <StackPanel Spacing="8">
+                    <TextBlock
+                      Classes="p" Margin="0,4,0,0"
+                      Text="{I18N {x:Static LocaleKey.SkillPage_DescriptionCard_Title}}"/>
+                    <TextBlock TextWrapping="Wrap">
+                      <TextBlock.Text>
+                        <MultiBinding Converter="{x:Static shadui:BasicConverters.FirstNotNullOrEmpty}">
+                          <Binding Path="Skill.Description"/>
+                          <I18N Key="{x:Static LocaleKey.SkillPage_DescriptionEmpty}"/>
+                        </MultiBinding>
+                      </TextBlock.Text>
+                    </TextBlock>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </TabItem>
 
-            <TextBlock
-              Classes="Muted Caption" Grid.Row="2"
-              Grid.Column="0" VerticalAlignment="Center"
-              Text="File"/>
-            <SelectableTextBlock
-              Grid.Row="2" Grid.Column="1"
-              Text="{Binding FilePath}"
-              TextWrapping="Wrap"/>
+            <TabItem Header="{I18N {x:Static LocaleKey.SkillPage_Tab_SkillMarkdownPreview}}">
+              <Border
+                Background="{DynamicResource CardBackgroundColor}"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1" ClipToBounds="True"
+                CornerRadius="{DynamicResource MdCornerRadius}">
+                <DockPanel LastChildFill="True">
+                  <Border
+                    DockPanel.Dock="Top" Padding="8,6"
+                    BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="0,0,0,1">
+                    <StackPanel
+                      HorizontalAlignment="Right" Orientation="Horizontal"
+                      Spacing="6">
+                      <ToggleButton
+                        Classes="Compact"
+                        Content="{I18N {x:Static LocaleKey.SkillPage_MarkdownPreviewMode_Raw}}"
+                        IsChecked="{Binding !#Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"/>
+                      <ToggleButton
+                        Classes="Compact"
+                        Content="{I18N {x:Static LocaleKey.SkillPage_MarkdownPreviewMode_Preview}}"
+                        IsChecked="{Binding #Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"/>
+                      <Button
+                        Classes="Ghost Compact"
+                        shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+                        shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                        Command="{Binding #Self.ViewModel.CopyMarkdownCommand}"
+                        Content="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                    </StackPanel>
+                  </Border>
 
-            <TextBlock
-              Classes="Muted Caption" Grid.Row="3"
-              Grid.Column="0" VerticalAlignment="Center"
-              Text="Prompt"/>
-            <TextBlock
-              Grid.Row="3" Grid.Column="1"
-              Text="Enabled skills are listed in {SkillsPrompt} with their SKILL.md path." TextWrapping="Wrap"/>
-          </Grid>
-        </Grid>
+                  <Panel>
+                    <v:ConditionalContentControl
+                      Condition="{Binding #Self.ViewModel.IsMarkdownPreviewMode}"
+                      ContentDataBinding="{Binding Skill}">
+                      <v:ConditionalContentControl.TrueContent>
+                        <DataTemplate x:DataType="skills:SkillDescriptor">
+                          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                            <md:MarkdownRenderer
+                              Margin="6,6,12,6"
+                              MarkdownBuilder="{Binding MarkdownBody, Converter={x:Static vc:CommonConverters.ToObservableStringBuilder}}"/>
+                          </ScrollViewer>
+                        </DataTemplate>
+                      </v:ConditionalContentControl.TrueContent>
+                      <v:ConditionalContentControl.FalseContent>
+                        <DataTemplate x:DataType="skills:SkillDescriptor">
+                          <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                            <SelectableTextBlock
+                              Margin="6,6,12,6"
+                              FontFamily="{StaticResource MonospaceFontFamily}"
+                              Text="{Binding MarkdownContent}"
+                              TextWrapping="Wrap"/>
+                          </ScrollViewer>
+                        </DataTemplate>
+                      </v:ConditionalContentControl.FalseContent>
+                    </v:ConditionalContentControl>
+
+                    <TextBlock
+                      Classes="Muted" HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      IsVisible="{Binding Skill.MarkdownContent, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                      Text="{I18N {x:Static LocaleKey.SkillPage_MarkdownEmpty}}"
+                      TextAlignment="Center" TextWrapping="Wrap"/>
+                  </Panel>
+                </DockPanel>
+              </Border>
+            </TabItem>
+          </TabControl>
+        </DockPanel>
       </DataTemplate>
     </shadui:NavigationView.ContentTemplate>
 
@@ -204,7 +417,8 @@
           Height="128" HorizontalAlignment="Center"
           Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
         <TextBlock
-          Classes="p" Text="Select a skill to view details."
+          Classes="p"
+          Text="{I18N {x:Static LocaleKey.SkillPage_EmptyContent_SelectInstruction}}"
           TextAlignment="Center" TextWrapping="Wrap"/>
       </StackPanel>
     </shadui:NavigationView.EmptyContent>

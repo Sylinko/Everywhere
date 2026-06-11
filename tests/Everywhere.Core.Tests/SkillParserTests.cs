@@ -97,4 +97,58 @@ public class SkillParserTests
 
         Assert.That(result.Diagnostics.Select(d => d.Id), Is.EqualTo(new[] { "skill.name_folder_mismatch" }));
     }
+
+    [Test]
+    public void Parse_ReadsSimpleMetadataAsDictionary()
+    {
+        var result = SkillParser.Parse(
+            @"C:\skills\metadata\SKILL.md",
+            "metadata",
+            """
+            ---
+            name: metadata
+            description: Valid description.
+            license: MIT
+            compatibility: Desktop
+            author: Everywhere
+            version: 1.0.0
+            ---
+
+            Body.
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Metadata["license"], Is.EqualTo("MIT"));
+            Assert.That(result.Metadata["compatibility"], Is.EqualTo("Desktop"));
+            Assert.That(result.Metadata["author"], Is.EqualTo("Everywhere"));
+            Assert.That(result.Metadata["version"], Is.EqualTo("1.0.0"));
+            Assert.That(result.MarkdownBody.Trim(), Is.EqualTo("Body."));
+        });
+    }
+
+    [Test]
+    public void Parse_FlattensNestedMetadataSection()
+    {
+        var result = SkillParser.Parse(
+            @"C:\skills\metadata\SKILL.md",
+            "metadata",
+            """
+            ---
+            name: metadata
+            description: Valid description.
+            metadata:
+              author: Codex Team
+              version: "2.0.0"
+            ---
+
+            Body.
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Metadata["metadata.author"], Is.EqualTo("Codex Team"));
+            Assert.That(result.Metadata["metadata.version"], Is.EqualTo("2.0.0"));
+        });
+    }
 }

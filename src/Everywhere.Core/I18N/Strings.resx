@@ -2887,4 +2887,112 @@ Release date: {2}</value>
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>Only sample from the top K options for each subsequent token.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>Skills</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Manage and configure the Skills available to Everywhere.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>Rescan skills</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>All sources</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>Search skills...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>Clear search</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>{0} skills</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value />
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>No matching skills found</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>No skills found</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>Open</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>Open file location</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>Enabled</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>Disabled</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>Overview</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md Preview</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>Metadata</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>Basic information</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>This skill does not provide a description.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>Preview</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>Raw</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md is empty.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Select a skill to view details.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>Source</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>File</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>License</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>Compatibility</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>Author</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>Version</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Skills rescanned.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>Unable to rescan skills.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>Unable to open file location.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>Unable to update skill status.</value>
+    </data>
 </root>

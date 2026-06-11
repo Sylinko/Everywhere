@@ -11,17 +11,39 @@ internal static partial class SkillParser
         var body = content;
         string? frontmatterName = null;
         string? frontmatterDescription = null;
+        var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         if (TryReadFrontmatter(content, out var frontmatter, out var remainingBody))
         {
             body = remainingBody;
-            foreach (var line in frontmatter.Split('\n'))
+            string? currentSection = null;
+            foreach (var rawLine in frontmatter.Split('\n'))
             {
+                var line = rawLine.TrimEnd('\r');
+                var nestedMatch = NestedFrontmatterLineRegex().Match(line);
+                if (nestedMatch.Success && currentSection is not null)
+                {
+                    AddMetadataValue(
+                        metadata,
+                        $"{currentSection}.{nestedMatch.Groups["key"].Value.Trim()}",
+                        nestedMatch.Groups["value"].Value.Trim());
+                    continue;
+                }
+
                 var match = FrontmatterLineRegex().Match(line);
                 if (!match.Success) continue;
 
                 var key = match.Groups["key"].Value.Trim();
-                var value = Unquote(match.Groups["value"].Value.Trim());
+                var value = match.Groups["value"].Value.Trim();
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    currentSection = key;
+                    continue;
+                }
+
+                currentSection = null;
+                value = Unquote(value);
+                AddMetadataValue(metadata, key, value);
                 if (key.Equals("name", StringComparison.OrdinalIgnoreCase))
                 {
                     frontmatterName = value;
@@ -47,7 +69,17 @@ internal static partial class SkillParser
             h1,
             paragraph,
             directoryName,
+            body,
+            metadata,
             diagnostics);
+    }
+
+    private static void AddMetadataValue(Dictionary<string, string> metadata, string key, string value)
+    {
+        var normalizedValue = Unquote(value).NullIfWhiteSpace();
+        if (normalizedValue is null) return;
+
+        metadata[key] = normalizedValue;
     }
 
     private static IReadOnlyList<SkillDiagnostic> CreateDiagnostics(string? name, string? description, string? directoryName)
@@ -159,6 +191,9 @@ internal static partial class SkillParser
     [GeneratedRegex(@"^\s*(?<key>[A-Za-z][A-Za-z0-9_-]*)\s*:\s*(?<value>.*)\s*$")]
     private static partial Regex FrontmatterLineRegex();
 
+    [GeneratedRegex(@"^\s+(?<key>[A-Za-z][A-Za-z0-9_-]*)\s*:\s*(?<value>.+)\s*$")]
+    private static partial Regex NestedFrontmatterLineRegex();
+
     [GeneratedRegex(@"^\s*#\s+(?<title>.+?)\s*$")]
     private static partial Regex HeadingRegex();
 }
@@ -169,5 +204,7 @@ internal sealed record SkillParseResult(
     string? HeadingName,
     string? FirstParagraph,
     string? DirectoryName,
+    string MarkdownBody,
+    IReadOnlyDictionary<string, string> Metadata,
     IReadOnlyList<SkillDiagnostic> Diagnostics);
 

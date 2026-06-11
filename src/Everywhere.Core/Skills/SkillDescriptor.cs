@@ -11,7 +11,24 @@ public sealed partial class SkillDescriptor : ObservableObject
 
     public string? Description { get; init; }
 
+    public required string DirectoryName { get; init; }
+
     public required string FilePath { get; init; }
+
+    public required string MarkdownContent { get; init; }
+
+    public required string MarkdownBody { get; init; }
+
+    public IReadOnlyDictionary<string, string> Metadata { get; init; } =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    public string? License => GetMetadataValue("license");
+
+    public string? Compatibility => GetMetadataValue("compatibility");
+
+    public string? Author => GetMetadataValue("metadata.author") ?? GetMetadataValue("author");
+
+    public string? Version => GetMetadataValue("metadata.version") ?? GetMetadataValue("version");
 
     public required SkillSourceRoot SourceRoot { get; init; }
 
@@ -31,6 +48,11 @@ public sealed partial class SkillDescriptor : ObservableObject
     internal Action<SkillDescriptor, bool>? IsEnabledChangedHandler { get; init; }
 
     partial void OnIsEnabledChanged(bool value) => IsEnabledChangedHandler?.Invoke(this, value);
+
+    private string? GetMetadataValue(string key) =>
+        Metadata.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : null;
 }
 
 public sealed record SkillDiagnostic(string Id, IDynamicResourceKey ContentKey, NotificationType Type);

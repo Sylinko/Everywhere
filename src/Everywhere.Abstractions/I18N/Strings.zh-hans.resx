@@ -37,4 +37,7 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>当前通道</value>
     </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>已复制。</value>
+    </data>
 </root>

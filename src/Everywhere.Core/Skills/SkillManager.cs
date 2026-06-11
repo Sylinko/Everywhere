@@ -67,14 +67,8 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
 
         var overrides = GetSkillEnabledOverrides();
         var isDefaultEnabled = SkillSource.IsDefaultEnabled(skill.SourceRoot);
-        if (isEnabled == isDefaultEnabled)
-        {
-            overrides.Remove(skill.Id);
-        }
-        else
-        {
-            overrides[skill.Id] = isEnabled;
-        }
+        if (isEnabled == isDefaultEnabled) overrides.Remove(skill.Id);
+        else overrides[skill.Id] = isEnabled;
 
         _persistentState.SkillEnabledOverrides = ToOrderedStateDictionary(overrides);
     }
@@ -91,6 +85,7 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         if (enabledSkills.Count == 0) return string.Empty;
 
         var builder = new StringBuilder();
+        // From vscode copilot prompt template, with modifications to fit our markdown-based skill format and instructions.
         builder.AppendLine("<skills>");
         builder.AppendLine("Here is a list of skills that contain domain specific knowledge on a variety of topics.");
         builder.AppendLine("Each skill comes with a description of the topic and a file path that contains the detailed instructions.");
@@ -173,9 +168,11 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
 
         var diagnostics = new BindableList<SkillDiagnostic>();
         SkillParseResult? parseResult = null;
+        var markdownContent = string.Empty;
         try
         {
-            parseResult = SkillParser.Parse(filePath, folderName, File.ReadAllText(filePath));
+            markdownContent = File.ReadAllText(filePath);
+            parseResult = SkillParser.Parse(filePath, folderName, markdownContent);
             foreach (var diagnostic in parseResult.Diagnostics)
             {
                 diagnostics.Add(diagnostic);
@@ -191,13 +188,18 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         var isDefaultEnabled = SkillSource.IsDefaultEnabled(root.Root);
         var isEnabled = skillEnabledOverrides.GetValueOrDefault(id, isDefaultEnabled);
         var displayName = parseResult?.FrontmatterName ?? folderName;
+        var directoryName = parseResult?.DirectoryName ?? folderName;
 
         return new SkillDescriptor
         {
             Id = id,
             Name = displayName,
             Description = parseResult?.FrontmatterDescription,
+            DirectoryName = directoryName,
             FilePath = Path.GetFullPath(filePath),
+            MarkdownContent = markdownContent,
+            MarkdownBody = parseResult?.MarkdownBody ?? string.Empty,
+            Metadata = parseResult?.Metadata ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             SourceRoot = root.Root,
             SourceName = root.Name,
             SourceDirectoryPath = root.DirectoryPath,
