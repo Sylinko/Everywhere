@@ -843,6 +843,42 @@
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>不支持的模型提供者 API 架構。</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_InvalidRequest" xml:space="preserve">
+        <value>官方服務無法處理此請求。請檢查請求內容或稍後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_Authentication" xml:space="preserve">
+        <value>官方服務登入狀態無效或已過期。請重新登入。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_ModelUnavailable" xml:space="preserve">
+        <value>所選官方模型不可用。請切換到其他模型。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_BillingAccountNotFound" xml:space="preserve">
+        <value>未找到你的官方服務帳戶資訊。請重新登入或聯繫支援。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_AccountSuspended" xml:space="preserve">
+        <value>你的官方服務帳戶已被暫停。請聯繫支援了解更多資訊。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RequestTooLarge" xml:space="preserve">
+        <value>請求內容超出官方服務限制。請減少輸入內容或附件後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitApi" xml:space="preserve">
+        <value>官方服務請求過於頻繁。請稍等片刻後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlmBurst" xml:space="preserve">
+        <value>短時間內模型請求過多。請稍等片刻後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm2h" xml:space="preserve">
+        <value>已達到 2 小時窗口內的模型請求限制。請稍後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
+        <value>已達到每日模型請求限制。請稍後重試。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel5h" xml:space="preserve">
+        <value>已達到 5 小時窗口內的高消耗模型請求限制。請稍後重試或切換模型。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel7d" xml:space="preserve">
+        <value>已達到 7 天窗口內的高消耗模型請求限制。請稍後重試或切換模型。</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>解決</value>
     </data>

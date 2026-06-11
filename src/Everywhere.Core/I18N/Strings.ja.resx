@@ -843,6 +843,42 @@
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>サポートされていないモデルプロバイダーAPIスキーマです。</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_InvalidRequest" xml:space="preserve">
+        <value>公式サービスはこのリクエストを処理できません。リクエスト内容を確認するか、後で再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_Authentication" xml:space="preserve">
+        <value>公式サービスのログイン状態が無効または期限切れです。再ログインしてください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_ModelUnavailable" xml:space="preserve">
+        <value>選択した公式モデルは利用できません。他のモデルに切り替えてください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_BillingAccountNotFound" xml:space="preserve">
+        <value>あなたの公式サービスアカウント情報が見つかりません。再ログインするか、サポートに連絡してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_AccountSuspended" xml:space="preserve">
+        <value>あなたの公式サービスアカウントは一時停止されています。詳細についてはサポートに連絡してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RequestTooLarge" xml:space="preserve">
+        <value>リクエスト内容が公式サービスの制限を超えています。入力内容または添付ファイルを減らして再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitApi" xml:space="preserve">
+        <value>公式サービスへのリクエストが頻繁すぎます。しばらく待ってから再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlmBurst" xml:space="preserve">
+        <value>短時間にモデルへのリクエストが多すぎます。しばらく待ってから再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm2h" xml:space="preserve">
+        <value>2時間のウィンドウ内でのモデルリクエスト制限に達しました。後で再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
+        <value>毎日のモデルリクエスト制限に達しました。後で再試行してください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel5h" xml:space="preserve">
+        <value>5時間のウィンドウ内での高消費モデルリクエスト制限に達しました。後で再試行するか、モデルを切り替えてください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel7d" xml:space="preserve">
+        <value>7日間のウィンドウ内での高消費モデルリクエスト制限に達しました。後で再試行するか、モデルを切り替えてください。</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>解決</value>
     </data>

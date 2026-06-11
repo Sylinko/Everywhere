@@ -843,6 +843,42 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>Schéma d'API du fournisseur de modèle non pris en charge.</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_InvalidRequest" xml:space="preserve">
+        <value>Le service officiel ne peut pas traiter cette demande. Veuillez vérifier le contenu de la demande ou réessayer plus tard.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_Authentication" xml:space="preserve">
+        <value>L'état de connexion au service officiel est invalide ou a expiré. Veuillez vous reconnecter.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_ModelUnavailable" xml:space="preserve">
+        <value>Le modèle officiel sélectionné n'est pas disponible. Veuillez passer à un autre modèle.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_BillingAccountNotFound" xml:space="preserve">
+        <value>Aucune information de compte de service officiel trouvée. Veuillez vous reconnecter ou contacter le support.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_AccountSuspended" xml:space="preserve">
+        <value>Votre compte de service officiel a été suspendu. Veuillez contacter le support pour plus d'informations.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RequestTooLarge" xml:space="preserve">
+        <value>Le contenu de la demande dépasse la limite du service officiel. Veuillez réduire le contenu ou les pièces jointes et réessayer.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitApi" xml:space="preserve">
+        <value>Les demandes au service officiel sont trop fréquentes. Veuillez patienter un moment avant de réessayer.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlmBurst" xml:space="preserve">
+        <value>Trop de demandes au modèle en peu de temps. Veuillez patienter un moment avant de réessayer.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm2h" xml:space="preserve">
+        <value>Limite de demandes au modèle atteinte dans une fenêtre de 2 heures. Veuillez réessayer plus tard.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
+        <value>Limite quotidienne de demandes au modèle atteinte. Veuillez réessayer plus tard.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel5h" xml:space="preserve">
+        <value>Limite de demandes au modèle à forte consommation atteinte dans une fenêtre de 5 heures. Veuillez réessayer plus tard ou changer de modèle.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_RateLimitExpensiveModel7d" xml:space="preserve">
+        <value>Limite de demandes au modèle à forte consommation atteinte dans une fenêtre de 7 jours. Veuillez réessayer plus tard ou changer de modèle.</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>Résoudre</value>
     </data>
