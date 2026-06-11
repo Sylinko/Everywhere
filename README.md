@@ -1,6 +1,7 @@
 <a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">前往中文版本 »</a>
+<a href="https://github.com/Sylinko/Everywhere/blob/main/README-ja-jp.md">日本語バージョン »</a>
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/fdc68ffd-9660-4185-a236-6ec985c00e88" alt="Banner"/>
