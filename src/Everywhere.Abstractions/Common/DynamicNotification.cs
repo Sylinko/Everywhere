@@ -1,6 +1,5 @@
 ﻿using System.Windows.Input;
 using Avalonia.Controls.Notifications;
-using Everywhere.I18N;
 
 namespace Everywhere.Common;
 

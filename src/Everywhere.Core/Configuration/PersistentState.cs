@@ -111,6 +111,12 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
+    public Dictionary<string, bool>? SkillEnabledOverrides
+    {
+        get => Get<Dictionary<string, bool>>();
+        set => Set(value);
+    }
+
     public bool IsCloudSyncEnabled
     {
         get => Get(false);

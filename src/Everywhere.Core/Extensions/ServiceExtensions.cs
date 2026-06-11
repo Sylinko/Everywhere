@@ -6,6 +6,7 @@ using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
+using Everywhere.Skills;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Everywhere.Views.Pages;
@@ -44,6 +45,8 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, CustomAssistantPage>()
                 .AddSingleton<ChatPluginPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
+                .AddSingleton<SkillPageViewModel>()
+                .AddSingleton<IMainViewNavigationItem, SkillPage>()
                 .AddSingleton<WebSearchEnginePageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, WebSearchEnginePage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
@@ -73,6 +76,11 @@ public static class ServiceExtensions
             services
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
+                .AddSingleton<SkillSource>()
+                .AddSingleton<SkillManager>()
+                .AddSingleton<ISkillManager>(x => x.GetRequiredService<SkillManager>())
+                .AddSingleton<ISkillPromptProvider>(x => x.GetRequiredService<SkillManager>())
+                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<SkillManager>())
                 .AddSingleton<IChatWindowNotificationService, ChatWindowNotificationService>()
                 .AddSingleton<IChatService, ChatService>()
                 .AddSingleton<IGreetings, Greetings>()

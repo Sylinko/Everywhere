@@ -19,6 +19,8 @@ public static class Prompts
         Working directory: {WorkingDirectory}
         </SystemInformation>
 
+        {SkillsPrompt}
+
         <FormatInstructions>
         Always keep your responses concise and to the point.
         Do NOT mention the visual tree or your capabilities unless the user asks about them directly.

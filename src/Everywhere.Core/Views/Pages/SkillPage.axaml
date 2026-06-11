@@ -1,0 +1,212 @@
+<UserControl
+  x:Class="Everywhere.Views.Pages.SkillPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:skills="clr-namespace:Everywhere.Skills" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self" x:DataType="vm:SkillPageViewModel">
+  <UserControl.Styles>
+    <Style Selector="ListBox.SkillListBox">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Style Selector="^ ListBoxItem">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      </Style>
+      <Setter Property="ItemTemplate">
+        <DataTemplate DataType="skills:SkillDescriptor">
+          <Grid
+            ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+            <LucideIcon
+              Grid.Column="0" Margin="0,0,8,0"
+              Kind="Sparkles"/>
+
+            <StackPanel
+              Grid.Column="1" VerticalAlignment="Center"
+              Spacing="4">
+              <TextBlock
+                Classes="p" IsHitTestVisible="False"
+                Text="{Binding Name}"
+                TextTrimming="CharacterEllipsis"/>
+              <TextBlock
+                Classes="Muted Caption" IsHitTestVisible="False"
+                IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                MaxLines="2"
+                Text="{Binding Description}"
+                TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+
+            <LucideIcon
+              Grid.Column="2"
+              Foreground="{DynamicResource WarningColor}"
+              IsVisible="{Binding !!Diagnostics.Count}"
+              Kind="TriangleAlert"
+              Size="{DynamicResource FontSizeL}"
+              ToolTip.Placement="Top"
+              ToolTip.Tip="{Binding FirstDiagnosticContentKey^}"/>
+
+            <ToggleSwitch
+              Grid.Column="3" Margin="0,0,4,0"
+              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+              IsEnabled="{Binding IsValid}"
+              ToolTip.Tip="Only affects how Everywhere assembles {SkillsPrompt}."/>
+          </Grid>
+        </DataTemplate>
+      </Setter>
+    </Style>
+  </UserControl.Styles>
+
+  <shadui:NavigationView
+    Padding="24,0,24,20" HeaderMaxWidth="1000"
+    PageTransition="{x:Null}"
+    PaneWidth="320" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+    SelectedItem="{Binding SelectedSkill, Mode=TwoWay}">
+    <shadui:NavigationView.PaneHeader>
+      <DockPanel
+        Height="36" Margin="0,14,0,8">
+        <TextBlock
+          Classes="h4" DockPanel.Dock="Left"
+          VerticalAlignment="Center" Text="Skills"/>
+
+        <Button
+          Classes="Ghost Compact Uniform" DockPanel.Dock="Right"
+          Width="32" HorizontalAlignment="Right"
+          Command="{Binding RefreshCommand}"
+          Content="{LucideIconContent RefreshCw, Size=16}"
+          ToolTip.Tip="Refresh skills"/>
+      </DockPanel>
+    </shadui:NavigationView.PaneHeader>
+
+    <shadui:NavigationView.PaneContent>
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding SkillManager.SourceGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="skills:SkillSourceGroup">
+              <StackPanel
+                Margin="0,0,0,16" Spacing="8">
+                <Grid
+                  ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                  <StackPanel
+                    Grid.Column="0" Spacing="2">
+                    <TextBlock
+                      Classes="p"
+                      Text="{Binding Name}"
+                      TextTrimming="CharacterEllipsis"/>
+                    <TextBlock
+                      Classes="Muted Caption"
+                      Text="{Binding DirectoryPath}"
+                      TextTrimming="CharacterEllipsis"
+                      ToolTip.Tip="{Binding DirectoryPath}"/>
+                  </StackPanel>
+
+                  <Button
+                    Classes="Ghost Compact Uniform" Grid.Column="1"
+                    Width="32" VerticalAlignment="Center"
+                    Command="{Binding #Self.ViewModel.OpenSourceFolderCommand}"
+                    CommandParameter="{Binding}"
+                    Content="{LucideIconContent FolderOpen, Size=16}"
+                    ToolTip.Tip="Open folder"/>
+                </Grid>
+
+                <TextBlock
+                  Classes="Muted Caption" Margin="8,0"
+                  IsVisible="{Binding !Skills.Count}"
+                  Text="No skills found in this folder."/>
+
+                <ListBox
+                  Classes="SkillListBox"
+                  ItemsSource="{Binding Skills}"
+                  SelectedItem="{Binding #Self.ViewModel.SelectedSkill, Mode=TwoWay}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </shadui:NavigationView.PaneContent>
+
+    <shadui:NavigationView.ContentTemplate>
+      <DataTemplate DataType="skills:SkillDescriptor">
+        <Grid
+          MaxWidth="1000" Margin="0,14,0,0"
+          RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14">
+          <Grid
+            Grid.Row="0" ColumnDefinitions="Auto,*"
+            ColumnSpacing="16">
+            <LucideIcon
+              Grid.Column="0" VerticalAlignment="Top"
+              Kind="Sparkles" Size="64"/>
+            <StackPanel
+              Grid.Column="1" Spacing="4">
+              <TextBlock
+                Classes="h3"
+                Text="{Binding Name}"
+                TextTrimming="CharacterEllipsis"/>
+              <TextBlock
+                Classes="Muted"
+                Text="{Binding Description}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+
+          <shadui:Toast
+            Title="{Binding FirstDiagnosticContentKey^}"
+            Grid.Row="1" HorizontalAlignment="Stretch"
+            CanDismiss="False" CanDismissByClicking="False"
+            IsVisible="{Binding !IsValid}"
+            Notification="Warning"/>
+
+          <Grid
+            Grid.Row="2" Margin="0"
+            Background="{DynamicResource SettingsItemBackgroundColor}"
+            ColumnDefinitions="Auto,*" ColumnSpacing="12"
+            RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+            <TextBlock
+              Classes="Muted Caption" Grid.Row="0"
+              Grid.Column="0" VerticalAlignment="Center"
+              Text="ID"/>
+            <SelectableTextBlock
+              Grid.Row="0" Grid.Column="1"
+              Text="{Binding Id}"/>
+
+            <TextBlock
+              Classes="Muted Caption" Grid.Row="1"
+              Grid.Column="0" VerticalAlignment="Center"
+              Text="Source"/>
+            <SelectableTextBlock
+              Grid.Row="1" Grid.Column="1"
+              Text="{Binding SourceName}"/>
+
+            <TextBlock
+              Classes="Muted Caption" Grid.Row="2"
+              Grid.Column="0" VerticalAlignment="Center"
+              Text="File"/>
+            <SelectableTextBlock
+              Grid.Row="2" Grid.Column="1"
+              Text="{Binding FilePath}"
+              TextWrapping="Wrap"/>
+
+            <TextBlock
+              Classes="Muted Caption" Grid.Row="3"
+              Grid.Column="0" VerticalAlignment="Center"
+              Text="Prompt"/>
+            <TextBlock
+              Grid.Row="3" Grid.Column="1"
+              Text="Enabled skills are listed in {SkillsPrompt} with their SKILL.md path." TextWrapping="Wrap"/>
+          </Grid>
+        </Grid>
+      </DataTemplate>
+    </shadui:NavigationView.ContentTemplate>
+
+    <shadui:NavigationView.EmptyContent>
+      <StackPanel
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        Spacing="16">
+        <Image
+          Height="128" HorizontalAlignment="Center"
+          Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+        <TextBlock
+          Classes="p" Text="Select a skill to view details."
+          TextAlignment="Center" TextWrapping="Wrap"/>
+      </StackPanel>
+    </shadui:NavigationView.EmptyContent>
+  </shadui:NavigationView>
+</UserControl>
