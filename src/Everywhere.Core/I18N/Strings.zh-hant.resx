@@ -534,7 +534,7 @@
         <value>模型支持先思考再回答。如果模型不支持，開啟此選項可能會導致對話時出現錯誤。注意此選項只會影響 Everywhere 如何處理模型響應，不能控制模型是否真的啟用思考。對於可以動態開關思考的模型，請開啟此選項之後，在下方的「啟用思考」選項作進一步調整。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>不受配額限制</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>圖像輸入支援</value>
@@ -3036,5 +3036,8 @@
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>無法更新 Skill 狀態。</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>指示當前模型是否受 5 小時和每週配額的限制</value>
     </data>
 </root>

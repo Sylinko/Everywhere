@@ -534,7 +534,7 @@
         <value>모델이 먼저 생각한 후에 대답하도록 지원합니다. 모델이 지원하지 않는 경우, 이 옵션을 활성화하면 대화 중 오류가 발생할 수 있습니다. 이 옵션은 Everywhere가 모델 응답을 처리하는 방식에만 영향을 미치며, 모델이 실제로 사고를 활성화하는지 제어하지 않습니다. 사고를 동적으로 전환할 수 있는 모델의 경우, 이 옵션을 활성화한 후 아래의 '사고 활성화' 옵션에서 추가 조정을 하세요.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>쿼터 제한 없음</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>이미지 입력 지원</value>
@@ -3036,5 +3036,8 @@
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>기술 상태를 업데이트할 수 없습니다.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>현재 모델이 5시간 및 주간 쿼터의 제한을 받는지 여부를 나타냅니다.</value>
     </data>
 </root>

@@ -534,7 +534,7 @@
         <value>O modelo suporta pensar antes de responder. Se o modelo não suportar, ativar esta opção pode causar erros durante a conversa. Note que esta opção apenas afetará como o Everywhere lida com as respostas do modelo, não controla se o modelo realmente ativará o raciocínio. Para modelos que podem alternar dinamicamente o raciocínio, ative esta opção e faça ajustes adicionais na opção 'Ativar Raciocínio' abaixo.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>Sem Limite de Quota</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Suporte a Entrada de Imagem</value>
@@ -3037,5 +3037,8 @@ Data de lançamento: {2}</value>
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Não foi possível atualizar o status da habilidade.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Indica se o modelo atual está sujeito a limites de 5 horas e semanais</value>
     </data>
 </root>

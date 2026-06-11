@@ -533,7 +533,7 @@
         <value>Das Modell unterstützt das Nachdenken vor der Antwort. Wenn das Modell dies nicht unterstützt, kann das Aktivieren dieser Option zu Fehlern im Gespräch führen. Beachten Sie, dass diese Option nur beeinflusst, wie Everywhere die Modellantworten verarbeitet, nicht ob das Modell tatsächlich das Nachdenken aktiviert. Für Modelle, die das Nachdenken dynamisch ein- und ausschalten können, aktivieren Sie diese Option und nehmen Sie weitere Anpassungen unter der Option „Nachdenken aktivieren“ unten vor.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>Keine Quotenbeschränkungen</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Bildeingabe-Unterstützung</value>
@@ -3035,5 +3035,8 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Fähigkeitsstatus konnte nicht aktualisiert werden.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Zeigt an, ob das aktuelle Modell durch eine 5-Stunden- und wöchentliche Quotenbeschränkung eingeschränkt ist</value>
     </data>
 </root>

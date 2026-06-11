@@ -534,7 +534,7 @@
         <value>Le modèle prend en charge la réflexion avant de répondre. Si le modèle ne prend pas en charge cette fonctionnalité, activer cette option peut entraîner des erreurs lors de la conversation. Notez que cette option n'affecte que la façon dont Everywhere traite les réponses du modèle et ne peut pas contrôler si le modèle active réellement la réflexion. Pour les modèles pouvant activer ou désactiver la réflexion dynamiquement, activez cette option, puis ajustez l'option &quot;Activer la réflexion&quot; ci-dessous.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>Sans Limite de Quota</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Support d'Entrée d'Image</value>
@@ -3036,5 +3036,8 @@ Date de publication : {2}</value>
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Échec de la mise à jour de l'état de la compétence.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Indique si le modèle actuel est soumis à une limite de 5 heures et hebdomadaire</value>
     </data>
 </root>

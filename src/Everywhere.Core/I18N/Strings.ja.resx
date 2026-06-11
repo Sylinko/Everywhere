@@ -534,7 +534,7 @@
         <value>モデルは先に考えてから回答することをサポートします。このオプションを有効にすると、モデルがサポートしていない場合に対話中にエラーが発生する可能性があります。このオプションはEverywhereがモデルの応答を処理する方法にのみ影響し、モデルが実際に思考を有効にするかどうかを制御するものではありません。動的に思考を切り替えられるモデルの場合は、このオプションを有効にした後、下の「思考を有効にする」オプションでさらに調整してください。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>配額制限なし</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>画像入力サポート</value>
@@ -3036,5 +3036,8 @@
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>スキルの状態を更新できませんでした。</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>現在のモデルが5時間および週ごとの配額制限を受けているかどうかを示します</value>
     </data>
 </root>

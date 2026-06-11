@@ -534,7 +534,7 @@
         <value>Il modello supporta il pensiero prima di rispondere. Se il modello non supporta questa funzione, attivare questa opzione potrebbe causare errori durante la conversazione. Nota che questa opzione influisce solo su come Everywhere gestisce le risposte del modello e non controlla se il modello è realmente in grado di pensare. Per i modelli che possono attivare o disattivare il pensiero dinamicamente, attiva questa opzione e poi regola ulteriormente l'opzione 'Abilita Pensiero' qui sotto.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>Senza Limiti di Quota</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Supporto Input Immagine</value>
@@ -3036,5 +3036,8 @@ Data di rilascio: {2}</value>
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Impossibile aggiornare lo stato della Skill.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Indica se il modello attuale è soggetto a limiti di 5 ore e settimanali</value>
     </data>
 </root>

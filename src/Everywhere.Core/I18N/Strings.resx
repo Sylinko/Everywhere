@@ -3038,6 +3038,6 @@ Release date: {2}</value>
         <value>Unable to update skill status.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value />
+        <value>Indicates whether the current model is subject to a 5-hour and weekly quota limit</value>
     </data>
 </root>

@@ -534,7 +534,7 @@
         <value>Модель поддерживает предварительное обдумывание перед ответом. Если модель не поддерживает эту функцию, включение этой опции может привести к ошибкам в диалоге. Обратите внимание, что эта опция влияет только на то, как Everywhere обрабатывает ответы модели, и не может контролировать, действительно ли обдумывание включено. Для моделей, которые могут динамически переключать обдумывание, включите эту опцию и затем настройте параметр «Включить обдумывание» ниже.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_Header" xml:space="preserve">
-        <value/>
+        <value>Без Ограничений Квоты</value>
     </data>
     <data name="Assistant_SupportsImage_Header" xml:space="preserve">
         <value>Поддержка Ввода Изображения</value>
@@ -3036,5 +3036,8 @@
     </data>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Не удалось обновить статус навыка.</value>
+    </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Указывает, ограничена ли текущая модель 5 часами и недельной квотой</value>
     </data>
 </root>
