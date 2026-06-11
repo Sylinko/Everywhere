@@ -78,11 +78,13 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     public bool HasAnySkills => _skills.Count > 0;
 
+    public bool HasVisibleSourceGroups => _filteredSourceGroups.Count > 0;
+
     private readonly ISkillManager _skillManager;
     private readonly BindableList<SkillSourceFilterItem> _sourceFilterItems = [];
     private readonly BindableList<SkillSourceGroupItem> _filteredSourceGroups = [];
     private readonly SourceCache<SkillDescriptorWrapper, string> _skills = new(static item => item.Skill.Id);
-    private readonly Dictionary<string, bool> _expandedStateBySourceKey = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, SkillSourceGroupItem> _sourceGroupItemsByKey = new(StringComparer.OrdinalIgnoreCase);
 
     public SkillPageViewModel(ISkillManager skillManager)
     {
@@ -108,11 +110,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         LifetimeDisposables.Add(Disposable.Create(() => skillManager.SourceGroups.CollectionChanged -= HandleSourceGroupsCollectionChanged));
     }
 
-    partial void OnSelectedSkillWrapperChanged(SkillDescriptorWrapper? oldValue, SkillDescriptorWrapper? newValue)
-    {
-        Console.WriteLine($"OnSelectedSkillWrapperChanged(oldValue: {oldValue?.Skill.FilePath}, newValue: {newValue?.Skill.FilePath}");
-    }
-
     partial void OnFilteredSkillCountChanged(int value)
     {
         FilteredSkillCountKey = new FormattedDynamicResourceKey(
@@ -134,6 +131,16 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
             },
             ToastExceptionHandler,
             cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task OpenFolderAsync(string folderPath)
+    {
+        var launched = await Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folderPath));
+        if (!launched)
+        {
+            ToastManager.Error(LocaleResolver.Common_Error, LocaleResolver.SkillPage_OpenFileLocationFailedToast_Title);
+        }
     }
 
     [RelayCommand]
@@ -204,11 +211,12 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     private void SyncSkillsFromManager()
     {
+        SyncSourceGroupsFromManager();
+
         var items = new List<SkillDescriptorWrapper>();
-        for (var index = 0; index < _skillManager.SourceGroups.Count; index++)
+        foreach (var group in _skillManager.SourceGroups)
         {
-            var group = _skillManager.SourceGroups[index];
-            items.AddRange(group.Skills.Select(skill => new SkillDescriptorWrapper(skill, group, index)));
+            items.AddRange(group.Skills.Select(skill => new SkillDescriptorWrapper(skill, group)));
         }
 
         _skills.Edit(updater =>
@@ -217,24 +225,45 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
             updater.AddOrUpdate(items);
         });
 
-        RebuildSourceFilters(items);
+        RebuildSourceFilters();
+        ApplyFilteredSkills(_skills.Items.Where(FilterSkill).ToList());
         OnPropertyChanged(nameof(HasAnySkills));
     }
 
-    private void RebuildSourceFilters(IReadOnlyList<SkillDescriptorWrapper> skills)
+    private void SyncSourceGroupsFromManager()
+    {
+        var activeSourceKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var sourceGroup in _skillManager.SourceGroups)
+        {
+            var sourceKey = GetSourceKey(sourceGroup);
+            activeSourceKeys.Add(sourceKey);
+
+            if (_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
+            {
+                groupItem.Update(sourceGroup.Name, sourceGroup.DirectoryPath);
+            }
+            else
+            {
+                _sourceGroupItemsByKey.Add(sourceKey, new SkillSourceGroupItem(sourceGroup.Name, sourceGroup.DirectoryPath));
+            }
+        }
+
+        foreach (var sourceKey in _sourceGroupItemsByKey.Keys.Where(key => !activeSourceKeys.Contains(key)).ToArray())
+        {
+            _sourceGroupItemsByKey.Remove(sourceKey);
+        }
+    }
+
+    private void RebuildSourceFilters()
     {
         var selectedSourceKey = SelectedSourceFilter?.SourceKey;
         _sourceFilterItems.Clear();
         _sourceFilterItems.Add(SkillSourceFilterItem.All);
 
-        foreach (var item in skills
-                     .AsValueEnumerable()
-                     .GroupBy(static item => item.SourceKey)
-                     .OrderBy(group => group.Min(item => item.SourceOrder))
-                     .ThenBy(group => group.First().SourceName, StringComparer.OrdinalIgnoreCase))
+        foreach (var group in _skillManager.SourceGroups)
         {
-            var first = item.First();
-            _sourceFilterItems.Add(new SkillSourceFilterItem(first.SourceKey, new DirectResourceKey(first.SourceName)));
+            _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectResourceKey(group.Name)));
         }
 
         SelectedSourceFilter =
@@ -244,46 +273,54 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     private void HandleFilteredSkillsChanged(IReadOnlyCollection<SkillDescriptorWrapper> skills)
     {
-        var grouped = skills
-            .GroupBy(static item => item.SourceKey)
-            .Select(group =>
-            {
-                var first = group.First();
-                var groupItem = new SkillSourceGroupItem(
-                    first.SourceKey,
-                    first.SourceName,
-                    group
-                        .AsValueEnumerable()
-                        .OrderBy(static item => item.Skill.Name, StringComparer.OrdinalIgnoreCase)
-                        .ThenBy(static item => item.Skill.Id, StringComparer.OrdinalIgnoreCase)
-                        .ToList());
-                if (_expandedStateBySourceKey.TryGetValue(groupItem.SourceKey, out var isExpanded))
-                {
-                    groupItem.IsExpanded = isExpanded;
-                }
+        ApplyFilteredSkills(skills);
+    }
 
-                groupItem.PropertyChanged += (_, args) =>
-                {
-                    if (args.PropertyName == nameof(SkillSourceGroupItem.IsExpanded))
-                    {
-                        _expandedStateBySourceKey[groupItem.SourceKey] = groupItem.IsExpanded;
-                    }
-                };
-                return groupItem;
-            })
-            .OrderBy(static group => group.Items[0].SourceOrder)
-            .ThenBy(static group => group.Name, StringComparer.OrdinalIgnoreCase)
+    private void ApplyFilteredSkills(IReadOnlyCollection<SkillDescriptorWrapper> skills)
+    {
+        var skillsBySourceKey = skills
+            .GroupBy(static item => item.SourceKey)
+            .ToDictionary(static group => group.Key, static group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+        var visibleSourceGroups = _skillManager.SourceGroups
+            .AsValueEnumerable()
+            .Where(IsSourceGroupVisible)
             .ToList();
 
-        _filteredSourceGroups.Clear();
-        foreach (var group in grouped)
+        foreach (var sourceGroup in visibleSourceGroups)
         {
-            _filteredSourceGroups.Add(group);
+            var sourceKey = GetSourceKey(sourceGroup);
+            if (!_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
+            {
+                continue;
+            }
+
+            skillsBySourceKey.TryGetValue(sourceKey, out var sourceSkills);
+            groupItem.SetItems(
+                sourceSkills?
+                    .AsValueEnumerable()
+                    .OrderBy(static item => item.Skill.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static item => item.Skill.Id, StringComparer.OrdinalIgnoreCase)
+                    .ToList() ?? []);
         }
 
+        _filteredSourceGroups.Clear();
+        foreach (var sourceGroup in visibleSourceGroups)
+        {
+            var sourceKey = GetSourceKey(sourceGroup);
+            if (_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
+            {
+                _filteredSourceGroups.Add(groupItem);
+            }
+        }
+
+        OnPropertyChanged(nameof(HasVisibleSourceGroups));
         FilteredSkillCount = skills.Count;
         TrySelectSkill(SelectedSkillWrapper?.Id);
     }
+
+    private bool IsSourceGroupVisible(SkillSourceGroup sourceGroup) =>
+        SelectedSourceFilter is not { IsAll: false } sourceFilter ||
+        GetSourceKey(sourceGroup).Equals(sourceFilter.SourceKey, StringComparison.OrdinalIgnoreCase);
 
     private bool FilterSkill(SkillDescriptorWrapper item)
     {
@@ -299,6 +336,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     }
 
     private void RefreshFilter() => _skills.Refresh();
+
+    private static string GetSourceKey(SkillSourceGroup group) => $"{group.SourceRoot}:{group.DirectoryPath}";
 
     /// <summary>
     /// Tries to select a skill by the preferred skill ID. If not found, selects the first skill in the filtered list.
@@ -326,22 +365,35 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         public bool IsAll => ReferenceEquals(this, All);
     }
 
-    public sealed partial class SkillSourceGroupItem(
-        string sourceKey,
-        string name,
-        IReadOnlyList<SkillDescriptorWrapper> items
-    ) : ObservableObject
+    public sealed partial class SkillSourceGroupItem(string name, string sourceDirectoryPath) : ObservableObject
     {
-        public string SourceKey { get; } = sourceKey;
+        private readonly BindableList<SkillDescriptorWrapper> _items = [];
 
-        public string Name { get; } = name;
+        [ObservableProperty]
+        public partial string Name { get; private set; } = name;
 
-        public IReadOnlyList<SkillDescriptorWrapper> Items { get; } = items;
+        [ObservableProperty]
+        public partial string SourceDirectoryPath { get; private set; } = sourceDirectoryPath;
+
+        public IReadOnlyBindableList<SkillDescriptorWrapper> Items => _items;
 
         public int Count => Items.Count;
 
         [ObservableProperty]
         public partial bool IsExpanded { get; set; } = true;
+
+        public void Update(string name, string sourceDirectoryPath)
+        {
+            Name = name;
+            SourceDirectoryPath = sourceDirectoryPath;
+        }
+
+        public void SetItems(IReadOnlyCollection<SkillDescriptorWrapper> items)
+        {
+            _items.Clear();
+            _items.AddRange(items);
+            OnPropertyChanged(nameof(Count));
+        }
     }
 
     public sealed class SkillDescriptorWrapper : ObservableObject
@@ -352,18 +404,12 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
         public string SourceKey { get; }
 
-        public string SourceName { get; }
-
-        public int SourceOrder { get; }
-
         public IReadOnlyList<string> SearchValues { get; }
 
-        public SkillDescriptorWrapper(SkillDescriptor skill, SkillSourceGroup group, int sourceOrder)
+        public SkillDescriptorWrapper(SkillDescriptor skill, SkillSourceGroup group)
         {
             Skill = skill;
-            SourceKey = $"{group.SourceRoot}:{group.DirectoryPath}";
-            SourceName = group.Name;
-            SourceOrder = sourceOrder;
+            SourceKey = GetSourceKey(group);
             SearchValues =
             [
                 skill.Id,

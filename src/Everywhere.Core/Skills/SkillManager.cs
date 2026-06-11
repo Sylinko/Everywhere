@@ -133,7 +133,6 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         return SkillSource.GetRoots()
             .AsValueEnumerable()
             .Select(root => DiscoverSkillGroup(root, seenIds, skillEnabledOverrides))
-            .Where(group => group.Skills.Count > 0 || group.SourceRoot == SkillSourceRoot.Everywhere)
             .ToList();
     }
 
@@ -187,14 +186,15 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         var isValid = diagnostics.AsValueEnumerable().All(d => d.Type != NotificationType.Error);
         var isDefaultEnabled = SkillSource.IsDefaultEnabled(root.Root);
         var isEnabled = skillEnabledOverrides.GetValueOrDefault(id, isDefaultEnabled);
-        var displayName = parseResult?.FrontmatterName ?? folderName;
+        var displayName = parseResult?.FrontmatterName ?? parseResult?.HeadingName ?? folderName;
+        var description = parseResult?.FrontmatterDescription ?? parseResult?.FirstParagraph;
         var directoryName = parseResult?.DirectoryName ?? folderName;
 
         return new SkillDescriptor
         {
             Id = id,
             Name = displayName,
-            Description = parseResult?.FrontmatterDescription,
+            Description = description,
             DirectoryName = directoryName,
             FilePath = Path.GetFullPath(filePath),
             MarkdownContent = markdownContent,

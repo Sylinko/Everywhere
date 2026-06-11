@@ -2923,6 +2923,12 @@ Release date: {2}</value>
     <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
         <value>Open file location</value>
     </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>Open source folder</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>No skills in this source. Open the folder to add one.</value>
+    </data>
     <data name="SkillPage_Status_Enabled" xml:space="preserve">
         <value>Enabled</value>
     </data>

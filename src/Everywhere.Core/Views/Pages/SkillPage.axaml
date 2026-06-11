@@ -149,26 +149,42 @@
                     Padding="0,0,8,0"
                     IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
                     <Expander.Header>
-                      <DockPanel
-                        Margin="12,4,0,4" HorizontalSpacing="8">
+                      <Grid
+                        Margin="12,4,0,4" ColumnDefinitions="Auto,Auto,*"
+                        ColumnSpacing="6">
                         <TextBlock
-                          Classes="Muted Caption" DockPanel.Dock="Right"
+                          Classes="p" Grid.Column="0"
                           VerticalAlignment="Center"
-                          Text="{Binding Count}"/>
-                        <TextBlock
-                          Classes="p" VerticalAlignment="Center"
                           Text="{Binding Name}"
                           TextTrimming="CharacterEllipsis"/>
-                      </DockPanel>
+                        <Button
+                          Classes="Ghost Compact Uniform" Grid.Column="1"
+                          shadui:ButtonAssist.Icon="{LucideIconContent FolderOpen}"
+                          Command="{Binding #Self.ViewModel.OpenFolderCommand}"
+                          CommandParameter="{Binding SourceDirectoryPath}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.SkillPage_OpenSourceFolderButton_ToolTip}}"/>
+                        <TextBlock
+                          Classes="Muted Caption" Grid.Column="2"
+                          HorizontalAlignment="Right" VerticalAlignment="Center"
+                          Text="{Binding Count}"/>
+                      </Grid>
                     </Expander.Header>
 
-                    <ListBox
-                      x:Name="SkillListBox" Margin="4,0,0,4"
-                      ItemsSource="{Binding Items}">
-                      <Interaction.Behaviors>
-                        <shadui:FixSelectedItemBehavior SelectedItem="{Binding #Self.ViewModel.SelectedSkillWrapper}"/>
-                      </Interaction.Behaviors>
-                    </ListBox>
+                    <StackPanel>
+                      <ListBox
+                        x:Name="SkillListBox" Margin="4,0,0,4"
+                        ItemsSource="{Binding Items}">
+                        <Interaction.Behaviors>
+                          <shadui:FixSelectedItemBehavior SelectedItem="{Binding #Self.ViewModel.SelectedSkillWrapper}"/>
+                        </Interaction.Behaviors>
+                      </ListBox>
+
+                      <TextBlock
+                        Classes="Muted Caption" Margin="16,0,12,10"
+                        IsVisible="{Binding !Count}"
+                        Text="{I18N {x:Static LocaleKey.SkillPage_SourceGroupNoSkills}}"
+                        TextWrapping="Wrap"/>
+                    </StackPanel>
                   </Expander>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -176,7 +192,7 @@
 
             <StackPanel
               HorizontalAlignment="Center" VerticalAlignment="Center"
-              IsVisible="{Binding !FilteredSkillCount}"
+              IsVisible="{Binding !HasVisibleSourceGroups}"
               Spacing="12">
               <Image
                 Height="96" HorizontalAlignment="Center"
@@ -260,7 +276,8 @@
                 <shadui:Toast
                   Title="{Binding ContentKey^}"
                   HorizontalAlignment="Stretch" CanDismiss="False"
-                  CanDismissByClicking="False" Notification="Warning"/>
+                  CanDismissByClicking="False"
+                  Notification="{Binding Type, Converter={x:Static shadui:NotificationTypeToNotificationConverter.Shared}}"/>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -354,11 +371,13 @@
                       <ToggleButton
                         Classes="Compact"
                         Content="{I18N {x:Static LocaleKey.SkillPage_MarkdownPreviewMode_Raw}}"
-                        IsChecked="{Binding !#Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"/>
+                        IsChecked="{Binding !#Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"
+                        IsHitTestVisible="{Binding !$self.IsChecked}"/>
                       <ToggleButton
                         Classes="Compact"
                         Content="{I18N {x:Static LocaleKey.SkillPage_MarkdownPreviewMode_Preview}}"
-                        IsChecked="{Binding #Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"/>
+                        IsChecked="{Binding #Self.ViewModel.IsMarkdownPreviewMode, Mode=TwoWay}"
+                        IsHitTestVisible="{Binding !$self.IsChecked}"/>
                       <Button
                         Classes="Ghost Compact"
                         shadui:ButtonAssist.Icon="{LucideIconContent Copy}"

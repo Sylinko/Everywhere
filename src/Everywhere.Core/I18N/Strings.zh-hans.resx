@@ -2924,6 +2924,12 @@
     <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
         <value>打开文件位置</value>
     </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>打开来源文件夹</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>此来源中没有 Skills。打开文件夹即可添加。</value>
+    </data>
     <data name="SkillPage_Status_Enabled" xml:space="preserve">
         <value>已启用</value>
     </data>
