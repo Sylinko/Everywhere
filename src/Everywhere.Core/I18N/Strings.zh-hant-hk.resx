@@ -2887,4 +2887,118 @@
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>對於後續的每個令牌，僅從排名前 K 的選項中進行採樣。</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>技能</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>管理和配置 Everywhere 可以使用的技能。</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>重新掃描技能</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>全部來源</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>搜索技能...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>清空搜索</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>共 {0} 個技能</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>啟用或禁用此技能。這只會影響 Everywhere 自身的行為。</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>沒有匹配的技能</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>沒有找到技能</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>打開</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>打開文件位置</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>打開來源文件夾</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>此來源中沒有技能。打開文件夾即可添加。</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>已啟用</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>已禁用</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>加載失敗</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>概覽</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md 預覽</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>元數據</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>基本資訊</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>技能描述</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>該 Skill 沒有提供描述。</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>預覽</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>原文</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md 沒有內容。</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>選擇一個 Skill 以查看詳情。</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>來源</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>文件</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>許可證</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>兼容性</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>作者</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>版本</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Skills 已重新掃描。</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>無法重新掃描 Skills。</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>無法打開文件位置。</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>無法更新 Skill 狀態。</value>
+    </data>
 </root>

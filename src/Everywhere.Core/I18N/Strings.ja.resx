@@ -2887,4 +2887,118 @@
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>次の各トークンについて、上位 K のオプションからのみサンプリングします。</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>スキル</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Everywhere が使用できるスキルを管理および構成します。</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>スキルを再スキャン</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>すべてのソース</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>スキルを検索...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>検索をクリア</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>合計 {0} 件のスキル</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>このスキルを有効または無効にします。これは Everywhere 自体の動作にのみ影響します。</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>一致するスキルはありません</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>スキルが見つかりません</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>開く</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>ファイルの場所を開く</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>ソースフォルダーを開く</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>このソースにはスキルがありません。フォルダーを開いて追加してください。</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>有効</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>無効</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>読み込みエラー</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>概要</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md プレビュー</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>メタデータ</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>基本情報</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>スキルの説明</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>このスキルには説明がありません。</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>プレビュー</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>生の内容</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.mdには内容がありません。</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>詳細を表示するにはスキルを選択してください。</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>ソース</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>ファイル</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>ライセンス</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>互換性</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>著者</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>バージョン</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>スキルが再スキャンされました。</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>スキルの再スキャンに失敗しました。</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>ファイルの場所を開けませんでした。</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>スキルの状態を更新できませんでした。</value>
+    </data>
 </root>

@@ -37,4 +37,7 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>현재 채널</value>
     </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>복사되었습니다.</value>
+    </data>
 </root>

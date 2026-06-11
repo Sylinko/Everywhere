@@ -2886,4 +2886,118 @@ Yayın tarihi: {2}</value>
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>Her bir sonraki token için yalnızca en üst K seçeneklerinden örnekleme yapılır.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>Yetenekler</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Everywhere'ın kullanabileceği Yetenekleri yönetin ve yapılandırın.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>Yetenekleri yeniden tara</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>Tüm Kaynaklar</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>Yetenekleri ara...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>Aramayı temizle</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>Toplam {0} Yetenek</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Bu Yeteneği etkinleştir veya devre dışı bırak. Bu sadece Everywhere'ın davranışını etkiler.</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>Eşleşen Yetenek yok</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>Yetenek bulunamadı</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>Aç</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>Dosya konumunu aç</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>Kaynak klasörünü aç</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>Bu kaynakta Yetenek yok. Ekleme yapmak için klasörü açın.</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>Etkin</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>Devre Dışı</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>Yükleme hatası</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>Genel Bakış</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md Önizlemesi</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>Meta Veriler</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>Temel Bilgiler</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>Yetenek Açıklaması</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>Bu Yetenek için bir açıklama sağlanmamıştır.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>Önizleme</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>Ham Metin</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md dosyası boş.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Detayları görmek için bir Yetenek seçin.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>Kaynak</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>Dosya</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>Lisans</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>Uyumluluk</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>Yazar</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>Sürüm</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Yetenekler yeniden tarandı.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>Yetenekler yeniden taranamadı.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>Dosya konumu açılamadı.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>Yetenek durumu güncellenemedi.</value>
+    </data>
 </root>

@@ -2887,4 +2887,118 @@
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>후속 각 토큰에 대해 상위 K의 옵션 중에서만 샘플링합니다.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>기능</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Everywhere에서 사용할 수 있는 기능을 관리하고 구성합니다.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>기능 다시 스캔</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>모든 출처</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>기능 검색...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>검색 지우기</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>총 {0} 개의 기능</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>이 기능을 활성화하거나 비활성화합니다. 이는 Everywhere의 동작에만 영향을 미칩니다.</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>일치하는 기능이 없습니다.</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>기능을 찾을 수 없습니다.</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>열기</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>파일 위치 열기</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>출처 폴더 열기</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>이 출처에는 기능이 없습니다. 폴더를 열어 추가하세요.</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>활성화됨</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>비활성화됨</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>로드 실패</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>개요</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md 미리보기</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>메타데이터</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>기본 정보</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>기술 설명</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>이 기술에는 설명이 제공되지 않았습니다.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>미리보기</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>원문</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md에 내용이 없습니다.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>자세히 보려면 기술을 선택하세요.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>출처</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>파일</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>라이센스</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>호환성</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>저자</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>버전</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>기술이 다시 스캔되었습니다.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>기술을 다시 스캔할 수 없습니다.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>파일 위치를 열 수 없습니다.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>기술 상태를 업데이트할 수 없습니다.</value>
+    </data>
 </root>

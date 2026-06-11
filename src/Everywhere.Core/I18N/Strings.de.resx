@@ -2886,4 +2886,118 @@ Veröffentlichungsdatum: {2}</value>
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>Für jedes nachfolgende Token wird nur aus den obersten K Optionen ausgewählt.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>Fähigkeiten</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Verwalten und konfigurieren Sie die Fähigkeiten, die Everywhere nutzen kann.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>Fähigkeiten neu scannen</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>Alle Quellen</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>Fähigkeiten suchen...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>Suche zurücksetzen</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>Insgesamt {0} Fähigkeiten</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Diese Fähigkeit aktivieren oder deaktivieren. Dies beeinflusst nur das Verhalten von Everywhere.</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>Keine passenden Fähigkeiten</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>Keine Fähigkeiten gefunden</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>Öffnen</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>Dateispeicherort öffnen</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>Quellordner öffnen</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>In dieser Quelle sind keine Fähigkeiten vorhanden. Öffnen Sie den Ordner, um hinzuzufügen.</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>Aktiviert</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>Deaktiviert</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>Laden fehlgeschlagen</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>Übersicht</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>SKILL.md Vorschau</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>Metadaten</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>Grundinformationen</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>Fähigkeitsbeschreibung</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>Diese Fähigkeit hat keine Beschreibung bereitgestellt.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>Vorschau</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>Rohtext</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md hat keinen Inhalt.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Wählen Sie eine Fähigkeit, um Details anzuzeigen.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>Quelle</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>Datei</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>Lizenz</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>Kompatibilität</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>Autor</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>Version</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Fähigkeiten wurden neu gescannt.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>Fähigkeiten konnten nicht neu gescannt werden.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>Dateispeicherort konnte nicht geöffnet werden.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>Fähigkeitsstatus konnte nicht aktualisiert werden.</value>
+    </data>
 </root>

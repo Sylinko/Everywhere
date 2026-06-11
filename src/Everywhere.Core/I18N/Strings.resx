@@ -2909,7 +2909,7 @@ Release date: {2}</value>
         <value>{0} skills</value>
     </data>
     <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
-        <value />
+        <value>Enable or disable this skill. This will only affect Everywhere's behavior.</value>
     </data>
     <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
         <value>No matching skills found</value>

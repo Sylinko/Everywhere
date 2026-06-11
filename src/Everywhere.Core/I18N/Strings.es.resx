@@ -2887,4 +2887,118 @@ Fecha de lanzamiento: {2}</value>
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>Para cada token subsiguiente, se muestrea solo de las opciones en el top K.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>Habilidades</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Gestiona y configura las habilidades que puede usar Everywhere.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>Volver a escanear habilidades</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>Todas las fuentes</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>Buscar habilidades...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>Limpiar búsqueda</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>Total de {0} habilidades</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Habilita o deshabilita esta habilidad. Esto solo afectará el comportamiento de Everywhere.</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>No hay habilidades que coincidan</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>No se encontraron habilidades</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>Abrir</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>Abrir ubicación del archivo</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>Abrir carpeta de origen</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>No hay habilidades en esta fuente. Abre la carpeta para agregar.</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>Habilitada</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>Deshabilitada</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>Error de carga</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>Resumen</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>Vista previa de SKILL.md</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>Metadatos</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>Información Básica</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>Descripción de la Habilidad</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>Esta habilidad no tiene descripción.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>Vista Previa</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>Texto Original</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md está vacío.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Selecciona una habilidad para ver los detalles.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>Fuente</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>Archivo</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>Licencia</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>Compatibilidad</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>Autor</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>Versión</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Las habilidades se han vuelto a escanear.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>No se pudo volver a escanear las habilidades.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>No se pudo abrir la ubicación del archivo.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>No se pudo actualizar el estado de la habilidad.</value>
+    </data>
 </root>

@@ -37,4 +37,7 @@
     <data name="UpdateChannel_Unknown" xml:space="preserve">
         <value>Canal Actual</value>
     </data>
+    <data name="Common_Copied" xml:space="preserve">
+        <value>Copiado.</value>
+    </data>
 </root>

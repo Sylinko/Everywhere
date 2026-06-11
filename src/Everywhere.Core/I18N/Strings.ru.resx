@@ -2887,4 +2887,118 @@
     <data name="Assistant_TopK_Description" xml:space="preserve">
         <value>Для каждого последующего токена семплирование происходит только из K лучших вариантов.</value>
     </data>
+    <data name="SkillPage_Title" xml:space="preserve">
+        <value>Навыки</value>
+    </data>
+    <data name="SkillPage_Description" xml:space="preserve">
+        <value>Управляйте и настраивайте навыки, доступные для Everywhere.</value>
+    </data>
+    <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
+        <value>Пересканировать навыки</value>
+    </data>
+    <data name="SkillPage_SourceFilter_All" xml:space="preserve">
+        <value>Все источники</value>
+    </data>
+    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+        <value>Поиск навыков...</value>
+    </data>
+    <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
+        <value>Очистить поиск</value>
+    </data>
+    <data name="SkillPage_CountText" xml:space="preserve">
+        <value>Всего {0} навыков</value>
+    </data>
+    <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
+        <value>Включить или отключить этот навык. Это повлияет только на поведение Everywhere.</value>
+    </data>
+    <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
+        <value>Нет совпадающих навыков</value>
+    </data>
+    <data name="SkillPage_NoSkillsFound" xml:space="preserve">
+        <value>Навыки не найдены</value>
+    </data>
+    <data name="SkillPage_OpenButton_Content" xml:space="preserve">
+        <value>Открыть</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationButton_ToolTip" xml:space="preserve">
+        <value>Открыть расположение файла</value>
+    </data>
+    <data name="SkillPage_OpenSourceFolderButton_ToolTip" xml:space="preserve">
+        <value>Открыть папку источника</value>
+    </data>
+    <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
+        <value>В этом источнике нет навыков. Откройте папку, чтобы добавить.</value>
+    </data>
+    <data name="SkillPage_Status_Enabled" xml:space="preserve">
+        <value>Включено</value>
+    </data>
+    <data name="SkillPage_Status_Disabled" xml:space="preserve">
+        <value>Отключено</value>
+    </data>
+    <data name="SkillPage_Status_Error" xml:space="preserve">
+        <value>Ошибка загрузки</value>
+    </data>
+    <data name="SkillPage_Tab_Overview" xml:space="preserve">
+        <value>Обзор</value>
+    </data>
+    <data name="SkillPage_Tab_SkillMarkdownPreview" xml:space="preserve">
+        <value>Предпросмотр SKILL.md</value>
+    </data>
+    <data name="SkillPage_Tab_Metadata" xml:space="preserve">
+        <value>Метаданные</value>
+    </data>
+    <data name="SkillPage_BasicInformationCard_Title" xml:space="preserve">
+        <value>Основная информация</value>
+    </data>
+    <data name="SkillPage_DescriptionCard_Title" xml:space="preserve">
+        <value>Описание навыка</value>
+    </data>
+    <data name="SkillPage_DescriptionEmpty" xml:space="preserve">
+        <value>Этот навык не имеет описания.</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Preview" xml:space="preserve">
+        <value>Предпросмотр</value>
+    </data>
+    <data name="SkillPage_MarkdownPreviewMode_Raw" xml:space="preserve">
+        <value>Исходный текст</value>
+    </data>
+    <data name="SkillPage_MarkdownEmpty" xml:space="preserve">
+        <value>SKILL.md не содержит содержимого.</value>
+    </data>
+    <data name="SkillPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Выберите навык для просмотра деталей.</value>
+    </data>
+    <data name="SkillPage_Field_Id" xml:space="preserve">
+        <value>ID</value>
+    </data>
+    <data name="SkillPage_Field_Source" xml:space="preserve">
+        <value>Источник</value>
+    </data>
+    <data name="SkillPage_Field_File" xml:space="preserve">
+        <value>Файл</value>
+    </data>
+    <data name="SkillPage_Field_License" xml:space="preserve">
+        <value>Лицензия</value>
+    </data>
+    <data name="SkillPage_Field_Compatibility" xml:space="preserve">
+        <value>Совместимость</value>
+    </data>
+    <data name="SkillPage_Field_Author" xml:space="preserve">
+        <value>Автор</value>
+    </data>
+    <data name="SkillPage_Field_Version" xml:space="preserve">
+        <value>Версия</value>
+    </data>
+    <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
+        <value>Навыки успешно пересканированы.</value>
+    </data>
+    <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
+        <value>Не удалось пересканировать навыки.</value>
+    </data>
+    <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
+        <value>Не удалось открыть расположение файла.</value>
+    </data>
+    <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
+        <value>Не удалось обновить статус навыка.</value>
+    </data>
 </root>
