@@ -38,6 +38,9 @@
         <value>当前通道</value>
     </data>
     <data name="Common_Copied" xml:space="preserve">
-        <value>已复制。</value>
+        <value>已复制</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>M月d日</value>
     </data>
 </root>

@@ -3,13 +3,45 @@ using Avalonia.Data.Converters;
 
 namespace Everywhere.ValueConverters;
 
-public class DateTimeOffsetLocalizeConverter : IValueConverter
+public static class DateTimeOffsetConverters
 {
-    public static DateTimeOffsetLocalizeConverter Shared { get; } = new();
+    /// <summary>
+    /// Converts a <see cref="DateTimeOffset"/> to local time for display, and back to UTC for storage.
+    /// </summary>
+    public static IValueConverter Localize { get; } =
+        new FuncValueConverter<DateTimeOffset?, DateTimeOffset?>(value => value?.ToLocalTime(), value => value?.ToUniversalTime());
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is not DateTimeOffset dto ? value : dto.ToLocalTime();
+    /// <summary>
+    /// Converts a <see cref="DateTimeOffset"/> to a short date or time string for display, depending on how close it is to the current time.
+    /// </summary>
+    /// <remarks>
+    /// If the value is within 12 hours in the future, it will be displayed as a short time (e.g. "14:30").
+    /// If the value is within the same day in the past, it will also be displayed as a short time (e.g. "09:15").
+    /// Otherwise, it will be displayed as a short date (e.g. "Mar 5") using the current culture's short month and day pattern.
+    /// </remarks>
+    public static IValueConverter ToShortDateOrTimeString { get; } = new FuncValueConverter<DateTimeOffset?, string?>(value =>
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is not DateTimeOffset dto ? value : dto.ToUniversalTime();
+        var culture = CultureInfo.CurrentUICulture;
+        var localValue = value.Value.ToLocalTime();
+        var now = DateTimeOffset.Now;
+
+        var remaining = value.Value - now;
+
+        if (remaining >= TimeSpan.Zero && remaining < TimeSpan.FromHours(12))
+        {
+            return localValue.ToString("HH:mm", culture);
+        }
+
+        if (remaining < TimeSpan.Zero && localValue.Date == now.Date)
+        {
+            return localValue.ToString("HH:mm", culture);
+        }
+
+        return localValue.ToString(Abstractions.I18N.LocaleResolver.Common_ShortMonthDayPattern, culture);
+    });
 }

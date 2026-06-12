@@ -3055,7 +3055,4 @@
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Не удалось обновить статус навыка.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Указывает, ограничена ли текущая модель 5 часами и недельной квотой</value>
-    </data>
 </root>

@@ -38,6 +38,9 @@
         <value>Canale Corrente</value>
     </data>
     <data name="Common_Copied" xml:space="preserve">
-        <value>Copiato.</value>
+        <value>Copiato</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>d MMM</value>
     </data>
 </root>

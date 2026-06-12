@@ -3055,7 +3055,4 @@
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>スキルの状態を更新できませんでした。</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>現在のモデルが5時間および週ごとの配額制限を受けているかどうかを示します</value>
-    </data>
 </root>

@@ -14,7 +14,6 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Everywhere.Messages;
 using GnomeStack.Os.Secrets;
 using Microsoft.Extensions.Logging;
@@ -472,10 +471,8 @@ public sealed partial class OAuthCloudClient :
 
     private sealed class OAuthTokenRequestException : HandledException
     {
-        public HttpStatusCode StatusCode { get; }
         public string Error { get; }
         public string ErrorDescription { get; }
-        public string? ErrorUri { get; }
 
         public bool IsRefreshTokenRejected => Error is "invalid_grant" or "invalid_token";
 
@@ -492,10 +489,8 @@ public sealed partial class OAuthCloudClient :
             CreateFriendlyMessageKey(statusCode, error, errorDescription, errorUri),
             showDetails: false)
         {
-            StatusCode = statusCode;
             Error = error;
             ErrorDescription = errorDescription;
-            ErrorUri = errorUri;
         }
 
         public static OAuthTokenRequestException FromResponse(HttpStatusCode statusCode, string responseContent)

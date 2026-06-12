@@ -3054,7 +3054,4 @@ Yayın tarihi: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Yetenek durumu güncellenemedi.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Mevcut modelin 5 saatlik ve haftalık kota sınırlamalarına tabi olup olmadığını gösterir</value>
-    </data>
 </root>

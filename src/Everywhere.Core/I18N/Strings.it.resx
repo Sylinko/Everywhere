@@ -3055,7 +3055,4 @@ Data di rilascio: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Impossibile aggiornare lo stato della Skill.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Indica se il modello attuale è soggetto a limiti di 5 ore e settimanali</value>
-    </data>
 </root>

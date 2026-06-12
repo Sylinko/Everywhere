@@ -38,6 +38,9 @@
         <value>Current Channel</value>
     </data>
     <data name="Common_Copied" xml:space="preserve">
-        <value>Copied.</value>
+        <value>Copied</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>MMM d</value>
     </data>
 </root>

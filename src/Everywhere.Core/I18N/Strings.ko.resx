@@ -3055,7 +3055,4 @@
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>기술 상태를 업데이트할 수 없습니다.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>현재 모델이 5시간 및 주간 쿼터의 제한을 받는지 여부를 나타냅니다.</value>
-    </data>
 </root>

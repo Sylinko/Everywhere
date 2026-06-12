@@ -15,7 +15,7 @@
           Command="{Binding UpdateOrCheckCommand, RelativeSource={RelativeSource TemplatedParent}}"
           IsCheckingUpdate="{Binding UpdateOrCheckCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
           IsUpdateAvailable="{Binding SoftwareUpdater.LatestUpdate, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
-          LastUpdateCheckDate="{Binding Settings.Common.LastUpdateCheckTime, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static vc:DateTimeOffsetLocalizeConverter.Shared}}"
+          LastUpdateCheckDate="{Binding Settings.Common.LastUpdateCheckTime, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static vc:DateTimeOffsetConverters.Localize}}"
           LastUpdateCheckTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_LastUpdateCheckTitle_Text}}"
           NeverCheckedTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_NeverChecked_Text}}"
           NewVersion="{Binding SoftwareUpdater.LatestUpdate?.Version, RelativeSource={RelativeSource TemplatedParent}}"

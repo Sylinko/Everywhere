@@ -116,13 +116,9 @@
                   x:Name="PlanCreditsPanel"
                   IsVisible="{Binding CloudClient.Subscription.Plan, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static cloud:SubscriptionPlan.Free}, FallbackValue={x:False}, TargetNullValue={x:False}}"
                   Spacing="4">
-                  <Grid
-                    ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                  <DockPanel HorizontalSpacing="4">
                     <TextBlock
-                      Classes="Caption" Grid.Column="0"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_PlanCreditsTextBlock_Text}}"/>
-                    <TextBlock
-                      Classes="Caption Muted" Grid.Column="1">
+                      Classes="Caption Muted" DockPanel.Dock="Right">
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
                           <Binding
@@ -130,11 +126,6 @@
                             TargetNullValue="0%"/>
                         </I18N>
                       </TextBlock.Text>
-                    </TextBlock>
-                    <LucideIcon
-                      Grid.Column="2" Kind="CircleQuestionMark"
-                      Size="{DynamicResource FontSizeS}"
-                      ToolTip.Placement="Top">
                       <ToolTip.Tip>
                         <TextBlock Grid.Column="1">
                           <Run Text="{Binding CloudClient.Subscription.RemainingPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
@@ -142,12 +133,76 @@
                           <Run Text="{Binding CloudClient.Subscription.TotalPlanCredits, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
                         </TextBlock>
                       </ToolTip.Tip>
-                    </LucideIcon>
-                  </Grid>
-                  <ProgressBar
-                    Maximum="1"
-                    Value="{Binding CloudClient.Subscription.RemainingPlanCreditsRatio, FallbackValue=0, TargetNullValue=0}"/>
+                    </TextBlock>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_PlanCreditsTextBlock_Text}}"/>
+                  </DockPanel>
                 </StackPanel>
+
+                <DockPanel
+                  x:Name="BonusCreditsPanel" HorizontalSpacing="4">
+                  <TextBlock
+                    Classes="Caption Muted" DockPanel.Dock="Right"
+                    Text="{Binding CloudClient.Subscription?.BonusCredits, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, TargetNullValue=N/A}">
+                    <ToolTip.Tip>
+                      <TextBlock
+                        Grid.Column="1"
+                        Text="{Binding CloudClient.Subscription?.BonusCredits, StringFormat={}{0:N0}, TargetNullValue=N/A}"/>
+                    </ToolTip.Tip>
+                  </TextBlock>
+                  <TextBlock
+                    Classes="Caption"
+                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_BonusCreditsTextBlock_Text}}"/>
+                </DockPanel>
+
+                <Grid
+                  x:Name="FiveHourWindowPanel" ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="4"
+                  IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour, TargetNullValue={x:False}}">
+                  <TextBlock
+                    Classes="Caption" Grid.Column="0"
+                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}}"/>
+                  <TextBlock
+                    Classes="Caption Muted" Grid.Column="1"
+                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
+                  <TextBlock
+                    Classes="Caption Muted" Grid.Column="2"
+                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
+                    <ToolTip.Tip>
+                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
+                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_FiveHourWindowTextBlock_Text}"/>
+                        <Binding
+                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                          Path="CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt" StringFormat="{}{0:g}"/>
+                      </I18N>
+                    </ToolTip.Tip>
+                  </TextBlock>
+                </Grid>
+
+                <Grid
+                  x:Name="SevenDayWindowPanel" ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="4"
+                  IsVisible="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay, TargetNullValue={x:False}}">
+                  <TextBlock
+                    Classes="Caption" Grid.Column="0"
+                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}}"/>
+                  <TextBlock
+                    Classes="Caption Muted" Grid.Column="1"
+                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.RemainingPercent, StringFormat={}{0:N0}%, TargetNullValue={x:Null}}"/>
+                  <TextBlock
+                    Classes="Caption Muted" Grid.Column="2"
+                    Text="{Binding CloudClient.Subscription?.QuotaLimit?.SevenDay.ResetAt, Converter={x:Static vc:DateTimeOffsetConverters.ToShortDateOrTimeString}, TargetNullValue={x:Null}}">
+                    <ToolTip.Tip>
+                      <I18N Key="{x:Static LocaleKey.UserProfilePresenter_QuotaLimitResetAtToolTip_Tip}">
+                        <I18N Key="{x:Static LocaleKey.UserProfilePresenter_SevenDayWindowTextBlock_Text}"/>
+                        <Binding
+                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
+                          Path="CloudClient.Subscription?.QuotaLimit?.FiveHour.ResetAt" StringFormat="{}{0:g}"/>
+                      </I18N>
+                    </ToolTip.Tip>
+                  </TextBlock>
+                </Grid>
 
                 <StackPanel
                   x:Name="WebSearchPanel" Spacing="4">
@@ -163,13 +218,9 @@
                     </Binding>
                   </StackPanel.IsVisible>
 
-                  <Grid
-                    ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                  <DockPanel HorizontalSpacing="4">
                     <TextBlock
-                      Classes="Caption" Grid.Column="0"
-                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_WebSearchTextBlock_Text}}"/>
-                    <TextBlock
-                      Classes="Caption Muted" Grid.Column="1">
+                      Classes="Caption Muted" DockPanel.Dock="Right">
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RemainingTextBlock_Text}">
                           <Binding
@@ -177,11 +228,6 @@
                             TargetNullValue="0%"/>
                         </I18N>
                       </TextBlock.Text>
-                    </TextBlock>
-                    <LucideIcon
-                      Grid.Column="2" Kind="CircleQuestionMark"
-                      Size="{DynamicResource FontSizeS}"
-                      ToolTip.Placement="Top">
                       <ToolTip.Tip>
                         <TextBlock Grid.Column="1">
                           <Run Text="{Binding CloudClient.Subscription.RemainingFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
@@ -189,32 +235,12 @@
                           <Run Text="{Binding CloudClient.Subscription.TotalFreeWebSearchCount, StringFormat={}{0:N0}, FallbackValue=0, TargetNullValue=0}"/>
                         </TextBlock>
                       </ToolTip.Tip>
-                    </LucideIcon>
-                  </Grid>
-                  <ProgressBar
-                    Maximum="1"
-                    Value="{Binding CloudClient.Subscription.RemainingFreeWebSearchRatio, FallbackValue=0, TargetNullValue=0}"/>
+                    </TextBlock>
+                    <TextBlock
+                      Classes="Caption"
+                      Text="{I18N {x:Static LocaleKey.UserProfilePresenter_WebSearchTextBlock_Text}}"/>
+                  </DockPanel>
                 </StackPanel>
-
-                <Grid
-                  ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
-                  <TextBlock
-                    Classes="Caption" Grid.Column="0"
-                    Text="{I18N {x:Static LocaleKey.UserProfilePresenter_BonusCreditsTextBlock_Text}}"/>
-                  <TextBlock
-                    Classes="Caption Muted" Grid.Column="1"
-                    Text="{Binding CloudClient.Subscription.BonusCredits, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, FallbackValue=N/A, TargetNullValue=N/A}"/>
-                  <LucideIcon
-                    Grid.Column="2" Kind="CircleQuestionMark"
-                    Size="{DynamicResource FontSizeS}"
-                    ToolTip.Placement="Top">
-                    <ToolTip.Tip>
-                      <TextBlock
-                        Grid.Column="1"
-                        Text="{Binding CloudClient.Subscription.BonusCredits, StringFormat={}{0:N0}, FallbackValue=N/A, TargetNullValue=N/A}"/>
-                    </ToolTip.Tip>
-                  </LucideIcon>
-                </Grid>
 
                 <v:LazyIndexedContentControl
                   ContentDataBinding="{Binding CloudClient.Subscription, TargetNullValue={x:Null}}"
@@ -240,7 +266,7 @@
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_RenewsOnTextBlock_Text}">
                           <Binding
-                            Converter="{x:Static vc:DateTimeOffsetLocalizeConverter.Shared}"
+                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
                             Path="PeriodEnd" StringFormat="{}{0:g}"/>
                         </I18N>
                       </TextBlock.Text>
@@ -253,7 +279,7 @@
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_TrialUntilTextBlock_Text}">
                           <Binding
-                            Converter="{x:Static vc:DateTimeOffsetLocalizeConverter.Shared}"
+                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
                             Path="PeriodEnd" StringFormat="{}{0:g}"/>
                         </I18N>
                       </TextBlock.Text>
@@ -266,7 +292,7 @@
                       <TextBlock.Text>
                         <I18N Key="{x:Static LocaleKey.UserProfilePresenter_EndsOnTextBlock_Text}">
                           <Binding
-                            Converter="{x:Static vc:DateTimeOffsetLocalizeConverter.Shared}"
+                            Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
                             Path="PeriodEnd" StringFormat="{}{0:g}"/>
                         </I18N>
                       </TextBlock.Text>
@@ -382,7 +408,7 @@
                     <TextBlock.Text>
                       <I18N Key="{x:Static LocaleKey.UserProfilePresenter_LastSynchronizedTextBlock_Text}">
                         <Binding
-                          Converter="{x:Static vc:DateTimeOffsetLocalizeConverter.Shared}"
+                          Converter="{x:Static vc:DateTimeOffsetConverters.Localize}"
                           Path="PersistentState.LastCloudSynchronized" StringFormat="{}{0:g}"/>
                       </I18N>
                     </TextBlock.Text>

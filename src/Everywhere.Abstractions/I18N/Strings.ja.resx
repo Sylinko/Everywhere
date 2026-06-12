@@ -38,6 +38,9 @@
         <value>不明なチャネル</value>
     </data>
     <data name="Common_Copied" xml:space="preserve">
-        <value>コピーしました。</value>
+        <value>コピーしました</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>M月d日</value>
     </data>
 </root>

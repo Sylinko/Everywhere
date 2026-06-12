@@ -3055,7 +3055,4 @@ Date de publication : {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Échec de la mise à jour de l'état de la compétence.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Indique si le modèle actuel est soumis à une limite de 5 heures et hebdomadaire</value>
-    </data>
 </root>

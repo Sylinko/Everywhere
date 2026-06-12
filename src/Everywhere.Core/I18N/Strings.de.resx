@@ -3054,7 +3054,4 @@ Veröffentlichungsdatum: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Fähigkeitsstatus konnte nicht aktualisiert werden.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Zeigt an, ob das aktuelle Modell durch eine 5-Stunden- und wöchentliche Quotenbeschränkung eingeschränkt ist</value>
-    </data>
 </root>

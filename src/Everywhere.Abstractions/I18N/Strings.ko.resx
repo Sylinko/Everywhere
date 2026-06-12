@@ -38,6 +38,9 @@
         <value>현재 채널</value>
     </data>
     <data name="Common_Copied" xml:space="preserve">
-        <value>복사되었습니다.</value>
+        <value>복사되었습니다</value>
+    </data>
+    <data name="Common_ShortMonthDayPattern" xml:space="preserve">
+        <value>M월 d일</value>
     </data>
 </root>

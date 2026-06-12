@@ -3057,6 +3057,15 @@
         <value>无法更新 Skill 状态。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>指示当前模型是否受 5 小时和每周配额的限制</value>
+        <value>指示当前模型是否受 5 小时和 7 天配额的限制</value>
+    </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5 小时</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7 天</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>{0}使用配额将于 {1} 重置</value>
     </data>
 </root>

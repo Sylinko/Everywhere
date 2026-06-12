@@ -3055,7 +3055,4 @@ Fecha de lanzamiento: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>No se pudo actualizar el estado de la habilidad.</value>
     </data>
-    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Indica si el modelo actual está sujeto a un límite de 5 horas y cuotas semanales</value>
-    </data>
 </root>

@@ -3056,6 +3056,6 @@
         <value>無法更新 Skill 狀態。</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>指示當前模型是否受 5 小時和每週配額的限制</value>
+        <value>指示當前模型是否受 5 小時和 7 天配額的限制</value>
     </data>
 </root>

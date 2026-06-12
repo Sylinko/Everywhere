@@ -3056,6 +3056,15 @@ Release date: {2}</value>
         <value>Unable to update skill status.</value>
     </data>
     <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
-        <value>Indicates whether the current model is subject to a 5-hour and weekly quota limit</value>
+        <value>Indicates whether the current model is subject to a 5-hour and 7-day quota limit</value>
+    </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5-hour</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7-day</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>{0} quota limit will be reset at {1}</value>
     </data>
 </root>
