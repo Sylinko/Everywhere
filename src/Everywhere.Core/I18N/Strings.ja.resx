@@ -873,6 +873,12 @@
     <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
         <value>毎日のモデルリクエスト制限に達しました。後で再試行してください。</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
+        <value>5時間のモデルリクエストの制限を超えました。後で再試行するか、制限のないモデルに切り替えてください。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
+        <value>7日間のモデルリクエストの制限を超えました。後で再試行するか、制限のないモデルに切り替えてください。</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>解決</value>
     </data>

@@ -873,6 +873,12 @@
     <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
         <value>已達到每日模型請求限制。請稍後重試。</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
+        <value>已超出 5 小時模型請求配額，請稍後重試或切換至不受配額限制的模型。</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
+        <value>已超出 7 天模型請求配額，請稍後重試或切換至不受配額限制的模型。</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>解決</value>
     </data>

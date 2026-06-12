@@ -872,6 +872,12 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
         <value>Das tägliche Anfrage-Limit für Modellanfragen wurde erreicht. Bitte versuchen Sie es später erneut.</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
+        <value>Das 5-Stunden-Modell-Anforderungsquota wurde überschritten. Bitte versuchen Sie es später erneut oder wechseln Sie zu einem Modell ohne Quota-Beschränkung.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
+        <value>Das 7-Tage-Modell-Anforderungsquota wurde überschritten. Bitte versuchen Sie es später erneut oder wechseln Sie zu einem Modell ohne Quota-Beschränkung.</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>Lösen</value>
     </data>

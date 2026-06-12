@@ -873,6 +873,12 @@
     <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
         <value>일일 모델 요청 제한에 도달했습니다. 나중에 다시 시도하세요.</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
+        <value>5시간 모델 요청 쿼터를 초과했습니다. 나중에 다시 시도하거나 쿼터 제한이 없는 모델로 전환하세요.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
+        <value>7일 모델 요청 쿼터를 초과했습니다. 나중에 다시 시도하거나 쿼터 제한이 없는 모델로 전환하세요.</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>해결</value>
     </data>

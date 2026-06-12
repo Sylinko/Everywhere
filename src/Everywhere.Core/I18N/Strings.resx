@@ -874,10 +874,10 @@ My intelligence is powered by large language models, and I need your help to con
         <value>The daily model request limit has been reached. Please try again later.</value>
     </data>
     <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
-        <value />
+        <value>5-Hour Model Request Quota Exceeded. Please Try Again Later or Switch to a Model Without Quota Limits.</value>
     </data>
     <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
-        <value />
+        <value>7-Day Model Request Quota Exceeded. Please Try Again Later or Switch to a Model Without Quota Limits.</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>Solve</value>

@@ -873,6 +873,12 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
     <data name="KernelMixinFactory_OfficialError_RateLimitLlm24h" xml:space="preserve">
         <value>Limite quotidienne de demandes au modèle atteinte. Veuillez réessayer plus tard.</value>
     </data>
+    <data name="KernelMixinFactory_OfficialError_5HourQuotaLimitExceeded" xml:space="preserve">
+        <value>Limite de quota de 5 heures dépassée, veuillez réessayer plus tard ou passer à un modèle sans limite de quota.</value>
+    </data>
+    <data name="KernelMixinFactory_OfficialError_7DayQuotaLimitExceeded" xml:space="preserve">
+        <value>Limite de quota de 7 jours dépassée, veuillez réessayer plus tard ou passer à un modèle sans limite de quota.</value>
+    </data>
     <data name="ChatWindowViewModel_QuickActions_Solve" xml:space="preserve">
         <value>Résoudre</value>
     </data>
