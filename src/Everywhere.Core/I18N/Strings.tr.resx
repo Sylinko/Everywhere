@@ -3054,4 +3054,16 @@ Yayın tarihi: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Yetenek durumu güncellenemedi.</value>
     </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Mevcut modelin 5 saat ve 7 gün kotalarına tabi olup olmadığını gösterir</value>
+    </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5 Saat</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7 Gün</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>{0} kotaları {1} tarihinde sıfırlanacak</value>
+    </data>
 </root>

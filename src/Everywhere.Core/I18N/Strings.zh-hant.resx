@@ -3058,4 +3058,13 @@
     <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
         <value>指示當前模型是否受 5 小時和 7 天配額的限制</value>
     </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5 小時</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7 天</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>{0} 使用配額將於 {1} 重置</value>
+    </data>
 </root>

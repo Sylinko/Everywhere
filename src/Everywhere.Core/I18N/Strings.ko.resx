@@ -3055,4 +3055,16 @@
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>기술 상태를 업데이트할 수 없습니다.</value>
     </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>현재 모델이 5시간 및 7일 쿼터 제한을 받는지 여부를 나타냅니다.</value>
+    </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5시간</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7일</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>{0} 사용 쿼터는 {1}에 초기화됩니다.</value>
+    </data>
 </root>

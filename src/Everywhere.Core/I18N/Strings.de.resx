@@ -3054,4 +3054,16 @@ Veröffentlichungsdatum: {2}</value>
     <data name="SkillPage_UpdateStatusFailedToast_Title" xml:space="preserve">
         <value>Fähigkeitsstatus konnte nicht aktualisiert werden.</value>
     </data>
+    <data name="OfficialAssistant_IsQuotaLimitFree_ToolTip" xml:space="preserve">
+        <value>Gibt an, ob das aktuelle Modell durch ein 5-Stunden- und 7-Tage-Kontingent eingeschränkt ist</value>
+    </data>
+    <data name="UserProfilePresenter_FiveHourWindowTextBlock_Text" xml:space="preserve">
+        <value>5 Stunden</value>
+    </data>
+    <data name="UserProfilePresenter_SevenDayWindowTextBlock_Text" xml:space="preserve">
+        <value>7 Tage</value>
+    </data>
+    <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
+        <value>Das Kontingent von {0} wird am {1} zurückgesetzt</value>
+    </data>
 </root>
