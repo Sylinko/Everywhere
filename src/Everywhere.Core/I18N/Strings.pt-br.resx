@@ -91,6 +91,9 @@
     <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
         <value>Janela de Chat</value>
     </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>Press at any time to open the chat window.</value>
+    </data>
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>temperature</value>
     </data>
@@ -2195,8 +2198,14 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
         <value>Selecionar Elemento Visual</value>
     </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>Press at any time to select a visual element, which will then open the chat window.</value>
+    </data>
     <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
         <value>Capturar Captura de Tela</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>Press at any time to capture a screenshot, which will then open the chat window.</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
         <value>Assistente do Navegador</value>
@@ -3058,5 +3067,26 @@ Data de lançamento: {2}</value>
     </data>
     <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
         <value>O uso da cota de {0} será reiniciado em {1}</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Description" xml:space="preserve">
+        <value>Set whether to enable the current shortcut.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Description" xml:space="preserve">
+        <value>Set the main shortcut.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Header" xml:space="preserve">
+        <value>Principal</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Header" xml:space="preserve">
+        <value>Alternativo</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Description" xml:space="preserve">
+        <value>Set an optional alternative key.</value>
+    </data>
+    <data name="MainTrayIcon_Menu_EnableChatWindowShortcut" xml:space="preserve">
+        <value>Atalho para a janela de chat</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
+        <value>Habilitar</value>
     </data>
 </root>

@@ -91,6 +91,9 @@
     <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
         <value>채팅 창</value>
     </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>언제든지 눌러 채팅 창을 호출하세요.</value>
+    </data>
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>temperature</value>
     </data>
@@ -2194,8 +2197,14 @@
     <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
         <value>시각 요소 선택</value>
     </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>언제든지 눌러 시각 요소를 선택한 후 채팅 창을 호출하세요.</value>
+    </data>
     <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
         <value>스크린샷 캡처</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>언제든지 눌러 스크린샷을 캡처한 후 채팅 창을 호출하세요.</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
         <value>브라우저 도우미</value>
@@ -3057,5 +3066,26 @@
     </data>
     <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
         <value>{0} 사용 쿼터는 {1}에 초기화됩니다.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Description" xml:space="preserve">
+        <value>현재 단축키를 활성화할지 설정합니다.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Description" xml:space="preserve">
+        <value>주 단축키를 설정합니다.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Header" xml:space="preserve">
+        <value>주</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Header" xml:space="preserve">
+        <value>대체</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Description" xml:space="preserve">
+        <value>선택 가능한 대체 키를 설정합니다.</value>
+    </data>
+    <data name="MainTrayIcon_Menu_EnableChatWindowShortcut" xml:space="preserve">
+        <value>채팅 창 단축키</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
+        <value>활성화</value>
     </data>
 </root>

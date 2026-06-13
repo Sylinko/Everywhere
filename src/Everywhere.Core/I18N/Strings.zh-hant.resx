@@ -91,6 +91,9 @@
     <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
         <value>聊天視窗</value>
     </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>隨時按下即可呼出聊天窗口。</value>
+    </data>
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>temperature</value>
     </data>
@@ -2194,8 +2197,14 @@
     <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
         <value>選擇視覺元素</value>
     </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>隨時按下即可選擇視覺元素，然後會呼出聊天窗口。</value>
+    </data>
     <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
         <value>捕獲螢幕截圖</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>隨時按下即可捕獲螢幕截圖，然後會呼出聊天窗口。</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
         <value>瀏覽器助手</value>
@@ -3057,5 +3066,26 @@
     </data>
     <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
         <value>{0} 使用配額將於 {1} 重置</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Description" xml:space="preserve">
+        <value>設定是否啟用當前快捷鍵。</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Description" xml:space="preserve">
+        <value>設定主要快捷鍵。</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Header" xml:space="preserve">
+        <value>主要</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Header" xml:space="preserve">
+        <value>替代</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Description" xml:space="preserve">
+        <value>設定可選的替代按鍵。</value>
+    </data>
+    <data name="MainTrayIcon_Menu_EnableChatWindowShortcut" xml:space="preserve">
+        <value>聊天窗口快捷鍵</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
+        <value>啟用</value>
     </data>
 </root>

@@ -91,6 +91,9 @@
     <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
         <value>チャットウィンドウ</value>
     </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>いつでも押してチャットウィンドウを呼び出せます。</value>
+    </data>
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>temperature</value>
     </data>
@@ -2194,8 +2197,14 @@
     <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
         <value>ビジュアル要素を選択</value>
     </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>いつでも押して視覚要素を選択し、その後チャットウィンドウが表示されます。</value>
+    </data>
     <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
         <value>スクリーンショットをキャプチャ</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>いつでも押してスクリーンショットをキャプチャし、その後チャットウィンドウが表示されます。</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
         <value>ブラウザアシスタント</value>
@@ -3057,5 +3066,26 @@
     </data>
     <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
         <value>{0}の使用量は{1}にリセットされます</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Description" xml:space="preserve">
+        <value>現在のショートカットキーを有効にするかどうかを設定します。</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Description" xml:space="preserve">
+        <value>主要なショートカットキーを設定します。</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Header" xml:space="preserve">
+        <value>主要</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Header" xml:space="preserve">
+        <value>代替</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Description" xml:space="preserve">
+        <value>オプションの代替キーを設定します。</value>
+    </data>
+    <data name="MainTrayIcon_Menu_EnableChatWindowShortcut" xml:space="preserve">
+        <value>チャットウィンドウショートカット</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
+        <value>有効</value>
     </data>
 </root>

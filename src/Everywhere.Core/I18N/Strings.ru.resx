@@ -91,6 +91,9 @@
     <data name="ShortcutSettings_ChatWindow_Header" xml:space="preserve">
         <value>Окно Чата</value>
     </data>
+    <data name="ShortcutSettings_ChatWindow_Desription" xml:space="preserve">
+        <value>Нажмите в любое время, чтобы открыть окно чата.</value>
+    </data>
     <data name="Assistant_Temperature_Header" xml:space="preserve">
         <value>Temperature</value>
     </data>
@@ -2194,8 +2197,14 @@
     <data name="ShortcutSettings_PickVisualElement_Header" xml:space="preserve">
         <value>Выбор визуального элемента</value>
     </data>
+    <data name="ShortcutSettings_PickVisualElement_Desription" xml:space="preserve">
+        <value>Нажмите в любое время, чтобы выбрать визуальный элемент, после чего откроется окно чата.</value>
+    </data>
     <data name="ShortcutSettings_TakeScreenshot_Header" xml:space="preserve">
         <value>Сделать скриншот</value>
+    </data>
+    <data name="ShortcutSettings_TakeScreenshot_Desription" xml:space="preserve">
+        <value>Нажмите в любое время, чтобы сделать снимок экрана, после чего откроется окно чата.</value>
     </data>
     <data name="Strategy_BuiltIn_Browser_Name" xml:space="preserve">
         <value>Помощник браузера</value>
@@ -3057,5 +3066,26 @@
     </data>
     <data name="UserProfilePresenter_QuotaLimitResetAtToolTip_Tip" xml:space="preserve">
         <value>Квота будет сброшена {1} для {0}</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Description" xml:space="preserve">
+        <value>Настройте, включен ли текущий ярлык.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Description" xml:space="preserve">
+        <value>Настройте основной ярлык.</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Main_Header" xml:space="preserve">
+        <value>Основной</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Header" xml:space="preserve">
+        <value>Альтернативный</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_Alternative_Description" xml:space="preserve">
+        <value>Настройте опциональную альтернативную клавишу.</value>
+    </data>
+    <data name="MainTrayIcon_Menu_EnableChatWindowShortcut" xml:space="preserve">
+        <value>Ярлык окна чата</value>
+    </data>
+    <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
+        <value>Включить</value>
     </data>
 </root>
