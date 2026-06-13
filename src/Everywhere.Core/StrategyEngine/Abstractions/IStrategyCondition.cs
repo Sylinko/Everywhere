@@ -12,8 +12,16 @@ public interface IStrategyCondition
     /// Evaluates this condition against the given context.
     /// </summary>
     /// <param name="context">The strategy context to evaluate against.</param>
-    /// <returns>True if the condition matches, false otherwise.</returns>
-    bool Evaluate(StrategyContext context);
+    /// <returns><c>true</c> when matched, <c>false</c> when not matched, or <c>null</c> when required data is unavailable.</returns>
+    bool? Evaluate(StrategyContext context);
+
+    /// <summary>
+    /// Evaluates this condition and returns diagnostics when the implementation can provide them.
+    /// </summary>
+    ConditionEvaluationResult EvaluateDetailed(StrategyContext context) => new()
+    {
+        Value = Evaluate(context)
+    };
 }
 
 /// <summary>

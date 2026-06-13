@@ -1,7 +1,7 @@
 <UserControl
   x:Class="Everywhere.Views.Pages.SkillPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:skills="clr-namespace:Everywhere.Skills"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:skills="clr-namespace:Everywhere.Skills;assembly=Everywhere.Abstractions"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
   xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
   x:DataType="vm:SkillPageViewModel">

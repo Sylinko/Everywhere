@@ -11,7 +11,7 @@ namespace Everywhere.StrategyEngine;
 public sealed partial record Strategy
 {
     /// <summary>
-    /// Unique identifier for deduplication across strategies (e.g., 'builtin.browser-summarize').
+    /// Unique identifier for deduplication across strategies, for example <c>builtin.browser-summarize</c>.
     /// </summary>
     [Key(0)] public required string Id { get; init; }
 
@@ -36,14 +36,29 @@ public sealed partial record Strategy
     public int Priority { get; init; }
 
     /// <summary>
+    /// Concrete source of this normalized strategy.
+    /// </summary>
+    /// <remarks>
+    /// For a file derived through <c>from</c>, this remains the current file; included sources are recorded in <see cref="Includes"/>.
+    /// </remarks>
+    public StrategySource Source { get; init; } = StrategySource.Unknown;
+
+    /// <summary>
+    /// Sources included through authoring-time references such as <c>from</c>.
+    /// </summary>
+    public IReadOnlyList<StrategySource> Includes { get; init; } = [];
+
+    /// <summary>
     /// Condition that must be satisfied for this strategy to be available to the user.
     /// </summary>
     public IStrategyCondition? Condition { get; init; }
 
     /// <summary>
-    /// User message template to auto-send when starting the conversation.
-    /// Supports variable interpolation with {variable} syntax (e.g. from Preprocessors).
+    /// User message template to send when starting the conversation.
     /// </summary>
+    /// <remarks>
+    /// Supports variable interpolation such as <c>{extra.file_manager.selection.items}</c> after preprocessors and extra context are collected.
+    /// </remarks>
     [Key(2)] public string? Body { get; init; }
 
     /// <summary>
@@ -54,27 +69,48 @@ public sealed partial record Strategy
     [Key(3)] public string? SystemPrompt { get; init; }
 
     /// <summary>
-    /// Allowed tool/plugin names for this command. null for default.
+    /// Request-scoped tool rules. <c>null</c> means the current default tool policy is left unchanged.
     /// </summary>
     /// <remarks>
-    /// Wildcard is allowed. e.g.
-    /// { "builtin.visual_tree.*": true, "builtin.web_browser.web_*": true, "builtin.web_browser.web_search": false }
+    /// Wildcards are allowed, for example
+    /// <c>{ "builtin.visual_tree.*": true, "builtin.web_browser.web_*": true, "builtin.web_browser.web_search": false }</c>.
     ///
-    /// Note that `builtin.visual_tree.*` and `builtin.visual_tree` are different.
-    /// Thr former means all functions in `builtin.visual_tree` should be applied (enable or disable) no matter whether then are enabled.
-    /// But the latter only means the `builtin.visual_tree` should be applied, functions will keep their original state.
+    /// <c>builtin.visual_tree.*</c> and <c>builtin.visual_tree</c> are different. The former applies to child functions;
+    /// the latter applies only to the named tool group and leaves child function state unchanged.
     ///
-    /// When applying, keys first ordered then apply one by one, latter overrides former.
+    /// Rules are applied in deterministic order; later matching rules override earlier ones.
     /// </remarks>
     [Key(4)] public ToolRulesets? ToolRulesets { get; init; }
 
     /// <summary>
-    /// List of preprocessor IDs to run before executing this strategy.
+    /// Preprocessor IDs to run before prompt rendering.
     /// </summary>
-    [Key(5)] public IReadOnlyList<string>? Preprocessors { get; init; }
+    /// <remarks>
+    /// IDs are resolved from registered preprocessors. Unknown IDs should become diagnostics when the execution pipeline is wired.
+    /// </remarks>
+    [IgnoreMember]
+    public IReadOnlyList<string> Preprocessors
+    {
+        get => _preprocessors ?? [];
+        init => _preprocessors = value;
+    }
+
+    [Key(5)]
+    private IReadOnlyList<string>? _preprocessors;
 
     /// <summary>
     /// Displays in the watermark as a hint for the user input after selecting this command.
     /// </summary>
     [Key(6)] public IDynamicResourceKey? ArgumentHintKey { get; init; }
+
+    /// <summary>
+    /// Runtime timeout options for matching and execution.
+    /// </summary>
+    public StrategyOptions Options { get; init; } = StrategyOptions.Default;
+
+    /// <summary>
+    /// Additional normalized metadata for diagnostics, editor surfaces, and future providers.
+    /// </summary>
+    public IReadOnlyDictionary<string, object?> Metadata { get; init; } =
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 }

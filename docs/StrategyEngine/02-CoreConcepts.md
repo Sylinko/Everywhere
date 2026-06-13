@@ -26,6 +26,8 @@ Strategy Engine intentionally separates the versioned authoring model from the r
 
 `Strategy` is the runtime model. It has no schema version and is optimized for matching/execution: parsed durations, parsed icon values, compiled condition AST, normalized tool rules, resolved preprocessor IDs, source references, and diagnostics.
 
+Enable/disable state is not part of `StrategyDefinitionV1` or runtime `Strategy`. It belongs to UI/software settings owned by providers. A future user `IStrategyProvider` should apply those settings before returning strategies from `GetStrategies()`, similar to `SkillManager`.
+
 This split is required because Strategy files are versioned. Future breaking format changes should add another authoring model and normalizer:
 
 ```text
@@ -44,7 +46,6 @@ public sealed record StrategyDefinitionV1
     public string Schema { get; init; } = "everywhere.strategy/v1";
     public string? Id { get; init; }
     public StrategyFromReference? From { get; init; }
-    public bool? Enabled { get; init; }
 
     public string? Name { get; init; }
     public string? Description { get; init; }
@@ -70,7 +71,6 @@ public sealed partial record Strategy
     public required string Id { get; init; }
     public required StrategySource Source { get; init; }
     public IReadOnlyList<StrategySource> Includes { get; init; } = [];
-    public bool Enabled { get; init; } = true;
 
     public required IDynamicResourceKey NameKey { get; init; }
     public IDynamicResourceKey? DescriptionKey { get; init; }

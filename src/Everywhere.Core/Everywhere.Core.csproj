@@ -62,6 +62,7 @@
     <PackageReference Include="Serilog.Extensions.Logging"/>
     <PackageReference Include="Serilog.Sinks.Console"/>
     <PackageReference Include="Serilog.Sinks.File"/>
+    <PackageReference Include="SharpYaml" />
     <PackageReference Include="Svg.Controls.Skia.Avalonia"/>
     <PackageReference Include="Sylinko.CSharpMath.Avalonia" />
     <PackageReference Include="System.Drawing.Common"/>

@@ -25,7 +25,7 @@ public abstract class AttachmentConditionBase<T> : IAttachmentCondition where T 
     /// </summary>
     public int MaxCount { get; init; } = -1;
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         var matchingAttachments = context.Attachments.AsValueEnumerable().OfType<T>().Where(MatchesAttachment).ToList();
         if (matchingAttachments.Count < MinCount)

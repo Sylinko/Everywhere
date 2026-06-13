@@ -39,7 +39,6 @@ YAML implementation choice:
 | `schema` | string | No | `everywhere.strategy/v1` | Strategy schema version. |
 | `id` | string | No | provider-derived | Stable Strategy ID. |
 | `from` | string or object | No | null | Single source to derive from. |
-| `enabled` | bool | No | true | Whether this Strategy participates in matching. |
 | `name` | string | Yes after normalization | source/provider-derived | Display name. |
 | `description` | string | No | null | Tooltip/subtitle. |
 | `icon` | string | No | null | Icon identifier, preferably Lucide icon name. |
@@ -99,6 +98,12 @@ from: skill://my-writing-style
 ```
 
 ```yaml
+from: skill://codex/deepwiki
+```
+
+`skill://deepwiki` uses short-name first-wins resolution ordered by `SkillSourceRoot`. `skill://codex/deepwiki` and `skill://codex.deepwiki` are equivalent precise references to the global skill ID `codex.deepwiki`. Strategy inheritance uses the skill `MarkdownBody`; frontmatter is not copied into the body.
+
+```yaml
 from:
   source: E:\Everywhere\Strategies\BaseReview.strategy.md
   kind: strategy
@@ -134,13 +139,9 @@ Rules:
 6. Duplicate IDs within one provider namespace are invalid.
 7. User Strategies do not override builtin Strategies.
 
-## 5. Enabled
+## 5. Provider Enablement
 
-```yaml
-enabled: true
-```
-
-Disabled Strategies are loaded for editing/diagnostics but skipped during matching.
+`.strategy.md` does not have an `enabled` field, and runtime `Strategy` does not store enablement. Enable/disable state belongs to UI/software settings owned by the provider. A future user `IStrategyProvider` should read those settings and return only active strategies from `GetStrategies()`, while any editor surface may separately load disabled files for management and diagnostics. If an old draft file contains `enabled`, v1 parsing treats it as ordinary metadata and it must not affect matching.
 
 ## 6. Display Fields
 
@@ -157,13 +158,9 @@ priority: 80
 
 `when` controls whether a Strategy is recommended.
 
-If absent:
+See `06-ConditionDslSpec.md` for the detailed Condition DSL grammar, binding model, operator semantics, diagnostics, and compiler plan. This section keeps only common examples.
 
-```yaml
-when: true
-```
-
-Explicit true/false:
+If absent, the Strategy has no condition and can be recommended by the provider. Explicit booleans are allowed:
 
 ```yaml
 when: true
@@ -173,7 +170,26 @@ when: true
 when: false
 ```
 
-Composite conditions:
+Text selection:
+
+```yaml
+when:
+  attachments.selection.text:
+    length:
+      min: 1
+```
+
+Implicit `all` across multiple clauses:
+
+```yaml
+when:
+  attachments.selection.text:
+    contains: "TODO"
+  environment.os:
+    in: ["windows", "macos", "linux"]
+```
+
+Explicit composite:
 
 ```yaml
 when:
@@ -186,379 +202,58 @@ when:
             contains: "secret"
 ```
 
-Supported composite operators:
+File attachments:
 
-```text
-all
-any
-none
+```yaml
+when:
+  attachments.files:
+    count:
+      min: 1
+```
+
+```yaml
+when:
+  attachments.files:
+    any:
+      extension:
+        equals: ".png"
+```
+
+Index and range:
+
+```yaml
+when:
+  attachments.files[0].path:
+    glob: "*.md"
+```
+
+```yaml
+when:
+  attachments.files[^1].extension:
+    equals: ".pdf"
+```
+
+Extra context:
+
+```yaml
+when:
+  extra.file_manager.selection.items:
+    any:
+      extension:
+        in: [".pdf", ".docx"]
+```
+
+Visual query:
+
+```yaml
+when:
+  visual.exists:
+    query: "//TopLevel//Button[@name='Save']"
 ```
 
 All conditions evaluate to `bool?`, and only root `true` recommends the Strategy.
 
-## 8. Path Conditions
-
-A path condition maps a context path to an operator object.
-
-```yaml
-when:
-  all:
-    - extra.file_manager.selection.items:
-        count:
-          min: 1
-```
-
-Supported root paths:
-
-```text
-attachments
-visual
-clipboard
-assistant
-environment
-extra
-```
-
-## 9. String Operators
-
-Examples:
-
-```yaml
-environment.os:
-  equals: "windows"
-```
-
-```yaml
-extra.browser.active_tab.url:
-  startsWith: "https://arxiv.org/"
-```
-
-```yaml
-attachments.selection.text:
-  regex: "\\bTODO\\b"
-```
-
-Full set:
-
-```yaml
-equals: "value"
-in: ["a", "b"]
-contains: "value"
-startsWith: "prefix"
-endsWith: "suffix"
-regex: "pattern"
-glob: "*.pdf"
-caseSensitive: true
-```
-
-Rules:
-
-1. Default string comparison is case-insensitive.
-2. `caseSensitive: true` makes supported string operations case-sensitive.
-3. Regex uses `options.regexTimeout`.
-4. Regex timeout evaluates to `null`.
-
-## 10. Length, Count, Numeric Operators
-
-String length:
-
-```yaml
-attachments.selection.text:
-  length:
-    min: 1
-    max: 5000
-```
-
-Array count:
-
-```yaml
-extra.file_manager.selection.items:
-  count:
-    min: 1
-    max: 20
-```
-
-Numeric:
-
-```yaml
-extra.file_manager.selection.items:
-  any:
-    size:
-      max: 10485760
-```
-
-Supported numeric shape:
-
-```yaml
-min: 0
-max: 100
-equals: 5
-```
-
-## 11. Array Operators
-
-Array `any`:
-
-```yaml
-extra.file_manager.selection.items:
-  any:
-    extension:
-      in: [".pdf", ".docx", ".txt"]
-```
-
-Array `all`:
-
-```yaml
-extra.file_manager.selection.items:
-  all:
-    kind:
-      equals: "file"
-```
-
-Array `none`:
-
-```yaml
-extra.file_manager.selection.items:
-  none:
-    extension:
-      in: [".exe", ".bat", ".cmd", ".ps1"]
-```
-
-Inside array operators, paths are relative to each item.
-
-## 12. Attachments Paths
-
-Recommended v1 paths:
-
-```text
-attachments.files
-attachments.files[].path
-attachments.files[].mimeType
-attachments.files[].extension
-attachments.selection.text
-attachments.text
-attachments.visual.primary
-attachments.visual.items
-```
-
-Examples:
-
-```yaml
-attachments.files:
-  count:
-    min: 1
-```
-
-```yaml
-attachments.files:
-  any:
-    extension:
-      equals: ".png"
-```
-
-## 13. Clipboard Paths
-
-Recommended v1 paths:
-
-```text
-clipboard.text
-clipboard.hasText
-clipboard.hasImage
-clipboard.files
-```
-
-Example:
-
-```yaml
-clipboard.text:
-  length:
-    min: 1
-```
-
-Clipboard paths can be read before matching. The Strategy details UI should disclose clipboard access.
-
-## 14. Assistant Paths
-
-Recommended v1 paths:
-
-```text
-assistant.id
-assistant.name
-assistant.model.id
-assistant.model.modalities
-assistant.model.supportsToolCall
-```
-
-Example:
-
-```yaml
-assistant.model.modalities:
-  contains: "image"
-```
-
-## 15. Environment Paths
-
-Recommended v1 paths:
-
-```text
-environment.os
-environment.architecture
-environment.locale
-environment.timeZone
-environment.currentDate
-```
-
-Example:
-
-```yaml
-environment.os:
-  in: ["windows", "macos"]
-```
-
-## 16. Extra Paths
-
-`extra` is the user-facing namespace for context collected by extra providers.
-
-### 16.1 File Manager
-
-Public schema:
-
-```text
-extra.file_manager.current_folder.path
-extra.file_manager.current_folder.displayName
-extra.file_manager.selection.items
-extra.file_manager.selection.items[].path
-extra.file_manager.selection.items[].displayName
-extra.file_manager.selection.items[].kind
-extra.file_manager.selection.items[].extension
-extra.file_manager.selection.items[].size
-```
-
-Example:
-
-```yaml
-extra.file_manager.selection.items:
-  any:
-    extension:
-      in: [".pdf", ".docx"]
-```
-
-### 16.2 Browser
-
-Recommended future schema:
-
-```text
-extra.browser.active_tab.url
-extra.browser.active_tab.title
-extra.browser.active_tab.domain
-```
-
-Example:
-
-```yaml
-extra.browser.active_tab.url:
-  startsWith: "https://arxiv.org/"
-```
-
-### 16.3 Workspace
-
-Recommended future schema:
-
-```text
-extra.workspace.root
-extra.workspace.name
-extra.workspace.git.branch
-extra.workspace.git.hasChanges
-```
-
-## 17. Visual Conditions
-
-v1 visual condition types:
-
-```text
-visual.exists
-visual.count
-visual.match
-```
-
-### 17.1 `visual.exists`
-
-```yaml
-visual.exists:
-  query: "//TopLevel//Button[@name='Save']"
-```
-
-Returns `true` if at least one element matches.
-
-### 17.2 `visual.count`
-
-```yaml
-visual.count:
-  query: "//ListViewItem[@selected=true]"
-  min: 1
-  max: 5
-```
-
-Returns `true` if the count is within range.
-
-### 17.3 `visual.match`
-
-```yaml
-visual.match:
-  query: "//TopLevel/@name"
-  contains: "Visual Studio"
-```
-
-The query must select attribute values. The rest of the object uses normal string/numeric/bool operators.
-
-## 18. Visual Query Syntax
-
-Supported examples:
-
-```text
-//Button
-/TopLevel/Panel/Button
-.//TextEdit[@focused=true]
-//TopLevel/@name
-//ListViewItem[@selected=true]
-//Button[contains(@name,'Save')]
-//Document[matches(@text,'error|warning')]
-```
-
-Supported concepts:
-
-| Syntax | Meaning |
-| --- | --- |
-| `//Type` | Descendant search by visual element type. |
-| `/` | Strict parent-child step. |
-| `.` | Current primary visual element. |
-| `*` | Any element type. |
-| `@name` | Name attribute. |
-| `@text` | Text content, read only when explicitly requested. |
-| `@process` | Owning process name. |
-| `@selected` | Selected state. |
-| `@focused` | Focused state. |
-| `@disabled` | Disabled state. |
-| `@readonly` | Read-only state. |
-| `@offscreen` | Offscreen state. |
-| `@password` | Password state. |
-| `@bounds.x` | Bounds X. |
-| `@bounds.y` | Bounds Y. |
-| `@bounds.width` | Bounds width. |
-| `@bounds.height` | Bounds height. |
-| `contains(@name,'x')` | String contains. |
-| `matches(@text,'regex')` | Regex match. |
-
-Not supported in v1:
-
-1. XPath axes.
-2. Namespaces.
-3. Arbitrary functions.
-4. Arithmetic expressions.
-5. Index selectors such as `//Button[3]`.
-6. Platform-specific fields such as AutomationId/ClassName.
-
-## 19. Tools
+## 8. Tools
 
 `tools` uses the existing `ToolRulesets` format.
 
@@ -571,7 +266,7 @@ tools:
 
 Keys are plugin or plugin-function glob patterns. Values are booleans.
 
-## 20. Preprocessors
+## 9. Preprocessors
 
 ```yaml
 preprocessors:
@@ -587,7 +282,7 @@ Rules:
 4. v1 preprocessors return variables only.
 5. Prompt variables use path-style names.
 
-## 21. System Prompt
+## 10. System Prompt
 
 Short form:
 
@@ -605,7 +300,7 @@ systemPrompt: |
 
 It supports the same variable interpolation as body.
 
-## 22. Options
+## 11. Options
 
 All runtime options live under `options`.
 
@@ -637,7 +332,7 @@ s
 
 Invalid durations are validation errors.
 
-## 23. Prompt Body
+## 12. Prompt Body
 
 The markdown body is the user prompt template.
 
@@ -655,9 +350,9 @@ Variable rules:
 4. Missing values render as empty string in user-facing execution.
 5. Diagnostics should report missing values by path.
 
-## 24. Complete Examples
+## 13. Complete Examples
 
-### 24.1 File Manager Selection
+### 13.1 File Manager Selection
 
 ```markdown
 ---
@@ -698,7 +393,7 @@ Please summarize the selected files:
 {extra.file_manager.selection.items}
 ```
 
-### 24.2 Browser URL Strategy
+### 13.2 Browser URL Strategy
 
 ```markdown
 ---
@@ -729,7 +424,7 @@ Readable text:
 {preprocess.browser.readable_text}
 ```
 
-### 24.3 Skill-derived Strategy
+### 13.3 Skill-derived Strategy
 
 ```markdown
 ---
@@ -756,7 +451,7 @@ Please rewrite this text politely and concisely:
 
 Because the body is present, it replaces the body loaded from `SKILL.md`. Other fields from the source are replaced by current fields when present.
 
-### 24.4 Visual Query Strategy
+### 13.4 Visual Query Strategy
 
 ```markdown
 ---
@@ -781,7 +476,7 @@ Explain the current focused editor content:
 {attachments.selection.text}
 ```
 
-## 25. Validation Checklist
+## 14. Validation Checklist
 
 An implementation must validate:
 
@@ -791,11 +486,10 @@ An implementation must validate:
 4. `id` is valid or derivable.
 5. User ID does not use `builtin.`.
 6. `from` has one source and no unsupported nested inheritance.
-7. `enabled` is bool.
-8. `priority` is int.
-9. `when` uses supported structure.
-10. Visual query syntax is valid.
-11. `tools` is map string -> bool.
-12. `preprocessors` is string array and IDs exist when registry is known.
-13. `options` durations are valid.
-14. Body is valid UTF-8/UTF-16 text depending on file encoding support.
+7. `priority` is int.
+8. `when` uses supported structure.
+9. Visual query syntax is valid.
+10. `tools` is map string -> bool.
+11. `preprocessors` is string array and IDs exist when registry is known.
+12. `options` durations are valid.
+13. Body is valid UTF-8/UTF-16 text depending on file encoding support.

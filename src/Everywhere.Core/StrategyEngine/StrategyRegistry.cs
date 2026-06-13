@@ -8,6 +8,7 @@ public sealed class StrategyRegistry(IEnumerable<IStrategyProvider> providers) :
     public IEnumerable<Strategy> GetRegisteredStrategies() =>
         providers.SelectMany(p => p.GetStrategies().Select(s => s with
         {
-            Id = $"{p.Namespace}.{s.Id}"
+            Id = $"{p.Namespace}.{s.Id}",
+            Source = StrategySource.FromProvider(p.Namespace, s.Id)
         }));
 }

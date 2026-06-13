@@ -1,7 +1,7 @@
 using Everywhere.AI;
 using Everywhere.Chat;
 
-namespace Everywhere.Core.Tests;
+namespace Everywhere.Core.Tests.AI;
 
 /// <summary>
 /// Tests for <see cref="PromptTemplateRenderer.Render"/>, the recursive prompt-variable resolver.

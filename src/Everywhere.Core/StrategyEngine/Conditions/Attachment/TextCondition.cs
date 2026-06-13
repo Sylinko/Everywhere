@@ -41,7 +41,7 @@ public sealed class TextCondition : IAttachmentCondition
     /// </summary>
     public int MinCount { get; init; } = 1;
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         var matchingCount = 0;
         var hasPrimary = false;

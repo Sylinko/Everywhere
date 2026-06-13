@@ -61,6 +61,9 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
             cancellationToken);
     }
 
+    public SkillResolutionResult ResolveSkillReference(string reference) =>
+        SkillReferenceResolver.Resolve(reference, _skillsById.Values);
+
     public void SetSkillEnabled(SkillDescriptor skill, bool isEnabled)
     {
         skill.IsEnabled = isEnabled;
@@ -206,7 +209,7 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
             IsValid = isValid,
             IsEnabled = isValid && isEnabled,
             Diagnostics = diagnostics,
-            IsEnabledChangedHandler = SetSkillEnabled,
+            // IsEnabledChangedHandler = SetSkillEnabled, TODO: This is shit
         };
     }
 

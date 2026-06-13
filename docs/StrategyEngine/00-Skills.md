@@ -166,15 +166,33 @@ Rules:
 
 The model-facing contract is that enabled skills are listed with complete `SKILL.md` file paths. The model can then call `read_file` with that path when the task falls within the skill's domain.
 
-## 9. `skill://id`
+## 9. `skill://` References
 
-`skill://id` remains an internal/reference URI for Strategy `from`, not a file-reading URI required by Skills v1.
+`skill://` remains an internal/reference URI for Strategy `from`, not a file-reading URI required by Skills v1.
+
+Supported forms:
+
+```text
+skill://deepwiki
+skill://codex/deepwiki
+skill://codex.deepwiki
+```
+
+Rules:
+
+1. `skill://deepwiki` is a short reference. It matches the first installed skill whose normalized folder name is `deepwiki`.
+2. Short-reference ordering must follow `SkillSourceRoot` numeric order.
+3. `skill://codex/deepwiki` is source-qualified. The source segment is a string, not a serialized enum value, and is compared case-insensitively.
+4. `skill://codex.deepwiki` directly matches the current global skill ID and is equivalent to `skill://codex/deepwiki`.
+5. If a short reference matches multiple installed skills, first-wins applies and Strategy normalization should emit a warning diagnostic listing candidates.
+6. If multiple roots collapse to the same global skill ID, first-wins applies.
 
 Recommended future policy for Strategy integration:
 
-1. `from: skill://id` resolves installed skills regardless of enabled state, because the Strategy reference is explicit.
+1. `from: skill://...` resolves installed skills regardless of enabled state, because the Strategy reference is explicit.
 2. UI should show that the Strategy references a disabled skill when applicable.
 3. `read_file` does not need to support `skill://id` for Skills v1.
+4. Strategy `from` uses `SkillDescriptor.MarkdownBody`, not raw `SKILL.md` content with frontmatter.
 
 ## 10. Security and Trust Boundary
 

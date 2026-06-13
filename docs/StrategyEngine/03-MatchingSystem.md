@@ -16,7 +16,7 @@ The output should eventually be `IReadOnlyList<StrategyCandidate>`. Existing cod
 ## 2. End-to-end Matching Pipeline
 
 ```text
-1. Load enabled strategy sources
+1. Load provider-supplied strategy sources
 2. Parse into versioned StrategyDefinitionVx documents
 3. Normalize documents into runtime Strategy objects
 4. Validate and collect diagnostics during normalization
@@ -29,7 +29,7 @@ The output should eventually be `IReadOnlyList<StrategyCandidate>`. Existing cod
 11. Emit diagnostics and slow-match notifications
 ```
 
-## 3. Loading Enabled Strategy Sources
+## 3. Loading Strategy Sources
 
 Providers return raw strategy sources:
 
@@ -314,6 +314,8 @@ Evaluation steps:
 4. If operator cannot be applied to the value type, return `false` and a diagnostic.
 5. Respect per-condition timeout.
 
+Path resolution is registry-based. The evaluator must ask registered path resolvers for roots such as `attachments`, `environment`, `clipboard`, `assistant`, `visual`, and `extra`; it must not hard-code all future roots into the evaluator itself. If no resolver is registered for a path, the condition evaluates to `null` and emits a diagnostic.
+
 ## 12. String Operators
 
 Supported operators:
@@ -420,6 +422,8 @@ Evaluation:
 4. `visual.exists` returns `true` if at least one element matches, otherwise `false`.
 5. `visual.count` returns `true` if result count is within range, otherwise `false`.
 6. `visual.match` selects attribute values and applies normal operators.
+
+M5 may parse these shapes and return `null` with a diagnostic until the visual query milestone supplies the concrete resolver/evaluator.
 
 ## 16. Visual Query DSL Scope
 

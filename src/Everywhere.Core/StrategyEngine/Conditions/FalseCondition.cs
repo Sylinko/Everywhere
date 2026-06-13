@@ -7,5 +7,5 @@ public sealed class FalseCondition : IStrategyCondition
 {
     public static FalseCondition Shared { get; } = new();
 
-    public bool Evaluate(StrategyContext context) => false;
+    public bool? Evaluate(StrategyContext context) => false;
 }

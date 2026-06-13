@@ -18,7 +18,7 @@ public sealed class StrategyEngine(IStrategyRegistry registry, ILogger<StrategyE
         {
             try
             {
-                if (strategy.Condition?.Evaluate(context) is not false) results.Add(strategy);
+                if (strategy.Condition is null || strategy.Condition.Evaluate(context) is true) results.Add(strategy);
             }
             catch (Exception ex)
             {

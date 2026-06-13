@@ -97,7 +97,6 @@ Known gaps to address:
 ---
 schema: everywhere.strategy/v1
 id: user.file-manager.summarize-selection
-enabled: true
 
 name: "Summarize selected files"
 description: "Summarize files selected in the file manager"
@@ -157,10 +156,11 @@ The Strategy author only sees `extra.file_manager.*`. The implementation may sat
 
 | Document | Purpose |
 | --- | --- |
+| `00-Skills.md` | Lightweight Skills registry, management UI, prompt injection, and `skill://id` resolution. |
 | `01-Overview.md` | Product and architecture overview. |
 | `02-CoreConcepts.md` | Canonical runtime model and data contracts. |
 | `03-MatchingSystem.md` | Matching pipeline, three-valued logic, extra context, visual query evaluation. |
 | `04-Preprocessors.md` | Execution pipeline and preprocessor behavior. |
 | `05-ConfigurationFormat.md` | `.strategy.md` file format and DSL reference. |
-| `06-ImplementationPlan.md` | Direct implementation steps, testing plan, and acceptance criteria. |
-| `07-Skills.md` | Lightweight Skills registry, management UI, prompt injection, and `skill://id` resolution. |
+| `06-ConditionDslSpec.md` | Detailed Condition DSL grammar, binding, diagnostics, and compiler plan. |
+| `07-ImplementationPlan.md` | Direct implementation steps, testing plan, and acceptance criteria. |

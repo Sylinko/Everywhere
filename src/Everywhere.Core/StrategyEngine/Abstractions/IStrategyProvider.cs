@@ -12,8 +12,10 @@ public interface IStrategyProvider
     string Namespace { get; }
 
     /// <summary>
-    /// Gets all strategies available from this provider.
+    /// Gets strategies currently available from this provider.
     /// </summary>
-    /// <returns>An enumeration of strategies.</returns>
+    /// <remarks>
+    /// User enablement and provider-specific filtering should be applied here before strategies reach the registry.
+    /// </remarks>
     IEnumerable<Strategy> GetStrategies();
 }

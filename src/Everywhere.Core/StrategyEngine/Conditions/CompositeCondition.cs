@@ -17,7 +17,7 @@ public sealed class CompositeCondition : IStrategyCondition
     /// </summary>
     public required IReadOnlyList<IStrategyCondition> Conditions { get; init; }
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         if (Conditions.Count == 0)
         {
@@ -26,8 +26,8 @@ public sealed class CompositeCondition : IStrategyCondition
 
         return Logic switch
         {
-            CompositeLogic.And => Conditions.AsValueEnumerable().All(c => c.Evaluate(context)),
-            CompositeLogic.Or => Conditions.AsValueEnumerable().Any(c => c.Evaluate(context)),
+            CompositeLogic.And => Conditions.AsValueEnumerable().All(c => c.Evaluate(context) is true),
+            CompositeLogic.Or => Conditions.AsValueEnumerable().Any(c => c.Evaluate(context) is true),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

@@ -7,5 +7,6 @@ public sealed class NotCondition : IStrategyCondition
 {
     public required IStrategyCondition Inner { get; init; }
 
-    public bool Evaluate(StrategyContext context) => !Inner.Evaluate(context);
+    public bool? Evaluate(StrategyContext context) =>
+        Inner.Evaluate(context) is { } value ? !value : null;
 }

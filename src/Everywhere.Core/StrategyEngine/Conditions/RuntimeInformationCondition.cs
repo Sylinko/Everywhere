@@ -15,7 +15,7 @@ public sealed class RuntimeInformationCondition : IStrategyCondition
     /// </summary>
     public Architecture? Architecture { get; init; }
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         if (OS.HasValue && !RuntimeInformation.IsOSPlatform(OS.Value))
         {

@@ -1,6 +1,6 @@
 using Everywhere.Skills;
 
-namespace Everywhere.Core.Tests;
+namespace Everywhere.Core.Tests.Skills;
 
 public class SkillParserTests
 {
@@ -149,6 +149,61 @@ public class SkillParserTests
         {
             Assert.That(result.Metadata["metadata.author"], Is.EqualTo("Codex Team"));
             Assert.That(result.Metadata["metadata.version"], Is.EqualTo("2.0.0"));
+        });
+    }
+
+    [Test]
+    public void Parse_InvalidYamlReturnsDiagnosticAndUsesMarkdownFallbacks()
+    {
+        var result = SkillParser.Parse(
+            @"C:\skills\broken\SKILL.md",
+            "broken",
+            """
+            ---
+            name: [
+            ---
+
+            # Fallback Name
+
+            Fallback description.
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.FrontmatterName, Is.Null);
+            Assert.That(result.HeadingName, Is.EqualTo("Fallback Name"));
+            Assert.That(result.FirstParagraph, Is.EqualTo("Fallback description."));
+            Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Id), Does.Contain("skill.invalid_yaml"));
+        });
+    }
+
+    [Test]
+    public void Parse_IgnoresComplexMetadataValues()
+    {
+        var result = SkillParser.Parse(
+            @"C:\skills\metadata\SKILL.md",
+            "metadata",
+            """
+            ---
+            name: metadata
+            description: Valid description.
+            tags:
+              - a
+              - b
+            metadata:
+              author: Everywhere
+              links:
+                - https://example.com
+            ---
+
+            Body.
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Metadata.ContainsKey("tags"), Is.False);
+            Assert.That(result.Metadata["metadata.author"], Is.EqualTo("Everywhere"));
+            Assert.That(result.Metadata.ContainsKey("metadata.links"), Is.False);
         });
     }
 }

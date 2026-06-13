@@ -2,7 +2,7 @@ using Everywhere.AI;
 using Everywhere.AI.Configurator;
 using Everywhere.Views;
 
-namespace Everywhere.Core.Tests;
+namespace Everywhere.Core.Tests.AI;
 
 [TestFixture]
 public class OfficialModelDefinitionTests

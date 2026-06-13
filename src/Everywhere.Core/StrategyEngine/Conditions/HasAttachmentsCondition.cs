@@ -17,7 +17,7 @@ public sealed class HasAttachmentsCondition : IStrategyCondition
     /// </summary>
     public AttachmentType? Type { get; init; }
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         var attachments = Type switch
         {

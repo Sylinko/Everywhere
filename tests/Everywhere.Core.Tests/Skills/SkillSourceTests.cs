@@ -2,7 +2,7 @@ using Everywhere.Skills;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
-namespace Everywhere.Core.Tests;
+namespace Everywhere.Core.Tests.Skills;
 
 public class SkillSourceTests
 {

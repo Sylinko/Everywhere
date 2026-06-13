@@ -14,9 +14,9 @@ public sealed class GroupedCondition : IStrategyCondition
     /// </summary>
     public required IReadOnlyList<IReadOnlyList<IStrategyCondition>> Groups { get; init; }
 
-    public bool Evaluate(StrategyContext context)
+    public bool? Evaluate(StrategyContext context)
     {
         // OR between groups, AND within groups
-        return Groups.AsValueEnumerable().Any(group => group.AsValueEnumerable().All(c => c.Evaluate(context)));
+        return Groups.AsValueEnumerable().Any(group => group.AsValueEnumerable().All(c => c.Evaluate(context) is true));
     }
 }

@@ -16,6 +16,11 @@ public static class StrategyEngineServiceCollectionExtensions
         // Register core services
         services.AddSingleton<IStrategyRegistry, StrategyRegistry>();
         services.AddSingleton<IStrategyEngine, StrategyEngine>();
+        services.AddSingleton<IStrategyDefinitionNormalizer, StrategyDefinitionV1Normalizer>();
+        services.AddSingleton<IStrategySourceResolver, RelativeFileStrategySourceResolver>();
+        services.AddSingleton<IStrategySourceResolver, AbsoluteFileStrategySourceResolver>();
+        services.AddSingleton<IStrategySourceResolver, SkillStrategySourceResolver>();
+        services.AddSingleton<IStrategySourceResolver, UnsupportedUrlStrategySourceResolver>();
 
         // Register built-in strategies
         services.AddSingleton<IStrategyProvider, GlobalStrategyProvider>();
