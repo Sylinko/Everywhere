@@ -20,21 +20,25 @@ namespace Everywhere.Chat;
 [Union(3, typeof(FileAttachment))]
 public abstract partial class ChatAttachment(IDynamicResourceKey headerKey) : ObservableObject
 {
+    [JsonIgnore]
     public abstract LucideIconKind Icon { get; }
 
     [Key(0)]
+    [JsonIgnore]
     public virtual IDynamicResourceKey HeaderKey => headerKey;
 
     /// <summary>
     /// Indicates whether the attachment is presently focused in the UI.
     /// </summary>
     [IgnoreMember]
+    [JsonIgnore]
     public bool IsPrimary { get; set; }
 
     /// <summary>
     /// The opacity that bind to the view for animation.
     /// </summary>
     [IgnoreMember]
+    [JsonIgnore]
     [ObservableProperty]
     public partial double Opacity { get; set; } = 1d;
 }
@@ -49,18 +53,21 @@ public partial class VisualElementAttachment : ChatAttachment
     /// The text representation of the visual element.
     /// </summary>
     [Key(2)]
+    [JsonIgnore]
     public string? Content { get; set; }
 
     /// <summary>
     /// Ignore this property during serialization because it should already be converted into prompts and shouldn't appear in history.
     /// </summary>
     [IgnoreMember]
+    [JsonIgnore]
     public ResilientReference<IVisualElement>? Element { get; }
 
     /// <summary>
     /// Indicates whether the visual element is valid.
     /// </summary>
     [IgnoreMember]
+    [JsonIgnore]
     public bool IsElementValid => Element?.Target is not null;
 
     [SerializationConstructor]
@@ -143,6 +150,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     public override LucideIconKind Icon => LucideIconKind.TextCursorInput;
 
     [Key(0)]
+    [JsonPropertyName("text")]
     public string Text { get; }
 
     [SerializationConstructor]
@@ -222,6 +230,7 @@ public sealed partial class TextAttachment(IDynamicResourceKey headerKey, string
     public override LucideIconKind Icon => LucideIconKind.TextInitial;
 
     [Key(1)]
+    [JsonPropertyName("text")]
     public string Text => text;
 }
 
@@ -245,6 +254,7 @@ public sealed partial class FileAttachment(
     public override LucideIconKind Icon => LucideIconKind.File;
 
     [Key(1)]
+    [JsonPropertyName("path")]
     public string FilePath
     {
         get;
@@ -256,9 +266,11 @@ public sealed partial class FileAttachment(
     } = filePath;
 
     [Key(2)]
+    [JsonIgnore]
     public string Sha256 { get; } = sha256;
 
     [Key(3)]
+    [JsonPropertyName("mimeType")]
     public string MimeType { get; } = FileUtilities.VerifyMimeType(mimeType);
 
     /// <summary>
@@ -266,7 +278,14 @@ public sealed partial class FileAttachment(
     /// e.g. From clipboard, downloaded from URL, etc.
     /// </summary>
     [Key(4)]
+    [JsonIgnore]
     public string? Description { get; set; } = description;
+
+    [JsonPropertyName("name")]
+    public string Name => Path.GetFileName(FilePath);
+
+    [JsonPropertyName("extension")]
+    public string Extension => Path.GetExtension(FilePath);
 
     [JsonIgnore]
     [IgnoreMember]

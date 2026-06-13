@@ -1,3 +1,4 @@
+using Everywhere.I18N;
 using Everywhere.StrategyEngine;
 
 namespace Everywhere.Core.Tests.StrategyEngine;
@@ -12,8 +13,8 @@ public class StrategyDocumentParserTests
             """
             ---
             schema: everywhere.strategy/v1
-            id: user.demo
-            name: Demo
+            name: demo
+            title: "Demo title"
             priority: 10
             preprocessors:
               - selected-text
@@ -29,12 +30,60 @@ public class StrategyDocumentParserTests
             Assert.That(document.Diagnostics, Is.Empty);
             Assert.That(document.Schema, Is.EqualTo(StrategyDefinitionV1.DefaultSchema));
             Assert.That(document.HasBodySection, Is.True);
-            Assert.That(definition.Id, Is.EqualTo("user.demo"));
-            Assert.That(definition.Name, Is.EqualTo("Demo"));
+            Assert.That(definition.Name, Is.EqualTo("demo"));
+            Assert.That(definition.TitleKey, Is.TypeOf<DirectResourceKey>());
+            Assert.That(definition.TitleKey?.ToString(), Is.EqualTo("Demo title"));
             Assert.That(definition.Priority, Is.EqualTo(10));
             Assert.That(definition.Preprocessors, Is.EqualTo(new[] { "selected-text" }));
             Assert.That(definition.Body, Is.EqualTo("\nBody."));
         });
+    }
+
+    [Test]
+    public void Parse_TitleMappingCreatesJsonDynamicResourceKey()
+    {
+        var document = StrategyDocumentParser.Parse(
+            @"C:\strategies\demo.strategy.md",
+            """
+            ---
+            name: demo
+            title:
+              en: Demo
+              zh-hans: 演示
+            ---
+            Body.
+            """,
+            "user");
+
+        var definition = (StrategyDefinitionV1)document.Definition;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(document.Diagnostics, Is.Empty);
+            Assert.That(definition.TitleKey, Is.TypeOf<JsonDynamicResourceKey>());
+            var title = (JsonDynamicResourceKey)definition.TitleKey!;
+            Assert.That(title["en"], Is.EqualTo("Demo"));
+            Assert.That(title["zh-hans"], Is.EqualTo("演示"));
+        });
+    }
+
+    [Test]
+    public void Parse_InvalidTitleShapeReturnsDiagnostic()
+    {
+        var document = StrategyDocumentParser.Parse(
+            @"C:\strategies\demo.strategy.md",
+            """
+            ---
+            name: demo
+            title:
+              en:
+                nested: bad
+            ---
+            Body.
+            """,
+            "user");
+
+        Assert.That(document.Diagnostics.Select(diagnostic => diagnostic.Code), Does.Contain("strategy.invalid_title"));
     }
 
     [Test]
@@ -60,8 +109,7 @@ public class StrategyDocumentParserTests
             @"C:\strategies\tools.strategy.md",
             """
             ---
-            id: user.tools
-            name: Tools
+            name: tools
             tools:
               builtin.web.*: yes
             ---
@@ -79,8 +127,7 @@ public class StrategyDocumentParserTests
             @"C:\strategies\duration.strategy.md",
             """
             ---
-            id: user.duration
-            name: Duration
+            name: duration
             options:
               matchingTimeout: 1m
             ---
@@ -96,7 +143,7 @@ public class StrategyDocumentParserTests
     {
         var document = StrategyDocumentParser.Parse(
             @"C:\strategies\body.strategy.md",
-            "---\r\nid: user.body\r\nname: Body\r\n---\r\n\r\nLine 1\r\nLine 2\r\n",
+            "---\r\nname: body\r\n---\r\n\r\nLine 1\r\nLine 2\r\n",
             "user");
 
         Assert.Multiple(() =>
@@ -113,8 +160,7 @@ public class StrategyDocumentParserTests
             @"C:\strategies\metadata.strategy.md",
             """
             ---
-            id: user.metadata
-            name: Metadata
+            name: metadata
             author: Everywhere
             custom:
               nested: value

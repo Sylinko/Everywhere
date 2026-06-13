@@ -13,14 +13,6 @@ public sealed record StrategyDefinitionV1
     public string Schema { get; init; } = DefaultSchema;
 
     /// <summary>
-    /// Stable authoring ID before provider namespacing.
-    /// </summary>
-    /// <remarks>
-    /// A user file may declare <c>id: research.summary</c>; normalization prefixes it with the provider namespace when needed.
-    /// </remarks>
-    public string? Id { get; init; }
-
-    /// <summary>
     /// Optional source to derive this definition from.
     /// </summary>
     /// <remarks>
@@ -29,6 +21,11 @@ public sealed record StrategyDefinitionV1
     public StrategyFromReference? From { get; init; }
 
     public string? Name { get; init; }
+
+    /// <summary>
+    /// Optional display title. When omitted, <see cref="Name"/> is used as the display key.
+    /// </summary>
+    public IDynamicResourceKey? TitleKey { get; init; }
 
     public string? Description { get; init; }
 
@@ -113,4 +110,9 @@ public sealed record StrategyOptionsDefinitionV1
     /// Extra context collection budget, for example <c>200ms</c>.
     /// </summary>
     public string? ExtraTimeout { get; init; }
+
+    /// <summary>
+    /// Per-preprocessor execution budget, for example <c>2s</c>.
+    /// </summary>
+    public string? PreprocessorTimeout { get; init; }
 }

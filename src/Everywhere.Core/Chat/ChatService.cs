@@ -103,12 +103,14 @@ public sealed partial class ChatService : IChatService
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
 
-                var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+                var strategyMessage = message.As<UserStrategyChatMessage>();
+                var systemPromptOverride = strategyMessage?.Strategy.SystemPrompt;
                 await GenerateAsync(
                     chatContext,
                     customAssistant,
                     assistantChatMessage,
                     systemPromptOverride: systemPromptOverride,
+                    preprocessorResult: strategyMessage?.PreprocessorResult,
                     cancellationToken: cancellationToken);
             },
             _logger.ToExceptionHandler());
@@ -143,12 +145,14 @@ public sealed partial class ChatService : IChatService
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
 
-                var systemPromptOverride = newMessage.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+                var strategyMessage = newMessage.As<UserStrategyChatMessage>();
+                var systemPromptOverride = strategyMessage?.Strategy.SystemPrompt;
                 await GenerateAsync(
                     chatContext,
                     customAssistant,
                     assistantChatMessage,
                     systemPromptOverride: systemPromptOverride,
+                    preprocessorResult: strategyMessage?.PreprocessorResult,
                     cancellationToken: cancellationToken);
             },
             _logger.ToExceptionHandler());
@@ -385,6 +389,7 @@ public sealed partial class ChatService : IChatService
         Assistant assistant,
         AssistantChatMessage assistantChatMessage,
         string? systemPromptOverride = null,
+        PreprocessorResult? preprocessorResult = null,
         bool enableNotifications = true,
         CancellationToken cancellationToken = default)
     {
@@ -409,7 +414,7 @@ public sealed partial class ChatService : IChatService
                 (assistant is ISystemPromptProvider { SystemPrompt: { Length: > 0 } providedSystemPrompt } ?
                     providedSystemPrompt :
                     Prompts.DefaultSystemPrompt);
-            var systemPrompt = promptRenderer.RenderSystemPrompt(promptTemplate);
+            var systemPrompt = promptRenderer.RenderSystemPrompt(promptTemplate, preprocessorResult);
 
             while (true)
             {
@@ -1115,31 +1120,14 @@ public sealed partial class ChatService : IChatService
         public static string RenderPrompt(string prompt, Func<string, string?> resolver) =>
             PromptTemplateRenderer.Render(prompt, resolver);
 
-        public string RenderSystemPrompt(string prompt)
+        public string RenderSystemPrompt(string prompt, PreprocessorResult? preprocessorResult = null)
         {
-            return RenderPrompt(prompt, key => promptVariables.TryGetValue(key, out var getter) ? getter() : null);
+            return StrategyPromptRenderer.RenderSystemPrompt(prompt, promptVariables, preprocessorResult);
         }
 
         public string RenderStrategyUserPrompt(string strategyBody, string? userInput, PreprocessorResult? preprocessorResult)
         {
-            var renderedStrategy = RenderPrompt(strategyBody, key =>
-            {
-                if (key == "Argument") return userInput ?? string.Empty;
-                if (preprocessorResult?.Variables?.TryGetValue(key, out var val) == true) return val;
-                if (promptVariables.TryGetValue(key, out var getter)) return getter();
-                return null;
-            });
-
-            if (string.IsNullOrEmpty(userInput))
-            {
-                return renderedStrategy;
-            }
-
-            return new StringBuilder(renderedStrategy)
-                .AppendLine()
-                .AppendLine("<UserRequestStart>")
-                .Append(userInput)
-                .ToString();
+            return StrategyPromptRenderer.RenderUserPrompt(strategyBody, userInput, preprocessorResult, promptVariables);
         }
     }
 }

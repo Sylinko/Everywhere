@@ -58,6 +58,6 @@ internal static partial class PromptTemplateRenderer
             });
     }
 
-    [GeneratedRegex(@"(?<!\{)\{(\w+)\}(?!\})")]
+    [GeneratedRegex(@"(?<!\{)\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_-]*)*)\}(?!\})")]
     private static partial Regex PromptTemplateRegex();
 }

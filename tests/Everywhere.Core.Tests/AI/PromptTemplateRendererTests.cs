@@ -117,6 +117,16 @@ public class PromptTemplateRendererTests
     }
 
     [Test]
+    public void Render_PathStyleVariable_ResolvesSinglePass()
+    {
+        var result = PromptTemplateRenderer.Render(
+            "{preprocess.selection.text}",
+            Resolver(Map(("preprocess.selection.text", "selected"))));
+
+        Assert.That(result, Is.EqualTo("selected"));
+    }
+
+    [Test]
     public void Render_DepthCapExceeded_StopsGracefully()
     {
         // A finite-but-too-deep, non-cyclic chain V0 -> {V1} -> {V2} -> ... longer than MaxDepth.

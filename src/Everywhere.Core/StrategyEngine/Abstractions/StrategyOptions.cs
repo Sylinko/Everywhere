@@ -14,7 +14,8 @@ public sealed record StrategyOptions
         ConditionTimeout = TimeSpan.FromMilliseconds(80),
         RegexTimeout = TimeSpan.FromMilliseconds(50),
         VisualQueryTimeout = TimeSpan.FromMilliseconds(120),
-        ExtraTimeout = TimeSpan.FromMilliseconds(200)
+        ExtraTimeout = TimeSpan.FromMilliseconds(200),
+        PreprocessorTimeout = TimeSpan.FromSeconds(2)
     };
 
     /// <summary>
@@ -41,4 +42,9 @@ public sealed record StrategyOptions
     /// Budget for on-demand extra context collection.
     /// </summary>
     public required TimeSpan ExtraTimeout { get; init; }
+
+    /// <summary>
+    /// Budget for each execution-time preprocessor.
+    /// </summary>
+    public required TimeSpan PreprocessorTimeout { get; init; }
 }

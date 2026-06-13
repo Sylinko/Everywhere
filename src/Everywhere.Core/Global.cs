@@ -12,6 +12,7 @@ global using LocaleKey = Everywhere.Core.I18N.LocaleKey;
 global using LocaleResolver = Everywhere.Core.I18N.LocaleResolver;
 global using Everywhere.ViewModels;
 global using ShadUI.Extensions;
+global using ZLinq;
 using Avalonia.Metadata;
 
 [assembly: XmlnsDefinition("https://github.com/avaloniaui", "Everywhere.MarkupExtensions")]

@@ -1,5 +1,7 @@
 ﻿using Everywhere.AI;
 
+using Everywhere.StrategyEngine;
+
 namespace Everywhere.Chat;
 
 public interface IChatService
@@ -43,6 +45,7 @@ public interface IChatService
         Assistant assistant,
         AssistantChatMessage assistantChatMessage,
         string? systemPromptOverride = null,
+        PreprocessorResult? preprocessorResult = null,
         bool enableNotifications = true,
         CancellationToken cancellationToken = default);
 }

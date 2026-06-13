@@ -2,7 +2,6 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.Logging;
-using ZLinq;
 
 namespace Everywhere.Skills;
 

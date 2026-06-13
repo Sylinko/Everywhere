@@ -15,9 +15,11 @@ public sealed partial class UserStrategyChatMessage : UserChatMessage
     public UserStrategyChatMessage(
         string content,
         IReadOnlyList<ChatAttachment> attachments,
-        Strategy strategy) : base(content, attachments)
+        Strategy strategy,
+        PreprocessorResult? preprocessorResult = null) : base(content, attachments)
     {
         Strategy = strategy;
+        PreprocessorResult = preprocessorResult;
     }
 
     [SerializationConstructor]
@@ -26,7 +28,7 @@ public sealed partial class UserStrategyChatMessage : UserChatMessage
         IReadOnlyList<ChatAttachment> attachments,
         DateTimeOffset createdAt,
         Strategy strategy,
-        PreprocessorResult preprocessorResult) : base(content, attachments)
+        PreprocessorResult? preprocessorResult) : base(content, attachments)
     {
         CreatedAt = createdAt;
         Strategy = strategy;

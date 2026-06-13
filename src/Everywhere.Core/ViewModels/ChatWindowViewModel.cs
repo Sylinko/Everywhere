@@ -16,6 +16,7 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.I18N;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
@@ -107,6 +108,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IVisualElementContext _visualElementContext;
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
+    private readonly IStrategyPreprocessorExecutor _strategyPreprocessors;
     private readonly IGreetings _greetings;
     private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
@@ -130,6 +132,7 @@ public sealed partial class ChatWindowViewModel :
         IVisualElementContext visualElementContext,
         IBlobStorage blobStorage,
         IStrategyEngine strategyEngine,
+        IStrategyPreprocessorExecutor strategyPreprocessors,
         IGreetings greetings,
         ILogger<ChatWindowViewModel> logger)
     {
@@ -142,6 +145,7 @@ public sealed partial class ChatWindowViewModel :
         _visualElementContext = visualElementContext;
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
+        _strategyPreprocessors = strategyPreprocessors;
         _greetings = greetings;
         _notificationService = notificationService;
         _logger = logger;
@@ -565,30 +569,48 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void SendMessage(string? message)
+    private async Task SendMessage(string? message)
     {
         if (message is null) return;
         message = message.Trim();
 
         if (message.Length == 0 && SelectedStrategy is null) return;
 
-        ChatAttachment[]? attachments = null;
-        _chatAttachmentsSource.Edit(list =>
-        {
-            attachments = [..list];
-            list.Clear();
-        });
+        var attachments = ChatAttachments.ToArray();
 
         UserChatMessage userMessage;
         if (SelectedStrategy is { } selectedStrategy)
         {
-            userMessage = new UserStrategyChatMessage(message, attachments!, selectedStrategy);
+            PreprocessorResult? preprocessorResult;
+            try
+            {
+                IsBusy = true;
+                preprocessorResult = await ExecuteStrategyPreprocessorsAsync(
+                    selectedStrategy,
+                    message,
+                    attachments,
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to execute strategy preprocessors");
+                ToastExceptionHandler.HandleException(ex);
+                return;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+
+            userMessage = new UserStrategyChatMessage(message, attachments, selectedStrategy, preprocessorResult);
             SelectedStrategy = null;
         }
         else
         {
-            userMessage = new UserChatMessage(message, attachments!);
+            userMessage = new UserChatMessage(message, attachments);
         }
+
+        _chatAttachmentsSource.Edit(list => list.Clear());
 
         if (EditingUserMessageNode is { } oldNode)
         {
@@ -599,6 +621,48 @@ public sealed partial class ChatWindowViewModel :
         {
             _chatService.SendMessage(userMessage);
         }
+    }
+
+    private async Task<PreprocessorResult?> ExecuteStrategyPreprocessorsAsync(
+        Strategy strategy,
+        string? userInput,
+        IReadOnlyList<ChatAttachment> attachments,
+        CancellationToken cancellationToken)
+    {
+        if (strategy.Preprocessors.Count == 0)
+        {
+            return null;
+        }
+
+        var result = await _strategyPreprocessors.ExecuteAsync(
+            new StrategyExecutionContext
+            {
+                Strategy = strategy,
+                StrategyContext = StrategyContext.FromAttachments(attachments),
+                UserInput = userInput,
+                CancellationToken = cancellationToken
+            },
+            cancellationToken);
+
+        foreach (var diagnostic in result.Diagnostics)
+        {
+            if (diagnostic.Severity == StrategyDiagnosticSeverity.Error)
+            {
+                var message = diagnostic.MessageKey?.ToString() ?? diagnostic.Code;
+                throw new HandledException(
+                    new InvalidOperationException(message),
+                    new DirectResourceKey(message),
+                    showDetails: false);
+            }
+
+            _logger.LogWarning(
+                "Strategy preprocessor diagnostic {Code} at {Path}: {Message}",
+                diagnostic.Code,
+                diagnostic.Path,
+                diagnostic.MessageKey);
+        }
+
+        return result.Result;
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]

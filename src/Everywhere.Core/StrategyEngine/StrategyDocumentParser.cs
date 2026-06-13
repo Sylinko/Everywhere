@@ -10,9 +10,9 @@ public static class StrategyDocumentParser
     private static readonly HashSet<string> KnownDefinitionKeys = new(StringComparer.OrdinalIgnoreCase)
     {
         "schema",
-        "id",
         "from",
         "name",
+        "title",
         "description",
         "icon",
         "priority",
@@ -85,9 +85,9 @@ public static class StrategyDocumentParser
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
 
         var schema = ReadString(values, "schema", filePath, providerId, diagnostics) ?? StrategyDefinitionV1.DefaultSchema;
-        var id = ReadString(values, "id", filePath, providerId, diagnostics);
         var from = ReadFrom(values, filePath, providerId, diagnostics);
         var name = ReadString(values, "name", filePath, providerId, diagnostics);
+        var title = ReadDynamicResourceKey(values, "title", filePath, providerId, diagnostics);
         var description = ReadString(values, "description", filePath, providerId, diagnostics);
         var icon = ReadString(values, "icon", filePath, providerId, diagnostics);
         var priority = ReadInt(values, "priority", filePath, providerId, diagnostics);
@@ -100,9 +100,9 @@ public static class StrategyDocumentParser
         return new StrategyDefinitionV1
         {
             Schema = schema,
-            Id = id,
             From = from,
             Name = name,
+            TitleKey = title,
             Description = description,
             Icon = icon,
             Priority = priority,
@@ -142,6 +142,56 @@ public static class StrategyDocumentParser
         return value;
     }
 
+    private static IDynamicResourceKey? ReadDynamicResourceKey(
+        IReadOnlyDictionary<string, object?> values,
+        string key,
+        string filePath,
+        string providerId,
+        List<StrategyDiagnostic> diagnostics)
+    {
+        if (!values.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        if (value is string text)
+        {
+            return new DirectResourceKey(text);
+        }
+
+        if (value is not IReadOnlyDictionary<string, object?> map)
+        {
+            diagnostics.Add(CreateDiagnostic(
+                "strategy.invalid_title",
+                "Strategy title must be a string or a mapping from locale name to string.",
+                filePath,
+                providerId,
+                path: "title"));
+            return null;
+        }
+
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (k, v) in map.AsValueEnumerable())
+        {
+            if (string.IsNullOrWhiteSpace(k) || v is not string titleText)
+            {
+                diagnostics.Add(CreateDiagnostic(
+                    "strategy.invalid_title",
+                    "Strategy title mapping keys must be non-empty strings and values must be strings.",
+                    filePath,
+                    providerId,
+                    path: string.IsNullOrWhiteSpace(k) ? "title" : $"title.{k}"));
+                continue;
+            }
+
+            result[k] = titleText;
+        }
+
+        return diagnostics.Any(diagnostic => diagnostic.Code == "strategy.invalid_title") ?
+            null :
+            new JsonDynamicResourceKey(result);
+    }
+
     private static StrategyFromReference? ReadFrom(
         IReadOnlyDictionary<string, object?> values,
         string filePath,
@@ -176,8 +226,7 @@ public static class StrategyDocumentParser
 
         var kind = StrategyFromReferenceKind.Auto;
         var kindValue = ReadString(map, "kind", filePath, providerId, diagnostics);
-        if (!string.IsNullOrWhiteSpace(kindValue) &&
-            !Enum.TryParse(kindValue, ignoreCase: true, out kind))
+        if (!string.IsNullOrWhiteSpace(kindValue) && !Enum.TryParse(kindValue, ignoreCase: true, out kind))
         {
             diagnostics.Add(CreateDiagnostic(
                 "strategy.invalid_from",
@@ -214,11 +263,11 @@ public static class StrategyDocumentParser
         }
 
         var result = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (key, toolValue) in map)
+        foreach (var (k, v) in map.AsValueEnumerable())
         {
-            if (toolValue is bool isAllowed)
+            if (v is bool isAllowed)
             {
-                result[key] = isAllowed;
+                result[k] = isAllowed;
                 continue;
             }
 
@@ -227,7 +276,7 @@ public static class StrategyDocumentParser
                 "Strategy tools values must be bool.",
                 filePath,
                 providerId,
-                path: $"tools.{key}"));
+                path: $"tools.{k}"));
         }
 
         return result;
@@ -263,7 +312,8 @@ public static class StrategyDocumentParser
             ConditionTimeout = ReadDurationString(map, "conditionTimeout", filePath, providerId, diagnostics),
             RegexTimeout = ReadDurationString(map, "regexTimeout", filePath, providerId, diagnostics),
             VisualQueryTimeout = ReadDurationString(map, "visualQueryTimeout", filePath, providerId, diagnostics),
-            ExtraTimeout = ReadDurationString(map, "extraTimeout", filePath, providerId, diagnostics)
+            ExtraTimeout = ReadDurationString(map, "extraTimeout", filePath, providerId, diagnostics),
+            PreprocessorTimeout = ReadDurationString(map, "preprocessorTimeout", filePath, providerId, diagnostics)
         };
 
         return options;

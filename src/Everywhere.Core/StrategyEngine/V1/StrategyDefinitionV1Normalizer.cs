@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Common.Frontmatter;
+using Everywhere.StrategyEngine.ConditionExpression;
 using Everywhere.StrategyEngine.Conditions;
 using Lucide.Avalonia;
 
@@ -9,13 +10,6 @@ namespace Everywhere.StrategyEngine;
 
 public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinitionNormalizer
 {
-    private readonly IReadOnlyList<IStrategyPathResolver> _pathResolvers;
-
-    public StrategyDefinitionV1Normalizer(IEnumerable<IStrategyPathResolver>? pathResolvers = null)
-    {
-        _pathResolvers = pathResolvers?.ToList() ?? [];
-    }
-
     public string Schema => StrategyDefinitionV1.DefaultSchema;
 
     public async Task<StrategyNormalizationResult> NormalizeAsync(
@@ -63,7 +57,6 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
         }
 
         var merged = Merge(sourceDefinition, currentDefinition, document.HasBodySection);
-        var id = ResolveId(merged.Id, document.Source, diagnostics);
         var name = merged.Name.NullIfWhiteSpace();
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -73,6 +66,10 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
                     "Strategy name is required after normalization.",
                     document.Source,
                     path: "name"));
+        }
+        else
+        {
+            ValidateName(name, document.Source, diagnostics);
         }
 
         var options = ResolveOptions(merged.Options, document.Source, diagnostics);
@@ -88,10 +85,10 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
         {
             Strategy = new Strategy
             {
-                Id = id,
+                Id = ResolveId(name!, document.Source),
                 Source = document.Source,
                 Includes = sourceDocument is null ? [] : [sourceDocument.Source],
-                NameKey = new DirectResourceKey(name),
+                NameKey = merged.TitleKey ?? new DirectResourceKey(name),
                 DescriptionKey = string.IsNullOrWhiteSpace(merged.Description) ? null : new DirectResourceKey(merged.Description),
                 Icon = icon,
                 Priority = merged.Priority ?? 0,
@@ -158,9 +155,9 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
         return source with
         {
             Schema = current.Schema,
-            Id = current.Id,
             From = current.From,
             Name = current.Name ?? source.Name,
+            TitleKey = current.TitleKey ?? source.TitleKey,
             Description = current.Description ?? source.Description,
             Icon = current.Icon ?? source.Icon,
             Priority = current.Priority ?? source.Priority,
@@ -187,7 +184,8 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
             ConditionTimeout = current.ConditionTimeout ?? source.ConditionTimeout,
             RegexTimeout = current.RegexTimeout ?? source.RegexTimeout,
             VisualQueryTimeout = current.VisualQueryTimeout ?? source.VisualQueryTimeout,
-            ExtraTimeout = current.ExtraTimeout ?? source.ExtraTimeout
+            ExtraTimeout = current.ExtraTimeout ?? source.ExtraTimeout,
+            PreprocessorTimeout = current.PreprocessorTimeout ?? source.PreprocessorTimeout
         };
     }
 
@@ -204,54 +202,20 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
         return result;
     }
 
-    private static string ResolveId(string? id, StrategySource source, List<StrategyDiagnostic> diagnostics)
+    private static void ValidateName(string name, StrategySource source, List<StrategyDiagnostic> diagnostics)
     {
-        var providerId = source.ProviderId;
-        var resolvedId = id.NullIfWhiteSpace() ?? $"{providerId}.{DeriveId(source)}";
-        if (!resolvedId.Contains('.', StringComparison.Ordinal))
-        {
-            resolvedId = $"{providerId}.{resolvedId}";
-        }
-
-        if (!providerId.Equals("builtin", StringComparison.OrdinalIgnoreCase) &&
-            resolvedId.StartsWith("builtin.", StringComparison.OrdinalIgnoreCase))
+        if (!StrategyNameRegex().IsMatch(name))
         {
             diagnostics.Add(
                 CreateDiagnostic(
-                    "strategy.invalid_id",
-                    "User-authored strategies cannot use the builtin namespace.",
+                    "strategy.invalid_name",
+                    "Strategy name contains invalid characters.",
                     source,
-                    path: "id"));
+                    path: "name"));
         }
-
-        if (!StrategyIdRegex().IsMatch(resolvedId))
-        {
-            diagnostics.Add(
-                CreateDiagnostic(
-                    "strategy.invalid_id",
-                    "Strategy id contains invalid characters.",
-                    source,
-                    path: "id"));
-        }
-
-        return resolvedId;
     }
 
-    private static string DeriveId(StrategySource source)
-    {
-        var name = source.Location.IsFile ?
-            Path.GetFileNameWithoutExtension(source.Location.LocalPath) :
-            source.Location.Segments.LastOrDefault()?.Trim('/') ?? "strategy";
-        if (name.EndsWith(".strategy", StringComparison.OrdinalIgnoreCase))
-        {
-            name = name[..^".strategy".Length];
-        }
-
-        var normalized = IdInvalidCharacterRegex()
-            .Replace(name.Trim().ToLowerInvariant(), "-")
-            .Trim('-', '.', '_');
-        return string.IsNullOrWhiteSpace(normalized) ? "strategy" : normalized;
-    }
+    private static string ResolveId(string name, StrategySource source) => $"{source.ProviderId}.{name}";
 
     private static StrategyOptions ResolveOptions(
         StrategyOptionsDefinitionV1? definition,
@@ -271,7 +235,9 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
             VisualQueryTimeout = ParseDuration(definition.VisualQueryTimeout, nameof(definition.VisualQueryTimeout), source, diagnostics) ??
                 StrategyOptions.Default.VisualQueryTimeout,
             ExtraTimeout = ParseDuration(definition.ExtraTimeout, nameof(definition.ExtraTimeout), source, diagnostics) ??
-                StrategyOptions.Default.ExtraTimeout
+                StrategyOptions.Default.ExtraTimeout,
+            PreprocessorTimeout = ParseDuration(definition.PreprocessorTimeout, nameof(definition.PreprocessorTimeout), source, diagnostics) ??
+                StrategyOptions.Default.PreprocessorTimeout
         };
     }
 
@@ -319,7 +285,7 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
             null => null,
             true => TrueCondition.Shared,
             false => FalseCondition.Shared,
-            _ => new StrategyConditionCompiler(_pathResolvers, options).Compile(when, source, diagnostics) // TODO
+            _ => new StrategyConditionCompiler(options).Compile(when, source, diagnostics)
         };
     }
 
@@ -341,10 +307,8 @@ public sealed partial class StrategyDefinitionV1Normalizer : IStrategyDefinition
         };
 
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]*$")]
-    private static partial Regex StrategyIdRegex();
+    private static partial Regex StrategyNameRegex();
 
-    [GeneratedRegex(@"[^a-z0-9._-]+")]
-    private static partial Regex IdInvalidCharacterRegex();
 }
 
 file static class StrategyDefinitionNormalizerStringExtensions

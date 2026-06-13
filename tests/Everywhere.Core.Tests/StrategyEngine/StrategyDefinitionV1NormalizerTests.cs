@@ -1,4 +1,5 @@
 using Everywhere.Collections;
+using Everywhere.I18N;
 using Everywhere.Skills;
 using Everywhere.StrategyEngine;
 using Lucide.Avalonia;
@@ -26,7 +27,6 @@ public class StrategyDefinitionV1NormalizerTests
             "Polite/polite.strategy.md",
             """
             ---
-            id: user.polite
             from: ./SKILL.md
             ---
             """);
@@ -52,9 +52,9 @@ public class StrategyDefinitionV1NormalizerTests
             "Base/rewrite.strategy.md",
             """
             ---
-            id: user.rewrite
             from: ./SKILL.md
-            name: Rewrite
+            name: rewrite
+            title: Rewrite
             ---
 
             Current body.
@@ -73,8 +73,8 @@ public class StrategyDefinitionV1NormalizerTests
             "Base/base.strategy.md",
             """
             ---
-            id: user.base
-            name: Base
+            name: base
+            title: Base
             icon: Info
             priority: 1
             when: false
@@ -88,9 +88,9 @@ public class StrategyDefinitionV1NormalizerTests
             "Base/current.strategy.md",
             """
             ---
-            id: user.current
             from: ./base.strategy.md
-            name: Current
+            name: current
+            title: Current
             icon: FileText
             priority: 90
             when: true
@@ -118,6 +118,33 @@ public class StrategyDefinitionV1NormalizerTests
     }
 
     [Test]
+    public async Task Normalize_TitleOverridesNameKey()
+    {
+        using var workspace = TestWorkspace.Create();
+        var strategyPath = workspace.Write(
+            "title.strategy.md",
+            """
+            ---
+            name: identity-name
+            title:
+              en: Display title
+              zh-hans: 显示标题
+            ---
+
+            Body.
+            """);
+
+        var result = await NormalizeFileAsync(strategyPath);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics.Where(diagnostic => diagnostic.Severity == StrategyDiagnosticSeverity.Error), Is.Empty);
+            Assert.That(result.Strategy!.NameKey, Is.TypeOf<JsonDynamicResourceKey>());
+            Assert.That(((JsonDynamicResourceKey)result.Strategy.NameKey)["en"], Is.EqualTo("Display title"));
+        });
+    }
+
+    [Test]
     public async Task Normalize_MissingCurrentBodyInheritsSourceBody()
     {
         using var workspace = TestWorkspace.Create();
@@ -126,9 +153,9 @@ public class StrategyDefinitionV1NormalizerTests
             "Base/inherit.strategy.md",
             """
             ---
-            id: user.inherit
             from: ./SKILL.md
-            name: Inherit
+            name: inherit
+            title: Inherit
             ---
             """);
 
@@ -146,18 +173,18 @@ public class StrategyDefinitionV1NormalizerTests
             "Nested/base.strategy.md",
             """
             ---
-            id: user.base
             from: ./SKILL.md
-            name: Base
+            name: base
+            title: Base
             ---
             """);
         var strategyPath = workspace.Write(
             "Nested/current.strategy.md",
             """
             ---
-            id: user.current
             from: ./base.strategy.md
-            name: Current
+            name: current
+            title: Current
             ---
             """);
 
@@ -178,9 +205,9 @@ public class StrategyDefinitionV1NormalizerTests
             "managed.strategy.md",
             """
             ---
-            id: user.managed
             from: skill://codex/deepwiki
-            name: Managed
+            name: managed
+            title: Managed
             ---
             """);
         var skill = CreateSkill("codex.deepwiki", SkillSourceRoot.Codex, "Managed skill body.");
@@ -203,9 +230,9 @@ public class StrategyDefinitionV1NormalizerTests
             "managed.strategy.md",
             """
             ---
-            id: user.managed
             from: skill://deepwiki
-            name: Managed
+            name: managed
+            title: Managed
             ---
             """);
 
@@ -224,15 +251,14 @@ public class StrategyDefinitionV1NormalizerTests
     }
 
     [Test]
-    public async Task Normalize_RejectsBuiltinNamespaceForUserProvider()
+    public async Task Normalize_InvalidNameProducesDiagnostic()
     {
         using var workspace = TestWorkspace.Create();
         var strategyPath = workspace.Write(
             "bad.strategy.md",
             """
             ---
-            id: builtin.bad
-            name: Bad
+            name: bad name
             ---
 
             Body.
@@ -243,7 +269,7 @@ public class StrategyDefinitionV1NormalizerTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Strategy, Is.Null);
-            Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Code), Does.Contain("strategy.invalid_id"));
+            Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Code), Does.Contain("strategy.invalid_name"));
         });
     }
 

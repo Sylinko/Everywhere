@@ -19,6 +19,7 @@ namespace Everywhere.I18N;
 [Union(1, typeof(DirectResourceKey))]
 [Union(2, typeof(FormattedDynamicResourceKey))]
 [Union(3, typeof(AggregateDynamicResourceKey))]
+[Union(4, typeof(JsonDynamicResourceKey))]
 public partial interface IDynamicResourceKey : IObservable<object?>
 {
     /// <summary>

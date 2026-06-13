@@ -16,6 +16,9 @@ public static class StrategyEngineServiceCollectionExtensions
         // Register core services
         services.AddSingleton<IStrategyRegistry, StrategyRegistry>();
         services.AddSingleton<IStrategyEngine, StrategyEngine>();
+        services.AddSingleton<IUserStrategySource, UserStrategySource>();
+        services.AddSingleton<IStrategyPreprocessorRegistry, StrategyPreprocessorRegistry>();
+        services.AddSingleton<IStrategyPreprocessorExecutor, StrategyPreprocessorExecutor>();
         services.AddSingleton<IStrategyDefinitionNormalizer, StrategyDefinitionV1Normalizer>();
         services.AddSingleton<IStrategySourceResolver, RelativeFileStrategySourceResolver>();
         services.AddSingleton<IStrategySourceResolver, AbsoluteFileStrategySourceResolver>();
@@ -23,6 +26,7 @@ public static class StrategyEngineServiceCollectionExtensions
         services.AddSingleton<IStrategySourceResolver, UnsupportedUrlStrategySourceResolver>();
 
         // Register built-in strategies
+        services.AddSingleton<IStrategyProvider, UserStrategyProvider>();
         services.AddSingleton<IStrategyProvider, GlobalStrategyProvider>();
         services.AddSingleton<IStrategyProvider, BrowserStrategyProvider>();
         services.AddSingleton<IStrategyProvider, CodeEditorStrategyProvcider>();

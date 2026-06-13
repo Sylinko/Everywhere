@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using Everywhere.Chat;
 using Everywhere.Interop;
 using ZLinq;
@@ -32,6 +33,12 @@ public sealed class StrategyContext
     /// Additional metadata for custom matching logic.
     /// </summary>
     public IReadOnlyDictionary<string, object> Metadata { get; init; } = new Dictionary<string, object>();
+
+    /// <summary>
+    /// Extra context already collected for strategy matching.
+    /// Additional deferred roots may still be collected lazily by the DSL runtime.
+    /// </summary>
+    public ExtraContextSnapshot? ExtraContext { get; init; }
 
     /// <summary>
     /// Creates a StrategyContext from a list of attachments.
@@ -121,8 +128,8 @@ public sealed class StrategyContext
 /// <param name="ExecutablePath">Full path to the executable, if available.</param>
 /// <param name="MainWindowTitle">The main window title, if available.</param>
 public record ProcessInfo(
-    int ProcessId,
-    string ProcessName,
-    string? ExecutablePath,
-    string? MainWindowTitle
+    [property: JsonPropertyName("processId")] int ProcessId,
+    [property: JsonPropertyName("name")] string ProcessName,
+    [property: JsonPropertyName("executablePath")] string? ExecutablePath,
+    [property: JsonPropertyName("mainWindowTitle")] string? MainWindowTitle
 );

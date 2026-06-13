@@ -19,6 +19,7 @@ public class StrategyModelTests
             Assert.That(options.RegexTimeout, Is.EqualTo(TimeSpan.FromMilliseconds(50)));
             Assert.That(options.VisualQueryTimeout, Is.EqualTo(TimeSpan.FromMilliseconds(120)));
             Assert.That(options.ExtraTimeout, Is.EqualTo(TimeSpan.FromMilliseconds(200)));
+            Assert.That(options.PreprocessorTimeout, Is.EqualTo(TimeSpan.FromSeconds(2)));
         });
     }
 
@@ -64,7 +65,7 @@ public class StrategyModelTests
 
         var strategies = engine.GetStrategies(StrategyContext.FromAttachments([]));
 
-        Assert.That(strategies.Select(strategy => strategy.Id), Is.EqualTo(new[] { "builtin.provider-supplied" }));
+        Assert.That(strategies.Select(s => s.Id), Is.EqualTo(["builtin.provider-supplied"]));
     }
 
     [Test]
@@ -76,7 +77,17 @@ public class StrategyModelTests
             SystemPrompt = "Use concise prose.",
             Preprocessors = ["selected-text"]
         };
-        ChatMessage message = new UserStrategyChatMessage("argument", [], strategy);
+        ChatMessage message = new UserStrategyChatMessage(
+            "argument",
+            [],
+            strategy,
+            new PreprocessorResult
+            {
+                Variables = new Dictionary<string, string>
+                {
+                    ["preprocess.selection.text"] = "selected"
+                }
+            });
 
         var bytes = MessagePackSerializer.Serialize(message);
         var roundTripped = MessagePackSerializer.Deserialize<ChatMessage>(bytes);
@@ -92,6 +103,7 @@ public class StrategyModelTests
             Assert.That(strategyMessage.Strategy.Preprocessors, Is.EqualTo(new[] { "selected-text" }));
             Assert.That(strategyMessage.Strategy.Includes, Is.Empty);
             Assert.That(strategyMessage.Strategy.Options, Is.EqualTo(StrategyOptions.Default));
+            Assert.That(strategyMessage.PreprocessorResult?.Variables?["preprocess.selection.text"], Is.EqualTo("selected"));
         });
     }
 

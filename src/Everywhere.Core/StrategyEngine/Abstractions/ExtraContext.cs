@@ -1,4 +1,42 @@
+using Everywhere.I18N;
+
 namespace Everywhere.StrategyEngine;
+
+public sealed record StrategyContextRequirements
+{
+    public bool NeedsClipboard { get; init; }
+
+    public bool NeedsVisualTree { get; init; }
+
+    public IReadOnlySet<string> ExtraRoots { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
+    public IReadOnlySet<string> AssistantPaths { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+}
+
+public sealed record ExtraContextRequest
+{
+    public required string PublicRoot { get; init; }
+
+    public IReadOnlyList<string> RequiredPaths { get; init; } = [];
+
+    public required TimeSpan Timeout { get; init; }
+}
+
+public interface IExtraContextProvider
+{
+    string Id { get; }
+
+    string PublicRoot { get; }
+
+    IDynamicResourceKey PermissionDescriptionKey { get; }
+
+    bool CanCollect(StrategyContext baseContext, ExtraContextRequest request);
+
+    Task<ExtraContextNode?> CollectAsync(
+        StrategyContext baseContext,
+        ExtraContextRequest request,
+        CancellationToken cancellationToken);
+}
 
 /// <summary>
 /// Snapshot of extra context collected on demand for matching and execution.
