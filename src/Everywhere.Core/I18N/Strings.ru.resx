@@ -3091,4 +3091,7 @@
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>Установить альтернативную клавишу</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>Ввод, вывод и общий итог - это сумма текущего раунда (включая многократные вызовы инструментов и т.д.), которая не обязательно отражает контекст.</value>
+    </data>
 </root>

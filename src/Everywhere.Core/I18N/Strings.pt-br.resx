@@ -3092,4 +3092,7 @@ Data de lançamento: {2}</value>
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>Definir Tecla Alternativa</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>Entradas, saídas e totais são a soma da rodada atual (incluindo chamadas de ferramentas múltiplas), podendo não refletir o contexto.</value>
+    </data>
 </root>

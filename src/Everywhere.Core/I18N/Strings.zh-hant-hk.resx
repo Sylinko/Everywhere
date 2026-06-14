@@ -3091,4 +3091,7 @@
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>設置替代按鍵</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>輸入、輸出和總計均為當前輪次內的總和（包括多輪工具調用等），不一定能反映上下文情況</value>
+    </data>
 </root>

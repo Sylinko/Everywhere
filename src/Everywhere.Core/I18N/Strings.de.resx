@@ -3090,4 +3090,7 @@ Veröffentlichungsdatum: {2}</value>
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>Alternative Taste festlegen</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>Eingaben, Ausgaben und Gesamtsummen sind die Summen der aktuellen Runde (einschließlich mehrerer Toolaufrufe) und spiegeln möglicherweise nicht den Kontext wider.</value>
+    </data>
 </root>

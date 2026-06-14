@@ -3091,4 +3091,7 @@
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>대체 키 설정</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>입력, 출력 및 총계는 현재 라운드 내의 합계입니다(여러 라운드 도구 호출 포함). 반드시 맥락을 반영하지는 않습니다.</value>
+    </data>
 </root>

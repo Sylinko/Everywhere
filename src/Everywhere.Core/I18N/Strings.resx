@@ -3092,6 +3092,6 @@ Release date: {2}</value>
         <value>Set Alternative Key</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
-        <value />
+        <value>Input, output, and total are the sums for the current round (including multi-turn tool calls, etc.) and may not reflect the context.</value>
     </data>
 </root>

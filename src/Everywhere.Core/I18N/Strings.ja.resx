@@ -3091,4 +3091,7 @@
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>代替キーを設定</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>入力、出力、合計は現在のラウンド内の合計です（複数回のツール呼び出しを含む）ので、必ずしも文脈を反映しているわけではありません。</value>
+    </data>
 </root>

@@ -3091,4 +3091,7 @@ Data di rilascio: {2}</value>
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>Imposta tasto alternativo</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>L'input, l'output e il totale sono la somma per il turno corrente (inclusi più invocazioni di strumenti), e potrebbero non riflettere la situazione contestuale.</value>
+    </data>
 </root>

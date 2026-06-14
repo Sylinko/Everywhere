@@ -3090,4 +3090,7 @@ Yayın tarihi: {2}</value>
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
         <value>Alternatif Tuşu Ayarla</value>
     </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
+        <value>Girdi, çıktı ve toplam, mevcut tur içindeki toplamı (çoklu tur araç çağrıları dahil) yansıtır, bağlamı tam olarak yansıtmayabilir.</value>
+    </data>
 </root>
