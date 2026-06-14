@@ -3089,6 +3089,6 @@ Release date: {2}</value>
         <value>Enable</value>
     </data>
     <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
-        <value />
+        <value>Set Alternative Key</value>
     </data>
 </root>

@@ -3088,4 +3088,7 @@
     <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
         <value>Включить</value>
     </data>
+    <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
+        <value>Установить альтернативную клавишу</value>
+    </data>
 </root>

@@ -3087,4 +3087,7 @@ Yayın tarihi: {2}</value>
     <data name="CompositeKeyboardShortcut_IsEnabled_Header" xml:space="preserve">
         <value>Etkin</value>
     </data>
+    <data name="CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip" xml:space="preserve">
+        <value>Alternatif Tuşu Ayarla</value>
+    </data>
 </root>
