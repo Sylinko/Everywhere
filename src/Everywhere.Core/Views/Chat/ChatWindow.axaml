@@ -268,7 +268,7 @@
                   Background="{DynamicResource PrimaryColor}"
                   Opacity="0"/>
                 <Border
-                  x:Name="PART_InnerBorder" Margin="2"
+                  x:Name="PART_InnerBorder" Width="0.5"
                   Background="{DynamicResource BorderColor}"/>
               </Panel>
             </ControlTemplate>

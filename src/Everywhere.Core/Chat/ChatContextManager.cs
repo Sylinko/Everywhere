@@ -266,7 +266,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
                 _metadataMap[_current.Metadata.Id] = _current.Metadata;
             }
 
-            await LoadMetadataAsync(9, null).ConfigureAwait(false);
+            await LoadMetadataAsync(30, null).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
