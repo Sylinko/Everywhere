@@ -5,21 +5,29 @@
   x:DataType="vm:MainViewModel" x:TypeArguments="vm:MainViewModel">
 
   <v:ReactiveUserControl.Styles>
-    <!-- <Style Selector="DockPanel#RootPanel"> -->
-    <!--   <Style Selector="^ &gt; TransitioningContentControl"> -->
-    <!--     <Setter Property="Margin" Value="0,14,12,16"/> -->
-    <!--   </Style> -->
-    <!-- </Style> -->
-    <Style Selector="DockPanel#RootPanel.narrow">
-      <Style Selector="^ &gt; shadui|NavigationBar">
-        <Setter Property="DockPanel.Dock" Value="Bottom"/>
-        <Setter Property="Orientation" Value="Horizontal"/>
-        <Setter Property="Margin" Value="0,8"/>
-        <Setter Property="HorizontalAlignment" Value="Left"/>
-        <Setter Property="VerticalAlignment" Value="Bottom"/>
+    <Style Selector="DockPanel#RootPanel">
+      <Style Selector="^ shadui|NavigationView:compact /template/ DockPanel#PART_PaneRoot">
+        <Setter Property="Margin" Value="0,0,16,0"/>
       </Style>
-      <Style Selector="^ &gt; TransitioningContentControl">
-        <Setter Property="Margin" Value="16,0"/>
+
+      <Style Selector="^.narrow">
+        <Style Selector="^ &gt; shadui|NavigationBar">
+          <Setter Property="DockPanel.Dock" Value="Bottom"/>
+          <Setter Property="Orientation" Value="Horizontal"/>
+          <Setter Property="Margin" Value="0,8"/>
+          <Setter Property="HorizontalAlignment" Value="Stretch"/>
+          <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+
+        <Style Selector="^ shadui|NavigationView">
+          <Style Selector="^:compact /template/ DockPanel#PART_PaneRoot">
+            <Setter Property="Margin" Value="16,0"/>
+          </Style>
+          <Style Selector="^:compact /template/ Border#PART_ContentRoot">
+            <Setter Property="BorderThickness" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+          </Style>
+        </Style>
       </Style>
     </Style>
   </v:ReactiveUserControl.Styles>
