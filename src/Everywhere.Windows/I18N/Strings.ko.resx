@@ -13,9 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
-        <value>파워셸 스크립트를 실행할 수 있는 기능을 제공하여 시스템과 직접 상호작용할 수 있습니다. 그러나 이는 위험할 수 있으며, 파일 삭제나 시스템 충돌이 발생할 수 있습니다.</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
         <value>Everything</value>
     </data>

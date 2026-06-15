@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>如果不確定該如何設定，請保持預設。必須以 &quot;http(s)://&quot; 開頭。</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>詢問 Everywhere，或只是聊天</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -193,7 +193,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>摘要</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>點擊以設定快捷鍵</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -756,7 +756,7 @@
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>完成選擇後，請點擊“測試助手可用性”，我會檢查配置是否正確。</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>在此輸入 API 金鑰...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -957,13 +957,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>建立</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>名稱</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>指定助理的名稱，僅用於顯示和區分。</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>描述</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
@@ -1577,13 +1577,13 @@
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>請求標頭</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* 請輸入金鑰</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* 值</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>值</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
@@ -1772,7 +1772,7 @@
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>上一個</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
         <value>輸入你的回答…</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
@@ -2440,7 +2440,7 @@
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>臨時聊天：開啟後當前聊天不會被保存，切換或新建對話時即刪除。</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(可選) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2488,7 +2488,7 @@
     <data name="Common_Submit" xml:space="preserve">
         <value>提交</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>輸入拒絕原因</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2506,7 +2506,7 @@
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>在左側選擇一個項目查看詳情</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜尋...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2959,7 +2959,7 @@
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>全部來源</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜索技能...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">

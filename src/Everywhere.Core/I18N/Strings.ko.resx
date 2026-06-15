@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>무엇을 해야 할지 모른다면 기본값으로 두세요. &quot;http(s)://&quot;로 시작해야 합니다.</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>Everywhere에게 물어보거나 그냥 채팅하세요</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -193,7 +193,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>요약</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>단축키 설정을 클릭하세요</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -756,7 +756,7 @@
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>선택을 완료한 후 “도우미 가용성 테스트”를 클릭하세요. 제가 구성이 올바른지 확인하겠습니다.</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>여기에 API 키 입력...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -957,13 +957,13 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>생성</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>이름</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>표시 및 구분 목적으로만 사용되는 어시스턴트의 이름을 지정하세요.</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>설명</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
@@ -1577,13 +1577,13 @@
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>요청 헤더</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* 키를 입력하세요</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* 값</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>값을 입력하세요</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
@@ -1772,7 +1772,7 @@
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>이전</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
         <value>답변을 입력하세요…</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
@@ -2440,7 +2440,7 @@
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>임시 채팅: 활성화하면 현재 채팅이 저장되지 않으며, 대화 전환 또는 새 대화 시 삭제됩니다.</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(선택 사항) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2488,7 +2488,7 @@
     <data name="Common_Submit" xml:space="preserve">
         <value>제출</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>거부 이유 입력</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2506,7 +2506,7 @@
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>왼쪽에서 항목을 선택하여 자세히 보기</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>검색...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2959,7 +2959,7 @@
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>모든 출처</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>기능 검색...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">

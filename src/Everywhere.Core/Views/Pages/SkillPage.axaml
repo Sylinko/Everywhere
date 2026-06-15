@@ -110,8 +110,8 @@
           <TextBox
             Classes="Clearable" Margin="-1,0,0,0"
             CornerRadius="0,6,6,0" FontWeight="Normal"
-            Text="{Binding SearchText, Mode=TwoWay, Delay=500}"
-            Watermark="{I18N {x:Static LocaleKey.SkillPage_SearchBox_Watermark}}"/>
+            PlaceholderText="{I18N {x:Static LocaleKey.SkillPage_SearchBox_PlaceholderText}}"
+            Text="{Binding SearchText, Mode=TwoWay, Delay=500}"/>
         </DockPanel>
       </StackPanel>
     </shadui:NavigationView.PaneHeader>

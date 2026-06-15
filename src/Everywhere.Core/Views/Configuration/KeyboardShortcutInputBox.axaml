@@ -26,7 +26,7 @@
                 <TextBlock
                   VerticalAlignment="Center"
                   IsVisible="{Binding !IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
-                  Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_Watermark}}"/>
+                  Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_PlaceholderText}}"/>
                 <TextBlock
                   VerticalAlignment="Center"
                   IsVisible="{Binding IsRecording, RelativeSource={RelativeSource TemplatedParent}}"

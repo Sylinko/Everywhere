@@ -117,9 +117,9 @@
                             MaxLength="{Binding MaxLength}"
                             MaxLines="6"
                             PasswordChar="{Binding PasswordChar}"
+                            PlaceholderText="{Binding Watermark}"
                             Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="{Binding TextWrapping}"
-                            Watermark="{Binding Watermark}"/>
+                            TextWrapping="{Binding TextWrapping}"/>
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsIntegerItem">

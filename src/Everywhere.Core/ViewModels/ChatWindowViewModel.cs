@@ -112,7 +112,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
-    private readonly DynamicResourceKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_Watermark);
+    private readonly DynamicResourceKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
     private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
 
     private readonly Meter _meter = new(typeof(ChatWindowViewModel).FullName.NotNull(), App.Version);
@@ -799,7 +799,7 @@ public sealed partial class ChatWindowViewModel :
             ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
                 selectedStrategy.DescriptionKey :
                 new FormattedDynamicResourceKey(
-                    LocaleKey.ChatInputArea_Watermark_StrategyArgumentHint,
+                    LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);
         }
         else

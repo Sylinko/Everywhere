@@ -13,9 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_PowerShell_Description" xml:space="preserve">
-        <value>Предоставляет возможность выполнять скрипты PowerShell, позволяя прямое взаимодействие с системой. Однако это также опасно и может привести к случайному удалению файлов или сбоям системы.</value>
-    </data>
     <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
         <value>Everything</value>
     </data>

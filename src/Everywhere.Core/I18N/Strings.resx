@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>Leaving this to default if you don't know what to do. Must starts with &quot;http(s)://&quot;.</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>Ask Everywhere, or just chat</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -193,7 +193,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>Summary</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>Click to set a shortcut</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -756,7 +756,7 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>After completing your selection, please click 'Test assistant availability', and I will check if the configuration is correct.</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>Enter API key here...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -957,13 +957,13 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Create</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>Name</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Specify the name of the assistant for display and differentiation purposes.</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>Description</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
@@ -1577,13 +1577,13 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>Request Headers</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* Please input key</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* Value</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>Please input value</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
@@ -1772,7 +1772,7 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>Previous</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
         <value>Type your answer...</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
@@ -2440,7 +2440,7 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>Temporary Chat: Once enabled, the current chat will not be saved and will be deleted when switching or starting a new conversation.</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Optional) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2488,7 +2488,7 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Common_Submit" xml:space="preserve">
         <value>Submit</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>Enter denial reason</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2506,7 +2506,7 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Select an item on the left to view details</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Search...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2956,7 +2956,7 @@ Release date: {2}</value>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>All sources</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Search skills...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">

@@ -38,7 +38,7 @@
                 AcceptsReturn="False"
                 FontSize="{DynamicResource FontSize2Xl}"
                 FontWeight="Bold"
-                PlaceholderText="{I18N {x:Static LocaleKey.CustomAssistant_EmptyName_Watermark}}"
+                PlaceholderText="{I18N {x:Static LocaleKey.CustomAssistant_EmptyName_PlaceholderText}}"
                 Text="{Binding CustomAssistant?.Name, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
 
               <Button
@@ -68,7 +68,7 @@
                   x:Name="PART_DescriptionTextBlock" Classes="Muted"
                   Margin="0,0,6,0" VerticalAlignment="Center"
                   AcceptsReturn="True" MaxLength="4096"
-                  PlaceholderText="{I18N {x:Static LocaleKey.CustomAssistant_EmptyDescription_Watermark}}"
+                  PlaceholderText="{I18N {x:Static LocaleKey.CustomAssistant_EmptyDescription_PlaceholderText}}"
                   Text="{Binding CustomAssistant?.Description, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                   TextWrapping="Wrap"/>
               </ScrollViewer>

@@ -139,9 +139,9 @@
                     Classes="Compact" VerticalAlignment="Stretch"
                     VerticalContentAlignment="Stretch" AcceptsReturn="False"
                     AcceptsTab="False" MaxLines="1"
+                    PlaceholderText="{I18N {x:Static LocaleKey.ConsentDecisionCard_ReasonTextBox_PlaceholderText}}"
                     Text="{TemplateBinding Reason, Mode=TwoWay}"
-                    TextWrapping="NoWrap"
-                    Watermark="{I18N {x:Static LocaleKey.ConsentDecisionCard_ReasonTextBox_Watermark}}"/>
+                    TextWrapping="NoWrap"/>
                 </DockPanel>
               </StackPanel>
             </Expander>

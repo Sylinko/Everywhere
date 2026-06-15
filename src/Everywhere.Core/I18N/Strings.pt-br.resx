@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>Caso não tenha certeza do que se trata, mantenha o valor padrão. Deve começar com “http(s)://”.</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>Pergunte ao Everywhere ou fique à vontade para conversar</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -193,7 +193,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>Resumir</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>Clique para definir atalho</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -756,7 +756,7 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>Após a seleção, clique em 'Testar Conexão do Assistente' e verificarei se a configuração está correta.</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>Digite a chave da API aqui...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -957,13 +957,13 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Criar</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>Nome</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Defina o nome do assistente, usado apenas para exibição e identificação.</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>Descrição</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
@@ -1578,13 +1578,13 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>Cabeçalhos da solicitação</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* Chave</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* Valor</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>Valor</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
@@ -1773,7 +1773,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>Anterior</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
         <value>Digite sua resposta…</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
@@ -2441,7 +2441,7 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>Chat Temporário: quando ativado, a conversa atual não será salva e será excluída ao alternar ou iniciar uma nova conversa.</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(opcional) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2489,7 +2489,7 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="Common_Submit" xml:space="preserve">
         <value>Enviar</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>Insira o motivo da recusa</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2507,7 +2507,7 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Selecione um item à esquerda para ver os detalhes.</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Pesquisar...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2960,7 +2960,7 @@ Data de lançamento: {2}</value>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>Todas as Fontes</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Buscar Habilidades...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">

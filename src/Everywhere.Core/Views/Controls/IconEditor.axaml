@@ -19,8 +19,8 @@
                 <TextBox
                   Classes="Compact" Margin="8,4,0,4"
                   InnerLeftContent="{LucideIconContent Search, Size=12}"
-                  Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                  Watermark="{I18N {x:Static LocaleKey.IconEditor_SearchBox_Watermark}}"/>
+                  PlaceholderText="{I18N {x:Static LocaleKey.IconEditor_SearchBox_PlaceholderText}}"
+                  Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
               </shadui:TabControlAssist.HeaderContent>
 
               <TabItem

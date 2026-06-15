@@ -85,9 +85,9 @@
                           Classes="Compact" Margin="-2,0"
                           HorizontalAlignment="Stretch" AcceptsReturn="True"
                           MaxLines="5"
+                          PlaceholderText="{I18N {x:Static LocaleKey.AskQuestionCard_FreeformTextBox_PlaceholderText}}"
                           Text="{Binding FreeformText}"
-                          TextWrapping="Wrap"
-                          Watermark="{I18N {x:Static LocaleKey.AskQuestionCard_FreeformTextBox_Watermark}}">
+                          TextWrapping="Wrap">
                           <Interaction.Behaviors>
                             <ClickEventTrigger
                               ClickMode="Press" HandledEventsToo="True">

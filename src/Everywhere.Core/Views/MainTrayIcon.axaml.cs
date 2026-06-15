@@ -75,7 +75,7 @@ public sealed partial class MainTrayIcon : TrayIcon
                 Source = _shortcutSettings.ChatWindow,
                 Mode = BindingMode.TwoWay
             },
-            ToggleType = NativeMenuItemToggleType.CheckBox,
+            ToggleType = MenuItemToggleType.CheckBox,
         });
 
         Menu.Items.Add(new NativeMenuItemSeparator());
