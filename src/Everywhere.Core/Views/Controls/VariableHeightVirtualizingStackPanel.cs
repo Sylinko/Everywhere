@@ -84,8 +84,11 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
     private ScrollViewer? _observedScrollViewer;
     private bool _isWaitingForShrinkConfirmation;
     private int _prefixDirtyIndex;
+    private int _realizedStartIndex = -1;
+    private int _realizedEndIndex = -1;
     private int _scrollToIndex = -1;
     private Control? _scrollToElement;
+
     static VariableHeightVirtualizingStackPanel()
     {
         EstimatedItemHeightProperty.Changed.AddClassHandler<VariableHeightVirtualizingStackPanel>((panel, args) =>
@@ -135,7 +138,6 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             var anchor = CaptureAnchor(viewport.Top, itemCount);
             var (startIndex, endIndex) = GetRealizationRange(_extendedViewport, itemCount, anchor.Index);
 
-
             RealizeRange(items, startIndex, endIndex, availableSize);
             QueueAnchorCorrection(anchor, viewport.Top);
 
@@ -162,13 +164,14 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         _isInLayout = true;
         try
         {
-            for (var index = 0; index < _slots.Count; index++)
+            if (HasRealizedRange)
             {
-                var element = _slots[index].Container;
-                if (element is null)
-                    continue;
-
-                element.Arrange(new Rect(0, GetOffsetForIndex(index), finalSize.Width, GetItemHeight(index)));
+                var endIndex = Math.Min(_realizedEndIndex, _slots.Count - 1);
+                for (var index = Math.Max(0, _realizedStartIndex); index <= endIndex; index++)
+                {
+                    var element = _slots[index].Container;
+                    element?.Arrange(new Rect(0, GetOffsetForIndex(index), finalSize.Width, GetItemHeight(index)));
+                }
             }
 
             ApplyPendingScrollOffsetCorrection();
@@ -182,7 +185,6 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
     protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
     {
-
         base.OnItemsChanged(items, e);
 
         switch (e.Action)
@@ -238,10 +240,23 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
     protected override IEnumerable<Control> GetRealizedContainers()
     {
-        foreach (var slot in _slots)
+        foreach (var index in GetRealizedIndexes())
         {
-            if (slot.Container is { } container)
+            if (_slots[index].Container is { } container)
                 yield return container;
+        }
+    }
+
+    private IEnumerable<int> GetRealizedIndexes()
+    {
+        if (!HasRealizedRange)
+            yield break;
+
+        var endIndex = Math.Min(_realizedEndIndex, _slots.Count - 1);
+        for (var index = Math.Max(0, _realizedStartIndex); index <= endIndex; index++)
+        {
+            if (_slots[index].Container is not null)
+                yield return index;
         }
     }
 
@@ -258,10 +273,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
     protected override int IndexFromContainer(Control container)
     {
-        if (container == _scrollToElement)
-            return _scrollToIndex;
-
-        return _containerToIndex.GetValueOrDefault(container, -1);
+        return container == _scrollToElement ? _scrollToIndex : _containerToIndex.GetValueOrDefault(container, -1);
     }
 
     protected override Control? ScrollIntoView(int index)
@@ -395,10 +407,6 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             {
                 _pendingScrollOffsetCorrectionBaseY = scrollViewer.Offset.Y;
             }
-
-        }
-        else
-        {
         }
     }
 
@@ -413,7 +421,8 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         {
             y += GetSlotHeight(index);
             index++;
-        } while (index < itemCount && y < end);
+        }
+        while (index < itemCount && y < end);
 
         var endIndex = Math.Min(itemCount - 1, Math.Max(startIndex, index - 1));
         if (anchorIndex >= 0)
@@ -427,10 +436,28 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
     private void RealizeRange(IReadOnlyList<object?> items, int startIndex, int endIndex, Size availableSize)
     {
-        for (var index = 0; index < _slots.Count; index++)
+        if (startIndex > endIndex)
         {
-            if (index < startIndex || index > endIndex)
-                RecycleSlot(index);
+            RecycleRealizedRange();
+            return;
+        }
+
+        if (HasRealizedRange)
+        {
+            var oldStart = _realizedStartIndex;
+            var oldEnd = _realizedEndIndex;
+
+            if (oldStart < startIndex)
+            {
+                var recycleEnd = Math.Min(oldEnd, startIndex - 1);
+                RecycleSlotRange(oldStart, recycleEnd - oldStart + 1);
+            }
+
+            if (oldEnd > endIndex)
+            {
+                var recycleStart = Math.Max(oldStart, endIndex + 1);
+                RecycleSlotRange(recycleStart, oldEnd - recycleStart + 1);
+            }
         }
 
         var measureSize = new Size(availableSize.Width, double.PositiveInfinity);
@@ -440,6 +467,8 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             MeasureElement(element, index, measureSize);
         }
 
+        _realizedStartIndex = startIndex;
+        _realizedEndIndex = endIndex;
     }
 
     private Control GetOrCreateElement(IReadOnlyList<object?> items, int index)
@@ -571,6 +600,15 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         }
     }
 
+    private void RecycleRealizedRange()
+    {
+        if (!HasRealizedRange)
+            return;
+
+        RecycleSlotRange(_realizedStartIndex, _realizedEndIndex - _realizedStartIndex + 1);
+        ResetRealizedRange();
+    }
+
     private void RecycleAll()
     {
         for (var index = 0; index < _slots.Count; index++)
@@ -579,6 +617,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         }
 
         _containerToIndex.Clear();
+        ResetRealizedRange();
     }
 
     private void EnsureSlots(int count)
@@ -594,6 +633,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             RecycleSlotRange(count, _slots.Count - count);
             _slots.RemoveRange(count, _slots.Count - count);
             MarkPrefixDirty(count);
+            ClampRealizedRange();
         }
     }
 
@@ -608,6 +648,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         }
 
         _slots.InsertRange(Math.Min(index, _slots.Count), Enumerable.Range(0, count).Select(_ => new Slot()));
+        RefreshRealizedRange();
         MarkPrefixDirty(index);
     }
 
@@ -618,6 +659,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
         var removeCount = Math.Min(count, _slots.Count - index);
         _slots.RemoveRange(index, removeCount);
+        RefreshRealizedRange();
         MarkPrefixDirty(index);
     }
 
@@ -631,8 +673,10 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         {
             RecycleSlot(i);
             _slots[i].MeasuredHeight = double.NaN;
+            _slots[i].PendingShrinkHeight = double.NaN;
         }
 
+        RefreshRealizedRange();
         MarkPrefixDirty(index);
     }
 
@@ -644,6 +688,51 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             if (_slots[index].Container is { } container)
                 _containerToIndex[container] = index;
         }
+    }
+
+    private bool HasRealizedRange =>
+        _realizedStartIndex >= 0 &&
+        _realizedEndIndex >= _realizedStartIndex;
+
+    private void ResetRealizedRange()
+    {
+        _realizedStartIndex = -1;
+        _realizedEndIndex = -1;
+    }
+
+    private void ClampRealizedRange()
+    {
+        if (!HasRealizedRange)
+            return;
+
+        if (_realizedStartIndex >= _slots.Count)
+        {
+            ResetRealizedRange();
+            return;
+        }
+
+        _realizedEndIndex = Math.Min(_realizedEndIndex, _slots.Count - 1);
+        if (_realizedEndIndex < _realizedStartIndex)
+            ResetRealizedRange();
+    }
+
+    private void RefreshRealizedRange()
+    {
+        var start = -1;
+        var end = -1;
+        for (var index = 0; index < _slots.Count; index++)
+        {
+            if (_slots[index].Container is null)
+                continue;
+
+            if (start < 0)
+                start = index;
+
+            end = index;
+        }
+
+        _realizedStartIndex = start;
+        _realizedEndIndex = end;
     }
 
     private double GetItemHeight(int index)
@@ -665,15 +754,29 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         EnsureSlotCountAtLeast(index + 1);
         var slot = _slots[index];
         if (slot.HasMeasuredHeight && MathUtilities.AreClose(slot.MeasuredHeight, height))
+        {
+            slot.PendingShrinkHeight = double.NaN;
             return;
+        }
 
         if (slot.HasMeasuredHeight &&
             height + HeightShrinkGuardThreshold < slot.MeasuredHeight)
         {
+            if (slot.HasPendingShrinkHeight &&
+                MathUtilities.AreClose(slot.PendingShrinkHeight, height))
+            {
+                slot.PendingShrinkHeight = double.NaN;
+                slot.MeasuredHeight = height;
+                MarkPrefixDirty(index);
+                return;
+            }
+
+            slot.PendingShrinkHeight = height;
             RequestShrinkConfirmation();
             return;
         }
 
+        slot.PendingShrinkHeight = double.NaN;
         slot.MeasuredHeight = height;
         MarkPrefixDirty(index);
     }
@@ -684,14 +787,16 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
             return;
 
         _isWaitingForShrinkConfirmation = true;
-        Dispatcher.UIThread.Post(() =>
-        {
-            _isWaitingForShrinkConfirmation = false;
-            if (VisualRoot is not null)
+        Dispatcher.UIThread.Post(
+            () =>
             {
-                InvalidateMeasure();
-            }
-        }, DispatcherPriority.Background);
+                _isWaitingForShrinkConfirmation = false;
+                if (VisualRoot is not null)
+                {
+                    InvalidateMeasure();
+                }
+            },
+            DispatcherPriority.Background);
     }
 
     private void EnsureSlotCountAtLeast(int count)
@@ -781,8 +886,8 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         if (double.IsFinite(availableSize.Width))
             return availableSize.Width;
 
-        return _slots
-            .Select(slot => slot.Container?.DesiredSize.Width ?? 0)
+        return GetRealizedIndexes()
+            .Select(index => _slots[index].Container?.DesiredSize.Width ?? 0)
             .DefaultIfEmpty(0)
             .Max();
     }
@@ -853,41 +958,45 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
         }
 
         var baseY = _pendingScrollOffsetCorrectionBaseY;
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (!scrollViewer.IsAttachedToVisualTree())
+        Dispatcher.UIThread.Post(
+            () =>
             {
-                return;
-            }
+                if (!scrollViewer.IsAttachedToVisualTree())
+                {
+                    return;
+                }
 
-            if (double.IsFinite(baseY) &&
-                !MathUtilities.AreClose(scrollViewer.Offset.Y, baseY))
-            {
+                if (double.IsFinite(baseY) &&
+                    !MathUtilities.AreClose(scrollViewer.Offset.Y, baseY))
+                {
+                    _pendingScrollOffsetCorrectionBaseY = double.NaN;
+                    return;
+                }
+
                 _pendingScrollOffsetCorrectionBaseY = double.NaN;
-                return;
-            }
-
-            _pendingScrollOffsetCorrectionBaseY = double.NaN;
-            _isApplyingScrollOffsetCorrection = true;
-            try
-            {
-                var maximum = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
-                var y = Math.Clamp(scrollViewer.Offset.Y + correction, 0, maximum);
-                scrollViewer.Offset = new Vector(scrollViewer.Offset.X, y);
-            }
-            finally
-            {
-                _isApplyingScrollOffsetCorrection = false;
-            }
-        }, DispatcherPriority.Background);
+                _isApplyingScrollOffsetCorrection = true;
+                try
+                {
+                    var maximum = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+                    var y = Math.Clamp(scrollViewer.Offset.Y + correction, 0, maximum);
+                    scrollViewer.Offset = new Vector(scrollViewer.Offset.X, y);
+                }
+                finally
+                {
+                    _isApplyingScrollOffsetCorrection = false;
+                }
+            },
+            DispatcherPriority.Background);
     }
 
     private sealed class Slot
     {
         public double MeasuredHeight { get; set; } = double.NaN;
+        public double PendingShrinkHeight { get; set; } = double.NaN;
         public Control? Container { get; set; }
         public object? RecycleKey { get; set; }
         public bool HasMeasuredHeight => !double.IsNaN(MeasuredHeight);
+        public bool HasPendingShrinkHeight => !double.IsNaN(PendingShrinkHeight);
     }
 
     private readonly record struct Anchor(int Index, double Delta);
