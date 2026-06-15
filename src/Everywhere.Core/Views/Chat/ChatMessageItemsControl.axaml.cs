@@ -38,27 +38,29 @@ public class ChatMessageItemsControl : ItemsControl
 
     private ChatMessageControl? _lastMessageControl;
 
+    protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey)
+    {
+        if (item is ChatMessageNode or ChatMessage)
+        {
+            recycleKey = typeof(ChatMessageControl);
+            return true;
+        }
+
+        return base.NeedsContainerOverride(item, index, out recycleKey);
+    }
+
     protected override void ContainerIndexChangedOverride(Control container, int oldIndex, int newIndex)
     {
         base.ContainerIndexChangedOverride(container, oldIndex, newIndex);
 
-        UpdateLastMessageControl(container, newIndex);
+        UpdateLastMessageControl(container as ChatMessageControl, newIndex);
     }
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
     {
         return item switch
         {
-            ChatMessageNode chatMessageNode => new ChatMessageControl
-            {
-                DataContext = chatMessageNode,
-                Content = chatMessageNode.Message,
-            },
-            ChatMessage chatMessage => new ChatMessageControl
-            {
-                DataContext = chatMessage,
-                Content = chatMessage,
-            },
+            ChatMessageNode or ChatMessage => new ChatMessageControl(),
             _ => base.CreateContainerForItemOverride(item, index, recycleKey)
         };
     }
@@ -67,16 +69,61 @@ public class ChatMessageItemsControl : ItemsControl
     {
         base.PrepareContainerForItemOverride(container, item, index);
 
-        UpdateLastMessageControl(container, index);
+        if (container is not ChatMessageControl chatMessageControl)
+            return;
+
+        switch (item)
+        {
+            case ChatMessageNode chatMessageNode:
+                chatMessageControl.DataContext = chatMessageNode;
+                chatMessageControl.Content = chatMessageNode.Message;
+                break;
+            case ChatMessage chatMessage:
+                chatMessageControl.DataContext = chatMessage;
+                chatMessageControl.Content = chatMessage;
+                break;
+        }
+
+        UpdateLastMessageControl(chatMessageControl, index);
     }
 
-    private void UpdateLastMessageControl(Control control, int index)
+    protected override void ClearContainerForItemOverride(Control container)
     {
-        if (control is ChatMessageControl chatMessageControl && index == Items.Count - 1)
+        if (container is ChatMessageControl chatMessageControl)
+        {
+            if (ReferenceEquals(_lastMessageControl, chatMessageControl))
+            {
+                _lastMessageControl = null;
+            }
+
+            chatMessageControl.IsLast = false;
+            chatMessageControl.Content = null;
+            chatMessageControl.DataContext = null;
+        }
+
+        base.ClearContainerForItemOverride(container);
+    }
+
+    private void UpdateLastMessageControl(ChatMessageControl? control, int index)
+    {
+        if (control is null)
+            return;
+
+        var isLast = index == Items.Count - 1;
+        if (isLast)
         {
             _lastMessageControl?.IsLast = false;
-            _lastMessageControl = chatMessageControl;
+            _lastMessageControl = control;
             _lastMessageControl.IsLast = true;
+        }
+        else
+        {
+            if (ReferenceEquals(_lastMessageControl, control))
+            {
+                _lastMessageControl = null;
+            }
+
+            control.IsLast = false;
         }
     }
 }

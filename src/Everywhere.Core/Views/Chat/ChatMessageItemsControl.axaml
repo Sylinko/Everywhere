@@ -20,8 +20,9 @@
             Margin="{TemplateBinding Padding}">
             <ItemsPresenter.ItemsPanel>
               <ItemsPanelTemplate>
-                <StackPanel
-                  Orientation="Vertical" Spacing="6"/>
+                <v:VariableHeightVirtualizingStackPanel
+                  CacheLength="1" EstimatedItemHeight="140"
+                  Spacing="6"/>
               </ItemsPanelTemplate>
             </ItemsPresenter.ItemsPanel>
           </ItemsPresenter>
