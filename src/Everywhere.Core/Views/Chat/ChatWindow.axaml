@@ -13,7 +13,7 @@
   Background="{DynamicResource AcrylicWindowBackgroundColor}"
   BorderBrush="{DynamicResource BorderColor}"
   ExtendClientAreaToDecorationsHint="True" SizeToContent="WidthAndHeight"
-  TransparencyLevelHint="AcrylicBlur" WindowStartupLocation="CenterScreen">
+  TransparencyLevelHint="AcrylicBlur,Blur,None" WindowStartupLocation="CenterScreen">
 
   <v:ReactiveShadWindow.BorderThickness>
     <OnPlatform
@@ -31,7 +31,7 @@
     <Border
       x:Name="TitleBarBorder" Grid.Row="0"
       Height="44" Padding="8,0"
-      Background="Transparent">
+      Background="Transparent" WindowDecorationProperties.ElementRole="TitleBar">
       <Border.FlowDirection>
         <OnPlatform
           x:TypeArguments="FlowDirection" Linux="LeftToRight"
@@ -43,7 +43,8 @@
           x:Name="Eva" DockPanel.Dock="Left"
           Width="36" Height="36"
           Margin="0,0,0,-4" FlowDirection="LeftToRight"
-          IsThinking="{Binding IsBusy}">
+          IsThinking="{Binding IsBusy}"
+          WindowDecorationProperties.ElementRole="User">
           <v:Eva.Effect>
             <DropShadowEffect
               OffsetX="1.5" OffsetY="1.5"
@@ -137,7 +138,8 @@
             Classes="Ghost TitleBar" Margin="0,0,2,0"
             IsChecked="{Binding ChatContextManager.Current.Metadata.IsTemporary, Mode=TwoWay}"
             IsVisible="{Binding ChatContextManager.Current.DisplayItems.Count, Converter={x:Static vc:Int32Converters.NotGreaterThan}, ConverterParameter=1}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatContext_TemporaryToggleButton_ToolTip}}">
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatContext_TemporaryToggleButton_ToolTip}}"
+            WindowDecorationProperties.ElementRole="User">
             <LucideIcon
               Kind="Ghost" Size="16"/>
           </ToggleButton>
@@ -149,7 +151,8 @@
               Content="{LucideIconContent History, Size=16}"
               FlowDirection="LeftToRight"
               IsChecked="{Binding PersistentState.IsChatWindowHistoryOpened, Mode=TwoWay}"
-              ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_ToolTip}}"/>
+              ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_History_ToolTip}}"
+              WindowDecorationProperties.ElementRole="User"/>
 
             <Panel
               x:Name="BackgroundStatusIndicator"
@@ -195,14 +198,16 @@
             Command="{Binding ChatContextManager.CreateNewCommand}"
             Content="{LucideIconContent Plus, Size=20}"
             HotKey="Ctrl+N"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_CreateNew_ToolTip}}"/>
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_CreateNew_ToolTip}}"
+            WindowDecorationProperties.ElementRole="User"/>
 
           <ToggleButton
             Classes="Ghost TitleBar" Background="#00252525"
             BorderThickness="1.5" HotKey="Ctrl+D"
             IsChecked="{Binding $parent[v:ChatWindow].IsWindowPinned, Mode=TwoWay}"
             IsThreeState="True"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TogglePin_ToolTip}}">
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_TogglePin_ToolTip}}"
+            WindowDecorationProperties.ElementRole="User">
             <LucideIcon Size="15"/>
           </ToggleButton>
 
@@ -211,7 +216,8 @@
             Command="{Binding CloseCommand}"
             Content="{LucideIconContent X, Size=20}"
             HotKey="Ctrl+W"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_Close_ToolTip}}"/>
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatWindow_Close_ToolTip}}"
+            WindowDecorationProperties.ElementRole="User"/>
         </StackPanel>
 
         <TextBlock

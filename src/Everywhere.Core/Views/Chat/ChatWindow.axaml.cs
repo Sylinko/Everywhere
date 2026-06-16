@@ -251,13 +251,6 @@ public partial class ChatWindow :
         return new NoneAutomationPeer(this); // Disable automation peer to avoid being detected by self
     }
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-        if (TitleBarBorder.Bounds.Contains(e.GetCurrentPoint(this).Position))
-            BeginMoveDrag(e);
-    }
-
     void IRecipient<CloakChatWindowMessage>.Receive(CloakChatWindowMessage message)
     {
         Dispatcher.UIThread.Invoke(() => SetCloaked(message.IsCloaked));
