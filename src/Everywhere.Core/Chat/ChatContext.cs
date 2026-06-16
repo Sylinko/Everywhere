@@ -95,11 +95,11 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     /// <summary>
     /// Resource key for the busy message to show when waiting for a response.
-    /// This can be set temporarily using <see cref="SetBusyMessage(IDynamicResourceKey?)"/>.
+    /// This can be set temporarily using <see cref="SetBusyMessage(IDynamicLocaleKey?)"/>.
     /// </summary>
     [IgnoreMember]
     [ObservableProperty]
-    public partial IDynamicResourceKey? BusyMessageKey { get; private set; }
+    public partial IDynamicLocaleKey? BusyMessageKey { get; private set; }
 
     /// <summary>
     /// Backing store for MessagePack (de)serialization: nodes are persisted as a collection, and linked by Ids.
@@ -407,7 +407,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     /// <param name="busyMessage"></param>
     /// <returns></returns>
-    public IDisposable SetBusyMessage(IDynamicResourceKey? busyMessage)
+    public IDisposable SetBusyMessage(IDynamicLocaleKey? busyMessage)
     {
         var previous = BusyMessageKey;
         BusyMessageKey = busyMessage;
@@ -608,7 +608,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
 
         public async Task<ConsentDecisionResult> HandleConsentRequestAsync(
-            IDynamicResourceKey headerKey,
+            IDynamicLocaleKey headerKey,
             ChatPluginDisplayBlock? content,
             RequestConsentRememberMasks rememberMasks,
             CancellationToken cancellationToken)

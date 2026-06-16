@@ -7,14 +7,14 @@ namespace Everywhere.Configuration;
 [GeneratedSettingsItems]
 public sealed partial class TerminalPluginSettings : ObservableObject
 {
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.TerminalPluginSettings_ShellPath_Header,
         LocaleKey.TerminalPluginSettings_ShellPath_Description)]
     [SettingsStringItem]
     [ObservableProperty]
     public partial string? ShellPath { get; set; }
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.TerminalPluginSettings_AutoApprove_Header,
         LocaleKey.TerminalPluginSettings_AutoApprove_Description)]
     public bool AutoApprove

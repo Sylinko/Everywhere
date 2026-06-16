@@ -100,7 +100,7 @@ public sealed partial class ChatWindowViewModel :
     /// Can be set to one of greetings or instructions based on the chat context, or a default value.
     /// </summary>
     [ObservableProperty]
-    public partial IDynamicResourceKey? ChatInputAreaWatermarkKey { get; private set; }
+    public partial IDynamicLocaleKey? ChatInputAreaWatermarkKey { get; private set; }
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -112,7 +112,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
-    private readonly DynamicResourceKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
+    private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
     private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
 
     private readonly Meter _meter = new(typeof(ChatWindowViewModel).FullName.NotNull(), App.Version);
@@ -408,7 +408,7 @@ public sealed partial class ChatWindowViewModel :
             //     var text = await Clipboard.GetTextAsync();
             //     if (text.IsNullOrEmpty()) return;
             //
-            //     chatAttachments.Add(new ChatTextAttachment(new DirectResourceKey(text.SafeSubstring(0, 10)), text));
+            //     chatAttachments.Add(new ChatTextAttachment(new DirectLocaleKey(text.SafeSubstring(0, 10)), text));
             // }
         }
         catch (OperationCanceledException) { }
@@ -553,7 +553,7 @@ public sealed partial class ChatWindowViewModel :
 
         var blob = await _blobStorage.StorageBlobAsync(memoryStream, "image/png", cancellationToken: cancellationToken);
         return new FileAttachment(
-            new DynamicResourceKey(string.Empty),
+            new DynamicLocaleKey(string.Empty),
             blob.LocalPath,
             blob.Sha256,
             blob.MimeType);
@@ -798,7 +798,7 @@ public sealed partial class ChatWindowViewModel :
         {
             ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
                 selectedStrategy.DescriptionKey :
-                new FormattedDynamicResourceKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);
         }

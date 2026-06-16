@@ -344,7 +344,7 @@ public interface IExtraContextProvider
 {
     string Id { get; }
     string PublicRoot { get; }
-    IDynamicResourceKey PermissionDescriptionKey { get; }
+    IDynamicLocaleKey PermissionDescriptionKey { get; }
     bool CanCollect(StrategyContext baseContext, ExtraContextRequest request);
     Task<ExtraContextNode?> CollectAsync(
         StrategyContext baseContext,
@@ -518,7 +518,7 @@ Add or prepare a details view showing:
 5. Extra providers inferred.
 6. Preprocessors.
 7. Enabled/disabled tools.
-8. Permissions using `IDynamicResourceKey`.
+8. Permissions using `IDynamicLocaleKey`.
 9. Recent diagnostics.
 
 ### 10.3 Toasts

@@ -22,7 +22,7 @@ public class ShortcutListener(IEventHelper eventHelper) : IShortcutListener
         }
         var ex = new HandledException(
             new InvalidOperationException("Failed to grab keyboard hotkey"),
-            new DynamicResourceKey(LocaleKey.Linux_ShortcutListener_Register_FailedToGrabHotkey)
+            new DynamicLocaleKey(LocaleKey.Linux_ShortcutListener_Register_FailedToGrabHotkey)
         );
         throw ex;
     }
@@ -41,7 +41,7 @@ public class ShortcutListener(IEventHelper eventHelper) : IShortcutListener
         }
         var ex = new HandledException(
             new InvalidOperationException("Failed to grab mouse hotkey"),
-            new DynamicResourceKey(LocaleKey.Linux_ShortcutListener_Register_FailedToGrabHotkey)
+            new DynamicLocaleKey(LocaleKey.Linux_ShortcutListener_Register_FailedToGrabHotkey)
         );
         throw ex;
     }

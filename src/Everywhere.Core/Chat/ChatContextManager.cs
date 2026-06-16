@@ -358,12 +358,12 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
                         });
                     ToastManager
                         .Create(
-                            new FormattedDynamicResourceKey(
+                            new FormattedDynamicLocaleKey(
                                 LocaleKey.ChatContextManager_DeletingToast_Content,
-                                new DirectResourceKey(metadata.ActualTopic ?? string.Empty)).ToString())
+                                new DirectLocaleKey(metadata.ActualTopic ?? string.Empty)).ToString())
                         .WithProgress(progress)
                         .WithDurationSeconds(5d)
-                        .WithAction(DynamicResourceKey.Resolve(LocaleKey.Common_Undo), ButtonStyle.Ghost)
+                        .WithAction(DynamicLocaleKey.Resolve(LocaleKey.Common_Undo), ButtonStyle.Ghost)
                         .OnBottomLeft()
                         .ShowInfoAsync()
                         .ContinueWith(
@@ -467,7 +467,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
                 ToastManager
                     .Error(
                         LocaleResolver.Common_Error,
-                        new FormattedDynamicResourceKey(
+                        new FormattedDynamicLocaleKey(
                             LocaleKey.ChatContextManager_LoadChatContextFailedToast_Content,
                             ex.GetFriendlyMessage()));
             });

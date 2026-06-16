@@ -157,7 +157,7 @@ public sealed partial class OfficialModelProvider : ObservableObject, IOfficialM
         [property: JsonPropertyName("id")] string ModelId,
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("icon")] string Icon,
-        [property: JsonPropertyName("description")] JsonDynamicResourceKey? DescriptionKey,
+        [property: JsonPropertyName("description")] JsonDynamicLocaleKey? DescriptionKey,
         [property: JsonPropertyName("toolCall")] bool SupportsToolCall,
         [property: JsonPropertyName("knowledge")] string? KnowledgeCutoff,
         [property: JsonPropertyName("releaseDate")] string? ReleaseDate,

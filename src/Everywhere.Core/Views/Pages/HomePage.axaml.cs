@@ -8,7 +8,7 @@ public partial class HomePage : ReactiveUserControl<HomePageViewModel>, IMainVie
 
     public LucideIconKind Icon => LucideIconKind.House;
 
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.HomePage_Title);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.HomePage_Title);
 
     public HomePage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {

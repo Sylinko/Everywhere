@@ -268,7 +268,7 @@ public sealed partial class ChatService : IChatService
     private static AssistantChatMessage CreateCustomAssistantNotSelectedErrorAssistantChatMessage() =>
         new()
         {
-            ErrorMessageKey = new DynamicResourceKey(LocaleKey.ChatService_Error_CustomAssistantNotSelected),
+            ErrorMessageKey = new DynamicLocaleKey(LocaleKey.ChatService_Error_CustomAssistantNotSelected),
             FinishedAt = DateTimeOffset.UtcNow,
         };
 
@@ -657,7 +657,7 @@ public sealed partial class ChatService : IChatService
                         using var memoryStream = new MemoryStream(binaryContent.Data.Value.ToArray());
                         var blob = await _blobStorage.StorageBlobAsync(memoryStream, binaryContent.MimeType, cancellationToken: cancellationToken);
                         EnsureSpan<AssistantChatMessageImageSpan>(true).ImageOutput = new FileAttachment(
-                            new DynamicResourceKey(string.Empty),
+                            new DynamicLocaleKey(string.Empty),
                             blob.LocalPath,
                             blob.Sha256,
                             blob.MimeType);
@@ -690,7 +690,7 @@ public sealed partial class ChatService : IChatService
 
                 if (callingToolsBusyMessage is null && hasFunctionCallUpdates)
                 {
-                    callingToolsBusyMessage = chatContext.SetBusyMessage(new DynamicResourceKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
+                    callingToolsBusyMessage = chatContext.SetBusyMessage(new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
                 }
             }
         }
@@ -814,7 +814,7 @@ public sealed partial class ChatService : IChatService
                     // Display error in the chat span (UI).
                     var errorFunctionMessage = new FunctionCallChatMessage(
                         LucideIconKind.X,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
                     functionCallSpan.Add(errorFunctionMessage);
 
                     // Iterate through the function call contents in the group.
@@ -839,9 +839,9 @@ public sealed partial class ChatService : IChatService
                             cancellationToken);
                     }
 
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicResourceKey(
+                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
                         LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
 
                     continue;
                 }
@@ -869,7 +869,7 @@ public sealed partial class ChatService : IChatService
                     // Display error in the chat span (UI).
                     var errorFunctionMessage = new FunctionCallChatMessage(
                         LucideIconKind.X,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
                     functionCallSpan.Add(errorFunctionMessage);
 
                     // Iterate through the function call contents in the group.
@@ -892,9 +892,9 @@ public sealed partial class ChatService : IChatService
                             cancellationToken);
                     }
 
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicResourceKey(
+                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
                         LocaleKey.HandledFunctionInvokingException_FunctionNotFound,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
 
                     continue;
                 }
@@ -967,7 +967,7 @@ public sealed partial class ChatService : IChatService
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        functionCallChatMessage.ErrorMessageKey ??= new DynamicResourceKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
+                        functionCallChatMessage.ErrorMessageKey ??= new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
                     }
                 }
             }
@@ -1072,10 +1072,10 @@ public sealed partial class ChatService : IChatService
                 return Task.FromResult(ConsentDecisionResult.AllowOnce);
             }
 
-            FormattedDynamicResourceKey headerKey;
+            FormattedDynamicLocaleKey headerKey;
             if (context.ChatPlugin is McpChatPlugin)
             {
-                headerKey = new FormattedDynamicResourceKey(
+                headerKey = new FormattedDynamicLocaleKey(
                     LocaleKey.ChatPluginConsentRequest_MCP_Header,
                     context.ChatFunction.HeaderKey);
             }
@@ -1093,16 +1093,16 @@ public sealed partial class ChatService : IChatService
 
                 if (context.ChatFunction.Permissions == ChatFunctionPermissions.None)
                 {
-                    headerKey = new FormattedDynamicResourceKey(
+                    headerKey = new FormattedDynamicLocaleKey(
                         LocaleKey.ChatPluginConsentRequest_CommonNone_Header,
                         context.ChatFunction.HeaderKey);
                 }
                 else
                 {
-                    headerKey = new FormattedDynamicResourceKey(
+                    headerKey = new FormattedDynamicLocaleKey(
                         LocaleKey.ChatPluginConsentRequest_Common_Header,
                         context.ChatFunction.HeaderKey,
-                        new DirectResourceKey(context.ChatFunction.Permissions.I18N(LocaleResolver.Common_Comma, true)));
+                        new DirectLocaleKey(context.ChatFunction.Permissions.I18N(LocaleResolver.Common_Comma, true)));
                 }
             }
 

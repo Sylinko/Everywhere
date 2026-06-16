@@ -85,7 +85,7 @@ public sealed class StatisticsBackfiller(
             await statisticsDb.SaveChangesAsync();
             notificationPublisher.Push(
                 "history_backfilled",
-                new DynamicResourceKey(LocaleKey.HomeNotification_StatisticsBackfilled),
+                new DynamicLocaleKey(LocaleKey.HomeNotification_StatisticsBackfilled),
                 canDismiss: true);
         }
         catch (Exception ex)

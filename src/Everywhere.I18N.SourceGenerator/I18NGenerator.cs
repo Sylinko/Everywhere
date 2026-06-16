@@ -240,7 +240,7 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
                   [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
                   private static string Resolve(string key)
                   {
-                      return global::Everywhere.I18N.DynamicResourceKey.Resolve(key);
+                      return global::Everywhere.I18N.DynamicLocaleKey.Resolve(key);
                   }
 
               """);

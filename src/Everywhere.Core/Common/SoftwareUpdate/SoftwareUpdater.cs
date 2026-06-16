@@ -211,7 +211,7 @@ public sealed partial class SoftwareUpdater(
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    ex = new HandledException(ex, new DynamicResourceKey(LocaleKey.SoftwareUpdater_PerformUpdate_FailedToast_Message));
+                    ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.SoftwareUpdater_PerformUpdate_FailedToast_Message));
                     activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 
                     logger.LogError(ex, "Failed to perform update.");

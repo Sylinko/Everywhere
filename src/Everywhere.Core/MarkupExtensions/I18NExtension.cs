@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Reactive;
 using System.Reactive.Disposables;
 using Avalonia.Collections;
 using Avalonia.Data;
@@ -7,7 +8,6 @@ using Avalonia.Data.Converters;
 using Avalonia.Data.Core;
 using Avalonia.Markup.Xaml;
 using Avalonia.Metadata;
-using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using ZLinq;
 
@@ -24,12 +24,6 @@ public class I18NExtension : MarkupExtension
 
     [Content, AssignBinding]
     public AvaloniaList<object> Arguments { get; set; } = [];
-
-    public IValueConverter? Converter { get; set; }
-
-    public object? ConverterParameter { get; set; }
-
-    public CultureInfo? ConverterCulture { get; set; }
 
     /// <summary>
     /// Whether to resolve the resource key immediately. If true, the extension will return the resolved value directly.
@@ -57,27 +51,18 @@ public class I18NExtension : MarkupExtension
 
         var dynamicResourceKey = Key switch
         {
-            IDynamicResourceKey key => key,
-            _ when Arguments is { Count: > 0 } args => new FormattedDynamicResourceKey(
+            IDynamicLocaleKey key => key,
+            _ when Arguments is { Count: > 0 } args => new FormattedDynamicLocaleKey(
                 Key,
                 args.AsValueEnumerable().Select(arg => arg switch
                 {
-                    BindingBase b => new BindingResourceKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
-                    IDynamicResourceKey key => key,
-                    _ => new DynamicResourceKey(arg)
+                    BindingBase b => new BindingLocaleKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
+                    IDynamicLocaleKey key => key,
+                    _ => new DynamicLocaleKey(arg)
                 }).ToList()),
-            _ => new DynamicResourceKey(Key)
+            _ => new DynamicLocaleKey(Key)
         };
-        return Resolve ?
-            dynamicResourceKey.ToString() ?? string.Empty :
-            new Binding
-            {
-                Path = $"{nameof(IDynamicResourceKey.Self)}^",
-                Source = dynamicResourceKey,
-                Converter = Converter,
-                ConverterParameter = ConverterParameter,
-                ConverterCulture = ConverterCulture,
-            };
+        return Resolve ? dynamicResourceKey.ToString() ?? string.Empty : dynamicResourceKey.ToBinding();
     }
 
     private sealed class BindingResolver : IObserver<object?>, IMultiValueConverter
@@ -96,7 +81,7 @@ public class I18NExtension : MarkupExtension
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             _subscription?.Dispose();
-            if (values is not [IDynamicResourceKey key]) return null;
+            if (values is not [IDynamicLocaleKey key]) return null;
 
             _subscription = key.Subscribe(this);
             return key.ToString(); // return resolved string immediately. If it changes, OnNext will be called to update the target.
@@ -122,36 +107,39 @@ public class I18NExtension : MarkupExtension
     /// <param name="binding"></param>
     /// <param name="target"></param>
     /// <param name="property"></param>
-    private sealed class BindingResourceKey(
-        BindingBase binding,
-        AvaloniaObject? target,
-        AvaloniaProperty? property
-    ) : IDynamicResourceKey, IObserver<object?>
+    private sealed class BindingLocaleKey(BindingBase binding, AvaloniaObject? target, AvaloniaProperty? property) : IDynamicLocaleKey
     {
-        public IDynamicResourceKey Self => this;
-
-// #pragma warning disable CS0618
-//         private readonly BindingExpressionBase? _bindingInstance = binding.Initiate(target ?? new AvaloniaObject(), property);
-// #pragma warning restore CS0618
-
-        private IDisposable? _selfSubscription;
-        private object? _value;
-
         public IDisposable Subscribe(IObserver<object?> observer)
         {
-            return Disposable.Empty;
-            // DisposeHelper.DisposeToDefault(ref _selfSubscription);
-            // _selfSubscription = _bindingInstance?.Source.Subscribe(this); // Subscribe to the binding so that we can get updates.
-            //
-            // return _bindingInstance?.Source.Subscribe(observer) ?? Disposable.Empty;
+            if (CreateInstance(binding, target ?? new AvaloniaObject(), property, null) is not UntypedBindingExpressionBase expression ||
+                ToObservable(expression) is not IObservable<object?> observable)
+            {
+                return Disposable.Empty;
+            }
+
+            return observable.Subscribe(new AnonymousObserver<object?>(value => observer.OnNext(value switch
+            {
+                BindingNotification => null,
+                _ => value?.ToString()
+            })));
         }
 
-        public override string ToString() => _value?.ToString() ?? string.Empty;
+        // internal abstract BindingExpressionBase CreateInstance(
+        //     AvaloniaObject target,
+        //     AvaloniaProperty? targetProperty,
+        //     object? anchor);
+        [UnsafeAccessor(UnsafeAccessorKind.Method)]
+        private extern static BindingExpressionBase CreateInstance(
+            BindingBase binding,
+            AvaloniaObject target,
+            AvaloniaProperty? property,
+            object? anchor);
 
-        public void OnCompleted() { }
-
-        public void OnError(Exception error) => _value = null;
-
-        public void OnNext(object? value) => _value = value;
+        // internal IAvaloniaSubject<object?> ToObservable(AvaloniaObject? target = null)
+        [UnsafeAccessor(UnsafeAccessorKind.Method)]
+        [return: UnsafeAccessorType("Avalonia.Reactive.IAvaloniaSubject`1[[System.Object, System.Private.CoreLib]], Avalonia.Base")]
+        private extern static object ToObservable(
+            UntypedBindingExpressionBase binding,
+            AvaloniaObject? target = null);
     }
 }

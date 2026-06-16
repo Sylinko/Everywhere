@@ -62,7 +62,7 @@ internal static partial class SkillParser
             diagnostics.Add(
                 new SkillDiagnostic(
                     "skill.missing_name",
-                    new DirectResourceKey("SKILL.md is missing required frontmatter field 'name'."),
+                    new DirectLocaleKey("SKILL.md is missing required frontmatter field 'name'."),
                     NotificationType.Error));
         }
 
@@ -71,7 +71,7 @@ internal static partial class SkillParser
             diagnostics.Add(
                 new SkillDiagnostic(
                     "skill.missing_description",
-                    new DirectResourceKey("SKILL.md is missing required frontmatter field 'description'."),
+                    new DirectLocaleKey("SKILL.md is missing required frontmatter field 'description'."),
                     NotificationType.Error));
         }
 
@@ -82,7 +82,7 @@ internal static partial class SkillParser
             diagnostics.Add(
                 new SkillDiagnostic(
                     "skill.name_folder_mismatch",
-                    new DirectResourceKey("Skill name does not match the folder name; the folder name is used for the skill ID."),
+                    new DirectLocaleKey("Skill name does not match the folder name; the folder name is used for the skill ID."),
                     NotificationType.Warning));
         }
 
@@ -125,7 +125,7 @@ internal static partial class SkillParser
                 "frontmatter.invalid_field" => "skill.invalid_frontmatter_field",
                 _ => diagnostic.Id
             },
-            new DirectResourceKey(diagnostic.Message),
+            new DirectLocaleKey(diagnostic.Message),
             NotificationType.Error);
 
     private static string? NullIfWhiteSpace(this string? value) =>

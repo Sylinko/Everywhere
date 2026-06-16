@@ -18,8 +18,8 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// </summary>
 public sealed class EssentialPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Essential_Header);
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Essential_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_Description);
     public override LucideIconKind? Icon => LucideIconKind.ToolCase;
     public override bool IsDefaultEnabled => true;
 
@@ -63,7 +63,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         After started, you will wait for the subagent to complete and return the final result as string.
         Each agent invocation is stateless and isolated, so make sure to provide all necessary context and instructions for the subagent.
         """)]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Header, LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Header, LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Description)]
     private async Task<string> RunSubagentAsync(
         [FromKernelServices] IChatService chatService,
         [FromKernelServices] Assistant assistant,
@@ -75,10 +75,10 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         string? specialization = null,
         CancellationToken cancellationToken = default)
     {
-        displaySink.AppendDynamicResourceKey(
-            new FormattedDynamicResourceKey(
+        displaySink.AppendDynamicLocaleKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Title,
-                new DirectResourceKey(title)),
+                new DirectLocaleKey(title)),
             "Large");
 
         // Fork a temporary chat context for the subagent
@@ -130,7 +130,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
     [Description(
         "Manage a structured todo list to track progress and plan tasks. " +
         "Use this tool to ensure task visibility and proper planning when dealing with complex or multi-step tasks.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Header,
         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Description)]
     private static string ManageTodoList(
@@ -155,27 +155,27 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             case TodoAction.Reset:
             {
                 chatContext.UserInterfaceBroker.SetTodoItems(items);
-                displaySink.AppendDynamicResourceKey(
-                    new FormattedDynamicResourceKey(
+                displaySink.AppendDynamicLocaleKey(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Reset,
-                        new DirectResourceKey(items.Count)));
+                        new DirectLocaleKey(items.Count)));
                 return "Todo list reset successfully";
             }
             case TodoAction.Read when chatContext.UserInterfaceBroker.TodoItems.Count is not > 0:
             {
-                displaySink.AppendDynamicResourceKey(
-                    new FormattedDynamicResourceKey(
+                displaySink.AppendDynamicLocaleKey(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Read,
-                        new DirectResourceKey(0)));
+                        new DirectLocaleKey(0)));
 
                 return "Todo list is empty";
             }
             case TodoAction.Read:
             {
-                displaySink.AppendDynamicResourceKey(
-                    new FormattedDynamicResourceKey(
+                displaySink.AppendDynamicLocaleKey(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Read,
-                        new DirectResourceKey(chatContext.UserInterfaceBroker.TodoItems.Count)));
+                        new DirectLocaleKey(chatContext.UserInterfaceBroker.TodoItems.Count)));
 
                 var sb = new StringBuilder();
                 foreach (var item in chatContext.UserInterfaceBroker.TodoItems)
@@ -203,7 +203,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         "Use this tool to ask the user a small number of clarifying questions before proceeding. " +
         "Provide the questions array with concise headers and prompts. " +
         "Use options for fixed choices, set multiSelect when multiple selections are allowed.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Header,
         LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Description)]
     private async static Task<IReadOnlyDictionary<string, ChatPluginQuestionAnswer>> AskUserQuestionAsync(
@@ -220,10 +220,10 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 new ArgumentException("At least one question must be provided.", nameof(questions)));
         }
 
-        userInterface.DisplaySink.AppendDynamicResourceKey(
-            new FormattedDynamicResourceKey(
+        userInterface.DisplaySink.AppendDynamicLocaleKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Essential_AskUserQuestion_Prompt,
-                new DirectResourceKey(questions.Count)));
+                new DirectLocaleKey(questions.Count)));
 
         var answers = await userInterface.AskQuestionAsync(questions, cancellationToken);
         if (answers.Count != questions.Count)

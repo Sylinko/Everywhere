@@ -41,7 +41,7 @@ public interface ICloudClient : INotifyPropertyChanged
     /// <summary>
     /// Gets the resource key for the last error message encountered during login or data retrieval operations. Returns null if there are no errors.
     /// </summary>
-    IDynamicResourceKey? LastLoginErrorKey { get; }
+    IDynamicLocaleKey? LastLoginErrorKey { get; }
 
     /// <summary>
     /// Gets a list of notifications

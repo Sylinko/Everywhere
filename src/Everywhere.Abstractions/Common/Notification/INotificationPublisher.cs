@@ -7,11 +7,11 @@ public interface INotificationPublisher
 {
     void Push(
         string id,
-        IDynamicResourceKey contentKey,
+        IDynamicLocaleKey contentKey,
         NotificationType type = NotificationType.Information,
         bool canDismiss = true,
         bool forceShow = false,
-        IDynamicResourceKey? actionButtonContentKey = null,
+        IDynamicLocaleKey? actionButtonContentKey = null,
         ICommand? actionCommand = null);
 
     void Dismiss(string id);

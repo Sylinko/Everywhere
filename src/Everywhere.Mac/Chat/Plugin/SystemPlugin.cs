@@ -15,9 +15,9 @@ namespace Everywhere.Mac.Chat.Plugin;
 
 public sealed class SystemPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Header);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Header);
 
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Description);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Description);
 
     public override LucideIconKind? Icon => LucideIconKind.AppWindowMac;
 
@@ -70,19 +70,19 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         Complete
     }
 
-    private static DynamicResourceKey GetActionResourceKey(SystemAction action) => action switch
+    private static DynamicLocaleKey GetActionResourceKey(SystemAction action) => action switch
     {
-        SystemAction.Create => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Create),
-        SystemAction.List => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_List),
-        SystemAction.Update => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Update),
-        SystemAction.Delete => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Delete),
-        SystemAction.Complete => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Complete),
+        SystemAction.Create => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Create),
+        SystemAction.List => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_List),
+        SystemAction.Update => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Update),
+        SystemAction.Delete => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Delete),
+        SystemAction.Complete => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Complete),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
 
     [KernelFunction("manage_reminders")]
     [Description("Manage reminders: create, list, update, delete, or complete.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Header)]
     private async Task<string> ManageRemindersAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -102,8 +102,8 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -130,10 +130,10 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         if (!string.IsNullOrWhiteSpace(title))
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         // Only show consent for actions that modify data
@@ -141,7 +141,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         {
             var consent = await userInterface.RequestConsentAsync(
                 action.ToString(),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Consent_Header),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Consent_Header),
                 detailBlock,
                 cancellationToken: cancellationToken);
 
@@ -149,7 +149,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing reminders.")),
-                    new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage),
+                    new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage),
                     showDetails: false);
             }
         }
@@ -231,7 +231,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
     [KernelFunction("manage_calendar")]
     [Description(
         "Manage calendar events: create, list, or delete. When listing, you can specify a date range to filter events. Default is the next 2 weeks. Maximum range is 31 days.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Header)]
     private async Task<string> ManageCalendarAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -262,8 +262,8 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -297,28 +297,28 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         if (!title.IsNullOrWhiteSpace())
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         if (startDate.HasValue && endDate.HasValue)
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Time,
-                        new DirectResourceKey($"{startDate:f} - {endDate:f}"))));
+                        new DirectLocaleKey($"{startDate:f} - {endDate:f}"))));
         }
 
         if (!location.IsNullOrWhiteSpace())
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Location,
-                        new DirectResourceKey(location))));
+                        new DirectLocaleKey(location))));
         }
 
         // Only show consent for actions that modify data
@@ -326,7 +326,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         {
             var consent = await userInterface.RequestConsentAsync(
                 action.ToString(),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header),
                 detailBlock,
                 cancellationToken: cancellationToken);
 
@@ -334,7 +334,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing calendar.")),
-                    new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage),
+                    new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage),
                     showDetails: false);
             }
         }
@@ -422,7 +422,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("send_email")]
     [Description("Compose a new email in the Mail app.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Header)]
     private async Task<string> SendEmailAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The recipient email address")] string recipient,
@@ -434,12 +434,12 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Recipient,
-                    new DirectResourceKey(recipient))),
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Subject, new DirectResourceKey(subject))),
+                    new DirectLocaleKey(recipient))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Subject, new DirectLocaleKey(subject))),
         };
 
         // Don't show consent because it already shows before calling this function
@@ -460,7 +460,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("open_maps")]
     [Description("Open Apple Maps and search for a location.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Header)]
     private async Task<string> OpenMapsAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The location or query to search for")] string query,
@@ -470,8 +470,8 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query, new DirectResourceKey(query))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query, new DirectLocaleKey(query))),
         };
         displaySink.AppendBlocks(detailBlock);
 
@@ -487,7 +487,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("manage_notes")]
     [Description("Manage notes: create, list, or delete.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Header)]
     private async Task<string> ManageNotesAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -514,8 +514,8 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -542,15 +542,15 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         if (!string.IsNullOrWhiteSpace(title))
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         var consent = await userInterface.RequestConsentAsync(
             null,
-            new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Consent_Header),
+            new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Consent_Header),
             detailBlock,
             cancellationToken: cancellationToken);
 
@@ -558,7 +558,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing notes.")),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage),
                 showDetails: false);
         }
 
@@ -614,7 +614,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("open_url")]
     [Description("Open a URL in the default browser.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Header)]
     private async Task<string> OpenUrlAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The http or https URL to open")] string url,
@@ -630,8 +630,8 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url, new DirectResourceKey(url))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url, new DirectLocaleKey(url))),
         };
         displaySink.AppendBlocks(detailBlock);
 
@@ -640,7 +640,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("execute_applescript")]
     [Description("Execute raw AppleScript. Use this only when other specific functions are not applicable.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_Header)]
     private async Task<string> ExecuteAppleScriptAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -663,14 +663,14 @@ public sealed class SystemPlugin : BuiltInChatPlugin
 
         var consent = await userInterface.RequestConsentAsync(
             null,
-            new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header),
+            new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header),
             detailBlock,
             cancellationToken: cancellationToken);
         if (!consent)
         {
             throw new HandledException(
                 new UnauthorizedAccessException(consent.FormatReason("User denied consent for AppleScript execution.")),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage),
                 showDetails: false);
         }
 
@@ -715,9 +715,9 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new SystemException($"AppleScript execution failed: {errorOutput}"),
-                new FormattedDynamicResourceKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ErrorMessage,
-                    new DirectResourceKey(errorOutput)),
+                    new DirectLocaleKey(errorOutput)),
                 showDetails: false);
         }
 

@@ -36,20 +36,20 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
 
     [ObservableProperty] public partial StatisticsOverview? MonthlyOverview { get; private set; }
 
-    [ObservableProperty] public partial IDynamicResourceKey TurnAverageKey { get; private set; } =
-        new FormattedDynamicResourceKey(LocaleKey.HomePage_TurnAverage, new DirectResourceKey("0"));
+    [ObservableProperty] public partial IDynamicLocaleKey TurnAverageKey { get; private set; } =
+        new FormattedDynamicLocaleKey(LocaleKey.HomePage_TurnAverage, new DirectLocaleKey("0"));
 
-    [ObservableProperty] public partial IDynamicResourceKey HeatmapSummaryKey { get; private set; } =
-        new FormattedDynamicResourceKey(
+    [ObservableProperty] public partial IDynamicLocaleKey HeatmapSummaryKey { get; private set; } =
+        new FormattedDynamicLocaleKey(
             LocaleKey.HomePage_HeatmapSummary,
-            new FormattedDynamicResourceKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.HomePage_HeatmapValueLabel,
-                new DirectResourceKey("0"),
-                new DynamicResourceKey(LocaleKey.HomePage_Topics)),
-            new DirectResourceKey("0"));
+                new DirectLocaleKey("0"),
+                new DynamicLocaleKey(LocaleKey.HomePage_Topics)),
+            new DirectLocaleKey("0"));
 
-    [ObservableProperty] public partial IDynamicResourceKey HeatmapRangeKey { get; private set; } =
-        new FormattedDynamicResourceKey(LocaleKey.HomePage_LastMonths, new DirectResourceKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
+    [ObservableProperty] public partial IDynamicLocaleKey HeatmapRangeKey { get; private set; } =
+        new FormattedDynamicLocaleKey(LocaleKey.HomePage_LastMonths, new DirectLocaleKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
 
     [ObservableProperty] public partial HeatmapMetricTabItem? SelectedHeatmapMetricItem { get; set; }
 
@@ -112,9 +112,9 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     {
         var now = DateTimeOffset.Now;
         TodayText = now.ToString("D", CultureInfo.CurrentCulture);
-        HeatmapRangeKey = new FormattedDynamicResourceKey(
+        HeatmapRangeKey = new FormattedDynamicLocaleKey(
             LocaleKey.HomePage_LastMonths,
-            new DirectResourceKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
+            new DirectLocaleKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
 
         var monthStart = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
         var nextMonthStart = monthStart.AddMonths(1);
@@ -128,9 +128,9 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
             StatisticsDeviceScope.AllDevices,
             cancellationToken);
         Overview = overview;
-        TurnAverageKey = new FormattedDynamicResourceKey(
+        TurnAverageKey = new FormattedDynamicLocaleKey(
             LocaleKey.HomePage_TurnAverage,
-            new DirectResourceKey(
+            new DirectLocaleKey(
                 overview.TopicCount > 0 ? ((double)overview.TurnCount / overview.TopicCount).ToString("0.#", CultureInfo.CurrentCulture) : "0"));
 
         await RefreshHeatmapAsync(SelectedHeatmapMetricItem, cancellationToken);
@@ -191,35 +191,35 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
 
     private void InitializeHeatmapMetrics()
     {
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Topics), StatisticsHeatmapMetric.Topics));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Turns), StatisticsHeatmapMetric.Turns));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Tokens), StatisticsHeatmapMetric.Tokens));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_VisualContext), StatisticsHeatmapMetric.VisualContext));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_ToolUsage), StatisticsHeatmapMetric.ToolUsage));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Topics), StatisticsHeatmapMetric.Topics));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Turns), StatisticsHeatmapMetric.Turns));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Tokens), StatisticsHeatmapMetric.Tokens));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_VisualContext), StatisticsHeatmapMetric.VisualContext));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_ToolUsage), StatisticsHeatmapMetric.ToolUsage));
         SelectedHeatmapMetricItem = HeatmapMetrics[0];
     }
 
-    private static FormattedDynamicResourceKey CreateHeatmapSummaryKey(StatisticsHeatmapMetric metric, IReadOnlyList<IStatisticsHeatmapDay> days)
+    private static FormattedDynamicLocaleKey CreateHeatmapSummaryKey(StatisticsHeatmapMetric metric, IReadOnlyList<IStatisticsHeatmapDay> days)
     {
         var total = days.Sum(x => x.Value);
         var streak = GetLongestStreak(days);
-        var valueLabelKey = new FormattedDynamicResourceKey(
+        var valueLabelKey = new FormattedDynamicLocaleKey(
             LocaleKey.HomePage_HeatmapValueLabel,
-            new DirectResourceKey(Humanizer.HumanizeNumber(total)),
+            new DirectLocaleKey(Humanizer.HumanizeNumber(total)),
             GetMetricLabelKey(metric));
-        return new FormattedDynamicResourceKey(
+        return new FormattedDynamicLocaleKey(
             LocaleKey.HomePage_HeatmapSummary,
             valueLabelKey,
-            new DirectResourceKey(streak.ToString("N0", CultureInfo.CurrentCulture)));
+            new DirectLocaleKey(streak.ToString("N0", CultureInfo.CurrentCulture)));
     }
 
-    private static DynamicResourceKey GetMetricLabelKey(StatisticsHeatmapMetric metric) => metric switch
+    private static DynamicLocaleKey GetMetricLabelKey(StatisticsHeatmapMetric metric) => metric switch
     {
-        StatisticsHeatmapMetric.Topics => new DynamicResourceKey(LocaleKey.HomePage_Topics),
-        StatisticsHeatmapMetric.Turns => new DynamicResourceKey(LocaleKey.HomePage_Turns),
-        StatisticsHeatmapMetric.Tokens => new DynamicResourceKey(LocaleKey.HomePage_Tokens),
-        StatisticsHeatmapMetric.VisualContext => new DynamicResourceKey(LocaleKey.HomePage_VisualContext),
-        StatisticsHeatmapMetric.ToolUsage => new DynamicResourceKey(LocaleKey.HomePage_ToolUsage),
+        StatisticsHeatmapMetric.Topics => new DynamicLocaleKey(LocaleKey.HomePage_Topics),
+        StatisticsHeatmapMetric.Turns => new DynamicLocaleKey(LocaleKey.HomePage_Turns),
+        StatisticsHeatmapMetric.Tokens => new DynamicLocaleKey(LocaleKey.HomePage_Tokens),
+        StatisticsHeatmapMetric.VisualContext => new DynamicLocaleKey(LocaleKey.HomePage_VisualContext),
+        StatisticsHeatmapMetric.ToolUsage => new DynamicLocaleKey(LocaleKey.HomePage_ToolUsage),
         _ => throw new ArgumentOutOfRangeException(nameof(metric), metric, null)
     };
 
@@ -253,14 +253,14 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     /// </summary>
     /// <param name="Name"></param>
     /// <param name="Metric"></param>
-    public sealed record HeatmapMetricTabItem(IDynamicResourceKey Name, StatisticsHeatmapMetric Metric);
+    public sealed record HeatmapMetricTabItem(IDynamicLocaleKey Name, StatisticsHeatmapMetric Metric);
 
     /// <summary>
     /// Bindable quick configuration card shown on the home dashboard.
     /// </summary>
-    public sealed partial class QuickConfigurationCardItem(IDynamicResourceKey name, LucideIconKind icon, string route) : ObservableObject
+    public sealed partial class QuickConfigurationCardItem(IDynamicLocaleKey name, LucideIconKind icon, string route) : ObservableObject
     {
-        public IDynamicResourceKey Name { get; } = name;
+        public IDynamicLocaleKey Name { get; } = name;
 
         public LucideIconKind Icon { get; } = icon;
 
@@ -277,19 +277,19 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         public IReadOnlyList<QuickConfigurationCardItem> Cards { get; } =
         [
             new(
-                new DynamicResourceKey(LocaleKey.HomePage_Assistants),
+                new DynamicLocaleKey(LocaleKey.HomePage_Assistants),
                 LucideIconKind.Bot,
                 "CustomAssistantPage"),
             new(
-                new DynamicResourceKey(LocaleKey.HomePage_BuiltInTools),
+                new DynamicLocaleKey(LocaleKey.HomePage_BuiltInTools),
                 LucideIconKind.Hammer,
                 "ChatPluginPage"),
             new(
-                new DynamicResourceKey(LocaleKey.HomePage_Mcp),
+                new DynamicLocaleKey(LocaleKey.HomePage_Mcp),
                 LucideIconKind.Unplug,
                 "ChatPluginPage"),
             new(
-                new DynamicResourceKey(LocaleKey.HomePage_Skills),
+                new DynamicLocaleKey(LocaleKey.HomePage_Skills),
                 LucideIconKind.Box,
                 "SkillPage")
         ];

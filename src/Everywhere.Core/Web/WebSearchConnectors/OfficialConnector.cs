@@ -51,7 +51,7 @@ public sealed partial class OfficialConnector(
             throw new HandledException(
                 new UserNotLoginException(
                     "Everywhere cloud search service requires user login. Please instruct the user to login or configure 3rd-party search services"),
-                new DynamicResourceKey(LocaleKey.HandledSystemException_UserNotLogin),
+                new DynamicLocaleKey(LocaleKey.HandledSystemException_UserNotLogin),
                 showDetails: false);
         }
 
@@ -61,37 +61,37 @@ public sealed partial class OfficialConnector(
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchDepth
     {
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_Basic)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_Basic)]
         Basic,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_Fast)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_Fast)]
         Fast,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_UltraFast)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_UltraFast)]
         UltraFast
     }
 
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchTopic
     {
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_General)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_General)]
         General,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_News)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_News)]
         News,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_Finance)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_Finance)]
         Finance
     }
 
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchTimeRange
     {
-        [DynamicResourceKey(LocaleKey.Common_Default)]
+        [DynamicLocaleKey(LocaleKey.Common_Default)]
         Default,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Day)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Day)]
         Day,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
         Week,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
         Month,
-        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Year)]
+        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Year)]
         Year
     }
 

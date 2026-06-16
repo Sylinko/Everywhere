@@ -42,7 +42,7 @@ public sealed record FunctionCallContext(
 
     public async Task<RequestConsentResult> RequestConsentAsync(
         string? id,
-        IDynamicResourceKey headerKey,
+        IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         CancellationToken cancellationToken = default)

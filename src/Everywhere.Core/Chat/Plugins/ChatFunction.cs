@@ -14,9 +14,9 @@ namespace Everywhere.Chat.Plugins;
     DynamicallyAccessedMemberTypes.PublicProperties)]
 public abstract partial class ChatFunction : ObservableObject
 {
-    public virtual IDynamicResourceKey HeaderKey => new DirectResourceKey(KernelFunction.Name);
+    public virtual IDynamicLocaleKey HeaderKey => new DirectLocaleKey(KernelFunction.Name);
 
-    public virtual IDynamicResourceKey DescriptionKey => new DirectResourceKey(KernelFunction.Description);
+    public virtual IDynamicLocaleKey DescriptionKey => new DirectLocaleKey(KernelFunction.Description);
 
     public LucideIconKind? Icon { get; set; }
 
@@ -52,9 +52,9 @@ public abstract partial class ChatFunction : ObservableObject
 
 public sealed class BuiltInChatFunction : ChatFunction
 {
-    public override IDynamicResourceKey HeaderKey { get; }
+    public override IDynamicLocaleKey HeaderKey { get; }
 
-    public override IDynamicResourceKey DescriptionKey => field ?? base.DescriptionKey;
+    public override IDynamicLocaleKey DescriptionKey => field ?? base.DescriptionKey;
 
     public override ChatFunctionPermissions Permissions { get; }
 
@@ -82,32 +82,32 @@ public sealed class BuiltInChatFunction : ChatFunction
         Func<FunctionCallContent, bool?>? onPermissionConsent = null,
         string? functionName = null,
         string? description = null,
-        IDynamicResourceKey? headerKey = null,
-        IDynamicResourceKey? descriptionKey = null)
+        IDynamicLocaleKey? headerKey = null,
+        IDynamicLocaleKey? descriptionKey = null)
     {
         if (headerKey is not null)
         {
             HeaderKey = headerKey;
         }
-        else if (method.Method.GetCustomAttributes<DynamicResourceKeyAttribute>(false).FirstOrDefault() is { HeaderKey.Length: > 0 } attribute)
+        else if (method.Method.GetCustomAttributes<DynamicLocaleKeyAttribute>(false).FirstOrDefault() is { HeaderKey.Length: > 0 } attribute)
         {
-            HeaderKey = new DynamicResourceKey(attribute.HeaderKey);
+            HeaderKey = new DynamicLocaleKey(attribute.HeaderKey);
             if (!attribute.DescriptionKey.IsNullOrWhiteSpace())
             {
-                DescriptionKey = new DynamicResourceKey(attribute.DescriptionKey);
+                DescriptionKey = new DynamicLocaleKey(attribute.DescriptionKey);
             }
         }
         else if (!functionName.IsNullOrWhiteSpace())
         {
-            HeaderKey = new DirectResourceKey(functionName);
+            HeaderKey = new DirectLocaleKey(functionName);
         }
         else if (method.Method.GetCustomAttributes<KernelFunctionAttribute>(false).FirstOrDefault() is { Name: { Length: > 0 } name })
         {
-            HeaderKey = new DirectResourceKey(name);
+            HeaderKey = new DirectLocaleKey(name);
         }
         else
         {
-            HeaderKey = new DirectResourceKey(method.Method.Name);
+            HeaderKey = new DirectLocaleKey(method.Method.Name);
         }
 
         if (descriptionKey is not null)

@@ -92,24 +92,24 @@ public sealed class ChatWindowNotificationService : IChatWindowNotificationServi
                 availability.Kind is ModelAvailabilityKind.Deprecated or ModelAvailabilityKind.Unavailable ?
                     NotificationType.Error :
                     NotificationType.Warning,
-                ActionButtonContentKey: new DynamicResourceKey(LocaleKey.ChatWindow_ModelWarning_OpenAssistantSettings),
+                ActionButtonContentKey: new DynamicLocaleKey(LocaleKey.ChatWindow_ModelWarning_OpenAssistantSettings),
                 ActionCommand: new RelayCommand(() => OpenAssistantSettings(assistant.Id))));
     }
 
-    private static IDynamicResourceKey CreateOfficialModelWarningMessageKey(ModelAvailability availability)
+    private static IDynamicLocaleKey CreateOfficialModelWarningMessageKey(ModelAvailability availability)
     {
-        var deprecationDate = new DirectResourceKey(availability.DeprecationDate?.ToString("D") ?? string.Empty);
+        var deprecationDate = new DirectLocaleKey(availability.DeprecationDate?.ToString("D") ?? string.Empty);
         return availability.Kind switch
         {
-            ModelAvailabilityKind.Unavailable => new FormattedDynamicResourceKey(
+            ModelAvailabilityKind.Unavailable => new FormattedDynamicLocaleKey(
                 LocaleKey.ChatWindow_ModelWarning_Unavailable),
-            ModelAvailabilityKind.Deprecated => new FormattedDynamicResourceKey(
+            ModelAvailabilityKind.Deprecated => new FormattedDynamicLocaleKey(
                 LocaleKey.ChatWindow_ModelWarning_Deprecated,
                 deprecationDate),
-            ModelAvailabilityKind.DeprecatingSoon => new FormattedDynamicResourceKey(
+            ModelAvailabilityKind.DeprecatingSoon => new FormattedDynamicLocaleKey(
                 LocaleKey.ChatWindow_ModelWarning_DeprecatingSoon,
                 deprecationDate),
-            _ => DirectResourceKey.Empty
+            _ => DirectLocaleKey.Empty
         };
     }
 

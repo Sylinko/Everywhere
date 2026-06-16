@@ -37,7 +37,7 @@ public interface IChatPluginDisplaySink
     /// </summary>
     /// <param name="resourceKey"></param>
     /// <param name="className"></param>
-    void AppendDynamicResourceKey(IDynamicResourceKey resourceKey, string? className = null);
+    void AppendDynamicLocaleKey(IDynamicLocaleKey resourceKey, string? className = null);
 
     /// <summary>
     /// Appends a Markdown builder to the display sink. The caller can use the returned builder to build markdown content.
@@ -49,7 +49,7 @@ public interface IChatPluginDisplaySink
     /// Appends a progress indicator to the display sink. The caller can use the returned progress reporter to report progress between 0.0 and 1.0.
     /// </summary>
     /// <returns>a progress reporter that accepts values between 0.0 and 1.0, NaN for indeterminate progress</returns>
-    IProgress<double> AppendProgress(IDynamicResourceKey headerKey);
+    IProgress<double> AppendProgress(IDynamicLocaleKey headerKey);
 
     /// <summary>
     /// Appends a file reference to the display sink.

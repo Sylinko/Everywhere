@@ -23,9 +23,9 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// </summary>
 public sealed partial class TerminalPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
 
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
 
     public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
 
@@ -90,7 +90,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     }
 
     [KernelFunction("execute_in_terminal")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Header,
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Description)]
     private async Task<string> ExecuteInTerminalAsync(
@@ -113,7 +113,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             throw new HandledException(
                 new NotSupportedException(
                     $"Unsupported shell or not found: {shellPath}. Only PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash are supported."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell),
                 showDetails: false);
         }
 
@@ -121,7 +121,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         {
             var consent = await userInterface.RequestConsentAsync(
                 null,
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
                 new ChatPluginContainerDisplayBlock
                 {
                     new ChatPluginTextDisplayBlock(description),
@@ -133,7 +133,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new UnauthorizedAccessException(consent.FormatReason("User denied consent for shell script execution.")),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage),
                     showDetails: false);
             }
         }

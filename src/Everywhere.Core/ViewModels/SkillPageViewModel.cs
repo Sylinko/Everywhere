@@ -43,8 +43,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     public partial int FilteredSkillCount { get; private set; }
 
     [ObservableProperty]
-    public partial IDynamicResourceKey FilteredSkillCountKey { get; private set; } =
-        new FormattedDynamicResourceKey(LocaleKey.SkillPage_CountText, new DirectResourceKey(0));
+    public partial IDynamicLocaleKey FilteredSkillCountKey { get; private set; } =
+        new FormattedDynamicLocaleKey(LocaleKey.SkillPage_CountText, new DirectLocaleKey(0));
 
     public IReadOnlyBindableList<SkillSourceFilterItem> SourceFilterItems { get; }
 
@@ -68,7 +68,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
             {
                 result = null;
                 if (string.IsNullOrWhiteSpace(value)) return false;
-                result = new SkillInformationField(new DynamicResourceKey(labelKey), value, isMonospace);
+                result = new SkillInformationField(new DynamicLocaleKey(labelKey), value, isMonospace);
                 return true;
             }
         }
@@ -113,9 +113,9 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     partial void OnFilteredSkillCountChanged(int value)
     {
-        FilteredSkillCountKey = new FormattedDynamicResourceKey(
+        FilteredSkillCountKey = new FormattedDynamicLocaleKey(
             LocaleKey.SkillPage_CountText,
-            new DirectResourceKey(value));
+            new DirectLocaleKey(value));
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -195,7 +195,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         try
         {
             await App.Clipboard.SetTextAsync(text);
-            ToastManager.Success(DynamicResourceKey.Resolve(AbstractionsLocaleKey.Common_Copied));
+            ToastManager.Success(DynamicLocaleKey.Resolve(AbstractionsLocaleKey.Common_Copied));
         }
         catch (Exception ex)
         {
@@ -264,7 +264,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
         foreach (var group in _skillManager.SourceGroups)
         {
-            _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectResourceKey(group.Name)));
+            _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectLocaleKey(group.Name)));
         }
 
         SelectedSourceFilter =
@@ -358,10 +358,10 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
                 .FirstOrDefault();
     }
 
-    public sealed record SkillSourceFilterItem(string SourceKey, IDynamicResourceKey Name)
+    public sealed record SkillSourceFilterItem(string SourceKey, IDynamicLocaleKey Name)
     {
         public static SkillSourceFilterItem All { get; } =
-            new("all", new DynamicResourceKey(LocaleKey.SkillPage_SourceFilter_All));
+            new("all", new DynamicLocaleKey(LocaleKey.SkillPage_SourceFilter_All));
 
         public bool IsAll => ReferenceEquals(this, All);
     }
@@ -427,5 +427,5 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         }
     }
 
-    public sealed record SkillInformationField(IDynamicResourceKey Label, string Value, bool IsMonospace);
+    public sealed record SkillInformationField(IDynamicLocaleKey Label, string Value, bool IsMonospace);
 }

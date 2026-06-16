@@ -80,9 +80,6 @@ public sealed class StatisticsHeatmap : UserControl
 
     private readonly Dictionary<Rect, IStatisticsHeatmapDay> _hitTargets = [];
     private readonly Border _toolTipHolder;
-    private readonly DynamicResourceKey _mondayKey = new(LocaleKey.HomePage_HeatmapWeekdayMondayShort);
-    private readonly DynamicResourceKey _wednesdayKey = new(LocaleKey.HomePage_HeatmapWeekdayWednesdayShort);
-    private readonly DynamicResourceKey _fridayKey = new(LocaleKey.HomePage_HeatmapWeekdayFridayShort);
 
     static StatisticsHeatmap()
     {
@@ -211,9 +208,9 @@ public sealed class StatisticsHeatmap : UserControl
     {
         var labels = new[]
         {
-            (1, _mondayKey.ToString() ?? string.Empty),
-            (3, _wednesdayKey.ToString() ?? string.Empty),
-            (5, _fridayKey.ToString() ?? string.Empty)
+            (1, LocaleResolver.StatisticsHeatmap_MondayShort),
+            (3, LocaleResolver.StatisticsHeatmap_WednesdayShort),
+            (5, LocaleResolver.StatisticsHeatmap_FridayShort)
         };
         foreach (var (row, label) in labels.AsValueEnumerable())
         {

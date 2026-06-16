@@ -6,10 +6,10 @@ namespace Everywhere.Common.Notification;
 
 public sealed record DynamicNotification(
     string Id,
-    IDynamicResourceKey ContentKey,
+    IDynamicLocaleKey ContentKey,
     NotificationType Type,
     IRelayCommand<DynamicNotification>? DismissCommand,
-    IDynamicResourceKey? ActionButtonContentKey = null,
+    IDynamicLocaleKey? ActionButtonContentKey = null,
     ICommand? ActionCommand = null,
     string? Category = null
 )

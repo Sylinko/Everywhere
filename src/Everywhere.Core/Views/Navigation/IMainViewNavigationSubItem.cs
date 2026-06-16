@@ -4,5 +4,5 @@ public interface IMainViewNavigationSubItem : IMainViewNavigationItem
 {
     Type GroupType { get; }
 
-    IDynamicResourceKey? DescriptionKey { get; }
+    IDynamicLocaleKey? DescriptionKey { get; }
 }

@@ -72,8 +72,8 @@ public sealed partial record Strategy
     public IReadOnlyList<StrategySource> Includes { get; init; } = [];
     public bool Enabled { get; init; } = true;
 
-    public required IDynamicResourceKey NameKey { get; init; }
-    public IDynamicResourceKey? DescriptionKey { get; init; }
+    public required IDynamicLocaleKey NameKey { get; init; }
+    public IDynamicLocaleKey? DescriptionKey { get; init; }
     public ColoredIcon? Icon { get; init; }
     public int Priority { get; init; }
 
@@ -483,7 +483,7 @@ The engine should be able to report permissions implied by:
 2. Preprocessors.
 3. Tool rules that enable tools with permissions.
 
-Permission display must use `IDynamicResourceKey` so the UI can show natural language text:
+Permission display must use `IDynamicLocaleKey` so the UI can show natural language text:
 
 ```text
 Reads clipboard text

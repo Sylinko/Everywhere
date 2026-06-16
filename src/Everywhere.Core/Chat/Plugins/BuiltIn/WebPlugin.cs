@@ -18,8 +18,8 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 
 public sealed partial class WebPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_Header);
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Description);
     public override LucideIconKind? Icon => LucideIconKind.Globe;
     public override IReadOnlyList<SettingsItem> SettingsItems => _webBrowserSettings.SettingsItems;
 
@@ -69,7 +69,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new ArgumentException("Web search engine provider is not selected."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage),
                 showDetails: false);
         }
 
@@ -93,7 +93,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 google.SearchEngineId ??
                 throw new HandledException(
                     new UnauthorizedAccessException("Search Engine ID is not set."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
                     showDetails: false),
                 _httpClientFactory.CreateClient(),
                 EnsureUri(google.EndPoint)),
@@ -109,7 +109,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.EndPoint)),
             _ => throw new HandledException(
                 new NotSupportedException($"Web search engine provider '{provider.Id}' is not supported."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage),
                 showDetails: false)
         };
 
@@ -121,7 +121,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 throw new HandledException(
                     new ArgumentException(
                         "Endpoint is not a valid absolute http/https URI. Please instruct the user to correct in Main Window > Web Search."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage),
                     showDetails: false);
             }
 
@@ -133,7 +133,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             ApiKey.GetKey(id) ??
             throw new HandledException(
                 new UnauthorizedAccessException("API key is not set. Please instruct the user to configure in Main Window > Web Search."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage),
                 showDetails: false);
     }
 
@@ -154,7 +154,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         "Searches the public web for real-time information. Returns a JSON array of web pages. " +
         "STRICTLY confined to internet content; DO NOT use to search local files or personal data. " +
         "Results may be inaccurate.")]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header, LocaleKey.BuiltInChatPlugin_Web_WebSearch_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header, LocaleKey.BuiltInChatPlugin_Web_WebSearch_Description)]
     private async Task<string> SearchAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Search query")] string query,
@@ -164,10 +164,10 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         _logger.LogDebug("Performing web search with query: {Query}, count: {Count}", query, count);
         using var connector = CreateConnector();
 
-        displaySink.AppendDynamicResourceKey(
-            new FormattedDynamicResourceKey(
+        displaySink.AppendDynamicLocaleKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Web_WebSearch_Searching,
-                new DirectResourceKey(query)));
+                new DirectLocaleKey(query)));
 
         var results = await connector.SearchAsync(query, count, cancellationToken).ConfigureAwait(false);
         var indexedResults = results
@@ -181,7 +181,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         displaySink.AppendUrls(
             indexedResults.Select(r => new ChatPluginUrl(
                 r.Url,
-                new DirectResourceKey((r.Name ?? r.Snippet).SafeSubstring(0, 64)))
+                new DirectLocaleKey((r.Name ?? r.Snippet).SafeSubstring(0, 64)))
             {
                 Index = r.Index
             }).ToList());
@@ -191,7 +191,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
 
     [KernelFunction("web_extract")]
     [Description("Fetch and extract the main content from a web page. This tool is useful for summarizing or analyzing the content of a webpage.")]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
     private async Task<string> ExtractAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("An array of URLs to fetch content from. Maximum 10.")] IReadOnlyList<string> urls,
@@ -218,10 +218,10 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         var extractions = await Task.WhenAll(
             urls.DistinctBy(u => u.Trim()).Select(async url =>
             {
-                displaySink.AppendDynamicResourceKey(
-                    new FormattedDynamicResourceKey(
+                displaySink.AppendDynamicLocaleKey(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Web_WebExtract_Visiting,
-                        new DirectResourceKey(url)));
+                        new DirectLocaleKey(url)));
 
                 try
                 {

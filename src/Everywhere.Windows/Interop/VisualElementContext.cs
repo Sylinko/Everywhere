@@ -82,7 +82,7 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         catch (Exception ex)
         {
             Log.ForContext<VisualElementContext>().Error(
-                new HandledException(ex, new DirectResourceKey("Failed to get AutomationElement")),
+                new HandledException(ex, new DirectLocaleKey("Failed to get AutomationElement")),
                 "Failed to get AutomationElement");
         }
 

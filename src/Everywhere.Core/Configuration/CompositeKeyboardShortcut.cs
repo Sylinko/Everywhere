@@ -10,14 +10,14 @@ namespace Everywhere.Configuration;
 public sealed partial class CompositeKeyboardShortcut : ObservableObject
 {
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CompositeKeyboardShortcut_IsEnabled_Header,
         LocaleKey.CompositeKeyboardShortcut_IsEnabled_Description)]
     [SettingsItem(Group = "_")]
     public partial bool IsEnabled { get; set; } = true;
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CompositeKeyboardShortcut_Main_Header,
         LocaleKey.CompositeKeyboardShortcut_Main_Description)]
     [SettingsItem(Group = "_")]
@@ -25,7 +25,7 @@ public sealed partial class CompositeKeyboardShortcut : ObservableObject
     public partial KeyboardShortcut Main { get; set; }
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CompositeKeyboardShortcut_Alternative_Header,
         LocaleKey.CompositeKeyboardShortcut_Alternative_Description)]
     [SettingsItem(Group = "_")]

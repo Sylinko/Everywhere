@@ -24,8 +24,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private static TimeSpan RegexTimeout => TimeSpan.FromSeconds(3);
 
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Description);
     public override LucideIconKind? Icon => LucideIconKind.FileBox;
 
     private readonly ILogger<FileSystemPlugin> _logger;
@@ -89,7 +89,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         - Automatically ignores common build/hidden folders (e.g., bin, obj, .git, node_modules).
         - Has a 20-second timeout to prevent hanging.
         """)]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private string SearchFiles(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -187,7 +187,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("get_file_info")]
     [Description("Get information about a file or directory at the specified path.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -223,7 +223,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         - Has a 20-second timeout to prevent hanging.
         - Truncates extremely long lines around the match to save tokens.
         """)]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -400,7 +400,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         This tool will truncate its output at 2000 lines and may be called repeatedly with offset and limit parameters to read larger files in chunks. 
         Binary files use offset/limit as byte offsets.
         """)]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<object> ReadFileAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -435,7 +435,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new NotSupportedException("Attachment file size is larger than 10 MB, read operation with attachment=true is not supported."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
                     showDetails: false);
             }
 
@@ -446,7 +446,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new NotSupportedException("File size is larger than 100 MB, read operation is not supported."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
                 showDetails: false);
         }
 
@@ -574,7 +574,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("move_file")]
     [Description("Moves or renames a file or directory.")]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task MoveFileAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
@@ -611,7 +611,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_MoveConsent_Header),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_MoveConsent_Header),
             null,
             [source, destination],
             cancellationToken);
@@ -625,7 +625,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             throw new HandledSystemException(
                 new IOException("Failed to create destination directory.", ex),
                 HandledSystemExceptionType.IOException,
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage));
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage));
         }
 
         if (isFile)
@@ -641,7 +641,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [KernelFunction("delete_files")]
     [Description(
         "Delete files and directories at the specified path matching the given pattern.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -666,7 +666,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException("Cannot delete root directory."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage),
                 showDetails: false);
         }
 
@@ -675,7 +675,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException("Cannot delete system files or directories."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage),
                 showDetails: false);
         }
 
@@ -715,9 +715,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
-            new FormattedDynamicResourceKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header,
-                new DirectResourceKey(infosToDeleteList.Count)),
+                new DirectLocaleKey(infosToDeleteList.Count)),
             null,
             deleteTargets,
             cancellationToken);
@@ -730,7 +730,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             {
                 var consent = await userInterface.RequestConsentAsync(
                     "system",
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header),
                     new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(info.FullName)),
                     cancellationToken: cancellationToken);
                 if (!consent)
@@ -770,7 +770,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("create_directory")]
     [Description("Creates a new directory at the specified path.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -789,7 +789,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header),
             null,
             [path],
             cancellationToken);
@@ -799,7 +799,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     [KernelFunction("write_to_file")]
     [Description("Writes content to a text file at the specified path. Binary files are not supported.")]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -821,8 +821,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header),
-            new DynamicResourceKey(GetWriteConsentDescriptionKey(append, fileExists)),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header),
+            new DynamicLocaleKey(GetWriteConsentDescriptionKey(append, fileExists)),
             [path],
             cancellationToken);
 
@@ -831,7 +831,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException("Cannot write to a binary file."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage),
                 showDetails: false);
         }
 
@@ -847,7 +847,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         - Supports both regex and literal text replacement (toggle `isRegex`).
         - When using regex, replacements can use substitution patterns (e.g., $1, $2).
         """)]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
@@ -894,7 +894,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new NotSupportedException("File size is larger than 10 MB, replace operation is not supported."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage),
                 showDetails: false);
         }
 
@@ -903,7 +903,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new InvalidOperationException("Cannot replace content in a binary file."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage),
                 showDetails: false);
         }
 
@@ -1017,8 +1017,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     private static async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
         ChatContext chatContext,
-        IDynamicResourceKey headerKey,
-        IDynamicResourceKey? descriptionKey,
+        IDynamicLocaleKey headerKey,
+        IDynamicLocaleKey? descriptionKey,
         List<string> paths,
         CancellationToken cancellationToken)
     {
@@ -1031,7 +1031,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var container = new ChatPluginContainerDisplayBlock();
         if (descriptionKey is not null)
         {
-            container.Add(new ChatPluginDynamicResourceKeyDisplayBlock(descriptionKey));
+            container.Add(new ChatPluginDynamicLocaleKeyDisplayBlock(descriptionKey));
         }
 
         container.Add(new ChatPluginFileReferencesDisplayBlock(
@@ -1050,7 +1050,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException(consent.FormatReason("User denied consent for this operation.")),
-                new DirectResourceKey("File operation denied"),
+                new DirectLocaleKey("File operation denied"),
                 showDetails: false);
         }
     }
@@ -1071,13 +1071,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new InvalidOperationException("The specified path is a file, not a directory."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage),
                 showDetails: false);
         }
 
         throw new HandledException(
             new DirectoryNotFoundException("The specified path is not a directory or a file."),
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathNotExist_ErrorMessage),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathNotExist_ErrorMessage),
             showDetails: false);
     }
 
@@ -1097,13 +1097,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new InvalidOperationException("The specified path is a directory, not a file."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage),
                 showDetails: false);
         }
 
         throw new HandledException(
             new FileNotFoundException("The specified path is not a file or a directory."),
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathNotExist_ErrorMessage),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathNotExist_ErrorMessage),
             showDetails: false);
 
     }
@@ -1122,7 +1122,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         throw new HandledException(
             new FileNotFoundException("The specified path does not exist as a file or directory."),
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage),
             showDetails: false);
     }
 

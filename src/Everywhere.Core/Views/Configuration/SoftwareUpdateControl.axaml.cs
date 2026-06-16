@@ -17,10 +17,10 @@ public partial class SoftwareUpdateControl(
 
     public ISoftwareUpdater SoftwareUpdater { get; } = softwareUpdater;
 
-    public static readonly StyledProperty<IDynamicResourceKey?> UpdateOrCheckTitleProperty = AvaloniaProperty.Register<SoftwareUpdateControl, IDynamicResourceKey?>(
+    public static readonly StyledProperty<IDynamicLocaleKey?> UpdateOrCheckTitleProperty = AvaloniaProperty.Register<SoftwareUpdateControl, IDynamicLocaleKey?>(
         nameof(UpdateOrCheckTitle));
 
-    public IDynamicResourceKey? UpdateOrCheckTitle
+    public IDynamicLocaleKey? UpdateOrCheckTitle
     {
         get => GetValue(UpdateOrCheckTitleProperty);
         set => SetValue(UpdateOrCheckTitleProperty, value);
@@ -29,7 +29,7 @@ public partial class SoftwareUpdateControl(
     [RelayCommand]
     private async Task UpdateOrCheckAsync(CancellationToken cancellationToken)
     {
-        UpdateOrCheckTitle = new DynamicResourceKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text);
+        UpdateOrCheckTitle = new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text);
         if (SoftwareUpdater.LatestUpdate is not null)
         {
             serviceProvider.GetRequiredService<MainViewModel>().NavigateTo(serviceProvider.GetRequiredService<ChangeLogView>());
@@ -42,7 +42,7 @@ public partial class SoftwareUpdateControl(
         }
         catch (Exception ex)
         {
-            ex = new HandledException(ex, new DynamicResourceKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content));
+            ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content));
             ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }

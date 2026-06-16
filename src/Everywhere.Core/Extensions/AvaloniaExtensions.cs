@@ -19,11 +19,11 @@ public static class AvaloniaExtensions
             .DismissOnClick()
             .ShowError());
 
-    public static TextBlock ToTextBlock(this IDynamicResourceKey dynamicResourceKey)
+    public static TextBlock ToTextBlock(this IDynamicLocaleKey dynamicResourceKey)
     {
         return new TextBlock
         {
-            Classes = { nameof(DynamicResourceKey) },
+            Classes = { nameof(DynamicLocaleKey) },
             [!TextBlock.TextProperty] = dynamicResourceKey.ToBinding()
         };
     }

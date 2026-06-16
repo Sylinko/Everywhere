@@ -115,7 +115,7 @@
             </shadui:Badge.Background>
             <TextBlock Foreground="{DynamicResource BadgeForegroundColor}">
               <TextBlock.Text>
-                <I18N Key="{Binding Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                <I18N Key="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
               </TextBlock.Text>
             </TextBlock>
           </shadui:Badge>

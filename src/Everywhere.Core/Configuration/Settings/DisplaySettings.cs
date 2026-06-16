@@ -19,10 +19,10 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     public LucideIconKind Icon => LucideIconKind.MonitorCog;
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Display_Header);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Display_Header);
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Display_Description);
+    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Display_Description);
 
     /// <summary>
     /// Gets or sets the current application language.
@@ -33,7 +33,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     /// <example>
     /// default, zh-hans, ru, de, ja, it, fr, es, ko, pt-br, zh-hant, zh-hant-hk
     /// </example>
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.DisplaySettings_Language_Header,
         LocaleKey.DisplaySettings_Language_Description)]
     [SettingsItem(Group = "_")]
@@ -49,7 +49,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
         }
     }
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.DisplaySettings_Theme_Header,
         LocaleKey.DisplaySettings_Theme_Description)]
     [SettingsItem(Group = "_")]
@@ -74,7 +74,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
         }
     }
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.DisplaySettings_AccentColor_Header,
         LocaleKey.DisplaySettings_AccentColor_Description)]
     [SettingsItem(Group = "_")]
@@ -91,7 +91,7 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     /// <summary>
     /// Application font size.
     /// </summary>
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.DisplaySettings_FontSize_Header,
         LocaleKey.DisplaySettings_FontSize_Description)]
     [SettingsItem(Group = "_")]

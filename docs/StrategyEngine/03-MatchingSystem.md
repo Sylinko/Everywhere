@@ -209,7 +209,7 @@ public interface IExtraContextProvider
 {
     string Id { get; }                         // windows.explorer, macos.finder
     string PublicRoot { get; }                 // extra.file_manager
-    IDynamicResourceKey PermissionDescriptionKey { get; }
+    IDynamicLocaleKey PermissionDescriptionKey { get; }
 
     bool CanCollect(StrategyContext baseContext, ExtraContextRequest request);
 
@@ -519,7 +519,7 @@ public sealed record StrategyDiagnostic
 {
     public required StrategyDiagnosticSeverity Severity { get; init; }
     public required string Code { get; init; }
-    public IDynamicResourceKey? MessageKey { get; init; }
+    public IDynamicLocaleKey? MessageKey { get; init; }
     public string? Path { get; init; }
     public string? ProviderId { get; init; }
     public TimeSpan? Duration { get; init; }

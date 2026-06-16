@@ -14,7 +14,7 @@ public sealed partial class SettingsPage : UserControl, IMainViewNavigationTopLe
 
     public LucideIconKind Icon => LucideIconKind.Cog;
 
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsPage_Title);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsPage_Title);
 
     public Item[] Items { get; }
 

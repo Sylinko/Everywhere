@@ -22,10 +22,10 @@ namespace Everywhere.Windows.Chat.Plugins;
 /// </summary>
 public sealed class EverythingPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Header);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Header);
 
-    public override IDynamicResourceKey DescriptionKey { get; } =
-        new DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Description);
+    public override IDynamicLocaleKey DescriptionKey { get; } =
+        new DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Description);
 
     public override LucideIconKind? Icon => LucideIconKind.Search;
 
@@ -113,7 +113,7 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
 
     [KernelFunction("search_files")]
     [Description("Search files using Everything search engine.")]
-    [DynamicResourceKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header, LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
+    [DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header, LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
     private async Task<string> SearchFilesAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Standard search pattern in Everything search engine.")] string searchPattern,
@@ -140,10 +140,10 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
                         .Select(CreateFileRecord)
                         .ToList();
 
-                    displaySink.AppendDynamicResourceKey(
-                        new FormattedDynamicResourceKey(
+                    displaySink.AppendDynamicLocaleKey(
+                        new FormattedDynamicLocaleKey(
                             LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage,
-                            new DirectResourceKey(everything.Count.ToString())));
+                            new DirectLocaleKey(everything.Count.ToString())));
 
                     if (records.Count == 0) return "No results found.";
 

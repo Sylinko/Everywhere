@@ -3190,13 +3190,13 @@ Fecha de lanzamiento: {2}</value>
     <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
         <value>Tokens de salida: {0}</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_MondayShort" xml:space="preserve">
         <value>Lun</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_WednesdayShort" xml:space="preserve">
         <value>Mié</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_FridayShort" xml:space="preserve">
         <value>Vie</value>
     </data>
     <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">

@@ -338,7 +338,7 @@
                         HorizontalAlignment="Left"
                         FontSize="{DynamicResource FontSizeS}">
                         <TextBlock.Text>
-                          <I18N Key="{Binding Date, Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                          <I18N Key="{Binding Date, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                         </TextBlock.Text>
                       </TextBlock>
 
@@ -571,13 +571,13 @@
                       <TextBlock
                         Grid.Row="0" Grid.Column="1"
                         FontWeight="SemiBold"
-                        Text="{Binding NameKey^, Mode=OneTime}"
+                        Text="{Binding NameKey^}"
                         TextWrapping="Wrap"/>
                       <TextBlock
                         Classes="Muted Caption" Grid.Row="1"
                         Grid.Column="0" Grid.ColumnSpan="2"
                         Margin="4,0"
-                        Text="{Binding DescriptionKey^, Mode=OneTime, FallbackValue={x:Null}}"
+                        Text="{Binding DescriptionKey^, FallbackValue={x:Null}}"
                         TextWrapping="Wrap"/>
                     </Grid>
                   </Button>
@@ -1175,7 +1175,7 @@
                     Classes="Muted" VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeS}">
                     <TextBlock.Text>
-                      <I18N Key="{Binding PersistentState.VisualContextLengthLimit, Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                      <I18N Key="{Binding PersistentState.VisualContextLengthLimit, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                     </TextBlock.Text>
                   </TextBlock>
 
@@ -1206,7 +1206,7 @@
                     Classes="Muted" VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeS}">
                     <TextBlock.Text>
-                      <I18N Key="{Binding PersistentState.VisualContextDetailLevel, Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                      <I18N Key="{Binding PersistentState.VisualContextDetailLevel, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                     </TextBlock.Text>
                   </TextBlock>
 

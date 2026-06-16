@@ -34,13 +34,13 @@ public abstract class ChatPluginUserInterfaceItem<TResult> : ChatPluginUserInter
 /// <param name="rememberMasks"></param>
 /// <param name="cancellationToken"></param>
 public sealed class ChatPluginUserInterfaceConsentRequestItem(
-    IDynamicResourceKey headerKey,
+    IDynamicLocaleKey headerKey,
     ChatPluginDisplayBlock? displayBlock,
     RequestConsentRememberMasks rememberMasks,
     CancellationToken cancellationToken
 ) : ChatPluginUserInterfaceItem<ConsentDecisionResult>(cancellationToken)
 {
-    public IDynamicResourceKey HeaderKey { get; } = headerKey;
+    public IDynamicLocaleKey HeaderKey { get; } = headerKey;
 
     public ChatPluginDisplayBlock? DisplayBlock { get; } = displayBlock;
 

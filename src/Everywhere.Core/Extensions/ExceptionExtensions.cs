@@ -14,7 +14,7 @@ public static class ExceptionExtensions
     /// </summary>
     /// <param name="e"></param>
     /// <returns></returns>
-    public static IDynamicResourceKey GetFriendlyMessage(this Exception e)
+    public static IDynamicLocaleKey GetFriendlyMessage(this Exception e)
     {
         switch (e)
         {
@@ -28,25 +28,25 @@ public static class ExceptionExtensions
             }
             case SocketException se:
             {
-                return new FormattedDynamicResourceKey(
+                return new FormattedDynamicLocaleKey(
                     LocaleKey.FriendlyExceptionMessage_Socket,
-                    new DirectResourceKey((int)se.SocketErrorCode),
-                    new DynamicResourceKey($"{LocaleKey.FriendlyExceptionMessage_Socket}_{se.SocketErrorCode.ToString()}"));
+                    new DirectLocaleKey((int)se.SocketErrorCode),
+                    new DynamicLocaleKey($"{LocaleKey.FriendlyExceptionMessage_Socket}_{se.SocketErrorCode.ToString()}"));
             }
             case AggregateException ae:
             {
                 var innerMessages = ae
                     .InnerExceptions
                     .AsValueEnumerable()
-                    .Select(IDynamicResourceKey (i) => i.GetFriendlyMessage())
+                    .Select(IDynamicLocaleKey (i) => i.GetFriendlyMessage())
                     .Distinct()
                     .ToList();
 
                 if (innerMessages.Count == 1) return innerMessages[0];
 
-                return new FormattedDynamicResourceKey(
+                return new FormattedDynamicLocaleKey(
                     LocaleKey.FriendlyExceptionMessage_Aggregate,
-                    new AggregateDynamicResourceKey(innerMessages, "\n"));
+                    new AggregateDynamicLocaleKey(innerMessages, "\n"));
             }
             case HandledException he:
             {
@@ -58,14 +58,14 @@ public static class ExceptionExtensions
                 if (exceptionName.EndsWith("Exception")) exceptionName = exceptionName[..^"Exception".Length];
 
                 var messageKey = $"FriendlyExceptionMessage_{exceptionName}";
-                return DynamicResourceKey.Exists(messageKey) ?
-                    new AggregateDynamicResourceKey(
+                return DynamicLocaleKey.Exists(messageKey) ?
+                    new AggregateDynamicLocaleKey(
                         [
-                            new DynamicResourceKey(messageKey),
-                            new DirectResourceKey(e.Message.Trim())
+                            new DynamicLocaleKey(messageKey),
+                            new DirectLocaleKey(e.Message.Trim())
                         ],
                         "\n") :
-                    new DirectResourceKey(e.Message.Trim());
+                    new DirectLocaleKey(e.Message.Trim());
             }
         }
     }
@@ -99,13 +99,13 @@ public static class ExceptionExtensions
         }
     }
 
-    private static FormattedDynamicResourceKey FormatHttpExceptionMessage(string baseKey, HttpStatusCode? statusCode)
+    private static FormattedDynamicLocaleKey FormatHttpExceptionMessage(string baseKey, HttpStatusCode? statusCode)
     {
         var key = $"{baseKey}_{statusCode.ToString()}";
-        if (!DynamicResourceKey.Exists(key)) key = $"{baseKey}_0";
-        return new FormattedDynamicResourceKey(
+        if (!DynamicLocaleKey.Exists(key)) key = $"{baseKey}_0";
+        return new FormattedDynamicLocaleKey(
             baseKey,
-            new DirectResourceKey(statusCode ?? 0),
-            new DynamicResourceKey(key));
+            new DirectLocaleKey(statusCode ?? 0),
+            new DynamicLocaleKey(key));
     }
 }

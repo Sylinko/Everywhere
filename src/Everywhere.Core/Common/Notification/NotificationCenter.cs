@@ -266,11 +266,11 @@ public sealed class NotificationCenter : INotificationCenter, IDisposable
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(
             string id,
-            IDynamicResourceKey contentKey,
+            IDynamicLocaleKey contentKey,
             NotificationType type = NotificationType.Information,
             bool canDismiss = true,
             bool forceShow = false,
-            IDynamicResourceKey? actionButtonContentKey = null,
+            IDynamicLocaleKey? actionButtonContentKey = null,
             ICommand? actionCommand = null)
         {
             notificationCenter.Push(

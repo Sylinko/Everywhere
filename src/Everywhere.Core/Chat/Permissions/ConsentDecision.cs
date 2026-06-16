@@ -5,12 +5,12 @@
 /// </summary>
 public enum ConsentDecision
 {
-    [DynamicResourceKey(LocaleKey.ConsentDecision_Deny)]
+    [DynamicLocaleKey(LocaleKey.ConsentDecision_Deny)]
     Deny = 0,
-    [DynamicResourceKey(LocaleKey.ConsentDecision_AllowOnce)]
+    [DynamicLocaleKey(LocaleKey.ConsentDecision_AllowOnce)]
     AllowOnce = 1,
-    [DynamicResourceKey(LocaleKey.ConsentDecision_AllowSession)]
+    [DynamicLocaleKey(LocaleKey.ConsentDecision_AllowSession)]
     AllowSession = 2,
-    [DynamicResourceKey(LocaleKey.ConsentDecision_AlwaysAllow)]
+    [DynamicLocaleKey(LocaleKey.ConsentDecision_AlwaysAllow)]
     AlwaysAllow = 3
 }

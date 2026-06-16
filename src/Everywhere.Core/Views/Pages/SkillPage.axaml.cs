@@ -8,7 +8,7 @@ public partial class SkillPage : ReactiveUserControl<SkillPageViewModel>, IMainV
 
     public LucideIconKind Icon => LucideIconKind.Box;
 
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SkillPage_Title);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SkillPage_Title);
 
     public SkillPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {

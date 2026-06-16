@@ -13,26 +13,26 @@ public sealed partial class SystemAssistantSettings : SettingsBase, ISettingsCat
     public LucideIconKind Icon => LucideIconKind.Sparkles;
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Header);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Header);
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Description);
+    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Description);
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_TitleGeneration_Header,
         LocaleKey.SystemAssistantSettings_TitleGeneration_Desription)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(TitleGeneration)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
     public SystemAssistant TitleGeneration { get; } = new(ModelSpecializations.TitleGeneration);
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Header,
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Description)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(DefaultSubagent)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
     public SystemAssistant DefaultSubagent { get; } = new(ModelSpecializations.Default);
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_ImageUnderstanding_Header,
         LocaleKey.SystemAssistantSettings_ImageUnderstanding_Description)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(ImageUnderstanding)}.{nameof(SystemAssistant.AutoSelect)}")]

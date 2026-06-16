@@ -24,8 +24,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-translate",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_TranslateCommand_Description),
             Icon = LucideIconKind.Languages,
             Priority = 100,
             Condition = BaseCondition,
@@ -43,8 +43,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-explain",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ExplainCommand_Description),
             Icon = LucideIconKind.BookOpen,
             Priority = 95,
             Condition = BaseCondition,
@@ -64,8 +64,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-summarize",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_SummarizeCommand_Description),
             Icon = LucideIconKind.FileText,
             Priority = 90,
             Condition = new TextCondition
@@ -87,8 +87,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-rewrite",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_RewriteCommand_Description),
             Icon = LucideIconKind.PenLine,
             Priority = 85,
             Condition = BaseCondition,
@@ -108,8 +108,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-research",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_ResearchCommand_Description),
             Icon = LucideIconKind.Search,
             Priority = 80,
             Condition = BaseCondition,
@@ -132,8 +132,8 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "text-grammar",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_TextSelection_GrammarCommand_Description),
             Icon = LucideIconKind.SpellCheck,
             Priority = 75,
             Condition = BaseCondition,

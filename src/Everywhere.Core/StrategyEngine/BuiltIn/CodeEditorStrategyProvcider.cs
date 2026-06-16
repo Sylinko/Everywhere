@@ -55,8 +55,8 @@ public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
         new()
         {
             Id = "explain",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ExplainCommand_Description),
             Icon = LucideIconKind.MessageSquareCode,
             Priority = 100,
             Condition = Condition,
@@ -76,8 +76,8 @@ public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
         new()
         {
             Id = "review",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_ReviewCommand_Description),
             Icon = LucideIconKind.SearchCode,
             Priority = 90,
             Condition = Condition,
@@ -98,8 +98,8 @@ public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
         new()
         {
             Id = "document",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_DocumentCommand_Description),
             Icon = LucideIconKind.FileCode,
             Priority = 70,
             Condition = Condition,
@@ -119,8 +119,8 @@ public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
         new()
         {
             Id = "find-bugs",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_FindBugsCommand_Description),
             Icon = LucideIconKind.Bug,
             Priority = 85,
             Condition = Condition,
@@ -142,8 +142,8 @@ public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
         new()
         {
             Id = "optimize",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_CodeEditor_OptimizeCommand_Description),
             Icon = LucideIconKind.Zap,
             Priority = 60,
             Condition = Condition,

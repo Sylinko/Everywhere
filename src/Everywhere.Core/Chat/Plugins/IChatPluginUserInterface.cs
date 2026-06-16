@@ -123,7 +123,7 @@ public interface IChatPluginUserInterface
     /// <returns></returns>
     Task<RequestConsentResult> RequestConsentAsync(
         string? id,
-        IDynamicResourceKey headerKey,
+        IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         CancellationToken cancellationToken = default);
@@ -169,7 +169,7 @@ public interface IChatPluginUserInterfaceBroker
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<ConsentDecisionResult> HandleConsentRequestAsync(
-        IDynamicResourceKey headerKey,
+        IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content,
         RequestConsentRememberMasks rememberMasks,
         CancellationToken cancellationToken);

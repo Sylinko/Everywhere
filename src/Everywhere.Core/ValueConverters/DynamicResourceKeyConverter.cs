@@ -6,35 +6,35 @@ using Avalonia.Data.Converters;
 namespace Everywhere.ValueConverters;
 
 /// <summary>
-/// Resolves a <see cref="DynamicResourceKeyAttribute"/> to the actual resource.
+/// Resolves a <see cref="DynamicLocaleKeyAttribute"/> to the actual resource.
 /// </summary>
 [DynamicallyAccessedMembers(
     DynamicallyAccessedMemberTypes.PublicConstructors |
     DynamicallyAccessedMemberTypes.PublicFields |
     DynamicallyAccessedMemberTypes.PublicProperties)]
-public class DynamicResourceKeyConverter : IValueConverter
+public class DynamicLocaleKeyConverter : IValueConverter
 {
-    public static DynamicResourceKeyConverter Shared { get; } = new();
+    public static DynamicLocaleKeyConverter Shared { get; } = new();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        // 1. value is an object with DynamicResourceKeyAttribute on class
-        // 2. value is an enum with DynamicResourceKeyAttribute on field
+        // 1. value is an object with DynamicLocaleKeyAttribute on class
+        // 2. value is an enum with DynamicLocaleKeyAttribute on field
 
         if (value is null) return null;
 
         var type = value.GetType();
-        DynamicResourceKeyAttribute? attribute;
+        DynamicLocaleKeyAttribute? attribute;
         if (type.IsEnum)
         {
-            attribute = type.GetField(value.ToString() ?? string.Empty)?.GetCustomAttributes<DynamicResourceKeyAttribute>(true).FirstOrDefault();
+            attribute = type.GetField(value.ToString() ?? string.Empty)?.GetCustomAttributes<DynamicLocaleKeyAttribute>(true).FirstOrDefault();
         }
         else
         {
-            attribute = type.GetCustomAttributes<DynamicResourceKeyAttribute>(true).FirstOrDefault();
+            attribute = type.GetCustomAttributes<DynamicLocaleKeyAttribute>(true).FirstOrDefault();
         }
 
-        return attribute is null ? null : new DynamicResourceKey(attribute.HeaderKey);
+        return attribute is null ? null : new DynamicLocaleKey(attribute.HeaderKey);
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

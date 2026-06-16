@@ -172,7 +172,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                 var handledException = new HandledSystemException(
                     ex,
                     HandledSystemExceptionType.Timeout,
-                    new DynamicResourceKey(LocaleKey.FriendlyExceptionMessage_HttpRequest_RequestTimeout));
+                    new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_HttpRequest_RequestTimeout));
                 _logger.LogError(handledException, "Failed to load version history.");
 
                 throw handledException;
@@ -315,7 +315,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         {
             _logger.LogError(ex, "Failed to perform update.");
 
-            ex = new HandledException(ex, new DynamicResourceKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_UpdateFailed_Content));
+            ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_UpdateFailed_Content));
             ToastExceptionHandler.HandleException(ex);
         }
     }

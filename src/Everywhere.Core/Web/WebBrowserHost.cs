@@ -129,7 +129,7 @@ public sealed partial class WebBrowserHost : IWebBrowserHost
             await TestUrlConnectionAsync(httpClient, "https://cdn.npmmirror.com/binaries/chromium-browser-snapshots") ??
             throw new HandledException(
                 new HttpRequestException("Failed to connect to the Puppeteer browser download URL."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
                 showDetails: true);
 
         try
@@ -140,7 +140,7 @@ public sealed partial class WebBrowserHost : IWebBrowserHost
         {
             throw new HandledException(
                 new InvalidOperationException("Failed to download Puppeteer browser.", e),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
                 showDetails: true);
         }
 
@@ -150,7 +150,7 @@ public sealed partial class WebBrowserHost : IWebBrowserHost
 
         throw new HandledException(
             new InvalidOperationException("All attempts to launch Puppeteer browser have failed."),
-            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage),
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage),
             showDetails: true);
 
         async ValueTask<IBrowser?> TryLaunchBrowserAsync(string? path, SupportedBrowser browserType)
@@ -260,7 +260,7 @@ public sealed partial class WebBrowserHost : IWebBrowserHost
             {
                 throw new HandledException(
                     new InvalidOperationException("The web browser is currently running in the background and cannot be opened."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage),
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_CannotOpenBrowserInHeadlessMode_ErrorMessage),
                     showDetails: true);
             }
 

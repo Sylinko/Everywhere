@@ -54,7 +54,7 @@
                 <DataTemplate DataType="interop:ScreenSelectionMode">
                   <TextBlock
                     HorizontalAlignment="Center"
-                    Text="{Binding Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                    Text="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                 </DataTemplate>
               </ListBox.DataTemplates>
             </ListBox>

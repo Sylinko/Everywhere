@@ -2,4 +2,4 @@
 
 namespace Everywhere.Common;
 
-public sealed record Hyperlink(IDynamicResourceKey Content, Uri Uri);
+public sealed record Hyperlink(IDynamicLocaleKey Content, Uri Uri);

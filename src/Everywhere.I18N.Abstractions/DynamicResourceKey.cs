@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reactive;
 using System.Reactive.Disposables;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
@@ -15,31 +14,19 @@ namespace Everywhere.I18N;
 /// <summary>
 /// MessagePack serializable base class for dynamic resource keys. Make them happy.
 /// </summary>
-[Union(0, typeof(DynamicResourceKey))]
-[Union(1, typeof(DirectResourceKey))]
-[Union(2, typeof(FormattedDynamicResourceKey))]
-[Union(3, typeof(AggregateDynamicResourceKey))]
-public partial interface IDynamicResourceKey : IObservable<object?>
-{
-    /// <summary>
-    /// Just returns this, since Avalonia do not support {Binding .^} nor default implement of interface
-    /// </summary>
-    [JsonIgnore]
-    [IgnoreMember]
-    IDynamicResourceKey Self { get; }
-}
+[Union(0, typeof(DynamicLocaleKey))]
+[Union(1, typeof(DirectLocaleKey))]
+[Union(2, typeof(FormattedDynamicLocaleKey))]
+[Union(3, typeof(AggregateDynamicLocaleKey))]
+public partial interface IDynamicLocaleKey : IObservable<object?>;
 
 /// <summary>
 /// This class is used to create a dynamic resource key for axaml Binding.
 /// </summary>
 /// <param name="key"></param>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public partial class DynamicResourceKey(object? key) : IDynamicResourceKey, IRecipient<LocaleChangedMessage>
+public partial class DynamicLocaleKey(object? key) : IDynamicLocaleKey, IRecipient<LocaleChangedMessage>
 {
-    [JsonIgnore]
-    [IgnoreMember]
-    public IDynamicResourceKey Self => this;
-
     [Key(0)]
     public object Key { get; } = key ?? string.Empty; // avoid null key (especially for MessagePack)
 
@@ -68,7 +55,7 @@ public partial class DynamicResourceKey(object? key) : IDynamicResourceKey, IRec
         }
 
         while (_observers.ContainsKey(id)) id++; // ensure unique id
-        
+
         _observers.Add(id, observer);
         observer.OnNext(ToString());
 
@@ -83,7 +70,7 @@ public partial class DynamicResourceKey(object? key) : IDynamicResourceKey, IRec
     }
 
     [return: NotNullIfNotNull(nameof(key))]
-    public static implicit operator DynamicResourceKey?(string? key) => key == null ? null : new DynamicResourceKey(key);
+    public static implicit operator DynamicLocaleKey?(string? key) => key == null ? null : new DynamicLocaleKey(key);
 
     public static bool Exists(object key) => LocaleManager.Shared.TryGetResource(key, null, out _);
 
@@ -119,7 +106,7 @@ public partial class DynamicResourceKey(object? key) : IDynamicResourceKey, IRec
 
     public override string? ToString() => Resolve(Key);
 
-    public override bool Equals(object? obj) => obj is DynamicResourceKey other && Equals(Key, other.Key);
+    public override bool Equals(object? obj) => obj is DynamicLocaleKey other && Equals(Key, other.Key);
 
     public override int GetHashCode() => Key.GetHashCode();
 }
@@ -130,9 +117,9 @@ public partial class DynamicResourceKey(object? key) : IDynamicResourceKey, IRec
 /// </summary>
 /// <param name="key"></param>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public sealed partial class DirectResourceKey(object? key) : DynamicResourceKey(key)
+public sealed partial class DirectLocaleKey(object? key) : DynamicLocaleKey(key)
 {
-    public static DirectResourceKey Empty { get; } = new(null);
+    public static DirectLocaleKey Empty { get; } = new(null);
 
     private static readonly IDisposable NullDisposable = Disposable.Empty;
 
@@ -148,7 +135,7 @@ public sealed partial class DirectResourceKey(object? key) : DynamicResourceKey(
     /// <returns></returns>
     public override string? ToString() => Key.ToString();
 
-    public override bool Equals(object? obj) => obj is DynamicResourceKey other && Equals(Key, other.Key);
+    public override bool Equals(object? obj) => obj is DynamicLocaleKey other && Equals(Key, other.Key);
 
     public override int GetHashCode() => Key.GetHashCode();
 }
@@ -161,17 +148,17 @@ public sealed partial class DirectResourceKey(object? key) : DynamicResourceKey(
 /// <param name="key"></param>
 /// <param name="args"></param>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public sealed partial class FormattedDynamicResourceKey(object key, params IReadOnlyList<IDynamicResourceKey?> args) : DynamicResourceKey(key)
+public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOnlyList<IObservable<object?>?> args) : DynamicLocaleKey(key)
 {
     [Key(1)]
-    private IReadOnlyList<IDynamicResourceKey?> Args { get; } = args;
+    private IReadOnlyList<IObservable<object?>?> Args { get; } = args;
 
     public override IDisposable Subscribe(IObserver<object?> observer)
     {
         var formatter = new AnonymousObserver<object?>(_ => observer.OnNext(ToString()));
         var disposables = new CompositeDisposable();
         disposables.Add(base.Subscribe(formatter));
-        foreach (var arg in Args.AsValueEnumerable().OfType<IDynamicResourceKey>()) disposables.Add(arg.Subscribe(formatter));
+        foreach (var arg in Args.AsValueEnumerable().OfType<IObservable<object?>>()) disposables.Add(arg.Subscribe(formatter));
         return disposables;
     }
 
@@ -195,9 +182,9 @@ public sealed partial class FormattedDynamicResourceKey(object key, params IRead
         }
     }
 
-    public override bool Equals(object? obj) => obj is FormattedDynamicResourceKey other &&
-           Equals(Key, other.Key) &&
-           Args.SequenceEqual(other.Args);
+    public override bool Equals(object? obj) => obj is FormattedDynamicLocaleKey other &&
+        Equals(Key, other.Key) &&
+        Args.SequenceEqual(other.Args);
 
     public override int GetHashCode()
     {
@@ -213,14 +200,10 @@ public sealed partial class FormattedDynamicResourceKey(object key, params IRead
 /// </summary>
 /// <param name="keys"></param>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public sealed partial class AggregateDynamicResourceKey(IReadOnlyList<IDynamicResourceKey> keys, string separator = ", ") : IDynamicResourceKey
+public sealed partial class AggregateDynamicLocaleKey(IReadOnlyList<IDynamicLocaleKey> keys, string separator = ", ") : IDynamicLocaleKey
 {
-    [JsonIgnore]
-    [IgnoreMember]
-    public IDynamicResourceKey Self => this;
-
     [Key(0)]
-    private IReadOnlyList<IDynamicResourceKey> Keys { get; } = keys;
+    private IReadOnlyList<IDynamicLocaleKey> Keys { get; } = keys;
 
     [Key(1)]
     private string Separator { get; } = separator;
@@ -229,7 +212,7 @@ public sealed partial class AggregateDynamicResourceKey(IReadOnlyList<IDynamicRe
     {
         var formatter = new AnonymousObserver<object?>(_ => observer.OnNext(ToString()));
         var disposables = new CompositeDisposable();
-        foreach (var key in Keys.AsValueEnumerable().OfType<IDynamicResourceKey>()) disposables.Add(key.Subscribe(formatter));
+        foreach (var key in Keys.AsValueEnumerable().OfType<IDynamicLocaleKey>()) disposables.Add(key.Subscribe(formatter));
         return disposables;
     }
 
@@ -243,16 +226,16 @@ public sealed partial class AggregateDynamicResourceKey(IReadOnlyList<IDynamicRe
         var resolvedKeys = new object?[Keys.Count];
         for (var i = 0; i < Keys.Count; i++)
         {
-            if (Keys[i] is DynamicResourceKey dynamicKey) resolvedKeys[i] = dynamicKey.ToString();
+            if (Keys[i] is DynamicLocaleKey dynamicKey) resolvedKeys[i] = dynamicKey.ToString();
             else resolvedKeys[i] = Keys[i];
         }
 
         return string.Join(Separator, resolvedKeys);
     }
 
-    public override bool Equals(object? obj) => obj is AggregateDynamicResourceKey other &&
-           Keys.SequenceEqual(other.Keys) &&
-           Separator == other.Separator;
+    public override bool Equals(object? obj) => obj is AggregateDynamicLocaleKey other &&
+        Keys.SequenceEqual(other.Keys) &&
+        Separator == other.Separator;
 
     public override int GetHashCode()
     {
@@ -265,12 +248,8 @@ public sealed partial class AggregateDynamicResourceKey(IReadOnlyList<IDynamicRe
 
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 [MessagePackFormatter(typeof(MessagePackFormatter))]
-public sealed partial class JsonDynamicResourceKey : Dictionary<string, string>, IDynamicResourceKey, IRecipient<LocaleChangedMessage>
+public sealed partial class JsonDynamicLocaleKey : Dictionary<string, string>, IDynamicLocaleKey, IRecipient<LocaleChangedMessage>
 {
-    [JsonIgnore]
-    [IgnoreMember]
-    public IDynamicResourceKey Self => this;
-
     [IgnoreMember] private readonly Dictionary<int, IObserver<object?>> _observers = new(1); // usually only one subscriber
 
     /// <summary>
@@ -279,7 +258,7 @@ public sealed partial class JsonDynamicResourceKey : Dictionary<string, string>,
     /// </summary>
     private static readonly Dictionary<LocaleName, string[]> FallbackCache;
 
-    static JsonDynamicResourceKey()
+    static JsonDynamicLocaleKey()
     {
         FallbackCache = new Dictionary<LocaleName, string[]>();
         foreach (var locale in Enum.GetValues<LocaleName>())
@@ -301,11 +280,11 @@ public sealed partial class JsonDynamicResourceKey : Dictionary<string, string>,
         }
     }
 
-    public JsonDynamicResourceKey() { }
+    public JsonDynamicLocaleKey() { }
 
-    public JsonDynamicResourceKey(int capacity) : base(capacity) { }
+    public JsonDynamicLocaleKey(int capacity) : base(capacity) { }
 
-    public JsonDynamicResourceKey(IEnumerable<KeyValuePair<string, string>> init) : base(init) { }
+    public JsonDynamicLocaleKey(IEnumerable<KeyValuePair<string, string>> init) : base(init) { }
 
     /// <summary>
     /// Subscribes an observer to receive updates when the locale changes.
@@ -373,11 +352,11 @@ public sealed partial class JsonDynamicResourceKey : Dictionary<string, string>,
     [GeneratedRegex(@"(?<=[a-z])(?=[A-Z])")]
     private static partial Regex PascalCaseRegex();
 
-    public class MessagePackFormatter : DictionaryFormatterBase<string, string, JsonDynamicResourceKey>
+    public class MessagePackFormatter : DictionaryFormatterBase<string, string, JsonDynamicLocaleKey>
     {
-        protected override JsonDynamicResourceKey Create(int count, MessagePackSerializerOptions options) => new(count);
+        protected override JsonDynamicLocaleKey Create(int count, MessagePackSerializerOptions options) => new(count);
 
-        protected override void Add(JsonDynamicResourceKey collection, int index, string key, string value, MessagePackSerializerOptions options) =>
+        protected override void Add(JsonDynamicLocaleKey collection, int index, string key, string value, MessagePackSerializerOptions options) =>
             collection.Add(key, value);
     }
 }

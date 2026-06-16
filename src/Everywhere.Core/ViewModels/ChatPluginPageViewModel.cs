@@ -403,26 +403,26 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
 
     public interface IContentTabItem
     {
-        IDynamicResourceKey Header { get; }
+        IDynamicLocaleKey Header { get; }
     }
 
     public class SettingsTabItem(IReadOnlyList<SettingsItem> settingsItems) : IContentTabItem
     {
-        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
 
         public IReadOnlyList<SettingsItem> SettingsItems { get; } = settingsItems;
     }
 
     public class FunctionsTabItem(ChatPlugin plugin) : IContentTabItem
     {
-        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
 
         public ChatPlugin Plugin { get; } = plugin;
     }
 
     public partial class LogsTabItem(IReadOnlyBindableList<McpChatPlugin.LogEntry> logEntries) : ObservableObject, IContentTabItem
     {
-        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
 
         public IReadOnlyBindableList<McpChatPlugin.LogEntry> LogEntries { get; } = logEntries;
 

@@ -45,7 +45,7 @@ public sealed partial record ModelDefinitionTemplate : IModelDefinition
     public string? IconUrl { get; init; }
 
     [Key(13)]
-    public IDynamicResourceKey? DescriptionKey { get; init; }
+    public IDynamicLocaleKey? DescriptionKey { get; init; }
 
     [Key(14)]
     public ModelPricing? Pricing { get; init; }

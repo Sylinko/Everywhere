@@ -17,30 +17,30 @@ public class AssistantConfiguratorSelector : TemplatedControl
 
     public record ConfiguratorModel(
         AssistantConfiguratorType Type,
-        IDynamicResourceKey HeaderKey,
-        IDynamicResourceKey DescriptionKey
+        IDynamicLocaleKey HeaderKey,
+        IDynamicLocaleKey DescriptionKey
     );
 
     public sealed record OfficialConfiguratorModel(
         AssistantConfiguratorType Type,
-        IDynamicResourceKey HeaderKey,
-        IDynamicResourceKey DescriptionKey
+        IDynamicLocaleKey HeaderKey,
+        IDynamicLocaleKey DescriptionKey
     ) : ConfiguratorModel(Type, HeaderKey, DescriptionKey);
 
     public IReadOnlyList<ConfiguratorModel> ConfiguratorModels { get; } =
     [
         new OfficialConfiguratorModel(
             AssistantConfiguratorType.Official,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Description)),
         new(
             AssistantConfiguratorType.PresetBased,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Description)),
         new(
             AssistantConfiguratorType.Advanced,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Description)),
     ];
 
     public static readonly DirectProperty<AssistantConfiguratorSelector, Assistant?> AssistantProperty =

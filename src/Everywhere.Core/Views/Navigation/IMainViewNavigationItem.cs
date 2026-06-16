@@ -10,5 +10,5 @@ public interface IMainViewNavigationItem
 
     LucideIconKind Icon { get; }
 
-    IDynamicResourceKey TitleKey { get; }
+    IDynamicLocaleKey TitleKey { get; }
 }

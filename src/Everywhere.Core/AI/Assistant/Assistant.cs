@@ -75,7 +75,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     public AssistantConfigurator Configurator => GetConfigurator(ConfiguratorType);
 
     [JsonIgnore]
-    [DynamicResourceKey(LocaleKey.Assistant_ConfiguratorSelector_Header)]
+    [DynamicLocaleKey(LocaleKey.Assistant_ConfiguratorSelector_Header)]
     [SettingsItem(Classes = ["Ghost"])]
     protected SettingsControl<AssistantConfiguratorSelector> ConfiguratorSelector => new(
         new AssistantConfiguratorSelector
@@ -84,7 +84,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
         });
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_RequestTimeoutSeconds_Header,
         LocaleKey.Assistant_RequestTimeoutSeconds_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]
@@ -94,7 +94,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIOptions_Header,
         LocaleKey.Assistant_OpenAIOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI), Group = LocaleKey.Common_Advanced)]
@@ -103,7 +103,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsOpenAIResponses => Schema == ModelProviderSchema.OpenAIResponses;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIResponsesOptions_Header,
         LocaleKey.Assistant_OpenAIResponsesOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses), Group = LocaleKey.Common_Advanced)]
@@ -112,7 +112,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsAnthropic => Schema == ModelProviderSchema.Anthropic;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_AnthropicOptions_Header,
         LocaleKey.Assistant_AnthropicOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic), Group = LocaleKey.Common_Advanced)]
@@ -121,7 +121,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsGoogle => Schema == ModelProviderSchema.Google;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_GoogleOptions_Header,
         LocaleKey.Assistant_GoogleOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Common_Advanced)]

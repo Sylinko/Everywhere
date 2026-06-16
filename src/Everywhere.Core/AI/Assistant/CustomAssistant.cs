@@ -36,7 +36,7 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
     }
 
     [JsonIgnore]
-    [DynamicResourceKey(LocaleKey.Empty)]
+    [DynamicLocaleKey(LocaleKey.Empty)]
     [SettingsItem(Classes = ["Ghost"])]
     public SettingsControl<CustomAssistantInformationForm> InformationForm => new(
         new CustomAssistantInformationForm
@@ -45,7 +45,7 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
         });
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CustomAssistant_SystemPrompt_Header,
         LocaleKey.CustomAssistant_SystemPrompt_Description)]
     [SettingsItem(Classes = ["Ghost"])]

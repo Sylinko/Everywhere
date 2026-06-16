@@ -46,7 +46,7 @@
           </ScrollViewer>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginDynamicResourceKeyDisplayBlock">
+        <DataTemplate DataType="plugins:ChatPluginDynamicLocaleKeyDisplayBlock">
           <SelectableTextBlock
             shadui:ControlAssist.ClassName="{Binding ClassName}"
             Text="{Binding Key^}"

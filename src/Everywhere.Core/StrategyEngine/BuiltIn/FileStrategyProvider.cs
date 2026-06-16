@@ -40,8 +40,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-summarize",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_SummarizeCommand_Description),
             Icon = LucideIconKind.FileText,
             Priority = 100,
             Condition = new FileCondition { MinCount = 1 },
@@ -60,8 +60,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-extract-key-points",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractKeyPointsCommand_Description),
             Icon = LucideIconKind.ListChecks,
             Priority = 90,
             Condition = new FileCondition { Extensions = DocumentExtensions, MinCount = 1 },
@@ -79,8 +79,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-translate-document",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_TranslateDocumentCommand_Description),
             Icon = LucideIconKind.Languages,
             Priority = 85,
             Condition = new FileCondition { Extensions = DocumentExtensions, MinCount = 1 },
@@ -98,8 +98,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-describe-image",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_DescribeImageCommand_Description),
             Icon = LucideIconKind.Image,
             Priority = 95,
             Condition = new FileCondition { Extensions = ImageExtensions, MinCount = 1 },
@@ -117,8 +117,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-extract-text-ocr",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_ExtractTextCommand_Description),
             Icon = LucideIconKind.ScanText,
             Priority = 90,
             Condition = new FileCondition { Extensions = ImageExtensions, MinCount = 1 },
@@ -135,8 +135,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-analyze-data",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeDataCommand_Description),
             Icon = LucideIconKind.ChartBar,
             Priority = 95,
             Condition = new FileCondition { Extensions = DataExtensions, MinCount = 1 },
@@ -154,8 +154,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-visualize-data",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_VisualizeDataCommand_Description),
             Icon = LucideIconKind.ChartLine,
             Priority = 85,
             Condition = new FileCondition { Extensions = DataExtensions, MinCount = 1 },
@@ -173,8 +173,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-compare",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_CompareCommand_Description),
             Icon = LucideIconKind.GitCompare,
             Priority = 95,
             Condition = new FileCondition { MinCount = 2 },
@@ -193,8 +193,8 @@ public sealed class FileStrategyProvider : BuiltInStrategyProvider
         yield return new Strategy
         {
             Id = "file-analyze-code",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_File_AnalyzeCodeCommand_Description),
             Icon = LucideIconKind.Code,
             Priority = 90,
             Condition = new FileCondition { Extensions = CodeExtensions, MinCount = 1 },

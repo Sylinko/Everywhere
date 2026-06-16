@@ -33,7 +33,7 @@ public partial class AskQuestionCard : Card
     {
         public ChatPluginQuestion Question { get; }
         public SelectionMode SelectionMode { get; }
-        public IDynamicResourceKey? MultiSelectHintKey => Question.MultiSelect ? new DynamicResourceKey(LocaleKey.ChatPlugin_MultiSelectHint) : null;
+        public IDynamicLocaleKey? MultiSelectHintKey => Question.MultiSelect ? new DynamicLocaleKey(LocaleKey.ChatPlugin_MultiSelectHint) : null;
         public List<OptionWrapper> OptionWrappers { get; } = [];
 
         public QuestionWrapper(ChatPluginQuestion question)

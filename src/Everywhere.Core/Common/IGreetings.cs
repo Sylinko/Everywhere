@@ -2,5 +2,5 @@
 
 public interface IGreetings
 {
-    DynamicResourceKey GetRandomTip();
+    DynamicLocaleKey GetRandomTip();
 }

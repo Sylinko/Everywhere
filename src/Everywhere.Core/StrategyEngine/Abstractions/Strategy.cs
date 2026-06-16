@@ -18,12 +18,12 @@ public sealed partial record Strategy
     /// <summary>
     /// Display name.
     /// </summary>
-    [Key(1)] public required IDynamicResourceKey NameKey { get; init; }
+    [Key(1)] public required IDynamicLocaleKey NameKey { get; init; }
 
     /// <summary>
     /// Optional description shown as tooltip or subtitle.
     /// </summary>
-    public IDynamicResourceKey? DescriptionKey { get; init; }
+    public IDynamicLocaleKey? DescriptionKey { get; init; }
 
     /// <summary>
     /// Icon for UI display.
@@ -76,5 +76,5 @@ public sealed partial record Strategy
     /// <summary>
     /// Displays in the watermark as a hint for the user input after selecting this command.
     /// </summary>
-    [Key(6)] public IDynamicResourceKey? ArgumentHintKey { get; init; }
+    [Key(6)] public IDynamicLocaleKey? ArgumentHintKey { get; init; }
 }

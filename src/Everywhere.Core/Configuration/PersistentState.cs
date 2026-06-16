@@ -129,9 +129,9 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public IDynamicResourceKey? LastCloudSynchronizationErrorMessageKey
+    public IDynamicLocaleKey? LastCloudSynchronizationErrorMessageKey
     {
-        get => Get<IDynamicResourceKey?>();
+        get => Get<IDynamicLocaleKey?>();
         set => Set(value);
     }
 

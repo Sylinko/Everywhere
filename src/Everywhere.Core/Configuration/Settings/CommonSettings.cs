@@ -22,31 +22,31 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     public LucideIconKind Icon => LucideIconKind.Blocks;
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Common_Header);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Header);
 
     [SettingsItemIgnore]
-    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Common_Description);
+    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Description);
 
     [ObservableProperty]
     [SettingsItemIgnore]
     public partial DateTimeOffset? LastUpdateCheckTime { get; set; }
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_SoftwareUpdate_Header,
         LocaleKey.SoftwareSettings_SoftwareUpdate_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<SoftwareUpdateControl> SoftwareUpdate { get; } = new();
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header,
         LocaleKey.SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description)]
     [SettingsItem(Group = "_")]
     public partial bool IsAutomaticUpdateCheckEnabled { get; set; } = true;
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_UpdateChannel_Header,
         LocaleKey.SoftwareSettings_UpdateChannel_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]
@@ -59,7 +59,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     public static bool IsAdministrator => NativeHelper.IsAdministrator;
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_RestartAsAdministrator_Header,
         LocaleKey.SoftwareSettings_RestartAsAdministrator_Description)]
     [SettingsItem(IsVisibleBindingPath = $"!{nameof(IsAdministrator)}", Group = "_")]
@@ -67,7 +67,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     public SettingsControl<RestartAsAdministratorControl> RestartAsAdministrator { get; } = new();
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_IsStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsStartupEnabled_Description)]
     [SettingsItem(IsEnabledBindingPath = $"{nameof(IsAdministrator)} || !{nameof(IsAdministratorStartupEnabled)}", Group = "_")]
@@ -106,7 +106,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     }
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_IsAdministratorStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsAdministratorStartupEnabled_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsStartupEnabled), IsEnabledBindingPath = nameof(IsAdministrator), Group = "_")]
@@ -137,7 +137,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     }
 #else
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_IsUserStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsUserStartupEnabled_Description)]
     [SettingsItem(Group = "_")]
@@ -162,13 +162,13 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
 #endif
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_IsStatisticsEnabled_Header,
         LocaleKey.SoftwareSettings_IsStatisticsEnabled_Description)]
     [SettingsItem(Group = "_")]
     public partial bool IsStatisticsEnabled { get; set; } = true;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_DiagnosticData_Header,
         LocaleKey.SoftwareSettings_DiagnosticData_Description)]
     [SettingsItem(Group = "_")]
@@ -183,7 +183,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     }
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_DebugFeatures_Header,
         LocaleKey.SoftwareSettings_DebugFeatures_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]

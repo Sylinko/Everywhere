@@ -117,7 +117,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                             using (sb.Indent())
                             {
                                 sb.AppendLine($"GroupName = \"{EscapeStringForCode(groupName)}\",");
-                                sb.AppendLine($"HeaderKey = new global::Everywhere.I18N.DirectResourceKey(\"{EscapeStringForCode(groupName)}\"),");
+                                sb.AppendLine($"HeaderKey = new global::Everywhere.I18N.DirectLocaleKey(\"{EscapeStringForCode(groupName)}\"),");
                             }
                             sb.AppendLine("};");
                             sb.AppendLine();
@@ -286,8 +286,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     }
 
                     var transformExpr = GetNamedArgValue(attribute, "I18N", "false") == "true" ?
-                        $"DynamicResourceKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
-                        "DirectResourceKey(k)";
+                        $"DynamicLocaleKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
+                        "DirectLocaleKey(k)";
 
                     converterBuilder.Append("return x.Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
                     converterBuilder.Append(transformExpr);
@@ -470,18 +470,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     {
         var headerExpr = string.IsNullOrWhiteSpace(metadata.HeaderKey) ?
             "null" :
-            $"new global::Everywhere.I18N.DynamicResourceKey({metadata.HeaderKey})";
+            $"new global::Everywhere.I18N.DynamicLocaleKey({metadata.HeaderKey})";
         sb.AppendLine($"{itemName}.HeaderKey = {headerExpr};");
 
         if (metadata.DescriptionKey is { Length: > 0 })
         {
-            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicResourceKey({metadata.DescriptionKey});");
+            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicLocaleKey({metadata.DescriptionKey});");
         }
     }
 
     /// <summary>
-    /// Matches DynamicResourceKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
-    /// DynamicResourceKey(
+    /// Matches DynamicLocaleKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
+    /// DynamicLocaleKey(
     ///     LocaleKey.CustomAssistant_Icon_Header,
     ///     LocaleKey.CustomAssistant_Icon_Description)
     /// </summary>
@@ -489,8 +489,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// We need to parse the syntax ourselves because sometimes the attribute arguments are also SourceGenerated,
     /// and thus we cannot rely on ConstantValue of the attribute data.
     /// </remarks>
-    private static readonly Regex DynamicResourceKeyRegex = new(
-        @"DynamicResourceKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
+    private static readonly Regex DynamicLocaleKeyRegex = new(
+        @"DynamicLocaleKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
     /// <summary>
@@ -504,9 +504,9 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     {
         type ??= ((IPropertySymbol)symbol).Type;
         var kind = Classify(symbol, type);
-        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicResourceKey);
+        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicLocaleKey);
         var code = dynamicResourceKeyAttribute?.ApplicationSyntaxReference?.GetSyntax().ToString();
-        var match = code is not null ? DynamicResourceKeyRegex.Match(code) : null;
+        var match = code is not null ? DynamicLocaleKeyRegex.Match(code) : null;
         var headerKey = match?.Groups["headerKey"].Value.Trim() ?? string.Empty;
         var descriptionKey = match?.Groups["descriptionKey"].Success == true ? match.Groups["descriptionKey"].Value.Trim() : null;
         var settingsItemAttribute = attributeOwner.GetAttribute(KnownAttributes.SettingsItem);
@@ -577,14 +577,14 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     foreach (var member in enumMembers)
                     {
                         var memberAccess = $"{enumTypeStr}.{member.Name}";
-                        // Check for [DynamicResourceKey] on the enum member
+                        // Check for [DynamicLocaleKey] on the enum member
                         string? headerKey = null;
-                        if (member.GetAttribute(KnownAttributes.DynamicResourceKey) is { } attr)
+                        if (member.GetAttribute(KnownAttributes.DynamicLocaleKey) is { } attr)
                         {
                             var code = attr.ApplicationSyntaxReference?.GetSyntax().ToString();
                             if (code is not null)
                             {
-                                var match = DynamicResourceKeyRegex.Match(code);
+                                var match = DynamicLocaleKeyRegex.Match(code);
                                 headerKey = match.Groups["headerKey"].Value.Trim();
                             }
                             else if (attr.ConstructorArguments.Length > 0 &&
@@ -595,8 +595,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                         }
 
                         var resourceKeyExpr = headerKey is not null ?
-                            $"new global::Everywhere.I18N.DynamicResourceKey({headerKey})" :
-                            $"new global::Everywhere.I18N.DynamicResourceKey(\"{metadata.Type.Name}_{member.Name}\")";
+                            $"new global::Everywhere.I18N.DynamicLocaleKey({headerKey})" :
+                            $"new global::Everywhere.I18N.DynamicLocaleKey(\"{metadata.Type.Name}_{member.Name}\")";
 
                         sb.AppendLine($"new global::Everywhere.Configuration.SettingsSelectionItem.Item({resourceKeyExpr}, {memberAccess}, null),");
                     }

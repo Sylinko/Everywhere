@@ -7,20 +7,20 @@ namespace Everywhere.AI;
 public sealed partial class OpenAIResponsesOptions : ObservableObject
 {
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
     public partial string? ReasoningEffort { get; set; }
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.OpenAIResponsesOptions_ReasoningSummary_Header,
         LocaleKey.OpenAIResponsesOptions_ReasoningSummary_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries")]
     public partial string? ReasoningSummary { get; set; } = "auto";
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
     [SettingsItem(
@@ -29,7 +29,7 @@ public sealed partial class OpenAIResponsesOptions : ObservableObject
             "https://developers.openai.com/api/reference/resources/responses/methods/create#(resource)%20responses%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20temperature%20%3E%20(schema)")]
     public string? Temperature { get; set; }
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
     [SettingsItem(

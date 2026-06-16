@@ -11,7 +11,7 @@ namespace Everywhere.AI.Configurator;
 [GeneratedSettingsItems]
 public sealed partial class OfficialAssistantConfigurator : AssistantConfigurator
 {
-    [DynamicResourceKey(LocaleKey.Empty)]
+    [DynamicLocaleKey(LocaleKey.Empty)]
     public SettingsControl<OfficialModelDefinitionForm> ModelDefinitionForm { get; }
 
     private readonly Assistant _owner;

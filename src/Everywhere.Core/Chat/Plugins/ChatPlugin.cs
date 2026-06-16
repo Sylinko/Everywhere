@@ -22,10 +22,10 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     public abstract string Key { get; }
 
     [JsonIgnore]
-    public abstract IDynamicResourceKey HeaderKey { get; }
+    public abstract IDynamicLocaleKey HeaderKey { get; }
 
     [JsonIgnore]
-    public abstract IDynamicResourceKey DescriptionKey { get; }
+    public abstract IDynamicLocaleKey DescriptionKey { get; }
 
     [JsonIgnore]
     public virtual LucideIconKind? Icon => null;
@@ -81,7 +81,7 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void SetWarning(string key, IDynamicResourceKey? messageKey, ICommand? command = null)
+    public void SetWarning(string key, IDynamicLocaleKey? messageKey, ICommand? command = null)
     {
         if (messageKey is not null)
         {
@@ -96,10 +96,10 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     public void RemoveWarning(string key) => _warningsSource.RemoveKey(key);
 }
 
-public sealed record ChatPluginWarning(string Key, IDynamicResourceKey MessageKey, ICommand? Command = null)
+public sealed record ChatPluginWarning(string Key, IDynamicLocaleKey MessageKey, ICommand? Command = null)
 {
-    public IDynamicResourceKey? ActionButtonContentKey =>
-        Command is null ? null : new DynamicResourceKey(LocaleKey.ChatPluginPage_WarningActionButton_Content);
+    public IDynamicLocaleKey? ActionButtonContentKey =>
+        Command is null ? null : new DynamicLocaleKey(LocaleKey.ChatPluginPage_WarningActionButton_Content);
 }
 
 public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction : ChatFunction
@@ -213,9 +213,9 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
 
     public override string Key => $"mcp.{Id}";
 
-    public override DynamicResourceKey HeaderKey => new DirectResourceKey(TransportConfiguration?.Name ?? string.Empty);
+    public override DynamicLocaleKey HeaderKey => new DirectLocaleKey(TransportConfiguration?.Name ?? string.Empty);
 
-    public override DynamicResourceKey DescriptionKey => new DirectResourceKey(TransportConfiguration?.Description ?? string.Empty);
+    public override DynamicLocaleKey DescriptionKey => new DirectLocaleKey(TransportConfiguration?.Description ?? string.Empty);
 
     public override LucideIconKind? Icon => TransportConfiguration switch
     {

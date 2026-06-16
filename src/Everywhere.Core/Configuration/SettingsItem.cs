@@ -14,9 +14,9 @@ namespace Everywhere.Configuration;
 /// </summary>
 public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 {
-    public DynamicResourceKey? HeaderKey { get; set; }
+    public DynamicLocaleKey? HeaderKey { get; set; }
 
-    public DynamicResourceKey? DescriptionKey { get; set; }
+    public DynamicLocaleKey? DescriptionKey { get; set; }
 
     public Classes Classes { get; } = [];
 
@@ -324,7 +324,7 @@ public class SettingsDoubleItem : SettingsItem
 
 public class SettingsSelectionItem : SettingsItem
 {
-    public record Item(DynamicResourceKey Key, object? Value, IDataTemplate? ContentTemplate);
+    public record Item(DynamicLocaleKey Key, object? Value, IDataTemplate? ContentTemplate);
 
     public static readonly StyledProperty<IEnumerable<Item>> ItemsSourceProperty =
         AvaloniaProperty.Register<SettingsSelectionItem, IEnumerable<Item>>(nameof(ItemsSource));
@@ -493,7 +493,7 @@ public sealed class SettingsGroupItem : SettingsItem
     /// <summary>
     /// Gets the localized group key
     /// </summary>
-    public IDynamicResourceKey GroupKey => GroupName?.StartsWith('_') is not false ? DirectResourceKey.Empty : new DynamicResourceKey(GroupName);
+    public IDynamicLocaleKey GroupKey => GroupName?.StartsWith('_') is not false ? DirectLocaleKey.Empty : new DynamicLocaleKey(GroupName);
 
     /// <summary>
     /// A group item has no value of its own; it only serves as a container.

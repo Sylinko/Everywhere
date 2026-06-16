@@ -4,7 +4,7 @@ namespace Everywhere.Extensions;
 
 public static class I18NExtensions
 {
-    // public static string I18N(this string key, params DynamicResourceKeyBase[] args) => new FormattedDynamicResourceKey(key, args).ToString();
+    // public static string I18N(this string key, params DynamicLocaleKeyBase[] args) => new FormattedDynamicLocaleKey(key, args).ToString();
 
     /// <summary>
     /// Resolves the enum value to its internationalized string representation.
@@ -16,11 +16,11 @@ public static class I18NExtensions
     public static string I18N(this Enum e, string separator = ", ", bool preferMinimalSet = false)
     {
         var type = e.GetType();
-        var attribute = type.GetField(e.ToString())?.GetCustomAttributes<DynamicResourceKeyAttribute>(true).FirstOrDefault();
+        var attribute = type.GetField(e.ToString())?.GetCustomAttributes<DynamicLocaleKeyAttribute>(true).FirstOrDefault();
         if (attribute is null) return e.ToString();
 
         var isFlags = type.GetCustomAttribute<FlagsAttribute>() is not null;
-        if (!isFlags) return DynamicResourceKey.Resolve(attribute.HeaderKey);
+        if (!isFlags) return DynamicLocaleKey.Resolve(attribute.HeaderKey);
 
         var values = Enum.GetValues(type).Cast<Enum>();
         if (preferMinimalSet)
@@ -59,8 +59,8 @@ public static class I18NExtensions
 
         var parts = values.Select(v =>
         {
-            var attr = type.GetField(v.ToString())?.GetCustomAttributes<DynamicResourceKeyAttribute>(true).FirstOrDefault();
-            return attr is null ? v.ToString() : DynamicResourceKey.Resolve(attr.HeaderKey);
+            var attr = type.GetField(v.ToString())?.GetCustomAttributes<DynamicLocaleKeyAttribute>(true).FirstOrDefault();
+            return attr is null ? v.ToString() : DynamicLocaleKey.Resolve(attr.HeaderKey);
         });
         return string.Join(separator, parts);
     }

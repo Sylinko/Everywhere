@@ -8,7 +8,7 @@ public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewMode
 
     public LucideIconKind Icon => LucideIconKind.Hammer;
 
-    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.ChatPluginPage_Title);
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.ChatPluginPage_Title);
 
     public ChatPluginPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {

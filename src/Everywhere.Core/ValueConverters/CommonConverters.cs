@@ -67,8 +67,8 @@ public static class CommonConverters
             var enumName = Enum.GetName(type, x);
             if (enumName is null) return null;
 
-            var key = type.GetField(enumName)?.GetCustomAttribute<DynamicResourceKeyAttribute>()?.HeaderKey ?? $"{type.Name}_{enumName}";
-            return DynamicResourceKey.Resolve(key);
+            var key = type.GetField(enumName)?.GetCustomAttribute<DynamicLocaleKeyAttribute>()?.HeaderKey ?? $"{type.Name}_{enumName}";
+            return DynamicLocaleKey.Resolve(key);
         });
 
     public static IValueConverter IndexFromContainer { get; } = new FuncValueConverter<object?, int>(

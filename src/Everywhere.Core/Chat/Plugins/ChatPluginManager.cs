@@ -208,7 +208,7 @@ public class ChatPluginManager : IChatPluginManager
         {
             throw new HandledException(
                 new InvalidOperationException("MCP transport configuration is not valid."),
-                new DynamicResourceKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
+                new DynamicLocaleKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
         }
 
         var mcpChatPlugin = new McpChatPlugin(configuration);
@@ -224,7 +224,7 @@ public class ChatPluginManager : IChatPluginManager
         {
             throw new HandledException(
                 new InvalidOperationException("MCP transport configuration is not valid."),
-                new DynamicResourceKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
+                new DynamicLocaleKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
         }
 
         var wasRunning = mcpChatPlugin.IsRunning;
@@ -266,14 +266,14 @@ public class ChatPluginManager : IChatPluginManager
         {
             throw new HandledException(
                 new InvalidOperationException("MCP transport configuration is not set."),
-                new DynamicResourceKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
+                new DynamicLocaleKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
         }
 
         if (transportConfiguration.HasErrors)
         {
             throw new HandledException(
                 new InvalidOperationException("MCP transport configuration is not valid."),
-                new DynamicResourceKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
+                new DynamicLocaleKey(LocaleKey.ChatPluginManager_Common_InvalidMcpTransportConfiguration));
         }
 
         await EnsureMcpStartPreconditionsAsync(mcpChatPlugin, transportConfiguration, cancellationToken);
@@ -337,9 +337,9 @@ public class ChatPluginManager : IChatPluginManager
                 new FileNotFoundException(
                     $"MCP stdio command '{stdio.Command}' requires missing runtime '{missingDependency.DisplayName}'.",
                     stdio.Command),
-                new FormattedDynamicResourceKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.ChatPluginManager_McpPluginMissingRuntime_StartFailure,
-                    new DirectResourceKey(missingDependency.DisplayName)));
+                    new DirectLocaleKey(missingDependency.DisplayName)));
         }
 
         var command = NormalizeCommand(stdio.Command);
@@ -348,9 +348,9 @@ public class ChatPluginManager : IChatPluginManager
 
         throw new HandledException(
             new FileNotFoundException($"MCP stdio command '{command}' was not found.", command),
-            new FormattedDynamicResourceKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.ChatPluginManager_McpPluginCommandNotFound_StartFailure,
-                new DirectResourceKey(command)));
+                new DirectLocaleKey(command)));
     }
 
     private static bool TryCreateMcpStartHandledException(
@@ -378,9 +378,9 @@ public class ChatPluginManager : IChatPluginManager
         }
 
         var command = NormalizeCommand(stdio.Command);
-        var messageKey = new FormattedDynamicResourceKey(
+        var messageKey = new FormattedDynamicLocaleKey(
             LocaleKey.ChatPluginManager_McpPluginCommandNotFound_StartFailure,
-            new DirectResourceKey(command));
+            new DirectLocaleKey(command));
         handledException = new HandledException(
             new InvalidOperationException(
                 $"Failed to start MCP stdio command '{command}'. Error type: {systemException.GetType().Name}.",
@@ -489,7 +489,7 @@ public class ChatPluginManager : IChatPluginManager
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
-                    startingMcpMessageDisplay ??= chatContext.SetBusyMessage(new DynamicResourceKey(LocaleKey.ChatContext_BusyMessage_StartingMcp));
+                    startingMcpMessageDisplay ??= chatContext.SetBusyMessage(new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp));
 
                     try
                     {
@@ -503,9 +503,9 @@ public class ChatPluginManager : IChatPluginManager
                     {
                         throw new HandledException(
                             ex,
-                            new FormattedDynamicResourceKey(
+                            new FormattedDynamicLocaleKey(
                                 LocaleKey.ChatPluginManager_Common_FailedToStartMcpPlugin,
-                                new DirectResourceKey(mcpChatPlugin.Name)));
+                                new DirectLocaleKey(mcpChatPlugin.Name)));
                     }
                 }
 
@@ -607,9 +607,9 @@ public class ChatPluginManager : IChatPluginManager
 
         mcpChatPlugin.SetWarning(
             McpRuntimeWarningKey,
-            new FormattedDynamicResourceKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.ChatPluginManager_McpPluginMissingRuntime_Warning,
-                new DirectResourceKey(missingDependency.DisplayName)),
+                new DirectLocaleKey(missingDependency.DisplayName)),
             new AsyncRelayCommand<ToastResult>(result => ResolveMcpRuntimeDependencyAsync(mcpChatPlugin, missingDependency, result)));
     }
 
@@ -688,8 +688,8 @@ public class ChatPluginManager : IChatPluginManager
     private class ChatPluginSnapshot : ChatPlugin
     {
         public override string Key => _originalChatPlugin.Key;
-        public override IDynamicResourceKey HeaderKey => _originalChatPlugin.HeaderKey;
-        public override IDynamicResourceKey DescriptionKey => _originalChatPlugin.DescriptionKey;
+        public override IDynamicLocaleKey HeaderKey => _originalChatPlugin.HeaderKey;
+        public override IDynamicLocaleKey DescriptionKey => _originalChatPlugin.DescriptionKey;
         public override LucideIconKind? Icon => _originalChatPlugin.Icon;
         public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
         public override int FunctionCount => _actualFunctions.Count;

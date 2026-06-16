@@ -17,7 +17,7 @@ public sealed class NotificationCenterTests
             using var center = new NotificationCenter(new InMemoryKeyValueStorage());
             var publisher = center.GetPublisher("category.alpha");
 
-            publisher.Push("hello", new DirectResourceKey("Hello"));
+            publisher.Push("hello", new DirectLocaleKey("Hello"));
 
             Assert.Multiple(() =>
             {
@@ -37,8 +37,8 @@ public sealed class NotificationCenterTests
             var alpha = center.GetPublisher("category.alpha");
             var beta = center.GetPublisher("category.beta");
 
-            alpha.Push("shared", new DirectResourceKey("Alpha"));
-            beta.Push("shared", new DirectResourceKey("Beta"), NotificationType.Error);
+            alpha.Push("shared", new DirectLocaleKey("Alpha"));
+            beta.Push("shared", new DirectLocaleKey("Beta"), NotificationType.Error);
 
             Assert.Multiple(() =>
             {
@@ -58,9 +58,9 @@ public sealed class NotificationCenterTests
             var alpha = center.GetPublisher("category.alpha");
             var beta = center.GetPublisher("category.beta");
 
-            alpha.Push("a1", new DirectResourceKey("A1"));
-            alpha.Push("a2", new DirectResourceKey("A2"));
-            beta.Push("b1", new DirectResourceKey("B1"));
+            alpha.Push("a1", new DirectLocaleKey("A1"));
+            alpha.Push("a2", new DirectLocaleKey("A2"));
+            beta.Push("b1", new DirectLocaleKey("B1"));
 
             alpha.Dismiss("a1");
             Assert.That(center.Notifications.Select(n => (n.Category, n.Id)), Is.EquivalentTo(new[]
@@ -72,8 +72,8 @@ public sealed class NotificationCenterTests
             alpha.Reset(
                 new[]
                 {
-                    new DynamicNotificationDescriptor("a3", new DirectResourceKey("A3")),
-                    new DynamicNotificationDescriptor("a4", new DirectResourceKey("A4"))
+                    new DynamicNotificationDescriptor("a3", new DirectLocaleKey("A3")),
+                    new DynamicNotificationDescriptor("a4", new DirectLocaleKey("A4"))
                 });
             Assert.That(center.Notifications.Select(n => (n.Category, n.Id)), Is.EquivalentTo(new[]
             {
@@ -98,15 +98,15 @@ public sealed class NotificationCenterTests
             using var center = new NotificationCenter(new InMemoryKeyValueStorage());
             var publisher = center.GetPublisher("category.alpha");
 
-            publisher.Push("dismissible", new DirectResourceKey("Dismissible"));
+            publisher.Push("dismissible", new DirectLocaleKey("Dismissible"));
             var notification = center.Notifications.Single();
 
             notification.DismissCommand!.Execute(notification);
-            publisher.Push("dismissible", new DirectResourceKey("Dismissible"));
+            publisher.Push("dismissible", new DirectLocaleKey("Dismissible"));
 
             Assert.That(center.Notifications, Is.Empty);
 
-            publisher.Push("dismissible", new DirectResourceKey("Dismissible"), forceShow: true);
+            publisher.Push("dismissible", new DirectLocaleKey("Dismissible"), forceShow: true);
 
             Assert.Multiple(() =>
             {
@@ -124,11 +124,11 @@ public sealed class NotificationCenterTests
             using var center = new NotificationCenter(new InMemoryKeyValueStorage());
             var publisher = center.GetPublisher("category.alpha");
 
-            publisher.Push("info", new DirectResourceKey("Info"));
-            publisher.Push("warning-old", new DirectResourceKey("Warning"), NotificationType.Warning);
-            publisher.Push("error", new DirectResourceKey("Error"), NotificationType.Error);
-            publisher.Push("success", new DirectResourceKey("Success"), NotificationType.Success);
-            publisher.Push("warning-new", new DirectResourceKey("Warning"), NotificationType.Warning);
+            publisher.Push("info", new DirectLocaleKey("Info"));
+            publisher.Push("warning-old", new DirectLocaleKey("Warning"), NotificationType.Warning);
+            publisher.Push("error", new DirectLocaleKey("Error"), NotificationType.Error);
+            publisher.Push("success", new DirectLocaleKey("Success"), NotificationType.Success);
+            publisher.Push("warning-new", new DirectLocaleKey("Warning"), NotificationType.Warning);
 
             Assert.That(center.Notifications.Select(n => n.Id), Is.EqualTo(new[]
             {
@@ -152,11 +152,11 @@ public sealed class NotificationCenterTests
             publisher.Reset(
                 new[]
                 {
-                    new DynamicNotificationDescriptor("first", new DirectResourceKey("First")),
-                    new DynamicNotificationDescriptor("second", new DirectResourceKey("Second")),
-                    new DynamicNotificationDescriptor("third", new DirectResourceKey("Third"))
+                    new DynamicNotificationDescriptor("first", new DirectLocaleKey("First")),
+                    new DynamicNotificationDescriptor("second", new DirectLocaleKey("Second")),
+                    new DynamicNotificationDescriptor("third", new DirectLocaleKey("Third"))
                 });
-            publisher.Push("new", new DirectResourceKey("New"));
+            publisher.Push("new", new DirectLocaleKey("New"));
 
             Assert.That(center.Notifications.Select(n => n.Id), Is.EqualTo(new[]
             {

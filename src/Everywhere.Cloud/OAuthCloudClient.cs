@@ -48,7 +48,7 @@ public sealed partial class OAuthCloudClient :
     public partial CloudClientLoginStatus LoginStatus { get; private set; }
 
     [ObservableProperty]
-    public partial IDynamicResourceKey? LastLoginErrorKey { get; private set; }
+    public partial IDynamicLocaleKey? LastLoginErrorKey { get; private set; }
 
     public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationManager.Notifications;
 
@@ -177,7 +177,7 @@ public sealed partial class OAuthCloudClient :
         }
     }
 
-    private void HandleSessionInvalidated(IDynamicResourceKey errorKey)
+    private void HandleSessionInvalidated(IDynamicLocaleKey errorKey)
     {
         UserProfile = null;
         Subscription = null;
@@ -267,7 +267,7 @@ public sealed partial class OAuthCloudClient :
             [
                 new(
                     "banned",
-                    new DynamicResourceKey(LocaleKey.OAuthCloudClient_BannedNotification_Title),
+                    new DynamicLocaleKey(LocaleKey.OAuthCloudClient_BannedNotification_Title),
                     NotificationType.Error,
                     false)
             ];
@@ -284,7 +284,7 @@ public sealed partial class OAuthCloudClient :
             {
                 yield return new DynamicNotificationDescriptor(
                     "unpaid",
-                    new DynamicResourceKey(LocaleKey.OAuthCloudClient_UnpaidNotification_Title),
+                    new DynamicLocaleKey(LocaleKey.OAuthCloudClient_UnpaidNotification_Title),
                     NotificationType.Error,
                     false);
             }
@@ -297,7 +297,7 @@ public sealed partial class OAuthCloudClient :
                     {
                         yield return new DynamicNotificationDescriptor(
                             "credits_running_low",
-                            new DynamicResourceKey(LocaleKey.OAuthCloudClient_CreditsRunningLowNotification_Content),
+                            new DynamicLocaleKey(LocaleKey.OAuthCloudClient_CreditsRunningLowNotification_Content),
                             NotificationType.Warning);
                     }
 
@@ -305,7 +305,7 @@ public sealed partial class OAuthCloudClient :
                     {
                         yield return new DynamicNotificationDescriptor(
                             "free_web_search_running_low",
-                            new DynamicResourceKey(LocaleKey.OAuthCloudClient_FreeWebSearchRunningLowNotification_Content),
+                            new DynamicLocaleKey(LocaleKey.OAuthCloudClient_FreeWebSearchRunningLowNotification_Content),
                             NotificationType.Warning);
                     }
                 }
@@ -314,7 +314,7 @@ public sealed partial class OAuthCloudClient :
                 {
                     yield return new DynamicNotificationDescriptor(
                         "free_web_search_depleted",
-                        new DynamicResourceKey(LocaleKey.OAuthCloudClient_FreeWebSearchDepletedNotification_Content),
+                        new DynamicLocaleKey(LocaleKey.OAuthCloudClient_FreeWebSearchDepletedNotification_Content),
                         NotificationType.Error);
                 }
             }
@@ -505,7 +505,7 @@ public sealed partial class OAuthCloudClient :
             return new OAuthTokenRequestException(statusCode, error, errorDescription, errorUri);
         }
 
-        private static IDynamicResourceKey CreateFriendlyMessageKey(
+        private static IDynamicLocaleKey CreateFriendlyMessageKey(
             HttpStatusCode statusCode,
             string error,
             string errorDescription,
@@ -520,10 +520,10 @@ public sealed partial class OAuthCloudClient :
                 _ => LocaleKey.OAuthCloudClient_TokenRejected
             };
 
-            return new FormattedDynamicResourceKey(
+            return new FormattedDynamicLocaleKey(
                 key,
-                new DirectResourceKey(error),
-                new DirectResourceKey(FormatErrorDescription(errorDescription, errorUri)));
+                new DirectLocaleKey(error),
+                new DirectLocaleKey(FormatErrorDescription(errorDescription, errorUri)));
         }
 
         private static string FormatExceptionMessage(
@@ -614,10 +614,10 @@ public sealed partial class OAuthCloudClient :
                         new HandledSystemException(
                             new InvalidDataException($"OAuth Error: {error} - {errorDescription}"),
                             HandledSystemExceptionType.InvalidData,
-                            new FormattedDynamicResourceKey(
+                            new FormattedDynamicLocaleKey(
                                 LocaleKey.OAuthCloudClient_OAuthError,
-                                new DirectResourceKey(error),
-                                new DynamicResourceKey(errorDescription))));
+                                new DirectLocaleKey(error),
+                                new DynamicLocaleKey(errorDescription))));
                     return;
                 }
 
@@ -628,7 +628,7 @@ public sealed partial class OAuthCloudClient :
                         new HandledSystemException(
                             new InvalidDataException($"Invalid state received. Expected: {_expectedState}, Received: {state}"),
                             HandledSystemExceptionType.InvalidData,
-                            new DynamicResourceKey(LocaleKey.OAuthCloudClient_InvalidState)));
+                            new DynamicLocaleKey(LocaleKey.OAuthCloudClient_InvalidState)));
                     return;
                 }
 
@@ -639,7 +639,7 @@ public sealed partial class OAuthCloudClient :
                         new HandledSystemException(
                             new InvalidDataException("No code found in callback."),
                             HandledSystemExceptionType.InvalidData,
-                            new DynamicResourceKey(LocaleKey.OAuthCloudClient_MissingCode)));
+                            new DynamicLocaleKey(LocaleKey.OAuthCloudClient_MissingCode)));
                     return;
                 }
 
@@ -694,7 +694,7 @@ public sealed partial class OAuthCloudClient :
     private sealed class TokenSessionContext(
         IHttpClientFactory httpClientFactory,
         ILogger logger,
-        Action<IDynamicResourceKey> onSessionInvalidated
+        Action<IDynamicLocaleKey> onSessionInvalidated
     )
     {
         private readonly Lock _stateGate = new();
@@ -804,7 +804,7 @@ public sealed partial class OAuthCloudClient :
             }
         }
 
-        private bool ClearRejectedSession(long expectedGeneration, string expectedRefreshToken, IDynamicResourceKey errorKey)
+        private bool ClearRejectedSession(long expectedGeneration, string expectedRefreshToken, IDynamicLocaleKey errorKey)
         {
             var cleared = ClearLocalSessionCore(expectedGeneration, expectedRefreshToken);
             if (cleared) onSessionInvalidated(errorKey);

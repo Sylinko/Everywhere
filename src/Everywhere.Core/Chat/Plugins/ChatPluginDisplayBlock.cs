@@ -18,7 +18,7 @@ namespace Everywhere.Chat.Plugins;
 [MessagePackObject]
 [Union(0, typeof(ChatPluginContainerDisplayBlock))]
 [Union(1, typeof(ChatPluginTextDisplayBlock))]
-[Union(2, typeof(ChatPluginDynamicResourceKeyDisplayBlock))]
+[Union(2, typeof(ChatPluginDynamicLocaleKeyDisplayBlock))]
 [Union(3, typeof(ChatPluginMarkdownDisplayBlock))]
 [Union(4, typeof(ChatPluginProgressDisplayBlock))]
 [Union(5, typeof(ChatPluginFileReferencesDisplayBlock))]
@@ -98,10 +98,10 @@ public sealed partial class ChatPluginTextDisplayBlock(string text, string? clas
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginDynamicResourceKeyDisplayBlock(IDynamicResourceKey key, string? className = null) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginDynamicLocaleKeyDisplayBlock(IDynamicLocaleKey key, string? className = null) : ChatPluginDisplayBlock
 {
     [Key(0)]
-    public IDynamicResourceKey Key { get; } = key;
+    public IDynamicLocaleKey Key { get; } = key;
 
     [Key(1)]
     public string? ClassName { get; } = className;
@@ -121,13 +121,13 @@ public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBl
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginProgressDisplayBlock(IDynamicResourceKey headerKey) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginProgressDisplayBlock(IDynamicLocaleKey headerKey) : ChatPluginDisplayBlock
 {
     [field: AllowNull, MaybeNull]
     public Progress<double> ProgressReporter => field ??= new Progress<double>(value => Progress = value);
 
     [Key(0)]
-    public IDynamicResourceKey HeaderKey { get; } = headerKey;
+    public IDynamicLocaleKey HeaderKey { get; } = headerKey;
 
     [Key(1)]
     [ObservableProperty]
@@ -140,7 +140,7 @@ public sealed partial class ChatPluginProgressDisplayBlock(IDynamicResourceKey h
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class ChatPluginFileReference(
     string fullPath,
-    IDynamicResourceKey? displayNameKey = null,
+    IDynamicLocaleKey? displayNameKey = null,
     IReadOnlySet<ChatPluginFileReferenceLocation>? locations = null
 )
 {
@@ -148,7 +148,7 @@ public partial class ChatPluginFileReference(
     public string FullPath { get; } = fullPath;
 
     [Key(1)]
-    public IDynamicResourceKey? DisplayNameKey { get; } = displayNameKey;
+    public IDynamicLocaleKey? DisplayNameKey { get; } = displayNameKey;
 
     [Key(2)]
     public IReadOnlySet<ChatPluginFileReferenceLocation>? Locations { get; } = locations;
@@ -236,13 +236,13 @@ public sealed partial class ChatPluginFileDifferenceDisplayBlock(TextDifference 
 /// <param name="url"></param>
 /// <param name="displayNameKey"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginUrl(string? url, IDynamicResourceKey displayNameKey)
+public sealed partial class ChatPluginUrl(string? url, IDynamicLocaleKey displayNameKey)
 {
     [Key(0)]
     public string? Url { get; } = url;
 
     [Key(1)]
-    public IDynamicResourceKey DisplayNameKey { get; } = displayNameKey;
+    public IDynamicLocaleKey DisplayNameKey { get; } = displayNameKey;
 
     /// <summary>
     /// The index of this URL in the original list, if applicable.

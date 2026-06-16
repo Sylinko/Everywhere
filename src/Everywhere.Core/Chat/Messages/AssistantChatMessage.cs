@@ -30,7 +30,7 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
 
     [Key(1)]
     [ObservableProperty]
-    public partial IDynamicResourceKey? ErrorMessageKey { get; set; }
+    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
     [Key(2)]
     [ObservableProperty]

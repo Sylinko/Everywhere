@@ -15,8 +15,8 @@ namespace Everywhere.Linux.Chat.Plugins;
 /// </summary>
 public sealed class FdFindPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Header);
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Description);
     public override LucideIconKind? Icon => LucideIconKind.Search;
     public override bool IsDefaultEnabled => false;
 
@@ -76,7 +76,7 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
 
     [KernelFunction("search_files")]
     [Description("Search for files and directories in a specified path using fd-find. Highly efficient for large file systems.")]
-    [DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header)]
+    [DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header)]
     private async Task<string> SearchFilesAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The root directory to start searching from.")] string path,
@@ -134,10 +134,10 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
 
             var finalResults = query.Take(maxCount).ToList();
 
-            displaySink.AppendDynamicResourceKey(
-                new FormattedDynamicResourceKey(
+            displaySink.AppendDynamicLocaleKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage,
-                    new DirectResourceKey(finalResults.Count.ToString())));
+                    new DirectLocaleKey(finalResults.Count.ToString())));
 
             return new FileRecords(finalResults, finalResults.Count).ToString();
         }, cancellationToken);

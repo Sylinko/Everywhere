@@ -30,7 +30,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Obsolete: Use HeaderKey instead.
     /// </summary>
     [Key(2)]
-    private DynamicResourceKey? ObsoleteHeaderKey
+    private DynamicLocaleKey? ObsoleteHeaderKey
     {
         get => null; // for forward compatibility
         set => HeaderKey = value;
@@ -41,7 +41,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [Key(4)]
     [ObservableProperty]
-    public partial IDynamicResourceKey? ErrorMessageKey { get; set; }
+    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
     [Key(5)]
     [ObservableProperty]
@@ -66,7 +66,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [Key(9)]
     [ObservableProperty]
-    public partial IDynamicResourceKey? HeaderKey { get; set; }
+    public partial IDynamicLocaleKey? HeaderKey { get; set; }
 
     [Key(10)]
     private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks
@@ -121,7 +121,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         // The pipeline is set up in the primary constructor.
     }
 
-    public FunctionCallChatMessage(LucideIconKind icon, IDynamicResourceKey? headerKey)
+    public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey)
     {
         Icon = icon;
         HeaderKey = headerKey;

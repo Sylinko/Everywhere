@@ -40,7 +40,7 @@ public sealed partial class SkillDescriptor : ObservableObject
 
     public IReadOnlyList<SkillDiagnostic> Diagnostics { get; init; } = [];
 
-    public IDynamicResourceKey? FirstDiagnosticContentKey => Diagnostics.FirstOrDefault()?.ContentKey;
+    public IDynamicLocaleKey? FirstDiagnosticContentKey => Diagnostics.FirstOrDefault()?.ContentKey;
 
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
@@ -51,4 +51,4 @@ public sealed partial class SkillDescriptor : ObservableObject
             : null;
 }
 
-public sealed record SkillDiagnostic(string Id, IDynamicResourceKey ContentKey, NotificationType Type);
+public sealed record SkillDiagnostic(string Id, IDynamicLocaleKey ContentKey, NotificationType Type);

@@ -126,7 +126,7 @@ public interface IStatisticsHeatmapDay
 
     long Value { get; }
 
-    IDynamicResourceKey ToolTipKey { get; }
+    IDynamicLocaleKey ToolTipKey { get; }
 }
 
 /// <summary>
@@ -134,10 +134,10 @@ public interface IStatisticsHeatmapDay
 /// </summary>
 public sealed record StatisticsSimpleHeatmapDay(DateOnly Date, long Value) : IStatisticsHeatmapDay
 {
-    public IDynamicResourceKey ToolTipKey => new FormattedDynamicResourceKey(
+    public IDynamicLocaleKey ToolTipKey => new FormattedDynamicLocaleKey(
         LocaleKey.HomePage_HeatmapDayToolTip,
-        new DirectResourceKey(Date.ToString("D", CultureInfo.CurrentCulture)),
-        new DirectResourceKey(Value.ToString("N0", CultureInfo.CurrentCulture)));
+        new DynamicLocaleKey(Date.ToString("D", CultureInfo.CurrentCulture)),
+        new DirectLocaleKey(Value.ToString("N0", CultureInfo.CurrentCulture)));
 }
 
 /// <summary>
@@ -152,12 +152,12 @@ public sealed record StatisticsTokenHeatmapDay(
 {
     public long Value => InputTokenCount + OutputTokenCount;
 
-    public IDynamicResourceKey ToolTipKey => new FormattedDynamicResourceKey(
+    public IDynamicLocaleKey ToolTipKey => new FormattedDynamicLocaleKey(
         LocaleKey.HomePage_HeatmapTokenDayToolTip,
-        new DirectResourceKey(Date.ToString("D", CultureInfo.CurrentCulture)),
-        new DirectResourceKey(InputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
-        new DirectResourceKey(OutputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
-        new DirectResourceKey(CachedInputTokenCount.ToString("N0", CultureInfo.CurrentCulture)));
+        new DirectLocaleKey(Date.ToString("D", CultureInfo.CurrentCulture)),
+        new DirectLocaleKey(InputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
+        new DirectLocaleKey(OutputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
+        new DirectLocaleKey(CachedInputTokenCount.ToString("N0", CultureInfo.CurrentCulture)));
 }
 
 /// <summary>

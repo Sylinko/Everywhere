@@ -29,10 +29,10 @@ public class Greetings(ICloudClient cloudClient) : IGreetings
         LocaleKey.Greetings_NotLoginTip2,
     };
 
-    public DynamicResourceKey GetRandomTip()
+    public DynamicLocaleKey GetRandomTip()
     {
         var isLogin = cloudClient.UserProfile is not null;
         var tips = isLogin ? TipKeys : NotLoginTipKeys;
-        return new DynamicResourceKey(tips[Random.Shared.Next(tips.Length)]);
+        return new DynamicLocaleKey(tips[Random.Shared.Next(tips.Length)]);
     }
 }

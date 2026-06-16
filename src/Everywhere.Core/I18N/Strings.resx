@@ -3187,13 +3187,13 @@ Release date: {2}</value>
     <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
         <value>Output tokens: {0}</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_MondayShort" xml:space="preserve">
         <value>Mon</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_WednesdayShort" xml:space="preserve">
         <value>Wed</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_FridayShort" xml:space="preserve">
         <value>Fri</value>
     </data>
     <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">

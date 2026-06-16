@@ -38,7 +38,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
 
     [Required]
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CustomAssistant_ModelProviderTemplate_Header,
         LocaleKey.CustomAssistant_ModelProviderTemplate_Description)]
     [SettingsItem(Group = "_")]
@@ -63,7 +63,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     }
 
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_ApiKey_Header,
         LocaleKey.Assistant_ApiKey_Description)]
     [SettingsItem(Group = "_")]
@@ -103,7 +103,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
 
     [Required]
     [JsonIgnore]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Header,
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Description)]
     [SettingsItem(Group = "_")]

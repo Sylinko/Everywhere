@@ -72,9 +72,9 @@ Recommended interface:
 public interface IStrategyPreprocessor
 {
     string Id { get; }
-    IDynamicResourceKey DisplayNameKey { get; }
-    IDynamicResourceKey DescriptionKey { get; }
-    IDynamicResourceKey PermissionDescriptionKey { get; }
+    IDynamicLocaleKey DisplayNameKey { get; }
+    IDynamicLocaleKey DescriptionKey { get; }
+    IDynamicLocaleKey PermissionDescriptionKey { get; }
 
     Task<PreprocessorResult> ProcessAsync(
         StrategyExecutionContext context,
@@ -255,7 +255,7 @@ Rules:
 Preprocessors must expose permission description keys:
 
 ```csharp
-IDynamicResourceKey PermissionDescriptionKey { get; }
+IDynamicLocaleKey PermissionDescriptionKey { get; }
 ```
 
 Strategy details UI should aggregate permissions from:

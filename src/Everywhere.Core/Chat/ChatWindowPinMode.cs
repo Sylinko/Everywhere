@@ -2,21 +2,21 @@
 
 public enum ChatWindowPinMode
 {
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_RememberPrevious)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_RememberPrevious)]
     RememberLast,
 
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_AlwaysTopmost)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_AlwaysTopmost)]
     AlwaysTopmost,
 
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_AlwaysPinned)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_AlwaysPinned)]
     AlwaysPinned,
 
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_AlwaysUnpinned)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_AlwaysUnpinned)]
     AlwaysUnpinned,
 
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_TopmostOnInput)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_TopmostOnInput)]
     TopmostOnInput,
 
-    [DynamicResourceKey(LocaleKey.ChatWindowPinMode_PinOnInput)]
+    [DynamicLocaleKey(LocaleKey.ChatWindowPinMode_PinOnInput)]
     PinOnInput
 }

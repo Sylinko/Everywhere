@@ -11,5 +11,5 @@ internal static class KnownAttributes
     public const string SettingsSelectionItem = "Everywhere.Configuration.SettingsSelectionItemAttribute";
     public const string SettingsTemplatedItem = "Everywhere.Configuration.SettingsTemplatedItemAttribute";
     public const string SettingsItems = "Everywhere.Configuration.SettingsItemsAttribute";
-    public const string DynamicResourceKey = "Everywhere.I18N.DynamicResourceKeyAttribute";
+    public const string DynamicLocaleKey = "Everywhere.I18N.DynamicLocaleKeyAttribute";
 }

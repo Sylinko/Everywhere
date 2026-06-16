@@ -14,8 +14,8 @@ public sealed class GlobalStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "what-is-this",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_WhatIsThisCommand_Description),
             Icon = LucideIconKind.Info,
             Priority = -100,
             Body =
@@ -33,8 +33,8 @@ public sealed class GlobalStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "summarize",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_SummarizeCommand_Description),
             Icon = LucideIconKind.FileText,
             Priority = -90,
             Body =
@@ -50,8 +50,8 @@ public sealed class GlobalStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "help",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Global_HelpCommand_Description),
             Icon = LucideIconKind.Sparkles,
             Priority = -80,
             Body =
