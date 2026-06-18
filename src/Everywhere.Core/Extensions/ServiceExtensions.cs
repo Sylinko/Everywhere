@@ -4,9 +4,12 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
+using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Skills;
+using Everywhere.Statistics;
+using Everywhere.Statistics.Database;
 using Everywhere.Storage;
 using Everywhere.Views;
 using Everywhere.Views.Pages;
@@ -41,6 +44,8 @@ public static class ServiceExtensions
                 .AddSingleton<VisualTreeDebugger>()
                 .AddSingleton<ChatWindowViewModel>()
                 .AddSingleton<ChatWindow>()
+                .AddSingleton<HomePageViewModel>()
+                .AddSingleton<IMainViewNavigationItem, HomePage>()
                 .AddSingleton<CustomAssistantPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, CustomAssistantPage>()
                 .AddSingleton<ChatPluginPageViewModel>()
@@ -50,8 +55,6 @@ public static class ServiceExtensions
                 .AddSingleton<WebSearchEnginePageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, WebSearchEnginePage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
-                .AddSingleton<AboutPageViewModel>()
-                .AddSingleton<IMainViewNavigationItem, AboutPage>()
                 .AddTransient<WelcomeViewModel>()
                 .AddTransient<WelcomeView>()
                 .AddTransient<ChangeLogViewModel>()
@@ -68,9 +71,21 @@ public static class ServiceExtensions
                     var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
+                .AddDbContextFactory<StatisticsDbContext>((_, options) =>
+                {
+                    var dbPath = RuntimeConstants.GetDatabasePath("statistics.db");
+                    options.UseSqlite($"Data Source={dbPath}");
+                })
                 .AddSingleton<IBlobStorage, BlobStorage>()
                 .AddSingleton<IChatContextStorage, ChatContextStorage>()
-                .AddTransient<IAsyncInitializer, ChatDbInitializer>();
+                .AddSingleton<NotificationCenter>()
+                .AddSingleton<INotificationCenter>(x => x.GetRequiredService<NotificationCenter>())
+                .AddSingleton(typeof(INotificationPublisher<>), typeof(NotificationPublisher<>))
+                .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
+                .AddSingleton<IStatisticsService, StatisticsService>()
+                .AddTransient<IAsyncInitializer, ChatDbInitializer>()
+                .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
+                .AddTransient<IAsyncInitializer, StatisticsBackfiller>();
 
         public IServiceCollection AddChatEssentials() =>
             services

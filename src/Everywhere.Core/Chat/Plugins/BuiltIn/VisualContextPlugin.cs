@@ -13,6 +13,7 @@ using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
 using Everywhere.Storage;
+using Everywhere.Statistics;
 using Everywhere.Views;
 using Lucide.Avalonia;
 using Microsoft.SemanticKernel;
@@ -31,17 +32,20 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private readonly IVisualElementContext _visualElementContext;
     private readonly PersistentState _persistentState;
     private readonly Settings _settings;
+    private readonly IStatisticsRecorder _statisticsRecorder;
 
     public VisualContextPlugin(
         IBlobStorage blobStorage,
         IVisualElementContext visualElementContext,
         PersistentState persistentState,
-        Settings settings) : base("visual_context")
+        Settings settings,
+        IStatisticsRecorder statisticsRecorder) : base("visual_context")
     {
         _blobStorage = blobStorage;
         _visualElementContext = visualElementContext;
         _persistentState = persistentState;
         _settings = settings;
+        _statisticsRecorder = statisticsRecorder;
 
         _functionsSource.Edit(list =>
         {
@@ -144,6 +148,14 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new FormattedDynamicResourceKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
                 new DirectResourceKey(windowCount)));
+        _statisticsRecorder.RecordVisualContextAsync(
+                new StatisticsVisualContextDraft(
+                    null,
+                    chatContext.Metadata.Id,
+                    StatisticsVisualContextSource.VisualContextPlugin,
+                    ElementCount: windowCount),
+                CancellationToken.None)
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         return TokenHelper.Omit(xmlBuilder.TrimEnd().ToString(), 20000);
     }
@@ -168,6 +180,15 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         {
             bitmap.Save(stream, 100);
             blob = await _blobStorage.StorageBlobAsync(stream, "image/png", cancellationToken: cancellationToken);
+            await _statisticsRecorder.RecordVisualContextAsync(
+                new StatisticsVisualContextDraft(
+                    null,
+                    chatContext.Metadata.Id,
+                    StatisticsVisualContextSource.ScreenCapture,
+                    ScreenshotCount: 1,
+                    ImageCount: 1,
+                    ByteCount: stream.Length),
+                CancellationToken.None);
         }
 
         return new FileAttachment(
@@ -235,6 +256,14 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             new FormattedDynamicResourceKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Result,
                 new DirectResourceKey(builder.BuiltVisualElements.Count)));
+        _statisticsRecorder.RecordVisualContextAsync(
+                new StatisticsVisualContextDraft(
+                    null,
+                    chatContext.Metadata.Id,
+                    StatisticsVisualContextSource.VisualContextPlugin,
+                    ElementCount: builder.BuiltVisualElements.Count),
+                CancellationToken.None)
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
         return result;
     }

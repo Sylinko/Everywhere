@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Collections;
 using Everywhere.Common;
+using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Messages;
@@ -19,10 +20,6 @@ using GnomeStack.Os.Secrets;
 using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Cloud;
-
-public sealed record UserProfileUpdatedMessage;
-
-public sealed record SubscriptionInformationUpdatedMessage;
 
 public sealed partial class OAuthCloudClient :
     ObservableObject,
@@ -48,7 +45,7 @@ public sealed partial class OAuthCloudClient :
     public partial SubscriptionInformation? Subscription { get; private set; }
 
     [ObservableProperty]
-    public partial CloudClientLoginStatus LoginStatus { get; set; }
+    public partial CloudClientLoginStatus LoginStatus { get; private set; }
 
     [ObservableProperty]
     public partial IDynamicResourceKey? LastLoginErrorKey { get; private set; }
@@ -218,7 +215,6 @@ public sealed partial class OAuthCloudClient :
             UserProfile = await response.Content.ReadFromJsonAsync<UserProfile>(
                 UserProfileJsonSerializerContext.Default.Options,
                 cancellationToken: cancellationToken);
-            WeakReferenceMessenger.Default.Send(new UserProfileUpdatedMessage());
 
             // The subscription info is not included in the user profile response, so we need a separate call.
             await RefreshSubscriptionAsync(cancellationToken);
@@ -255,7 +251,6 @@ public sealed partial class OAuthCloudClient :
 
         Subscription = payload.EnsureData();
         UpdateNotifications();
-        WeakReferenceMessenger.Default.Send(new SubscriptionInformationUpdatedMessage());
     }
 
     private void UpdateNotifications()
@@ -268,16 +263,20 @@ public sealed partial class OAuthCloudClient :
 
         if (subscription.Plan == SubscriptionPlan.Banned)
         {
-            _notificationManager.Reset(
-                new DynamicNotificationDescriptor(
+            DynamicNotificationDescriptor[] notifications =
+            [
+                new(
                     "banned",
                     new DynamicResourceKey(LocaleKey.OAuthCloudClient_BannedNotification_Title),
                     NotificationType.Error,
-                    false));
+                    false)
+            ];
+            _notificationManager.Reset(notifications);
             return;
         }
 
-        _notificationManager.Reset(GenerateNotifications());
+        var generatedNotifications = GenerateNotifications().ToList();
+        _notificationManager.Reset(generatedNotifications);
 
         IEnumerable<DynamicNotificationDescriptor> GenerateNotifications()
         {

@@ -1,0 +1,602 @@
+<UserControl
+  x:Class="Everywhere.Views.Pages.HomePage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self" x:DataType="vm:HomePageViewModel">
+  <UserControl.Styles>
+    <Style Selector="UniformGrid#TopCardsUniformGrid">
+      <Style Selector="^.narrow">
+        <Setter Property="Columns" Value="2"/>
+        <Setter Property="Rows" Value="2"/>
+      </Style>
+      <Style Selector="^.wide">
+        <Setter Property="Columns" Value="4"/>
+        <Setter Property="Rows" Value="1"/>
+      </Style>
+    </Style>
+
+    <Style Selector="DockPanel#BottomCardsDockPanel">
+      <Style Selector="^.narrow &gt; Border#QuickConfigurationCard">
+        <Setter Property="DockPanel.Dock" Value="Bottom"/>
+      </Style>
+      <Style Selector="^.wide &gt; Border#QuickConfigurationCard">
+        <Setter Property="DockPanel.Dock" Value="Right"/>
+        <Setter Property="Width" Value="320"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Border.HomeCard">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}"/>
+      <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="16"/>
+
+      <Style Selector="^ TextBlock.h2">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+      </Style>
+    </Style>
+
+    <Style Selector="HyperlinkButton.Footer">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="TextElement.Foreground" Value="{DynamicResource ForegroundColor}"/>
+
+      <Style Selector="^.Icon">
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}"/>
+        <Setter Property="BorderThickness" Value="0.5"/>
+      </Style>
+    </Style>
+
+    <Style Selector="Button.Secondary">
+      <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}"/>
+      <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource SettingsItemHoverBackgroundColor}"/>
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel VerticalSpacing="12">
+    <Grid
+      x:Name="Footer" DockPanel.Dock="Bottom"
+      Margin="24,0,24,20" HorizontalAlignment="Center"
+      ColumnDefinitions="*,9,Auto" ColumnSpacing="12">
+      <WrapPanel
+        Grid.Column="0" VerticalAlignment="Center"
+        ItemSpacing="12" LineSpacing="8"
+        Orientation="Horizontal">
+        <HyperlinkButton
+          Classes="Footer"
+          Command="{Binding OpenWelcomeDialogCommand}">
+          <HyperlinkButton.Content>
+            <StackPanel
+              Orientation="Horizontal" Spacing="6">
+              <LucideIcon
+                Kind="House" Size="15"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_WelcomePage}}"/>
+            </StackPanel>
+          </HyperlinkButton.Content>
+        </HyperlinkButton>
+        <HyperlinkButton
+          Classes="Footer"
+          Command="{Binding OpenChangeLogCommand}">
+          <HyperlinkButton.Content>
+            <StackPanel
+              Orientation="Horizontal" Spacing="6">
+              <LucideIcon
+                Kind="Rocket" Size="15"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_WhatsNew}}"/>
+            </StackPanel>
+          </HyperlinkButton.Content>
+        </HyperlinkButton>
+        <HyperlinkButton
+          Classes="Footer" NavigateUri="https://github.com/Sylinko/Everywhere">
+          <HyperlinkButton.Content>
+            <StackPanel
+              Orientation="Horizontal" Spacing="6">
+              <LucideIcon
+                Kind="Github" Size="15"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_GitHubRepo}}"/>
+            </StackPanel>
+          </HyperlinkButton.Content>
+        </HyperlinkButton>
+        <HyperlinkButton
+          Classes="Footer" NavigateUri="https://github.com/Sylinko/Everywhere/blob/main/ThirdPartyNotices.txt">
+          <HyperlinkButton.Content>
+            <StackPanel
+              Orientation="Horizontal" Spacing="6">
+              <LucideIcon
+                Kind="CodeXml" Size="15"/>
+              <TextBlock Text="{I18N {x:Static LocaleKey.AboutPage_OpenSourceLicenses}}"/>
+            </StackPanel>
+          </HyperlinkButton.Content>
+        </HyperlinkButton>
+      </WrapPanel>
+
+      <Border
+        Grid.Column="1" Width="0.5"
+        Margin="0,4" HorizontalAlignment="Center"
+        VerticalAlignment="Stretch"
+        Background="{DynamicResource BorderColor}"/>
+
+      <StackPanel
+        Grid.Column="2" Orientation="Horizontal"
+        Spacing="4">
+        <HyperlinkButton
+          Classes="Footer Icon"
+          NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}">
+          <LucideIcon
+            Foreground="{DynamicResource ForegroundColor}"
+            Kind="BookOpen"
+            Size="{DynamicResource FontSizeL}"/>
+        </HyperlinkButton>
+        <HyperlinkButton
+          Classes="Footer Icon"
+          NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}">
+          <Image
+            Width="{DynamicResource FontSizeL}"
+            Height="{DynamicResource FontSizeL}"
+            Source="{StaticResource DiscordDrawingImage}"/>
+        </HyperlinkButton>
+        <HyperlinkButton
+          Classes="Footer Icon"
+          NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}">
+          <Image
+            Width="{DynamicResource FontSizeL}"
+            Height="{DynamicResource FontSizeL}"
+            Source="{StaticResource QQDrawingImage}"/>
+        </HyperlinkButton>
+      </StackPanel>
+    </Grid>
+
+    <ScrollViewer
+      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <StackPanel
+        MaxWidth="1000" Margin="24,18,24,20"
+        Spacing="16">
+        <ItemsControl ItemsSource="{Binding Notifications}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="8"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="notification:DynamicNotification">
+              <shadui:Toast
+                MinWidth="0" Margin="0"
+                Padding="12,8" HorizontalAlignment="Stretch"
+                ActionButtonContent="{Binding ActionButtonContentKey^, FallbackValue={x:Null}}"
+                ActionCommand="{Binding ActionCommand, Mode=OneTime}"
+                CanDismiss="{Binding CanDismiss, Mode=OneTime}"
+                CanDismissByClicking="False"
+                Content="{Binding ContentKey^}"
+                DismissCommand="{Binding DismissCommand, Mode=OneTime}"
+                Notification="{Binding Type, Converter={x:Static shadui:NotificationTypeToNotificationConverter.Shared}}"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid
+          VerticalAlignment="Top" ColumnDefinitions="*,Auto"
+          ColumnSpacing="8" RowDefinitions="Auto,Auto,Auto"
+          RowSpacing="12">
+          <!--  <Border  -->
+          <!--  Grid.Row="0" Grid.Column="0"  -->
+          <!--  Width="120" Height="120"  -->
+          <!--  Margin="-60" HorizontalAlignment="Left"  -->
+          <!--  Background="{DynamicResource PrimaryColor}"  -->
+          <!--  CornerRadius="60" Opacity="0.6">  -->
+          <!--   <Border.Effect> -->
+          <!--     <BlurEffect Radius="100"/> -->
+          <!--   </Border.Effect> -->
+          <!-- </Border> -->
+
+          <StackPanel
+            Grid.Row="0" Grid.Column="0"
+            Orientation="Horizontal" Spacing="8">
+            <Border
+              Padding="8,2"
+              Background="{DynamicResource InfoColor20}"
+              CornerRadius="{DynamicResource FullCornerRadius}">
+              <StackPanel
+                Orientation="Horizontal" Spacing="4">
+                <Ellipse
+                  Width="6" Height="6"
+                  VerticalAlignment="Center"
+                  Fill="{DynamicResource InfoColor}"/>
+                <TextBlock
+                  Classes="Caption"
+                  Foreground="{DynamicResource InfoColor}"
+                  Text="{I18N {x:Static LocaleKey.HomePage_Today}}"/>
+              </StackPanel>
+            </Border>
+
+            <TextBlock
+              Classes="Caption Muted" VerticalAlignment="Center"
+              Text="{Binding TodayText}"/>
+          </StackPanel>
+
+          <TextBlock
+            Classes="h2" Grid.Row="1"
+            Grid.Column="0">
+            <Run Text="{I18N {x:Static LocaleKey.HomePage_WelcomeBackPrefix}}"/><Run>
+              <Run.Text>
+                <MultiBinding Converter="{x:Static shadui:BasicConverters.FirstNotNullOrEmpty}">
+                  <Binding
+                    Path="CloudClient.UserProfile?.Name"
+                    TargetNullValue="{x:Null}"/>
+                  <Binding
+                    Mode="OneTime"
+                    Source="{x:Static system:Environment.UserName}"/>
+                </MultiBinding>
+              </Run.Text>
+            </Run>
+          </TextBlock>
+
+          <TextBlock
+            Classes="Muted" Grid.Row="2"
+            Grid.Column="0" HorizontalAlignment="Left"
+            Text="{I18N {x:Static LocaleKey.HomePage_Subtitle}}"
+            TextWrapping="Wrap"/>
+
+          <Button
+            Classes="Primary" Grid.Row="0"
+            Grid.RowSpan="3" Grid.Column="1"
+            HorizontalAlignment="Right" VerticalAlignment="Bottom"
+            shadui:ButtonAssist.Icon="{LucideIconContent MessageCircle}"
+            Command="{Binding StartChatCommand}"
+            Content="{I18N {x:Static LocaleKey.HomePage_StartChat}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"/>
+        </Grid>
+
+        <UniformGrid
+          x:Name="TopCardsUniformGrid" HorizontalAlignment="Stretch"
+          ColumnSpacing="10" RowSpacing="6">
+          <Interaction.Behaviors>
+            <AdaptiveBehavior>
+              <AdaptiveClassSetter
+                MinWidth="0" MaxWidth="700"
+                ClassName="narrow" MaxWidthOperator="LessThan"
+                MinWidthOperator="GreaterThanOrEqual"/>
+              <AdaptiveClassSetter
+                MinWidth="700" MaxWidth="Infinity"
+                ClassName="wide" MaxWidthOperator="LessThan"
+                MinWidthOperator="GreaterThanOrEqual"/>
+            </AdaptiveBehavior>
+          </Interaction.Behaviors>
+
+          <Border Classes="HomeCard">
+            <StackPanel Spacing="8">
+              <StackPanel
+                Orientation="Horizontal" Spacing="8">
+                <LucideIcon
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="MessagesSquare" Size="16"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_Topics}}"/>
+              </StackPanel>
+              <TextBlock
+                Classes="h2"
+                Text="{Binding Overview?.TopicCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+              <TextBlock Classes="Muted Caption">
+                <TextBlock.Text>
+                  <I18N Key="{x:Static LocaleKey.HomePage_ThisMonth}">
+                    <Binding
+                      Path="MonthlyOverview?.TopicCount" StringFormat="{}{0:N0}"
+                      TargetNullValue="0"/>
+                  </I18N>
+                </TextBlock.Text>
+              </TextBlock>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="HomeCard">
+            <StackPanel Spacing="8">
+              <StackPanel
+                Orientation="Horizontal" Spacing="8">
+                <LucideIcon
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="GitBranch" Size="16"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_Turns}}"/>
+              </StackPanel>
+              <TextBlock
+                Classes="h2"
+                Text="{Binding Overview?.TurnCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+              <TextBlock
+                Classes="Muted Caption"
+                Text="{Binding TurnAverageKey^}"/>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="HomeCard">
+            <StackPanel Spacing="8">
+              <StackPanel
+                Orientation="Horizontal" Spacing="8">
+                <LucideIcon
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="Coins" Size="16"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_Tokens}}"/>
+              </StackPanel>
+              <TextBlock
+                Classes="h2"
+                Text="{Binding Overview?.TokenSummary.TotalTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}">
+                <ToolTip.Tip>
+                  <I18N Key="{x:Static LocaleKey.HomePage_TotalTokensToolTip}">
+                    <Binding
+                      Path="Overview?.TokenSummary.TotalTokenCount" StringFormat="{}{0:N0}"
+                      TargetNullValue="0"/>
+                  </I18N>
+                </ToolTip.Tip>
+              </TextBlock>
+
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition MaxWidth="200"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
+                  <StackPanel
+                    Grid.Column="0" Orientation="Horizontal"
+                    Spacing="4">
+                    <ToolTip.Tip>
+                      <I18N Key="{x:Static LocaleKey.HomePage_InputTokensToolTip}">
+                        <Binding
+                          Path="Overview?.TokenSummary.InputTokenCount" StringFormat="{}{0:N0}"
+                          TargetNullValue="0"/>
+                      </I18N>
+                    </ToolTip.Tip>
+                    <LucideIcon
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="ArrowDownToLine" Size="14"/>
+                    <TextBlock
+                      FontWeight="SemiBold"
+                      Text="{Binding Overview?.TokenSummary.InputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                  </StackPanel>
+
+                  <StackPanel
+                    Grid.Column="2" Orientation="Horizontal"
+                    Spacing="4">
+                    <ToolTip.Tip>
+                      <I18N Key="{x:Static LocaleKey.HomePage_OutputTokensToolTip}">
+                        <Binding
+                          Path="Overview?.TokenSummary.OutputTokenCount" StringFormat="{}{0:N0}"
+                          TargetNullValue="0"/>
+                      </I18N>
+                    </ToolTip.Tip>
+                    <LucideIcon
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="ArrowUpFromLine" Size="14"/>
+                    <TextBlock
+                      FontWeight="SemiBold"
+                      Text="{Binding Overview?.TokenSummary.OutputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                  </StackPanel>
+
+                  <StackPanel
+                    Grid.Column="4" Orientation="Horizontal"
+                    Spacing="4">
+                    <ToolTip.Tip>
+                      <I18N Key="{x:Static LocaleKey.HomePage_CachedHitRateToolTip}">
+                        <Binding
+                          Path="Overview?.TokenSummary.CachedInputTokenCount" StringFormat="{}{0:N0}"
+                          TargetNullValue="0"/>
+                        <Binding
+                          Path="Overview?.TokenSummary.InputTokenCount" StringFormat="{}{0:N0}"
+                          TargetNullValue="0"/>
+                      </I18N>
+                    </ToolTip.Tip>
+                    <LucideIcon
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="DatabaseZap" Size="14"/>
+                    <TextBlock
+                      FontWeight="SemiBold"
+                      Text="{Binding Overview?.TokenSummary.CachedInputHitRate, TargetNullValue=0, StringFormat='{}{0:P0}'}"/>
+                  </StackPanel>
+                </Grid>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="HomeCard">
+            <StackPanel Spacing="8">
+              <StackPanel
+                Orientation="Horizontal" Spacing="8">
+                <LucideIcon
+                  Foreground="{DynamicResource MutedColor}"
+                  Kind="ScanSearch" Size="16"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_VisualContext}}"/>
+              </StackPanel>
+              <TextBlock
+                Classes="h2"
+                Text="{Binding Overview?.VisualElementCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+              <TextBlock
+                x:Name="VisualContextDetailText" Classes="Muted Caption"
+                TextTrimming="CharacterEllipsis"
+                ToolTip.Tip="{Binding #VisualContextDetailText.Text}">
+                <TextBlock.Text>
+                  <I18N Key="{x:Static LocaleKey.HomePage_VisualContextDetail}">
+                    <Binding
+                      Path="Overview?.VisualElementCount" StringFormat="{}{0:N0}"
+                      TargetNullValue="0"/>
+                    <MultiBinding Converter="{x:Static vc:Int64Converters.Sum}">
+                      <Binding
+                        Path="Overview?.ScreenshotCount" TargetNullValue="0"/>
+                      <Binding
+                        Path="Overview?.ImageCount" TargetNullValue="0"/>
+                    </MultiBinding>
+                    <Binding
+                      Converter="{x:Static vc:Int64Converters.HumanizeBytes}"
+                      Path="Overview?.VisualContextBytes" TargetNullValue="0"/>
+                  </I18N>
+                </TextBlock.Text>
+              </TextBlock>
+            </StackPanel>
+          </Border>
+        </UniformGrid>
+
+        <DockPanel
+          x:Name="BottomCardsDockPanel" HorizontalSpacing="12"
+          VerticalSpacing="8">
+          <Interaction.Behaviors>
+            <AdaptiveBehavior>
+              <AdaptiveClassSetter
+                MinWidth="0" MaxWidth="532"
+                ClassName="narrow" MaxWidthOperator="LessThan"
+                MinWidthOperator="GreaterThanOrEqual"/>
+              <AdaptiveClassSetter
+                MinWidth="532" MaxWidth="Infinity"
+                ClassName="wide" MaxWidthOperator="LessThan"
+                MinWidthOperator="GreaterThanOrEqual"/>
+            </AdaptiveBehavior>
+          </Interaction.Behaviors>
+
+          <Border
+            x:Name="QuickConfigurationCard" Classes="HomeCard">
+            <DockPanel VerticalSpacing="12">
+              <TextBlock
+                Classes="h4" DockPanel.Dock="Top"
+                Text="{I18N {x:Static LocaleKey.HomePage_QuickConfiguration}}"/>
+              <ItemsControl ItemsSource="{Binding QuickConfigurationCards}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid
+                      Columns="1" RowSpacing="8"
+                      Rows="0"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HomePageViewModel+QuickConfigurationCardItem">
+                    <Button
+                      Classes="Secondary" Padding="16"
+                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                      Command="{Binding #Self.ViewModel.NavigateToCommand}"
+                      CommandParameter="{Binding Route}">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border
+                          Width="32" Height="32"
+                          Background="{DynamicResource InfoColor20}"
+                          CornerRadius="{DynamicResource FullCornerRadius}">
+                          <!--  TODO: MCP Icon  -->
+                          <LucideIcon
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Foreground="{DynamicResource InfoColor}"
+                            Kind="{Binding Icon}"
+                            Size="18"/>
+                        </Border>
+                        <TextBlock
+                          Grid.Column="1" Margin="12,0,0,0"
+                          VerticalAlignment="Center" FontWeight="SemiBold"
+                          Text="{Binding Name^}"/>
+                        <TextBlock
+                          Grid.Column="2" VerticalAlignment="Center"
+                          FontWeight="SemiBold"
+                          Text="{Binding CountText}"/>
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </DockPanel>
+          </Border>
+
+          <Border
+            Classes="HomeCard" MinHeight="360">
+            <StackPanel Spacing="12">
+              <StackPanel>
+                <StackPanel
+                  Orientation="Horizontal" Spacing="8">
+                  <TextBlock
+                    Classes="h4"
+                    Text="{I18N {x:Static LocaleKey.HomePage_AssistantActivity}}"/>
+                  <Border
+                    Padding="8,2" VerticalAlignment="Center"
+                    Background="{DynamicResource SecondaryCardBackgroundColor}"
+                    CornerRadius="{DynamicResource FullCornerRadius}">
+                    <TextBlock
+                      Classes="Muted Caption"
+                      Text="{Binding HeatmapRangeKey^}"/>
+                  </Border>
+                </StackPanel>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{Binding HeatmapSummaryKey^}"/>
+              </StackPanel>
+
+              <ListBox
+                MaxWidth="520" HorizontalAlignment="Left"
+                ItemsSource="{Binding HeatmapMetrics}"
+                SelectedItem="{Binding SelectedHeatmapMetricItem, Mode=TwoWay}">
+                <ListBox.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                  </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HomePageViewModel+HeatmapMetricTabItem">
+                    <TextBlock
+                      Margin="6,2"
+                      Text="{Binding Name^}"/>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.ItemContainerTheme>
+                  <ControlTheme
+                    BasedOn="{StaticResource TabListBoxItemTheme}"
+                    TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+                    <Setter Property="Padding" Value="4,2"/>
+                  </ControlTheme>
+                </ListBox.ItemContainerTheme>
+              </ListBox>
+
+              <v:StatisticsHeatmap
+                Days="{Binding HeatmapDays}"
+                FontSize="{DynamicResource FontSizeS}"
+                Months="6"/>
+
+              <StackPanel
+                HorizontalAlignment="Right" Orientation="Horizontal"
+                Spacing="6">
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_Less}}"/>
+                <Border
+                  Width="10" Height="10"
+                  Background="#2A2B31" CornerRadius="2"/>
+                <Border
+                  Width="10" Height="10"
+                  Background="#1F3657" CornerRadius="2"/>
+                <Border
+                  Width="10" Height="10"
+                  Background="#26528B" CornerRadius="2"/>
+                <Border
+                  Width="10" Height="10"
+                  Background="#2A70CA" CornerRadius="2"/>
+                <Border
+                  Width="10" Height="10"
+                  Background="#448FF6" CornerRadius="2"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.HomePage_More}}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </DockPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

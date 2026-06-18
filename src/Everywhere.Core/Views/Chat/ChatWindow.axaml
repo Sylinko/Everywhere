@@ -2,11 +2,11 @@
   x:Class="Everywhere.Views.ChatWindow" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions"
   xmlns:c="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:chat="clr-namespace:Everywhere.Chat"
-  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls"
-  xmlns:p="clr-namespace:Everywhere.Chat.Plugins" xmlns:se="clr-namespace:Everywhere.StrategyEngine"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions"
+  xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls" xmlns:p="clr-namespace:Everywhere.Chat.Plugins"
+  xmlns:se="clr-namespace:Everywhere.StrategyEngine" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:sys="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
   Title="{I18N {x:Static LocaleKey.ChatWindow_Title}}"
   MinWidth="400" MinHeight="300"
   x:DataType="vm:ChatWindowViewModel" x:TypeArguments="vm:ChatWindowViewModel"
@@ -721,7 +721,7 @@
             </ItemsControl.ItemsPanel>
 
             <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="c:DynamicNotification">
+              <DataTemplate x:DataType="notification:DynamicNotification">
                 <Border
                   x:Name="Notification" Padding="8,2"
                   BorderBrush="{DynamicResource BorderColor60}"

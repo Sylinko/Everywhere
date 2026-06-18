@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel;
+using System.Net;
 using System.Reactive.Disposables;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,12 +15,7 @@ using ZLinq;
 
 namespace Everywhere.Cloud;
 
-public sealed partial class OfficialModelProvider :
-    ObservableObject,
-    IOfficialModelProvider,
-    IRecipient<UserProfileUpdatedMessage>,
-    IRecipient<SubscriptionInformationUpdatedMessage>,
-    IDisposable
+public sealed partial class OfficialModelProvider : ObservableObject, IOfficialModelProvider, IDisposable
 {
     public IReadOnlyBindableList<ModelDefinitionTemplate> ModelDefinitions { get; }
 
@@ -30,12 +26,16 @@ public sealed partial class OfficialModelProvider :
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<OfficialModelProvider> _logger;
     private readonly SourceList<ModelDefinitionTemplate> _modelDefinitionsSource = new();
-    private readonly CompositeDisposable _disposables = new();
+    private readonly CompositeDisposable _disposables = new(3);
 
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private DateTimeOffset _nextFetchCooldownTime = DateTimeOffset.MinValue;
 
-    public OfficialModelProvider(PersistentState persistentState, IHttpClientFactory httpClientFactory, ILogger<OfficialModelProvider> logger)
+    public OfficialModelProvider(
+        PersistentState persistentState,
+        ICloudClient cloudClient,
+        IHttpClientFactory httpClientFactory,
+        ILogger<OfficialModelProvider> logger)
     {
         _persistentState = persistentState;
         _httpClientFactory = httpClientFactory;
@@ -50,6 +50,14 @@ public sealed partial class OfficialModelProvider :
         }
 
         WeakReferenceMessenger.Default.RegisterAll(this);
+
+        cloudClient.PropertyChanged += HandleCloudClientPropertyChanged;
+        _disposables.Add(Disposable.Create(() => cloudClient.PropertyChanged -= HandleCloudClientPropertyChanged));
+
+        void HandleCloudClientPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            RefreshAsync().Detach();
+        }
     }
 
     /// <summary>
@@ -125,16 +133,6 @@ public sealed partial class OfficialModelProvider :
             IsBusy = false;
             _refreshLock.Release();
         }
-    }
-
-    public void Receive(UserProfileUpdatedMessage message)
-    {
-        RefreshAsync().Detach();
-    }
-
-    public void Receive(SubscriptionInformationUpdatedMessage message)
-    {
-        RefreshAsync().Detach();
     }
 
     public void Dispose()

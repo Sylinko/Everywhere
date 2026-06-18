@@ -366,13 +366,12 @@ public sealed partial class FileAttachment(
                     new NotSupportedException($"File size exceeds the maximum allowed size of {maxBytesSize} bytes."),
                     new FormattedDynamicResourceKey(
                         LocaleKey.FileAttachment_Create_FileTooLarge,
-                        new DirectResourceKey(FileUtilities.HumanizeBytes(stream.Length)),
-                        new DirectResourceKey(FileUtilities.HumanizeBytes(maxBytesSize))),
+                        new DirectResourceKey(Humanizer.HumanizeBytes(stream.Length)),
+                        new DirectResourceKey(Humanizer.HumanizeBytes(maxBytesSize))),
                     showDetails: false);
             }
 
             mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
-
             var sha256 = await SHA256.HashDataAsync(stream, cancellationToken);
             var sha256String = Convert.ToHexString(sha256).ToLowerInvariant();
             return new FileAttachment(new DirectResourceKey(Path.GetFileName(filePath)), filePath, sha256String, mimeType, description);

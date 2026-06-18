@@ -5,6 +5,7 @@ using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Statistics;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -112,6 +113,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
             assistantChatMessage,
             systemPromptOverride: systemPrompt,
             enableNotifications: false,
+            purpose: StatisticsModelInvocationPurpose.SubagentResponse,
             cancellationToken: cancellationToken);
 
         if (assistantChatMessage.Count < 1)

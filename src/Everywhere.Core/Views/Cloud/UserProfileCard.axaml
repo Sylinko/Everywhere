@@ -1,8 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:c="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:UserProfileCard}"
     TargetType="v:UserProfileCard">
@@ -71,7 +72,7 @@
                 </ItemsControl.ItemsPanel>
 
                 <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="c:DynamicNotification">
+                  <DataTemplate x:DataType="notification:DynamicNotification">
                     <shadui:Toast
                       MinWidth="0" Margin="0"
                       Padding="12,8" HorizontalAlignment="Stretch"

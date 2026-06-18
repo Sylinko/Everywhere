@@ -1,20 +1,9 @@
-﻿using System.Windows.Input;
-using Avalonia.Controls.Notifications;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
 using Everywhere.Configuration;
 using ObservableCollections;
 
-namespace Everywhere.Common;
-
-public readonly record struct DynamicNotificationDescriptor(
-    string Id,
-    IDynamicResourceKey ContentKey,
-    NotificationType Type = NotificationType.Information,
-    bool CanDismiss = true,
-    bool ForceShow = false,
-    IDynamicResourceKey? ActionButtonContentKey = null,
-    ICommand? ActionCommand = null);
+namespace Everywhere.Common.Notification;
 
 public sealed class DynamicNotificationManager : IDisposable
 {
@@ -37,22 +26,10 @@ public sealed class DynamicNotificationManager : IDisposable
     }
 
     /// <summary>
-    /// Pushes a new notification to be displayed. The notification will be automatically dismissed after a certain period, or can be dismissed manually if <paramref name="canDismiss"/> is true.
+    /// Pushes a new notification to be displayed. The notification will be automatically dismissed after a certain period, or can be dismissed manually if CanDismiss is true.
     /// If the notification with the same ID already exists, it will be replaced with the new one. This allows for updating existing notifications without stacking duplicates.
     /// Dismissed notifications will be automatically removed from the list, IKeyValueStorage can be used to persist dismissed notification IDs to prevent them from showing again in the future.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="contentKey"></param>
-    /// <param name="notificationType"></param>
-    /// <param name="canDismiss"></param>
-    /// <param name="forceShow">If true, the notification will be shown even if it has been marked as dismissed in the storage. This is useful for critical notifications that should always be shown at least once.</param>
-    public void Push(
-        string id,
-        IDynamicResourceKey contentKey,
-        NotificationType notificationType,
-        bool canDismiss,
-        bool forceShow = false) => Push(new DynamicNotificationDescriptor(id, contentKey, notificationType, canDismiss, forceShow));
-
     public void Push(DynamicNotificationDescriptor dynamicNotification)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dynamicNotification.Id);
@@ -63,6 +40,8 @@ public sealed class DynamicNotificationManager : IDisposable
 
         _notificationsSource[key] = CreateNotification(key, dynamicNotification);
     }
+
+    public void Dismiss(string id) => _notificationsSource.Remove(CreateStorageKey(id, _scope));
 
     /// <summary>
     /// Clears all notifications from the manager.
@@ -89,7 +68,7 @@ public sealed class DynamicNotificationManager : IDisposable
         }
     }
 
-    internal static string CreateStorageKey(string id, string? scope) =>
+    private static string CreateStorageKey(string id, string? scope) =>
         scope.IsNullOrEmpty() ? $"Notification:{id}" : $"Notification:{scope}:{id}";
 
     private DynamicNotification CreateNotification(string key, DynamicNotificationDescriptor notification) => new(

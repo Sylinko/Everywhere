@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Numerics;
 using Avalonia.Data.Converters;
+using Everywhere.Utilities;
 using ZLinq;
 
 namespace Everywhere.ValueConverters;
@@ -59,6 +60,8 @@ public class NumberConverters<T> where T : struct, INumber<T>
 
     public static IValueConverter FromEnum { get; } = new FromEnumConverter();
 
+    public static IValueConverter Humanize { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeNumber(n));
+
     private sealed class SumConverter : IMultiValueConverter
     {
         public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
@@ -90,7 +93,10 @@ public class NumberConverters<T> where T : struct, INumber<T>
 }
 
 public class Int32Converters : NumberConverters<int>;
-public class Int64Converters : NumberConverters<long>;
+public class Int64Converters : NumberConverters<long>
+{
+    public static IValueConverter HumanizeBytes { get; } = new FuncValueConverter<long, string>(Humanizer.HumanizeBytes);
+}
 public class DoubleConverters : NumberConverters<double>;
 public class SingleConverters : NumberConverters<float>;
 public class DecimalConverters : NumberConverters<decimal>;

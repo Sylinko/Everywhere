@@ -1,5 +1,7 @@
 ﻿using Everywhere.AI;
 
+using Everywhere.Statistics;
+
 namespace Everywhere.Chat;
 
 public interface IChatService
@@ -37,6 +39,7 @@ public interface IChatService
     /// <param name="assistantChatMessage"></param>
     /// <param name="systemPromptOverride"></param>
     /// <param name="enableNotifications">Send notifications for function calls and other events during the generation process.</param>
+    /// <param name="purpose">Statistics classification for model invocations produced by this generation.</param>
     /// <param name="cancellationToken"></param>
     Task GenerateAsync(
         ChatContext chatContext,
@@ -44,5 +47,6 @@ public interface IChatService
         AssistantChatMessage assistantChatMessage,
         string? systemPromptOverride = null,
         bool enableNotifications = true,
+        StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,
         CancellationToken cancellationToken = default);
 }

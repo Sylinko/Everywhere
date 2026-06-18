@@ -161,6 +161,13 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     }
 #endif
 
+    [ObservableProperty]
+    [DynamicResourceKey(
+        LocaleKey.SoftwareSettings_IsStatisticsEnabled_Header,
+        LocaleKey.SoftwareSettings_IsStatisticsEnabled_Description)]
+    [SettingsItem(Group = "_")]
+    public partial bool IsStatisticsEnabled { get; set; } = true;
+
     [DynamicResourceKey(
         LocaleKey.SoftwareSettings_DiagnosticData_Header,
         LocaleKey.SoftwareSettings_DiagnosticData_Description)]

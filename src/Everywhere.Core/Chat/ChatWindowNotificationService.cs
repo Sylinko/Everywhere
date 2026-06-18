@@ -12,6 +12,7 @@ using Everywhere.AI.Configurator;
 using Everywhere.Cloud;
 using Everywhere.Collections;
 using Everywhere.Common;
+using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Messages;
 

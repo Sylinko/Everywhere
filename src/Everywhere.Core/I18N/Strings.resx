@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Access and manage application settings file and logs.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Usage Statistics</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Collect local usage statistics for the home dashboard. Turning this off stops new statistics from being recorded, but existing history can still be shown.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Edit Settings File</value>
     </data>
@@ -3093,5 +3099,125 @@ Release date: {2}</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>Input, output, and total are the sums for the current round (including multi-turn tool calls, etc.) and may not reflect the context.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Home</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Today</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>Welcome back, </value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>Your AI assistant is ready everywhere - context across every app on your desktop.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Start chat</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>{0} times this month</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Topics</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Turns</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Tokens</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Visual context</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Tool Usage</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Input</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Output</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} cached input tokens / {1:N0} input tokens</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>avg {0:0.#} / topic</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} elements, {1:N0} images, {2}</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Assistant Activity</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Last {0} months</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} - longest streak {1:N0} days</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Less</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>More</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Built-in Tools</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Skills</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Quick Configuration</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Assistants</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Total provider-reported tokens: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Input tokens: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Output tokens: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Mon</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Wed</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Fri</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: input {1}, output {2}, cached {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} is available.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} has been downloaded and is ready to install.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>View update</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Install</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value></value>
     </data>
 </root>

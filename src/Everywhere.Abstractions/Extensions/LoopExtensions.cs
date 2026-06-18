@@ -22,6 +22,16 @@ public static class LoopExtensions
             }
         }
 
+        public void Reset(params ReadOnlySpan<T> data)
+        {
+            source.Clear();
+
+            foreach (var item in data)
+            {
+                source.Add(item);
+            }
+        }
+
         public ICollection<T> AddRange(IEnumerable<T> data)
         {
             foreach (var item in data)

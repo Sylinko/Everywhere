@@ -2,6 +2,7 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=COM/@EntryIndexedValue">COM</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=IO/@EntryIndexedValue">IO</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=SSL/@EntryIndexedValue">SSL</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/XamlNaming/Abbreviations/=QQ/@EntryIndexedValue">QQ</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=lucide/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=modder/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=oobe/@EntryIndexedValue">True</s:Boolean>

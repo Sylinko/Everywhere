@@ -408,23 +408,4 @@ public static class FileUtilities
     {
         return KnownMimeTypes.FirstOrDefault(kv => string.Equals(kv.Value, mimeType, StringComparison.OrdinalIgnoreCase)).Key;
     }
-
-    /// <summary>
-    /// Converts a byte size into a human-readable string with appropriate units.
-    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
-    /// </summary>
-    /// <param name="bytes"></param>
-    /// <returns></returns>
-    public static string HumanizeBytes(long bytes)
-    {
-        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
-        double len = bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
-    }
 }
