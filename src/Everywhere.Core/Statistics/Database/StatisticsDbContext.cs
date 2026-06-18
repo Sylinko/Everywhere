@@ -96,7 +96,7 @@ public sealed class StatisticsDbContext(DbContextOptions<StatisticsDbContext> op
     }
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.AllConstructors)]
-    private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.Ticks, v => new DateTimeOffset(v, TimeSpan.Zero));
+    private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
 }
 
 /// <summary>

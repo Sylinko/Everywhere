@@ -285,7 +285,8 @@
               <TextBlock
                 Classes="h2"
                 Text="{Binding Overview?.TopicCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
-              <TextBlock Classes="Muted Caption">
+              <TextBlock
+                Classes="Muted Caption" HorizontalAlignment="Left">
                 <TextBlock.Text>
                   <I18N Key="{x:Static LocaleKey.HomePage_ThisMonth}">
                     <Binding
@@ -312,7 +313,7 @@
                 Classes="h2"
                 Text="{Binding Overview?.TurnCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
               <TextBlock
-                Classes="Muted Caption"
+                Classes="Muted Caption" HorizontalAlignment="Left"
                 Text="{Binding TurnAverageKey^}"/>
             </StackPanel>
           </Border>
@@ -424,7 +425,7 @@
                 Text="{Binding Overview?.VisualElementCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
               <TextBlock
                 x:Name="VisualContextDetailText" Classes="Muted Caption"
-                TextTrimming="CharacterEllipsis"
+                HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"
                 ToolTip.Tip="{Binding #VisualContextDetailText.Text}">
                 <TextBlock.Text>
                   <I18N Key="{x:Static LocaleKey.HomePage_VisualContextDetail}">

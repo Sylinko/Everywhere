@@ -103,10 +103,10 @@ public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbC
     }
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.AllConstructors)]
-    private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.Ticks, v => new DateTimeOffset(v, TimeSpan.Zero));
+    private class DateTimeOffsetToTicksConverter() : ValueConverter<DateTimeOffset, long>(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
 }
 
-public class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory, ILogger<ChatDbInitializer> logger) : IAsyncInitializer
+public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory, ILogger<ChatDbInitializer> logger) : IAsyncInitializer
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
 
