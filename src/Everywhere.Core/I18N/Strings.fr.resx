@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Accédez et gérez le fichier de paramètres de l'application et les journaux.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Statistiques d'Utilisation</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Collecte des statistiques d'utilisation locales pour le tableau de bord d'accueil. Une fois désactivé, l'enregistrement de nouvelles statistiques s'arrête, mais les historiques existants restent visibles. Vos données ne seront traitées qu'en local.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Modifier le fichier de paramètres</value>
     </data>
@@ -3093,5 +3099,125 @@ Date de publication : {2}</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>Les entrées, sorties et totaux sont des sommes pour le tour actuel (y compris les appels d'outils multi-tours), et ne reflètent pas nécessairement le contexte.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Accueil</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Aujourd'hui</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>Content de te revoir,</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>Votre assistant IA est prêt à travailler partout sur le bureau, connectant le contexte de chaque application.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Commencer la discussion</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>{0} fois ce mois-ci</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Sujets</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Tours</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Tokens</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Contexte Visuel</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Utilisation des Outils</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Entrée</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Sortie</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} entrées mises en cache / {1:N0} entrées totales</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>Moyenne de {0:0.#} tours par sujet</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} éléments, {1:N0} images</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Activité de l'Assistant</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Derniers {0} mois</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · Plus long en continu {1:N0} jours</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Moins</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>Plus</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Outils intégrés</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Compétences</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Configuration rapide</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Assistants</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Total des Tokens rapportés par l'API du modèle : {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Tokens d'entrée : {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Tokens de sortie : {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Lun</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Mer</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Ven</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0} : {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0} : Entrée {1}, Sortie {2}, Cache {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} est disponible pour mise à jour.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} a été téléchargé et est prêt à être installé.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>Voir la mise à jour</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Installer</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>Les premières statistiques proviennent de l'analyse des données de chat historiques et peuvent comporter des erreurs.</value>
     </data>
 </root>

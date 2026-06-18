@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>訪問和管理應用程式設定檔和日誌。</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>使用統計</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>為首頁儀表板收集本地使用統計。關閉後將停止記錄新的統計數據，但仍可顯示已有歷史。你的數據只會在本地處理。</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>編輯設定檔</value>
     </data>
@@ -3093,5 +3099,125 @@
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>輸入、輸出和總計均為當前輪次內的總和（包括多輪工具調用等），不一定能反映上下文情況</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>首頁</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>今天</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>歡迎回來，</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>你的 AI 助手已準備好在桌面各處工作，連接每個應用的上下文。</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>開始聊天</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>本月 {0} 次</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>話題</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>輪次</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Tokens</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>視覺上下文</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>工具調用</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>輸入</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>輸出</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} 緩存輸入 / {1:N0} 總輸入</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>平均每話題 {0:0.#} 次</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} 個元素，{1:N0} 張圖片</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>助手活動</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>最近 {0} 個月</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · 最長連續 {1:N0} 天</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>少</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>多</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>內置工具</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>技能</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>快速配置</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>助手</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>模型 API 報告的總 Token: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>輸入 Token: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>輸出 Token: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>週一</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>週三</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>週五</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: 輸入 {1}，輸出 {2}，緩存 {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} 已可更新。</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} 已下載完成，可以安裝。</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>查看更新</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>安裝</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>首次統計數據來自歷史聊天數據分析，可能存在誤差。</value>
     </data>
 </root>

@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Доступ к файлу настроек приложения и журналам.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Статистика использования</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Собирать локальную статистику использования для главной панели. При отключении прекращается запись новых данных, но уже имеющаяся история будет доступна. Ваши данные будут обрабатываться только локально.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Редактировать файл настроек</value>
     </data>
@@ -3093,5 +3099,125 @@
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>Ввод, вывод и общий итог - это сумма текущего раунда (включая многократные вызовы инструментов и т.д.), которая не обязательно отражает контекст.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Главная</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Сегодня</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>С возвращением,</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>Ваш AI помощник готов работать на рабочем столе, связывая контекст каждого приложения.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Начать чат</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>В этом месяце {0} раз</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Темы</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Раунды</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Токены</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Визуальный контекст</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Использование инструмента</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Ввод</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Вывод</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} кэшированных вводов / {1:N0} всего вводов</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>В среднем по теме {0:0.#} раз</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} элементов, {1:N0} изображений</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Активность помощника</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Последние {0} месяцев</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · Длительность {1:N0} дней</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Меньше</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>Больше</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Встроенные инструменты</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Навыки</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Быстрая настройка</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Ассистенты</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Всего токенов по отчету API модели: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Входные токены: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Выходные токены: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Пн</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Ср</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Пт</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: Вход {1}, Выход {2}, Кэш {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Обновление для Everywhere {0} доступно.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} загружен и готов к установке.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>Посмотреть обновление</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Установить</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>Первичные статистические данные получены из анализа исторических чатов и могут содержать погрешности.</value>
     </data>
 </root>

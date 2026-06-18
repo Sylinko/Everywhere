@@ -3218,6 +3218,6 @@ Release date: {2}</value>
         <value>Install</value>
     </data>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
-        <value></value>
+        <value>Initial statistics are derived from historical chat data analysis and may contain inaccuracies.</value>
     </data>
 </root>

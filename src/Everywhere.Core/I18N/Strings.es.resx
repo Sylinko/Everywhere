@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Accede y gestiona el archivo de configuración de la aplicación y los registros.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Estadísticas de Uso</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Recopila estadísticas de uso locales para el panel de inicio. Al desactivarlo, dejará de registrar nuevos datos estadísticos, pero aún podrá mostrar el historial existente. Tus datos solo se procesarán localmente.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Editar archivo de configuración</value>
     </data>
@@ -3093,5 +3099,125 @@ Fecha de lanzamiento: {2}</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>La entrada, salida y total son la suma de la ronda actual (incluyendo múltiples llamadas a herramientas), y no necesariamente reflejan el contexto.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Inicio</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Hoy</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>Bienvenido de nuevo,</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>Tu asistente AI está listo para trabajar en todo el escritorio, conectando el contexto de cada aplicación.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Iniciar Chat</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>Este mes {0} veces</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Temas</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Rondas</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Tokens</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Contexto Visual</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Uso de Herramientas</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Entrada</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Salida</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} entradas en caché / {1:N0} entradas totales</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>Promedio de {0:0.#} por tema</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} elementos, {1:N0} imágenes</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Actividad del Asistente</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Últimos {0} meses</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · Máximo continuo de {1:N0} días</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Menos</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>Más</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Herramientas Integradas</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Habilidades</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Configuración Rápida</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Asistentes</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Total de Tokens reportados por la API del modelo: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Tokens de entrada: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Tokens de salida: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Lun</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Mié</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Vie</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: Entrada {1}, Salida {2}, Caché {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} ya está disponible para actualizar.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} se ha descargado y está listo para instalar.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>Ver actualización</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Instalar</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>Los primeros datos estadísticos provienen del análisis de datos de chat históricos y pueden contener errores.</value>
     </data>
 </root>

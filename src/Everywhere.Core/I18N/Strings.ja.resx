@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>アプリケーション設定ファイルとログにアクセスして管理します。</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>使用統計</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>ホームページのダッシュボードにローカル使用統計を収集します。オフにすると新しい統計データの記録が停止しますが、既存の履歴は表示されます。あなたのデータはローカルでのみ処理されます。</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>設定ファイルを編集</value>
     </data>
@@ -3093,5 +3099,125 @@
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>入力、出力、合計は現在のラウンド内の合計です（複数回のツール呼び出しを含む）ので、必ずしも文脈を反映しているわけではありません。</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>ホームページ</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>今日</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>お帰りなさい、</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>あなたのAIアシスタントがデスクトップのどこでも作業する準備ができました。各アプリのコンテキストに接続します。</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>チャットを開始</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>今月 {0} 回</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>トピック</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>ターン</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>トークン</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>ビジュアルコンテキスト</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>ツール使用</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>入力</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>出力</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} キャッシュ入力 / {1:N0} 総入力</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>トピックごとの平均 {0:0.#} 回</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} 個の要素、{1:N0} 枚の画像</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>アシスタントの活動</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>最近の {0} か月</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · 最長連続 {1:N0} 日</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>少</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>多</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>内蔵ツール</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>スキル</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>クイック設定</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>アシスタント</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>モデル API が報告した総トークン: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>入力トークン: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>出力トークン: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>月</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>水</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>金</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: 入力 {1}、出力 {2}、キャッシュ {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} の更新が利用可能です。</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} のダウンロードが完了しました。インストールできます。</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>更新を表示</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>インストール</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>最初の統計データは過去のチャットデータ分析に基づいており、誤差がある可能性があります。</value>
     </data>
 </root>

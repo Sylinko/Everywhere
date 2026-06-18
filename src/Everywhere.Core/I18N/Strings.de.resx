@@ -580,6 +580,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Zugriff auf und Verwaltung der Anwendungsdatei und Protokolle.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Nutzungsstatistiken</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Sammelt lokale Nutzungsstatistiken für das Dashboard. Wenn deaktiviert, werden keine neuen Statistiken mehr aufgezeichnet, aber vorhandene Historie bleibt sichtbar. Deine Daten werden nur lokal verarbeitet.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Einstellungsdatei bearbeiten</value>
     </data>
@@ -3092,5 +3098,125 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>Eingaben, Ausgaben und Gesamtsummen sind die Summen der aktuellen Runde (einschließlich mehrerer Toolaufrufe) und spiegeln möglicherweise nicht den Kontext wider.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Startseite</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Heute</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>Willkommen zurück, </value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>Dein AI-Assistent ist bereit, überall auf dem Desktop zu arbeiten und den Kontext jeder Anwendung zu verbinden.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Chat starten</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>Diesen Monat {0} Mal</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Themen</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Runden</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Tokens</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Visueller Kontext</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Werkzeugnutzung</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Eingabe</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Ausgabe</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} Cache-Eingaben / {1:N0} Gesamteingaben</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>Durchschnittlich {0:0.#} Mal pro Thema</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} Elemente, {1:N0} Bilder</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Assistentenaktivität</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Letzte {0} Monate</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · Längste zusammenhängende {1:N0} Tage</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Weniger</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>Mehr</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Eingebaute Werkzeuge</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Fähigkeiten</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Schnelle Konfiguration</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Assistenten</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Gesamt-Token laut Modell-API: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Eingabe-Token: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Ausgabe-Token: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Mo</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Mi</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Fr</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: Eingabe {1}, Ausgabe {2}, Cache {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} ist verfügbar.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} wurde heruntergeladen und kann installiert werden.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>Update anzeigen</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Installieren</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>Die ersten Statistiken stammen aus der Analyse historischer Chats und können Ungenauigkeiten aufweisen.</value>
     </data>
 </root>

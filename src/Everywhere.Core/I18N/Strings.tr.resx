@@ -580,6 +580,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>Uygulama ayarları dosyasına ve günlüklerine erişin ve yönetin.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>Kullanım İstatistikleri</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>Ana sayfa gösterge paneli için yerel kullanım istatistiklerini toplar. Kapatıldığında yeni istatistik verileri kaydedilmeyecek, ancak mevcut geçmiş veriler gösterilmeye devam edecektir. Verilerin yalnızca yerel olarak işlenecektir.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>Ayarlar Dosyasını Düzenle</value>
     </data>
@@ -3092,5 +3098,125 @@ Yayın tarihi: {2}</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>Girdi, çıktı ve toplam, mevcut tur içindeki toplamı (çoklu tur araç çağrıları dahil) yansıtır, bağlamı tam olarak yansıtmayabilir.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>Ana Sayfa</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>Bugün</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>Hoş geldin,</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>AI asistanın masaüstünde her yerde çalışmaya hazır, her uygulamanın bağlamını bağlıyor.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>Sohbete Başla</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>Bu Ay {0} Kez</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>Konu</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>Turlar</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>Token'lar</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>Görsel Bağlam</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>Araç Kullanımı</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>Girdi</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>Çıktı</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} önbellek girişi / {1:N0} toplam girdi</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>Konu başına ortalama {0:0.#} kez</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} öğe, {1:N0} resim</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>Asistan Aktivitesi</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>Son {0} Ay</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · En Uzun Sürekli {1:N0} Gün</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>Daha Az</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>Daha Fazla</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>Yerleşik Araçlar</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>Yetenekler</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>Hızlı Yapılandırma</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>Asistanlar</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>Model API'sinin raporladığı toplam Token: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>Girdi Token: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>Çıktı Token: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>Pzt</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>Çar</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>Cum</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: Girdi {1}, Çıktı {2}, Önbellek {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} güncellenebilir.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} indirildi, kuruluma hazır.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>Güncellemeyi Görüntüle</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>Yükle</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>İlk istatistik verileri geçmiş sohbet verileri analizinden gelmektedir, hatalar olabilir.</value>
     </data>
 </root>

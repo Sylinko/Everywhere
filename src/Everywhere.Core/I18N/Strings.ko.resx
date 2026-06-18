@@ -581,6 +581,12 @@
     <data name="SoftwareSettings_DebugFeatures_Description" xml:space="preserve">
         <value>애플리케이션 설정 파일 및 로그에 접근하고 관리합니다.</value>
     </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Header" xml:space="preserve">
+        <value>사용 통계</value>
+    </data>
+    <data name="SoftwareSettings_IsStatisticsEnabled_Description" xml:space="preserve">
+        <value>홈페이지 대시보드에 대한 로컬 사용 통계를 수집합니다. 비활성화하면 새로운 통계 기록이 중단되지만 기존 기록은 여전히 표시됩니다. 귀하의 데이터는 로컬에서만 처리됩니다.</value>
+    </data>
     <data name="DebugFeaturesControl_EditSettingsFileButton_Content" xml:space="preserve">
         <value>설정 파일 편집</value>
     </data>
@@ -3093,5 +3099,125 @@
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip" xml:space="preserve">
         <value>입력, 출력 및 총계는 현재 라운드 내의 합계입니다(여러 라운드 도구 호출 포함). 반드시 맥락을 반영하지는 않습니다.</value>
+    </data>
+    <data name="HomePage_Title" xml:space="preserve">
+        <value>홈페이지</value>
+    </data>
+    <data name="HomePage_Today" xml:space="preserve">
+        <value>오늘</value>
+    </data>
+    <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
+        <value>다시 오신 것을 환영합니다,</value>
+    </data>
+    <data name="HomePage_Subtitle" xml:space="preserve">
+        <value>당신의 AI 비서가 데스크탑 곳곳에서 작업할 준비가 되어 있으며, 각 애플리케이션의 맥락을 연결합니다.</value>
+    </data>
+    <data name="HomePage_StartChat" xml:space="preserve">
+        <value>채팅 시작</value>
+    </data>
+    <data name="HomePage_ThisMonth" xml:space="preserve">
+        <value>이번 달 {0} 회</value>
+    </data>
+    <data name="HomePage_Topics" xml:space="preserve">
+        <value>주제</value>
+    </data>
+    <data name="HomePage_Turns" xml:space="preserve">
+        <value>턴</value>
+    </data>
+    <data name="HomePage_Tokens" xml:space="preserve">
+        <value>토큰</value>
+    </data>
+    <data name="HomePage_VisualContext" xml:space="preserve">
+        <value>시각적 맥락</value>
+    </data>
+    <data name="HomePage_ToolUsage" xml:space="preserve">
+        <value>도구 사용</value>
+    </data>
+    <data name="HomePage_Input" xml:space="preserve">
+        <value>입력</value>
+    </data>
+    <data name="HomePage_Output" xml:space="preserve">
+        <value>출력</value>
+    </data>
+    <data name="HomePage_CachedHitRateToolTip" xml:space="preserve">
+        <value>{0:N0} 캐시 입력 / {1:N0} 총 입력</value>
+    </data>
+    <data name="HomePage_TurnAverage" xml:space="preserve">
+        <value>주제당 평균 {0:0.#} 회</value>
+    </data>
+    <data name="HomePage_VisualContextDetail" xml:space="preserve">
+        <value>{0:N0} 개 요소, {1:N0} 장 이미지</value>
+    </data>
+    <data name="HomePage_AssistantActivity" xml:space="preserve">
+        <value>비서 활동</value>
+    </data>
+    <data name="HomePage_LastMonths" xml:space="preserve">
+        <value>최근 {0} 개월</value>
+    </data>
+    <data name="HomePage_HeatmapValueLabel" xml:space="preserve">
+        <value>{0} {1}</value>
+    </data>
+    <data name="HomePage_HeatmapSummary" xml:space="preserve">
+        <value>{0} · 가장 긴 연속 {1:N0} 일</value>
+    </data>
+    <data name="HomePage_Less" xml:space="preserve">
+        <value>적음</value>
+    </data>
+    <data name="HomePage_More" xml:space="preserve">
+        <value>많음</value>
+    </data>
+    <data name="HomePage_Mcp" xml:space="preserve">
+        <value>MCP</value>
+    </data>
+    <data name="HomePage_BuiltInTools" xml:space="preserve">
+        <value>내장 도구</value>
+    </data>
+    <data name="HomePage_Skills" xml:space="preserve">
+        <value>기술</value>
+    </data>
+    <data name="HomePage_QuickConfiguration" xml:space="preserve">
+        <value>빠른 설정</value>
+    </data>
+    <data name="HomePage_Assistants" xml:space="preserve">
+        <value>도우미</value>
+    </data>
+    <data name="HomePage_TotalTokensToolTip" xml:space="preserve">
+        <value>모델 API 보고서의 총 토큰: {0}</value>
+    </data>
+    <data name="HomePage_InputTokensToolTip" xml:space="preserve">
+        <value>입력 토큰: {0}</value>
+    </data>
+    <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
+        <value>출력 토큰: {0}</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+        <value>월</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+        <value>수</value>
+    </data>
+    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+        <value>금</value>
+    </data>
+    <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
+        <value>{0}: {1}</value>
+    </data>
+    <data name="HomePage_HeatmapTokenDayToolTip" xml:space="preserve">
+        <value>{0}: 입력 {1}, 출력 {2}, 캐시 {3}</value>
+    </data>
+    <data name="HomeNotification_UpdateAvailable" xml:space="preserve">
+        <value>Everywhere {0} 업데이트 가능합니다.</value>
+    </data>
+    <data name="HomeNotification_UpdateReady" xml:space="preserve">
+        <value>Everywhere {0} 다운로드 완료, 설치할 수 있습니다.</value>
+    </data>
+    <data name="HomeNotification_ViewUpdate" xml:space="preserve">
+        <value>업데이트 보기</value>
+    </data>
+    <data name="HomeNotification_InstallUpdate" xml:space="preserve">
+        <value>설치</value>
+    </data>
+    <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
+        <value>첫 통계 데이터는 과거 채팅 데이터 분석에서 가져온 것으로, 오차가 있을 수 있습니다.</value>
     </data>
 </root>
