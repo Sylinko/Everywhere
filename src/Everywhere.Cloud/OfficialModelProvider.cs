@@ -56,7 +56,10 @@ public sealed partial class OfficialModelProvider : ObservableObject, IOfficialM
 
         void HandleCloudClientPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            RefreshAsync().Detach();
+            if (e.PropertyName is nameof(ICloudClient.UserProfile) or nameof(ICloudClient.Subscription))
+            {
+                RefreshAsync().Detach();
+            }
         }
     }
 
