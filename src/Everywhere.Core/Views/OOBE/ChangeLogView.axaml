@@ -113,7 +113,7 @@
             <Image
               Width="{DynamicResource FontSizeL}"
               Height="{DynamicResource FontSizeL}"
-              Source="{StaticResource DiscordDrawingImage}"/>
+              Source="{StaticResource GitHubDrawingImage}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.ChangeLogView_ViewOnGitHubHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
@@ -132,7 +132,7 @@
             <Image
               Width="{DynamicResource FontSizeL}"
               Height="{DynamicResource FontSizeL}"
-              Source="{StaticResource QQDrawingImage}"/>
+              Source="{StaticResource DiscordDrawingImage}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
@@ -141,19 +141,8 @@
             Orientation="Horizontal" Spacing="4">
             <Image
               Width="{DynamicResource FontSizeL}"
-              Height="{DynamicResource FontSizeL}">
-              <Image.Source>
-                <DrawingImage>
-                  <DrawingImage.Drawing>
-                    <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
-                      <GeometryDrawing
-                        Brush="{DynamicResource ForegroundColor}"
-                        Geometry="F1 M24,24z M0,0z M21.395,15.035A40,40,0,0,0,20.592,12.771L19.513,10.076C19.514,10.044 19.527,9.514 19.527,9.24 19.526,4.632 17.351,0 12,0 6.649,0 4.474,4.632 4.474,9.241 4.474,9.515 4.487,10.045 4.488,10.077L3.408,12.772A39,39,0,0,0,2.606,15.036C1.585,18.319 1.916,19.679 2.168,19.709 2.708,19.774 4.271,17.237 4.271,17.237 4.271,18.706 5.027,20.624 6.665,22.008 6.053,22.196 5.302,22.487 4.82,22.843 4.386,23.163 4.441,23.489 4.519,23.621 4.862,24.199 10.402,23.99 12.001,23.81 13.601,23.99 19.141,24.199 19.484,23.621 19.562,23.489 19.616,23.163 19.183,22.843 18.7,22.487 17.95,22.197 17.337,22.007 18.974,20.623 19.73,18.705 19.73,17.236 19.73,17.236 21.293,19.773 21.833,19.708 22.084,19.678 22.414,18.318 21.395,15.035"/>
-                    </DrawingGroup>
-                  </DrawingImage.Drawing>
-                </DrawingImage>
-              </Image.Source>
-            </Image>
+              Height="{DynamicResource FontSizeL}"
+              Source="{StaticResource QQDrawingImage}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
