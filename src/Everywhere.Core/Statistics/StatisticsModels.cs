@@ -114,7 +114,6 @@ public sealed record StatisticsOverview(
     long VisualElementCount,
     long ScreenshotCount,
     long ImageCount,
-    long VisualContextBytes,
     long ToolInvocationCount
 );
 
@@ -220,6 +219,5 @@ public sealed record StatisticsVisualContextDraft(
     StatisticsVisualContextSource Source,
     int ElementCount = 0,
     int ScreenshotCount = 0,
-    int ImageCount = 0,
-    long ByteCount = 0
+    int ImageCount = 0
 );

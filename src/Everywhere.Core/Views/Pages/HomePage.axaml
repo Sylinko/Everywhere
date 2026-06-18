@@ -437,9 +437,6 @@
                       <Binding
                         Path="Overview?.ImageCount" TargetNullValue="0"/>
                     </MultiBinding>
-                    <Binding
-                      Converter="{x:Static vc:Int64Converters.HumanizeBytes}"
-                      Path="Overview?.VisualContextBytes" TargetNullValue="0"/>
                   </I18N>
                 </TextBlock.Text>
               </TextBlock>

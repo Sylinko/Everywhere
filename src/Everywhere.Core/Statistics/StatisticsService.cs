@@ -42,7 +42,6 @@ public sealed class StatisticsService(
         var visualElementCount = await visualQuery.SumAsync(x => (long)x.ElementCount, cancellationToken);
         var screenshotCount = await visualQuery.SumAsync(x => (long)x.ScreenshotCount, cancellationToken);
         var imageCount = await visualQuery.SumAsync(x => (long)x.ImageCount, cancellationToken);
-        var visualContextBytes = await visualQuery.SumAsync(x => x.ByteCount, cancellationToken);
 
         var toolQuery = ApplyDeviceScope(db.ToolInvocationEvents.AsNoTracking(), deviceId)
             .Where(x => x.StartedAt >= range.Start && x.StartedAt < range.End);
@@ -56,7 +55,6 @@ public sealed class StatisticsService(
             visualElementCount,
             screenshotCount,
             imageCount,
-            visualContextBytes,
             toolInvocationCount);
     }
 

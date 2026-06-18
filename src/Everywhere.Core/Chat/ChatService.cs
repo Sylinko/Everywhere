@@ -1257,17 +1257,12 @@ public sealed partial class ChatService : IChatService
             .ToList();
         if (imageAttachments.Count == 0) return;
 
-        var byteCount = imageAttachments
-            .AsValueEnumerable()
-            .Select(x => File.Exists(x.FilePath) ? new FileInfo(x.FilePath).Length : 0L)
-            .Sum();
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     _currentTurnEventId.Value,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.ImageAttachment,
-                    ImageCount: imageAttachments.Count,
-                    ByteCount: byteCount),
+                    ImageCount: imageAttachments.Count),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
     }
@@ -1276,7 +1271,7 @@ public sealed partial class ChatService : IChatService
     {
         var previousTurnEventId = _currentTurnEventId.Value;
         _currentTurnEventId.Value = turnEventId;
-        return new RestoreAction(() => _currentTurnEventId.Value = previousTurnEventId);
+        return Disposable.Create(() => _currentTurnEventId.Value = previousTurnEventId);
     }
 
     private static ChatMessageNode? FindMessageNode(ChatContext chatContext, ChatMessage message) =>
@@ -1304,11 +1299,6 @@ public sealed partial class ChatService : IChatService
     private static KeyValuePair<string, object?> GetModelTag(string? modelId) => new("gen_ai.request.model", modelId);
 
     #endregion
-
-    private sealed class RestoreAction(Action restore) : IDisposable
-    {
-        public void Dispose() => restore();
-    }
 
     // TODO: this is shit
     private sealed class ScopedPromptRenderer(

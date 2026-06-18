@@ -156,8 +156,7 @@ namespace Everywhere.Statistics.Database.Migrations
                     CreatedAt = table.Column<long>(type: "INTEGER", nullable: false),
                     ElementCount = table.Column<int>(type: "INTEGER", nullable: false),
                     ScreenshotCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    ImageCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    ByteCount = table.Column<long>(type: "INTEGER", nullable: false)
+                    ImageCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

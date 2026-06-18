@@ -234,7 +234,6 @@ public sealed class VisualContextEventEntity
     public int ElementCount { get; init; }
     public int ScreenshotCount { get; set; }
     public int ImageCount { get; set; }
-    public long ByteCount { get; set; }
 }
 
 /// <summary>

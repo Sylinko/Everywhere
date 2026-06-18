@@ -1,7 +1,6 @@
 using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Statistics;
-using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -98,8 +97,7 @@ public sealed class StatisticsRecorderTests
             StatisticsVisualContextSource.ScreenCapture,
             ElementCount: 3,
             ScreenshotCount: 1,
-            ImageCount: 1,
-            ByteCount: 4096));
+            ImageCount: 1));
 
         await using var db = await database.Factory.CreateDbContextAsync();
         var model = await db.ModelInvocationEvents.AsNoTracking().SingleAsync();
@@ -122,7 +120,6 @@ public sealed class StatisticsRecorderTests
             Assert.That(tool.FunctionName, Has.Length.EqualTo(255));
             Assert.That(tool.Status, Is.EqualTo(StatisticsToolInvocationStatus.Denied));
             Assert.That(visual.Source, Is.EqualTo(StatisticsVisualContextSource.ScreenCapture));
-            Assert.That(visual.ByteCount, Is.EqualTo(4096));
         }
     }
 
@@ -158,8 +155,7 @@ public sealed class StatisticsRecorderTests
             null,
             chatContext.Metadata.Id,
             StatisticsVisualContextSource.ImageAttachment,
-            ImageCount: 1,
-            ByteCount: 128));
+            ImageCount: 1));
 
         await using var db = await database.Factory.CreateDbContextAsync();
 

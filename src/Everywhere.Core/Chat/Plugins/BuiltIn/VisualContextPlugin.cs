@@ -186,8 +186,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.ScreenCapture,
                     ScreenshotCount: 1,
-                    ImageCount: 1,
-                    ByteCount: stream.Length),
+                    ImageCount: 1),
                 CancellationToken.None);
         }
 

@@ -1,6 +1,5 @@
 using Everywhere.Chat;
 using Everywhere.Configuration;
-using Everywhere.Extensions;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -101,8 +100,7 @@ public sealed class StatisticsRecorder(
                         CreatedAt = DateTimeOffset.UtcNow,
                         ElementCount = draft.ElementCount,
                         ScreenshotCount = draft.ScreenshotCount,
-                        ImageCount = draft.ImageCount,
-                        ByteCount = draft.ByteCount
+                        ImageCount = draft.ImageCount
                     });
                 await db.SaveChangesAsync(token);
             },

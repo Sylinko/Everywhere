@@ -68,7 +68,6 @@ public sealed class StatisticsServiceTests
             Assert.That(currentOverview.VisualElementCount, Is.EqualTo(5));
             Assert.That(currentOverview.ScreenshotCount, Is.EqualTo(1));
             Assert.That(currentOverview.ImageCount, Is.EqualTo(2));
-            Assert.That(currentOverview.VisualContextBytes, Is.EqualTo(1000));
             Assert.That(currentOverview.ToolInvocationCount, Is.EqualTo(2));
 
             Assert.That(allOverview.TopicCount, Is.EqualTo(2), "All-devices scope includes both device rows.");
@@ -257,8 +256,7 @@ public sealed class StatisticsServiceTests
             CreatedAt = createdAt,
             ElementCount = elements,
             ScreenshotCount = screenshots,
-            ImageCount = images,
-            ByteCount = bytes
+            ImageCount = images
         };
 
     private static ToolInvocationEventEntity CreateTool(

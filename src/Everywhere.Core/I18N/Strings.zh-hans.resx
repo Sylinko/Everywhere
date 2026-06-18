@@ -3147,7 +3147,7 @@
         <value>平均每话题 {0:0.#} 次</value>
     </data>
     <data name="HomePage_VisualContextDetail" xml:space="preserve">
-        <value>{0:N0} 个元素，{1:N0} 张图片，{2}</value>
+        <value>{0:N0} 个元素，{1:N0} 张图片</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
         <value>助手活动</value>

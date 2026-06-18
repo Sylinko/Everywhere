@@ -256,9 +256,6 @@ namespace Everywhere.Statistics.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("ByteCount")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid?>("ChatContextId")
                         .HasColumnType("TEXT");
 

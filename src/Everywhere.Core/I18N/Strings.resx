@@ -3146,7 +3146,7 @@ Release date: {2}</value>
         <value>avg {0:0.#} / topic</value>
     </data>
     <data name="HomePage_VisualContextDetail" xml:space="preserve">
-        <value>{0:N0} elements, {1:N0} images, {2}</value>
+        <value>{0:N0} elements, {1:N0} images</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
         <value>Assistant Activity</value>
