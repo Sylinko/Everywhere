@@ -3149,7 +3149,7 @@
         <value>{0:N0} 개 요소, {1:N0} 장 이미지</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value></value>
+        <value>활동</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>최근 {0} 개월</value>

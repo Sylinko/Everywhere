@@ -3148,7 +3148,7 @@ Yayın tarihi: {2}</value>
         <value>{0:N0} öğe, {1:N0} resim</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value></value>
+        <value>Etkinlik</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>Son {0} Ay</value>

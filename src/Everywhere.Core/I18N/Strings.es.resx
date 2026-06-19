@@ -3149,7 +3149,7 @@ Fecha de lanzamiento: {2}</value>
         <value>{0:N0} elementos, {1:N0} imágenes</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value></value>
+        <value>Actividad</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>Últimos {0} meses</value>

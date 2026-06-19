@@ -3149,7 +3149,7 @@
         <value>{0:N0} элементов, {1:N0} изображений</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value></value>
+        <value>Деятельность</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>Последние {0} месяцев</value>

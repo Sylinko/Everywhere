@@ -3148,7 +3148,7 @@ Veröffentlichungsdatum: {2}</value>
         <value>{0:N0} Elemente, {1:N0} Bilder</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value></value>
+        <value>Aktivität</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>Letzte {0} Monate</value>
