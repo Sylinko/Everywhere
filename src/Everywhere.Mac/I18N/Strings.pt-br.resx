@@ -32,13 +32,13 @@
         <value>Listar tudo</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Update" xml:space="preserve">
-        <value>Modificar</value>
+        <value>Atualizar</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Delete" xml:space="preserve">
         <value>Excluir</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_Action_Complete" xml:space="preserve">
-        <value>Completar</value>
+        <value>Concluir</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_Header" xml:space="preserve">
         <value>Gerenciar Lembretes</value>
@@ -53,7 +53,7 @@
         <value>Permitir gerenciar lembretes?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage" xml:space="preserve">
-        <value>Você negou a solicitação para gerenciar lembretes.</value>
+        <value>Você recusou a solicitação para gerenciar lembretes.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Header" xml:space="preserve">
         <value>Gerenciar Calendário</value>
@@ -71,10 +71,10 @@
         <value>Notas: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header" xml:space="preserve">
-        <value>Permitir gerenciar calendário?</value>
+        <value>Permitir gerenciar o calendário?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage" xml:space="preserve">
-        <value>Você recusou o pedido para gerenciar o calendário.</value>
+        <value>Você recusou a solicitação para gerenciar o calendário.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_Header" xml:space="preserve">
         <value>Gerenciar Notas</value>
@@ -89,10 +89,10 @@
         <value>Permitir gerenciar notas?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage" xml:space="preserve">
-        <value>Você recusou o pedido para gerenciar notas.</value>
+        <value>Você recusou a solicitação para gerenciar notas.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Header" xml:space="preserve">
-        <value>Enviar Email</value>
+        <value>Enviar E-mail</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Recipient" xml:space="preserve">
         <value>Destinatário: {0}</value>
@@ -101,10 +101,10 @@
         <value>Assunto: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_Consent_Header" xml:space="preserve">
-        <value>Permitir enviar email?</value>
+        <value>Permitir enviar e-mail?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_SendEmail_DenyMessage" xml:space="preserve">
-        <value>Você recusou o pedido para enviar email.</value>
+        <value>Você recusou a solicitação de envio de e-mail.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_OpenMaps_Header" xml:space="preserve">
         <value>Abrir Mapas</value>
@@ -125,15 +125,15 @@
         <value>Permitir executar AppleScript?</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage" xml:space="preserve">
-        <value>Você recusou o pedido para executar AppleScript.</value>
+        <value>Você recusou a solicitação de execução do AppleScript.</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_System_ExecuteScript_ErrorMessage" xml:space="preserve">
-        <value>Falha ao executar AppleScript: {0}</value>
+        <value>Falha ao executar o AppleScript: {0}</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Header" xml:space="preserve">
         <value>Terminal zsh</value>
     </data>
     <data name="MacOS_BuiltInChatPlugin_Zsh_Description" xml:space="preserve">
-        <value>Permite a execução de scripts zsh, permitindo interagir diretamente com o sistema, mas também é arriscado e pode causar exclusão de arquivos ou falhas no sistema.</value>
+        <value>Permite executar scripts zsh, possibilitando interação direta com o sistema. No entanto, isso também apresenta riscos, podendo resultar na exclusão acidental de arquivos ou em falhas no sistema.</value>
     </data>
 </root>

@@ -14,19 +14,19 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="ModelPricingUnit_UsdPerMToken" xml:space="preserve">
-        <value>USD {0} por milhão de Tokens</value>
+        <value>USD {0} por milhão de tokens</value>
     </data>
     <data name="ModelPricingUnit_MCreditPerMToken" xml:space="preserve">
-        <value>{0}M créditos por 1M Tokens</value>
+        <value>{0}M créditos por 1M de tokens</value>
     </data>
     <data name="ModelPricing_NotGreaterThanTierDescription" xml:space="preserve">
-        <value>Quando o número de Tokens ≤ {1}, {0}</value>
+        <value>Quando a contagem de tokens ≤ {1}, {0}</value>
     </data>
     <data name="ModelPricing_BetweenTiersDescription" xml:space="preserve">
-        <value>Quando {1} &lt; número de Tokens ≤ {2}, {0}</value>
+        <value>Quando a contagem de tokens &gt; {1} e ≤ {2}, {0}</value>
     </data>
     <data name="ModelPricing_GreaterThanTierDescription" xml:space="preserve">
-        <value>Quando o número de Tokens &gt; {1}, {0}</value>
+        <value>Quando a contagem de tokens &gt; {1}, {0}</value>
     </data>
     <data name="UpdateChannel_Canary" xml:space="preserve">
         <value>Canary</value>
