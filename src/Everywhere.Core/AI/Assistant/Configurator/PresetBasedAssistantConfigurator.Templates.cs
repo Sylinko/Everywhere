@@ -378,6 +378,50 @@ partial class PresetBasedAssistantConfigurator
         },
         new()
         {
+            Id = "mistral",
+            DisplayName = "Mistral AI",
+            OfficialWebsiteUrl = "https://mistral.ai",
+            Endpoint = "https://api.mistral.ai/v1",
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/mistral-color.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/mistral-color.svg",
+            Schema = ModelProviderSchema.Mistral,
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "mistral-medium-latest",
+                    Name = "Mistral Medium",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text | Modalities.Image,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 128_000,
+                    OutputLimit = 128_000,
+                    IsDefault = true
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "mistral-small-latest",
+                    Name = "Mistral Small",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text | Modalities.Image,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 128_000,
+                    OutputLimit = 128_000
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "devstral-latest",
+                    Name = "Devstral",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 128_000,
+                    OutputLimit = 128_000
+                }
+            ]
+        },
+        new()
+        {
             Id = "deepseek",
             DisplayName = "DeepSeek",
             Endpoint = "https://api.deepseek.com",

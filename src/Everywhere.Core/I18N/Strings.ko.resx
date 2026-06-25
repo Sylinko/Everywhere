@@ -3220,4 +3220,16 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>첫 통계 데이터는 과거 채팅 데이터 분석에서 가져온 것으로, 오차가 있을 수 있습니다.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Mistral 옵션</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Mistral AI 모델 구성 옵션</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>추론 포함</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>응답에 추론/사고 콘텐츠 포함</value>
+    </data>
 </root>
