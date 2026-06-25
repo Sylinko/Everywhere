@@ -148,23 +148,31 @@ public sealed partial class TextDifference : ObservableObject, IDisposable
     {
         get
         {
-            var acceptance = false;
-            foreach (var change in Changes)
+            bool? acceptance = false;
+            _changesSource.Edit(list =>
             {
-                if (change.Accepted is null) return null;
-                if (change.Accepted.Value) acceptance = true;
-            }
+                foreach (var change in list)
+                {
+                    if (change.Accepted is null)
+                    {
+                        acceptance = null;
+                        return;
+                    }
+
+                    if (change.Accepted.Value) acceptance = true;
+                }
+            });
 
             return acceptance;
         }
     }
 
-    public int TotalChangesCount => Changes.Count;
+    public int TotalChangesCount => _changesSource.Count;
 
     /// <summary>
     /// Count of changes that are not pending (i.e., Accepted is true or false).
     /// </summary>
-    public int NotPendingChangesCount => Changes.Count(c => c.Accepted.HasValue);
+    public int NotPendingChangesCount => _changesSource.Count(c => c.Accepted.HasValue);
 
     [IgnoreMember] private readonly CompositeDisposable _disposables = new(3);
     [IgnoreMember] private readonly SourceList<TextChange> _changesSource = new();

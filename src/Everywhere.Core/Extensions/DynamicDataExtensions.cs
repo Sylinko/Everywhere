@@ -49,6 +49,13 @@ public static class DynamicDataExtensions
             source.Edit(list => item = list[index]);
             return item!;
         }
+
+        public int Count(Func<T, bool> predicate)
+        {
+            var count = 0;
+            source.Edit(list => count = list.Count(predicate));
+            return count;
+        }
     }
 
     /// <summary>
