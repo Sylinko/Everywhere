@@ -3220,4 +3220,16 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Первичные статистические данные получены из анализа исторических чатов и могут содержать погрешности.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Опции Mistral</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Параметры конфигурации для моделей Mistral AI</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Включить рассуждения</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Включить содержание рассуждений/мыслей в ответ</value>
+    </data>
 </root>

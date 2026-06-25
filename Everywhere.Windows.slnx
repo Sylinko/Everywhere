@@ -17,6 +17,7 @@
   </Folder>
   <Folder Name="/3rd/SemanticKernel/">
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
+    <Project Path="3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
   </Folder>
   <Folder Name="/I18N/">
     <Project Path="src/Everywhere.I18N.Abstractions/Everywhere.I18N.Abstractions.csproj" />

@@ -3221,4 +3221,16 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>首次统计数据来自历史聊天数据分析，可能存在误差。</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Mistral 选项</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Mistral AI 模型的配置选项</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>包含推理</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>在响应中包含推理/思考内容</value>
+    </data>
 </root>

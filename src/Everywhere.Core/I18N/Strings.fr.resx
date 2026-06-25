@@ -3220,4 +3220,16 @@ Date de publication : {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Les premières statistiques proviennent de l'analyse des données de chat historiques et peuvent comporter des erreurs.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Options Mistral</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Options de configuration pour les modèles Mistral AI</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Inclure le raisonnement</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Inclure le contenu de raisonnement/réflexion dans la réponse</value>
+    </data>
 </root>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI.Configurator;
@@ -22,7 +22,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     [ObservableProperty]
     [SettingsItemIgnore]
-    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic))]
+    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic), nameof(IsMistral))]
     public partial ModelProviderSchema Schema { get; set; }
 
     [ObservableProperty]
@@ -121,12 +121,21 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsGoogle => Schema == ModelProviderSchema.Google;
 
+    public bool IsMistral => Schema == ModelProviderSchema.Mistral;
+
     [DynamicResourceKey(
         LocaleKey.Assistant_GoogleOptions_Header,
         LocaleKey.Assistant_GoogleOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Common_Advanced)]
     [SettingsItems(IsExpanded = false)]
     public GoogleOptions GoogleOptions { get; } = new();
+
+    [DynamicResourceKey(
+        LocaleKey.Assistant_MistralOptions_Header,
+        LocaleKey.Assistant_MistralOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsMistral), Group = LocaleKey.Common_Advanced)]
+    [SettingsItems(IsExpanded = false)]
+    public MistralOptions MistralOptions { get; } = new();
 
     private readonly OfficialAssistantConfigurator _officialConfigurator;
     private readonly PresetBasedAssistantConfigurator _presetBasedConfigurator;

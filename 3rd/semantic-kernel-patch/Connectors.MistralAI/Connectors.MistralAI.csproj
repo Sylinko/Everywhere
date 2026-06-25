@@ -1,0 +1,113 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Microsoft.SemanticKernel.Connectors.MistralAI</AssemblyName>
+    <RepoRoot>..\..\semantic-kernel</RepoRoot>
+    <ProjectRoot>$(RepoRoot)\dotnet\src\Connectors\Connectors.MistralAI</ProjectRoot>
+    <RootNamespace>Microsoft.SemanticKernel.Connectors.MistralAI</RootNamespace>
+    <!-- Must disable default compile items because this project uses explicit <Compile Include=.../> entries
+         to mix local patch files with submodule originals via $(ProjectRoot) references. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SemanticKernel.Core"/>
+    <PackageReference Include="System.Diagnostics.DiagnosticSource"/>
+  </ItemGroup>
+
+  <Import Project="$(RepoRoot)\dotnet\src\InternalUtilities\src\InternalUtilities.props" />
+
+  <ItemGroup>
+    <Compile Include="Client\ChatCompletionRequest.cs">
+      <Link>Client\ChatCompletionRequest.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\ChatCompletionResponse.cs">
+      <Link>Client\ChatCompletionResponse.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\ContentChunk.cs">
+      <Link>Client\ContentChunk.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\ContentChunkType.cs">
+      <Link>Client\ContentChunkType.cs</Link>
+    </Compile>
+    <Compile Include="Client\DocumentUrlChunk.cs">
+      <Link>Client\DocumentUrlChunk.cs</Link>
+    </Compile>
+    <Compile Include="Client\ImageUrlChunk.cs">
+      <Link>Client\ImageUrlChunk.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralChatChoice.cs">
+      <Link>Client\MistralChatChoice.cs</Link>
+    </Compile>
+    <Compile Include="Client\MistralChatCompletionChunk.cs">
+      <Link>Client\MistralChatCompletionChunk.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralChatCompletionChoice.cs">
+      <Link>Client\MistralChatCompletionChoice.cs</Link>
+    </Compile>
+    <Compile Include="Client\MistralChatMessage.cs">
+      <Link>Client\MistralChatMessage.cs</Link>
+    </Compile>
+    <Compile Include="Client\MistralClient.cs">
+      <Link>Client\MistralClient.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralEmbedding.cs">
+      <Link>Client\MistralEmbedding.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralFunction.cs">
+      <Link>Client\MistralFunction.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralParameters.cs">
+      <Link>Client\MistralParameters.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralResponseBase.cs">
+      <Link>Client\MistralResponseBase.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralTool.cs">
+      <Link>Client\MistralTool.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralToolCall.cs">
+      <Link>Client\MistralToolCall.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\MistralUsage.cs">
+      <Link>Client\MistralUsage.cs</Link>
+    </Compile>
+    <Compile Include="Client\TextChunk.cs">
+      <Link>Client\TextChunk.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\TextEmbeddingRequest.cs">
+      <Link>Client\TextEmbeddingRequest.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Client\TextEmbeddingResponse.cs">
+      <Link>Client\TextEmbeddingResponse.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Extensions\MistralAIKernelBuilderExtensions.cs">
+      <Link>Extensions\MistralAIKernelBuilderExtensions.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Extensions\MistralAIPluginCollectionExtensions.cs">
+      <Link>Extensions\MistralAIPluginCollectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Extensions\MistralAIServiceCollectionExtensions.cs">
+      <Link>Extensions\MistralAIServiceCollectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Extensions\MistralAIServiceCollectionExtensions.DependencyInjection.cs">
+      <Link>Extensions\MistralAIServiceCollectionExtensions.DependencyInjection.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\MistralAIPromptExecutionSettings.cs">
+      <Link>MistralAIPromptExecutionSettings.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\MistralAIToolCallBehavior.cs">
+      <Link>MistralAIToolCallBehavior.cs</Link>
+    </Compile>
+    <Compile Include="Services\MistralAIChatCompletionService.cs">
+      <Link>Services\MistralAIChatCompletionService.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Services\MistralAIEmbeddingGenerator.cs">
+      <Link>Services\MistralAIEmbeddingGenerator.cs</Link>
+    </Compile>
+    <Compile Include="$(ProjectRoot)\Services\MistralAITextEmbeddingGenerationService.cs">
+      <Link>Services\MistralAITextEmbeddingGenerationService.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+</Project>

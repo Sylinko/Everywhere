@@ -3219,4 +3219,16 @@ Veröffentlichungsdatum: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Die ersten Statistiken stammen aus der Analyse historischer Chats und können Ungenauigkeiten aufweisen.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Mistral-Optionen</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Konfigurationsoptionen für Mistral AI Modelle</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Schlussfolgerungen einbeziehen</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Schlussfolgerungs-/Denkinhalte in die Antwort einbeziehen</value>
+    </data>
 </root>

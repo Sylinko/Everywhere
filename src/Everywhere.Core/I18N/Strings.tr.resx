@@ -3219,4 +3219,16 @@ Yayın tarihi: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>İlk istatistik verileri geçmiş sohbet verileri analizinden gelmektedir, hatalar olabilir.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Mistral Seçenekleri</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Mistral AI modelleri için yapılandırma seçenekleri</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Muhakemeyi dahil et</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Yanıtta muhakeme/düşünme içeriğini dahil et</value>
+    </data>
 </root>
