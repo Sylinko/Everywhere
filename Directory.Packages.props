@@ -1,17 +1,17 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <MicrosoftPackageVersion>10.0.7</MicrosoftPackageVersion>
+    <MicrosoftPackageVersion>10.0.9</MicrosoftPackageVersion>
     <MEAIVersion>10.5.2</MEAIVersion>
-    <EntityFrameworkVersion>10.0.0</EntityFrameworkVersion>
+    <EntityFrameworkVersion>10.0.9</EntityFrameworkVersion>
     <SemanticKernelVersion>1.75.0</SemanticKernelVersion>
-    <OpenTelemetryVersion>1.15.3</OpenTelemetryVersion>
-    <SentryVersion>6.5.0</SentryVersion>
-    <AvaloniaVersion>12.0.4</AvaloniaVersion>
+    <OpenTelemetryVersion>1.16.0</OpenTelemetryVersion>
+    <SentryVersion>6.6.0</SentryVersion>
+    <AvaloniaVersion>12.0.5</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
     <LiveMarkdownVersion>2.2.0</LiveMarkdownVersion>
     <SkiaSharpVersion>3.119.4</SkiaSharpVersion>
-    <XamlBehaviorsVersion>11.3.9.5</XamlBehaviorsVersion>
+    <XamlBehaviorsVersion>12.0.0.1</XamlBehaviorsVersion>
     <TikTokenVersion>6.0.0</TikTokenVersion>
   </PropertyGroup>
   <ItemGroup Label="Common">
@@ -24,7 +24,7 @@
     <PackageVersion Include="Grpc.Tools" Version="2.71.0" />
     <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.8.0" />
     <PackageVersion Include="JetBrains.Profiler.Api" Version="1.4.13" />
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.4.0" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.7.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkVersion)" />
@@ -41,8 +41,8 @@
     <PackageVersion Include="ObservableCollections" Version="3.3.4" />
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
-    <PackageVersion Include="PolySharp" Version="1.15.0" />
-    <PackageVersion Include="ReverseMarkdown" Version="5.3.0" />
+    <PackageVersion Include="PolySharp" Version="1.16.0" />
+    <PackageVersion Include="ReverseMarkdown" Version="5.4.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.OpenTelemetry" Version="$(SentryVersion)" />
@@ -51,13 +51,13 @@
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="SharpYaml" Version="3.10.0" />
+    <PackageVersion Include="SharpYaml" Version="3.11.0" />
     <PackageVersion Include="System.Drawing.Common" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="System.Text.Json" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="ZLinq" Version="1.5.6" />
   </ItemGroup>
   <ItemGroup Label="AI">
-    <PackageVersion Include="Anthropic" Version="12.20.0" />
+    <PackageVersion Include="Anthropic" Version="12.31.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MEAIVersion)" />
@@ -68,14 +68,14 @@
     <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="$(SemanticKernelVersion)" />
     <PackageVersion Include="ModelContextProtocol" Version="1.2.0" />
     <PackageVersion Include="OllamaSharp" Version="5.4.25" />
-    <PackageVersion Include="PuppeteerSharp" Version="24.42.0" />
+    <PackageVersion Include="PuppeteerSharp" Version="25.1.2" />
   </ItemGroup>
   <ItemGroup Label="Avalonia">
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="$(AvaloniaEditVersion)" />
     <PackageVersion Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Controls.ColorPicker" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.Controls.DataGrid" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Controls.DataGrid" Version="12.0.1" />
     <PackageVersion Include="Avalonia.HtmlRenderer" Version="12.0.0" />
     <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
@@ -92,15 +92,15 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="$(SkiaSharpVersion)" />
-    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.11" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.13" />
     <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="12.0.0" />
-    <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.3" />
+    <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
     <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="$(XamlBehaviorsVersion)" />
   </ItemGroup>
   <ItemGroup Label="Windows">
     <PackageVersion Include="Interop.UIAutomationClient" Version="10.19041.0" />
     <PackageVersion Include="Microsoft.PowerShell.SDK" Version="7.6.0" />
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.275">
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
@@ -114,10 +114,10 @@
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.1" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageVersion Include="NUnit" Version="4.6.0" />
-    <PackageVersion Include="NUnit.Analyzers" Version="4.13.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.14.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
   </ItemGroup>
   <ItemGroup Label="ShadUI">

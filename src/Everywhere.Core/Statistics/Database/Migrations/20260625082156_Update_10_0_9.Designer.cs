@@ -3,6 +3,7 @@ using System;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Everywhere.Statistics.Database.Migrations
 {
     [DbContext(typeof(StatisticsDbContext))]
-    partial class StatisticsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625082156_Update_10_0_9")]
+    partial class Update_10_0_9
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");

@@ -24,7 +24,7 @@ public sealed class StatisticsBackfillerTests
         var assistantNodeId = Guid.CreateVersion7();
         var now = DateTimeOffset.UtcNow;
 
-        var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectResourceKey("read_file"))
+        var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("read_file"))
         {
             CreatedAt = now,
             FinishedAt = now.AddMilliseconds(25)

@@ -17,11 +17,6 @@
     <!-- Patch projects: MSBuild builds them during ResolveProjectReferences,
          output DLL paths are collected into @(PatchAssembly) via OutputItemType.
          PatchTargets metadata = semicolon-separated target assembly names to weave. -->
-    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Base\Everywhere.Patches.Avalonia.Base.csproj"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="PatchAssembly"
-                      PatchTargets="Avalonia.Base"
-                      GlobalPropertiesToRemove="RuntimeIdentifier" />
 
     <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Avalonia.Controls\Everywhere.Patches.Avalonia.Controls.csproj"
                       ReferenceOutputAssembly="false"
