@@ -36,16 +36,14 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
         new PreviewEndpointTextBox
         {
             MinWidth = 320d,
-            [!PreviewEndpointTextBox.EndpointProperty] = new Binding(nameof(Endpoint))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
-            [!PreviewEndpointTextBox.SchemaProperty] = new Binding(nameof(Schema))
-            {
-                Source = this,
-                Mode = BindingMode.OneWay
-            }
+            [!PreviewEndpointTextBox.EndpointProperty] = CompiledBinding.Create(
+                (AdvancedAssistantConfigurator x) => x.Endpoint,
+                source: this,
+                mode: BindingMode.TwoWay),
+            [!PreviewEndpointTextBox.SchemaProperty] = CompiledBinding.Create(
+                (AdvancedAssistantConfigurator x) => x.Schema,
+                source: this,
+                mode: BindingMode.OneWay)
         });
 
     [SettingsItemIgnore]
@@ -69,11 +67,10 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
-            [!ApiKeyComboBox.SelectedIdProperty] = new Binding(nameof(ApiKey))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (AdvancedAssistantConfigurator x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay)
         });
 
     [DynamicLocaleKey(
@@ -120,11 +117,10 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(
         new ModalitiesSelector
         {
-            [!ModalitiesSelector.ModalitiesProperty] = new Binding(nameof(owner.InputModalities))
-            {
-                Source = owner,
-                Mode = BindingMode.TwoWay
-            }
+            [!ModalitiesSelector.ModalitiesProperty] = CompiledBinding.Create(
+                (Assistant x) => x.InputModalities,
+                source: owner,
+                mode: BindingMode.TwoWay)
         });
 
     /// <summary>

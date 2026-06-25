@@ -70,15 +70,15 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
-            [!ApiKeyComboBox.SelectedIdProperty] = new Binding(nameof(ApiKey))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
-            [!ApiKeyComboBox.DefaultNameProperty] = new Binding($"{nameof(ModelProviderTemplate)}.{nameof(ModelProviderTemplate.DisplayName)}")
-            {
-                Source = this,
-            },
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (PresetBasedAssistantConfigurator x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay),
+            [!ApiKeyComboBox.DefaultNameProperty] = CompiledBinding.Create(
+                (PresetBasedAssistantConfigurator x) => x.ModelProviderTemplate!.DisplayName,
+                source: this,
+                targetNullValue: string.Empty,
+                fallbackValue: string.Empty)
         });
 
     [JsonIgnore]

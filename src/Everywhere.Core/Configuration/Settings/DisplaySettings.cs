@@ -80,12 +80,11 @@ public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
     [SettingsItem(Group = "_")]
     public SettingsControl<AccentColorSelector> AccentColorControl => new(new AccentColorSelector
     {
-        [!AccentColorSelector.SelectedColorProperty] = new Binding(nameof(AccentColor))
-        {
-            Source = this,
-            Mode = BindingMode.TwoWay,
-            Converter = SerializableColorValueConverters.ToColor
-        },
+        [!AccentColorSelector.SelectedColorProperty] = CompiledBinding.Create(
+            (DisplaySettings x) => x.AccentColor,
+            source: this,
+            mode: BindingMode.TwoWay,
+            converter: SerializableColorValueConverters.ToColor)
     });
 
     /// <summary>

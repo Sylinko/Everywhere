@@ -168,11 +168,10 @@ public sealed partial class GoogleWebSearchEngineProvider(ObservableCollection<A
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(apiKeys)
         {
-            [!ApiKeyComboBox.SelectedIdProperty] = new Binding(nameof(ApiKey))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (GoogleWebSearchEngineProvider x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay)
         });
 
     [ObservableProperty]
@@ -240,11 +239,10 @@ public sealed partial class ApiKeyWebSearchEngineProvider(
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(apiKeys)
         {
-            [!ApiKeyComboBox.SelectedIdProperty] = new Binding(nameof(ApiKey))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (ApiKeyWebSearchEngineProvider x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay)
         });
 }
 
@@ -291,11 +289,10 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         new ApiKeyComboBox(apiKeys)
         {
-            [!ApiKeyComboBox.SelectedIdProperty] = new Binding(nameof(ApiKey))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay
-            },
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (OptionalApiKeyWebSearchEngineProvider x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay)
         });
 }
 
