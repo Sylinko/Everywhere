@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Reactive;
 using System.Reactive.Disposables;
 using Avalonia.Collections;
 using Avalonia.Data;
@@ -8,6 +7,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Data.Core;
 using Avalonia.Markup.Xaml;
 using Avalonia.Metadata;
+using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using ZLinq;
 
@@ -104,25 +104,77 @@ public class I18NExtension : MarkupExtension
     /// <summary>
     /// This class is used to create a dynamic resource key for axaml Binding.
     /// </summary>
-    /// <param name="binding"></param>
-    /// <param name="target"></param>
-    /// <param name="property"></param>
-    private sealed class BindingLocaleKey(BindingBase binding, AvaloniaObject? target, AvaloniaProperty? property) : IDynamicLocaleKey
+    private sealed class BindingLocaleKey : IDynamicLocaleKey, IObserver<object?>
     {
+        private readonly AvaloniaObject _target;
+        private readonly UntypedBindingExpressionBase? _expression;
+        private readonly List<IObserver<object?>> _observers = new(1);
+
+        private IDisposable? _bindingSubscription;
+
+        /// <summary>
+        /// The current value of the binding. This is used to determine if the value has changed and to notify observers.
+        /// </summary>
+        private string? _value;
+
+        /// <summary>
+        /// This class is used to create a dynamic resource key for axaml Binding.
+        /// </summary>
+        /// <param name="binding"></param>
+        /// <param name="target"></param>
+        /// <param name="property"></param>
+        public BindingLocaleKey(BindingBase binding, AvaloniaObject? target, AvaloniaProperty? property)
+        {
+            _target = target ?? new AvaloniaObject();
+            _expression = CreateInstance(binding, _target, property, null) as UntypedBindingExpressionBase;
+        }
+
         public IDisposable Subscribe(IObserver<object?> observer)
         {
-            if (CreateInstance(binding, target ?? new AvaloniaObject(), property, null) is not UntypedBindingExpressionBase expression ||
-                ToObservable(expression) is not IObservable<object?> observable)
+            if (_expression is null || ToObservable(_expression, _target) is not IObservable<object?> observable)
             {
                 return Disposable.Empty;
             }
 
-            return observable.Subscribe(new AnonymousObserver<object?>(value => observer.OnNext(value switch
+            _observers.Add(observer);
+            _bindingSubscription ??= observable.Subscribe(this);
+
+            return Disposable.Create(() => Unsubscribe(observer));
+        }
+
+        void IObserver<object?>.OnNext(object? value)
+        {
+            _value = value switch
             {
                 BindingNotification => null,
                 _ => value?.ToString()
-            })));
+            };
+
+            foreach (var observer in _observers)
+            {
+                observer.OnNext(_value);
+            }
         }
+
+        void IObserver<object?>.OnCompleted() { }
+
+        void IObserver<object?>.OnError(Exception error) { }
+
+        /// <summary>
+        /// Unsubscribes an observer from the list of observers. If there are no more observers, it disposes of the binding subscription.
+        /// </summary>
+        /// <param name="observer"></param>
+        private void Unsubscribe(IObserver<object?> observer)
+        {
+            _observers.Remove(observer);
+
+            if (_observers.Count == 0)
+            {
+                DisposeHelper.DisposeToDefault(ref _bindingSubscription);
+            }
+        }
+
+        public override string? ToString() => _value;
 
         // internal abstract BindingExpressionBase CreateInstance(
         //     AvaloniaObject target,
