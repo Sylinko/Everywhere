@@ -148,10 +148,10 @@ public sealed partial class DirectLocaleKey(object? key) : DynamicLocaleKey(key)
 /// <param name="key"></param>
 /// <param name="args"></param>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOnlyList<IObservable<object?>?> args) : DynamicLocaleKey(key)
+public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOnlyList<IDynamicLocaleKey?> args) : DynamicLocaleKey(key)
 {
     [Key(1)]
-    private IReadOnlyList<IObservable<object?>?> Args { get; } = args;
+    private IReadOnlyList<IDynamicLocaleKey?> Args { get; } = args;
 
     public override IDisposable Subscribe(IObserver<object?> observer)
     {
