@@ -100,7 +100,8 @@
                   <shadui:DataList
                     AddCommand="{Binding StdioConfiguration.AddEmptyEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
                     ItemsSource="{Binding StdioConfiguration.EnvironmentVariables, RelativeSource={RelativeSource TemplatedParent}}"
-                    RemoveCommand="{Binding StdioConfiguration.RemoveEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}">
+                    RemoveCommand="{Binding StdioConfiguration.RemoveEnvironmentVariableCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <shadui:DataList.ItemTemplate>
                       <DataTemplate>
                         <DataTemplate.DataType>
@@ -119,7 +120,7 @@
                           </Interaction.Behaviors>
 
                           <TextBox
-                            Grid.Column="0"
+                            Grid.Column="0" AcceptsReturn="False"
                             PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_KeyTextBox_PlaceholderText}}"
                             Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <Interaction.Behaviors>
@@ -127,9 +128,10 @@
                             </Interaction.Behaviors>
                           </TextBox>
                           <TextBox
-                            Grid.Column="1"
+                            Grid.Column="1" MaxLines="3"
                             PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText}}"
-                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap"/>
                         </Grid>
                       </DataTemplate>
                     </shadui:DataList.ItemTemplate>
@@ -160,7 +162,8 @@
                   <shadui:DataList
                     AddCommand="{Binding HttpConfiguration.AddEmptyHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
                     ItemsSource="{Binding HttpConfiguration.Headers, RelativeSource={RelativeSource TemplatedParent}}"
-                    RemoveCommand="{Binding HttpConfiguration.RemoveHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}">
+                    RemoveCommand="{Binding HttpConfiguration.RemoveHeaderCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <shadui:DataList.ItemTemplate>
                       <DataTemplate>
                         <DataTemplate.DataType>
@@ -187,9 +190,10 @@
                             </Interaction.Behaviors>
                           </TextBox>
                           <TextBox
-                            Grid.Column="1"
+                            Grid.Column="1" MaxLines="3"
                             PlaceholderText="{I18N {x:Static LocaleKey.McpTransportConfigurationForm_ValueTextBox_PlaceholderText}}"
-                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap"/>
                         </Grid>
                       </DataTemplate>
                     </shadui:DataList.ItemTemplate>
