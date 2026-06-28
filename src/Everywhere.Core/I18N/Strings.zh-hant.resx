@@ -2773,6 +2773,9 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令於 {0} 開始執行，{1} 秒後失敗，退出代碼為 {2}</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>進階</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>進階</value>
     </data>

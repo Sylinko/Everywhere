@@ -2772,6 +2772,9 @@ Veröffentlichungsdatum: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Erweitert</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Erweitert</value>
     </data>

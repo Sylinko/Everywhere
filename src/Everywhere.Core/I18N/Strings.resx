@@ -2773,6 +2773,9 @@ Release date: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Command started at {0}, failed after {1} seconds with exit code {2}</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Advanced</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Advanced</value>
     </data>

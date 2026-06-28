@@ -2772,6 +2772,9 @@ Yayın tarihi: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Komut {0} tarihinde başladı, {1} saniye sonra başarısız oldu, çıkış kodu {2}</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Gelişmiş</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Gelişmiş</value>
     </data>

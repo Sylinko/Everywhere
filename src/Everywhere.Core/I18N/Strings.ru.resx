@@ -2773,6 +2773,9 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Команда начата в {0}, завершилась с ошибкой через {1} секунд, код выхода {2}</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Расширенные</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Расширенные</value>
     </data>

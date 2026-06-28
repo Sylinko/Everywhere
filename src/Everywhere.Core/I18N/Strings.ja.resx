@@ -2773,6 +2773,9 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>コマンドは {0} にて実行を開始し、{1} 秒後に失敗しました。終了コードは {2} です</value>
     </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>高度</value>
+    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>詳細</value>
     </data>

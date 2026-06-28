@@ -1197,7 +1197,7 @@ Você pode usar placeholders no prompt, delimitados por {}, que serão substitu�
         <value>Descartar</value>
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
-        <value>Permitir que "{0}" seja executado? Ele requer a permissão "{1}"</value>
+        <value>Permitir que &quot;{0}&quot; seja executado? Ele requer a permissão &quot;{1}&quot;</value>
     </data>
     <data name="Common_Comma" xml:space="preserve">
         <value>,</value>
@@ -1510,7 +1510,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Servidor MCP</value>
     </data>
     <data name="McpTransportConfiguration_Name_ValidationErrorMessage_Regex" xml:space="preserve">
-        <value>Apenas números, letras e os caracteres "-" e "_" são permitidos.</value>
+        <value>Apenas números, letras e os caracteres &quot;-&quot; e &quot;_&quot; são permitidos.</value>
     </data>
     <data name="ValidationErrorMessage_Required" xml:space="preserve">
         <value>Este campo é obrigatório.</value>
@@ -1594,7 +1594,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Adicionar Plugin MCP (campos com * são obrigatórios)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
-        <value>Você tem certeza que deseja remover "{0}"?</value>
+        <value>Você tem certeza que deseja remover &quot;{0}&quot;?</value>
     </data>
     <data name="ChatPluginPage_AddMcpPluginButton_Content" xml:space="preserve">
         <value>Adicionar</value>
@@ -1609,7 +1609,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Configuração MCP inválida.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Não foi possível iniciar o plugin MCP "{0}".</value>
+        <value>Não foi possível iniciar o plugin MCP &quot;{0}&quot;.</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>Este servidor MCP requer {0}, mas o Everywhere não o encontrou.</value>
@@ -1633,7 +1633,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Este servidor MCP requer {0}. Por favor, instale-o antes de iniciar o servidor.</value>
     </data>
     <data name="ChatPluginManager_McpPluginCommandNotFound_StartFailure" xml:space="preserve">
-        <value>Comando MCP "{0}" não encontrado. Por favor, instale-o ou modifique o caminho do comando.</value>
+        <value>Comando MCP &quot;{0}&quot; não encontrado. Por favor, instale-o ou modifique o caminho do comando.</value>
     </data>
     <data name="ChatPluginPage_TabItem_Logs_Header" xml:space="preserve">
         <value>Logs</value>
@@ -1705,7 +1705,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>O Everywhere já está em execução. Verifique o ícone na bandeja do sistema.</value>
     </data>
     <data name="HandledFunctionInvokingException_ArgumentMissing" xml:space="preserve">
-        <value>Parâmetro obrigatório "{0}" ausente ao chamar a ferramenta. Isso pode ser causado por uma alucinação do modelo.</value>
+        <value>Parâmetro obrigatório &quot;{0}&quot; ausente ao chamar a ferramenta. Isso pode ser causado por uma alucinação do modelo.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text" xml:space="preserve">
         <value>Atualização disponível</value>
@@ -2688,7 +2688,7 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
         <value>💡 O núcleo de desenvolvimento do Everywhere consiste em apenas duas pessoas. Contribuições de código e feedback são bem-vindos</value>
     </data>
     <data name="Greetings_Tip6" xml:space="preserve">
-        <value>💡 Sinta-se à vontade para se juntar à nossa comunidade oficial na página "Sobre" para interagir conosco!</value>
+        <value>💡 Sinta-se à vontade para se juntar à nossa comunidade oficial na página &quot;Sobre&quot; para interagir conosco!</value>
     </data>
     <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
         <value>A aprovação automática da ferramenta de terminal está ativada; chamadas inadequadas do assistente podem causar sérios problemas no sistema ou perda irreversível de arquivos. Use por sua conta e risco.</value>
@@ -2766,13 +2766,16 @@ Data de lançamento: {2}</value>
         <value>Assistente de Análise de Imagem</value>
     </data>
     <data name="SystemAssistantSettings_ImageUnderstanding_Description" xml:space="preserve">
-        <value>Especialista visual acionado pelo assistente principal conforme necessário. Quando o assistente principal julgar necessário, ele designará este agente para analisar a imagem por meio da ferramenta "Designar Novo Assistente". Certifique-se de que o modelo selecionado possui capacidade de reconhecimento visual.</value>
+        <value>Especialista visual acionado pelo assistente principal conforme necessário. Quando o assistente principal julgar necessário, ele designará este agente para analisar a imagem por meio da ferramenta &quot;Designar Novo Assistente&quot;. Certifique-se de que o modelo selecionado possui capacidade de reconhecimento visual.</value>
     </data>
     <data name="TerminalView_SuccessToolTip_Tip" xml:space="preserve">
         <value>O comando foi iniciado em {0} e concluído com sucesso após {1} segundos</value>
     </data>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>O comando foi iniciado em {0} e falhou após {1} segundos. Código de saída: {2}</value>
+    </data>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Avançado</value>
     </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Avançado</value>
@@ -2784,7 +2787,7 @@ Data de lançamento: {2}</value>
         <value>Assistente Padrão</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Assistente padrão acionado pelo assistente principal conforme necessário. Quando o assistente principal delega tarefas comuns por meio da ferramenta "Designar Novo Assistente", este agente é responsável por processar e retornar os resultados em um contexto independente. "Seleção Automática" significa usar o mesmo assistente do principal.</value>
+        <value>Assistente padrão acionado pelo assistente principal conforme necessário. Quando o assistente principal delega tarefas comuns por meio da ferramenta &quot;Designar Novo Assistente&quot;, este agente é responsável por processar e retornar os resultados em um contexto independente. &quot;Seleção Automática&quot; significa usar o mesmo assistente do principal.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Chave da API (opcional)</value>
@@ -2826,7 +2829,7 @@ Data de lançamento: {2}</value>
         <value>Tipo de Raciocínio</value>
     </data>
     <data name="OpenAIOptions_ThinkingType_Description" xml:space="preserve">
-        <value>Alternativas compatíveis com OpenAI, como "enabled" ou "disabled". Deixe em branco por padrão.</value>
+        <value>Alternativas compatíveis com OpenAI, como &quot;enabled&quot; ou &quot;disabled&quot;. Deixe em branco por padrão.</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>Esforço de Raciocínio</value>
@@ -2844,7 +2847,7 @@ Data de lançamento: {2}</value>
         <value>Resumo do Raciocínio</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Description" xml:space="preserve">
-        <value>Solicite um resumo de raciocínio para modelos suportados, como "auto". Deixe em branco por padrão.</value>
+        <value>Solicite um resumo de raciocínio para modelos suportados, como &quot;auto&quot;. Deixe em branco por padrão.</value>
     </data>
     <data name="AnthropicOptions_ThinkingConfig_Header" xml:space="preserve">
         <value>Modo de Raciocínio</value>
@@ -2895,7 +2898,7 @@ Data de lançamento: {2}</value>
         <value>Orçamento de Raciocínio</value>
     </data>
     <data name="GoogleOptions_ThinkingBudget_Description" xml:space="preserve">
-        <value>Limite de tokens de raciocínio do modelo Gemini 2.5; "0" desativa o raciocínio, "-1" ativa o raciocínio dinâmico.</value>
+        <value>Limite de tokens de raciocínio do modelo Gemini 2.5; &quot;0&quot; desativa o raciocínio, &quot;-1&quot; ativa o raciocínio dinâmico.</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Header" xml:space="preserve">
         <value>Nível de Raciocínio</value>
