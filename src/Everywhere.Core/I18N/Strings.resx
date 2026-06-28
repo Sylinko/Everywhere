@@ -3217,16 +3217,4 @@ Release date: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Initial statistics are derived from historical chat data analysis and may contain inaccuracies.</value>
     </data>
-    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
-        <value />
-    </data>
-    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
-        <value />
-    </data>
-    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
-        <value />
-    </data>
-    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
-        <value />
-    </data>
 </root>

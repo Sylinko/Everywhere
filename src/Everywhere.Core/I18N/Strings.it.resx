@@ -2773,9 +2773,6 @@ Data di rilascio: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Il comando è stato avviato il {0} ed è fallito dopo {1} secondi, codice di uscita {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Cerca file con Everything.</value>
-    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Avanzate</value>
     </data>

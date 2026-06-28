@@ -2772,9 +2772,6 @@ Veröffentlichungsdatum: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Verwenden Sie Everything, um Dateien zu suchen.</value>
-    </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Erweitert</value>
     </data>

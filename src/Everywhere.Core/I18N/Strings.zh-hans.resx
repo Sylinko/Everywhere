@@ -2774,14 +2774,8 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令于 {0} 开始执行，{1} 秒后失败，退出代码为 {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>使用 Everything 搜索文件。</value>
-    </data>
     <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
         <value>高级</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>使用 Everything 搜索文件。</value>
     </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>高级</value>
@@ -3226,17 +3220,5 @@
     </data>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>首次统计数据来自历史聊天数据分析，可能存在误差。</value>
-    </data>
-    <data name="ChatWindowSettings_Group_Attachment" xml:space="preserve">
-        <value>附件</value>
-    </data>
-    <data name="ChatWindowSettings_Group_Behavior" xml:space="preserve">
-        <value>行为</value>
-    </data>
-    <data name="ChatWindowSettings_Group_Display" xml:space="preserve">
-        <value>显示</value>
-    </data>
-    <data name="ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction" xml:space="preserve">
-        <value>运行以获取工具列表</value>
     </data>
 </root>
