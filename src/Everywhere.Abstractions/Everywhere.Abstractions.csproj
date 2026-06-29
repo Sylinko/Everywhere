@@ -9,6 +9,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm"/>
     <PackageReference Include="DynamicData"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+    <PackageReference Include="ObservableCollections"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>
 

@@ -58,7 +58,7 @@ public static class SettingsExtensions
         .AddSingleton<Settings>(xx =>
         {
             var configuration = xx.GetRequiredKeyedService<IConfiguration>(typeof(Settings));
-            var settings = new Settings();
+            var settings = new Settings(xx);
             configuration.Bind(settings);
             return settings;
         })
@@ -69,8 +69,8 @@ public static class SettingsExtensions
         .AddTransient<OpenWebBrowserControl>()
         .AddTransient<DebugFeaturesControl>()
         .AddSingleton<PersistentKeyValueStorage>()
-        .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
-        .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
+        .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+        .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
         .AddSingleton<PersistentState>()
         .AddTransient<IAsyncInitializer, SettingsInitializer>()
         .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();

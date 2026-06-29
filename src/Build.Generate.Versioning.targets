@@ -8,7 +8,7 @@
     <ItemGroup>
       <VersioningCode Include="// &lt;auto-generated /&gt;"/>
       <VersioningCode Include="using Everywhere.Common%3B"/>
-      <VersioningCode Include="namespace Everywhere.Configuration%3B"/>
+      <VersioningCode Include="namespace Everywhere.Common%3B"/>
       <VersioningCode Include="partial class RuntimeConstants"/>
       <VersioningCode Include="{"/>
       <VersioningCode Include="public static SemanticVersion Version { get%3B } = SemanticVersion.TryParse(&quot;$(SemanticVersion)&quot;, out var version) ? version : new SemanticVersion(1)%3B"/>

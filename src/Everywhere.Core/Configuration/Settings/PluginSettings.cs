@@ -5,7 +5,7 @@ using Everywhere.Collections;
 
 namespace Everywhere.Configuration;
 
-public sealed partial class PluginSettings : SettingsBase
+public sealed partial class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
     /// <summary>
     /// Gets or sets whether each plugin is enabled.

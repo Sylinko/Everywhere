@@ -1,4 +1,4 @@
-﻿namespace Everywhere.Configuration;
+﻿namespace Everywhere.Common;
 
 /// <summary>
 /// Provides runtime constants and utility methods for managing writable data paths and database paths.

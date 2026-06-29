@@ -1,10 +1,11 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:common="clr-namespace:Everywhere.Common"
-  xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ac="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions"
+  xmlns:ai="clr-namespace:Everywhere.AI" xmlns:c="clr-namespace:Everywhere.Configuration"
+  xmlns:common="clr-namespace:Everywhere.Common" xmlns:interop="clr-namespace:Everywhere.Interop"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <DataTemplate
     x:Key="{x:Type aai:ModelProviderTemplate}"
     x:DataType="aai:ModelProviderTemplate">
@@ -48,19 +49,19 @@
   <DataTemplate x:Key="{x:Type interop:KeyboardShortcut}">
     <DataTemplate.DataType>
       <x:Type
-        x:TypeArguments="interop:KeyboardShortcut" TypeName="c:SettingsTemplatedItem"/>
+        x:TypeArguments="interop:KeyboardShortcut" TypeName="ac:SettingsTemplatedItem"/>
     </DataTemplate.DataType>
 
     <v:KeyboardShortcutInputBox
       MinWidth="160" MinHeight="32"
-      HorizontalAlignment="Right"
+      HorizontalAlignment="Left"
       Shortcut="{Binding Value, Mode=TwoWay}"/>
   </DataTemplate>
 
   <DataTemplate x:Key="{x:Type c:CompositeKeyboardShortcut}">
     <DataTemplate.DataType>
       <x:Type
-        x:TypeArguments="c:CompositeKeyboardShortcut" TypeName="c:SettingsTemplatedItem"/>
+        x:TypeArguments="c:CompositeKeyboardShortcut" TypeName="ac:SettingsTemplatedItem"/>
     </DataTemplate.DataType>
 
     <v:CompositeKeyboardShortcutInputBox
@@ -71,7 +72,7 @@
   <DataTemplate x:Key="{x:Type common:ColoredIcon}">
     <DataTemplate.DataType>
       <x:Type
-        x:TypeArguments="common:ColoredIcon" TypeName="c:SettingsTemplatedItem"/>
+        x:TypeArguments="common:ColoredIcon" TypeName="ac:SettingsTemplatedItem"/>
     </DataTemplate.DataType>
 
     <Button
@@ -96,7 +97,7 @@
   <DataTemplate x:Key="{x:Type ai:SystemAssistant}">
     <DataTemplate.DataType>
       <x:Type
-        x:TypeArguments="ai:SystemAssistant" TypeName="c:SettingsTemplatedItem"/>
+        x:TypeArguments="ai:SystemAssistant" TypeName="ac:SettingsTemplatedItem"/>
     </DataTemplate.DataType>
 
     <ToggleSwitch

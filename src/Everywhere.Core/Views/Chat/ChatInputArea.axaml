@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:configuration="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:common="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:configuration="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ChatInputArea}"
     TargetType="v:ChatInputArea">
@@ -279,7 +279,7 @@
               IsVisible="{Binding SoftwareUpdater?.LatestUpdate?.IsReady, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}">
               <ToolTip.Tip>
                 <I18N Key="{x:Static LocaleKey.ChatInputArea_UpdateButton_ToolTip}">
-                  <Binding Source="{x:Static configuration:RuntimeConstants.Version}"/>
+                  <Binding Source="{x:Static common:RuntimeConstants.Version}"/>
                   <Binding
                     Path="SoftwareUpdater?.LatestUpdate?.Version"
                     RelativeSource="{RelativeSource TemplatedParent}"/>

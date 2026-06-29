@@ -78,7 +78,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DynamicLocaleKey(LocaleKey.Assistant_ConfiguratorSelector_Header)]
     [SettingsItem(Classes = ["Ghost"])]
     protected SettingsControl<AssistantConfiguratorSelector> ConfiguratorSelector => new(
-        new AssistantConfiguratorSelector
+        _ => new AssistantConfiguratorSelector
         {
             Assistant = this
         });

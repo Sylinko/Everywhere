@@ -11,9 +11,10 @@ using ShadUI;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
+public sealed partial class CommonSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
 {
-    private static INativeHelper NativeHelper => ServiceLocator.Resolve<INativeHelper>();
+    [SettingsItemIgnore]
+    private INativeHelper NativeHelper => GetRequiredService<INativeHelper>();
 
     [SettingsItemIgnore]
     public int Index => 0;
@@ -56,7 +57,7 @@ public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
     [JsonIgnore]
     [SettingsItemIgnore]
     [SupportedOSPlatform("windows")]
-    public static bool IsAdministrator => NativeHelper.IsAdministrator;
+    public bool IsAdministrator => NativeHelper.IsAdministrator;
 
     [JsonIgnore]
     [DynamicLocaleKey(

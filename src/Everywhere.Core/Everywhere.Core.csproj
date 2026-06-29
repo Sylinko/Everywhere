@@ -46,7 +46,6 @@
     <PackageReference Include="Microsoft.SemanticKernel.Abstractions"/>
     <PackageReference Include="Microsoft.SemanticKernel.Core"/>
     <PackageReference Include="ModelContextProtocol"/>
-    <PackageReference Include="ObservableCollections" />
     <PackageReference Include="OllamaSharp"/>
     <PackageReference Include="OpenTelemetry"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>

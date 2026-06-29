@@ -5,7 +5,7 @@ using Lucide.Avalonia;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class ShortcutSettings : SettingsBase, ISettingsCategory
+public sealed partial class ShortcutSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
 {
     [SettingsItemIgnore]
     public int Index => 2;

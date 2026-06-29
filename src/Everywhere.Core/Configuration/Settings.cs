@@ -1,13 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Configuration;
-
-public abstract class SettingsBase : ObservableObject
-{
-    protected static readonly Meter Meter = new(typeof(Settings).FullName.NotNull(), App.Version);
-}
 
 /// <summary>
 /// Represents the application settings.
@@ -16,28 +10,28 @@ public abstract class SettingsBase : ObservableObject
 /// </summary>
 [Serializable]
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed partial class Settings : SettingsBase
+public sealed partial class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
     [ObservableProperty]
     public partial string? Version { get; set; }
 
     #region Common
 
-    public CommonSettings Common { get; set; } = new();
+    public CommonSettings Common { get; } = new(serviceProvider);
 
-    public DisplaySettings Display { get; set; } = new();
+    public DisplaySettings Display { get; } = new(serviceProvider);
 
-    public ShortcutSettings Shortcut { get; set; } = new();
+    public ShortcutSettings Shortcut { get; } = new(serviceProvider);
 
-    public ProxySettings Proxy { get; set; } = new();
+    public ProxySettings Proxy { get; } = new(serviceProvider);
 
     #endregion
 
-    public ModelSettings Model { get; set; } = new();
+    public ModelSettings Model { get; } = new(serviceProvider);
 
-    public SystemAssistantSettings SystemAssistant { get; set; } = new();
+    public SystemAssistantSettings SystemAssistant { get; } = new(serviceProvider);
 
-    public ChatWindowSettings ChatWindow { get; set; } = new();
+    public ChatWindowSettings ChatWindow { get; } = new(serviceProvider);
 
-    public PluginSettings Plugin { get; set; } = new();
+    public PluginSettings Plugin { get; } = new(serviceProvider);
 }
