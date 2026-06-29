@@ -136,3 +136,58 @@ public class SettingsItemsAttribute : Attribute
 
     public string? IsExpandableBindingPath { get; set; }
 }
+
+/// <summary>
+/// Marks a settings property or type as a terminal System.Text.Json subtree.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property)]
+public sealed class SettingsSerializedSubtreeAttribute : Attribute;
+
+public enum SettingsUnknownMemberHandling
+{
+    /// <summary>
+    /// Keep unknown JSON keys in the backing document.
+    /// </summary>
+    Preserve,
+
+    /// <summary>
+    /// Remove JSON keys that are not represented by the effective descriptor.
+    /// </summary>
+    Prune,
+
+    /// <summary>
+    /// Report a diagnostic when unknown JSON keys are present.
+    /// </summary>
+    Error
+}
+
+/// <summary>
+/// Controls how unknown JSON members are handled for a settings object subtree.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property)]
+public sealed class SettingsUnknownMemberHandlingAttribute(SettingsUnknownMemberHandling handling) : Attribute
+{
+    public SettingsUnknownMemberHandling Handling { get; } = handling;
+}
+
+public enum SettingsCollectionBinding
+{
+    /// <summary>
+    /// Keep the collection instance and replace its items to match the JSON array.
+    /// </summary>
+    ReplaceItems,
+
+    /// <summary>
+    /// Reserved for future keyed item patching.
+    /// </summary>
+    PatchByKey
+}
+
+/// <summary>
+/// Controls how a settings collection is synchronized from JSON.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class SettingsCollectionBindingAttribute(SettingsCollectionBinding binding) : Attribute
+{
+    public SettingsCollectionBinding Binding { get; } = binding;
+}

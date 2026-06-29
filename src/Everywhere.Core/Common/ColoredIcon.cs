@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.Configuration;
 using Lucide.Avalonia;
 using Color = Avalonia.Media.Color;
 
@@ -14,6 +15,7 @@ public enum ColoredIconType
 /// <summary>
 /// Represents an icon.
 /// </summary>
+[SettingsSerializedSubtree]
 public partial class ColoredIcon(ColoredIconType type, SerializableColor? foreground = null, SerializableColor? background = null) : ObservableObject
 {
     [JsonIgnore]

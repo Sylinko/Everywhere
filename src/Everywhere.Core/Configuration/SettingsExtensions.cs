@@ -1,13 +1,10 @@
-﻿using System.ComponentModel;
-using System.Runtime.Versioning;
-using System.Text.Json;
+﻿using System.Runtime.Versioning;
 using Everywhere.Common;
+using Everywhere.Configuration.Engine;
 using Everywhere.Initialization;
 using Everywhere.Views;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WritableJsonConfiguration;
 
 namespace Everywhere.Configuration;
 
@@ -17,51 +14,29 @@ public static class SettingsExtensions
     [SupportedOSPlatform("windows")]
 #endif
     public static IServiceCollection AddSettings(this IServiceCollection services) => services
-        .AddKeyedSingleton<IConfiguration>(
-            typeof(Settings),
-            (xx, _) =>
-            {
-                // Forward compatibility: use FallbackGuidConverter to handle invalid GUIDs and set them to Guid.Empty
-                TypeDescriptor.AddAttributes(typeof(Guid), new TypeConverterAttribute(typeof(FallbackGuidConverter)));
-
-                var settingsJsonPath = Path.Combine(RuntimeConstants.WritableFolderPath, "settings.json");
-                var loggerFactory = xx.GetRequiredService<ILoggerFactory>();
-
-                // Run Migrations
-                try
-                {
-                    var migrations = typeof(SettingsExtensions).Assembly.GetTypes()
-                        .Where(t => typeof(SettingsMigration).IsAssignableFrom(t) && !t.IsAbstract)
-                        .Select(Activator.CreateInstance)
-                        .Cast<SettingsMigration>();
-
-                    var migrator = new SettingsMigrator(settingsJsonPath, migrations, loggerFactory.CreateLogger<SettingsMigrator>());
-                    migrator.Migrate();
-                }
-                catch (Exception ex)
-                {
-                    loggerFactory.CreateLogger("SettingsMigration").LogError(ex, "Error running settings migrations");
-                }
-
-                IConfiguration configuration;
-                try
-                {
-                    configuration = WritableJsonConfigurationFabric.Create(settingsJsonPath, loggerFactory: loggerFactory);
-                }
-                catch (Exception ex) when (ex is JsonException or InvalidDataException)
-                {
-                    File.Delete(settingsJsonPath);
-                    configuration = WritableJsonConfigurationFabric.Create(settingsJsonPath, loggerFactory: loggerFactory);
-                }
-                return configuration;
-            })
-        .AddSingleton<Settings>(xx =>
+        .AddSingleton(xx =>
         {
-            var configuration = xx.GetRequiredKeyedService<IConfiguration>(typeof(Settings));
-            var settings = new Settings(xx);
-            configuration.Bind(settings);
-            return settings;
+            var settingsJsonPath = Path.Combine(RuntimeConstants.WritableFolderPath, "settings.json");
+            var loggerFactory = xx.GetRequiredService<ILoggerFactory>();
+
+            try
+            {
+                var migrations = typeof(SettingsExtensions).Assembly.GetTypes()
+                    .Where(t => typeof(SettingsMigration).IsAssignableFrom(t) && !t.IsAbstract)
+                    .Select(Activator.CreateInstance)
+                    .Cast<SettingsMigration>();
+
+                var migrator = new SettingsMigrator(settingsJsonPath, migrations, loggerFactory.CreateLogger<SettingsMigrator>());
+                migrator.Migrate();
+            }
+            catch (Exception ex)
+            {
+                loggerFactory.CreateLogger("SettingsMigration").LogError(ex, "Error running settings migrations");
+            }
+
+            return SettingsEngine.Load(settingsJsonPath, xx, loggerFactory);
         })
+        .AddSingleton(sp => sp.GetRequiredService<SettingsEngine>().Settings)
         .AddTransient<SoftwareUpdateControl>()
 #if WINDOWS
         .AddTransient<RestartAsAdministratorControl>()
@@ -72,6 +47,5 @@ public static class SettingsExtensions
         .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
         .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
         .AddSingleton<PersistentState>()
-        .AddTransient<IAsyncInitializer, SettingsInitializer>()
         .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 }

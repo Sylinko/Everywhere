@@ -153,6 +153,18 @@ public sealed partial class FormattedDynamicLocaleKey(object key, params IReadOn
     [Key(1)]
     private IReadOnlyList<IDynamicLocaleKey?> Args { get; } = args;
 
+    /// <summary>
+    /// Creates a new instance of the <see cref="FormattedDynamicLocaleKey"/> class with the specified key and arguments.
+    /// </summary>
+    /// <remarks>
+    /// args can be any object, but if they are not IDynamicLocaleKey, they will be converted to DirectLocaleKey using their ToString() method.
+    /// </remarks>
+    /// <param name="key"></param>
+    /// <param name="args"></param>
+    public FormattedDynamicLocaleKey(object key, params ReadOnlySpan<object?> args) : this(
+        key,
+        args.AsValueEnumerable().Select(a => a as IDynamicLocaleKey ?? new DirectLocaleKey(a?.ToString())).ToList()) { }
+
     public override IDisposable Subscribe(IObserver<object?> observer)
     {
         var formatter = new AnonymousObserver<object?>(_ => observer.OnNext(ToString()));
