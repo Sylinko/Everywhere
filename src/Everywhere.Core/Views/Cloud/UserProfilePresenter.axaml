@@ -1,0 +1,113 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <Design.PreviewWith>
+    <v:UserProfilePresenter/>
+  </Design.PreviewWith>
+
+  <ControlTheme
+    x:Key="{x:Type v:UserProfilePresenter}"
+    TargetType="v:UserProfilePresenter">
+    <Setter Property="Size" Value="32"/>
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Button
+            Classes="Outline"
+            Width="{TemplateBinding Size}"
+            Height="{TemplateBinding Size}"
+            Padding="0" HorizontalAlignment="Left"
+            HorizontalContentAlignment="Center"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            ToolTip.Placement="Right">
+            <ToolTip.Tip>
+              <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
+                <Binding
+                  Path="CloudClient?.LastLoginErrorKey^" FallbackValue="{x:Null}"
+                  TargetNullValue="{x:Null}" RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="CloudClient?.UserProfile?.Name" FallbackValue="{x:Null}"
+                  TargetNullValue="{x:Null}" RelativeSource="{RelativeSource TemplatedParent}"/>
+              </MultiBinding>
+            </ToolTip.Tip>
+            <Button.Flyout>
+              <Flyout
+                Placement="Top" VerticalOffset="-8">
+                <v:UserProfileCard
+                  Width="240" Margin="4"
+                  ShowActionsButton="{TemplateBinding ShowActionsButton}"/>
+              </Flyout>
+            </Button.Flyout>
+
+            <Border
+              Margin="1" ClipToBounds="True"
+              CornerRadius="{DynamicResource FullCornerRadius}">
+              <Panel Margin="-1">
+                <LucideIcon
+                  IsVisible="{Binding #AvatarImage.Bounds.Width, Converter={x:Static vc:DoubleConverters.NotGreaterThan}, ConverterParameter=0}"
+                  Kind="User"
+                  Size="{TemplateBinding FontSize}"/>
+                <Image
+                  x:Name="AvatarImage" md:AsyncImageLoader.SizeToContent="Manual"
+                  md:AsyncImageLoader.Source="{Binding CloudClient?.UserProfile?.AvatarUrl, TargetNullValue={x:Null}, RelativeSource={RelativeSource TemplatedParent}}"
+                  RenderOptions.BitmapInterpolationMode="HighQuality" RenderOptions.EdgeMode="Antialias"
+                  Stretch="UniformToFill"/>
+              </Panel>
+            </Border>
+          </Button>
+
+          <shadui:Badge
+            Width="16" Height="16"
+            Margin="0,-4,-4,0" Padding="0"
+            HorizontalAlignment="Right" VerticalAlignment="Top"
+            Background="{DynamicResource ErrorColor}"
+            Content="!" CornerRadius="8"
+            FontSize="10"
+            ToolTip.Tip="{Binding CloudClient?.LastLoginErrorKey^, FallbackValue={x:Null}, TargetNullValue={x:Null}, RelativeSource={RelativeSource TemplatedParent}}">
+            <shadui:Badge.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding
+                  Path="CloudClient?.LoginStatus" Converter="{x:Static ObjectConverters.Equal}"
+                  ConverterParameter="{x:Static cloud:CloudClientLoginStatus.LoginFailed}" FallbackValue="{x:False}"
+                  TargetNullValue="{x:False}" RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="CloudClient?.LastLoginErrorKey" Converter="{x:Static ObjectConverters.IsNotNull}"
+                  FallbackValue="{x:False}" TargetNullValue="{x:False}" RelativeSource="{RelativeSource TemplatedParent}"/>
+              </MultiBinding>
+            </shadui:Badge.IsVisible>
+          </shadui:Badge>
+
+          <shadui:Badge
+            Width="16" Height="16"
+            Margin="0,-4,-4,0" Padding="0"
+            HorizontalAlignment="Right" VerticalAlignment="Top"
+            Background="{DynamicResource ErrorColor}"
+            Content="!" CornerRadius="8"
+            FontSize="10">
+            <shadui:Badge.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding
+                  Path="CloudClient?.Subscription?.Status" Converter="{x:Static ObjectConverters.Equal}"
+                  ConverterParameter="{x:Static cloud:SubscriptionStatus.Unpaid}" FallbackValue="{x:False}"
+                  TargetNullValue="{x:False}" RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="CloudClient?.LoginStatus" Converter="{x:Static ObjectConverters.NotEqual}"
+                  ConverterParameter="{x:Static cloud:CloudClientLoginStatus.LoginFailed}" FallbackValue="{x:True}"
+                  TargetNullValue="{x:True}" RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="CloudClient?.LastLoginErrorKey" Converter="{x:Static ObjectConverters.IsNull}"
+                  FallbackValue="{x:True}" TargetNullValue="{x:True}" RelativeSource="{RelativeSource TemplatedParent}"/>
+              </MultiBinding>
+            </shadui:Badge.IsVisible>
+          </shadui:Badge>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

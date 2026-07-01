@@ -4,22 +4,22 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 using Avalonia;
 using Avalonia.Controls;
-using Everywhere.AI;
-using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
+using Everywhere.Messages;
+using Everywhere.StrategyEngine;
 using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
-using Everywhere.Windows.Configuration;
 using Everywhere.Windows.Interop;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
 using Serilog;
-using Serilog.Extensions.Logging;
 
 namespace Everywhere.Windows;
 
@@ -31,6 +31,10 @@ public static class Program
         MainAsync(args).GetAwaiter().GetResult();
     }
 
+    /// <summary>
+    /// We must implement our own async Main method. otherwise [STAThread] won't work properly.
+    /// </summary>
+    /// <param name="args"></param>
     private static async Task MainAsync(string[] args)
     {
         if (args.Contains("--load-user-profile"))
@@ -40,18 +44,18 @@ public static class Program
 
         await Entrance.InitializeAsync(args);
 
+        RegisterUrlProtocol();
+
         ServiceLocator.Build(x => x
 
                 #region Basic
 
-                .AddLogging(builder => builder
-                    .AddSerilog(dispose: true)
-                    .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning))
-                .AddSingleton<IRuntimeConstantProvider, RuntimeConstantProvider>()
+                .AddApplicationLogging()
                 .AddSingleton<IVisualElementContext, VisualElementContext>()
                 .AddSingleton<IShortcutListener, ShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
+                .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
                 .AddWatchdogManager()
@@ -59,26 +63,20 @@ public static class Program
                 .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
+                .AddCloudClient()
+                .AddChatEssentials()
 
                 #endregion
 
                 #region Chat Plugins
 
-                .AddTransient<BuiltInChatPlugin, EssentialPlugin>()
-                .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
-                .AddTransient<BuiltInChatPlugin, WebBrowserPlugin>()
-                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
-                .AddTransient<BuiltInChatPlugin, PowerShellPlugin>()
                 .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
                 #endregion
 
-                #region Chat
+                #region Strategy Engine
 
-                .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
-                .AddSingleton<IChatPluginManager, ChatPluginManager>()
-                .AddSingleton<IChatService, ChatService>()
-                .AddChatContextManager()
+                .AddStrategyEngine()
 
                 #endregion
 
@@ -91,11 +89,11 @@ public static class Program
 
         );
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
 
-    private static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
+    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
+        AppBuilder.Configure(() => new App(serviceProvider))
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
@@ -132,6 +130,41 @@ public static class Program
                 dwFlags = 0,
             };
             PInvoke.LoadUserProfile((HANDLE)token, &profileInfo);
+        }
+    }
+
+    /// <summary>
+    /// Register the "sylinko-everywhere" protocol handler in Registry
+    /// </summary>
+    private static void RegisterUrlProtocol()
+    {
+        try
+        {
+            var exePath = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(exePath)) return;
+
+            const string CommandKeyPath = $@"Software\Classes\{UrlProtocolCallbackMessage.Scheme}";
+            const string CommandSubPath = @"shell\open\command";
+            var command = $"\"{exePath}\" \"%1\"";
+
+            using (var existingKey = Registry.CurrentUser.OpenSubKey($@"{CommandKeyPath}\{CommandSubPath}", writable: false))
+            {
+                if (existingKey?.GetValue(null) is string existingValue && existingValue == command)
+                {
+                    return;
+                }
+            }
+
+            using var registry = Registry.CurrentUser.CreateSubKey(CommandKeyPath);
+            registry.SetValue(null, "URL: Sylinko Everywhere Protocol");
+            registry.SetValue("URL Protocol", string.Empty);
+
+            using var commandKey = registry.CreateSubKey(CommandSubPath);
+            commandKey.SetValue(null, command);
+        }
+        catch (Exception ex)
+        {
+            Log.ForContext(typeof(Program)).Error(ex, "Failed to register URL protocol");
         }
     }
 }

@@ -2,7 +2,7 @@
 
 public partial class MainView : ReactiveUserControl<MainViewModel>
 {
-    public MainView()
+    public MainView(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }

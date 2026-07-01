@@ -14,13 +14,15 @@ namespace Everywhere.Configuration;
 /// </summary>
 public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 {
-    public DynamicResourceKey? HeaderKey { get; set; }
+    public DynamicLocaleKey? HeaderKey { get; set; }
 
-    public DynamicResourceKey? DescriptionKey { get; set; }
+    public DynamicLocaleKey? DescriptionKey { get; set; }
 
     public Classes Classes { get; } = [];
 
     public bool IsExperimental { get; set; }
+
+    public string? DocumentUrl { get; set; }
 
     public static readonly StyledProperty<object?> ValueProperty =
         AvaloniaProperty.Register<SettingsItem, object?>(nameof(Value), enableDataValidation: true);
@@ -65,9 +67,9 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 
     public static readonly DirectProperty<SettingsItem, IEnumerable<SettingsItem>?> ChildrenProperty =
         AvaloniaProperty.RegisterDirect<SettingsItem, IEnumerable<SettingsItem>?>(
-        nameof(Children),
-        o => o.Children,
-        (o, v) => o.Children = v);
+            nameof(Children),
+            o => o.Children,
+            (o, v) => o.Children = v);
 
     public IEnumerable<SettingsItem>? Children
     {
@@ -79,6 +81,18 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
     /// Indicates whether this settings item contains no content (but may have child items).
     /// </summary>
     public virtual bool IsEmpty => false;
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == IsExpandableProperty)
+        {
+            IsExpanded = change.NewValue is true;
+        }
+    }
+
+    #region INotifyDataErrorInfo implementation
 
     private object? _error;
 
@@ -105,6 +119,8 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(null));
         RaisePropertyChanged(HasErrorsProperty, false, true);
     }
+
+    #endregion
 }
 
 public class SettingsBooleanItem : SettingsItem
@@ -258,11 +274,57 @@ public class SettingsDoubleItem : SettingsItem
         get => GetValue(IsTextBoxVisibleProperty);
         set => SetValue(IsTextBoxVisibleProperty, value);
     }
+
+    public static readonly DirectProperty<SettingsDoubleItem, string?> ValueTextProperty =
+        AvaloniaProperty.RegisterDirect<SettingsDoubleItem, string?>(
+            nameof(ValueText),
+            o => o.ValueText,
+            (o, v) => o.ValueText = v);
+
+    public string? ValueText
+    {
+        get
+        {
+            // Get the value and use step to determine the number of decimal places to show
+            double value;
+            try
+            {
+                value = Convert.ToDouble(Value);
+            }
+            catch
+            {
+                value = 0d;
+            }
+
+            var step = Step > 0 ? Step : 0.1; // default to 1 decimal places if step is not set
+            var decimalPlaces = (int)Math.Ceiling(-Math.Log10(step));
+            return value.ToString($"F{decimalPlaces}");
+        }
+        set
+        {
+            if (double.TryParse(value, out var result))
+            {
+                Value = Math.Clamp(result, MinValue, MaxValue);
+            }
+
+            RaisePropertyChanged(ValueTextProperty, null, value);
+        }
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == ValueProperty)
+        {
+            RaisePropertyChanged(ValueTextProperty, null, ValueText);
+        }
+    }
 }
 
 public class SettingsSelectionItem : SettingsItem
 {
-    public record Item(DynamicResourceKey Key, object Value, IDataTemplate? ContentTemplate);
+    public record Item(DynamicLocaleKey Key, object? Value, IDataTemplate? ContentTemplate);
 
     public static readonly StyledProperty<IEnumerable<Item>> ItemsSourceProperty =
         AvaloniaProperty.Register<SettingsSelectionItem, IEnumerable<Item>>(nameof(ItemsSource));
@@ -289,6 +351,15 @@ public class SettingsSelectionItem : SettingsItem
             field = value;
             RaisePropertyChanged(SelectedItemProperty, oldValue, value);
         }
+    }
+
+    public static readonly StyledProperty<bool> UserEditableProperty =
+        AvaloniaProperty.Register<SettingsSelectionItem, bool>(nameof(IsEditable));
+
+    public bool IsEditable
+    {
+        get => GetValue(UserEditableProperty);
+        set => SetValue(UserEditableProperty, value);
     }
 
     private bool _isHandlingPropertyChange;
@@ -406,4 +477,32 @@ public sealed class SettingsControlItem(Func<Control> controlFactory) : Settings
     /// Use lazy control creation to avoid unnecessary instantiation and potential UI thread issues.
     /// </summary>
     public Control Control => controlFactory();
+}
+
+/// <summary>
+/// A settings item that groups multiple child items under a common header.
+/// The group is always expandable and arranges its children vertically.
+/// </summary>
+public sealed class SettingsGroupItem : SettingsItem
+{
+    /// <summary>
+    /// Gets the name of the group, used as the display header.
+    /// </summary>
+    public string? GroupName { get; init; }
+
+    /// <summary>
+    /// Gets the localized group key
+    /// </summary>
+    public IDynamicLocaleKey GroupKey => GroupName?.StartsWith('_') is not false ? DirectLocaleKey.Empty : new DynamicLocaleKey(GroupName);
+
+    /// <summary>
+    /// A group item has no value of its own; it only serves as a container.
+    /// </summary>
+    public override bool IsEmpty => true;
+
+    public SettingsGroupItem()
+    {
+        IsExpandable = true;
+        IsExpanded = true;
+    }
 }

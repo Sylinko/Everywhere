@@ -1,0 +1,243 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <Design.PreviewWith>
+    <v:Eva
+      Width="128" Height="128"/>
+  </Design.PreviewWith>
+
+  <ControlTheme
+    x:Key="{x:Type v:Eva}"
+    TargetType="v:Eva">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="UseLayoutRounding" Value="False"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="v:Eva">
+          <Viewbox ClipToBounds="False">
+            <Panel>
+              <Image
+                Width="30" Height="30"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Focusable="False">
+                <Image.Source>
+                  <DrawingImage>
+                    <DrawingImage.Drawing>
+                      <GeometryDrawing Geometry="F1 M515,235C364,235 233,289 233,481 233,655 351,726 515,726L526,726C691,726 809,655 809,481 809,289 678,235 526,235">
+                        <GeometryDrawing.Brush>
+                          <LinearGradientBrush SpreadMethod="Pad" StartPoint="288.1,325.1" EndPoint="751.5,632">
+                            <GradientStop Offset="0" Color="#FFFFFFFF"/>
+                            <GradientStop Offset="1" Color="#FFDEDEDE"/>
+                          </LinearGradientBrush>
+                        </GeometryDrawing.Brush>
+                      </GeometryDrawing>
+                    </DrawingImage.Drawing>
+                  </DrawingImage>
+                </Image.Source>
+              </Image>
+
+              <Decorator
+                x:Name="PART_EyesContainer" Margin="0,0,0,2"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Focusable="False">
+                <Image
+                  x:Name="PART_Eyes" Width="18"
+                  Height="18">
+                  <Image.Source>
+                    <DrawingImage>
+                      <DrawingImage.Drawing>
+                        <GeometryDrawing
+                          Brush="#FF000000" Geometry="F1 M612,440C612,471 624,496 651,496 678,496 689,471 689,440 689,409 677,384 651,384 625,384 612,409 612,440z M430,440C430,471 418,496 391,496 364,496 353,471 353,440 353,409 365,384 391,384 417,384 430,409 430,440z"/>
+                      </DrawingImage.Drawing>
+                    </DrawingImage>
+                  </Image.Source>
+                </Image>
+              </Decorator>
+
+              <TextBlock
+                x:Name="PART_ThinkingGesture" IsVisible="False"
+                Text="👉"/>
+
+              <TextBlock
+                x:Name="PART_SearchingScope" IsVisible="False"
+                Text="🔍"/>
+            </Panel>
+          </Viewbox>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+
+    <Style Selector="^:idle">
+      <Style Selector="^ /template/ Image#PART_Eyes">
+        <Style.Animations>
+          <Animation
+            Easing="QuarticEaseInOut" IterationCount="INFINITE"
+            Duration="0:0:10">
+            <KeyFrame Cue="0%">
+              <Setter Property="Margin" Value="0,0,0,0"/>
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="0.03%">
+              <Setter Property="Margin" Value="2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="0.4%">
+              <Setter Property="Margin" Value="2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="0.46%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="1%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.06%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.12%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.3%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.36%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.42%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="3%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="4%">
+              <Setter Property="Margin" Value="0,0,0,0"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+    </Style>
+
+    <Style Selector="^:thinking">
+      <Style Selector="^:not(:looking) /template/ Image#PART_Eyes">
+        <Style.Animations>
+          <Animation
+            Easing="QuarticEaseInOut" IterationCount="INFINITE"
+            Duration="0:0:4">
+            <KeyFrame Cue="0%">
+              <Setter Property="Margin" Value="0,0,0,0"/>
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="0.3%">
+              <Setter Property="Margin" Value="2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="6%">
+              <Setter Property="Margin" Value="2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="6.3%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="12%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="12.6%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="13.2%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="14.3%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="14.9%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="15.5%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="23%">
+              <Setter Property="Margin" Value="-2,0,0,4"/>
+            </KeyFrame>
+            <KeyFrame Cue="28%">
+              <Setter Property="Margin" Value="0,0,0,0"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+
+      <Style Selector="^ /template/ TextBlock#PART_ThinkingGesture">
+        <Setter Property="IsVisible" Value="True"/>
+        <Style.Animations>
+          <Animation
+            Easing="CubicEaseInOut" IterationCount="INFINITE"
+            PlaybackDirection="Alternate" Duration="0:0:2">
+            <KeyFrame Cue="0%">
+              <Setter Property="TranslateTransform.X" Value="-3"/>
+              <Setter Property="TranslateTransform.Y" Value="16"/>
+              <Setter Property="RotateTransform.Angle" Value="10"/>
+            </KeyFrame>
+            <KeyFrame Cue="50%">
+              <Setter Property="TranslateTransform.X" Value="0"/>
+              <Setter Property="RotateTransform.Angle" Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+              <Setter Property="TranslateTransform.X" Value="2"/>
+              <Setter Property="TranslateTransform.Y" Value="15"/>
+              <Setter Property="RotateTransform.Angle" Value="-5"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+    </Style>
+
+    <Style Selector="^:looking">
+      <Style Selector="^ /template/ Image#PART_Eyes">
+        <Style.Animations>
+          <Animation
+            Easing="QuarticEaseInOut" IterationCount="INFINITE"
+            Duration="0:0:10">
+            <KeyFrame Cue="1%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.06%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.12%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.3%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.36%">
+              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
+            </KeyFrame>
+            <KeyFrame Cue="1.42%">
+              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+            </KeyFrame>
+          </Animation>
+        </Style.Animations>
+      </Style>
+    </Style>
+
+    <Style Selector="^:searching /template/ TextBlock#PART_SearchingScope">
+      <Setter Property="IsVisible" Value="True"/>
+      <Style.Animations>
+        <Animation
+          Easing="CubicEaseInOut" IterationCount="INFINITE"
+          PlaybackDirection="Alternate" Duration="0:0:2">
+          <KeyFrame Cue="0%">
+            <Setter Property="TranslateTransform.X" Value="10.5"/>
+            <Setter Property="TranslateTransform.Y" Value="7.5"/>
+            <Setter Property="RotateTransform.Angle" Value="10"/>
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="TranslateTransform.X" Value="2"/>
+            <Setter Property="TranslateTransform.Y" Value="15"/>
+            <Setter Property="RotateTransform.Angle" Value="0"/>
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

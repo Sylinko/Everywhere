@@ -1,0 +1,33 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ChatMessageItemsControl}"
+    TargetType="v:ChatMessageItemsControl">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="md:MarkdownTextBlock.IsSelectionScope" Value="True"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <shadui:Timeline
+          ClipToBounds="False" DotSize="9"
+          Fill="{DynamicResource PrimaryColor}"
+          Spacing="5"
+          Stroke="{DynamicResource BorderColor}"
+          StrokeThickness="2">
+          <ItemsPresenter
+            x:Name="PART_ItemsPresenter"
+            Margin="{TemplateBinding Padding}">
+            <ItemsPresenter.ItemsPanel>
+              <ItemsPanelTemplate>
+                <v:VariableHeightVirtualizingStackPanel
+                  CacheLength="1" EstimatedItemHeight="140"
+                  Spacing="6"/>
+              </ItemsPanelTemplate>
+            </ItemsPresenter.ItemsPanel>
+          </ItemsPresenter>
+        </shadui:Timeline>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

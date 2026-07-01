@@ -1,62 +1,76 @@
-using System.Reflection;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
+using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AttachedProperties;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
-using Everywhere.Utilities;
+using Everywhere.Messages;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
-using Window = Avalonia.Controls.Window;
+
+#if DEBUG
+using ClassicDiagnostics.Avalonia;
+#endif
 
 namespace Everywhere;
 
-public class App : Application, IRecipient<ApplicationCommand>
+public class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>
 {
-    public static string Version => typeof(TransientWindow).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    public static string Version => RuntimeConstants.Version.ToString();
 
-    public static ThemeManager ThemeManager => _themeManager ?? throw new InvalidOperationException("ThemeManager is not initialized.");
+    public static IClipboard Clipboard =>
+        _topLevel?.Clipboard ?? throw new InvalidOperationException("Clipboard is not available.");
 
+    public static IStorageProvider StorageProvider =>
+        _topLevel?.StorageProvider ?? throw new InvalidOperationException("StorageProvider is not available.");
+
+    public static ILauncher Launcher => BetterBclLauncher.Shared;
+
+    public static Screens Screens => _topLevel?.Screens ?? throw new InvalidOperationException("Screens is not available.");
+
+    public static ThemeManager ThemeManager => _themeManager ?? throw new InvalidOperationException("Application is not initialized.");
+
+    private static TopLevel? _topLevel;
     private static ThemeManager? _themeManager;
 
-    public TopLevel TopLevel { get; } = new Window();
+    private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
+    private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
 
-    private readonly DebounceExecutor<App, DispatcherTimerImpl> _trayIconClickedDebounce;
-
-    private TransientWindow? _mainWindow, _debugWindow;
-    private int _trayIconClickCount;
-
-    public App()
-    {
-        _trayIconClickedDebounce = new DebounceExecutor<App, DispatcherTimerImpl>(
-            () => this,
-            app =>
-            {
-                if (app._trayIconClickCount >= 2)
-                {
-                    app.HandleOpenMainWindowMenuItemClicked(app, EventArgs.Empty);
-                }
-                else
-                {
-                    app.HandleOpenChatWindowMenuItemClicked(app, EventArgs.Empty);
-                }
-
-                app._trayIconClickCount = 0;
-            },
-            TimeSpan.FromMilliseconds(300)
-        );
-    }
+    /// <summary>
+    /// Flag to prevent multiple calls to ShowWindow method from event loop.
+    /// </summary>
+    private bool _isShowWindowBusy;
 
     public override void Initialize()
     {
+        InitializeErrorHandler();
+
         AvaloniaXamlLoader.Load(this);
+
+        _topLevel = new Window() ?? throw new InvalidOperationException("Application is not initialized correctly.");
+
+#if DEBUG
+        if (Design.IsDesignMode)
+        {
+            ServiceLocator.Build(x => x.AddAvaloniaBasicServices());
+            return;
+        }
+
+        this.AttachDevTools();
+#endif
+
+        Window.WindowClosedEvent.AddClassHandler<TransientWindow>(HandleTransientWindowClosed);
 
         // After this, ThemeChanged event from the system can be received
         _themeManager = new ThemeManager(this);
@@ -65,6 +79,27 @@ public class App : Application, IRecipient<ApplicationCommand>
         // e.g. ShowMainWindow
         WeakReferenceMessenger.Default.Register(this);
 
+        InitializeMarkdown();
+        InitializeApp();
+
+        TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
+
+        RecordAppLaunchMetric();
+    }
+
+    private void HandleTransientWindowClosed(TransientWindow sender, RoutedEventArgs args)
+    {
+        sender.Content = null;
+
+        if (sender.Content is { } content)
+        {
+            _transientWindows.Remove(content.GetType());
+            content.To<ISetLogicalParent>().SetParent(null);
+        }
+    }
+
+    private static void InitializeErrorHandler()
+    {
         Dispatcher.UIThread.UnhandledException += (_, e) =>
         {
             Log.Logger.Error(e.Exception, "UI Thread Unhandled Exception");
@@ -77,15 +112,33 @@ public class App : Application, IRecipient<ApplicationCommand>
 
             e.Handled = true;
         };
+    }
+
+    private static void InitializeMarkdown()
+    {
+        AsyncImageLoader.DefaultDecoders =
+        [
+            SvgImageDecoder.Shared,
+            DefaultBitmapDecoder.Shared
+        ];
+
+        FileBasedAsyncImageLoaderCache.CacheDirectory = RuntimeConstants.EnsureCacheFolderPath("img");
+        AsyncImageLoader.DefaultCache = FileBasedAsyncImageLoaderCache.Shared;
 
         MarkdownNode.Register<MathInlineNode>();
         MarkdownNode.Register<MathBlockNode>();
 
+        MarkdownRenderer.ConfigurePipeline += x => x.UseMermaid();
+        MarkdownNode.Register<MermaidBlockNode>();
+    }
+
+    private void InitializeApp()
+    {
         try
         {
-            foreach (var group in ServiceLocator
-                         .Resolve<IEnumerable<IAsyncInitializer>>()
-                         .GroupBy(i => i.Priority)
+            foreach (var group in serviceProvider
+                         .GetRequiredService<IEnumerable<IAsyncInitializer>>()
+                         .GroupBy(i => i.Index)
                          .OrderBy(g => g.Key))
             {
                 Task.WhenAll(group.Select(i => i.InitializeAsync())).WaitOnDispatcherFrame();
@@ -101,8 +154,30 @@ public class App : Application, IRecipient<ApplicationCommand>
                 NativeMessageBoxButtons.Ok,
                 NativeMessageBoxIcon.Error);
         }
+    }
 
-        Log.ForContext<App>().Information("Application started");
+    private static void RecordAppLaunchMetric()
+    {
+        const string OsType =
+#if WINDOWS
+            "Windows";
+#elif LINUX
+                "Linux";
+#elif MACOS
+                "macOS";
+#else
+                "Unknown";
+#endif
+
+        using var meter = new Meter(typeof(App).FullName.NotNull(), Version);
+        meter.CreateCounter<int>("app.launches").Add(
+            1,
+            new TagList
+            {
+                { "os.type", OsType },
+                { "os.description", RuntimeInformation.OSDescription },
+                { "app.version", Version }
+            });
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -111,23 +186,9 @@ public class App : Application, IRecipient<ApplicationCommand>
         {
             case IClassicDesktopStyleApplicationLifetime:
             {
-                DisableAvaloniaDataAnnotationValidation();
                 ShowMainWindowOnNeeded();
                 break;
             }
-        }
-    }
-
-    private static void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToList();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
         }
     }
 
@@ -136,84 +197,63 @@ public class App : Application, IRecipient<ApplicationCommand>
     /// </summary>
     private void ShowMainWindowOnNeeded()
     {
+        var currentVersion = RuntimeConstants.Version;
+        var persistentState = serviceProvider.GetRequiredService<PersistentState>();
+        if (!SemanticVersion.TryParse(persistentState.PreviousLaunchVersion, out var previousVersion))
+        {
+            previousVersion = new SemanticVersion(0);
+        }
+
         // If the --ui command line argument is present, show the main window.
-        if (Environment.GetCommandLineArgs().Contains("--ui"))
+        if (Environment.GetCommandLineArgs().Contains("--ui") || previousVersion < currentVersion)
         {
-            ShowWindow<MainView>(ref _mainWindow);
-            return;
+            ShowWindow<MainView>();
         }
 
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
-        var persistentState = ServiceLocator.Resolve<PersistentState>();
-        if (persistentState.PreviousLaunchVersion == version) return;
-
-        ShowWindow<MainView>(ref _mainWindow);
+        persistentState.PreviousLaunchVersion = currentVersion.ToString();
     }
 
-    private void HandleTrayIconClicked(object? sender, EventArgs e)
-    {
-        _trayIconClickCount++;
-        if (_trayIconClickCount >= 2)
-        {
-            // Double click detected, open main window immediately.
-            HandleOpenMainWindowMenuItemClicked(this, EventArgs.Empty);
-            _trayIconClickCount = 0;
-            _trayIconClickedDebounce.Cancel();
-        }
-        else
-        {
-            // Start or reset the debounce timer for single click.
-            _trayIconClickedDebounce.Trigger();
-        }
-    }
-
-    private void HandleOpenChatWindowMenuItemClicked(object? sender, EventArgs e)
-    {
-        var chatWindow = ServiceLocator.Resolve<ChatWindow>();
-        chatWindow.ViewModel.ShowAsync(null).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-    }
-
-    private void HandleOpenMainWindowMenuItemClicked(object? sender, EventArgs e)
-    {
-        ShowWindow<MainView>(ref _mainWindow);
-    }
-
-    private void HandleOpenDebugWindowMenuItemClicked(object? sender, EventArgs e)
-    {
-        ShowWindow<VisualTreeDebugger>(ref _debugWindow);
-    }
-
-    /// <summary>
-    /// Flag to prevent multiple calls to ShowWindow method from event loop.
-    /// </summary>
-    private static bool _isShowWindowBusy;
-
-    private static void ShowWindow<TContent>(ref TransientWindow? window) where TContent : Control
+    private void ShowWindow<TContent>() where TContent : Control
     {
         if (_isShowWindowBusy) return;
         try
         {
             _isShowWindowBusy = true;
-            if (window is { IsVisible: true })
+
+            var windowType = typeof(TContent);
+            _transientWindows.TryGetValue(windowType, out var window);
+
+            if (window is { IsLoaded: true })
             {
                 if (window.WindowState is WindowState.Minimized)
                 {
                     window.WindowState = WindowState.Normal;
                 }
 
-                var windowHelper = ServiceLocator.Resolve<IWindowHelper>();
-                windowHelper.SetCloaked(window, false);
+                var topMost = window.Topmost;
+                window.Topmost = true;
+                window.Topmost = topMost;
+
+                window.Activate();
             }
             else
             {
-                window?.Close();
-                var content = ServiceLocator.Resolve<TContent>();
+                if (window is not null)
+                {
+                    window.Content = null;
+                    window.Close();
+                }
+
+                var content = serviceProvider.GetRequiredService<TContent>();
                 content.To<ISetLogicalParent>().SetParent(null);
                 window = new TransientWindow
                 {
                     [SaveWindowPlacementAssist.KeyProperty] = typeof(TContent).FullName,
                     Content = content
                 };
+                _transientWindows[windowType] = window;
+
+                _windowHelper.InitializeWindow(window);
                 window.Show();
             }
         }
@@ -223,16 +263,19 @@ public class App : Application, IRecipient<ApplicationCommand>
         }
     }
 
-    private void HandleExitMenuItemClicked(object? sender, EventArgs e)
-    {
-        Environment.Exit(0);
-    }
+    public void ShowMainWindow() => ShowWindow<MainView>();
 
-    public void Receive(ApplicationCommand command)
+    public void ShowDebugWindow() => ShowWindow<VisualTreeDebugger>();
+
+    void IRecipient<ApplicationMessage>.Receive(ApplicationMessage message)
     {
-        if (command is ShowWindowCommand { Name: nameof(MainView) })
+        if (message is ShowWindowMessage { Name: ShowWindowMessage.MainWindow } showWindowMessage)
         {
-            Dispatcher.UIThread.Invoke(() => ShowWindow<MainView>(ref _mainWindow));
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                ShowWindow<MainView>();
+                if (showWindowMessage.Route is not null) WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(showWindowMessage.Route));
+            });
         }
     }
 }

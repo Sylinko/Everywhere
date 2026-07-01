@@ -1,24 +1,17 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
-using Everywhere.AI;
-using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
+using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
-using Everywhere.Mac.Configuration;
 using Everywhere.Mac.Interop;
-using Everywhere.Mac.Patches;
-using HarmonyLib;
+using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Extensions.Logging;
 
 namespace Everywhere.Mac;
 
@@ -27,22 +20,22 @@ public static class Program
     [STAThread]
     public static async Task Main(string[] args)
     {
+#if IsMacOS
         NativeMessageBox.MacOSMessageBoxHandler = MessageBoxHandler;
+#endif
+
         await Entrance.InitializeAsync(args);
-        InitializeHarmony();
 
         ServiceLocator.Build(x => x
 
                 #region Basic
 
-                .AddLogging(builder => builder
-                    .AddSerilog(dispose: true)
-                    .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning))
-                .AddSingleton<IRuntimeConstantProvider, RuntimeConstantProvider>()
+                .AddApplicationLogging()
                 .AddSingleton<IVisualElementContext, VisualElementContext>()
                 .AddSingleton<IShortcutListener, CGEventShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
+                .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
                 .AddWatchdogManager()
@@ -50,33 +43,26 @@ public static class Program
                 .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
+                .AddCloudClient()
+                .AddChatEssentials()
 
                 #endregion
 
                 #region Chat Plugins
 
-                .AddTransient<BuiltInChatPlugin, EssentialPlugin>()
-                .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
-                .AddTransient<BuiltInChatPlugin, WebBrowserPlugin>()
-                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
                 .AddTransient<BuiltInChatPlugin, SystemPlugin>()
-                .AddTransient<BuiltInChatPlugin, ZshPlugin>()
 
                 #endregion
+                
+                #region Strategy Engine
 
-                #region Chat
-
-                .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
-                .AddSingleton<IChatPluginManager, ChatPluginManager>()
-                .AddSingleton<IChatService, ChatService>()
-                .AddChatContextManager()
+                .AddStrategyEngine()
 
                 #endregion
 
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, SettingsInitializer>()
                 .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
             #endregion
@@ -84,9 +70,10 @@ public static class Program
         );
 
         NSApplication.CheckForIllegalCrossThreadCalls = false;
-        NSApplication.SharedApplication.Delegate = new AppDelegate();
         NSApplication.Init();
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        NSApplication.SharedApplication.Delegate = new AppDelegate();
+
+        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
 
     private static NativeMessageBoxResult MessageBoxHandler(string title, string message, NativeMessageBoxButtons buttons, NativeMessageBoxIcon icon)
@@ -104,39 +91,39 @@ public static class Program
         {
             case NativeMessageBoxButtons.OkCancel:
             {
-                alert.AddButton(LocaleResolver.Common_OK);
-                alert.AddButton(LocaleResolver.Common_Cancel);
+                alert.AddButton(CoreLocaleResolver.Common_OK);
+                alert.AddButton(CoreLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.YesNo:
             {
-                alert.AddButton(LocaleResolver.Common_Yes);
-                alert.AddButton(LocaleResolver.Common_No);
+                alert.AddButton(CoreLocaleResolver.Common_Yes);
+                alert.AddButton(CoreLocaleResolver.Common_No);
                 break;
             }
             case NativeMessageBoxButtons.YesNoCancel:
             {
-                alert.AddButton(LocaleResolver.Common_Yes);
-                alert.AddButton(LocaleResolver.Common_No);
-                alert.AddButton(LocaleResolver.Common_Cancel);
+                alert.AddButton(CoreLocaleResolver.Common_Yes);
+                alert.AddButton(CoreLocaleResolver.Common_No);
+                alert.AddButton(CoreLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.RetryCancel:
             {
-                alert.AddButton(LocaleResolver.Common_Retry);
-                alert.AddButton(LocaleResolver.Common_Cancel);
+                alert.AddButton(CoreLocaleResolver.Common_Retry);
+                alert.AddButton(CoreLocaleResolver.Common_Cancel);
                 break;
             }
             case NativeMessageBoxButtons.AbortRetryIgnore:
             {
-                alert.AddButton(LocaleResolver.Common_Abort);
-                alert.AddButton(LocaleResolver.Common_Retry);
-                alert.AddButton(LocaleResolver.Common_Ignore);
+                alert.AddButton(CoreLocaleResolver.Common_Abort);
+                alert.AddButton(CoreLocaleResolver.Common_Retry);
+                alert.AddButton(CoreLocaleResolver.Common_Ignore);
                 break;
             }
             default:
             {
-                alert.AddButton(LocaleResolver.Common_OK);
+                alert.AddButton(CoreLocaleResolver.Common_OK);
                 break;
             }
         }
@@ -172,16 +159,8 @@ public static class Program
         };
     }
 
-    private static void InitializeHarmony()
-    {
-        // Apply Harmony patches
-        var harmony = new Harmony("com.sylinko.everywhere.mac.patches");
-        ControlAutomationPeerPatch.Patch(harmony);
-        BclLauncherExecPatch.Patch(harmony);
-    }
-
-    private static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
+    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
+        AppBuilder.Configure(() => new App(serviceProvider))
             .UsePlatformDetect()
             .With(
                 new AvaloniaNativePlatformOptions

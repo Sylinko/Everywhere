@@ -1,4 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.AI;
+using Everywhere.Chat;
 
 namespace Everywhere.Configuration;
 
@@ -27,19 +29,25 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
 
     public bool IsToolCallEnabled
     {
-        get => Get<bool>();
+        get => Get(true);
+        set => Set(value);
+    }
+
+    public bool IsWebSearchEnabled
+    {
+        get => Get(false);
         set => Set(value);
     }
 
     public int MaxChatAttachmentCount
     {
-        get => Get(10);
+        get => Get(50);
         set => Set(value);
     }
 
     public bool IsMainViewSidebarExpanded
     {
-        get => Get<bool>();
+        get => Get(true);
         set => Set(value);
     }
 
@@ -49,15 +57,81 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
+    public bool IsChatWindowHistoryOpened
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    public double ChatWindowHistoryDrawerWidth
+    {
+        get => Get(300d).FiniteOrDefault(300d);
+        set => Set(value.FiniteOrDefault(300d));
+    }
+
+    public double ChatWindowHistoryDrawerHeight
+    {
+        get => Get(300d).FiniteOrDefault(300d);
+        set => Set(value.FiniteOrDefault(300d));
+    }
+
     public string? ChatInputAreaText
     {
         get => Get<string?>();
         set => Set(value);
     }
 
-    public int VisualTreeTokenLimit
+    public VisualContextDetailLevel VisualContextDetailLevel
     {
-        get => Get(4096);
+        get => Get(VisualContextDetailLevel.Compact);
+        set => Set(value);
+    }
+
+    public VisualContextLengthLimit VisualContextLengthLimit
+    {
+        get => Get(VisualContextLengthLimit.Balanced);
+        set => Set(value);
+    }
+
+    public int MaxContextRounds
+    {
+        get => Get(-1);
+        set => Set(Math.Clamp(value, -1, 30));
+    }
+
+    public IReadOnlyList<ModelDefinitionTemplate>? OfficialModelDefinitionTemplate
+    {
+        get => Get<IReadOnlyList<ModelDefinitionTemplate>>();
+        set => Set(value);
+    }
+
+    public IReadOnlyList<string>? DismissedOfficialModelWarningKeys
+    {
+        get => Get<IReadOnlyList<string>>();
+        set => Set(value);
+    }
+
+    public Dictionary<string, bool>? SkillEnabledOverrides
+    {
+        get => Get<Dictionary<string, bool>>();
+        set => Set(value);
+    }
+
+    public bool IsCloudSyncEnabled
+    {
+        get => Get(false);
+        set => Set(value);
+    }
+
+    public DateTimeOffset? LastCloudSynchronized
+    {
+        get => Get<DateTimeOffset?>();
+        set => Set(value);
+    }
+
+    public IDynamicLocaleKey? LastCloudSynchronizationErrorMessageKey
+    {
+        get => Get<IDynamicLocaleKey?>();
         set => Set(value);
     }
 
@@ -68,7 +142,9 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
 
     private void Set<T>(T? value, [CallerMemberName] string key = "")
     {
-        if (EqualityComparer<T>.Default.Equals(Get(default(T), key), value)) return;
+        if (storage.Contains(key) &&
+            EqualityComparer<T>.Default.Equals(storage.Get<T>(key), value)) return;
+
         storage.Set(key, value);
         OnPropertyChanged(key);
     }

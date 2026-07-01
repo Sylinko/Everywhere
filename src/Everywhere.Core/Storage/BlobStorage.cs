@@ -6,12 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Everywhere.Storage;
 
-public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory, IRuntimeConstantProvider runtimeConstantProvider) : IBlobStorage
+public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory) : IBlobStorage
 {
-    private readonly string _blobBasePath = runtimeConstantProvider.EnsureWritableDataFolderPath("blob");
+    private readonly string _blobBasePath = RuntimeConstants.EnsureWritableDataFolderPath("blob");
 
-    public Task<BlobEntity> StorageBlobAsync(Stream content, string mimeType, CancellationToken cancellationToken = default) =>
-        StorageBlobAsync(content, null, mimeType, cancellationToken);
+    public Task<BlobEntity> StorageBlobAsync(
+        Stream content,
+        string mimeType,
+        string? extension = null,
+        CancellationToken cancellationToken = default) =>
+        StorageBlobAsync(content, null, mimeType, extension, cancellationToken);
 
     public async Task<BlobEntity> StorageBlobAsync(
         string filePath,
@@ -31,10 +35,15 @@ public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory, IRuntimeCon
         }
 
         mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
-        return await StorageBlobAsync(stream, filePath, mimeType, cancellationToken);
+        return await StorageBlobAsync(stream, filePath, mimeType, Path.GetExtension(filePath), cancellationToken);
     }
 
-    private async Task<BlobEntity> StorageBlobAsync(Stream content, string? localPath, string mimeType, CancellationToken cancellationToken = default)
+    private async Task<BlobEntity> StorageBlobAsync(
+        Stream content,
+        string? localPath,
+        string mimeType,
+        string? extension,
+        CancellationToken cancellationToken)
     {
         content.Seek(0, SeekOrigin.Begin);
         var sha256Bytes = await SHA256.HashDataAsync(content, cancellationToken);
@@ -42,9 +51,7 @@ public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory, IRuntimeCon
         var now = DateTimeOffset.UtcNow;
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-
         var blobEntity = await db.Blobs.FirstOrDefaultAsync(b => b.Sha256 == sha256String, cancellationToken);
-
         if (blobEntity is not null)
         {
             // Blob already exists, just update its access time
@@ -60,7 +67,9 @@ public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory, IRuntimeCon
             var blobDirectory = Path.Combine(_blobBasePath, datePath);
             Directory.CreateDirectory(blobDirectory);
 
-            localPath = Path.Combine(_blobBasePath, datePath, sha256String);
+            extension ??= FileUtilities.GetExtensionByMimeType(mimeType);
+            var fileName = extension.IsNullOrWhiteSpace() ? sha256String : $"{sha256String}.{extension.TrimStart('.')}";
+            localPath = Path.Combine(_blobBasePath, datePath, fileName);
             if (localPath.Length > 1024)
             {
                 throw new PathTooLongException($"Blob local path is too long: {localPath}");
@@ -94,7 +103,6 @@ public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory, IRuntimeCon
     {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         var blob = await db.Blobs.FirstOrDefaultAsync(b => b.Sha256 == sha256, cancellationToken);
-
         if (blob is not null)
         {
             blob.LastAccessAt = DateTimeOffset.UtcNow;

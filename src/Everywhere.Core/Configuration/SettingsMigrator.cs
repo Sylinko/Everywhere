@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
+using Everywhere.Common;
 using Microsoft.Extensions.Logging;
+using WritableJsonConfiguration;
 using ZLinq;
 
 namespace Everywhere.Configuration;
@@ -32,11 +33,34 @@ public class SettingsMigrator
             try
             {
                 var json = File.ReadAllText(_filePath);
-                root = JsonNode.Parse(json) as JsonObject;
+                root = JsonNode.Parse(json, null, new JsonDocumentOptions
+                {
+                    AllowTrailingCommas = true,
+                    AllowDuplicateProperties = true,
+                    CommentHandling = JsonCommentHandling.Skip
+                }) as JsonObject;
             }
             catch (Exception ex)
             {
+                ex = HandledSystemException.Handle(ex);
                 _logger.LogError(ex, "Failed to parse settings file for migration: {FilePath}", _filePath);
+
+                if (ex.InnerException is JsonException)
+                {
+                    // backup the old broken one
+                    try
+                    {
+                        var backupPath = Path.Combine(
+                            Path.GetDirectoryName(_filePath) ?? string.Empty,
+                            $"{Path.GetFileNameWithoutExtension(_filePath)}_backup_{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(_filePath)}");
+                        File.Copy(_filePath, backupPath, true);
+                    }
+                    catch (Exception ex1)
+                    {
+                        ex1 = HandledSystemException.Handle(ex1);
+                        _logger.LogError(ex1, "Failed to backup broken settings file: {FilePath}", _filePath);
+                    }
+                }
             }
         }
 
@@ -45,7 +69,7 @@ public class SettingsMigrator
         root ??= new JsonObject();
 
         var currentVersionStr = root[nameof(Settings.Version)]?.GetValue<string>();
-        var currentVersion = Version.TryParse(currentVersionStr, out var version) ? version : new Version(0, 0, 0);
+        var currentVersion = SemanticVersion.TryParse(currentVersionStr, out var version) ? version : new SemanticVersion(0);
         var originalVersion = currentVersion;
         var hasChanges = false;
 
@@ -72,14 +96,7 @@ public class SettingsMigrator
 
             try
             {
-                File.WriteAllText(_filePath, root.ToJsonString(new JsonSerializerOptions
-                {
-                    Converters = { new JsonStringEnumConverter() },
-                    WriteIndented = true,
-                    AllowTrailingCommas = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                    IgnoreReadOnlyProperties = true
-                }));
+                File.WriteAllText(_filePath, root.ToJsonString(WritableJsonConfigurationSource.DefaultJsonSerializerOptions));
             }
             catch (Exception ex)
             {

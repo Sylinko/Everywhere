@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsDeploymentTarget>true</IsDeploymentTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
+    <ProjectReference Include="..\..\3rd\Porta.Pty\src\Porta.Pty\Porta.Pty.csproj"/>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <InternalsVisibleTo Include="Everywhere.Terminal.Tests" />
+    <InternalsVisibleTo Include="Everywhere.Terminal.TestApp" />
+  </ItemGroup>
+
+</Project>

@@ -8,32 +8,27 @@ namespace Everywhere.Views.Pages;
 /// Represents a settings category page that displays a list of settings items.
 /// It dynamically creates settings items based on the properties of a specified settings category.
 /// </summary>
-public partial class SettingsCategoryPage : UserControl, IMainViewPage
+public sealed partial class SettingsCategoryPage : UserControl, IMainViewNavigationSubItem
 {
-    public int Index { get; }
+    public int Index => _settingsCategory.Index;
 
-    public DynamicResourceKeyBase Title { get; }
+    public string RouteKey => _settingsCategory.RouteKey;
 
-    public LucideIconKind Icon { get; }
+    public LucideIconKind Icon => _settingsCategory.Icon;
 
-    public SettingsItems Items { get; }
+    public IDynamicLocaleKey TitleKey => _settingsCategory.TitleKey;
 
-    public SettingsCategoryPage(int index, ISettingsCategory settingsCategory)
+    public SettingsItems SettingItems => _settingsCategory.SettingsItems;
+
+    public Type GroupType => _settingsCategory.GroupType;
+
+    public IDynamicLocaleKey? DescriptionKey => _settingsCategory.DescriptionKey;
+
+    private readonly ISettingsCategory _settingsCategory;
+
+    public SettingsCategoryPage(ISettingsCategory settingsCategory)
     {
-        Index = index;
-        Title = settingsCategory.DisplayNameKey;
-        Icon = settingsCategory.Icon;
-        Items = settingsCategory.SettingsItems ?? [];
-
+        _settingsCategory = settingsCategory;
         InitializeComponent();
     }
-}
-
-public class SettingsCategoryPageFactory(Settings settings) : IMainViewPageFactory
-{
-    public IEnumerable<IMainViewPage> CreatePages() =>
-    [
-        new SettingsCategoryPage(0, settings.Common),
-        new SettingsCategoryPage(0, settings.ChatWindow),
-    ];
 }

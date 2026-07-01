@@ -1,3 +1,2 @@
 *.onnx filter=lfs diff=lfs merge=lfs -text
-*.png filter=lfs diff=lfs merge=lfs -text
 "tools/sign_windows/**" filter=lfs diff=lfs merge=lfs -text

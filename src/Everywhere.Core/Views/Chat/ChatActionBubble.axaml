@@ -1,0 +1,136 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+
+  <ControlTheme
+    x:Key="{x:Type v:ChatActionBubble}"
+    TargetType="v:ChatActionBubble">
+
+    <Setter Property="HorizontalAlignment" Value="Left"/>
+    <Setter Property="Background" Value="#00000000"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}"/>
+    <Setter Property="Padding" Value="4,2"/>
+
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="4">
+          <Border
+            HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+            shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
+            shadui:Timeline.IsLoading="{TemplateBinding IsBusy}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <Border.Transitions>
+              <Transitions>
+                <BrushTransition
+                  Easing="CubicEaseOut" Property="Background"
+                  Duration="0:0:0.25"/>
+              </Transitions>
+            </Border.Transitions>
+
+            <ToggleButton
+              x:Name="PART_ToggleButton" Classes="Ghost"
+              MinHeight="0"
+              Padding="{TemplateBinding Padding}"
+              CornerRadius="{TemplateBinding CornerRadius}"
+              Focusable="False"
+              IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
+              <StackPanel
+                Orientation="Horizontal" Spacing="6">
+                <LucideIcon
+                  Foreground="{DynamicResource ForegroundLeadColor}"
+                  Kind="{TemplateBinding Icon}"
+                  Size="{DynamicResource FontSizeL}"/>
+                <ContentPresenter
+                  Content="{TemplateBinding Header}"
+                  FontSize="{DynamicResource FontSizeM}"
+                  Foreground="{DynamicResource ForegroundLeadColor}"/>
+
+                <TextBlock
+                  Margin="0,0,0,1" VerticalAlignment="Bottom"
+                  FontSize="10"
+                  Foreground="{DynamicResource SuccessColor60}"
+                  Text="{Binding ElapsedSeconds, StringFormat='{}{0:F1}s', Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}">
+                  <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <TemplateBinding
+                        Converter="{x:Static ObjectConverters.IsNotNull}"
+                        Property="ElapsedSeconds"/>
+                      <TemplateBinding
+                        Converter="{x:Static BoolConverters.Not}"
+                        Property="IsError"/>
+                      <TemplateBinding
+                        Converter="{x:Static BoolConverters.Not}"
+                        Property="IsBusy"/>
+                    </MultiBinding>
+                  </TextBlock.IsVisible>
+                </TextBlock>
+                <LucideIcon
+                  Margin="2,0,0,0" VerticalAlignment="Center"
+                  Foreground="{DynamicResource ErrorColor}"
+                  IsHitTestVisible="False" Kind="X"
+                  Size="{DynamicResource FontSizeM}">
+                  <LucideIcon.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <TemplateBinding Property="IsError"/>
+                      <TemplateBinding
+                        Converter="{x:Static BoolConverters.Not}"
+                        Property="IsBusy"/>
+                    </MultiBinding>
+                  </LucideIcon.IsVisible>
+                </LucideIcon>
+              </StackPanel>
+            </ToggleButton>
+          </Border>
+
+          <Border
+            x:Name="ContentBorder" Margin="4,0"
+            IsVisible="{TemplateBinding IsEffectivelyExpanded}"
+            Opacity="0.5" RenderTransform="translateY(-16px)">
+            <Border.Transitions>
+              <Transitions>
+                <DoubleTransition
+                  Easing="CubicEaseOut" Property="Opacity"
+                  Duration="0:0:0.25"/>
+                <TransformOperationsTransition
+                  Easing="CubicEaseOut" Property="RenderTransform"
+                  Duration="0:0:0.3"/>
+              </Transitions>
+            </Border.Transitions>
+
+            <ContentPresenter Content="{TemplateBinding Content}"/>
+          </Border>
+
+          <Border
+            Margin="4,0"
+            BorderBrush="{DynamicResource ErrorColor60}"
+            BorderThickness="3,0,0,0" CornerRadius="3">
+            <Border.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <TemplateBinding Property="IsEffectivelyExpanded"/>
+                <TemplateBinding Property="IsError"/>
+              </MultiBinding>
+            </Border.IsVisible>
+            <ContentPresenter
+              Margin="4,0,0,0"
+              Content="{TemplateBinding ErrorContent}"/>
+          </Border>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- <Style Selector="^:pointerover"> -->
+    <!--   <Setter Property="Background" Value="{DynamicResource GhostColor}"/> -->
+    <!-- </Style> -->
+
+    <Style Selector="^:expanded">
+      <Style Selector="^ /template/ Border#ContentBorder">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="RenderTransform" Value="translateY(0)"/>
+      </Style>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

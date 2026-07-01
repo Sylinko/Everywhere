@@ -1,28 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>Everywhere</RootNamespace>
+    <EverywhereI18NNamespace>Everywhere.Core.I18N</EverywhereI18NNamespace>
     <IsDeploymentTarget>true</IsDeploymentTarget>
-    <NoWarn>$(NoWarn);SCME0001</NoWarn>
+    <NoWarn>$(NoWarn);SCME0001;SENTRY0001</NoWarn>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Everywhere.Core.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**"/>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Anthropic"/>
     <PackageReference Include="Avalonia"/>
     <PackageReference Include="Avalonia.Fonts.Inter"/>
-    <PackageReference Include="Avalonia.Diagnostics">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Avalonia.AvaloniaEdit"/>
+    <PackageReference Include="Avalonia.HtmlRenderer" />
     <PackageReference Include="AvaloniaEdit.TextMate"/>
+    <PackageReference Include="ClassicDiagnostics.Avalonia" />
     <PackageReference Include="FuzzySharp"/>
     <PackageReference Include="GnomeStack.Os.Secrets"/>
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="JetBrains.Profiler.Api"/>
     <PackageReference Include="LiveMarkdown.Avalonia"/>
     <PackageReference Include="LiveMarkdown.Avalonia.Math"/>
+    <PackageReference Include="LiveMarkdown.Avalonia.Mermaid"/>
+    <PackageReference Include="LiveMarkdown.Avalonia.Svg.Skia"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite"/>
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Microsoft.EntityFrameworkCore.Tools">
@@ -34,14 +41,17 @@
     <PackageReference Include="Microsoft.Extensions.Configuration"/>
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging"/>
+    <PackageReference Include="Microsoft.ML.Tokenizers" />
+    <PackageReference Include="Microsoft.ML.Tokenizers.Data.O200kBase" />
     <PackageReference Include="Microsoft.SemanticKernel.Abstractions"/>
     <PackageReference Include="Microsoft.SemanticKernel.Core"/>
     <PackageReference Include="ModelContextProtocol"/>
-    <PackageReference Include="Nito.AsyncEx"/>
+    <PackageReference Include="ObservableCollections" />
     <PackageReference Include="OllamaSharp"/>
     <PackageReference Include="OpenTelemetry"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>
     <PackageReference Include="PuppeteerSharp"/>
+    <PackageReference Include="ReverseMarkdown" />
     <PackageReference Include="Sentry"/>
     <PackageReference Include="Sentry.OpenTelemetry"/>
     <PackageReference Include="Sentry.Serilog"/>
@@ -49,20 +59,25 @@
     <PackageReference Include="Serilog.Extensions.Logging"/>
     <PackageReference Include="Serilog.Sinks.Console"/>
     <PackageReference Include="Serilog.Sinks.File"/>
+    <PackageReference Include="SharpYaml" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia"/>
+    <PackageReference Include="Sylinko.CSharpMath.Avalonia" />
     <PackageReference Include="System.Drawing.Common"/>
-    <PackageReference Include="Tavily"/>
+    <PackageReference Include="TextMateSharp.Grammars" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\3rd\anthropic-sdk-csharp-patch\src\Anthropic\Anthropic.csproj" />
+    <ProjectReference Condition="'$(Configuration)' == 'Debug'" Include="..\..\3rd\ClassicDiagnostics.Avalonia\src\ClassicDiagnostics.Avalonia.csproj" />
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
-    <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.Google\Connectors.Google.csproj" />
-    <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Plugins.Web\Plugins.Web.csproj" />
+    <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.Google\Connectors.Google.csproj"/>
     <ProjectReference Include="..\..\3rd\shad-ui\src\ShadUI\ShadUI.csproj"/>
     <ProjectReference Include="..\..\3rd\WritableJsonConfiguration\src\WritableJsonConfiguration\WritableJsonConfiguration.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
-    <ProjectReference Include="..\Everywhere.I18N\Everywhere.I18N.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.Terminal\Everywhere.Terminal.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>
@@ -81,8 +96,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="I18N\*.resx"/>
-    <AdditionalFiles Include="I18N\*.resx"/>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -91,23 +106,52 @@
     </AvaloniaResource>
   </ItemGroup>
 
-  <Target Name="GenerateTelemetryConstants" BeforeTargets="CoreCompile">
-    <PropertyGroup>
-      <SentryDsn Condition="'$(SentryDsn)' == ''"/>
-      <GeneratedTelemetryFile>$(IntermediateOutputPath)TelemetryConstants.g.cs</GeneratedTelemetryFile>
-    </PropertyGroup>
-    <ItemGroup>
-      <TelemetryCode Include="// &lt;auto-generated /&gt;" />
-      <TelemetryCode Include="namespace Everywhere.Common%3B" />
-      <TelemetryCode Include="partial class Entrance" />
-      <TelemetryCode Include="{" />
-      <TelemetryCode Include="%20%20%20%20private const string SentryDsn = &quot;$(SentryDsn)&quot;%3B" />
-      <TelemetryCode Include="}" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(GeneratedTelemetryFile)" Lines="@(TelemetryCode)" Overwrite="true" />
-    <ItemGroup>
-      <Compile Include="$(GeneratedTelemetryFile)" />
-    </ItemGroup>
-  </Target>
+  <ItemGroup>
+    <Folder Include="Assets\EmojiBase\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Terminal\shellIntegration.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>Assets\Terminal\shellIntegration.ps1</Link>
+    </Content>
+    <Content Include="Assets\Terminal\shellIntegration.zsh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>Assets\Terminal\shellIntegration.zsh</Link>
+    </Content>
+    <Content Include="Assets\Terminal\shellIntegration.bash">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>Assets\Terminal\shellIntegration.bash</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <None Update="Assets\Shims\kiennq\checksum.sha512">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Assets\Shims\kiennq\version.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Assets\Shims\kiennq\shim.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Assets\Shims\kiennq\checksum.sha256">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Assets\Shims\kiennq\README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <Import Project="..\Build.Generate.Telemetry.targets"/>
+  <Import Project="..\Build.Generate.Cloud.targets"/>
 
 </Project>

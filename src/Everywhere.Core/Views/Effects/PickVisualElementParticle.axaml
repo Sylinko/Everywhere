@@ -1,0 +1,88 @@
+<UserControl
+  x:Class="Everywhere.Views.PickVisualElementParticle" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:chat="clr-namespace:Everywhere.Chat"
+  ClipToBounds="False">
+  <Border
+    x:Name="RootBorder" HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch">
+    <Panel>
+      <Border
+        x:Name="BackgroundBorder"
+        Background="{DynamicResource CardBackgroundColor}"
+        CornerRadius="4"/>
+
+      <Border
+        x:Name="StartContentBorder" ClipToBounds="True">
+        <ContentPresenter
+          x:Name="StartContentPresenter" HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+          VerticalContentAlignment="Stretch">
+          <ContentPresenter.DataTemplates>
+            <DataTemplate x:DataType="IImage">
+              <Image
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                Source="{Binding}"
+                Stretch="UniformToFill"/>
+            </DataTemplate>
+          </ContentPresenter.DataTemplates>
+        </ContentPresenter>
+      </Border>
+
+      <Viewbox
+        MaxWidth="256" MaxHeight="256"
+        Stretch="Uniform">
+        <ContentPresenter
+          x:Name="EndContentPresenter" HorizontalAlignment="Center"
+          VerticalAlignment="Center" HorizontalContentAlignment="Center"
+          VerticalContentAlignment="Center" Opacity="0">
+          <ContentPresenter.Styles>
+            <Style Selector="Border#PART_Border.Primary">
+              <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+            </Style>
+          </ContentPresenter.Styles>
+
+          <ContentPresenter.DataTemplates>
+            <DataTemplate DataType="chat:ChatAttachment">
+              <Border
+                x:Name="PART_Border" Height="24"
+                Background="{DynamicResource CardBackgroundColor}"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1"
+                Classes.Primary="{Binding IsPrimary}"
+                CornerRadius="4">
+                <DockPanel
+                  Margin="6,0" ClipToBounds="False"
+                  HorizontalSpacing="2" LastChildFill="True">
+                  <LucideIcon
+                    DockPanel.Dock="Left" VerticalAlignment="Center"
+                    Kind="{Binding Icon}"
+                    Size="{DynamicResource FontSizeM}"/>
+
+                  <Button
+                    x:Name="PART_RemoveButton" DockPanel.Dock="Right"
+                    Margin="0,0,-2,0" Padding="1"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource TransparentColor}"
+                    BorderThickness="0" Focusable="False"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatAttachment_RemoveButton_ToolTip}}">
+                    <LucideIcon
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="X"
+                      Size="{DynamicResource FontSizeS}"/>
+                  </Button>
+
+                  <TextBlock
+                    MaxWidth="160" VerticalAlignment="Center"
+                    FontSize="{DynamicResource FontSizeS}"
+                    Text="{Binding HeaderKey^}"
+                    TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}"
+                    TextWrapping="NoWrap"/>
+                </DockPanel>
+              </Border>
+            </DataTemplate>
+          </ContentPresenter.DataTemplates>
+        </ContentPresenter>
+      </Viewbox>
+    </Panel>
+  </Border>
+</UserControl>

@@ -20,17 +20,19 @@ public sealed class GeminiStreamingChatMessageContent : StreamingChatMessageCont
     /// <param name="choiceIndex">Choice index</param>
     /// <param name="calledToolResult">The result of tool called by the kernel.</param>
     /// <param name="metadata">Additional metadata</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiStreamingChatMessageContent(
         AuthorRole? role,
         string? content,
         string modelId,
         int choiceIndex,
         GeminiFunctionToolResult? calledToolResult = null,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             choiceIndex: choiceIndex,
             modelId: modelId,
             encoding: Encoding.UTF8,
@@ -49,6 +51,7 @@ public sealed class GeminiStreamingChatMessageContent : StreamingChatMessageCont
     /// <param name="toolCalls">Tool calls returned by model</param>
     /// <param name="metadata">Additional metadata</param>
     /// <param name="globalChoiceIndex">The index of function call</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiStreamingChatMessageContent(
         AuthorRole role,
         string? content,
@@ -56,12 +59,13 @@ public sealed class GeminiStreamingChatMessageContent : StreamingChatMessageCont
         int choiceIndex,
         IReadOnlyList<GeminiFunctionToolCall>? toolCalls,
         ref int globalChoiceIndex,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
             modelId: modelId,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             choiceIndex: choiceIndex,
             encoding: Encoding.UTF8,
             metadata: metadata)

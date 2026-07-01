@@ -3,7 +3,6 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Everywhere.Interop;
 
 namespace Everywhere.Views;
@@ -36,7 +35,7 @@ public class ScreenSelectionTransparentWindow : ScreenSelectionWindow
         Background = Brushes.Transparent;
         Cursor = new Cursor(StandardCursorType.Cross);
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
-        SystemDecorations = SystemDecorations.None;
+        WindowDecorations = WindowDecorations.None;
         SizeToContent = SizeToContent.Manual;
     }
 
@@ -100,6 +99,12 @@ public sealed class ScreenSelectionMaskWindow : ScreenSelectionTransparentWindow
     public void SetMask(PixelRect rect)
     {
         var maskRect = rect.Translate(-(PixelVector)_screenBounds.Position).ToRect(_scale);
+        if (maskRect.Width < 0 || maskRect.Height < 0)
+        {
+            // Sometimes the rect can be invalid due to DPI scaling and rounding, so we need to handle that case.
+            maskRect = default;
+        }
+
         _maskBorder.Clip = new CombinedGeometry(GeometryCombineMode.Exclude, new RectangleGeometry(Bounds), new RectangleGeometry(maskRect));
         _elementBoundsBorder.Margin = new Thickness(maskRect.X, maskRect.Y, 0, 0);
         _elementBoundsBorder.Width = maskRect.Width;
@@ -118,8 +123,7 @@ public sealed class ScreenSelectionToolTipWindow : ScreenSelectionWindow
             Mode = mode
         };
         SizeToContent = SizeToContent.WidthAndHeight;
-        SystemDecorations = SystemDecorations.BorderOnly;
-        ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.NoChrome;
+        WindowDecorations = WindowDecorations.BorderOnly;
         ExtendClientAreaToDecorationsHint = true;
     }
 }

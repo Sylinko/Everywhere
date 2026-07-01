@@ -166,8 +166,9 @@ public partial class ObjectObserverTests
 
         using var _ = Assert.EnterMultipleScope();
         Assert.That(changes, Has.Count.EqualTo(1));
-        Assert.That(changes[0].Path, Is.EqualTo($"{nameof(TestViewModel.Dict)}:Key1"));
-        Assert.That(changes[0].Value, Is.Null);
+        Assert.That(changes[0].Path, Is.EqualTo(nameof(TestViewModel.Dict)));
+        Assert.That(changes[0].Value, Is.SameAs(vm.Dict));
+        Assert.That(vm.Dict, Is.Empty);
     }
     
     [Test]

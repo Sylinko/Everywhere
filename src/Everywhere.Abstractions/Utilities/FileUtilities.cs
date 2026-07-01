@@ -319,16 +319,28 @@ public static class FileUtilities
     /// <param name="filePath"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static async Task<string?> DetectMimeTypeAsync(string filePath, CancellationToken cancellationToken = default)
+    public static async Task<string> DetectMimeTypeAsync(string filePath, CancellationToken cancellationToken = default)
     {
+        // 1. detect mime type by file extension
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         if (KnownMimeTypes.TryGetValue(extension, out var mimeType))
         {
             return mimeType;
         }
 
-        // detect mime type by reading file header
+        // 2. detect mime type by reading file header if it's not a known extension
         await using var stream = File.OpenRead(filePath);
+        return await DetectMimeTypeAsync(stream, cancellationToken);
+    }
+
+    /// <summary>
+    /// Detects the MIME type of a stream by analyzing its content.
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public static async Task<string> DetectMimeTypeAsync(Stream stream, CancellationToken cancellationToken = default)
+    {
         return await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) is null ?
             "application/octet-stream" :
             "text/plain";
@@ -392,22 +404,8 @@ public static class FileUtilities
             .Select(kv => kv.Key);
     }
 
-    /// <summary>
-    /// Converts a byte size into a human-readable string with appropriate units.
-    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
-    /// </summary>
-    /// <param name="bytes"></param>
-    /// <returns></returns>
-    public static string HumanizeBytes(long bytes)
+    public static string? GetExtensionByMimeType(string mimeType)
     {
-        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
-        double len = bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-        return $"{len:0.##} {sizes[order]}";
+        return KnownMimeTypes.FirstOrDefault(kv => string.Equals(kv.Value, mimeType, StringComparison.OrdinalIgnoreCase)).Key;
     }
 }

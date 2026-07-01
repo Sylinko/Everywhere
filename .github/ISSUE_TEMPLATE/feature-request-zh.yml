@@ -3,6 +3,7 @@ description: 提交一个新的功能请求
 title: "[Feat] "
 labels:
   - enhancement
+type: feature
 body:
   - type: checkboxes
     attributes:

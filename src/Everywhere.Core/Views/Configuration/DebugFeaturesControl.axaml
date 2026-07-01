@@ -12,7 +12,7 @@
           VerticalAlignment="Center" Orientation="Horizontal">
           <Button
             Classes="Outline"
-            shadui:ButtonAssist.Icon="{LucideIconContent FileJson2}"
+            shadui:ButtonAssist.Icon="{LucideIconContent FileBraces}"
             Command="{Binding EditSettingsFileCommand, RelativeSource={RelativeSource TemplatedParent}}"
             Content="{I18N {x:Static LocaleKey.DebugFeaturesControl_EditSettingsFileButton_Content}}"/>
           <Button

@@ -13,9 +13,6 @@ using Everywhere.Chat;
 using Everywhere.Common;
 using Everywhere.Interop;
 using ZLinq;
-#if DEBUG
-using JetBrains.Profiler.Api;
-#endif
 
 namespace Everywhere.Views;
 
@@ -27,8 +24,8 @@ public partial class VisualTreeDebugger : UserControl
     private readonly IReadOnlyList<VisualElementProperty> _properties = typeof(DebuggerVisualElement)
         .GetProperties(BindingFlags.Instance | BindingFlags.Public)
         .Select(p => new VisualElementProperty(p))
-        .ToReadOnlyList();
-    private readonly OverlayWindow _treeViewPointerOverOverlayWindow;
+        .ToList();
+    private readonly VisualElementOverlayWindow _treeViewPointerOverOverlayWindow;
 
     public VisualTreeDebugger(
         IShortcutListener shortcutListener,
@@ -56,7 +53,7 @@ public partial class VisualTreeDebugger : UserControl
                 _rootElements.Add(element);
             });
 
-        _treeViewPointerOverOverlayWindow = new OverlayWindow
+        _treeViewPointerOverOverlayWindow = new VisualElementOverlayWindow
         {
             Content = new Border
             {
@@ -111,7 +108,7 @@ public partial class VisualTreeDebugger : UserControl
         try
         {
             _rootElements.Clear();
-            if (await _visualElementContext.PickElementAsync(ScreenSelectionMode.Element) is { } element)
+            if (await _visualElementContext.PickVisualElementAsync(ScreenSelectionMode.Element) is { } element)
             {
                 _rootElements.Add(element);
             }
@@ -129,7 +126,13 @@ public partial class VisualTreeDebugger : UserControl
         try
         {
             if (VisualTreeView.SelectedItem is not IVisualElement selectedItem) return;
-            CaptureImage.Source = await selectedItem.CaptureAsync(CancellationToken.None);
+
+            using var pointer = await selectedItem.CaptureAsync(CancellationToken.None);
+            var bitmap = pointer.ToAvaloniaBitmap();
+#if DEBUG
+            bitmap?.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"));
+#endif
+            CaptureImage.Source = bitmap;
         }
         catch (Exception ex)
         {
@@ -138,46 +141,43 @@ public partial class VisualTreeDebugger : UserControl
         }
     }
 
-    private async void HandleBuildXmlButtonClicked(object? sender, RoutedEventArgs e)
+    private async void HandleBuildButtonClicked(object? sender, RoutedEventArgs e)
     {
         try
         {
+            const VisualContextDetailLevel level = VisualContextDetailLevel.Compact;
             var tokenLimit = int.Parse(TokenLimitTextBox.Text ?? "8000");
-            var builder = new VisualTreeBuilder(
+            var effectScope =
+                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(CancellationToken.None);
+            var builder = new VisualContextBuilder(
                 VisualTreeView.SelectedItems.AsValueEnumerable().OfType<IVisualElement>().ToList(),
                 tokenLimit,
                 0,
-                VisualTreeDetailLevel.Compact);
-#if DEBUG
-            // use profiler to measure xml building time in debug mode
-            var xml = await Task.Run(() =>
-            {
-                var originalThreadName = Thread.CurrentThread.Name;
-                Thread.CurrentThread.Name = "XML Builder Thread";
-                MeasureProfiler.StartCollectingData("BuildXml");
-
-                try
-                {
-                    return builder.Build(CancellationToken.None);
-                }
-                finally
-                {
-                    MeasureProfiler.SaveData("BuildXml");
-                    Thread.CurrentThread.Name = originalThreadName;
-                }
-            });
-#else
-            var xml = await Task.Run(() => builder.Build(CancellationToken.None));
-#endif
+                level,
+                effectScope: effectScope);
+            var visualTree = await Task.Run(() => builder.Build(CancellationToken.None));
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var filename = $"visual_tree_{timestamp}.xml";
-            var xmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename);
-            await File.WriteAllTextAsync(xmlPath, xml);
-            await ServiceLocator.Resolve<ILauncher>().LaunchFileInfoAsync(new FileInfo(xmlPath));
+            var extension = level switch
+            {
+                VisualContextDetailLevel.Compact => "json",
+                VisualContextDetailLevel.Detailed => "xml",
+                _ => "toon"
+            };
+            var filename = $"visual_tree_{timestamp}.{extension}";
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename);
+            await File.WriteAllTextAsync(filePath, visualTree);
+            await App.Launcher.LaunchFileInfoAsync(new FileInfo(filePath));
         }
+#if DEBUG
+        catch (Exception ex)
+        {
+            _ = ex;
+            Debugger.Break();
+#else
         catch
         {
             // ignored
+#endif
         }
     }
 }

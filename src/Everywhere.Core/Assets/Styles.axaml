@@ -1,16 +1,164 @@
-﻿<Styles
+<Styles
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:grammars="clr-namespace:TextMateSharp.Grammars;assembly=TextMateSharp.Grammars" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia">
+  xmlns:grammars="clr-namespace:TextMateSharp.Grammars;assembly=TextMateSharp.Grammars" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mermaid="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Mermaid" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views">
   <Styles.Resources>
     <ResourceDictionary>
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="{x:Static ThemeVariant.Light}">
           <grammars:ThemeName x:Key="ColorTheme">LightPlus</grammars:ThemeName>
           <Color x:Key="SystemBaseHighColor">#08080B</Color>
+          <system:String x:Key="BaseStylesheet"><![CDATA[
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #08080B; /* ForegroundColor */
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  color: #08080B; /* ForegroundColor */
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+h1 {
+  font-size: 1.8em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #DEDEDE; /* BorderColor */
+}
+h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #DEDEDE; /* BorderColor */
+}
+h3 { font-size: 1.25em; }
+p, ul, ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+a {
+  color: #0288D1; /* InfoColor */
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+blockquote {
+  margin: 0 0 16px 0;
+  padding: 8px 16px;
+  color: #71717A; /* ForegroundLeadColor */
+  border-left: 4px solid #CA5010; /* QuoteColor */
+  background-color: #F2F2F2; /* DialogBackgroundColor */
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+  color: #08080B; /* ForegroundColor */
+  background-color: #454545; /* GhostColor */
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+pre {
+  background-color: #1A1A1A; /* DialogBackgroundColor */
+  border: 1px solid #E6E6E6; /* BorderColor */
+  padding: 12px;
+  border-radius: 6px;
+  overflow: auto;
+}
+pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+hr {
+  height: 1px;
+  border: none;
+  background-color: #DEDEDE; /* BorderColor */
+  margin: 24px 0;
+}
+ul, ol { padding-left: 2em; }
+]]></system:String>
         </ResourceDictionary>
         <ResourceDictionary x:Key="{x:Static ThemeVariant.Dark}">
           <grammars:ThemeName x:Key="ColorTheme">DarkPlus</grammars:ThemeName>
           <Color x:Key="SystemBaseHighColor">#E5E5E5</Color>
+          <system:String x:Key="BaseStylesheet"><![CDATA[
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #E5E5E5; /* ForegroundColor */
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  color: #E5E5E5; /* ForegroundColor */
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+h1 {
+  font-size: 1.8em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #353535; /* BorderColor */
+}
+h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #353535; /* BorderColor */
+}
+h3 { font-size: 1.25em; }
+p, ul, ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+a {
+  color: #2979FF; /* InfoColor */
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+blockquote {
+  margin: 0 0 16px 0;
+  padding: 8px 16px;
+  color: #A1A1AA; /* ForegroundLeadColor */
+  border-left: 4px solid #D7BA7D; /* QuoteColor */
+  background-color: rgba(26, 26, 26, 0.4); /* DialogBackgroundColor */
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+  color: #E5E5E5; /* ForegroundColor */
+  background-color: #454545; /* GhostColor */
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+pre {
+  background-color: #1A1A1A; /* DialogBackgroundColor */
+  border: 1px solid #353535; /* BorderColor */
+  padding: 12px;
+  border-radius: 6px;
+  overflow: auto;
+}
+pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+hr {
+  height: 1px;
+  border: none;
+  background-color: #353535; /* BorderColor */
+  margin: 24px 0;
+}
+ul, ol { padding-left: 2em; }
+]]></system:String>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
@@ -70,10 +218,104 @@
     </Style>
 
     <Style Selector="^ md|CodeBlock">
-      <Style Selector="^ /template/ StackPanel">
-        <Setter Property="Spacing" Value="0"/>
-        <Setter Property="Margin" Value="0,0,0,4"/>
-      </Style>
+      <Setter Property="Margin" Value="0,8"/>
     </Style>
+
+    <Style Selector="^ mermaid|MermaidPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      <Setter Property="SecondaryForeground" Value="{DynamicResource SecondaryForegroundColor}"/>
+      <Setter Property="LineStroke" Value="{DynamicResource BorderColor}"/>
+      <Setter Property="ArrowFill" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="AccentFill" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="AccentStroke" Value="{DynamicResource PrimaryColor}"/>
+      <Setter Property="AccentForeground" Value="{DynamicResource PrimaryForegroundColor}"/>
+      <Setter Property="NodeFill" Value="{DynamicResource DialogBackgroundColor}"/>
+      <Setter Property="NodeStroke" Value="{DynamicResource BorderColor}"/>
+    </Style>
+
+    <Style Selector="^ md|MarkdownTextBlock">
+      <Setter Property="SelectionBrush" Value="#0078D7"/>
+      <Setter Property="SelectionForegroundBrush" Value="#E5E5E5"/>
+    </Style>
+  </Style>
+
+  <Style Selector="md|CodeBlock">
+    <Setter Property="ColorTheme" Value="{DynamicResource ColorTheme}"/>
+
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="md:CodeBlock">
+          <Border
+            Background="{DynamicResource CardBackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" CornerRadius="4">
+            <DockPanel>
+              <Border
+                DockPanel.Dock="Top"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="0,0,0,1">
+                <DockPanel
+                  Margin="4,2" LastChildFill="True">
+                  <TextBlock
+                    x:Name="PART_LanguageTextBlock" DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Text="{TemplateBinding Language}"/>
+
+                  <StackPanel
+                    DockPanel.Dock="Right" HorizontalAlignment="Right"
+                    Orientation="Horizontal" Spacing="0">
+                    <ToggleButton
+                      x:Name="PART_ToggleTextWrapButton" Classes="Compact Uniform"
+                      Width="{DynamicResource FontSize2Xl}"
+                      Height="{DynamicResource FontSize2Xl}"
+                      shadui:ButtonAssist.CheckedBackground="{DynamicResource TransparentColor}"
+                      shadui:ButtonAssist.CheckedForeground="{DynamicResource PrimaryColor}"
+                      Background="{DynamicResource TransparentColor}"
+                      BorderThickness="0" Focusable="False"
+                      IsChecked="{TemplateBinding IsCodeWrapped, Mode=TwoWay}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.CodeBlock_ToggleTextWrap_Tip}}">
+                      <LucideIcon
+                        Kind="TextWrap"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </ToggleButton>
+                    <Button
+                      x:Name="PART_CopyButton" Classes="Ghost Compact Uniform"
+                      Width="{DynamicResource FontSize2Xl}"
+                      Height="{DynamicResource FontSize2Xl}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
+                      <LucideIcon
+                        Kind="Copy"
+                        Size="{DynamicResource FontSizeL}"/>
+                    </Button>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <ScrollViewer
+                x:Name="PART_ScrollViewer"
+                Background="{DynamicResource SecondaryCardBackgroundColor}"
+                CornerRadius="0,0,5,5"
+                HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                VerticalScrollBarVisibility="Auto">
+                <md:MarkdownTextBlock
+                  x:Name="PART_CodeTextBlock" Margin="6,4,10,4"
+                  FontFamily="{StaticResource MonospaceFontFamily}"
+                  Foreground="{DynamicResource ForegroundColor}"
+                  TextWrapping="{TemplateBinding TextWrapping}"/>
+              </ScrollViewer>
+            </DockPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style Selector="v|PreviewEndpointTextBox">
+    <Setter Property="shadui:ControlAssist.Hint">
+      <I18N Key="{x:Static LocaleKey.PreviewEndpointTextBox_Hint}">
+        <TemplateBinding Property="PreviewEndpoint"/>
+      </I18N>
+    </Setter>
   </Style>
 </Styles>

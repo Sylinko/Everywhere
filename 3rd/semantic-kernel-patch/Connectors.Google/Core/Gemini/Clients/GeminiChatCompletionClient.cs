@@ -747,7 +747,7 @@ internal sealed class GeminiChatCompletionClient : ClientBase
 
     private List<GeminiChatMessageContent> GetChatMessageContentsFromResponse(GeminiResponse geminiResponse)
         => geminiResponse.Candidates == null ?
-            [new GeminiChatMessageContent(role: AuthorRole.Assistant, content: string.Empty, modelId: this._modelId, functionsToolCalls: null)]
+            [new GeminiChatMessageContent(role: AuthorRole.Assistant, content: string.Empty, modelId: this._modelId, functionsToolCalls: null, innerContent: geminiResponse)]
             : geminiResponse.Candidates.Select(candidate => this.GetChatMessageContentFromCandidate(geminiResponse, candidate)).ToList();
 
     private GeminiChatMessageContent GetChatMessageContentFromCandidate(GeminiResponse geminiResponse, GeminiResponseCandidate candidate)
@@ -770,20 +770,15 @@ internal sealed class GeminiChatCompletionClient : ClientBase
             content: text,
             modelId: this._modelId,
             functionCallParts: functionCallParts,
-            metadata: GetResponseMetadata(geminiResponse, candidate));
+            metadata: GetResponseMetadata(geminiResponse, candidate),
+            innerContent: geminiResponse);
 
         // Add thinking content as separate TextContent items with metadata
         foreach (var thinkingPart in thinkingParts)
         {
             if (!string.IsNullOrEmpty(thinkingPart.Text))
             {
-                message.Items.Add(new TextContent(
-                    text: thinkingPart.Text,
-                    modelId: this._modelId,
-                    metadata: new Dictionary<string, object?>
-                    {
-                        ["reasoning"] = true
-                    }));
+                message.Items.Add(new ReasoningContent(thinkingPart.Text));
             }
         }
 
@@ -839,7 +834,8 @@ internal sealed class GeminiChatCompletionClient : ClientBase
                 modelId: this._modelId,
                 calledToolResult: message.CalledToolResult,
                 metadata: message.Metadata,
-                choiceIndex: message.Metadata?.Index ?? 0);
+                choiceIndex: message.Metadata?.Index ?? 0,
+                innerContent: message.InnerContent);
         }
         else if (message.ToolCalls is not null)
         {
@@ -850,7 +846,8 @@ internal sealed class GeminiChatCompletionClient : ClientBase
                 toolCalls: message.ToolCalls,
                 metadata: message.Metadata,
                 choiceIndex: message.Metadata?.Index ?? 0,
-                globalChoiceIndex: ref functionRequestIndex);
+                globalChoiceIndex: ref functionRequestIndex,
+                innerContent: message.InnerContent);
         }
         else
         {
@@ -859,20 +856,16 @@ internal sealed class GeminiChatCompletionClient : ClientBase
                 content: message.Content,
                 modelId: this._modelId,
                 choiceIndex: message.Metadata?.Index ?? 0,
-                metadata: message.Metadata);
+                metadata: message.Metadata,
+                innerContent: message.InnerContent);
         }
 
         // Copy thinking & image content items from message to streaming content
         foreach (var item in message.Items)
         {
-            if (item is TextContent textContent &&
-                textContent.Metadata?.TryGetValue("reasoning", out var reasoning) == true &&
-                reasoning is true)
+            if (item is ReasoningContent reasoningContent)
             {
-                streamingContent.Items.Add(new StreamingTextContent(
-                    text: textContent.Text,
-                    modelId: this._modelId,
-                    metadata: textContent.Metadata));
+                streamingContent.Items.Add(new StreamingReasoningContent(reasoningContent.Text));
             }
 
             if (item is BinaryContent binaryContent)

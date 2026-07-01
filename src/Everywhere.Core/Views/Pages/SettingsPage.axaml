@@ -1,0 +1,64 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.Pages.SettingsPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:pages="clr-namespace:Everywhere.Views.Pages"
+  xmlns:v="clr-namespace:Everywhere.Views" x:Name="Self"
+  Margin="0,20,0,0">
+  <DockPanel
+    MaxWidth="1000" LastChildFill="True"
+    VerticalSpacing="16">
+    <TextBlock
+      Classes="h4" DockPanel.Dock="Top"
+      VerticalAlignment="Center" ClipToBounds="False"
+      Text="{I18N {x:Static LocaleKey.SettingsPage_Title}}"/>
+
+    <ScrollViewer
+      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <ItemsControl
+        Margin="0,0,12,0" HorizontalAlignment="Stretch"
+        ItemsSource="{Binding #Self.Items}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="8"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pages:SettingsPage+Item">
+            <Button
+              Classes="SettingsItem NoPressedAnimation" Padding="20,14"
+              HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+              Command="{Binding $parent[v:MainView].ViewModel.NavigateToCommand}"
+              CommandParameter="{Binding Page}">
+              <Grid
+                ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18"
+                RowDefinitions="Auto,*" RowSpacing="4">
+                <LucideIcon
+                  Grid.Row="0" Grid.RowSpan="2"
+                  Grid.Column="0" DockPanel.Dock="Right"
+                  VerticalAlignment="Center"
+                  Kind="{Binding Category.Icon}"
+                  Size="{DynamicResource FontSize2Xl}"/>
+
+                <TextBlock
+                  Grid.Row="0" Grid.Column="1"
+                  Text="{Binding Category.TitleKey^}"
+                  TextWrapping="Wrap"/>
+                <TextBlock
+                  Classes="Muted Caption" Grid.Row="1"
+                  Grid.Column="1"
+                  Text="{Binding Category.DescriptionKey^, FallbackValue={x:Null}}"
+                  TextWrapping="Wrap"/>
+
+                <LucideIcon
+                  Grid.Row="0" Grid.RowSpan="2"
+                  Grid.Column="2" DockPanel.Dock="Right"
+                  VerticalAlignment="Center" Kind="ChevronRight"
+                  Size="{DynamicResource FontSize2Xl}"/>
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

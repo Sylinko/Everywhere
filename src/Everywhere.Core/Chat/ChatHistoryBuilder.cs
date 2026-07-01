@@ -1,4 +1,6 @@
-﻿using Everywhere.Common;
+﻿using System.Security;
+using Everywhere.AI;
+using Everywhere.Common;
 using Everywhere.Utilities;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -13,13 +15,25 @@ namespace Everywhere.Chat;
 public static class ChatHistoryBuilder
 {
     public static async ValueTask<ChatHistory> BuildChatHistoryAsync(
-        IEnumerable<ChatMessage> chatMessages,
+        IPromptRenderer promptRenderer,
+        string systemPrompt,
+        IReadOnlyList<ChatMessage> chatMessages,
+        int maxContextRounds,
+        Modalities supportedModalities,
         CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
-        foreach (var chatMessage in chatMessages)
+        chatHistory.AddSystemMessage(systemPrompt);
+
+        var startIndex = ResolveStartIndex(chatMessages, maxContextRounds);
+
+        foreach (var chatMessage in chatMessages.Skip(startIndex))
         {
-            await foreach (var chatMessageContent in CreateChatMessageContentsAsync(chatMessage, cancellationToken))
+            await foreach (var chatMessageContent in CreateChatMessageContentsAsync(
+                               promptRenderer,
+                               chatMessage,
+                               supportedModalities,
+                               cancellationToken))
             {
                 chatHistory.Add(chatMessageContent);
             }
@@ -28,148 +42,181 @@ public static class ChatHistoryBuilder
         return chatHistory;
     }
 
+    private static int ResolveStartIndex(IReadOnlyList<ChatMessage> chatMessages, int maxContextRounds)
+    {
+        if (chatMessages.Count == 0 || maxContextRounds <= -1)
+        {
+            return 0;
+        }
+
+        var matchedUserRounds = 0;
+
+        for (var i = chatMessages.Count - 1; i >= 0; i--)
+        {
+            if (chatMessages[i].Role != AuthorRole.User)
+            {
+                continue;
+            }
+
+            matchedUserRounds++;
+            if (matchedUserRounds - 1 == maxContextRounds)
+            {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
     /// <summary>
     /// Creates chat message contents from a chat message.
     /// </summary>
+    /// <param name="promptRenderer"></param>
+    /// <param name="supportedModalities"></param>
     /// <param name="chatMessage"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     private static async IAsyncEnumerable<ChatMessageContent> CreateChatMessageContentsAsync(
+        IPromptRenderer promptRenderer,
         ChatMessage chatMessage,
+        Modalities supportedModalities,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         switch (chatMessage)
         {
-            case SystemChatMessage system:
-            {
-                yield return new ChatMessageContent(AuthorRole.System, system.SystemPrompt);
-                break;
-            }
-            case AssistantChatMessage assistant:
-            {
-                // ReSharper disable once ForCanBeConvertedToForeach
-                // foreach would create an enumerator object, which will cause thread lock issues.
-                for (var spanIndex = 0; spanIndex < assistant.Spans.Count; spanIndex++)
-                {
-                    var span = assistant.Spans[spanIndex];
-                    if (span.MarkdownBuilder.Length > 0)
-                    {
-                        var metadata = span.ReasoningOutput.IsNullOrEmpty() ?
-                            null :
-                            new Dictionary<string, object?>
-                            {
-                                { "reasoning_content", span.ReasoningOutput }
-                            };
-                        yield return new ChatMessageContent(AuthorRole.Assistant, span.MarkdownBuilder.ToString(), metadata: metadata);
-                    }
-
-                    // ReSharper disable once ForCanBeConvertedToForeach
-                    // foreach would create an enumerator object, which will cause thread lock issues.
-                    for (var callIndex = 0; callIndex < span.FunctionCalls.Count; callIndex++)
-                    {
-                        var functionCallChatMessage = span.FunctionCalls[callIndex];
-                        await foreach (var actionChatMessageContent in CreateChatMessageContentsAsync(functionCallChatMessage, cancellationToken))
-                        {
-                            yield return actionChatMessageContent;
-                        }
-                    }
-                }
-                break;
-            }
-            case UserChatMessage user:
+            case AssistantChatMessage assistantChatMessage:
             {
                 var items = new ChatMessageContentItemCollection();
-                foreach (var chatAttachment in user.Attachments.AsValueEnumerable().ToList())
+                foreach (var span in assistantChatMessage.Items)
                 {
-                    await PopulateKernelContentsAsync(chatAttachment, items, cancellationToken);
+                    switch (span)
+                    {
+                        case AssistantChatMessageTextSpan { Content: { Length: > 0 } content }:
+                        {
+                            items.Add(new TextContent(content, metadata: span.Metadata));
+                            break;
+                        }
+                        case AssistantChatMessageFunctionCallSpan { Items: { Count: > 0 } functionCalls }:
+                        {
+                            // 1. Add all function calls as content items.
+                            items.AddRange(functionCalls.SelectMany(f => f.Calls));
+
+                            // 2. Yield the assistant message with function call items first
+                            yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
+                            items = [];
+
+                            // 3. Yield the function call results as separate tool messages
+                            var resultItems = new ChatMessageContentItemCollection();
+                            var extraToolCallResults = new List<ChatAttachment>();
+                            foreach (var functionCall in functionCalls)
+                            {
+                                foreach (var call in functionCall.Calls)
+                                {
+                                    var callId = call.Id;
+                                    if (callId.IsNullOrEmpty())
+                                    {
+                                        throw new InvalidOperationException("Function CallId cannot be null or empty.");
+                                    }
+
+                                    var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
+                                    resultItems.Add(
+                                        resultContent ?? new FunctionResultContent(
+                                            call,
+                                            $"Error: No result found for function call ID '{callId}'. " +
+                                            $"This may caused by an error during function execution or user cancellation."));
+
+                                    // If the function call result is a ChatAttachment, add it as extra attachment message(s).
+                                    if (resultContent?.Result is ChatAttachment extraToolCallResult)
+                                    {
+                                        extraToolCallResults.Add(extraToolCallResult);
+                                    }
+                                }
+                            }
+
+                            yield return new ChatMessageContent(AuthorRole.Tool, resultItems);
+
+                            // 4. Workaround for any function call results that are ChatAttachments
+                            // We put them as user message because tool message doesn't support attachments
+                            if (extraToolCallResults.Count > 0)
+                            {
+                                var attachmentItems = new ChatMessageContentItemCollection { new TextContent("<ExtraToolCallResultAttachments>") };
+                                foreach (var extraToolCallResult in extraToolCallResults)
+                                {
+                                    await PopulateKernelContentsAsync(extraToolCallResult, attachmentItems, supportedModalities, cancellationToken);
+                                }
+
+                                // No valid attachment added, do nothing
+                                if (attachmentItems.Count == 1) break;
+
+                                attachmentItems.Add(new TextContent("</ExtraToolCallResultAttachments>"));
+                                yield return new ChatMessageContent(AuthorRole.User, attachmentItems);
+                            }
+
+                            break;
+                        }
+                        case AssistantChatMessageReasoningSpan { ReasoningOutput: { Length: > 0 } reasoningOutput }:
+                        {
+                            items.Add(new ReasoningContent(reasoningOutput) { Metadata = span.Metadata });
+                            break;
+                        }
+                        case AssistantChatMessageImageSpan { ImageOutput: { } imageOutput }:
+                        {
+                            try
+                            {
+                                var imageData = await File.ReadAllBytesAsync(imageOutput.FilePath, cancellationToken);
+                                items.Add(
+                                    new ImageContent(imageData, imageOutput.MimeType)
+                                    {
+                                        Metadata = span.Metadata
+                                    });
+                            }
+                            catch
+                            {
+                                items.Add(new TextContent("The image is generated but failed to be read from disk.", metadata: span.Metadata));
+                            }
+                            break;
+                        }
+                    }
                 }
 
                 if (items.Count > 0)
                 {
-                    // If there are attachments, add the user content as a separate item.
-                    items.Add(
-                        new TextContent(
-                            $"""
-                             <UserRequestStart/>
-                             {user.Content}
-                             """));
+                    yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
+                }
+                break;
+            }
+            case UserChatMessage userChatMessage:
+            {
+                var items = new ChatMessageContentItemCollection();
+                foreach (var chatAttachment in userChatMessage.Attachments.AsValueEnumerable().ToList())
+                {
+                    await PopulateKernelContentsAsync(chatAttachment, items, supportedModalities, cancellationToken);
+                }
+
+                if (userChatMessage is UserStrategyChatMessage { Strategy.Body: { Length: > 0 } strategyBody } userStrategyMessage)
+                {
+                    // If UserMessage template is provided, render the content with the template.
+                    var renderedContent = promptRenderer.RenderStrategyUserPrompt(
+                        strategyBody,
+                        userChatMessage.Content,
+                        userStrategyMessage.PreprocessorResult);
+                    items.Add(new TextContent(renderedContent));
                 }
                 else
                 {
                     // No attachments, just add the content directly.
-                    items.Add(new TextContent(user.Content));
+                    items.Add(new TextContent(userChatMessage.Content));
                 }
 
                 yield return new ChatMessageContent(AuthorRole.User, items);
                 break;
             }
-            case FunctionCallChatMessage functionCall:
+            case { Role.Label: "system" or "user" or "developer" or "tool" } when chatMessage.ToString() is { Length: > 0 } content:
             {
-                var functionCallMessage = new ChatMessageContent(AuthorRole.Assistant, content: null);
-                functionCallMessage.Items.AddRange(functionCall.Calls);
-                yield return functionCallMessage;
-
-                // ReSharper disable once ForCanBeConvertedToForeach
-                // foreach would create an enumerator object, which will cause thread lock issues.
-                for (var callIndex = 0; callIndex < functionCall.Calls.Count; callIndex++)
-                {
-                    var callId = functionCall.Calls[callIndex].Id;
-                    if (callId.IsNullOrEmpty())
-                    {
-                        throw new InvalidOperationException("Function call ID cannot be null or empty when creating chat message contents.");
-                    }
-
-                    var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
-                    yield return resultContent?.ToChatMessage() ?? new ChatMessageContent(
-                        AuthorRole.Tool,
-                        [
-                            new FunctionResultContent(
-                                functionCall.Calls[callIndex],
-                                $"Error: No result found for function call ID '{callId}'. " +
-                                $"This may caused by an error during function execution or user cancellation.")
-                        ]);
-
-                    if (await TryCreateExtraToolCallResultsContentAsync(
-                            resultContent,
-                            cancellationToken) is { } extraToolCallResultsContent)
-                    {
-                        yield return extraToolCallResultsContent;
-                    }
-                }
-
-                break;
-            }
-            case { Role.Label: "system" or "user" or "developer" or "tool" }:
-            {
-                yield return new ChatMessageContent(chatMessage.Role, chatMessage.ToString());
+                yield return new ChatMessageContent(chatMessage.Role, content);
                 break;
             }
         }
-    }
-
-    /// <summary>
-    /// Creates a special ChatMessageContent to hold the extra tool call results if there are any attachments in the function call chat message.
-    /// This is a workaround to include additional tool call results that are not part of the standard function call results. e.g. images, audio, etc.
-    /// </summary>
-    /// <param name="resultContent"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public static async ValueTask<ChatMessageContent?> TryCreateExtraToolCallResultsContentAsync(
-        FunctionResultContent? resultContent,
-        CancellationToken cancellationToken)
-    {
-        if (resultContent?.Result is not ChatAttachment chatAttachment) return null;
-
-        var items = new ChatMessageContentItemCollection { new TextContent("<ExtraToolCallResultAttachments>") };
-        await PopulateKernelContentsAsync(chatAttachment, items, cancellationToken);
-
-        if (items.Count == 1) // No valid attachment added
-        {
-            return null;
-        }
-
-        items.Add(new TextContent("</ExtraToolCallResultAttachments>"));
-        return new ChatMessageContent(AuthorRole.User, items);
     }
 
     /// <summary>
@@ -177,15 +224,17 @@ public static class ChatHistoryBuilder
     /// </summary>
     /// <param name="chatAttachment"></param>
     /// <param name="contents"></param>
+    /// <param name="supportedModalities"></param>
     /// <param name="cancellationToken"></param>
     private static async ValueTask PopulateKernelContentsAsync(
         ChatAttachment chatAttachment,
         ChatMessageContentItemCollection contents,
+        Modalities supportedModalities,
         CancellationToken cancellationToken)
     {
         switch (chatAttachment)
         {
-            case ChatTextSelectionAttachment textSelection:
+            case TextSelectionAttachment textSelection:
             {
                 contents.Add(
                     new TextContent(
@@ -201,7 +250,7 @@ public static class ChatHistoryBuilder
                          """));
                 break;
             }
-            case ChatVisualElementAttachment visualElement:
+            case VisualElementAttachment visualElement:
             {
                 contents.Add(
                     new TextContent(
@@ -212,7 +261,7 @@ public static class ChatHistoryBuilder
                          """));
                 break;
             }
-            case ChatTextAttachment text:
+            case TextAttachment text:
             {
                 contents.Add(
                     new TextContent(
@@ -223,17 +272,34 @@ public static class ChatHistoryBuilder
                          """));
                 break;
             }
-            case ChatFileAttachment file:
+            case FileAttachment file:
             {
                 var fileInfo = new FileInfo(file.FilePath);
-                if (!fileInfo.Exists || fileInfo.Length <= 0 || fileInfo.Length > 25 * 1024 * 1024) // TODO: Configurable max file size?
+                if (!fileInfo.Exists)
                 {
-                    return;
+                    contents.Add(GetOmittedContent("file not found"));
+                    break;
+                }
+                if (fileInfo.Length == 0)
+                {
+                    contents.Add(GetOmittedContent("file is empty"));
+                    break;
+                }
+                if (fileInfo.Length > 25 * 1024 * 1024) // TODO: Configurable max file size?
+                {
+                    contents.Add(GetOmittedContent($"file size {fileInfo.Length} exceeds the maximum supported size 25MB"));
+                    break;
+                }
+                if (!supportedModalities.SupportsMimeType(file.MimeType))
+                {
+                    contents.Add(GetOmittedContent("file modality is unsupported, try process with tool if any. e.g. `run_subagent`"));
+                    break;
                 }
 
                 byte[] data;
                 try
                 {
+                    await using var stream = fileInfo.OpenRead();
                     data = await File.ReadAllBytesAsync(file.FilePath, cancellationToken);
                 }
                 catch (Exception ex)
@@ -250,7 +316,7 @@ public static class ChatHistoryBuilder
                 contents.Add(
                     new TextContent(
                         $"""
-                         <Attachment type="file" path="{file.FilePath}" mimeType="{file.MimeType}" description="{file.Description}">
+                         <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
                          """));
                 contents.Add(
                     FileUtilities.GetCategory(file.MimeType) switch
@@ -261,6 +327,13 @@ public static class ChatHistoryBuilder
                     });
                 contents.Add(new TextContent("</Attachment>"));
                 break;
+
+                TextContent GetOmittedContent(string reason) => new(
+                    $"""
+                     <Attachment type="file" path="{SecurityElement.Escape(file.FilePath)}" mimeType="{SecurityElement.Escape(file.MimeType)}" description="{SecurityElement.Escape(file.Description)}">
+                     Content omitted because {reason}
+                     </Attachment>
+                     """);
             }
         }
     }

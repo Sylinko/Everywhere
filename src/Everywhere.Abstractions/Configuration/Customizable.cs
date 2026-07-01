@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -46,7 +47,7 @@ public partial class Customizable<T> : ObservableObject where T : notnull
     }
 
     [JsonIgnore]
-    public bool IsCustomValueSet => CustomValue is not null && !EqualityComparer<T>.Default.Equals((T)CustomValue, DefaultValue);
+    public bool IsCustomValueSet => CustomValue is T;
 
     [JsonIgnore]
     public T ActualValue => CustomValue is T value ? value : DefaultValue;
@@ -139,7 +140,7 @@ public partial class Customizable<T> : ObservableObject where T : notnull
                             return (T)Enum.Parse(typeof(T), enumString, true);
                         }
 
-                        return (T)Enum.ToObject(typeof(T), Convert.ToInt32(value));
+                        return (T)Enum.ToObject(typeof(T), Convert.ToInt32(value, CultureInfo.InvariantCulture));
                     }
 
                     if (value is JsonElement element)
@@ -147,7 +148,7 @@ public partial class Customizable<T> : ObservableObject where T : notnull
                         return element.Deserialize<T>();
                     }
 
-                    return (T)Convert.ChangeType(value, typeof(T));
+                    return (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
                 }
                 catch
                 {

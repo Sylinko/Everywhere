@@ -3,6 +3,7 @@ description: 提交错误报告以帮助改进
 title: "[Bug] "
 labels:
   - bug
+type: bug
 body:
   - type: checkboxes
     attributes:
@@ -10,7 +11,7 @@ body:
       options:
         - label: 我已经查找过相关的 Issue
           required: true
-        - label: 我已知晓使用非官方支持 API（如中转、代理）造成的问题不会被受理
+        - label: 我已理解并确认：非预设/非原生支持的模型兼容性问题不在支持范围内。
           required: true
   - type: textarea
     id: description

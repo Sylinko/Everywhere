@@ -1,7 +1,12 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Anthropic.Models.Messages;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Google.Core;
+using OpenAI.Chat;
+using OpenAI.Responses;
+using ZLinq;
 
 namespace Everywhere.Chat;
 
@@ -12,12 +17,15 @@ partial class ChatService
     /// </summary>
     public sealed class FunctionCallContentBuilder
     {
-        public int Count => _functionNamesByIndex?.Count ?? 0;
+        public int Count => Math.Max(
+            Math.Max(_functionCallIdsByIndex?.Count ?? 0, _functionNamesByIndex?.Count ?? 0),
+            Math.Max(_functionArgumentBuildersByIndex?.Count ?? 0, _functionMetadataByIndex?.Count ?? 0));
 
         private Dictionary<string, string>? _functionCallIdsByIndex;
         private Dictionary<string, string>? _functionNamesByIndex;
         private Dictionary<string, StringBuilder>? _functionArgumentBuildersByIndex;
         private Dictionary<string, IReadOnlyDictionary<string, object?>>? _functionMetadataByIndex;
+        private Dictionary<string, string>? _functionCallIndexesById;
 
         private static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
@@ -30,19 +38,38 @@ partial class ChatService
         /// Extracts function call updates from the content and track them for later building.
         /// </summary>
         /// <param name="content">The content to extract function call updates from.</param>
-        public void Append(StreamingChatMessageContent content)
+        /// <returns><see langword="true"/> if the content contains function call updates.</returns>
+        public bool Append(StreamingChatMessageContent content)
         {
-            var streamingFunctionCallUpdates = content.Items.OfType<StreamingFunctionCallUpdateContent>();
+            var hasFunctionCallUpdates = content.Items.AsValueEnumerable().OfType<StreamingFunctionCallUpdateContent>().Aggregate(
+                false,
+                (current, update) => current | TrackStreamingFunctionCallUpdate(update));
 
-            foreach (var update in streamingFunctionCallUpdates)
+            if (!hasFunctionCallUpdates)
             {
-                TrackStreamingFunctionCallUpdate(
-                    update,
-                    ref _functionCallIdsByIndex,
-                    ref _functionNamesByIndex,
-                    ref _functionArgumentBuildersByIndex,
-                    ref _functionMetadataByIndex);
+                // check inner content because SK doesn't handle them
+                hasFunctionCallUpdates = content.InnerContent switch
+                {
+                    // OpenAI Chat Completions
+                    StreamingChatCompletionUpdate { ToolCallUpdates.Count: > 0 } => true,
+                    // OpenAI Responses
+                    StreamingResponseOutputItemAddedUpdate { Item: FunctionCallResponseItem } => true,
+                    // Anthropic Messages
+                    RawMessageStreamEvent
+                    {
+                        Value:
+                        RawContentBlockStartEvent { ContentBlock.Value: ToolUseBlock } or
+                        RawContentBlockDeltaEvent { Delta.Value: ToolUseBlock }
+                    } => true,
+                    // Gemini (Seems not working?)
+                    GeminiResponse { Candidates.Count: > 0 } geminiResponse => geminiResponse.Candidates?.AsValueEnumerable().Any(candidate =>
+                        candidate.Content?.Parts?.AsValueEnumerable().Any(part => part.FunctionCall is not null) is true) is true,
+                    GeminiPart { FunctionCall: not null } => true,
+                    _ => hasFunctionCallUpdates
+                };
             }
+
+            return hasFunctionCallUpdates;
         }
 
         /// <summary>
@@ -59,7 +86,6 @@ partial class ChatService
             for (var i = 0; i < _functionCallIdsByIndex.Count; i++)
             {
                 var functionCallIndexAndId = _functionCallIdsByIndex.ElementAt(i);
-
                 var functionName = string.Empty;
 
                 if (_functionNamesByIndex?.TryGetValue(functionCallIndexAndId.Key, out var fqn) ?? false)
@@ -123,58 +149,90 @@ partial class ChatService
         /// Tracks streaming function call update contents.
         /// </summary>
         /// <param name="update">The streaming function call update content to track.</param>
-        /// <param name="functionCallIdsByIndex">The dictionary of function call IDs by function call index.</param>
-        /// <param name="functionNamesByIndex">The dictionary of function names by function call index.</param>
-        /// <param name="functionArgumentBuildersByIndex">The dictionary of function argument builders by function call index.</param>
-        /// <param name="functionMetadataByIndex">The dictionary of function metadata by function call index.</param>
-        private static void TrackStreamingFunctionCallUpdate(
-            StreamingFunctionCallUpdateContent? update,
-            ref Dictionary<string, string>? functionCallIdsByIndex,
-            ref Dictionary<string, string>? functionNamesByIndex,
-            ref Dictionary<string, StringBuilder>? functionArgumentBuildersByIndex,
-            ref Dictionary<string, IReadOnlyDictionary<string, object?>>? functionMetadataByIndex)
+        /// <returns><see langword="true"/> if the update contains function call data.</returns>
+        private bool TrackStreamingFunctionCallUpdate(StreamingFunctionCallUpdateContent? update)
         {
             if (update is null)
             {
                 // Nothing to track.
-                return;
+                return false;
             }
 
-            // Create index that is unique across many requests.
-            var functionCallIndex = $"{update.CallId}-{update.RequestIndex}-{update.FunctionCallIndex}";
+            var hasFunctionCallUpdate =
+                update.CallId is { Length: > 0 } ||
+                update.Name is { Length: > 0 } ||
+                update.Arguments is not null ||
+                update.Metadata is not null;
+
+            if (!hasFunctionCallUpdate)
+            {
+                return false;
+            }
+
+            // Create index that is stable across streaming chunks. CallId is often only present in
+            // one chunk, so the request/function-call indexes are the primary join key.
+            var functionCallIndex = GetFunctionCallIndex(update);
 
             // If we have a call id, ensure the index is being tracked. Even if it's not a function update,
             // we want to keep track of it so we can send back an error.
             if (update.CallId is { Length: > 0 } id)
             {
-                (functionCallIdsByIndex ??= [])[functionCallIndex] = id;
+                (_functionCallIdsByIndex ??= [])[functionCallIndex] = id;
             }
 
             // Ensure we're tracking the function's name.
             if (update.Name is { Length: > 0 } name)
             {
-                (functionNamesByIndex ??= [])[functionCallIndex] = name;
+                (_functionNamesByIndex ??= [])[functionCallIndex] = name;
             }
 
             // Track metadata
-            if (update.Metadata is not null && !functionMetadataByIndex?.ContainsKey(functionCallIndex) == true)
+            if (update.Metadata is not null)
             {
-                (functionMetadataByIndex ??= [])[functionCallIndex] = update.Metadata;
-            }
-            else if (update.Metadata is not null)
-            {
-                (functionMetadataByIndex ??= [])[functionCallIndex] = update.Metadata;
+                (_functionMetadataByIndex ??= [])[functionCallIndex] = update.Metadata;
             }
 
             // Ensure we're tracking the function's arguments.
-            if (update.Arguments is not { } argumentsUpdate) return;
-
-            if (!(functionArgumentBuildersByIndex ??= []).TryGetValue(functionCallIndex, out var arguments))
+            if (update.Arguments is not { } argumentsUpdate)
             {
-                functionArgumentBuildersByIndex[functionCallIndex] = arguments = new StringBuilder();
+                return true;
+            }
+
+            if (!(_functionArgumentBuildersByIndex ??= []).TryGetValue(functionCallIndex, out var arguments))
+            {
+                _functionArgumentBuildersByIndex[functionCallIndex] = arguments = new StringBuilder();
             }
 
             arguments.Append(argumentsUpdate);
+            return true;
+        }
+
+        private string GetFunctionCallIndex(StreamingFunctionCallUpdateContent update)
+        {
+            var streamingIndex = $"{update.RequestIndex}-{update.FunctionCallIndex}";
+
+            if (update.CallId is not { Length: > 0 } callId)
+            {
+                return streamingIndex;
+            }
+
+            if (_functionCallIndexesById?.TryGetValue(callId, out var existingIndex) == true)
+            {
+                return existingIndex;
+            }
+
+            if (_functionCallIdsByIndex?.TryGetValue(streamingIndex, out var existingCallId) == true &&
+                existingCallId != callId)
+            {
+                // Some non-incremental adapters do not provide a distinct FunctionCallIndex.
+                // Preserve those simultaneous full tool calls by falling back to CallId.
+                var callIdIndex = $"id:{callId}";
+                (_functionCallIndexesById ??= [])[callId] = callIdIndex;
+                return callIdIndex;
+            }
+
+            (_functionCallIndexesById ??= [])[callId] = streamingIndex;
+            return streamingIndex;
         }
     }
 

@@ -5,14 +5,13 @@
   <ControlTheme
     x:Key="{x:Type v:RestartAsAdministratorControl}"
     TargetType="v:RestartAsAdministratorControl">
-
     <Setter Property="Template">
       <ControlTemplate>
         <Button
           Classes="Outline" HorizontalAlignment="Left"
           shadui:ButtonAssist.Icon="{LucideIconContent Shield}"
           Command="{Binding RestartAsAdministratorCommand, RelativeSource={RelativeSource TemplatedParent}}"
-          Content="{I18N {x:Static LocaleKey.CommonSettings_RestartAsAdministrator_Button_Content}}"/>
+          Content="{I18N {x:Static LocaleKey.RestartAsAdministratorControl_RestartButton_Content}}"/>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

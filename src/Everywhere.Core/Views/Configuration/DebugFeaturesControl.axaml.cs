@@ -9,22 +9,15 @@ using ShadUI;
 
 namespace Everywhere.Views;
 
-public partial class DebugFeaturesControl(
-    ILauncher launcher,
-    ToastManager toastManager,
-    IRuntimeConstantProvider runtimeConstantProvider,
-    ILogger<DebugFeaturesControl> logger)
-    : TemplatedControl
+public partial class DebugFeaturesControl(ILogger<DebugFeaturesControl> logger) : TemplatedControl
 {
     [RelayCommand]
     private async Task EditSettingsFileAsync()
     {
         try
         {
-            var settingsPath = Path.Combine(
-                runtimeConstantProvider.Get<string>(RuntimeConstantType.WritableDataPath),
-                "settings.json");
-            var launched = await launcher.LaunchFileInfoAsync(new FileInfo(settingsPath));
+            var settingsPath = Path.Combine(RuntimeConstants.WritableFolderPath, "settings.json");
+            var launched = await App.Launcher.LaunchFileInfoAsync(new FileInfo(settingsPath));
             if (!launched)
             {
                 throw new InvalidOperationException($"Unable to launch: {settingsPath}");
@@ -34,12 +27,7 @@ public partial class DebugFeaturesControl(
         {
             ex = HandledSystemException.Handle(ex);
             logger.LogError(ex, "Failed to open settings file.");
-            toastManager
-                .CreateToast(LocaleResolver.Common_Error)
-                .WithContent(ex.GetFriendlyMessage())
-                .DismissOnClick()
-                .OnBottomRight()
-                .ShowError();
+            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 
@@ -48,8 +36,8 @@ public partial class DebugFeaturesControl(
     {
         try
         {
-            var logsPath = runtimeConstantProvider.EnsureWritableDataFolderPath("logs");
-            var launched = await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(logsPath));
+            var logsPath = RuntimeConstants.EnsureWritableDataFolderPath("logs");
+            var launched = await App.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(logsPath));
             if (!launched)
             {
                 throw new InvalidOperationException($"Unable to launch: {logsPath}");
@@ -59,12 +47,7 @@ public partial class DebugFeaturesControl(
         {
             ex = HandledSystemException.Handle(ex);
             logger.LogError(ex, "Failed to open logs folder.");
-            toastManager
-                .CreateToast(LocaleResolver.Common_Error)
-                .WithContent(ex.GetFriendlyMessage())
-                .DismissOnClick()
-                .OnBottomRight()
-                .ShowError();
+            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 
@@ -79,7 +62,7 @@ public partial class DebugFeaturesControl(
                 Path.Combine(
                     Path.GetDirectoryName(Environment.ProcessPath ?? typeof(DebugFeaturesControl).Assembly.Location) ?? ".",
                     "createdump.exe"));
-            var dumpsPath = runtimeConstantProvider.EnsureWritableDataFolderPath("dumps");
+            var dumpsPath = RuntimeConstants.EnsureWritableDataFolderPath("dumps");
             var dumpPath = Path.Combine(dumpsPath, $"dump_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.dmp");
             var psi = new ProcessStartInfo
             {
@@ -91,13 +74,7 @@ public partial class DebugFeaturesControl(
             };
 
             // toast: Everywhere will freeze for a few seconds while the dump is being created.
-            toastManager
-                .CreateToast(LocaleResolver.Common_Warning)
-                .WithContent(LocaleResolver.DebugFeaturesControl_CreateDumpToast_Content)
-                .DismissOnClick()
-                .OnBottomRight()
-                .WithDelay(1000)
-                .ShowWarning();
+            ToastManager.Warning(LocaleResolver.Common_Warning, LocaleResolver.DebugFeaturesControl_CreateDumpToast_Content, durationSeconds: 3d);
             await Task.Delay(500); // Give the toast time to show before freezing the UI.
 
             var process = Process.Start(psi);
@@ -115,13 +92,8 @@ public partial class DebugFeaturesControl(
             await process.WaitForExitAsync();
             if (process.ExitCode != 0)
             {
-                toastManager
-                    .CreateToast(LocaleResolver.Common_Error)
-                    .WithContent(error.Trim())
-                    .DismissOnClick()
-                    .OnBottomRight()
-                    .ShowWarning();
                 // The dump may still have been created despite the non-zero exit code.
+                ToastManager.Error(LocaleResolver.Common_Error, error.Trim());
 
                 if (!File.Exists(dumpPath))
                 {
@@ -129,19 +101,14 @@ public partial class DebugFeaturesControl(
                 }
             }
 
-            await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(dumpsPath));
+            await App.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(dumpsPath));
 #endif
         }
         catch (Exception ex)
         {
             ex = HandledSystemException.Handle(ex);
             logger.LogError(ex, "Failed to create dump.");
-            toastManager
-                .CreateToast(LocaleResolver.Common_Error)
-                .WithContent(ex.GetFriendlyMessage())
-                .DismissOnClick()
-                .OnBottomRight()
-                .ShowError();
+            ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
         }
     }
 }

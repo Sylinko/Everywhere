@@ -1,0 +1,105 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:KeyboardShortcutInputBox}"
+    TargetType="v:KeyboardShortcutInputBox">
+    <Setter Property="Focusable" Value="True"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:KeyboardShortcutInputBox">
+        <Border
+          x:Name="PART_InputBox" MinHeight="36"
+          Padding="12,4"
+          Background="{DynamicResource SelectionColor}"
+          BorderBrush="{DynamicResource BorderColor}"
+          BorderThickness="1"
+          CornerRadius="{DynamicResource LgCornerRadius}"
+          Cursor="Hand">
+          <Grid ColumnDefinitions="*, Auto">
+            <Panel
+              Grid.Column="0" VerticalAlignment="Center">
+
+              <!--  Watermarks Container  -->
+              <Panel
+                IsHitTestVisible="False"
+                IsVisible="{Binding !ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}">
+                <TextBlock
+                  VerticalAlignment="Center"
+                  IsVisible="{Binding !IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
+                  Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_PlaceholderText}}"/>
+                <TextBlock
+                  VerticalAlignment="Center"
+                  IsVisible="{Binding IsRecording, RelativeSource={RelativeSource TemplatedParent}}"
+                  Text="{I18N {x:Static LocaleKey.KeyboardShortcutInputBox_SettingWatermark}}"/>
+              </Panel>
+
+              <!--  Shortcut Items  -->
+              <ItemsControl
+                IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}"
+                ItemsSource="{TemplateBinding ShortcutParts}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel
+                      Orientation="Horizontal" Spacing="5"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <ContentControl Content="{Binding}">
+                      <ContentControl.DataTemplates>
+                        <DataTemplate DataType="v:TextShortcutPart">
+                          <Border
+                            Padding="6,2"
+                            Background="{DynamicResource PrimaryColor}"
+                            CornerRadius="4">
+                            <TextBlock
+                              FontSize="{DynamicResource FontSizeM}"
+                              FontWeight="SemiBold"
+                              Text="{Binding Text}">
+                              <TextBlock.Foreground>
+                                <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
+                              </TextBlock.Foreground>
+                            </TextBlock>
+                          </Border>
+                        </DataTemplate>
+                        <DataTemplate DataType="v:IconShortcutPart">
+                          <Border
+                            Padding="6,2"
+                            Background="{DynamicResource PrimaryColor}"
+                            CornerRadius="4">
+                            <PathIcon
+                              Width="{DynamicResource FontSizeM}"
+                              Height="{DynamicResource LineHeightM}"
+                              Data="{Binding Icon}">
+                              <PathIcon.Foreground>
+                                <SolidColorBrush Color="{DynamicResource PrimaryForegroundColor}"/>
+                              </PathIcon.Foreground>
+                            </PathIcon>
+                          </Border>
+                        </DataTemplate>
+                      </ContentControl.DataTemplates>
+                    </ContentControl>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Panel>
+
+            <Button
+              x:Name="PART_ClearButton" Classes="Ghost Compact"
+              Grid.Column="1" Margin="4,0,0,0"
+              Padding="2" Focusable="False"
+              IsVisible="{Binding !!ShortcutParts.Count, RelativeSource={RelativeSource TemplatedParent}}">
+              <LucideIcon
+                Foreground="{DynamicResource ForegroundColor}"
+                Kind="X" Size="18"/>
+            </Button>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^[IsRecording=True] /template/ Border#PART_InputBox">
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

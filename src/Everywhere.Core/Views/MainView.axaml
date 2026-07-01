@@ -6,20 +6,28 @@
 
   <v:ReactiveUserControl.Styles>
     <Style Selector="DockPanel#RootPanel">
-      <Style Selector="^ &gt; TransitioningContentControl">
-        <Setter Property="Margin" Value="0,14,16,16"/>
+      <Style Selector="^ shadui|NavigationView:compact /template/ DockPanel#PART_PaneRoot">
+        <Setter Property="Margin" Value="0,0,16,0"/>
       </Style>
-    </Style>
-    <Style Selector="DockPanel#RootPanel.narrow">
-      <Style Selector="^ &gt; shadui|NavigationBar">
-        <Setter Property="DockPanel.Dock" Value="Bottom"/>
-        <Setter Property="Orientation" Value="Horizontal"/>
-        <Setter Property="Margin" Value="0,8"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="VerticalAlignment" Value="Bottom"/>
-      </Style>
-      <Style Selector="^ &gt; TransitioningContentControl">
-        <Setter Property="Margin" Value="16,14,16,0"/>
+
+      <Style Selector="^.narrow">
+        <Style Selector="^ &gt; shadui|NavigationBar">
+          <Setter Property="DockPanel.Dock" Value="Bottom"/>
+          <Setter Property="Orientation" Value="Horizontal"/>
+          <Setter Property="Margin" Value="0,8"/>
+          <Setter Property="HorizontalAlignment" Value="Stretch"/>
+          <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+
+        <Style Selector="^ shadui|NavigationView">
+          <Style Selector="^:compact /template/ DockPanel#PART_PaneRoot">
+            <Setter Property="Margin" Value="16,0"/>
+          </Style>
+          <Style Selector="^:compact /template/ Border#PART_ContentRoot">
+            <Setter Property="BorderThickness" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+          </Style>
+        </Style>
       </Style>
     </Style>
   </v:ReactiveUserControl.Styles>
@@ -39,28 +47,33 @@
     </Interaction.Behaviors>
 
     <shadui:NavigationBar
-      Margin="12,8" ExpandedSize="220"
-      IsExpanded="{Binding PersistentState.IsMainViewSidebarExpanded}"
-      ItemsSource="{Binding Pages}"
-      SelectedItem="{Binding SelectedPage, Mode=TwoWay}"
+      Margin="12,8"
+      IsExpanded="{Binding PersistentState.IsMainViewSidebarExpanded, Mode=TwoWay}"
+      ItemsSource="{Binding Items}"
+      SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
       ZIndex="1">
       <Interaction.Behaviors>
         <shadui:ImplicitCompositionAnimationBehavior>
           <shadui:CompositionAnimation
-            Easing="{StaticResource SoftEaseOutBack}"
+            Easing="{x:Static shadui:EaseOutBack.Soft}"
             Target="Offset" Duration="0:0:0.4"/>
         </shadui:ImplicitCompositionAnimationBehavior>
       </Interaction.Behaviors>
+
+      <shadui:NavigationBar.Footer>
+        <v:UserProfilePresenter
+          Margin="8" HorizontalAlignment="Left"
+          FontSize="20" Size="36"/>
+      </shadui:NavigationBar.Footer>
     </shadui:NavigationBar>
 
     <TransitioningContentControl
       x:Name="TransitioningContentControl" ClipToBounds="False"
-      Content="{Binding SelectedPage.Route, FallbackValue={x:Null}}">
+      Content="{Binding SelectedItem.Route, FallbackValue={x:Null}}">
       <TransitioningContentControl.PageTransition>
-        <shadui:BetterPageSlide
-          FadeDuration="0:0:0.4" FadeEasing="CubicEaseInOut"
-          Orientation="Vertical" SlideDuration="0:0:0.6"
-          SlideEasing="{StaticResource PageSlideEase}"/>
+        <CrossFade
+          FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
+          Duration="0:0:0.4"/>
       </TransitioningContentControl.PageTransition>
     </TransitioningContentControl>
   </DockPanel>

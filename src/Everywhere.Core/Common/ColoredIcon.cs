@@ -44,8 +44,11 @@ public partial class ColoredIcon(ColoredIconType type, SerializableColor? foregr
     [ObservableProperty]
     public partial LucideIconKind Kind { get; set; }
 
-    [ObservableProperty]
-    public partial string? Text { get; set; }
+    public string? Text
+    {
+        get;
+        set => SetProperty(ref field, value?.SafeSubstring(0, 10));
+    }
 
     public static implicit operator ColoredIcon(LucideIconKind kind) => new(ColoredIconType.Lucide) { Kind = kind };
 

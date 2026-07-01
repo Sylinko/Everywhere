@@ -39,98 +39,6 @@
 
   <BoxShadows x:Key="AcrylicBoxShadows">inset 1 1 0.5 #90FFFFFF, inset 0 0 5 #C0FFFFFF</BoxShadows>
 
-  <Panel
-    x:Key="AssistantAvatar" x:Shared="False">
-    <Panel.Styles>
-      <Style Selector="Image.Eyes">
-        <Style.Animations>
-          <Animation
-            Easing="QuarticEaseInOut" IterationCount="INFINITE"
-            Duration="0:0:10">
-            <KeyFrame Cue="0%">
-              <Setter Property="Margin" Value="0,0,0,1"/>
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="0.03%">
-              <Setter Property="Margin" Value="2,0,0,6"/>
-            </KeyFrame>
-            <KeyFrame Cue="0.4%">
-              <Setter Property="Margin" Value="2,0,0,6"/>
-            </KeyFrame>
-            <KeyFrame Cue="0.46%">
-              <Setter Property="Margin" Value="-2,0,0,6"/>
-            </KeyFrame>
-            <KeyFrame Cue="1%">
-              <Setter Property="Margin" Value="-2,0,0,6"/>
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="1.06%">
-              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
-            </KeyFrame>
-            <KeyFrame Cue="1.12%">
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="1.3%">
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-            </KeyFrame>
-            <KeyFrame Cue="1.36%">
-              <Setter Property="ScaleTransform.ScaleY" Value="0.1"/>
-            </KeyFrame>
-            <KeyFrame Cue="1.42%">
-              <Setter Property="ScaleTransform.ScaleY" Value="1"/>
-              <Setter Property="Margin" Value="-2,0,0,6"/>
-            </KeyFrame>
-            <KeyFrame Cue="3%">
-              <Setter Property="Margin" Value="-2,0,0,6"/>
-            </KeyFrame>
-            <KeyFrame Cue="4%">
-              <Setter Property="Margin" Value="0,0,0,1"/>
-            </KeyFrame>
-          </Animation>
-        </Style.Animations>
-      </Style>
-    </Panel.Styles>
-
-    <Image
-      Width="30" Height="30"
-      Margin="0,0,0,1" HorizontalAlignment="Center"
-      VerticalAlignment="Center" Focusable="False">
-      <Image.Source>
-        <DrawingImage>
-          <DrawingImage.Drawing>
-            <GeometryDrawing Geometry="F1 M515,235C364,235 233,289 233,481 233,655 351,726 515,726L526,726C691,726 809,655 809,481 809,289 678,235 526,235">
-              <GeometryDrawing.Brush>
-                <LinearGradientBrush SpreadMethod="Pad" StartPoint="288.1,325.1" EndPoint="751.5,632">
-                  <GradientStop Offset="0" Color="#FFFFFFFF"/>
-                  <GradientStop Offset="1" Color="#FFDEDEDE"/>
-                </LinearGradientBrush>
-              </GeometryDrawing.Brush>
-            </GeometryDrawing>
-          </DrawingImage.Drawing>
-        </DrawingImage>
-      </Image.Source>
-    </Image>
-
-    <Image
-      Classes="Eyes" Width="18"
-      Height="18" Margin="0,0,0,1"
-      HorizontalAlignment="Center" VerticalAlignment="Center"
-      Focusable="False">
-      <Image.RenderTransform>
-        <ScaleTransform/>
-      </Image.RenderTransform>
-
-      <Image.Source>
-        <DrawingImage>
-          <DrawingImage.Drawing>
-            <GeometryDrawing
-              Brush="#FF000000" Geometry="F1 M612,440C612,471 624,496 651,496 678,496 689,471 689,440 689,409 677,384 651,384 625,384 612,409 612,440z M430,440C430,471 418,496 391,496 364,496 353,471 353,440 353,409 365,384 391,384 417,384 430,409 430,440z"/>
-          </DrawingImage.Drawing>
-        </DrawingImage>
-      </Image.Source>
-    </Image>
-  </Panel>
-
   <GeometryGroup
     x:Key="McpIconGeometry" FillRule="EvenOdd">
     <GeometryGroup.Transform>
@@ -139,4 +47,36 @@
     <StreamGeometry>F0 M24,24z M0,0z M15.688,2.343A2.588,2.588,0,0,0,12.078,2.343L2.452,11.783A0.863,0.863,0,0,1,1.249,11.783A0.823,0.823,0,0,1,1.249,10.603L10.875,1.163A4.313,4.313,0,0,1,16.891,1.163A4.116,4.116,0,0,1,18.095,4.703A4.3,4.3,0,0,1,21.704,5.883L21.754,5.933A4.115,4.115,0,0,1,21.754,11.833L13.048,20.37A0.274,0.274,0,0,0,13.048,20.763L14.836,22.517A0.823,0.823,0,0,1,14.836,23.697A0.863,0.863,0,0,1,13.633,23.697L11.845,21.944A1.92,1.92,0,0,1,11.845,19.19L20.551,10.652A2.47,2.47,0,0,0,20.551,7.112L20.501,7.063A2.588,2.588,0,0,0,16.894,7.06L9.722,14.094 9.72,14.096 9.622,14.193A0.863,0.863,0,0,1,8.418,14.193A0.823,0.823,0,0,1,8.418,13.013L15.691,5.88A2.47,2.47,0,0,0,15.688,2.343z</StreamGeometry>
     <StreamGeometry>F0 M24,24z M0,0z M14.485,4.703A0.823,0.823,0,0,0,14.485,3.523A0.863,0.863,0,0,0,13.281,3.523L6.162,10.505A4.115,4.115,0,0,0,6.162,16.405A4.314,4.314,0,0,0,12.178,16.405L19.298,9.423A0.823,0.823,0,0,0,19.298,8.243A0.863,0.863,0,0,0,18.094,8.243L10.975,15.225A2.588,2.588,0,0,1,7.365,15.225A2.47,2.47,0,0,1,7.365,11.685L14.485,4.703z</StreamGeometry>
   </GeometryGroup>
+
+  <FontFamily x:Key="MonospaceFontFamily">Maple Mono, Cascadia Mono, Consolas, Menlo, monospace</FontFamily>
+
+  <DrawingImage x:Key="GitHubDrawingImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing
+          Brush="{DynamicResource ForegroundColor}"
+          Geometry="F0 M24,24z M0,0z M12,0C18.63,0 24,5.276 24,11.79 23.999,16.857 20.71,21.357 15.825,22.977 15.225,23.095 15,22.727 15,22.417 15,22.019 15.015,20.752 15.015,19.175 15.015,18.07 14.64,17.362 14.205,16.994 16.875,16.699 19.68,15.697 19.68,11.172 19.68,9.875 19.215,8.828 18.45,8.003 18.57,7.708 18.99,6.5 18.33,4.878 18.33,4.878 17.325,4.554 15.03,6.087A11.32,11.32,0,0,0,12.03,5.689C11.01,5.689 9.99,5.822 9.03,6.087 6.735,4.569 5.73,4.878 5.73,4.878 5.07,6.5 5.49,7.708 5.61,8.003 4.845,8.828 4.38,9.89 4.38,11.172 4.38,15.682 7.17,16.699 9.84,16.994 9.495,17.288 9.18,17.804 9.075,18.571 8.385,18.881 6.66,19.381 5.58,17.598 5.355,17.244 4.68,16.375 3.735,16.389 2.73,16.404 3.33,16.949 3.75,17.17 4.26,17.45 4.845,18.497 4.98,18.836 5.22,19.499 6,20.766 9.015,20.221 9.015,21.209 9.03,22.137 9.03,22.417 9.03,22.727 8.805,23.081 8.205,22.977 3.303,21.374 -0.003,16.867 0,11.791 0,5.276 5.37,0 12,0z"/>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="DiscordDrawingImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing
+          Brush="{DynamicResource ForegroundColor}"
+          Geometry="F1 M24,24z M0,0z M20.317,4.3698A19.7913,19.7913,0,0,0,15.4319,2.8546A0.0741,0.0741,0,0,0,15.3534,2.8917C15.1424,3.267 14.9087,3.7565 14.7451,4.1412 12.9004,3.865 11.0651,3.865 9.2583,4.1412 9.0947,3.7479 8.8525,3.267 8.6406,2.8917A0.077,0.077,0,0,0,8.5621,2.8547A19.7363,19.7363,0,0,0,3.6769,4.3697A0.0699,0.0699,0,0,0,3.6448,4.3974C0.5334,9.0458,-0.319,13.5799,0.0992,18.0578A0.0824,0.0824,0,0,0,0.1304,18.1139C2.1832,19.6215,4.1717,20.5367,6.1233,21.1433A0.0777,0.0777,0,0,0,6.2075,21.1157C6.6691,20.4853,7.0806,19.8205,7.4335,19.1215A0.076,0.076,0,0,0,7.3919,19.0158C6.7391,18.7682,6.1176,18.4663,5.5197,18.1235A0.077,0.077,0,0,1,5.5121,17.9958C5.6379,17.9015,5.7638,17.8035,5.8839,17.7044A0.0743,0.0743,0,0,1,5.9615,17.6939C9.8893,19.4872,14.1415,19.4872,18.0229,17.6939A0.0739,0.0739,0,0,1,18.1014,17.7034C18.2216,17.8024,18.3474,17.9015,18.4742,17.9958A0.077,0.077,0,0,1,18.4676,18.1234A12.2986,12.2986,0,0,1,16.5946,19.0148A0.0766,0.0766,0,0,0,16.5539,19.1215C16.9143,19.8195,17.3258,20.4843,17.7789,21.1147A0.076,0.076,0,0,0,17.8631,21.1433C19.8241,20.5366,21.8126,19.6214,23.8654,18.1139A0.077,0.077,0,0,0,23.8967,18.0587C24.3971,12.8817,23.0585,8.38480000000001,20.3482,4.39830000000001A0.061,0.061,0,0,0,20.317,4.36970000000001z M8.02,15.3312C6.8375,15.3312 5.8631,14.2455 5.8631,12.9122 5.8631,11.579 6.8186,10.4933 8.0201,10.4933 9.2309,10.4933 10.1958,11.5885 10.1769,12.9123 10.1769,14.2455 9.2214,15.3312 8.02,15.3312z M15.9948,15.3312C14.8123,15.3312 13.8379,14.2455 13.8379,12.9122 13.8379,11.579 14.7933,10.4933 15.9948,10.4933 17.2056,10.4933 18.1705,11.5885 18.1516,12.9123 18.1516,14.2455 17.2056,15.3312 15.9948,15.3312z"/>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="QQDrawingImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing
+          Brush="{DynamicResource ForegroundColor}"
+          Geometry="F1 M24,24z M0,0z M21.395,15.035A40,40,0,0,0,20.592,12.771L19.513,10.076C19.514,10.044 19.527,9.514 19.527,9.24 19.526,4.632 17.351,0 12,0 6.649,0 4.474,4.632 4.474,9.241 4.474,9.515 4.487,10.045 4.488,10.077L3.408,12.772A39,39,0,0,0,2.606,15.036C1.585,18.319 1.916,19.679 2.168,19.709 2.708,19.774 4.271,17.237 4.271,17.237 4.271,18.706 5.027,20.624 6.665,22.008 6.053,22.196 5.302,22.487 4.82,22.843 4.386,23.163 4.441,23.489 4.519,23.621 4.862,24.199 10.402,23.99 12.001,23.81 13.601,23.99 19.141,24.199 19.484,23.621 19.562,23.489 19.616,23.163 19.183,22.843 18.7,22.487 17.95,22.197 17.337,22.007 18.974,20.623 19.73,18.705 19.73,17.236 19.73,17.236 21.293,19.773 21.833,19.708 22.084,19.678 22.414,18.318 21.395,15.035"/>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
 </ResourceDictionary>

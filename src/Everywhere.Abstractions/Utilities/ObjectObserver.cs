@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive.Disposables;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Everywhere.Collections;
@@ -13,6 +14,9 @@ namespace Everywhere.Utilities;
 public readonly record struct ObjectObserverChangedEventArgs(string Path, object? Value);
 
 public delegate void ObjectObserverChangedEventHandler(in ObjectObserverChangedEventArgs e);
+
+[AttributeUsage(AttributeTargets.Property)]
+public class ObjectObserverIgnoreAttribute : Attribute;
 
 /// <summary>
 /// Observes an INotifyPropertyChanged and its properties for changes.
@@ -32,13 +36,14 @@ public class ObjectObserver(ObjectObserverChangedEventHandler handler) : IDispos
                     p.PropertyType.IsAssignableTo(typeof(INotifyPropertyChanged)))
                 .Where(p => p.GetMethod?.GetParameters() is { Length: 0 }) // Ignore
                 .Where(p => p.GetCustomAttribute<JsonIgnoreAttribute>() is null)
+                .Where(p => p.GetCustomAttribute<ObjectObserverIgnoreAttribute>() is null)
                 .ToList());
 
     private PropertyInfo? GetPropertyInfo(Type type, string propertyName) =>
         GetPropertyInfos(type).AsValueEnumerable().FirstOrDefault(p => p.Name == propertyName);
 
     private readonly ObjectObserverChangedEventHandler _handler = handler;
-    private readonly DisposeCollector<Observation> _observations = new();
+    private readonly CompositeDisposable _observations = new();
 
     ~ObjectObserver()
     {
@@ -119,11 +124,15 @@ public class ObjectObserver(ObjectObserverChangedEventHandler handler) : IDispos
                 }
                 case IDictionary dictionary:
                 {
-                    foreach (DictionaryEntry entry in dictionary)
+                    var enumerator = dictionary.GetEnumerator();
+                    using var _ = enumerator as IDisposable;
+                    while (enumerator.MoveNext())
                     {
-                        if (entry.Key.ToString() is not { Length: > 0} key) continue;
+                        var entry = enumerator.Entry;
+                        if (entry.Key.ToString() is not { Length: > 0 } key) continue;
                         ObserveObject(key, entry.Value);
                     }
+
                     break;
                 }
             }
@@ -317,7 +326,7 @@ public class ObjectObserver(ObjectObserverChangedEventHandler handler) : IDispos
                     {
                         var keyString = key.ToString()!;
                         ObserveObject(keyString, null); // Stop observing
-                        _observer._handler.Invoke(new ObjectObserverChangedEventArgs(_basePath + keyString, null)); // Notify removal
+                        _observer._handler.Invoke(new ObjectObserverChangedEventArgs(_basePath.TrimEnd(':'), dictionary)); // Notify removal
                     }
                 }
             }

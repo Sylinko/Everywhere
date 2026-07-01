@@ -6,7 +6,6 @@ using Everywhere.Rpc;
 using MessagePack;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nito.AsyncEx;
 
 namespace Everywhere.Interop;
 
@@ -16,9 +15,9 @@ namespace Everywhere.Interop;
 /// </summary>
 public class WatchdogManager : IWatchdogManager, IAsyncInitializer
 {
-    public AsyncInitializerPriority Priority => AsyncInitializerPriority.Startup;
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
 
-    private readonly AsyncLock _mutex;
+    private readonly SemaphoreSlim _mutex = new(1, 1);
 
     private NamedPipeServerStream? _serverStream;
     private Process? _watchdogProcess;
@@ -33,7 +32,6 @@ public class WatchdogManager : IWatchdogManager, IAsyncInitializer
     {
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<WatchdogManager>();
-        _mutex = new AsyncLock();
     }
 
     public async Task InitializeAsync()

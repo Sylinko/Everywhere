@@ -1,0 +1,70 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:SettingsItemsControl}"
+    TargetType="v:SettingsItemsControl">
+    <Setter Property="Margin" Value="0,0,12,0"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ItemsPresenter
+          x:Name="PART_ItemsPresenter"
+          ItemsPanel="{TemplateBinding ItemsPanel}"/>
+      </ControlTemplate>
+    </Setter>
+
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Spacing="16"/>
+      </ItemsPanelTemplate>
+    </Setter>
+
+    <Setter Property="ItemContainerTheme">
+      <ControlTheme
+        x:DataType="c:SettingsItem" TargetType="ContentPresenter">
+        <Setter Property="IsVisible" Value="{Binding IsVisible}"/>
+      </ControlTheme>
+    </Setter>
+
+    <Setter Property="shadui:BindingAssist.DataTemplates">
+      <DataTemplates>
+        <DataTemplate x:DataType="c:SettingsGroupItem">
+          <v:SettingsGroupPanel
+            BorderBrush="{DynamicResource BorderColor}"
+            Header="{Binding GroupKey^}"
+            ItemsSource="{Binding Children}">
+            <v:SettingsGroupPanel.Styles>
+              <Style Selector="v|SettingsItemControl">
+                <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+                <Setter Property="Margin" Value="0,-1,0,0"/>
+
+                <Style Selector="^:group-first">
+                  <Setter Property="CornerRadius" Value="12,12,0,0"/>
+                  <Setter Property="Margin" Value="0"/>
+                </Style>
+                <Style Selector="^:group-last">
+                  <Setter Property="CornerRadius" Value="0,0,12,12"/>
+                </Style>
+                <Style Selector="^:group-first:group-last">
+                  <Setter Property="CornerRadius" Value="12"/>
+                </Style>
+              </Style>
+            </v:SettingsGroupPanel.Styles>
+          </v:SettingsGroupPanel>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="c:SettingsItem">
+          <v:SettingsItemControl
+            shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
+            IsEnabled="{Binding IsEnabled}"
+            IsExpandable="{Binding IsExpandable}"
+            IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+            Item="{Binding}"/>
+        </DataTemplate>
+      </DataTemplates>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

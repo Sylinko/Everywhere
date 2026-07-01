@@ -15,7 +15,7 @@ namespace Everywhere.Database.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("Everywhere.Database.BlobEntity", b =>
                 {
@@ -61,6 +61,9 @@ namespace Everywhere.Database.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("LocalSyncVersion")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Topic")
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
@@ -69,6 +72,8 @@ namespace Everywhere.Database.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LocalSyncVersion");
 
                     b.HasIndex("UpdatedAt");
 
@@ -96,6 +101,9 @@ namespace Everywhere.Database.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("LocalSyncVersion")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("TEXT");
 
@@ -108,6 +116,8 @@ namespace Everywhere.Database.Migrations
 
                     b.HasKey("ChatContextId", "Id");
 
+                    b.HasIndex("LocalSyncVersion");
+
                     b.HasIndex("ChatContextId", "ChoiceChildId");
 
                     b.HasIndex("ChatContextId", "IsDeleted");
@@ -116,6 +126,29 @@ namespace Everywhere.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("Nodes");
+                });
+
+            modelBuilder.Entity("Everywhere.Database.CloudSyncMetadataEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LastPulledVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LastPushedVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("LastSyncAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LocalVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SyncMetadata");
                 });
 
             modelBuilder.Entity("Everywhere.Database.NodeBlobEntity", b =>

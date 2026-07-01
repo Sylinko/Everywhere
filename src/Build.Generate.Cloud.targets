@@ -1,0 +1,33 @@
+<Project>
+  <Target Name="GenerateCloudConstants" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <ClientId Condition="'$(ClientId)' == ''"/>
+      <AccountBaseUrl Condition="'$(AccountBaseUrl)' == ''"/>
+      <AIGatewayBaseUrl Condition="'$(AIGatewayBaseUrl)' == ''"/>
+      <CloudSyncBaseUrl Condition="'$(CloudSyncBaseUrl)' == ''"/>
+      <GenerateCloudConstants>$(IntermediateOutputPath)CloudConstants.g.cs</GenerateCloudConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <CloudCode Include="// &lt;auto-generated /&gt;"/>
+      <CloudCode Include="namespace Everywhere.Cloud%3B"/>
+      <CloudCode Include="internal static class CloudConstants"/>
+      <CloudCode Include="{"/>
+      <CloudCode Include="public const string ClientId = &quot;$(ClientId)&quot;%3B"/>
+      <CloudCode Include="public const string AccountBaseUrl = &quot;$(AccountBaseUrl)&quot;%3B"/>
+      <CloudCode Include="public const string DashboardUrl = &quot;$(AccountBaseUrl)/dashboard&quot;%3B"/>
+      <CloudCode Include="public const string ManageSubscriptionUrl = &quot;$(AccountBaseUrl)/everywhere&quot;%3B"/>
+      <CloudCode Include="public const string GetSupportUrl = &quot;$(AccountBaseUrl)/everywhere%3Ftab=support&quot;%3B"/>
+      <CloudCode Include="public const string AIGatewayBaseUrl = &quot;$(AIGatewayBaseUrl)&quot;%3B"/>
+      <CloudCode Include="public const string WebSearchBaseUrl = &quot;$(AIGatewayBaseUrl)/v1/web/search&quot;%3B"/>
+      <CloudCode Include="public const string CloudSyncBaseUrl = &quot;$(CloudSyncBaseUrl)&quot;%3B"/>
+      <CloudCode Include="}"/>
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(GenerateCloudConstants)" Lines="@(CloudCode)" Overwrite="true"/>
+
+    <ItemGroup>
+      <Compile Include="$(GenerateCloudConstants)"/>
+    </ItemGroup>
+  </Target>
+</Project>

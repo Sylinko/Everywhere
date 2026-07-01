@@ -24,7 +24,7 @@ internal static class SymbolExtension
         public AttributeData? GetAttribute(string fullMetadataName)
             => symbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == fullMetadataName);
 
-        public bool IsHiddenItem() => symbol.HasAttribute(KnownAttributes.HiddenSettingsItem);
+        public bool IsHiddenItem() => symbol.HasAttribute(KnownAttributes.SettingsItemIgnore);
 
         /// <summary>
         /// Gets the type symbol of the property or field symbol.
@@ -49,8 +49,12 @@ internal static class SymbolExtension
             return ns == null || ns.IsGlobalNamespace ? string.Empty : ns.ToDisplayString();
         }
 
-        public bool IsSettingsCategory()
-            => type.BaseType?.ToDisplayString() == "Everywhere.Configuration.SettingsCategory";
+        /// <summary>
+        /// Get all members, including those in base types
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<ISymbol> GetAllMembers() =>
+            type.GetMembers().Concat(type.BaseType?.GetAllMembers() ?? []);
 
         public bool IsPartial() =>
             type.DeclaringSyntaxReferences

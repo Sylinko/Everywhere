@@ -1,0 +1,21 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:PreviewEndpointTextBox}"
+    TargetType="v:PreviewEndpointTextBox">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:PreviewEndpointTextBox">
+        <TextBox
+          x:Name="PART_TextBox"
+          Text="{Binding Endpoint, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}">
+          <shadui:ControlAssist.Hint>
+            <I18N Key="{x:Static LocaleKey.PreviewEndpointTextBox_Hint}">
+              <TemplateBinding Property="PreviewEndpoint"/>
+            </I18N>
+          </shadui:ControlAssist.Hint>
+        </TextBox>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

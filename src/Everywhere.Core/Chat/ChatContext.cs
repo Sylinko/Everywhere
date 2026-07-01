@@ -1,34 +1,26 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using DynamicData;
+using Everywhere.AI;
 using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins;
+using Everywhere.Collections;
+using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.Messages;
 using Everywhere.Utilities;
 using MessagePack;
+using Serilog;
+using ZLinq;
 
 namespace Everywhere.Chat;
-
-/// <summary>
-/// Message sent when chat context metadata changes.
-/// </summary>
-/// <param name="context">The chat context whose metadata has changed. Null if the context has been released.</param>
-/// <param name="metadata">The metadata that has changed.</param>
-/// <param name="propertyName">
-/// DateModified -> indicates the context has been modified. Need to save.
-/// Topic -> indicates the topic has changed. Need to save.
-/// IsSelected -> indicates selection state has changed.
-/// </param>
-public class ChatContextMetadataChangedMessage(ChatContext? context, ChatContextMetadata metadata, string? propertyName)
-{
-    public ChatContext? Context { get; set; } = context;
-
-    public ChatContextMetadata Metadata { get; set; } = metadata;
-
-    public string? PropertyName { get; set; } = propertyName;
-}
 
 /// <summary>
 /// Maintains the context of the chat, including a tree of <see cref="ChatMessageNode"/> and other metadata.
@@ -37,30 +29,32 @@ public class ChatContextMetadataChangedMessage(ChatContext? context, ChatContext
 [MessagePackObject(AllowPrivate = true)]
 public sealed partial class ChatContext : ObservableObject, IObservableList<ChatMessageNode>
 {
+    /// <summary>
+    /// Keeps a strong reference to busy chat contexts to prevent them from being garbage collected.
+    /// </summary>
+    // ReSharper disable once CollectionNeverQueried.Local
+    private static readonly HashSet<ChatContext> BusyChatContexts = [];
+
     [Key(0)]
     public ChatContextMetadata Metadata { get; }
 
+    /// <summary>
+    /// Items in the current branch, excluding the root system prompt node. Used for UI bindings.
+    /// </summary>
     [IgnoreMember]
-    public string SystemPrompt
-    {
-        get => _rootNode.Message.To<SystemChatMessage>().SystemPrompt;
-        set => _rootNode.Message.To<SystemChatMessage>().SystemPrompt = value;
-    }
-
-    [IgnoreMember]
-    public ReadOnlyObservableCollection<ChatMessageNode> BranchNodesWithoutSystem { get; }
+    public IReadOnlyBindableList<ChatMessageNode> DisplayItems { get; }
 
     /// <summary>
     /// Messages in the current branch.
     /// </summary>
     [IgnoreMember]
-    public int Count => _branchNodes.Count;
+    public int Count => _branchNodesSourceList.Count;
 
     [IgnoreMember]
-    public IObservable<int> CountChanged => _branchNodes.CountChanged;
+    public IObservable<int> CountChanged => _branchNodesSourceList.CountChanged;
 
     [IgnoreMember]
-    public IReadOnlyList<ChatMessageNode> Items => _branchNodes.Items;
+    public IReadOnlyList<ChatMessageNode> Items => _branchNodesSourceList.Items;
 
     /// <summary>
     /// Key: VisualElement.Id
@@ -69,32 +63,60 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// This is also not serialized.
     /// </summary>
     [IgnoreMember]
-    public ResilientCache<int, IVisualElement> VisualElements { get; } = new();
+    public ResilientCache<int, IVisualElement> VisualElements { get; }
 
     /// <summary>
     /// A map of granted permissions for plugin functions in this chat context (session).
-    /// Key: PluginName.FunctionName.id
-    /// Value: Granted permissions for the function.
+    /// Key: PluginName.FunctionName
+    /// Value: is granted or not.
     /// </summary>
     [IgnoreMember]
-    public Dictionary<string, ChatFunctionPermissions> GrantedPermissions { get; } = new();
+    public ConcurrentDictionary<string, bool> IsPermissionGrantedRecords { get; }
 
     /// <summary>
-    /// Resource key for the busy message to show when waiting for a response.
-    /// This can be set temporarily using <see cref="SetBusyMessage(DynamicResourceKeyBase?)"/>.
+    /// Tool and plugin rulesets for this chat context. This is used to determine which plugins and functions are enabled or disabled in this context.
+    /// </summary>
+    [IgnoreMember]
+    public ToolRulesets? ToolRulesets { get; }
+
+    [IgnoreMember]
+    public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
+
+    [IgnoreMember]
+    public IChatPluginUserInterfaceBroker UserInterfaceBroker { get; }
+
+    /// <summary>
+    /// Indicates whether the chat context is currently busy waiting for a response. This can be used to disable user input and show a loading indicator in the UI.
+    /// The busy state can be entered by calling <see cref="TryExecute"/>.
     /// </summary>
     [IgnoreMember]
     [ObservableProperty]
-    public partial DynamicResourceKeyBase? BusyMessage { get; private set; }
+    public partial bool IsBusy { get; private set; }
+
+    /// <summary>
+    /// Resource key for the busy message to show when waiting for a response.
+    /// This can be set temporarily using <see cref="SetBusyMessage(IDynamicLocaleKey?)"/>.
+    /// </summary>
+    [IgnoreMember]
+    [ObservableProperty]
+    public partial IDynamicLocaleKey? BusyMessageKey { get; private set; }
 
     /// <summary>
     /// Backing store for MessagePack (de)serialization: nodes are persisted as a collection, and linked by Ids.
     /// </summary>
     [Key(1)]
-    private ICollection<ChatMessageNode> MessageNodes => _messageNodeMap.Values;
+    private ICollection<ChatMessageNode> MessageNodes
+    {
+        get
+        {
+            using var _ = _graphMutationLock.EnterScope();
+
+            return _messageNodeMap.Values.AsValueEnumerable().ToList();
+        }
+    }
 
     /// <summary>
-    /// Root node (Guid.Empty) containing the System Prompt.
+    /// Root node (Guid.Empty) which is important for branch resolution but not included in the message node map.
     /// </summary>
     [Key(2)]
     private readonly ChatMessageNode _rootNode;
@@ -104,13 +126,15 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// NOTE that this map does not include the root node, which is always at Id = Guid.Empty.
     /// </summary>
     [IgnoreMember] private readonly Dictionary<Guid, ChatMessageNode> _messageNodeMap = new();
+    [IgnoreMember] private readonly Lock _graphMutationLock = new();
 
     /// <summary>
     /// Nodes on the currently selected branch. [0] is always the root node.
     /// </summary>
-    [IgnoreMember] private readonly SourceList<ChatMessageNode> _branchNodes = new();
+    [IgnoreMember] private readonly SourceList<ChatMessageNode> _branchNodesSourceList = new();
+    [IgnoreMember] private readonly CompositeDisposable _disposables = new(2);
 
-    [IgnoreMember] private readonly IDisposable _branchNodesWithoutSystemSubscription;
+    [IgnoreMember] private bool _isDisposed;
 
     /// <summary>
     /// Constructor for MessagePack deserialization and for creating a new chat context with existing nodes.
@@ -124,7 +148,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         Metadata = metadata;
         _messageNodeMap.AddRange(messageNodes.Select(v => new KeyValuePair<Guid, ChatMessageNode>(v.Id, v)));
         _rootNode = rootNode;
-        _branchNodes.Add(rootNode);
+        _branchNodesSourceList.Add(rootNode);
 
         foreach (var node in messageNodes.Append(rootNode))
         {
@@ -134,32 +158,130 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
 
         if (_messageNodeMap.ContainsKey(Guid.Empty))
-            throw new InvalidOperationException("Root node (Guid.Empty) must not be in the messageNodeMap.");
+            throw new InvalidOperationException("Message nodes cannot contain a node with an empty ID.");
 
         UpdateBranchAfter(0, rootNode);
 
-        BranchNodesWithoutSystem = _branchNodes
+        DisplayItems = _branchNodesSourceList
             .Connect()
-            .Filter(node => node != _rootNode)
-            .BindEx(out _branchNodesWithoutSystemSubscription);
+            .Filter(node => node != rootNode)
+            .ObserveOnAvaloniaDispatcher()
+            .BindEx(_disposables);
+
+        VisualElements = new ResilientCache<int, IVisualElement>();
+        IsPermissionGrantedRecords = new ConcurrentDictionary<string, bool>();
+        UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
 
     /// <summary>
-    /// Creates a new chat context with the given system prompt. A new Guid v7 ID is assigned.
+    /// Creates a new chat context. A new Guid v7 ID is assigned.
     /// </summary>
-    public ChatContext()
+    public ChatContext() : this(null) { }
+
+    private ChatContext(
+        ResilientCache<int, IVisualElement>? visualElements = null,
+        ConcurrentDictionary<string, bool>? isPermissionGrantedRecords = null,
+        ToolRulesets? toolRulesets = null,
+        IChatPluginUserInterfaceBroker? userInterfaceBroker = null)
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
-        _rootNode = ChatMessageNode.CreateRootNode("You are a helpful assistant.");
-        _rootNode.PropertyChanged += HandleNodePropertyChanged;
-        _branchNodes.Add(_rootNode);
+        VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
+        IsPermissionGrantedRecords = isPermissionGrantedRecords ?? new ConcurrentDictionary<string, bool>();
+        ToolRulesets = toolRulesets;
 
-        _branchNodesWithoutSystemSubscription = _branchNodes
+        _rootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
+        {
+            Context = this
+        };
+        _rootNode.PropertyChanged += HandleNodePropertyChanged;
+        _branchNodesSourceList.Add(_rootNode);
+
+        if (_messageNodeMap.ContainsKey(Guid.Empty))
+            throw new InvalidOperationException("Message nodes cannot contain a node with an empty ID.");
+
+        UpdateBranchAfter(0, _rootNode);
+
+        DisplayItems = _branchNodesSourceList
             .Connect()
             .Filter(node => node != _rootNode)
-            .Bind(out var branchNodesWithoutSystem)
-            .Subscribe();
-        BranchNodesWithoutSystem = branchNodesWithoutSystem;
+            .ObserveOnAvaloniaDispatcher()
+            .BindEx(_disposables);
+
+        UserInterfaceBroker = userInterfaceBroker ?? new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
+    }
+
+    #region Busy implementation
+
+    [IgnoreMember]
+    private readonly ReusableCancellationTokenSource _cancellationTokenSource = new();
+
+    /// <summary>
+    /// Try to execute a task in a busy state. If the context is already busy, returns false.
+    /// This method is only safe to call on the UI thread.
+    /// Note that action is executed with Task.Run
+    /// </summary>
+    public bool TryExecute(Func<CancellationToken, Task> action, IExceptionHandler exceptionHandler)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+
+        if (IsBusy) return false;
+
+        IsBusy = true;
+        BusyChatContexts.Add(this);
+        var cancellationToken = _cancellationTokenSource.Token;
+
+        Task.Run(() => action(cancellationToken), cancellationToken)
+            .ContinueWith(
+                t =>
+                {
+                    Debug.Assert(Dispatcher.UIThread.CheckAccess());
+
+                    BusyChatContexts.Remove(this);
+                    IsBusy = false;
+                    if (t.Exception is { } exception) exceptionHandler.HandleException(exception.InnerException ?? exception);
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.None,
+                TaskScheduler.FromCurrentSynchronizationContext());
+
+        return true;
+    }
+
+    /// <summary>
+    /// Cancels the current task if the context is busy.
+    /// </summary>
+    public void Cancel()
+    {
+        _cancellationTokenSource.Cancel();
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Fork a new ChatContext that inherits the current branch and metadata, but has a new Guid v7 ID and is marked as temporary.
+    /// This is useful for running sub-agents in a separate context while maintaining the same VisualElements and permissions.
+    /// </summary>
+    /// <returns></returns>
+    public ChatContext ForkSubagent()
+    {
+        return new ChatContext(
+            VisualElements,
+            IsPermissionGrantedRecords,
+            ToolRulesets.Copy(
+                new ToolRulesets(2)
+                {
+                    { "builtin.essential.run_subagent", false }, // Disallow run_subagent in sub-agents to prevent infinite recursion
+                    {
+                        "builtin.essential.ask_user_question", false
+                    } // Disallow ask_user_question in sub-agents to prevent user interaction in sub-agents
+                }),
+            UserInterfaceBroker)
+        {
+            Metadata =
+            {
+                IsTemporary = true
+            }
+        };
     }
 
     /// <summary>
@@ -167,13 +289,22 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     public void CreateBranchOn(ChatMessageNode siblingNode, ChatMessage chatMessage)
     {
-        var index = _branchNodes.Items.IndexOf(siblingNode);
-        var afterNode = index switch
+        using var _ = _graphMutationLock.EnterScope();
+
+        var index = 0;
+        ChatMessageNode? afterNode = null;
+        _branchNodesSourceList.Edit(list =>
         {
-            < 0 => throw new ArgumentException("The specified node is not in the current branch.", nameof(siblingNode)),
-            0 => _rootNode,
-            _ => _branchNodes.Items[index - 1]
-        };
+            index = list.IndexOf(siblingNode);
+            afterNode = index switch
+            {
+                < 0 => throw new ArgumentException("The specified node is not in the current branch.", nameof(siblingNode)),
+                0 => _rootNode,
+                _ => list[index - 1]
+            };
+        });
+
+        if (afterNode is null) return;
 
         var newNode = new ChatMessageNode(chatMessage)
         {
@@ -186,17 +317,48 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         afterNode.Add(newNode.Id);
         afterNode.ChoiceIndex = afterNode.Children.Count - 1;
 
-        UpdateBranchAfter(index - 1, afterNode);
+        UpdateBranchAfterCore(index - 1, afterNode);
     }
-
-    public void Insert(int index, ChatMessage chatMessage) => Insert(index, new ChatMessageNode(chatMessage) { Context = this });
 
     /// <summary>
     /// Adds a message at the end of the current branch.
     /// </summary>
     public void Add(ChatMessage message)
     {
-        Insert(_branchNodes.Count, new ChatMessageNode(message) { Context = this });
+        using var _ = _graphMutationLock.EnterScope();
+
+        var index = _branchNodesSourceList.Count;
+        var newNode = new ChatMessageNode(message) { Context = this };
+
+        ChatMessageNode afterNode = null!;
+        _branchNodesSourceList.Edit(list =>
+        {
+            afterNode = index switch
+            {
+                0 => _rootNode,
+                _ => list[index - 1]
+            };
+        });
+
+        _messageNodeMap[newNode.Id] = newNode;
+
+        if (afterNode.Children.Count > 0)
+        {
+            newNode.AddRange(afterNode.Children);
+            newNode.ChoiceIndex = afterNode.ChoiceIndex;
+            foreach (var afterNodeChildId in afterNode.Children)
+            {
+                _messageNodeMap[afterNodeChildId].Parent = newNode;
+            }
+
+            afterNode.Clear();
+        }
+
+        newNode.Parent = afterNode;
+        newNode.PropertyChanged += HandleNodePropertyChanged;
+        afterNode.Add(newNode.Id);
+
+        UpdateBranchAfterCore(index - 1, afterNode);
     }
 
     /// <summary>
@@ -205,10 +367,38 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// <returns></returns>
     public IEnumerable<ChatMessageNode> GetAllNodes()
     {
-        yield return _rootNode;
-        foreach (var node in _messageNodeMap.Values)
+        using var _ = _graphMutationLock.EnterScope();
+
+        var results = new ChatMessageNode[_messageNodeMap.Count + 1];
+        results[0] = _rootNode;
+        _messageNodeMap.Values.CopyTo(results, 1);
+        return results;
+    }
+
+    /// <summary>
+    /// Gets a snapshot of the chat context for persistence, including all nodes in all branches and their relationships.
+    /// </summary>
+    /// <returns></returns>
+    public IReadOnlyList<PersistenceNodeSnapshot> GetPersistenceSnapshot()
+    {
+        using var _ = _graphMutationLock.EnterScope();
+
+        var snapshots = new List<PersistenceNodeSnapshot>(_messageNodeMap.Count + 1) { CreatePersistenceNodeSnapshot(_rootNode) };
+        snapshots.AddRange(_messageNodeMap.Values.Select(CreatePersistenceNodeSnapshot));
+        return snapshots;
+
+        static PersistenceNodeSnapshot CreatePersistenceNodeSnapshot(ChatMessageNode node)
         {
-            yield return node;
+            var children = node.Children;
+            var choiceIndex = node.ChoiceIndex;
+            var choiceChildId = choiceIndex >= 0 && choiceIndex < children.Count ? children[choiceIndex] : (Guid?)null;
+
+            return new PersistenceNodeSnapshot(
+                node.Id,
+                node.Parent?.Id,
+                choiceChildId,
+                node.Message,
+                node.DateModified);
         }
     }
 
@@ -217,16 +407,38 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     /// <param name="busyMessage"></param>
     /// <returns></returns>
-    public IDisposable SetBusyMessage(DynamicResourceKeyBase? busyMessage)
+    public IDisposable SetBusyMessage(IDynamicLocaleKey? busyMessage)
     {
-        var previous = BusyMessage;
-        BusyMessage = busyMessage;
-        return Disposable.Create(() => BusyMessage = previous);
+        var previous = BusyMessageKey;
+        BusyMessageKey = busyMessage;
+        return Disposable.Create(() => BusyMessageKey = previous);
     }
 
-    public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) => _branchNodes.Connect(predicate);
+    public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) =>
+        _branchNodesSourceList.Connect(predicate);
 
-    public IObservable<IChangeSet<ChatMessageNode>> Preview(Func<ChatMessageNode, bool>? predicate = null) => _branchNodes.Preview(predicate);
+    public IObservable<IChangeSet<ChatMessageNode>> Preview(Func<ChatMessageNode, bool>? predicate = null) =>
+        _branchNodesSourceList.Preview(predicate);
+
+    /// <summary>
+    /// Used for get _branchNodesSourceList items in a no-copy way. Don't use this method to modify the list.
+    /// </summary>
+    /// <param name="updateAction"></param>
+    public void Read(Action<IExtendedList<ChatMessageNode>> updateAction)
+    {
+        _branchNodesSourceList.Edit(updateAction);
+    }
+
+    /// <summary>
+    /// Used for get _branchNodesSourceList items in a no-copy way. Don't use this method to modify the list.
+    /// </summary>
+    /// <param name="updateAction"></param>
+    public T Read<T>(Func<IExtendedList<ChatMessageNode>, T> updateAction)
+    {
+        T? result = default;
+        _branchNodesSourceList.Edit(list => result = updateAction(list));
+        return result!;
+    }
 
     private void HandleNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -242,63 +454,202 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// <summary>
     /// Rebuilds the current branch from the specified node forward.
     /// </summary>
-    private void UpdateBranchAfterNode(ChatMessageNode node) => UpdateBranchAfter(_branchNodes.Items.IndexOf(node), node);
+    private void UpdateBranchAfterNode(ChatMessageNode node)
+    {
+        using var _ = _graphMutationLock.EnterScope();
+
+        _branchNodesSourceList.Edit(list =>
+        {
+            var index = list.IndexOf(node);
+            if (index == -1)
+                throw new ArgumentOutOfRangeException(nameof(node), "Node is not in the branch nodes.");
+
+            UpdateBranchAfterCore(list, index, node);
+        });
+    }
 
     private void UpdateBranchAfter(int index, ChatMessageNode node)
+    {
+        using var _ = _graphMutationLock.EnterScope();
+
+        UpdateBranchAfterCore(index, node);
+    }
+
+    private void UpdateBranchAfterCore(int index, ChatMessageNode node)
     {
         if (index == -1)
             throw new ArgumentOutOfRangeException(nameof(index), "Node is not in the branch nodes.");
 
-        for (var i = _branchNodes.Count - 1; i > index; i--) _branchNodes.RemoveAt(i);
+        _branchNodesSourceList.Edit(list => UpdateBranchAfterCore(list, index, node));
+    }
+
+    private void UpdateBranchAfterCore(IExtendedList<ChatMessageNode> list, int index, ChatMessageNode node)
+    {
+        for (var i = list.Count - 1; i > index; i--) list.RemoveAt(i);
 
         // Follow ChoiceIndex down the tree.
         while (true)
         {
-            if (node.ChoiceIndex < 0 || node.ChoiceIndex >= node.Children.Count) break;
-            _branchNodes.Add(node = _messageNodeMap[node.Children[node.ChoiceIndex]]);
+            var children = node.Children;
+            var choiceIndex = node.ChoiceIndex;
+            if (choiceIndex < 0 || choiceIndex >= children.Count) break;
+            list.Add(node = _messageNodeMap[children[choiceIndex]]);
         }
-    }
-
-    private void Insert(int index, ChatMessageNode newNode)
-    {
-        if (newNode.Id == Guid.Empty)
-            throw new ArgumentException("New node must have a non-empty ID.", nameof(newNode));
-
-        _messageNodeMap[newNode.Id] = newNode;
-        newNode.PropertyChanged += HandleNodePropertyChanged;
-
-        var afterNode = index switch
-        {
-            0 => _rootNode,
-            _ => _branchNodes.Items[index - 1]
-        };
-
-        if (afterNode.Children.Count > 0)
-        {
-            newNode.AddRange(afterNode.Children);
-            newNode.ChoiceIndex = afterNode.ChoiceIndex;
-            foreach (var afterNodeChildId in afterNode.Children)
-            {
-                _messageNodeMap[afterNodeChildId].Parent = newNode;
-            }
-
-            afterNode.Clear();
-        }
-
-        newNode.Parent = afterNode;
-        afterNode.Add(newNode.Id);
-
-        UpdateBranchAfter(index - 1, afterNode);
     }
 
     public void Dispose()
     {
-        foreach (var node in _messageNodeMap.Values)
+        Debug.Assert(!_isDisposed);
+        if (_isDisposed)
         {
-            node.PropertyChanged -= HandleNodePropertyChanged;
+            Log.ForContext<ChatContext>().Error("ChatContext is already disposed.");
+            return;
         }
 
-        _branchNodesWithoutSystemSubscription.Dispose();
-        _branchNodes.Dispose();
+        _isDisposed = true;
+
+        using (_graphMutationLock.EnterScope())
+        {
+            foreach (var node in _messageNodeMap.Values)
+            {
+                node.PropertyChanged -= HandleNodePropertyChanged;
+                node.Dispose();
+            }
+
+            _rootNode.PropertyChanged -= HandleNodePropertyChanged;
+            _rootNode.Dispose();
+
+            _disposables.Dispose();
+            _branchNodesSourceList.Dispose();
+        }
+
+        Dispatcher.UIThread.Post(() => Metadata.States = ChatContextMetadataStates.None);
+
+        GC.SuppressFinalize(this);
+    }
+
+    ~ChatContext()
+    {
+        Dispatcher.UIThread.Post(() => Metadata.States = ChatContextMetadataStates.None);
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            if (value) Metadata.States |= ChatContextMetadataStates.Busy;
+            else Metadata.States &= ~ChatContextMetadataStates.Busy;
+        });
+    }
+
+    /// <summary>
+    /// Get and ensures the working directory
+    /// </summary>
+    /// <returns>
+    /// Usually a temporary directory path like C:\Users\[UserName]\AppData\Roaming\Everywhere\plugins\2025-12-30
+    /// </returns>
+    public string EnsureWorkingDirectory() =>
+        RuntimeConstants.EnsureWritableDataFolderPath("plugins", Metadata.DateCreated.ToString("yyyy-MM-dd"));
+
+    public IDictionary<string, Func<string>> GetPromptVariables()
+    {
+        return new Dictionary<string, Func<string>>(
+        [
+            new KeyValuePair<string, Func<string>>("Date", () => DateTime.Now.ToString("D")),
+            new KeyValuePair<string, Func<string>>("Time", () => DateTime.Now.ToString("F")),
+            new KeyValuePair<string, Func<string>>("OS", () => Environment.OSVersion.ToString()),
+            new KeyValuePair<string, Func<string>>("SystemLanguage", () => LocaleManager.CurrentLocale.ToEnglishName()),
+            new KeyValuePair<string, Func<string>>("WorkingDirectory", EnsureWorkingDirectory),
+            new KeyValuePair<string, Func<string>>("DefaultSystemPrompt", () => Prompts.DefaultSystemPrompt),
+        ]);
+    }
+
+    public readonly record struct PersistenceNodeSnapshot(
+        Guid Id,
+        Guid? ParentId,
+        Guid? ChoiceChildId,
+        ChatMessage Message,
+        DateTimeOffset DateModified
+    );
+
+    private sealed class ChatPluginUserInterfaceBroker : IChatPluginUserInterfaceBroker, IDisposable
+    {
+        public IReadOnlyBindableList<ChatPluginUserInterfaceItem> ChatPluginUserInterfaceItems { get; }
+
+        public IReadOnlyBindableList<ChatPluginTodoItem> TodoItems { get; }
+
+        private readonly SourceList<ChatPluginUserInterfaceItem> _chatPluginUserInterfaceItemsSourceList = new();
+        private readonly SourceList<ChatPluginTodoItem> _todoItemsSourceList = new();
+        private readonly CompositeDisposable _disposables = new(3);
+
+        public ChatPluginUserInterfaceBroker(ChatContext owner)
+        {
+            ChatPluginUserInterfaceItems = _chatPluginUserInterfaceItemsSourceList
+                .Connect()
+                .ObserveOnAvaloniaDispatcher()
+                .BindEx(_disposables);
+            TodoItems = _todoItemsSourceList
+                .Connect()
+                .ObserveOnAvaloniaDispatcher()
+                .BindEx(_disposables);
+            _chatPluginUserInterfaceItemsSourceList.CountChanged
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(count =>
+                {
+                    // On Avalonia UI thread, safe
+                    if (count > 0) owner.Metadata.States |= ChatContextMetadataStates.HasNotification;
+                    else owner.Metadata.States &= ~ChatContextMetadataStates.HasNotification;
+                }).DisposeWith(_disposables);
+        }
+
+        public void SetTodoItems(IReadOnlyList<ChatPluginTodoItem> items)
+        {
+            _todoItemsSourceList.Edit(list => list.Reset(items));
+        }
+
+        public async Task<ConsentDecisionResult> HandleConsentRequestAsync(
+            IDynamicLocaleKey headerKey,
+            ChatPluginDisplayBlock? content,
+            RequestConsentRememberMasks rememberMasks,
+            CancellationToken cancellationToken)
+        {
+            var item = new ChatPluginUserInterfaceConsentRequestItem(headerKey, content, rememberMasks, cancellationToken);
+            _chatPluginUserInterfaceItemsSourceList.Add(item);
+            WeakReferenceMessenger.Default.Send(new FlashChatWindowMessage(item.HeaderKey.ToString()));
+
+            try
+            {
+                return await item.Task;
+            }
+            finally
+            {
+                _chatPluginUserInterfaceItemsSourceList.Remove(item);
+            }
+        }
+
+        public async Task<IReadOnlyList<ChatPluginQuestionAnswer>> HandleAskQuestionAsync(
+            IReadOnlyList<ChatPluginQuestion> questions,
+            CancellationToken cancellationToken = default)
+        {
+            var item = new ChatPluginUserInterfaceAskQuestionItem(questions, cancellationToken);
+            _chatPluginUserInterfaceItemsSourceList.Add(item);
+            WeakReferenceMessenger.Default.Send(new FlashChatWindowMessage(item.Questions.FirstOrDefault()?.Question));
+
+            try
+            {
+                return await item.Task;
+            }
+            finally
+            {
+                _chatPluginUserInterfaceItemsSourceList.Remove(item);
+            }
+        }
+
+        public void Dispose()
+        {
+            _chatPluginUserInterfaceItemsSourceList.Dispose();
+            _todoItemsSourceList.Dispose();
+            _disposables.Dispose();
+        }
     }
 }

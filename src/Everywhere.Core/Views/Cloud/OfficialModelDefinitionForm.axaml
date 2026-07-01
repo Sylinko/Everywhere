@@ -1,0 +1,416 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:OfficialModelDefinitionForm}"
+    TargetType="v:OfficialModelDefinitionForm">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Panel.Styles>
+            <Style Selector="StackPanel.Disabled">
+              <Setter Property="Effect">
+                <BlurEffect Radius="11"/>
+              </Setter>
+              <Setter Property="IsEnabled" Value="False"/>
+              <Setter Property="Opacity" Value="0.4"/>
+            </Style>
+          </Panel.Styles>
+
+          <StackPanel
+            Classes.Disabled="{Binding CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNull}, RelativeSource={RelativeSource TemplatedParent}}"
+            Spacing="8">
+            <TextBlock
+              Classes="Large"
+              Text="{I18N {x:Static LocaleKey.OfficialModelDefinitionForm_SelectModelTextBlock_Text}}"
+              TextTrimming="CharacterEllipsis"/>
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                  Width="*" MinWidth="240"
+                  MaxWidth="512"/>
+              </Grid.ColumnDefinitions>
+
+              <DockPanel
+                HorizontalSpacing="8" LastChildFill="True">
+                <DockPanel.Styles>
+                  <Style Selector="Button#RefreshButton[IsEnabled=False] LucideIcon">
+                    <Style.Animations>
+                      <Animation
+                        IterationCount="Infinite" Duration="0:0:1">
+                        <KeyFrame Cue="0%">
+                          <Setter Property="RotateTransform.Angle" Value="0.0"/>
+                        </KeyFrame>
+                        <KeyFrame Cue="100%">
+                          <Setter Property="RotateTransform.Angle" Value="-360.0"/>
+                        </KeyFrame>
+                      </Animation>
+                    </Style.Animations>
+                  </Style>
+                </DockPanel.Styles>
+
+                <Button
+                  x:Name="RefreshButton" Classes="Ghost"
+                  DockPanel.Dock="Right" Width="36"
+                  Padding="0"
+                  Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                  IsEnabled="{Binding !OfficialModelProvider.IsBusy, RelativeSource={RelativeSource TemplatedParent}}"
+                  ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
+                  <LucideIcon
+                    Kind="RefreshCcw"
+                    Size="{DynamicResource FontSizeL}"/>
+                </Button>
+
+                <ComboBox
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                  shadui:ControlAssist.MinHeight="40"
+                  ItemsSource="{TemplateBinding ItemsSource}"
+                  MaxDropDownHeight="480"
+                  SelectedItem="{Binding SelectedItemWrapper, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                  <ComboBox.Styles>
+                    <Style Selector="ComboBoxItem">
+                      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                  </ComboBox.Styles>
+
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="v:OfficialModelDefinitionForm+ItemWrapper">
+                      <Grid
+                        Margin="0,0,12,0" ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto"/>
+                          <ColumnDefinition Width="Auto"/>
+                          <ColumnDefinition/>
+                          <ColumnDefinition
+                            Width="Auto" SharedSizeGroup="Badges"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                          Grid.Column="0"
+                          Width="{DynamicResource FontSize2Xl}"
+                          Height="{DynamicResource FontSize2Xl}"
+                          VerticalAlignment="Center" Background="#333333"
+                          ClipToBounds="True"
+                          CornerRadius="{DynamicResource FullCornerRadius}">
+                          <Image
+                            Margin="3" md:AsyncImageLoader.SizeToContent="Manual"
+                            md:AsyncImageLoader.Source="{Binding Model.IconUrl}"
+                            mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"
+                            IsVisible="{Binding Model.IconUrl, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Stretch="UniformToFill"/>
+                        </Border>
+
+                        <TextBlock
+                          Grid.Column="1" Margin="4,0"
+                          VerticalAlignment="Center"
+                          Text="{Binding Model.Name}"
+                          TextTrimming="CharacterEllipsis"
+                          ToolTip.Tip="{Binding Model.DescriptionKey^, FallbackValue={x:Null}}"/>
+                        <LucideIcon
+                          Grid.Column="2" HorizontalAlignment="Left"
+                          Foreground="{DynamicResource WarningColor}"
+                          IsVisible="{Binding Model.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          Kind="TriangleAlert"
+                          Size="{DynamicResource FontSizeL}"
+                          ToolTip.Placement="Top">
+                          <ToolTip.Tip>
+                            <I18N Key="{x:Static LocaleKey.OfficialModelDefinitionForm_DeprecationToast_Text}">
+                              <Binding
+                                Path="Model.DeprecationDate" StringFormat="{}{0:D}"/>
+                            </I18N>
+                          </ToolTip.Tip>
+                        </LucideIcon>
+
+                        <StackPanel
+                          Grid.Column="3" Margin="16,0,0,0"
+                          HorizontalAlignment="Right" Orientation="Horizontal"
+                          Spacing="2">
+                          <StackPanel.Styles>
+                            <Style Selector="shadui|Badge">
+                              <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
+                              <Setter Property="Height" Value="{DynamicResource FontSizeXl}"/>
+                              <Setter Property="CornerRadius" Value="4"/>
+                              <Style Selector="^ LucideIcon">
+                                <Setter Property="Size" Value="{DynamicResource FontSizeL}"/>
+                              </Style>
+                            </Style>
+                          </StackPanel.Styles>
+
+                          <shadui:Badge
+                            Background="Chocolate"
+                            IsVisible="{Binding Model.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
+                            <LucideIcon Kind="Eye"/>
+                          </shadui:Badge>
+                          <shadui:Badge
+                            Background="CadetBlue"
+                            IsVisible="{Binding Model.SupportsToolCall}"
+                            ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
+                            <LucideIcon Kind="Hammer"/>
+                          </shadui:Badge>
+                          <shadui:Badge
+                            Padding="6,0" Background="MediumSlateBlue">
+                            <ToolTip.Tip>
+                              <TextBlock>
+                                <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
+                                <Run Text="{Binding Model.ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                                <LineBreak/>
+                                <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
+                                <Run Text="{Binding Model.OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                              </TextBlock>
+                            </ToolTip.Tip>
+
+                            <TextBlock
+                              FontSize="{DynamicResource FontSizeS}"
+                              Text="{Binding Model.ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
+                          </shadui:Badge>
+                        </StackPanel>
+                      </Grid>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </DockPanel>
+            </Grid>
+
+            <StackPanel
+              Margin="0,8,0,0" Spacing="8">
+              <StackPanel
+                Orientation="Horizontal" Spacing="8">
+                <TextBlock
+                  Classes="Large"
+                  Text="{I18N {x:Static LocaleKey.OfficialModelDefinitionForm_DetailsTextBlock_Text}}"
+                  TextTrimming="CharacterEllipsis"/>
+                <HyperlinkButton
+                  VerticalAlignment="Bottom"
+                  Content="{I18N {x:Static LocaleKey.OfficialModelDefinitionForm_PricingTextBlock_Text}}"
+                  FontSize="{DynamicResource FontSizeS}"
+                  NavigateUri="{x:Static common:LinkConstants.OfficialWebsitePricingUri}"/>
+              </StackPanel>
+
+              <shadui:Toast
+                Title="{I18N {x:Static LocaleKey.OfficialModelDefinitionForm_ModelUnavailableToast_Text}}"
+                Margin="0" Padding="8"
+                HorizontalAlignment="Left" CanDismiss="False"
+                CanDismissByClicking="False"
+                IsVisible="{Binding IsSelectedModelUnavailable, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:False}}"
+                Notification="Error"/>
+
+              <shadui:Toast
+                Margin="0" Padding="8"
+                HorizontalAlignment="Left" CanDismiss="False"
+                CanDismissByClicking="False"
+                IsVisible="{Binding SelectedItem.DeprecationDate, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:False}}"
+                Notification="Warning">
+                <shadui:Toast.Title>
+                  <I18N Key="{x:Static LocaleKey.OfficialModelDefinitionForm_DeprecationToast_Text}">
+                    <Binding
+                      FallbackValue="{x:Null}"
+                      Path="SelectedItem.DeprecationDate"
+                      RelativeSource="{RelativeSource TemplatedParent}"
+                      StringFormat="{}{0:D}"/>
+                  </I18N>
+                </shadui:Toast.Title>
+              </shadui:Toast>
+
+              <HtmlLabel
+                Margin="4" AutoSizeHeightOnly="True"
+                BaseStylesheet="{DynamicResource BaseStylesheet}"
+                IsVisible="{Binding SelectedItem.DescriptionKey, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:False}}"
+                Text="{Binding SelectedItem.DescriptionKey^, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}, Converter={x:Static vc:HtmlTextNormalizerConverter.Shared}}"/>
+
+              <Border
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1" ClipToBounds="True"
+                CornerRadius="{DynamicResource MdCornerRadius}">
+                <Border.Styles>
+                  <Style Selector="UniformGrid#TableGrid.narrow">
+                    <Setter Property="Columns" Value="1"/>
+                    <Setter Property="Rows" Value="2"/>
+                    <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+                  </Style>
+                </Border.Styles>
+
+                <UniformGrid
+                  x:Name="TableGrid" Margin="0,0,-1,-1"
+                  Columns="2">
+                  <Interaction.Behaviors>
+                    <AdaptiveBehavior SourceControl="{Binding #TableGrid}">
+                      <AdaptiveClassSetter
+                        MinWidth="0" MaxWidth="720"
+                        ClassName="narrow"/>
+                    </AdaptiveBehavior>
+                  </Interaction.Behaviors>
+
+                  <UniformGrid.Styles>
+                    <Style Selector="Border">
+                      <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                      <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                      <Setter Property="Padding" Value="12,8"/>
+
+                      <Style Selector="^.Header">
+                        <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
+                      </Style>
+                    </Style>
+
+                    <Style Selector="TextBlock">
+                      <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                  </UniformGrid.Styles>
+
+                  <Grid RowDefinitions="*,*,*,*">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition
+                        Width="Auto" SharedSizeGroup="Header"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                      Classes="Header" Grid.Row="0"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.Assistant_InputModalities_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="0" Grid.Column="1">
+                      <v:ModalitiesPresenter Modalities="{Binding SelectedItem.InputModalities, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="1"
+                      Grid.Column="0">
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{I18N {x:Static LocaleKey.OfficialAssistant_IsQuotaLimitFree_Header}}"/>
+                        <LucideIcon
+                          IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
+                          Kind="CircleQuestionMark"
+                          Size="{DynamicResource FontSizeS}"
+                          ToolTip.Placement="Top"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.OfficialAssistant_IsQuotaLimitFree_ToolTip}}"/>
+                      </StackPanel>
+                    </Border>
+                    <Border
+                      Grid.Row="1" Grid.Column="1">
+                      <TextBlock Text="{Binding !SelectedItem.IsQuotaLimited, Converter={x:Static vc:BooleanToEmojiConverter.Shared}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="2"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_ReleaseDate_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="2" Grid.Column="1">
+                      <TextBlock Text="{Binding SelectedItem.ReleaseDate, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="3"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_InputPrice_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="3" Grid.Column="1">
+                      <TextBlock Text="{Binding SelectedItem.Pricing.InputDescriptionKey, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                  </Grid>
+
+                  <Grid RowDefinitions="*,*,*,*">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition
+                        Width="Auto" SharedSizeGroup="Header"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                      Classes="Header" Grid.Row="0"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputModalities_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="0" Grid.Column="1">
+                      <v:ModalitiesPresenter Modalities="{Binding SelectedItem.OutputModalities, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="1"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="1" Grid.Column="1">
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{Binding SelectedItem.ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                        <LucideIcon
+                          IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
+                          Kind="CircleQuestionMark"
+                          Size="{DynamicResource FontSizeS}"
+                          ToolTip.Placement="Top">
+                          <ToolTip.Tip>
+                            <TextBlock>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
+                              <Run Text="{Binding SelectedItem.ContextLimit, RelativeSource={RelativeSource TemplatedParent}, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                              <LineBreak/>
+                              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
+                              <Run Text="{Binding SelectedItem.OutputLimit, RelativeSource={RelativeSource TemplatedParent}, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+                            </TextBlock>
+                          </ToolTip.Tip>
+                        </LucideIcon>
+                      </StackPanel>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="2"
+                      Grid.Column="0">
+                      <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_KnowledgeCutoff_Header}}"/>
+                    </Border>
+                    <Border
+                      Grid.Row="2" Grid.Column="1">
+                      <TextBlock Text="{Binding SelectedItem.KnowledgeCutoff, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                    <Border
+                      Classes="Header" Grid.Row="3"
+                      Grid.Column="0">
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{I18N {x:Static LocaleKey.CustomAssistant_OutputPrice_Header}}"/>
+                        <LucideIcon
+                          Kind="CircleQuestionMark"
+                          Size="{DynamicResource FontSizeS}"
+                          ToolTip.Placement="Top"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_OutputPrice_ToolTip}}"/>
+                      </StackPanel>
+                    </Border>
+                    <Border
+                      Grid.Row="3" Grid.Column="1">
+                      <TextBlock Text="{Binding SelectedItem.Pricing.OutputDescriptionKey, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                    </Border>
+                  </Grid>
+                </UniformGrid>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+
+          <v:ConditionalContentControl
+            ClipToBounds="False"
+            Condition="{Binding CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNull}, RelativeSource={RelativeSource TemplatedParent}}"
+            ContentDataBinding="{Binding CloudClient, RelativeSource={RelativeSource TemplatedParent}}">
+            <v:ConditionalContentControl.TrueContent>
+              <DataTemplate x:DataType="cloud:ICloudClient">
+                <Border
+                  Margin="-16,-24,-16,-16"
+                  Background="{DynamicResource SecondaryCardBackgroundColor}"
+                  CornerRadius="{DynamicResource XlCornerRadius}">
+                  <v:UserProfileCard
+                    Width="240" Margin="16"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    ShowActionsButton="False"/>
+                </Border>
+              </DataTemplate>
+            </v:ConditionalContentControl.TrueContent>
+          </v:ConditionalContentControl>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

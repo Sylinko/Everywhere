@@ -33,7 +33,7 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
             }
         }
 
-        SerializeDictionary(ref writer, value.Metadata, options);
+        MetadataDictionaryMessagePackFormatter.Serialize(ref writer, value.Metadata, options);
     }
 
     protected override FunctionResultContent DeserializeCore(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -83,7 +83,7 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                 }
                 case 4:
                 {
-                    metadata = DeserializeDictionary(ref reader, options);
+                    metadata = MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options);
                     break;
                 }
                 default:
@@ -93,11 +93,6 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                     break;
                 }
             }
-        }
-
-        if (callId is null || pluginName is null || functionName is null)
-        {
-            throw new MessagePackSerializationException("FunctionResultContent required fields cannot be null.");
         }
 
         return new FunctionResultContent(functionName, pluginName, callId, result)

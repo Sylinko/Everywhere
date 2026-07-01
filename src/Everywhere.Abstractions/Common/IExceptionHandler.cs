@@ -8,7 +8,7 @@ public interface IExceptionHandler
         [CallerMemberName] object? source = null,
         [CallerLineNumber] int lineNumber = 0);
 
-    public static IExceptionHandler DangerouslyIgnoreAllException { get; } = new AnonymousExceptionHandler(static delegate { });
+    static IExceptionHandler DangerouslyIgnoreAllException { get; } = new AnonymousExceptionHandler(static delegate { });
 }
 
 /// <summary>

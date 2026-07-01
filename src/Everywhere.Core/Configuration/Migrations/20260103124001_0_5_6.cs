@@ -1,5 +1,7 @@
 ﻿using System.Text.Json.Nodes;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Common;
 
 namespace Everywhere.Configuration.Migrations;
 
@@ -15,7 +17,7 @@ namespace Everywhere.Configuration.Migrations;
 /// </summary>
 public class _20260103124001_0_5_6 : SettingsMigration
 {
-    public override Version Version => new(0, 5, 6);
+    public override SemanticVersion Version => new(0, 5, 6);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [

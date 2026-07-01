@@ -10,9 +10,9 @@ public class TokenCountHumanizationConverter : IValueConverter
 {
     public static TokenCountHumanizationConverter Shared { get; } = new();
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not int count) return null;
+        var count = System.Convert.ToInt64(value);
         return count switch
         {
             < 1_000 => count.ToString(culture),

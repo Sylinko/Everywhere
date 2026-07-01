@@ -1,0 +1,53 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ModalitiesSelector}"
+    TargetType="v:ModalitiesSelector">
+    <Setter Property="Background" Value="{DynamicResource SelectionColor}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:ModalitiesSelector">
+        <Border
+          HorizontalAlignment="Left"
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}">
+          <WrapPanel
+            Margin="{TemplateBinding Padding}"
+            ItemSpacing="6" LineSpacing="4">
+            <ToggleButton
+              Classes="Primary Compact Uniform"
+              shadui:ButtonAssist.Icon="{LucideIconContent TextInitial}"
+              Content="{I18N {x:Static LocaleKey.Modalities_Text}}"
+              IsChecked="{TemplateBinding SupportsText, Mode=TwoWay}"/>
+            <ToggleButton
+              Classes="Primary Compact Uniform"
+              shadui:ButtonAssist.Icon="{LucideIconContent Image}"
+              Content="{I18N {x:Static LocaleKey.Modalities_Image}}"
+              IsChecked="{TemplateBinding SupportsImage, Mode=TwoWay}"/>
+            <ToggleButton
+              Classes="Primary Compact Uniform"
+              shadui:ButtonAssist.Icon="{LucideIconContent AudioWaveform}"
+              Content="{I18N {x:Static LocaleKey.Modalities_Audio}}"
+              IsChecked="{TemplateBinding SupportsAudio, Mode=TwoWay}"/>
+            <ToggleButton
+              Classes="Primary Compact Uniform"
+              shadui:ButtonAssist.Icon="{LucideIconContent Video}"
+              Content="{I18N {x:Static LocaleKey.Modalities_Video}}"
+              IsChecked="{TemplateBinding SupportsVideo, Mode=TwoWay}"/>
+            <ToggleButton
+              Classes="Primary Compact Uniform"
+              shadui:ButtonAssist.Icon="{LucideIconContent FileText}"
+              Content="{I18N {x:Static LocaleKey.Modalities_Pdf}}"
+              IsChecked="{TemplateBinding SupportsPdf, Mode=TwoWay}"/>
+          </WrapPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

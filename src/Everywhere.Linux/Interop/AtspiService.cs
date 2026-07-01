@@ -656,13 +656,14 @@ public sealed partial class AtspiService
             }
         }
 
-        public Task<Bitmap> CaptureAsync(CancellationToken cancellationToken)
+        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
         {
             var rect = BoundingRectangle;
             if (OwnerWindow != null)
             {
                 rect = rect.Translate(-(PixelVector)OwnerWindow.BoundingRectangle.Position);
             }
+
             return Task.FromResult(atspi._windowBackend.Capture(this, rect));
         }
     }

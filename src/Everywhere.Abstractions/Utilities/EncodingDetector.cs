@@ -7,6 +7,8 @@ namespace Everywhere.Utilities;
 /// Provides functionality to detect the encoding of a text stream.
 /// It prioritizes BOM detection and then uses heuristics and statistical analysis
 /// to guess the encoding for non-BOM files.
+///
+/// TODO: Current implementation is a workaround, and may not be perfect. Consider integrating a well-known library like Ude or CharDet in the future for more robust detection.
 /// </summary>
 public static class EncodingDetector
 {

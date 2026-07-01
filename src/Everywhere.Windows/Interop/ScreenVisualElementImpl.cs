@@ -2,7 +2,6 @@
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
-using Avalonia.Media.Imaging;
 using Everywhere.Interop;
 
 namespace Everywhere.Windows.Interop;
@@ -53,7 +52,7 @@ public partial class VisualElementContext
 
                         if (PInvoke.MonitorFromWindow(hWnd, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONULL) != _hMonitor) return true;
 
-                        if (TryCreateVisualElement(() => Automation.FromHandle(hWnd)) is not { } visualElement) return true;
+                        if (TryCreateVisualElement(() => Automation.ElementFromHandle(hWnd)) is not { } visualElement) return true;
 
                         result.Add(visualElement);
                         return true; // continue enumeration
@@ -94,19 +93,19 @@ public partial class VisualElementContext
 
         public string? GetText(int maxLength = -1) => null;
 
-        public void Invoke() => throw new InvalidOperationException();
+        public void Invoke() => throw new InvalidOperationException("Screen is not invokable.");
 
-        public void SetText(string text) => throw new InvalidOperationException();
+        public void SetText(string text) => throw new InvalidOperationException("Cannot set text on screen.");
 
-        public void SendShortcut(KeyboardShortcut shortcut) => throw new InvalidOperationException();
+        public void SendShortcut(KeyboardShortcut shortcut) => SendInput(shortcut);
 
         public string? GetSelectionText() => null;
 
-        public Task<Bitmap> CaptureAsync(CancellationToken cancellationToken)
+        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
         {
             return CaptureScreen(BoundingRectangle) is not { } bitmap ?
                 throw new InvalidOperationException("Failed to capture screen.") :
-                Task.FromResult(bitmap);
+                Task.FromResult<IVisualElement.ICapturedBitmapData>(bitmap);
         }
 
         private sealed class SiblingAccessorImpl(ScreenVisualElementImpl visualElement) : VisualElementSiblingAccessor

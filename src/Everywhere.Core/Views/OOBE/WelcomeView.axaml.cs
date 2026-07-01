@@ -5,7 +5,7 @@ namespace Everywhere.Views;
 
 public partial class WelcomeView : ReactiveUserControl<WelcomeViewModel>, IRecipient<ShowConfettiEffectMessage>
 {
-    public WelcomeView()
+    public WelcomeView(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         InitializeComponent();
     }

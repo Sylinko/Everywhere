@@ -22,15 +22,20 @@ public sealed class ChatContextStorage(
     MessagePackSerializerOptions? serializerOptions = null
 ) : IChatContextStorage
 {
-    // cache of alive instances to avoid multi-instance but same id problems
+    // cache of alive instances to avoid multi-instance but same id problems.
+    // This is necessary because only one ChatContext/Metadata with the same ID can be alive at a time to ensure that property change notifications work correctly.
     private readonly ConcurrentDictionary<Guid, WeakReference<ChatContextMetadata>> _metadataCache = [];
     private readonly ConcurrentDictionary<Guid, WeakReference<ChatContext>> _contextCache = [];
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public async Task AddChatContextAsync(ChatContext context, CancellationToken cancellationToken = default)
     {
         if (context.Metadata.Id.Version != 7)
             throw new ArgumentException("ChatContext.Metadata.Id must be Guid v7.", nameof(context));
 
+        var nodeSnapshots = context.GetPersistenceSnapshot();
+
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var exists = await db.Chats.AsNoTracking().AnyAsync(x => x.Id == context.Metadata.Id, cancellationToken);
@@ -50,10 +55,9 @@ public sealed class ChatContextStorage(
         db.Chats.Add(ctxEntity);
 
         // Insert nodes (including root Guid.Empty if present)
-        var now = DateTimeOffset.UtcNow;
-        foreach (var node in context.GetAllNodes())
+        foreach (var node in nodeSnapshots.AsValueEnumerable())
         {
-            var entity = BuildNodeEntity(context.Metadata.Id, node, now);
+            var entity = BuildNodeEntity(context.Metadata.Id, node);
             db.Nodes.Add(entity);
         }
 
@@ -64,28 +68,58 @@ public sealed class ChatContextStorage(
         SetAlive(_metadataCache, context.Metadata.Id, context.Metadata);
     }
 
-    public async Task DeleteChatContextAsync(Guid chatContextId, CancellationToken cancellationToken = default)
+    public async Task DeleteChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default)
     {
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var ctx = await db.Chats.FirstOrDefaultAsync(x => x.Id == chatContextId, cancellationToken);
-        if (ctx is null) return;
 
-        var now = DateTimeOffset.UtcNow;
-        ctx.IsDeleted = true;
-        ctx.UpdatedAt = now;
+        foreach (var chatContextId in chatContextIds)
+        {
+            var ctx = await db.Chats.FirstOrDefaultAsync(x => x.Id == chatContextId, cancellationToken);
+            if (ctx is null) continue;
 
-        await db.Nodes.Where(n => n.ChatContextId == chatContextId)
-            .ExecuteUpdateAsync(
-                s => s
-                    .SetProperty(x => x.IsDeleted, true)
-                    .SetProperty(x => x.UpdatedAt, now),
-                cancellationToken);
+            var now = DateTimeOffset.UtcNow;
+            ctx.IsDeleted = true;
+            ctx.UpdatedAt = now;
 
-        await db.SaveChangesAsync(cancellationToken);
+            await db.Nodes.Where(n => n.ChatContextId == chatContextId)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(x => x.IsDeleted, true)
+                        .SetProperty(x => x.UpdatedAt, now),
+                    cancellationToken);
 
-        // Invalidate caches
-        _contextCache.TryRemove(chatContextId, out _);
-        _metadataCache.TryRemove(chatContextId, out _);
+            await db.SaveChangesAsync(cancellationToken);
+
+            // Invalidate caches
+            _contextCache.TryRemove(chatContextId, out var _);
+            _metadataCache.TryRemove(chatContextId, out var _);
+        }
+    }
+
+    public async Task RestoreChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default)
+    {
+        using var _ = await _lock.LockAsync(cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        foreach (var chatContextId in chatContextIds)
+        {
+            var ctx = await db.Chats.FirstOrDefaultAsync(x => x.Id == chatContextId, cancellationToken);
+            if (ctx is null) continue;
+
+            var now = DateTimeOffset.UtcNow;
+            ctx.IsDeleted = false;
+            ctx.UpdatedAt = now;
+
+            await db.Nodes.Where(n => n.ChatContextId == chatContextId)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(x => x.IsDeleted, false)
+                        .SetProperty(x => x.UpdatedAt, now),
+                    cancellationToken);
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async IAsyncEnumerable<ChatContextMetadata> QueryChatContextsAsync(
@@ -95,6 +129,7 @@ public sealed class ChatContextStorage(
         Guid? startAfterId = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var query = db.Chats.AsNoTracking().Where(x => !x.IsDeleted);
@@ -172,6 +207,7 @@ public sealed class ChatContextStorage(
         if (_contextCache.TryGetValue(chatContextId, out var wr) && wr.TryGetTarget(out var cached))
             return cached;
 
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var ctxRow = await db.Chats.AsNoTracking().FirstOrDefaultAsync(x => x.Id == chatContextId, cancellationToken)
@@ -194,11 +230,12 @@ public sealed class ChatContextStorage(
             .ToDictionaryAsync(b => b.Sha256, cancellationToken);
 
         // Root node
-        var rootRow = nodeRows.FirstOrDefault(x => x.Id == Guid.Empty);
-        if (rootRow is null || DeserializeMessage(rootRow.Payload) is not SystemChatMessage rootMessage)
-            throw new InvalidOperationException("Root node (System Prompt) is missing or invalid.");
+        var rootRow = nodeRows.AsValueEnumerable().FirstOrDefault(x => x.Id.Version == 0);
+        if (rootRow is null)
+            throw new InvalidOperationException("Root node is missing or invalid.");
 
-        var rootNode = new ChatMessageNode(Guid.Empty, rootMessage);
+        // Use shared root message instance for memory savings
+        var rootNode = new ChatMessageNode(rootRow.Id, new RootChatMessage());
 
         // Build node instances
         var nodesById = new Dictionary<Guid, ChatMessageNode>();
@@ -207,12 +244,12 @@ public sealed class ChatContextStorage(
         // Create non-root nodes first (we also create root below)
         foreach (var row in nodeRows)
         {
-            if (row.Id == Guid.Empty) continue; // handle root later
+            if (row.Id.Version == 0) continue; // handle root later
 
             var msg = DeserializeMessage(row.Payload);
-            if (msg is UserChatMessage userMsg)
+            if (msg is IHaveChatAttachments { Attachments: { } attachments })
             {
-                foreach (var attachment in userMsg.Attachments.OfType<ChatFileAttachment>())
+                foreach (var attachment in attachments.OfType<FileAttachment>())
                 {
                     if (blobsByHash.TryGetValue(attachment.Sha256, out var blobEntity))
                     {
@@ -224,7 +261,7 @@ public sealed class ChatContextStorage(
                 }
             }
 
-            var node = new ChatMessageNode(row.Id, msg);
+            var node = new ChatMessageNode(row.Id, msg, row.UpdatedAt);
             nodesById[row.Id] = node;
 
             if (row.ParentId is { } parentId)
@@ -256,7 +293,7 @@ public sealed class ChatContextStorage(
         }
 
         // Apply for root
-        ApplyChildren(Guid.Empty, rootNode, rootRow);
+        ApplyChildren(rootRow.Id, rootNode, rootRow);
 
         // Apply for all parents present
         var rowById = nodeRows.ToDictionary(x => x.Id);
@@ -285,12 +322,13 @@ public sealed class ChatContextStorage(
         if (context.Metadata.Id.Version != 7)
             throw new ArgumentException("ChatContext.Metadata.Id must be Guid v7.", nameof(context));
 
+        var nodeSnapshots = context.GetPersistenceSnapshot();
+
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var chatId = context.Metadata.Id;
-        var now = DateTimeOffset.UtcNow;
-
         // Upsert context row
+        var chatId = context.Metadata.Id;
         var ctxRow = await db.Chats.FirstOrDefaultAsync(x => x.Id == chatId, cancellationToken);
         if (ctxRow is null)
         {
@@ -321,33 +359,39 @@ public sealed class ChatContextStorage(
             .Where(x => x.ChatContextId == chatId)
             .ToListAsync(cancellationToken);
         var dbNodeBlobsSet = dbNodeBlobs
+            .AsValueEnumerable()
             .Select(nb => (nb.ChatNodeId, nb.BlobSha256, nb.Index))
             .ToHashSet();
 
-        var memNodes = context.GetAllNodes().ToDictionary(x => x.Id, x => x);
-
         // Upsert / Update
+        var memNodes = nodeSnapshots.AsValueEnumerable().ToDictionary(x => x.Id, x => x);
         foreach (var (id, node) in memNodes)
         {
             if (!dbNodes.TryGetValue(id, out var row))
             {
-                var entity = BuildNodeEntity(chatId, node, now);
+                var entity = BuildNodeEntity(chatId, node);
                 db.Nodes.Add(entity);
+            }
+            else if (row.UpdatedAt == node.DateModified &&
+                row.ParentId == node.ParentId &&
+                row.ChoiceChildId == node.ChoiceChildId)
+            {
+                continue; // No changes
             }
             else
             {
                 // Update fields
-                row.ParentId = node.Parent?.Id;
-                row.ChoiceChildId = ResolveChoiceChildId(node);
+                row.ParentId = node.ParentId;
+                row.ChoiceChildId = node.ChoiceChildId;
                 row.Payload = SerializeMessage(node.Message);
                 row.Author = node.Message.Role.Label.SafeSubstring(0, 10);
-                row.UpdatedAt = now;
+                row.UpdatedAt = node.DateModified;
                 row.IsDeleted = false;
             }
 
             if (node.Message is IHaveChatAttachments messageWithChatAttachments)
             {
-                var fileAttachments = messageWithChatAttachments.Attachments.AsValueEnumerable().OfType<ChatFileAttachment>().ToList();
+                var fileAttachments = messageWithChatAttachments.Attachments.AsValueEnumerable().OfType<FileAttachment>().ToList();
                 for (var i = 0; i < fileAttachments.Count; i++)
                 {
                     var attachment = fileAttachments[i];
@@ -388,7 +432,8 @@ public sealed class ChatContextStorage(
         }
 
         // Soft-delete nodes that disappeared in memory
-        foreach (var (id, row) in dbNodes)
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (id, row) in dbNodes.AsValueEnumerable())
         {
             if (!memNodes.ContainsKey(id))
             {
@@ -406,6 +451,7 @@ public sealed class ChatContextStorage(
 
     public async Task SaveChatContextMetadataAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default)
     {
+        using var _ = await _lock.LockAsync(cancellationToken);
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var ctxRow = await db.Chats.FirstOrDefaultAsync(x => x.Id == metadata.Id, cancellationToken);
@@ -417,7 +463,7 @@ public sealed class ChatContextStorage(
         await db.SaveChangesAsync(cancellationToken);
 
         SetAlive(_metadataCache, metadata.Id, metadata);
-        _contextCache.TryRemove(metadata.Id, out _); // keep metadata-context coherence
+        _contextCache.TryRemove(metadata.Id, out var _); // keep metadata-context coherence
     }
 
     // ————— helpers —————
@@ -477,17 +523,17 @@ public sealed class ChatContextStorage(
         }
     }
 
-    private ChatNodeEntity BuildNodeEntity(Guid chatId, ChatMessageNode node, DateTimeOffset now) =>
+    private ChatNodeEntity BuildNodeEntity(Guid chatId, ChatContext.PersistenceNodeSnapshot node) =>
         new()
         {
             ChatContextId = chatId,
             Id = node.Id,
-            ParentId = node.Parent?.Id,
-            ChoiceChildId = ResolveChoiceChildId(node),
+            ParentId = node.ParentId,
+            ChoiceChildId = node.ChoiceChildId,
             Payload = SerializeMessage(node.Message),
             Author = node.Message.Role.Label.SafeSubstring(0, 10),
-            CreatedAt = now,
-            UpdatedAt = now,
+            CreatedAt = node.DateModified,
+            UpdatedAt = node.DateModified,
             IsDeleted = false
         };
 
@@ -496,12 +542,6 @@ public sealed class ChatContextStorage(
 
     private static ChatMessage DeserializeMessage(byte[] payload) =>
         MessagePackSerializer.Deserialize<ChatMessage>(payload);
-
-    private static Guid? ResolveChoiceChildId(ChatMessageNode node)
-    {
-        if (node.ChoiceIndex < 0 || node.ChoiceIndex >= node.Children.Count) return null;
-        return node.Children[node.ChoiceIndex];
-    }
 
     private static long GetOrderKey(Guid id)
     {

@@ -15,12 +15,20 @@
         <TabControl>
           <TabItem Header="{I18N {x:Static LocaleKey.IconEditor_IconTabItem_Header}}">
             <TabControl x:Name="PART_IconTypeTabControl">
+              <shadui:TabControlAssist.HeaderContent>
+                <TextBox
+                  Classes="Compact" Margin="8,4,0,4"
+                  InnerLeftContent="{LucideIconContent Search, Size=12}"
+                  PlaceholderText="{I18N {x:Static LocaleKey.IconEditor_SearchBox_PlaceholderText}}"
+                  Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+              </shadui:TabControlAssist.HeaderContent>
+
               <TabItem
                 Header="Lucide"
                 Tag="{x:Static common:ColoredIconType.Lucide}">
                 <ListBox
                   Classes="Simple"
-                  ItemsSource="{x:Static v:IconEditor.AvailableKinds}"
+                  ItemsSource="{TemplateBinding LucideItemsSource}"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   SelectedItem="{Binding Icon.Kind, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}">
                   <ListBox.ItemsPanel>
@@ -42,7 +50,7 @@
                 Tag="{x:Static common:ColoredIconType.Text}">
                 <ListBox
                   Classes="Simple"
-                  ItemsSource="{x:Static v:IconEditor.AvailableEmojis}"
+                  ItemsSource="{TemplateBinding EmojiItemsSource}"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   SelectedItem="{Binding Icon.Text, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}">
                   <ListBox.ItemsPanel>
@@ -64,10 +72,10 @@
             </TabControl>
           </TabItem>
           <TabItem Header="{I18N {x:Static LocaleKey.IconEditor_BackgroundTabItem_Header}}">
-            <ColorView Color="{Binding Icon.BackgroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue=Black}"/>
+            <ColorView Color="{Binding Icon.BackgroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}}"/>
           </TabItem>
           <TabItem Header="{I18N {x:Static LocaleKey.IconEditor_ForegroundTabItem_Header}}">
-            <ColorView Color="{Binding Icon.ForegroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue=White}"/>
+            <ColorView Color="{Binding Icon.ForegroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}}"/>
           </TabItem>
         </TabControl>
       </ControlTemplate>

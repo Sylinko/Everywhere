@@ -30,6 +30,13 @@ public interface INativeHelper
     bool IsAdministratorStartupEnabled { get; set; }
 
     /// <summary>
+    /// Get whether the low data mode is currently active.
+    /// This can be used to reduce data usage when the user is on a metered network connection.
+    /// e.g. automatically download updates.
+    /// </summary>
+    bool IsLowDataModeActive { get; }
+
+    /// <summary>
     /// Restart the application as administrator (aka UAC on Windows).
     /// </summary>
     [SupportedOSPlatform("windows")]

@@ -78,12 +78,8 @@ public static partial class NativeMessageBox
     }
 
 #if WINDOWS
-    [LibraryImport("user32.dll", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]
-    private static partial int MessageBox(IntPtr hWnd, string text, string caption, int type);
-
-    private enum Win32MessageBoxResult
+    private enum MessageBoxResult
     {
-        None = 0,
         Ok = 1,
         Cancel = 2,
         Yes = 6,
@@ -92,19 +88,18 @@ public static partial class NativeMessageBox
         Ignore = 5
     }
 
-    private enum Win32MessageBoxButtons
+    [Flags]
+    private enum MessageBoxTypes
     {
-        Ok = 0x00000000,
+        None = 0x00000000,
+
+        Ok = None,
         OkCancel = 0x00000001,
         YesNo = 0x00000004,
         YesNoCancel = 0x00000003,
         RetryCancel = 0x00000005,
-        AbortRetryIgnore = 0x00000002
-    }
+        AbortRetryIgnore = 0x00000002,
 
-    private enum Win32MessageBoxIcon
-    {
-        None = 0x00000000,
         Information = 0x00000040,
         Warning = 0x00000030,
         Error = 0x00000010,
@@ -114,6 +109,9 @@ public static partial class NativeMessageBox
         Asterisk = Information
     }
 
+    [LibraryImport("user32.dll", EntryPoint = "MessageBoxW", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial MessageBoxResult MessageBox(IntPtr hWnd, string text, string caption, MessageBoxTypes type);
+
     private static NativeMessageBoxResult ShowWindowsMessageBox(
         string title,
         string message,
@@ -122,36 +120,36 @@ public static partial class NativeMessageBox
     {
         var buttonFlags = buttons switch
         {
-            NativeMessageBoxButtons.Ok => (int)Win32MessageBoxButtons.Ok,
-            NativeMessageBoxButtons.OkCancel => (int)Win32MessageBoxButtons.OkCancel,
-            NativeMessageBoxButtons.YesNo => (int)Win32MessageBoxButtons.YesNo,
-            NativeMessageBoxButtons.YesNoCancel => (int)Win32MessageBoxButtons.YesNoCancel,
-            NativeMessageBoxButtons.RetryCancel => (int)Win32MessageBoxButtons.RetryCancel,
-            NativeMessageBoxButtons.AbortRetryIgnore => (int)Win32MessageBoxButtons.AbortRetryIgnore,
-            _ => 0
+            NativeMessageBoxButtons.Ok => MessageBoxTypes.Ok,
+            NativeMessageBoxButtons.OkCancel => MessageBoxTypes.OkCancel,
+            NativeMessageBoxButtons.YesNo => MessageBoxTypes.YesNo,
+            NativeMessageBoxButtons.YesNoCancel => MessageBoxTypes.YesNoCancel,
+            NativeMessageBoxButtons.RetryCancel => MessageBoxTypes.RetryCancel,
+            NativeMessageBoxButtons.AbortRetryIgnore => MessageBoxTypes.AbortRetryIgnore,
+            _ => MessageBoxTypes.None
         };
 
         var iconFlags = icon switch
         {
-            NativeMessageBoxIcon.Information => (int)Win32MessageBoxIcon.Information,
-            NativeMessageBoxIcon.Warning => (int)Win32MessageBoxIcon.Warning,
-            NativeMessageBoxIcon.Error => (int)Win32MessageBoxIcon.Error,
-            NativeMessageBoxIcon.Question => (int)Win32MessageBoxIcon.Question,
-            NativeMessageBoxIcon.Stop => (int)Win32MessageBoxIcon.Stop,
-            NativeMessageBoxIcon.Hand => (int)Win32MessageBoxIcon.Hand,
-            NativeMessageBoxIcon.Asterisk => (int)Win32MessageBoxIcon.Asterisk,
-            _ => 0
+            NativeMessageBoxIcon.Information => MessageBoxTypes.Information,
+            NativeMessageBoxIcon.Warning => MessageBoxTypes.Warning,
+            NativeMessageBoxIcon.Error => MessageBoxTypes.Error,
+            NativeMessageBoxIcon.Question => MessageBoxTypes.Question,
+            NativeMessageBoxIcon.Stop => MessageBoxTypes.Stop,
+            NativeMessageBoxIcon.Hand => MessageBoxTypes.Hand,
+            NativeMessageBoxIcon.Asterisk => MessageBoxTypes.Asterisk,
+            _ => MessageBoxTypes.None
         };
 
         var result = MessageBox(IntPtr.Zero, message, title, buttonFlags | iconFlags);
         return result switch
         {
-            (int)Win32MessageBoxResult.Ok => NativeMessageBoxResult.Ok,
-            (int)Win32MessageBoxResult.Cancel => NativeMessageBoxResult.Cancel,
-            (int)Win32MessageBoxResult.Yes => NativeMessageBoxResult.Yes,
-            (int)Win32MessageBoxResult.No => NativeMessageBoxResult.No,
-            (int)Win32MessageBoxResult.Retry => NativeMessageBoxResult.Retry,
-            (int)Win32MessageBoxResult.Ignore => NativeMessageBoxResult.Ignore,
+            MessageBoxResult.Ok => NativeMessageBoxResult.Ok,
+            MessageBoxResult.Cancel => NativeMessageBoxResult.Cancel,
+            MessageBoxResult.Yes => NativeMessageBoxResult.Yes,
+            MessageBoxResult.No => NativeMessageBoxResult.No,
+            MessageBoxResult.Retry => NativeMessageBoxResult.Retry,
+            MessageBoxResult.Ignore => NativeMessageBoxResult.Ignore,
             _ => NativeMessageBoxResult.None
         };
     }

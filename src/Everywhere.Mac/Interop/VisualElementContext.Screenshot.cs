@@ -1,8 +1,8 @@
+using System.Reactive.Disposables;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Everywhere.Interop;
-using Everywhere.Utilities;
 using ImageIO;
 
 namespace Everywhere.Mac.Interop;
@@ -13,7 +13,7 @@ partial class VisualElementContext
     {
         private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
 
-        public static async Task<Bitmap?> ScreenshotAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
@@ -26,7 +26,7 @@ partial class VisualElementContext
         private readonly TaskCompletionSource<Bitmap?> _pickingPromise = new();
         private Bitmap? _resultBitmap;
 
-        private readonly DisposeCollector _disposables = new();
+        private readonly CompositeDisposable _disposables = new();
 
         // Free Mode State
         private bool _isDragging;

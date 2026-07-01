@@ -1,0 +1,54 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:CompositeKeyboardShortcutInputBox}"
+    TargetType="v:CompositeKeyboardShortcutInputBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel
+          Orientation="Horizontal" Spacing="6">
+          <v:KeyboardShortcutInputBox
+            MinWidth="160"
+            Shortcut="{Binding Shortcut?.Main, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
+
+          <v:KeyboardShortcutInputBox
+            x:Name="PART_AlternativeKeyInputBox" MinWidth="160"
+            Shortcut="{Binding Shortcut?.Alternative, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+            <v:KeyboardShortcutInputBox.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                <Binding
+                  Path="!Shortcut?.Alternative.IsEmpty"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  ElementName="PART_AlternativeKeyInputBox" Path="IsRecording"/>
+              </MultiBinding>
+            </v:KeyboardShortcutInputBox.IsVisible>
+          </v:KeyboardShortcutInputBox>
+
+          <Button
+            Classes="Ghost Compact Uniform"
+            shadui:ButtonAssist.Icon="{LucideIconContent Keyboard}"
+            shadui:ButtonAssist.IconSize="{DynamicResource FontSizeL}"
+            Command="{Binding #PART_AlternativeKeyInputBox.EnterRecordingModeCommand}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.CompositeKeyboardShortcutInputBox_SetAlternativeKeyToggleButton_ToolTip_Tip}}">
+            <Button.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding
+                  Path="!Shortcut?.Main.IsEmpty"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  Path="Shortcut?.Alternative.IsEmpty"
+                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                <Binding
+                  ElementName="PART_AlternativeKeyInputBox" Path="!IsRecording"/>
+              </MultiBinding>
+            </Button.IsVisible>
+          </Button>
+
+          <ToggleSwitch IsChecked="{Binding Shortcut?.IsEnabled, RelativeSource={RelativeSource TemplatedParent}}"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

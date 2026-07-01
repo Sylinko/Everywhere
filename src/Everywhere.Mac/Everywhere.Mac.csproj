@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>Everywhere</AssemblyName>
+    <EverywhereI18NNamespace>Everywhere.Mac.I18N</EverywhereI18NNamespace>
     <ApplicationTitle>Everywhere</ApplicationTitle>
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
@@ -19,6 +20,19 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
 
+  <Import Project="..\Build.Patches.targets" />
+
+  <!-- Workaround for TextMateSharp.Grammars libonigwrap.dylib failing in install_name_tool due to lack of header padding -->
+  <Target Name="_SkipInstallNameToolForLibOnigWrap" BeforeTargets="_InstallNameTool">
+    <Message Text="Skipping install_name_tool for libonigwrap.dylib to avoid 'larger updated load commands do not fit' error..." Importance="high" />
+    <ItemGroup>
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+    </ItemGroup>
+  </Target>
+
+  <PropertyGroup>
+    <ApplicationManifest>Info.plist</ApplicationManifest>
+  </PropertyGroup>
 
   <!-- $(IsPublish) is set to 'true' when running 'dotnet publish /p:IsPublish=true' -->
   <PropertyGroup Condition="'$(IsPublish)' != 'true'">
@@ -30,6 +44,21 @@
   <PropertyGroup Condition="'$(IsPublish)' == 'true'">
     <UseHardenedRuntime>true</UseHardenedRuntime>
   </PropertyGroup>
+
+  <!-- Workaround for TextMateSharp libonigwrap.dylib failing in install_name_tool and causing dyld crash on launch -->
+  <Target Name="_HideLibOnigWrapFromMacSdk" BeforeTargets="_ComputeDynamicLibrariesToReidentify;_LinkNativeExecutable;_InstallNameTool">
+    <Message Text="Intercepting libonigwrap.dylib to prevent dyld static linking crashes..." Importance="high" />
+    <ItemGroup>
+      <_ExtractedLibOnigWrap Include="@(_FileNativeReference)" Condition="'%(Filename)' == 'libonigwrap'" />
+      <_FileNativeReference Remove="@(_ExtractedLibOnigWrap)" />
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_CopyLibOnigWrapToBundle" AfterTargets="_CreateAppBundle">
+    <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')" />
+    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''" />
+  </Target>
 
   <!-- When not publishing, we sign the build output for local debugging -->
   <Target Name="SignOnBuild" AfterTargets="Build" Condition="'$(IsPublish)' != 'true'">
@@ -115,11 +144,18 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
-    <PackageReference Include="Lib.Harmony"/>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj" />
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="I18N\Strings*.resx"/>
+    <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
   <Import Project="..\Build.Watchdog.targets"/>
@@ -136,5 +172,16 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="_SetShellScriptsPublishFolderType"
+          BeforeTargets="_ComputePublishLocation"
+          Condition="'$(IsMacEnabled)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Condition="'%(Extension)' == '.zsh' Or '%(Extension)' == '.bash' Or '%(Extension)' == '.ps1'">
+        <PublishFolderType>Assembly</PublishFolderType>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

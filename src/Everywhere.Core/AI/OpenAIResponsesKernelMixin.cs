@@ -1,36 +1,41 @@
 ﻿using System.ClientModel;
 using System.ClientModel.Primitives;
+using Everywhere.Common;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using OpenAI;
 using OpenAI.Responses;
+using FunctionCallContent = Microsoft.Extensions.AI.FunctionCallContent;
 
 namespace Everywhere.AI;
 
 /// <summary>
-/// An implementation of <see cref="IKernelMixin"/> for OpenAI models via Responses API.
+/// An implementation of <see cref="KernelMixin"/> for OpenAI models via Responses API.
 /// </summary>
-public sealed class OpenAIResponsesKernelMixin : KernelMixinBase
+public sealed class OpenAIResponsesKernelMixin : KernelMixin
 {
     public override IChatCompletionService ChatCompletionService { get; }
 
+    private readonly OpenAIResponsesOptions _options;
+
     public OpenAIResponsesKernelMixin(
-        CustomAssistant customAssistant,
-        HttpClient httpClient,
+        Assistant assistant,
+        ModelConnection connection,
         ILoggerFactory loggerFactory
-    ) : base(customAssistant)
+    ) : base(assistant, connection)
     {
-        ChatCompletionService = new OptimizedOpenAIApiClient(
+        _options = assistant.OpenAIResponsesOptions;
+
+        ChatCompletionService = new OptimizedChatClient(
             new ResponsesClient(
-                ModelId,
-                new ApiKeyCredential(ApiKey.IsNullOrWhiteSpace() ? "NO_API_KEY" : ApiKey),
+                new ApiKeyCredential(ApiKey ?? "NO_API_KEY"),
                 new OpenAIClientOptions
                 {
                     Endpoint = new Uri(Endpoint, UriKind.Absolute),
-                    Transport = new HttpClientPipelineTransport(httpClient, true, loggerFactory)
+                    Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
                 }
-            ).AsIChatClient(),
+            ).AsIChatClient(ModelId),
             this
         ).AsChatCompletionService();
     }
@@ -38,7 +43,7 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixinBase
     /// <summary>
     /// optimized wrapper around OpenAI's IChatClient to extract reasoning content from internal properties.
     /// </summary>
-    private sealed class OptimizedOpenAIApiClient(IChatClient client, OpenAIResponsesKernelMixin owner) : DelegatingChatClient(client)
+    private sealed class OptimizedChatClient(IChatClient originalClient, OpenAIResponsesKernelMixin owner) : DelegatingChatClient(originalClient)
     {
         public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
             IEnumerable<ChatMessage> messages,
@@ -57,42 +62,45 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixinBase
                 for (var i = 0; i < update.Contents.Count; i++)
                 {
                     var content = update.Contents[i];
-                    switch (content)
+                    update.Contents[i] = content switch
                     {
-                        case FunctionCallContent { Name.Length: > 0, CallId: null or { Length: 0 } } missingIdContent:
-                        { 
+                        FunctionCallContent { Name.Length: > 0, CallId: null or { Length: 0 } } missingIdContent =>
                             // Generate a unique ToolCallId for the function call update.
-                            update.Contents[i] = new FunctionCallContent(
-                                Guid.CreateVersion7().ToString("N"),
-                                missingIdContent.Name,
-                                missingIdContent.Arguments);
-                            break;
-                        }
-                        case TextReasoningContent reasoningContent:
-                        { 
-                            // Semantic Kernel won't handle TextReasoningContent, convert it to TextContent with reasoning properties
-                            update.Contents[i] = new TextContent(reasoningContent.Text)
-                            {
-                                AdditionalProperties = ReasoningProperties
-                            };
-                            update.AdditionalProperties = ApplyReasoningProperties(update.AdditionalProperties);
-                            break;
-                        }
-                    }
+                            new FunctionCallContent(Guid.CreateVersion7().ToString("N"), missingIdContent.Name, missingIdContent.Arguments),
+                        ErrorContent errorContent => throw HandledChatException.FromErrorCode(
+                            new Exception(errorContent.Message),
+                            errorContent.ErrorCode ?? errorContent.Message),
+                        _ => update.Contents[i]
+                    };
                 }
 
                 yield return update;
             }
         }
 
-        private object? RawRepresentationFactory(IChatClient chatClient) => owner.IsDeepThinkingSupported ?
-            new CreateResponseOptions
+        private CreateResponseOptions RawRepresentationFactory(IChatClient _)
+        {
+            var options = owner._options;
+            var reasoningEffortLevel = options.ReasoningEffort switch
             {
+                { Length: > 0 } => new ResponseReasoningEffortLevel(options.ReasoningEffort),
+                _ => (ResponseReasoningEffortLevel?)null
+            };
+            var reasoningSummaryVerbosity = options.ReasoningSummary switch
+            {
+                { Length: > 0 } => new ResponseReasoningSummaryVerbosity(options.ReasoningSummary),
+                _ => (ResponseReasoningSummaryVerbosity?)null
+            };
+            return new CreateResponseOptions
+            {
+                Temperature = float.TryParse(options.Temperature, out var temperature) ? temperature : null,
+                TopP = float.TryParse(options.TopP, out var topP) ? topP : null,
                 ReasoningOptions = new ResponseReasoningOptions
                 {
-                    ReasoningSummaryVerbosity = ResponseReasoningSummaryVerbosity.Detailed
+                    ReasoningEffortLevel = reasoningEffortLevel,
+                    ReasoningSummaryVerbosity = reasoningSummaryVerbosity
                 }
-            } :
-            null;
+            };
+        }
     }
 }

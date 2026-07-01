@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Security;
 using System.Security.Principal;
 using Windows.Data.Xml.Dom;
+using Windows.Networking.Connectivity;
 using Windows.UI.Notifications;
 using Windows.Win32;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
@@ -96,6 +98,18 @@ public class NativeHelper : INativeHelper
         }
     }
 
+    public bool IsLowDataModeActive
+    {
+        get
+        {
+            var profile = NetworkInformation.GetInternetConnectionProfile();
+            if (profile == null) return false;
+
+            var cost = profile.GetConnectionCost();
+            return cost.NetworkCostType != NetworkCostType.Unrestricted || cost.ApproachingDataLimit || cost.OverDataLimit;
+        }
+    }
+
     public void RestartAsAdministrator()
     {
         if (IsAdministrator)
@@ -137,29 +151,36 @@ public class NativeHelper : INativeHelper
             // ignore
         }
 
-        var xml =
-            $"""
-             <toast launch='conversationId=9813'>
-                 <visual>
-                     <binding template='ToastGeneric'>
-                         {(string.IsNullOrEmpty(title) ? "" : $"<text>{title}</text>")}
-                         <text>{message}</text>
-                     </binding>
-                 </visual>
-             </toast>
-             """;
-        var xmlDocument = new XmlDocument();
-        xmlDocument.LoadXml(xml);
+        try
+        {
+            var xml =
+                $"""
+                 <toast launch='conversationId=9813'>
+                     <visual>
+                         <binding template='ToastGeneric'>
+                             {(string.IsNullOrEmpty(title) ? "" : $"<text>{SecurityElement.Escape(title)}</text>")}
+                             <text>{SecurityElement.Escape(message)}</text>
+                         </binding>
+                     </visual>
+                 </toast>
+                 """;
+            var xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(xml);
 
-        var toast = new ToastNotification(xmlDocument);
-        ToastNotificationManager.CreateToastNotifier(ModelId).Show(toast);
-        var tcs = new TaskCompletionSource<bool>();
+            var toast = new ToastNotification(xmlDocument);
+            ToastNotificationManager.CreateToastNotifier(ModelId).Show(toast);
+            var tcs = new TaskCompletionSource<bool>();
 
-        toast.Activated += (_, _) => tcs.SetResult(true);
-        toast.Dismissed += (_, _) => tcs.SetResult(false);
-        toast.Failed += (_, _) => tcs.SetResult(false);
+            toast.Activated += (_, _) => tcs.SetResult(true);
+            toast.Dismissed += (_, _) => tcs.SetResult(false);
+            toast.Failed += (_, _) => tcs.SetResult(false);
 
-        return tcs.Task;
+            return tcs.Task;
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
 
         void EnsureAumidRegistered()
         {

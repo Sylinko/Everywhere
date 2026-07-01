@@ -1,11 +1,12 @@
 <UserControl
   x:Class="Everywhere.Views.WelcomeView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:be="clr-namespace:Everywhere.Behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  d:DesignHeight="450" d:DesignWidth="800"
-  x:DataType="vm:WelcomeViewModel" mc:Ignorable="d">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:configurator="clr-namespace:Everywhere.AI.Configurator" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" d:DesignHeight="450"
+  d:DesignWidth="800" x:DataType="vm:WelcomeViewModel"
+  mc:Ignorable="d">
   <Grid
     Width="800" MinHeight="600"
     Margin="0,0,0,16" ColumnDefinitions="Auto,*"
@@ -16,18 +17,16 @@
       <RowDefinition MinHeight="200"/>
     </Grid.RowDefinitions>
 
-    <Viewbox
+    <v:Eva
       Grid.Row="1" Grid.Column="0"
-      Width="36" Height="36"
-      Margin="32,8,4,-4" VerticalAlignment="Top">
-      <ContentPresenter Content="{StaticResource AssistantAvatar}"/>
-    </Viewbox>
+      Width="48" Height="48"
+      Margin="24,8,4,-4" VerticalAlignment="Top"
+      IsThinking="{Binding IsBusy}"/>
 
     <TransitioningContentControl
       Grid.Row="1" Grid.Column="1"
-      Margin="0,8,32,0"
-      Content="{Binding CurrentStep}"
-      IsTransitionReversed="{Binding IsPageTransitionReversed}">
+      Margin="0,8,24,0"
+      Content="{Binding CurrentStep}">
       <TransitioningContentControl.Styles>
         <Style Selector="ListBox.AssistantMessage">
           <Style Selector="^ TextBlock">
@@ -52,24 +51,25 @@
               </ItemsPanelTemplate>
             </Setter.Value>
           </Setter>
+
           <Setter Property="ItemContainerTheme">
             <Setter.Value>
               <ControlTheme TargetType="ListBoxItem">
                 <Setter Property="Interaction.Behaviors">
                   <BehaviorCollectionTemplate>
                     <BehaviorCollection>
-                      <be:FadeInAnimationBehavior ItemDelayMultiplier="0:0:0.6"/>
+                      <in:FadeInAnimationBehavior ItemDelayMultiplier="0:0:0.6"/>
                     </BehaviorCollection>
                   </BehaviorCollectionTemplate>
                 </Setter>
-                <Setter Property="IsVisible" Value="{ReflectionBinding $self.Content.(Visual.IsVisible), FallbackValue=True}"/>
+                <Setter Property="IsVisible" Value="{Binding $self.Content.(Visual.IsVisible), FallbackValue=True}"/>
                 <Setter Property="Template">
                   <Setter.Value>
                     <ControlTemplate>
                       <Border
                         Padding="10,6" HorizontalAlignment="Left"
                         Background="{DynamicResource BorderColor}"
-                        CornerRadius="8">
+                        ClipToBounds="False" CornerRadius="8">
                         <ContentControl
                           ClipToBounds="False"
                           Content="{TemplateBinding Content}"/>
@@ -108,20 +108,30 @@
               <HyperlinkButton
                 VerticalAlignment="Center"
                 Content="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}"
-                NavigateUri="https://everywhere.sylinko.com"
+                NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}"
                 TextElement.Foreground="{DynamicResource InfoColor}"/>
               <HyperlinkButton
                 VerticalAlignment="Center"
                 Content="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"
-                NavigateUri="https://discord.gg/5fyg6nE3yn"
+                NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}"
                 TextElement.Foreground="{DynamicResource InfoColor}"/>
               <HyperlinkButton
                 VerticalAlignment="Center"
                 Content="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"
-                NavigateUri="https://qm.qq.com/cgi-bin/qm/qr?k=wp9aDBBnLc7pYATqT99tB-N2ZP2ETmJC&amp;jump_from=webapi&amp;authKey=97qUJfsQoI70dUNcgBZ0C3HCZeiEn8inLT7pzg8x+KinbQwfIrHFu3dB2+aHMbRD"
+                NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}"
                 TextElement.Foreground="{DynamicResource InfoColor}"/>
             </StackPanel>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_IntroStep_Message6}}"/>
+          </ListBox>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:WelcomeViewModelSoftLoginStep">
+          <ListBox Classes="AssistantMessage">
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_SoftLoginStep_Message1}}"/>
+
+            <v:UserProfileCard
+              Width="240" Margin="8"
+              HorizontalAlignment="Left" ShowActionsButton="False"/>
           </ListBox>
         </DataTemplate>
 
@@ -129,9 +139,20 @@
           <ListBox Classes="AssistantMessage">
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ConfiguratorStep_Message1}}"/>
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ConfiguratorStep_Message2}}"/>
-            <v:ModelProviderConfiguratorSelector
-              CustomAssistant="{Binding ViewModel.Assistant, Mode=OneTime}"
+            <v:AssistantConfiguratorSelector
+              Assistant="{Binding ViewModel.Assistant, Mode=OneTime}"
               IsSettingsVisible="False"/>
+          </ListBox>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:WelcomeViewModelHardLoginStep">
+          <ListBox Classes="AssistantMessage">
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_HardLoginStep_Message1}}"/>
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_HardLoginStep_Message2}}"/>
+
+            <v:UserProfileCard
+              Width="240" Margin="8"
+              HorizontalAlignment="Left" ShowActionsButton="False"/>
           </ListBox>
         </DataTemplate>
 
@@ -139,7 +160,13 @@
           <Panel>
             <ListBox
               Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static ai:ModelProviderConfiguratorType.PresetBased}}">
+              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.Official}}">
+              <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Official_Message1}}"/>
+            </ListBox>
+
+            <ListBox
+              Classes="AssistantMessage"
+              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.PresetBased}}">
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message1}}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message2}}"/>
               <StackPanel
@@ -148,7 +175,7 @@
                 <HyperlinkButton
                   VerticalAlignment="Center"
                   Content="{I18N {x:Static LocaleKey.WelcomeView_ModelProviderHyperlinkButton_Content}}"
-                  NavigateUri="https://everywhere.sylinko.com/model-provider/"
+                  NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteDocsModelProviderUri}"
                   TextElement.Foreground="{DynamicResource InfoColor}"/>
               </StackPanel>
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message4}}"/>
@@ -159,7 +186,7 @@
 
             <ListBox
               Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static ai:ModelProviderConfiguratorType.Advanced}}">
+              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.Advanced}}">
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message1}}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message2}}"/>
             </ListBox>
@@ -171,9 +198,10 @@
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message1}}"/>
             <v:KeyboardShortcutInputBox
               MinWidth="160" MinHeight="32"
-              Margin="-10,-6" Background="Transparent"
+              Margin="-10,-6"
+              Background="{DynamicResource TransparentColor}"
               BorderThickness="0"
-              Shortcut="{Binding ViewModel.Settings.ChatWindow.Shortcut, Mode=TwoWay}"/>
+              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow, Mode=TwoWay}"/>
             <TextBlock
               Classes="Muted"
               Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message2}}"/>
@@ -194,7 +222,8 @@
     <TransitioningContentControl
       Grid.Row="2" Grid.Column="0"
       Grid.ColumnSpan="2" Margin="32,8,32,0"
-      Content="{Binding CurrentStep}">
+      Content="{Binding CurrentStep}"
+      IsTransitionReversed="{Binding IsPageTransitionReversed}">
       <TransitioningContentControl.PageTransition>
         <CompositePageTransition>
           <PageSlide
@@ -207,11 +236,42 @@
         <DataTemplate DataType="vm:WelcomeViewModelIntroStep">
           <Button
             Classes="Primary" VerticalAlignment="Bottom"
-            Command="{Binding ViewModel.MoveNextCommand}"
+            Command="{Binding MoveNextCommand}"
             Content="{I18N {x:Static LocaleKey.WelcomeView_LetsStartButton_Content}}"/>
         </DataTemplate>
 
+        <DataTemplate DataType="vm:WelcomeViewModelSoftLoginStep">
+          <Grid
+            VerticalAlignment="Bottom" ColumnDefinitions="2*,*"
+            ColumnSpacing="8">
+            <Button
+              Classes="Secondary" Grid.Column="0"
+              Command="{Binding ViewModel.MoveNextCommand}"
+              Content="{I18N {x:Static LocaleKey.WelcomeView_SoftLoginStep_SkipButton_Content}}"/>
+            <Button
+              Classes="Primary" Grid.Column="1"
+              Command="{Binding ViewModel.MoveNextCommand}"
+              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"
+              IsEnabled="{Binding ViewModel.CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          </Grid>
+        </DataTemplate>
+
         <DataTemplate DataType="vm:WelcomeViewModelConfiguratorStep">
+          <Grid
+            VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
+            ColumnSpacing="8">
+            <Button
+              Classes="Secondary" Grid.Column="0"
+              Command="{Binding MovePreviousCommand}"
+              Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
+            <Button
+              Classes="Primary" Grid.Column="1"
+              Command="{Binding MoveNextCommand}"
+              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"/>
+          </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:WelcomeViewModelHardLoginStep">
           <Grid
             VerticalAlignment="Bottom" ColumnDefinitions="*,4*"
             ColumnSpacing="8">
@@ -222,7 +282,8 @@
             <Button
               Classes="Primary" Grid.Column="1"
               Command="{Binding ViewModel.MoveNextCommand}"
-              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"/>
+              Content="{I18N {x:Static LocaleKey.WelcomeView_NextStepButton_Content}}"
+              IsEnabled="{Binding ViewModel.CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNotNull}}"/>
           </Grid>
         </DataTemplate>
 
@@ -242,7 +303,7 @@
             <Button
               Classes="Secondary" Grid.Row="1"
               Grid.Column="0"
-              Command="{Binding ViewModel.MovePreviousCommand}"
+              Command="{Binding MovePreviousCommand}"
               Content="{I18N {x:Static LocaleKey.WelcomeView_PreviousStepButton_Content}}"/>
             <Button
               Classes="Primary" Grid.Row="1"

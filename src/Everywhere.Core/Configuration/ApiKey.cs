@@ -53,7 +53,27 @@ public partial class ApiKey : ObservableValidator
         set => SetProperty(ref _pendingKey, value);
     }
 
+    /// <summary>
+    /// You may say: Why don't use the SecretString?
+    /// The reason is said at: https://github.com/dotnet/platform-compat/blob/master/docs/DE0001.md
+    /// TL;DR: SecretString has no native support on any OS.
+    /// </summary>
     private string? _pendingKey;
+
+    /// <summary>
+    /// Validates the API key by checking if it is not null and empty.
+    /// </summary>
+    /// <param name="apiKey"></param>
+    /// <returns></returns>
+    public static ValidationResult? Validate(Guid apiKey)
+    {
+        if (GetKey(apiKey).IsNullOrWhiteSpace())
+        {
+            return new ValidationResult(LocaleResolver.ValidationErrorMessage_RequiredApiKey);
+        }
+
+        return ValidationResult.Success;
+    }
 
     /// <summary>
     /// Validates the Name property. Used for CustomValidation attribute.

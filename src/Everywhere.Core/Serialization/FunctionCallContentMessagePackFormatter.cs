@@ -13,8 +13,8 @@ public class FunctionCallContentMessagePackFormatter : FunctionContentMessagePac
         writer.Write(value.Id);
         writer.Write(value.PluginName);
         writer.Write(value.FunctionName);
-        SerializeDictionary(ref writer, value.Arguments, options);
-        SerializeDictionary(ref writer, value.Metadata, options);
+        MetadataDictionaryMessagePackFormatter.Serialize(ref writer, value.Arguments, options);
+        MetadataDictionaryMessagePackFormatter.Serialize(ref writer, value.Metadata, options);
     }
 
     protected override FunctionCallContent DeserializeCore(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -43,14 +43,15 @@ public class FunctionCallContentMessagePackFormatter : FunctionContentMessagePac
                     functionName = reader.ReadString();
                     break;
                 }
-                case 3 when DeserializeDictionary(ref reader, options) is { } dictionary:
+                case 3:
                 {
-                    arguments = new KernelArguments(dictionary);
+                    if (MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options) is { Count: > 0 } dictionary)
+                        arguments = new KernelArguments(dictionary);
                     break;
                 }
                 case 4:
                 {
-                    metadata = DeserializeDictionary(ref reader, options);
+                    metadata = MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options);
                     break;
                 }
                 default:
@@ -62,9 +63,9 @@ public class FunctionCallContentMessagePackFormatter : FunctionContentMessagePac
             }
         }
 
-        if (id is null || pluginName is null || functionName is null)
+        if (functionName is null)
         {
-            throw new MessagePackSerializationException("FunctionCallContent required fields cannot be null.");
+            throw new MessagePackSerializationException("FunctionCallContent functionName cannot be null.");
         }
 
         return new FunctionCallContent(functionName, pluginName, id, arguments)

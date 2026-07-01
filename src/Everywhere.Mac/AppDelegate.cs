@@ -1,15 +1,16 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Common;
 using Everywhere.Mac.Interop;
+using Everywhere.Messages;
 using Everywhere.ViewModels;
 using ObjCRuntime;
-using Serilog;
 
 namespace Everywhere.Mac;
 
 [Register("AppDelegate")]
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.AllMethods)]
 public partial class AppDelegate : NSApplicationDelegate
 {
     /// <summary>
@@ -96,6 +97,15 @@ public partial class AppDelegate : NSApplicationDelegate
         _spaceChangeObserver = null;
     }
 
+    public override void WillFinishLaunching(NSNotification notification)
+    {
+        NSAppleEventManager.SharedAppleEventManager.SetEventHandler(
+            this,
+            new Selector("handleGetURLEvent:withReplyEvent:"),
+            AEEventClass.Internet,
+            AEEventID.GetUrl);
+    }
+
     private static void OnSpaceChanged(NSNotification obj)
     {
         UpdateIsVisibleInDock();
@@ -107,15 +117,28 @@ public partial class AppDelegate : NSApplicationDelegate
     private static void UpdateIsVisibleInDock()
     {
         var isVisible = IsVisibleInDock && !IsInFullscreenSpace();
-        NSApplication.SharedApplication.ActivationPolicy = isVisible
-            ? NSApplicationActivationPolicy.Regular
-            : NSApplicationActivationPolicy.Accessory;
+        NSApplication.SharedApplication.ActivationPolicy =
+            isVisible ? NSApplicationActivationPolicy.Regular : NSApplicationActivationPolicy.Accessory;
     }
 
     public override bool ApplicationShouldHandleReopen(NSApplication sender, bool hasVisibleWindows)
     {
         // We handled the reopen by showing the chat window.
-        WeakReferenceMessenger.Default.Send<ApplicationCommand>(new ShowWindowCommand(nameof(ChatWindowViewModel)));
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.ChatWindow));
         return true;
+    }
+
+    [Export("handleGetURLEvent:withReplyEvent:")]
+    private void HandleGetURLEvent(NSAppleEventDescriptor evt, NSAppleEventDescriptor replyEvt)
+    {
+        var url = evt.ParamDescriptorForKeyword(GetDescriptor("----"))?.StringValue;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme.Equals(
+                UrlProtocolCallbackMessage.Scheme,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            WeakReferenceMessenger.Default.Send<ApplicationMessage>(new UrlProtocolCallbackMessage(url));
+        }
+
+        static uint GetDescriptor(string s) => (uint)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
     }
 }

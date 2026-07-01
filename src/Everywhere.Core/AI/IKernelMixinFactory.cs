@@ -1,9 +1,9 @@
 namespace Everywhere.AI;
 
 /// <summary>
-/// Represents a factory for creating instances of <see cref="IKernelMixin"/>.
+/// Represents a factory for creating instances of <see cref="KernelMixin"/>.
 /// </summary>
 public interface IKernelMixinFactory
 {
-    IKernelMixin GetOrCreate(CustomAssistant customAssistant, string? apiKeyOverride = null);
+    KernelMixin Create(Assistant assistant);
 }

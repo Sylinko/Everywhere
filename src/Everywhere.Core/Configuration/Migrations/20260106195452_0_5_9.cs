@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+using Everywhere.Common;
 using GnomeStack.Os.Secrets.Win32;
 using ZLinq;
 
@@ -12,7 +13,7 @@ namespace Everywhere.Configuration.Migrations;
 /// </summary>
 public class _20260106195452_0_5_9 : SettingsMigration
 {
-    public override Version Version => new(0, 5, 9);
+    public override SemanticVersion Version => new(0, 5, 9);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [

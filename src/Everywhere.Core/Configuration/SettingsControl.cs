@@ -16,6 +16,8 @@ public interface ISettingsControl
 public class SettingsControl<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TControl> : ISettingsControl
     where TControl : Control
 {
+    public bool IsCacheEnabled { get; set; }
+
     private readonly Func<IServiceProvider, TControl>? _factory;
 
     private TControl? _control;
@@ -27,20 +29,23 @@ public class SettingsControl<[DynamicallyAccessedMembers(DynamicallyAccessedMemb
         _control = control;
     }
 
-    public SettingsControl(Func<TControl> factory)
-    {
-        _factory = _ => factory();
-    }
-
-    public SettingsControl(Func<IServiceProvider, TControl> factory)
+    public SettingsControl(Func<IServiceProvider, TControl> factory, bool isCacheEnabled = true)
     {
         _factory = factory;
+        IsCacheEnabled = isCacheEnabled;
     }
 
     public Control CreateControl()
     {
-        if (_control is not null) return _control;
-        if (_factory is not null) return _control = _factory(ServiceLocator.Resolve<IServiceProvider>());
-        return _control = ServiceLocator.Resolve<TControl>();
+        if (_control is not null)
+        {
+            return _control;
+        }
+
+        var control = _factory is not null ?
+            _factory(ServiceLocator.Resolve<IServiceProvider>()) :
+            ServiceLocator.Resolve<TControl>();
+        if (IsCacheEnabled) _control = control;
+        return control;
     }
 }

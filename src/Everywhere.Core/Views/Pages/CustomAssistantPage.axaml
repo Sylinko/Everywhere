@@ -5,24 +5,26 @@
   xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:CustomAssistantPageViewModel"
   ClipToBounds="False">
   <shadui:NavigationView
-    MaxWidth="1600"
+    Padding="24,0,0,20" HeaderMaxWidth="1000"
+    HeaderPadding="0,0,12,0"
     PageTransition="{x:Null}"
-    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+    PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
     SelectedItem="{Binding SelectedCustomAssistant, Mode=TwoWay}">
     <shadui:NavigationView.PaneHeader>
-      <DockPanel Margin="0,0,0,8">
-        <TextBlock
-          Classes="h4" DockPanel.Dock="Left"
-          VerticalAlignment="Center"
-          Text="{I18N {x:Static LocaleKey.CustomAssistantPage_Title}}"/>
-
+      <DockPanel Margin="0,14,0,8">
         <Button
-          Classes="Secondary" HorizontalAlignment="Right"
+          Classes="Secondary" DockPanel.Dock="Right"
           VerticalAlignment="Center"
           shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
           Command="{Binding CreateNewCustomAssistantCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CreateNewCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_CreateNewCustomAssistantButton_ToolTip}}"/>
+
+        <TextBlock
+          Classes="h4" VerticalAlignment="Center"
+          Text="{I18N {x:Static LocaleKey.CustomAssistantPage_Title}}"
+          TextTrimming="CharacterEllipsis"/>
       </DockPanel>
     </shadui:NavigationView.PaneHeader>
 
@@ -33,10 +35,26 @@
         ItemsSource="{Binding CustomAssistants}"
         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
         SelectedItem="{Binding SelectedCustomAssistant, Mode=TwoWay}">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Style Selector="^:not(:pointerover) LucideIcon#GripIcon">
+              <Setter Property="IsVisible" Value="False"/>
+            </Style>
+          </Style>
+        </ListBox.Styles>
+
         <ListBox.DataTemplates>
           <DataTemplate DataType="ai:CustomAssistant">
             <DockPanel
               HorizontalSpacing="10" LastChildFill="True">
+              <LucideIcon
+                Name="GripIcon" DockPanel.Dock="Right"
+                Foreground="{DynamicResource MutedColor}"
+                Kind="GripVertical"
+                Size="{DynamicResource FontSizeXl}"/>
+
               <v:IconPresenter
                 DockPanel.Dock="Left" Width="40"
                 Height="40"
@@ -49,7 +67,7 @@
               <StackPanel VerticalAlignment="Center">
                 <TextBlock
                   Classes="p"
-                  Text="{Binding Name, FallbackValue={x:Null}}"
+                  Text="{Binding Name}"
                   TextTrimming="CharacterEllipsis"
                   ToolTip.Tip="{Binding $self.Text}"/>
 
@@ -68,35 +86,34 @@
 
     <shadui:NavigationView.Header>
       <StackPanel
-        Margin="0,0,12,8" HorizontalAlignment="Right"
+        Margin="0,14,0,14" HorizontalAlignment="Right"
+        IsVisible="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
         Orientation="Horizontal" Spacing="6">
         <Button
-          Classes="Secondary" VerticalAlignment="Center"
-          shadui:ButtonAssist.Icon="{LucideIconContent Unplug}"
+          Classes="Primary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Zap}"
           shadui:ButtonAssist.ShowProgress="{Binding CheckConnectivityCommand.IsRunning}"
           Command="{Binding CheckConnectivityCommand}"
           Content="{I18N {x:Static LocaleKey.CustomAssistantPage_CheckConnectivityButton_Content}}"
-          IsEnabled="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_CheckConnectivityButton_ToolTip}}"/>
 
-        <shadui:ButtonGroup
-          VerticalAlignment="Center" Orientation="Horizontal">
-          <Button
-            Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
-            Command="{Binding DuplicateCustomAssistantCommand}"
-            Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_Content}}"
-            IsEnabled="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip}}"/>
-          <Button
-            Classes="Secondary"
-            shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
-            Command="{Binding DeleteCustomAssistantCommand}"
-            Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_Content}}"
-            Foreground="{DynamicResource DestructiveColor}"
-            IsEnabled="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_ToolTip}}"/>
-        </shadui:ButtonGroup>
+        <Button
+          Classes="Secondary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+          Command="{Binding DuplicateCustomAssistantCommand}"
+          Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DuplicateCustomAssistantButton_ToolTip}}"/>
+
+        <Button
+          Classes="Secondary" VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+          Command="{Binding DeleteCustomAssistantCommand}"
+          Content="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_Content}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          Foreground="{DynamicResource DestructiveColor}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantPage_DeleteCustomAssistantButton_ToolTip}}"/>
       </StackPanel>
     </shadui:NavigationView.Header>
 
@@ -104,10 +121,30 @@
       <DataTemplate DataType="ai:CustomAssistant">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <v:SettingsItemsControl
-            Margin="0,0,12,0"
+            MaxWidth="1000" Margin="0,0,26,0"
             ItemsSource="{Binding SettingsItems, FallbackValue={x:Null}}"/>
         </ScrollViewer>
       </DataTemplate>
     </shadui:NavigationView.ContentTemplate>
+
+    <shadui:NavigationView.EmptyContent>
+      <StackPanel
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        Spacing="16">
+        <Image
+          Height="128" HorizontalAlignment="Center"
+          Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+        <TextBlock
+          Classes="p"
+          IsVisible="{Binding !!CustomAssistants.Count}"
+          Text="{I18N {x:Static LocaleKey.CustomAssistantPage_EmptyContent_SelectInstruction}}"
+          TextAlignment="Center" TextWrapping="Wrap"/>
+        <TextBlock
+          Classes="p"
+          IsVisible="{Binding !CustomAssistants.Count}"
+          Text="{I18N {x:Static LocaleKey.CustomAssistantPage_EmptyContent_EmptyListInstruction}}"
+          TextAlignment="Center" TextWrapping="Wrap"/>
+      </StackPanel>
+    </shadui:NavigationView.EmptyContent>
   </shadui:NavigationView>
 </UserControl>

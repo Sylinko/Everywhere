@@ -4,21 +4,36 @@ using System.Text.Json.Serialization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
+using Everywhere.AI.Configurator;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Messages;
 using Lucide.Avalonia;
 using Serilog;
 using ShadUI;
 
 namespace Everywhere.ViewModels;
 
-public partial class CustomAssistantPageViewModel(IKernelMixinFactory kernelMixinFactory, Settings settings) : ReactiveViewModelBase
+public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IRecipient<SelectCustomAssistantMessage>
 {
-    public ObservableCollection<CustomAssistant> CustomAssistants => settings.Model.CustomAssistants;
+    private readonly IKernelMixinFactory _kernelMixinFactory;
+    private readonly Settings _settings;
+
+    public ObservableCollection<CustomAssistant> CustomAssistants => _settings.Model.CustomAssistants;
 
     [ObservableProperty]
     public partial CustomAssistant? SelectedCustomAssistant { get; set; }
+
+    public CustomAssistantPageViewModel(IKernelMixinFactory kernelMixinFactory, Settings settings)
+    {
+        _kernelMixinFactory = kernelMixinFactory;
+        _settings = settings;
+        SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
+
+        WeakReferenceMessenger.Default.Register(this);
+    }
 
     private static Color[] RandomAssistantIconBackgrounds { get; } =
     [
@@ -62,9 +77,10 @@ public partial class CustomAssistantPageViewModel(IKernelMixinFactory kernelMixi
             {
                 Kind = LucideIconKind.Bot
             },
-            ConfiguratorType = ModelProviderConfiguratorType.PresetBased
+            ConfiguratorType = AssistantConfiguratorType.PresetBased
         };
-        settings.Model.CustomAssistants.Add(newAssistant);
+        _settings.Model.CustomAssistants.Add(newAssistant);
+        _settings.Model.SelectedCustomAssistant ??= newAssistant;
         SelectedCustomAssistant = newAssistant;
     }
 
@@ -83,7 +99,7 @@ public partial class CustomAssistantPageViewModel(IKernelMixinFactory kernelMixi
 
         duplicatedAssistant.Id = Guid.CreateVersion7();
         duplicatedAssistant.Name += " - " + LocaleResolver.Common_Copy;
-        settings.Model.CustomAssistants.Insert(settings.Model.CustomAssistants.IndexOf(customAssistant) + 1, duplicatedAssistant);
+        _settings.Model.CustomAssistants.Insert(_settings.Model.CustomAssistants.IndexOf(customAssistant) + 1, duplicatedAssistant);
         SelectedCustomAssistant = duplicatedAssistant;
     }
 
@@ -93,27 +109,33 @@ public partial class CustomAssistantPageViewModel(IKernelMixinFactory kernelMixi
         if (SelectedCustomAssistant is not { } customAssistant) return;
         if (!customAssistant.Configurator.Validate()) return;
 
+        KernelMixin? kernelMixin = null;
         try
         {
-            await kernelMixinFactory.GetOrCreate(customAssistant).CheckConnectivityAsync(cancellationToken);
-            ToastManager
+            kernelMixin = _kernelMixinFactory.Create(customAssistant);
+            await kernelMixin.CheckConnectivityAsync(cancellationToken);
+            ToastHost
                 .CreateToast(LocaleResolver.CustomAssistantPageViewModel_CheckConnectivity_SuccessToast_Title)
                 .DismissOnClick()
                 .ShowSuccess();
         }
         catch (Exception ex)
         {
-            ex = HandledChatException.Handle(ex);
+            ex = HandledChatException.Handle(ex, kernelMixin);
             Log.Logger.ForContext<CustomAssistantPageViewModel>().Error(
                 ex,
                 "Failed to check connectivity key for endpoint {ProviderId} and model {ModelId}",
                 customAssistant.Endpoint,
                 customAssistant.ModelId);
-            ToastManager
+            ToastHost
                 .CreateToast(LocaleResolver.CustomAssistantPageViewModel_CheckConnectivity_FailedToast_Title)
                 .WithContent(ex.GetFriendlyMessage().ToTextBlock())
                 .DismissOnClick()
                 .ShowError();
+        }
+        finally
+        {
+            kernelMixin?.Dispose();
         }
     }
 
@@ -129,6 +151,16 @@ public partial class CustomAssistantPageViewModel(IKernelMixinFactory kernelMixi
             .ShowAsync();
         if (result != DialogResult.Primary) return;
 
-        settings.Model.CustomAssistants.Remove(customAssistant);
+        _settings.Model.CustomAssistants.Remove(customAssistant);
+        _settings.Model.SelectedCustomAssistant = _settings.Model.CustomAssistants.FirstOrDefault();
+    }
+
+    public void Receive(SelectCustomAssistantMessage message)
+    {
+        if (CustomAssistants.FirstOrDefault(a => a.Id == message.AssistantId) is { } assistant)
+        {
+            SelectedCustomAssistant = assistant;
+            _settings.Model.SelectedCustomAssistant = assistant;
+        }
     }
 }

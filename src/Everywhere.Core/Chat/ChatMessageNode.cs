@@ -44,15 +44,50 @@ public sealed partial class ChatMessageNode : ObservableObject, IDisposable
         internal set;
     }
 
+    [IgnoreMember]
+    public DateTimeOffset DateModified { get; private set; }
+
     [IgnoreMember] private readonly SourceList<Guid> _children = new();
     [IgnoreMember] private readonly IDisposable _childrenCountChangedSubscription;
 
-    public ChatMessageNode(Guid id, ChatMessage message)
+    /// <summary>
+    /// Creates a new ChatMessageNode with a new Version 7 GUID.
+    /// </summary>
+    /// <param name="message"></param>
+    public ChatMessageNode(ChatMessage message) : this(Guid.CreateVersion7(), message) { }
+
+    /// <summary>
+    /// Creates a new ChatMessageNode with the given ID.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="message"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public ChatMessageNode(Guid id, ChatMessage message) : this(id, message, DateTimeOffset.UtcNow)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new ChatMessageNode with the given ID and modification date. Used for database initialization.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="message"></param>
+    /// <param name="dateModified"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    internal ChatMessageNode(Guid id, ChatMessage message, DateTimeOffset dateModified)
     {
         Id = id;
         Message = message ?? throw new ArgumentNullException(nameof(message)); // messagepack may pass null here so we guard against it
         message.PropertyChanged += HandleMessagePropertyChanged;
+        DateModified = dateModified;
+
         _childrenCountChangedSubscription = _children.CountChanged.Subscribe(_ => OnPropertyChanged(nameof(ChoiceCount)));
+    }
+
+    [SerializationConstructor]
+    private ChatMessageNode(Guid id, ChatMessage message, IReadOnlyList<Guid> children, int choiceIndex) : this(id, message)
+    {
+        _children.AddRange(children);
+        ChoiceIndex = choiceIndex;
     }
 
     private void HandleMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -60,7 +95,11 @@ public sealed partial class ChatMessageNode : ObservableObject, IDisposable
         OnPropertyChanged(nameof(Message));
     }
 
-    public ChatMessageNode(ChatMessage message) : this(Guid.CreateVersion7(), message) { }
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        DateModified = DateTimeOffset.UtcNow;
+        base.OnPropertyChanged(e);
+    }
 
     public void Add(Guid childId) => _children.Add(childId);
 
@@ -68,11 +107,10 @@ public sealed partial class ChatMessageNode : ObservableObject, IDisposable
 
     public void Clear() => _children.Clear();
 
-    internal static ChatMessageNode CreateRootNode(string systemPrompt) => new(Guid.Empty, new SystemChatMessage(systemPrompt));
-
     public void Dispose()
     {
         Message.PropertyChanged -= HandleMessagePropertyChanged;
+        if (Message is IDisposable disposable) disposable.Dispose();
         _childrenCountChangedSubscription.Dispose();
         _children.Dispose();
     }

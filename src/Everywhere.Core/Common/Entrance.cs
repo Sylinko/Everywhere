@@ -1,29 +1,24 @@
-﻿#if DEBUG
-using Avalonia.Controls;
-#endif
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO.Pipes;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Configuration;
 using Everywhere.Interop;
-using Everywhere.Views;
+using Everywhere.Messages;
 using MessagePack;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 using PuppeteerSharp;
-using Sentry.OpenTelemetry;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using ZLinq;
+#if DEBUG
+using Avalonia.Controls;
+#endif
 
 namespace Everywhere.Common;
 
-public static partial class Entrance
+public static class Entrance
 {
-    public static bool SendOnlyNecessaryTelemetry { get; set; }
-
     public static event EventHandler<UnobservedTaskExceptionEventArgs>? UnobservedTaskExceptionFilter;
 
     private static Mutex? _appMutex;
@@ -45,8 +40,8 @@ public static partial class Entrance
     public static async ValueTask InitializeAsync(string[] args)
     {
         await InitializeSingleInstanceAsync(args);
-
-        InitializeTelemetry();
+        InitializeRuntimeConstants();
+        Telemetry.Initialize();
         InitializeLogger();
         InitializeErrorHandling();
     }
@@ -74,27 +69,32 @@ public static partial class Entrance
             return;
         }
 
-        if (args.FirstOrDefault(x => x.StartsWith($"{UrlProtocolCallbackCommand.Scheme}:")) is { } url)
+#if IsWindows
+        if (args.FirstOrDefault(x => x.StartsWith($"{UrlProtocolCallbackMessage.Scheme}:")) is { } url)
         {
             // Bring the existing instance to the foreground.
-            await SendToHost(new UrlProtocolCallbackCommand(url)).ConfigureAwait(false);
+            await SendToHost(new UrlProtocolCallbackMessage(url)).ConfigureAwait(false);
             Environment.Exit(0);
             return;
         }
+#endif
 
         // Bring the existing instance to the foreground.
-        await SendToHost(new ShowWindowCommand(nameof(MainView))).ConfigureAwait(false);
+        await SendToHost(new ShowWindowMessage(ShowWindowMessage.ChatWindow)).ConfigureAwait(false);
         Environment.Exit(0);
     }
 
     private static async Task StartHostPipeServer()
     {
-        var retryCount = 3;
-        while (retryCount > 0)
+        const int maxRetries = 5;
+        var consecutiveErrors = 0;
+
+        while (consecutiveErrors < maxRetries)
         {
+            NamedPipeServerStream? server = null;
             try
             {
-                await using var server = new NamedPipeServerStream(
+                server = new NamedPipeServerStream(
                     BundleName,
                     PipeDirection.In,
                     1,
@@ -104,135 +104,142 @@ public static partial class Entrance
                 await server.WaitForConnectionAsync();
 
                 var lengthBuffer = new byte[4];
-                if (await server.ReadAsync(lengthBuffer.AsMemory(0, 4)) != 4) continue;
+                await server.ReadExactlyAsync(lengthBuffer.AsMemory(0, 4));
 
                 var length = BitConverter.ToInt32(lengthBuffer, 0);
+                if (length is <= 0 or > 1024 * 1024) // sanity check: max 1 MB
+                {
+                    Log.ForContext(typeof(Entrance)).Warning("Received invalid command length: {Length}", length);
+                    continue;
+                }
+
                 var buffer = new byte[length];
-                if (await server.ReadAsync(buffer.AsMemory(0, length)) != length) continue;
+                await server.ReadExactlyAsync(buffer.AsMemory(0, length));
 
                 try
                 {
-                    var command = MessagePackSerializer.Deserialize<ApplicationCommand>(buffer);
+                    var command = MessagePackSerializer.Deserialize<ApplicationMessage>(buffer);
                     WeakReferenceMessenger.Default.Send(command);
                 }
                 catch (Exception ex)
                 {
                     Log.ForContext(typeof(Entrance)).Error(ex, "Failed to deserialize host command.");
                 }
+
+                // Reset error counter on successful processing
+                consecutiveErrors = 0;
+            }
+            catch (EndOfStreamException)
+            {
+                // Client disconnected before sending complete data; not a server error, just retry
+                Log.ForContext(typeof(Entrance)).Warning("Pipe client disconnected prematurely.");
             }
             catch (Exception ex)
             {
                 Log.ForContext(typeof(Entrance)).Error(ex, "Host pipe server error.");
 
-                retryCount--;
+                consecutiveErrors++;
                 await Task.Delay(1000);
+            }
+            finally
+            {
+                if (server != null)
+                {
+                    await server.DisposeAsync();
+                }
+            }
+        }
+
+        Log.ForContext(typeof(Entrance)).Error(
+            "Host pipe server stopped after {MaxRetries} consecutive errors.", maxRetries);
+    }
+
+    private static async Task SendToHost(ApplicationMessage message)
+    {
+        const int maxAttempts = 3;
+        const int connectTimeoutMs = 5000;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await using var client = new NamedPipeClientStream(".", BundleName, PipeDirection.Out, PipeOptions.Asynchronous);
+                await client.ConnectAsync(connectTimeoutMs);
+
+                var bytes = MessagePackSerializer.Serialize(message);
+                var lengthBytes = BitConverter.GetBytes(bytes.Length);
+
+                await client.WriteAsync(lengthBytes);
+                await client.WriteAsync(bytes);
+                await client.FlushAsync();
+                return; // success
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                Log.Error(ex, "Failed to send command to host instance (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
+                await Task.Delay(500 * attempt);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to send command to host instance after {MaxAttempts} attempts.", maxAttempts);
+
+                // Show message box if the command is ShowMainWindowCommand as a fallback
+                if (message is ShowWindowMessage)
+                {
+                    NativeMessageBox.Show(
+                        LocaleResolver.Common_Info,
+                        LocaleResolver.Entrance_EverywhereAlreadyRunning,
+                        NativeMessageBoxButtons.Ok,
+                        NativeMessageBoxIcon.Information);
+                }
             }
         }
     }
 
-    private static async Task SendToHost(ApplicationCommand command)
+    private static void InitializeRuntimeConstants()
     {
         try
         {
-            await using var client = new NamedPipeClientStream(".", BundleName, PipeDirection.Out, PipeOptions.Asynchronous);
-            await client.ConnectAsync(1000);
-
-            var bytes = MessagePackSerializer.Serialize(command);
-            var lengthBytes = BitConverter.GetBytes(bytes.Length);
-
-            await client.WriteAsync(lengthBytes);
-            await client.WriteAsync(bytes);
+            // Accessing DeviceId to trigger its initialization and catch any potential exceptions early
+            _ = RuntimeConstants.DeviceId;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Failed to send command to host instance.");
-
-            // Show message box if the command is ShowMainWindowCommand as a fallback
-            if (command is ShowWindowCommand)
-            {
-                NativeMessageBox.Show(
-                    LocaleResolver.Common_Info,
-                    LocaleResolver.Entrance_EverywhereAlreadyRunning,
-                    NativeMessageBoxButtons.Ok,
-                    NativeMessageBoxIcon.Information);
-            }
+            NativeMessageBox.Show(
+                LocaleResolver.Common_CriticalError,
+                string.Format(LocaleResolver.Entrance_FailedToInitializeRuntimeConstants, ex),
+                NativeMessageBoxButtons.Ok,
+                NativeMessageBoxIcon.Error);
+            Environment.Exit(1);
         }
-    }
-
-    private static void InitializeTelemetry()
-    {
-        if (string.IsNullOrEmpty(SentryDsn)) return;
-
-        var sentry = SentrySdk.Init(o =>
-        {
-            o.Dsn = SentryDsn;
-            o.AutoSessionTracking = true;
-            o.IsGlobalModeEnabled = true;
-            o.Experimental.EnableLogs = true;
-#if DEBUG
-            o.TracesSampleRate = 1.0;
-            o.Environment = "debug";
-            o.Debug = true;
-#else
-            o.TracesSampleRate = 0.2;
-            o.Environment = "stable";
-#endif
-            o.Release = typeof(Entrance).Assembly.GetName().Version?.ToString();
-
-            o.UseOpenTelemetry();
-            o.SetBeforeSend(evt =>
-                evt.Exception.Segregate()
-                    .AsValueEnumerable()
-                    .Any(e => e is
-                        OperationCanceledException or
-                        TimeoutException or
-                        HandledException { IsExpected: true } or
-                        PuppeteerException) ? // No one knows why PuppeteerSharp throws so many exceptions and leave them unhandled in Task.Run
-                    null :
-                    evt);
-            o.SetBeforeSendTransaction(transaction => SendOnlyNecessaryTelemetry ? null : transaction);
-            o.SetBeforeBreadcrumb(breadcrumb => SendOnlyNecessaryTelemetry ? null : breadcrumb);
-        });
-
-        SentrySdk.ConfigureScope(scope =>
-        {
-            scope.User.Username = null;
-            scope.User.IpAddress = null;
-            scope.User.Email = null;
-        });
-
-        var traceProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("Everywhere.*")
-            .AddSentry()
-            .Build();
-
-        AppDomain.CurrentDomain.ProcessExit += delegate
-        {
-            traceProvider.Dispose();
-            sentry.Dispose();
-        };
     }
 
     private static void InitializeLogger()
     {
-        var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Everywhere");
-
         Log.Logger = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Debug()
+#endif
             .Enrich.FromLogContext()
             .Enrich.With<ActivityEnricher>()
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File(
                 new JsonFormatter(),
-                Path.Combine(dataPath, "logs", ".jsonl"),
+                Path.Combine(RuntimeConstants.EnsureWritableDataFolderPath("logs"), ".jsonl"),
                 rollingInterval: RollingInterval.Day)
-#if !DISABLE_TELEMETRY
             .WriteTo.Logger(lc => lc
                 .Filter.ByIncludingOnly(logEvent =>
                     logEvent.Properties.TryGetValue("SourceContext", out var sourceContextValue) &&
                     sourceContextValue.As<ScalarValue>()?.Value?.ToString()?.StartsWith("Everywhere.") is true)
+                .Filter.ByExcluding(logEvent => logEvent.Exception.Segregate()
+                    .AsValueEnumerable()
+                    .Any(e => e is
+                        OperationCanceledException or
+                        TimeoutException or
+                        HandledException { IsExpected: true } or
+                        PuppeteerException))
                 .WriteTo.Sentry(LogEventLevel.Error, LogEventLevel.Information))
-#endif
             .CreateLogger();
     }
 

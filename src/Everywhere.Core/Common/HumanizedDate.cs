@@ -2,16 +2,16 @@
 
 public enum HumanizedDate
 {
-    [DynamicResourceKey(LocaleKey.HumanizedDate_Today)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_Today)]
     Today,
-    [DynamicResourceKey(LocaleKey.HumanizedDate_Yesterday)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_Yesterday)]
     Yesterday,
-    [DynamicResourceKey(LocaleKey.HumanizedDate_LastWeek)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_LastWeek)]
     LastWeek,
-    [DynamicResourceKey(LocaleKey.HumanizedDate_LastMonth)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_LastMonth)]
     LastMonth,
-    [DynamicResourceKey(LocaleKey.HumanizedDate_LastYear)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_LastYear)]
     LastYear,
-    [DynamicResourceKey(LocaleKey.HumanizedDate_Earlier)]
+    [DynamicLocaleKey(LocaleKey.HumanizedDate_Earlier)]
     Earlier
 }

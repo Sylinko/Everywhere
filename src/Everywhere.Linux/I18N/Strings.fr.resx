@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French (Français) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
+        <value>Échec de l'enregistrement du raccourci. Cette combinaison de touches peut déjà être utilisée.</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
+        <value>fd-find</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Description" xml:space="preserve">
+        <value>Rechercher des fichiers sur votre ordinateur avec fd-find (un outil de recherche de fichiers local haute performance). Cet outil nécessite l'installation de fd-find pour être utilisé.</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
+        <value>Rechercher des fichiers</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Description" xml:space="preserve">
+        <value>Rechercher des fichiers ou des répertoires sous Linux en utilisant fd-find.</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage" xml:space="preserve">
+        <value>{0} fichiers trouvés</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
+        <value>Fournit la capacité d'exécuter des scripts bash, permettant une interaction directe avec le système. Cependant, cela comporte des risques, pouvant entraîner la suppression accidentelle de fichiers ou des plantages système.</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
+        <value>Bash Shell</value>
+    </data>
+</root>

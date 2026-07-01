@@ -1,8 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat.Plugins;
+using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
@@ -25,19 +26,19 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
             OnPropertyChanged(nameof(SelectedBuiltInPlugin));
             OnPropertyChanged(nameof(SelectedMcpPlugin));
 
-            ContentTabItems.Clear();
+            _contentTabItems.Clear();
             if (value is null) return;
+
+            _contentTabItems.Add(new FunctionsTabItem(value));
 
             if (value.SettingsItems is { Count: > 0 } settingsItems)
             {
-                ContentTabItems.Add(new SettingsTabItem(settingsItems));
+                _contentTabItems.Add(new SettingsTabItem(settingsItems));
             }
-
-            ContentTabItems.Add(new FunctionsTabItem(value));
 
             if (value is McpChatPlugin mcpPlugin)
             {
-                ContentTabItems.Add(new LogsTabItem(mcpPlugin.LogEntries));
+                _contentTabItems.Add(new LogsTabItem(mcpPlugin.LogEntries));
             }
         }
     }
@@ -72,10 +73,12 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
         }
     }
 
-    public ObservableCollection<IContentTabItem> ContentTabItems { get; } = [];
+    public IReadOnlyBindableList<IContentTabItem> ContentTabItems => _contentTabItems;
+
+    private readonly BindableList<IContentTabItem> _contentTabItems = [];
 
     [RelayCommand]
-    private async Task AddMcpPluginAsync()
+    private async Task AddMcpPluginAsync(CancellationToken cancellationToken)
     {
         var form = new McpTransportConfigurationForm();
         var result = await DialogManager
@@ -84,7 +87,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
                 LocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.Configuration.Validate())
             .WithCancelButton(LocaleResolver.Common_Cancel)
-            .ShowAsync();
+            .ShowAsync(cancellationToken);
         if (result != DialogResult.Primary) return;
         if (form.Configuration.HasErrors) return;
 
@@ -95,7 +98,10 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
         catch (Exception e)
         {
             ToastExceptionHandler.HandleException(e, "Failed to add MCP Plugin");
+            return;
         }
+
+        manager.RefreshMcpRuntimeWarnings();
     }
 
     [RelayCommand]
@@ -122,14 +128,14 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
 
             if (count == 0)
             {
-                ToastManager
+                ToastHost
                     .CreateToast(LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title)
                     .OnBottomRight()
                     .ShowWarning();
             }
             else if (count < configurations.Count)
             {
-                ToastManager
+                ToastHost
                     .CreateToast(
                         LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title.Format(count, configurations.Count - count))
                     .OnBottomRight()
@@ -137,7 +143,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
             }
             else
             {
-                ToastManager
+                ToastHost
                     .CreateToast(LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title.Format(count))
                     .OnBottomRight()
                     .ShowSuccess();
@@ -224,7 +230,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
             {
                 httpTransportMode = HttpTransportMode.Sse;
             }
-            else if (typePropString?.Equals("streamable-http", StringComparison.OrdinalIgnoreCase) is true)
+            else if (typePropString?.EndsWith("http", StringComparison.OrdinalIgnoreCase) is true)
             {
                 httpTransportMode = HttpTransportMode.StreamableHttp;
             }
@@ -371,12 +377,12 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
     }
 
     [RelayCommand]
-    private async Task CopyLogsAsync(McpChatPlugin? plugin)
+    private async Task CopyLogsAsync(IReadOnlyBindableList<McpChatPlugin.LogEntry>? logEntries)
     {
-        if (plugin is null) return;
+        if (logEntries is not { Count: > 0 }) return;
 
-        await Clipboard.SetTextAsync(string.Join('\n', plugin.LogEntries));
-        ToastManager
+        await App.Clipboard.SetTextAsync(string.Join('\n', logEntries));
+        ToastHost
             .CreateToast("Logs copied to clipboard.")
             .OnBottomRight()
             .ShowSuccess();
@@ -397,28 +403,28 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
 
     public interface IContentTabItem
     {
-        DynamicResourceKeyBase Header { get; }
+        IDynamicLocaleKey Header { get; }
     }
 
     public class SettingsTabItem(IReadOnlyList<SettingsItem> settingsItems) : IContentTabItem
     {
-        public DynamicResourceKeyBase Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
 
         public IReadOnlyList<SettingsItem> SettingsItems { get; } = settingsItems;
     }
 
     public class FunctionsTabItem(ChatPlugin plugin) : IContentTabItem
     {
-        public DynamicResourceKeyBase Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
 
         public ChatPlugin Plugin { get; } = plugin;
     }
 
-    public partial class LogsTabItem(ReadOnlyObservableCollection<McpChatPlugin.LogEntry> logEntries) : ObservableObject, IContentTabItem
+    public partial class LogsTabItem(IReadOnlyBindableList<McpChatPlugin.LogEntry> logEntries) : ObservableObject, IContentTabItem
     {
-        public DynamicResourceKeyBase Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
+        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
 
-        public ReadOnlyObservableCollection<McpChatPlugin.LogEntry> LogEntries { get; } = logEntries;
+        public IReadOnlyBindableList<McpChatPlugin.LogEntry> LogEntries { get; } = logEntries;
 
         [ObservableProperty]
         public partial bool ShowTimestamp { get; set; }

@@ -1,0 +1,113 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:AccentColorSelector}"
+    TargetType="v:AccentColorSelector">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel
+          Orientation="Horizontal" Spacing="8">
+          <StackPanel.Styles>
+            <Style Selector="ToggleButton">
+              <Setter Property="Width" Value="32"/>
+              <Setter Property="Height" Value="32"/>
+              <Setter Property="Margin" Value="0"/>
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource TransparentColor}"/>
+              <Setter Property="Template">
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="2" CornerRadius="32">
+                    <Border
+                      Margin="2"
+                      Background="{TemplateBinding Background}"
+                      CornerRadius="32"/>
+                  </Border>
+                </ControlTemplate>
+              </Setter>
+            </Style>
+
+            <Style Selector="ToggleButton:checked">
+              <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+            </Style>
+
+            <Style Selector="ListBoxItem">
+              <Setter Property="Width" Value="32"/>
+              <Setter Property="Height" Value="32"/>
+              <Setter Property="Margin" Value="0"/>
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="Template">
+                <ControlTemplate TargetType="ListBoxItem">
+                  <Border
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="2" CornerRadius="32">
+                    <Border
+                      Margin="2"
+                      Background="{TemplateBinding Content, Converter={x:Static vc:CommonConverters.ColorToBrush}}"
+                      CornerRadius="32"/>
+                  </Border>
+                </ControlTemplate>
+              </Setter>
+            </Style>
+
+            <Style Selector="ListBoxItem:selected">
+              <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+            </Style>
+          </StackPanel.Styles>
+
+          <ToggleButton
+            IsChecked="{TemplateBinding UseSystemAccentColor, Mode=TwoWay}"
+            IsHitTestVisible="{Binding !$self.IsChecked}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.AccentColorSelector_UseSystemAccentColorToolTip_Tip}}">
+            <ToggleButton.Background>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Offset="0.49" Color="White"/>
+                <GradientStop Offset="0.5" Color="Black"/>
+              </LinearGradientBrush>
+            </ToggleButton.Background>
+          </ToggleButton>
+
+          <ListBox
+            Padding="0,0,4,0"
+            Background="{x:Null}"
+            BorderThickness="0" ClipToBounds="False"
+            ItemsSource="{x:Static v:AccentColorSelector.PresetColors}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+            SelectedItem="{TemplateBinding SelectedPresetColor, Mode=TwoWay}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel
+                  Orientation="Horizontal" Spacing="8"/>
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+          </ListBox>
+
+          <ToggleButton
+            Classes="Compact"
+            IsChecked="{TemplateBinding UseCustomAccentColor, Mode=TwoWay}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.AccentColorSelector_CustomColorToolTip_Tip}}">
+            <ToggleButton.Background>
+              <ConicGradientBrush Center="50%,50%">
+                <GradientStop Offset="0" Color="#AAFF0000"/>
+                <GradientStop Offset="0.166" Color="#AAFFFF00"/>
+                <GradientStop Offset="0.333" Color="#AA00FF00"/>
+                <GradientStop Offset="0.5" Color="#AA00FFFF"/>
+                <GradientStop Offset="0.666" Color="#AA0000FF"/>
+                <GradientStop Offset="0.833" Color="#AAFF00FF"/>
+                <GradientStop Offset="1" Color="#AAFF0000"/>
+              </ConicGradientBrush>
+            </ToggleButton.Background>
+
+            <ToggleButton.Flyout>
+              <Flyout>
+                <ColorView Color="{TemplateBinding CustomAccentColor, Mode=TwoWay}"/>
+              </Flyout>
+            </ToggleButton.Flyout>
+          </ToggleButton>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

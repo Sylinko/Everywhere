@@ -13,36 +13,135 @@ public static partial class X11Native
     public const string LibXFixes = "libXfixes.so.3";
     public const X11Window ScanSkipWindow = (X11Window)ulong.MaxValue;
     public const uint CurrentTime = 0;
+
     public enum ShapeKind
     {
         Bounding = 0,
         Clip = 1,
         Input = 2
     }
-    [LibraryImport(LibX11)] internal static partial void XConvertSelection(IntPtr display, Atom selection, Atom target, Atom property, X11Window requestor, uint time);
-    [LibraryImport(LibX11)] internal static partial IntPtr XGetWMHints(IntPtr display, X11Window window);
-    [LibraryImport(LibX11)] internal static partial void XSetWMHints(IntPtr display, X11Window window, ref XWMHints hints);
-    [LibraryImport(LibX11)] internal static partial int XScreenCount(IntPtr display);
-    [LibraryImport(LibX11)] internal static partial int XDisplayWidth(IntPtr display, int screenNumber);
-    [LibraryImport(LibX11)] internal static partial int XDisplayHeight(IntPtr display, int screenNumber);
-    [LibraryImport(LibX11)] internal static partial IntPtr XKeysymToString(KeySym keysym);
-    [LibraryImport(LibX11)] internal static partial void XQueryKeymap(IntPtr display, byte[] keymap);
-    [LibraryImport(LibX11)] internal static partial int XGrabKeyboard(IntPtr display, X11Window grabWindow, int ownerEvents, GrabMode pointerMode, GrabMode keyboardMode, uint time);
-    [LibraryImport(LibX11)] internal static partial int XUngrabKeyboard(IntPtr display, X11Window grabWindow);
-    [LibraryImport(LibX11)] internal static partial int XTranslateCoordinates(IntPtr display, X11Window srcWindow, X11Window destWindow, int srcX, int srcY, out int destXReturn, out int destYReturn, out IntPtr childReturn);
-    [LibraryImport(LibX11)] internal static partial int XGetWindowProperty(IntPtr display, X11Window window, Atom property, long offset, long length, int delete, Atom reqType, out Atom actualTypeReturn, out int actualFormatReturn, out ulong nitemsReturn, out ulong bytesAfterReturn, out IntPtr propReturn);
-    [LibraryImport(LibX11)] internal static partial int XChangeWindowAttributes(IntPtr display, X11Window window, ulong valueMask, ref XSetWindowAttributes attributes);
-    [LibraryImport(LibXFixes)] internal static partial IntPtr XFixesCreateRegion(IntPtr display, XRectangle[] rectangles, int nrectangles);
-    [LibraryImport(LibXFixes)] internal static partial void XFixesDestroyRegion(IntPtr display, IntPtr region);
-    [LibraryImport(LibXFixes)] internal static partial void XFixesSetWindowShapeRegion(IntPtr display, X11Window window, int shapeKind, int xOffset, int yOffset, IntPtr region);
-    [LibraryImport(LibXFixes)] internal static partial int XFixesQueryExtension(IntPtr display, out int eventBase, out int errorBase);
-    [LibraryImport(LibXFixes)] internal static partial void XFixesSelectSelectionInput(IntPtr display, X11Window window, Atom selection, uint eventMask);
+
+    [LibraryImport(LibX11)]
+    internal static partial void XConvertSelection(
+        IntPtr display,
+        Atom selection,
+        Atom target,
+        Atom property,
+        X11Window requestor,
+        uint time);
+
+    [LibraryImport(LibX11)]
+    internal static partial IntPtr XGetWMHints(IntPtr display, X11Window window);
+
+    [LibraryImport(LibX11)]
+    internal static partial void XSetWMHints(IntPtr display, X11Window window, ref XWMHints hints);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XScreenCount(IntPtr display);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XDisplayWidth(IntPtr display, int screenNumber);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XDisplayHeight(IntPtr display, int screenNumber);
+
+    [LibraryImport(LibX11)]
+    internal static partial IntPtr XKeysymToString(KeySym keySym);
+
+    [LibraryImport(LibX11)]
+    internal static partial void XQueryKeymap(IntPtr display, [Out] byte[] keymap);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XGrabKeyboard(
+        IntPtr display,
+        X11Window grabWindow,
+        int ownerEvents,
+        GrabMode pointerMode,
+        GrabMode keyboardMode,
+        uint time);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XUngrabKeyboard(IntPtr display, X11Window grabWindow);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XTranslateCoordinates(
+        IntPtr display,
+        X11Window srcWindow,
+        X11Window destWindow,
+        int srcX,
+        int srcY,
+        out int destXReturn,
+        out int destYReturn,
+        out IntPtr childReturn);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XGetWindowProperty(
+        IntPtr display,
+        X11Window window,
+        Atom property,
+        long offset,
+        long length,
+        int delete,
+        Atom reqType,
+        out Atom actualTypeReturn,
+        out int actualFormatReturn,
+        out ulong nItemsReturn,
+        out ulong bytesAfterReturn,
+        out IntPtr propReturn);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XChangeWindowAttributes(
+        IntPtr display,
+        X11Window window,
+        ulong valueMask,
+        ref XSetWindowAttributes attributes);
+
+    [LibraryImport(LibX11)]
+    internal static unsafe partial int XSendEvent(
+        IntPtr display,
+        X11Window window,
+        int propagate,
+        ulong eventMask,
+        XClientMessageEvent* eventSend);
+
+    [LibraryImport(LibXFixes)]
+    internal static partial IntPtr XFixesCreateRegion(IntPtr display, [In] XRectangle[] rectangles, int nRectangles);
+
+    [LibraryImport(LibXFixes)]
+    internal static partial void XFixesDestroyRegion(IntPtr display, IntPtr region);
+
+    [LibraryImport(LibXFixes)]
+    internal static partial void XFixesSetWindowShapeRegion(
+        IntPtr display,
+        X11Window window,
+        int shapeKind,
+        int xOffset,
+        int yOffset,
+        IntPtr region);
+
+    [LibraryImport(LibXFixes)]
+    internal static partial int XFixesQueryExtension(IntPtr display, out int eventBase, out int errorBase);
+
+    [LibraryImport(LibXFixes)]
+    internal static partial void XFixesSelectSelectionInput(
+        IntPtr display,
+        X11Window window,
+        Atom selection,
+        uint eventMask);
 
     public const string LibXi = "libXi.so.6";
-    [LibraryImport(LibXi)] internal static partial int XIQueryVersion(IntPtr display, ref int major, ref int minor);
-    [LibraryImport(LibXi)] internal static partial int XISelectEvents(IntPtr display, X11Window window, XIEventMask[] masks, int numMasks);
-    [LibraryImport(LibX11)] internal static partial int XGetEventData(IntPtr display, IntPtr cookie);
-    [LibraryImport(LibX11)] internal static partial void XFreeEventData(IntPtr display, IntPtr cookie);
+
+    [LibraryImport(LibXi)]
+    internal static partial int XIQueryVersion(IntPtr display, ref int major, ref int minor);
+
+    [LibraryImport(LibXi)]
+    internal static partial int XISelectEvents(IntPtr display, X11Window window, [In] XIEventMask[] masks, int numMasks);
+
+    [LibraryImport(LibX11)]
+    internal static partial int XGetEventData(IntPtr display, IntPtr cookie);
+
+    [LibraryImport(LibX11)]
+    internal static partial void XFreeEventData(IntPtr display, IntPtr cookie);
 
     public const int XI_AllDevices = 0;
     public const int XI_AllMasterDevices = 1;
@@ -217,6 +316,23 @@ public static partial class X11Native
         IsUnmapped = 0,
         IsUnviewable = 1,
         IsViewable = 2
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct XClientMessageEvent
+    {
+        public int type;
+        public UIntPtr serial;
+        public int send_event;
+        public IntPtr display;
+        public IntPtr window;
+        public IntPtr message_type;
+        public int format;
+        public IntPtr data_l0;
+        public IntPtr data_l1;
+        public IntPtr data_l2;
+        public IntPtr data_l3;
+        public IntPtr data_l4;
     }
 
     public static string GetErrorCodeName(int code)

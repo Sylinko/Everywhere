@@ -160,7 +160,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 // and the state of Escape will be stuck.
                 if (type == CGEventType.KeyUp)
                 {
-                    Dispatcher.UIThread.InvokeAsync(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         OnCanceled();
                         Close();
@@ -203,7 +203,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             if (type != CGEventType.KeyDown) return;
             if (!_allowedModes.Contains(mode)) return;
 
-            Dispatcher.UIThread.InvokeAsync(() =>
+            Dispatcher.UIThread.Post(() =>
             {
                 CurrentMode = mode;
                 HandlePickModeChanged();

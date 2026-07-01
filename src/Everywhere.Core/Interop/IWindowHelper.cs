@@ -41,4 +41,16 @@ public interface IWindowHelper
     /// <param name="window"></param>
     /// <returns></returns>
     bool AnyModelDialogOpened(Window window);
+
+    /// <summary>
+    /// Request user attention to the window (e.g. flash taskbar icon, bounce dock icon).
+    /// </summary>
+    /// <param name="window"></param>
+    void RequestUserAttention(Window window);
+
+    /// <summary>
+    /// Initialize the window properties by its type
+    /// </summary>
+    /// <param name="window"></param>
+    void InitializeWindow(Window window);
 }

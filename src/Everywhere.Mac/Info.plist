@@ -22,13 +22,26 @@
 	<string>1.0.0</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>12.0</string>
-	<key>LSUIElement</key>
-	<true/>
+    <key>LSUIElement</key>
+    <true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>Everywhere needs to capture the screen to analyze visual elements.</string>
 	<key>NSAccessibilityUsageDescription</key>
 	<string>Everywhere needs accessibility permissions to interact with other applications.</string>
+	<key>CFBundleTypeRole</key>
+	<string>Editor</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.sylinko.everywhere</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>sylinko-everywhere</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

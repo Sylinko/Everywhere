@@ -2,15 +2,15 @@
 
 namespace Everywhere.Views.Pages;
 
-public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewModel>, IMainViewPage
+public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewModel>, IMainViewNavigationTopLevelItem
 {
-    public int Index => 10;
-
-    public DynamicResourceKeyBase Title => new DynamicResourceKey(LocaleKey.ChatPluginPage_Title);
+    public int Index => 1;
 
     public LucideIconKind Icon => LucideIconKind.Hammer;
 
-    public ChatPluginPage()
+    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.ChatPluginPage_Title);
+
+    public ChatPluginPage(IServiceProvider serviceProvider) : base(serviceProvider, disposeOnUnloaded: false)
     {
         InitializeComponent();
     }

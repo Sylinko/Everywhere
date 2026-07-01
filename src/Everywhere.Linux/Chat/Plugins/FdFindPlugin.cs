@@ -13,10 +13,10 @@ namespace Everywhere.Linux.Chat.Plugins;
 /// <summary>
 /// A plugin that integrates with the `fd` (fd-find) command-line tool to provide fast file search on Linux.
 /// </summary>
-public class FdFindPlugin : BuiltInChatPlugin
+public sealed class FdFindPlugin : BuiltInChatPlugin
 {
-    public override DynamicResourceKeyBase HeaderKey { get; } = new DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Header);
-    public override DynamicResourceKeyBase DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_Description);
     public override LucideIconKind? Icon => LucideIconKind.Search;
     public override bool IsDefaultEnabled => false;
 
@@ -25,7 +25,7 @@ public class FdFindPlugin : BuiltInChatPlugin
     public FdFindPlugin() : base("fdfind")
     {
         _functionsSource.Add(
-            new NativeChatFunction(
+            new BuiltInChatFunction(
                 SearchFilesAsync,
                 ChatFunctionPermissions.FileRead));
     }
@@ -55,18 +55,16 @@ public class FdFindPlugin : BuiltInChatPlugin
     {
         try
         {
-            using var process = new Process
+            using var process = Process.Start(new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "which",
-                    Arguments = command,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            process.Start();
+                FileName = "which",
+                Arguments = command,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            if (process is null) return false;
+
             await process.WaitForExitAsync();
             return process.ExitCode == 0;
         }
@@ -78,9 +76,9 @@ public class FdFindPlugin : BuiltInChatPlugin
 
     [KernelFunction("search_files")]
     [Description("Search for files and directories in a specified path using fd-find. Highly efficient for large file systems.")]
-    [DynamicResourceKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header)]
+    [DynamicLocaleKey(LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header)]
     private async Task<string> SearchFilesAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The root directory to start searching from.")] string path,
         [Description("Regex search pattern to match file and directory names.")] string filePattern = ".*",
         [Description("Maximum number of results to return. Max is 1000.")] int maxCount = 100,
@@ -116,13 +114,11 @@ public class FdFindPlugin : BuiltInChatPlugin
 
             using var process = Process.Start(startInfo);
             if (process == null) return "Failed to start fd process.";
-            while (!process.StandardOutput.EndOfStream)
+
+            var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
+            if (!string.IsNullOrEmpty(line))
             {
-                var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
-                if (!string.IsNullOrEmpty(line))
-                {
-                    results.Add(CreateFileRecordFromPath(line)); 
-                }
+                results.Add(CreateFileRecordFromPath(line));
             }
 
             await process.WaitForExitAsync(cancellationToken);
@@ -138,10 +134,10 @@ public class FdFindPlugin : BuiltInChatPlugin
 
             var finalResults = query.Take(maxCount).ToList();
 
-            userInterface.DisplaySink.AppendDynamicResourceKey(
-                new FormattedDynamicResourceKey(
+            displaySink.AppendDynamicLocaleKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage,
-                    new DirectResourceKey(finalResults.Count.ToString())));
+                    new DirectLocaleKey(finalResults.Count.ToString())));
 
             return new FileRecords(finalResults, finalResults.Count).ToString();
         }, cancellationToken);

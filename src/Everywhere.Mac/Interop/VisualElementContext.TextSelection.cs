@@ -222,7 +222,7 @@ partial class VisualElementContext
                 catch (Exception ex)
                 {
                     // Ignore errors during detection
-                    Log.ForContext<TextSelectionDetector>().Error(ex, "Error during text selection detection");
+                    Log.ForContext<TextSelectionDetector>().Warning(ex, "Error during text selection detection");
                 }
                 finally
                 {

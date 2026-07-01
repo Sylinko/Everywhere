@@ -17,6 +17,7 @@ internal sealed class MessageWindow
 
     public delegate void MessageHandler(in MSG msg);
 
+    private readonly ManualResetEventSlim _windowCreatedEvent = new(false);
     private readonly Lock _lock = new();
     private readonly Dictionary<uint, List<MessageHandler>> _handlers = new();
 
@@ -29,6 +30,8 @@ internal sealed class MessageWindow
         };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
+
+        _windowCreatedEvent.Wait();
     }
 
     public IDisposable AddHandler(uint message, MessageHandler handler)
@@ -59,7 +62,7 @@ internal sealed class MessageWindow
 
     private unsafe void WindowLoop()
     {
-        using var hModule = PInvoke.GetModuleHandle(null);
+        using var hModule = PInvoke.GetModuleHandle();
 
         // Create a message-only window (child of HWND_MESSAGE)
         HWnd = PInvoke.CreateWindowEx(
@@ -72,6 +75,8 @@ internal sealed class MessageWindow
             null,
             hModule,
             null);
+
+        _windowCreatedEvent.Set();
 
         if (HWnd.IsNull)
             throw new InvalidOperationException("Failed to create message window.");

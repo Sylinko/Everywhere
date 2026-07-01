@@ -1,4 +1,5 @@
 ﻿RegisterClassEx
+UnregisterClass
 CreateWindowEx
 DefWindowProc
 DestroyWindow
@@ -108,4 +109,7 @@ SHQueryUserNotificationState
 
 PeekMessage
 PostThreadMessage
-WM_USER
+
+FlashWindowEx
+
+SetProp

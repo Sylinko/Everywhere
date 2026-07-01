@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Japanese (日本語) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
+        <value>未払いの支払いがあります。早めに処理してください。</value>
+    </data>
+    <data name="OAuthCloudClient_OAuthError" xml:space="preserve">
+        <value>認証に失敗しました ({0}): 操作をキャンセルしたか、サーバーがリクエストを拒否しました。{1}</value>
+    </data>
+    <data name="OAuthCloudClient_InvalidState" xml:space="preserve">
+        <value>ログインセッションが期限切れまたはセキュリティリスクがあります。アカウントの安全のため、ページを閉じて再度ログインを試みてください。</value>
+    </data>
+    <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
+        <value>有効な認証情報を取得できませんでした。再試行してください。</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>ローカルに保存されたログイン資格情報が無効になったか、他の場所で更新されました。再ログインしてください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>ログインサービスがこのアプリのOAuthクライアント設定を拒否しました。アプリを更新するか、サポートに連絡してください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>ログインサービスは一時的に利用できません。後でもう一度お試しください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>ログインサービスがトークンリクエストを拒否しました。再ログインをお試しください。サーバーの応答：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>サービス利用規約に違反したため、あなたは禁止されています。詳細はサポートにお問い合わせください。</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>クレジットの 80% を超えて使用しています。より経済的なモデルへの切り替えを検討してください。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>無料のクラウド検索回数の 80% を超えて使用しています。無料回数を超えるクラウド検索はクレジットが減少します。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>無料のクラウド検索回数を使い切りました。クラウド検索はクレジットが減少します。</value>
+    </data>
+</root>

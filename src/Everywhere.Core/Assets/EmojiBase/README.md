@@ -1,0 +1,2 @@
+From [emojibase](https://github.com/milesj/emojibase), parsed from JSON and saved as MsgPack for faster loading and smaller file size. 
+The original data is licensed under MIT, see [LICENSE](https://github.com/milesj/emojibase/blob/master/LICENSE) for more details.

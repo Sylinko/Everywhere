@@ -1,21 +1,34 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.Pages.SettingsCategoryPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:p="clr-namespace:Everywhere.Views.Pages"
-  xmlns:v="clr-namespace:Everywhere.Views">
-  <DockPanel
-    MaxWidth="1080" LastChildFill="True">
-    <Border DockPanel.Dock="Top">
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  x:Name="Self" Margin="0,16,0,0"
+  ClipToBounds="False">
+  <DockPanel VerticalSpacing="16">
+    <DockPanel
+      MaxWidth="1018" Dock="Top"
+      HorizontalSpacing="8">
+      <!--  Back Button  -->
+      <Button
+        Classes="Ghost Compact Uniform" DockPanel.Dock="Left"
+        Width="36" Height="36"
+        Margin="-10,0,0,0" VerticalAlignment="Center"
+        Command="{Binding $parent[v:MainView].ViewModel.NavigateToTypeCommand}"
+        CommandParameter="{x:Type p:SettingsPage}">
+        <PathIcon Data="{x:Static shadui:Icons.ChevronLeft}"/>
+      </Button>
+
       <TextBlock
-        Classes="h4" Margin="0,0,0,8"
-        VerticalAlignment="Center" ClipToBounds="False"
-        Text="{Binding $parent[p:SettingsCategoryPage].Title^}"/>
-    </Border>
+        Classes="h4" VerticalAlignment="Center"
+        Text="{Binding #Self.TitleKey^}"/>
+    </DockPanel>
 
     <ScrollViewer
       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <v:SettingsItemsControl
-        Margin="0,0,12,0" HorizontalAlignment="Stretch"
-        ItemsSource="{Binding $parent[p:SettingsCategoryPage].Items}"/>
+        MaxWidth="1000" Margin="0,0,16,16"
+        HorizontalAlignment="Stretch"
+        ItemsSource="{Binding #Self.SettingItems}"/>
     </ScrollViewer>
   </DockPanel>
 </UserControl>

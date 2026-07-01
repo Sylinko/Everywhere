@@ -1,0 +1,25 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ChatPluginUserInterfaceHost}"
+    TargetType="v:ChatPluginUserInterfaceHost">
+    <Setter Property="shadui:BindingAssist.DataTemplates">
+      <DataTemplates>
+        <DataTemplate x:DataType="plugins:ChatPluginUserInterfaceConsentRequestItem">
+          <v:ConsentDecisionCard
+            Command="{Binding Command, Mode=OneTime}"
+            Content="{Binding DisplayBlock, Mode=OneTime}"
+            Header="{Binding HeaderKey^, Mode=OneTime}"
+            RememberMasks="{Binding RememberMasks, Mode=OneTime}"/>
+        </DataTemplate>
+        <DataTemplate x:DataType="plugins:ChatPluginUserInterfaceAskQuestionItem">
+          <v:AskQuestionCard
+            Command="{Binding Command, Mode=OneTime}"
+            Questions="{Binding Questions, Mode=OneTime}"/>
+        </DataTemplate>
+      </DataTemplates>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

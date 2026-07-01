@@ -1,23 +1,23 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json.Serialization;
-using DynamicData;
+using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
 namespace Everywhere.Mac.Chat.Plugin;
 
-public class SystemPlugin : BuiltInChatPlugin
+public sealed class SystemPlugin : BuiltInChatPlugin
 {
-    public override DynamicResourceKeyBase HeaderKey { get; } = new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Header);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Header);
 
-    public override DynamicResourceKeyBase DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Description);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Description);
 
     public override LucideIconKind? Icon => LucideIconKind.AppWindowMac;
 
@@ -30,31 +30,31 @@ public class SystemPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     ManageRemindersAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     ManageCalendarAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     SendEmailAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     OpenMapsAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     ManageNotesAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     OpenUrlAsync,
                     ChatFunctionPermissions.NetworkAccess));
             list.Add(
-                new NativeChatFunction(
+                new BuiltInChatFunction(
                     ExecuteAppleScriptAsync,
                     ChatFunctionPermissions.ShellExecute));
         });
@@ -70,21 +70,22 @@ public class SystemPlugin : BuiltInChatPlugin
         Complete
     }
 
-    private static DynamicResourceKey GetActionResourceKey(SystemAction action) => action switch
+    private static DynamicLocaleKey GetActionResourceKey(SystemAction action) => action switch
     {
-        SystemAction.Create => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Create),
-        SystemAction.List => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_List),
-        SystemAction.Update => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Update),
-        SystemAction.Delete => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Delete),
-        SystemAction.Complete => new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Complete),
+        SystemAction.Create => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Create),
+        SystemAction.List => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_List),
+        SystemAction.Update => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Update),
+        SystemAction.Delete => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Delete),
+        SystemAction.Complete => new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_Action_Complete),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
     };
 
     [KernelFunction("manage_reminders")]
     [Description("Manage reminders: create, list, update, delete, or complete.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Header)]
     private async Task<string> ManageRemindersAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Update, Delete, Complete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Notes (optional)")] string? notes,
@@ -101,8 +102,8 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -129,10 +130,10 @@ public class SystemPlugin : BuiltInChatPlugin
         if (!string.IsNullOrWhiteSpace(title))
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         // Only show consent for actions that modify data
@@ -140,22 +141,22 @@ public class SystemPlugin : BuiltInChatPlugin
         {
             var consent = await userInterface.RequestConsentAsync(
                 action.ToString(),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Consent_Header),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_Consent_Header),
                 detailBlock,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException("User denied consent for managing reminders."),
-                    new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage),
+                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing reminders.")),
+                    new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage),
                     showDetails: false);
             }
         }
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
+        displaySink.AppendBlocks(detailBlock);
 
-        string script;
+        FormattableString script;
         switch (action)
         {
             case SystemAction.Create:
@@ -172,16 +173,16 @@ public class SystemPlugin : BuiltInChatPlugin
             }
             case SystemAction.List:
             {
-                script = """
-                         tell application "Reminders"
-                             set output to ""
-                             set remList to every reminder of default list whose completed is false
-                             repeat with r in remList
-                                 set output to output & "ID: " & id of r & "|Title: " & name of r & "|Due: " & (get due date of r) & "\n"
-                             end repeat
-                             return output
-                         end tell
-                         """;
+                script = $"""
+                          tell application "Reminders"
+                              set output to ""
+                              set remList to every reminder of default list whose completed is false
+                              repeat with r in remList
+                                  set output to output & "ID: " & id of r & "|Title: " & name of r & "|Due: " & (get due date of r) & "\n"
+                              end repeat
+                              return output
+                          end tell
+                          """;
                 break;
             }
             case SystemAction.Delete:
@@ -221,15 +222,19 @@ public class SystemPlugin : BuiltInChatPlugin
                 throw new ArgumentException($"Unknown action: {action}");
         }
 
-        return await RunAppleScriptAsync(script, cancellationToken);
+        var remindersResult = await RunAppleScriptAsync(script, cancellationToken);
+        return action == SystemAction.List
+            ? TokenHelper.Omit(remindersResult, maxTokenCount: 40000)
+            : remindersResult;
     }
 
     [KernelFunction("manage_calendar")]
     [Description(
         "Manage calendar events: create, list, or delete. When listing, you can specify a date range to filter events. Default is the next 2 weeks. Maximum range is 31 days.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Header)]
     private async Task<string> ManageCalendarAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Delete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Start date and time (required for create, optional for list)")] DateTime? startDate,
@@ -257,8 +262,8 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -292,28 +297,28 @@ public class SystemPlugin : BuiltInChatPlugin
         if (!title.IsNullOrWhiteSpace())
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         if (startDate.HasValue && endDate.HasValue)
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Time,
-                        new DirectResourceKey($"{startDate:f} - {endDate:f}"))));
+                        new DirectLocaleKey($"{startDate:f} - {endDate:f}"))));
         }
 
         if (!location.IsNullOrWhiteSpace())
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Detail_Location,
-                        new DirectResourceKey(location))));
+                        new DirectLocaleKey(location))));
         }
 
         // Only show consent for actions that modify data
@@ -321,22 +326,22 @@ public class SystemPlugin : BuiltInChatPlugin
         {
             var consent = await userInterface.RequestConsentAsync(
                 action.ToString(),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_Consent_Header),
                 detailBlock,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException("User denied consent for managing calendar."),
-                    new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage),
+                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing calendar.")),
+                    new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage),
                     showDetails: false);
             }
         }
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
+        displaySink.AppendBlocks(detailBlock);
 
-        string script;
+        FormattableString script;
         switch (action)
         {
             case SystemAction.Create:
@@ -409,14 +414,17 @@ public class SystemPlugin : BuiltInChatPlugin
                 throw new ArgumentException($"Unknown action: {action}");
         }
 
-        return await RunAppleScriptAsync(script, cancellationToken);
+        var calendarResult = await RunAppleScriptAsync(script, cancellationToken);
+        return action == SystemAction.List
+            ? TokenHelper.Omit(calendarResult, maxTokenCount: 40000)
+            : calendarResult;
     }
 
     [KernelFunction("send_email")]
     [Description("Compose a new email in the Mail app.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Header)]
     private async Task<string> SendEmailAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The recipient email address")] string recipient,
         [Description("The subject of the email")] string subject,
         [Description("The content of the email")] string content,
@@ -426,19 +434,18 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Recipient,
-                    new DirectResourceKey(recipient))),
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Subject, new DirectResourceKey(subject))),
+                    new DirectLocaleKey(recipient))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_SendEmail_Detail_Subject, new DirectLocaleKey(subject))),
         };
 
         // Don't show consent because it already shows before calling this function
+        displaySink.AppendBlocks(detailBlock);
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
-
-        var script =
+        return await RunAppleScriptAsync(
             $$"""
               tell application "Mail"
                   set newMessage to make new outgoing message with properties {subject:"{{subject}}", content:"{{content}}", visible:true}
@@ -447,16 +454,15 @@ public class SystemPlugin : BuiltInChatPlugin
                   end tell
                   activate
               end tell
-              """;
-
-        return await RunAppleScriptAsync(script, cancellationToken);
+              """,
+            cancellationToken);
     }
 
     [KernelFunction("open_maps")]
     [Description("Open Apple Maps and search for a location.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Header)]
     private async Task<string> OpenMapsAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("The location or query to search for")] string query,
         CancellationToken cancellationToken)
     {
@@ -464,28 +470,27 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query, new DirectResourceKey(query))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenMaps_Detail_Query, new DirectLocaleKey(query))),
         };
+        displaySink.AppendBlocks(detailBlock);
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
-
-        var script =
+        return await RunAppleScriptAsync(
             $"""
              tell application "Maps"
                  activate
-                 open location "http://maps.apple.com/?q={query}"
+                 search {query}"
              end tell
-             """;
-
-        return await RunAppleScriptAsync(script, cancellationToken);
+             """,
+            cancellationToken);
     }
 
     [KernelFunction("manage_notes")]
     [Description("Manage notes: create, list, or delete.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Header)]
     private async Task<string> ManageNotesAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Action: Create, List, Delete")] SystemAction action,
         [Description("Title (required for create)")] string? title,
         [Description("Content (required for create)")] string? content,
@@ -509,8 +514,8 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_Action,
                     GetActionResourceKey(action))),
         };
@@ -519,12 +524,13 @@ public class SystemPlugin : BuiltInChatPlugin
         {
             try
             {
+                FormattableString actionScript = $"""
+                                                  tell application "Notes"
+                                                      return name of (first note whose id is "{id}")
+                                                  end tell
+                                                  """;
                 title = (await RunAppleScriptAsync(
-                    $"""
-                     tell application "Notes"
-                         return name of (first note whose id is "{id}")
-                     end tell
-                     """,
+                    actionScript,
                     cancellationToken)).Trim();
             }
             catch
@@ -536,29 +542,29 @@ public class SystemPlugin : BuiltInChatPlugin
         if (!string.IsNullOrWhiteSpace(title))
         {
             detailBlock.Add(
-                new ChatPluginDynamicResourceKeyDisplayBlock(
-                    new FormattedDynamicResourceKey(
+                new ChatPluginDynamicLocaleKeyDisplayBlock(
+                    new FormattedDynamicLocaleKey(
                         LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Detail_Title,
-                        new DirectResourceKey(title))));
+                        new DirectLocaleKey(title))));
         }
 
         var consent = await userInterface.RequestConsentAsync(
             null,
-            new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Consent_Header),
+            new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_Consent_Header),
             detailBlock,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException("User denied consent for managing notes."),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage),
+                new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing notes.")),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage),
                 showDetails: false);
         }
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
+        displaySink.AppendBlocks(detailBlock);
 
-        string script;
+        FormattableString script;
         switch (action)
         {
             case SystemAction.Create:
@@ -574,16 +580,16 @@ public class SystemPlugin : BuiltInChatPlugin
             }
             case SystemAction.List:
             {
-                script = """
-                         tell application "Notes"
-                             set output to ""
-                             set noteList to every note
-                             repeat with n in noteList
-                                 set output to output & "ID: " & id of n & "|Title: " & name of n & "\n"
-                             end repeat
-                             return output
-                         end tell
-                         """;
+                script = $"""
+                          tell application "Notes"
+                              set output to ""
+                              set noteList to every note
+                              repeat with n in noteList
+                                  set output to output & "ID: " & id of n & "|Title: " & name of n & "\n"
+                              end repeat
+                              return output
+                          end tell
+                          """;
                 break;
             }
             case SystemAction.Delete:
@@ -600,39 +606,44 @@ public class SystemPlugin : BuiltInChatPlugin
                 throw new ArgumentException($"Unknown action: {action}");
         }
 
-        return await RunAppleScriptAsync(script, cancellationToken);
+        var notesResult = await RunAppleScriptAsync(script, cancellationToken);
+        return action == SystemAction.List
+            ? TokenHelper.Omit(notesResult, maxTokenCount: 40000)
+            : notesResult;
     }
 
     [KernelFunction("open_url")]
     [Description("Open a URL in the default browser.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Header)]
     private async Task<string> OpenUrlAsync(
-        [FromKernelServices] IChatPluginUserInterface userInterface,
-        [Description("The URL to open")] string url,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [Description("The http or https URL to open")] string url,
         CancellationToken cancellationToken)
     {
         _logger.LogDebug("Opening URL: {Url}", url);
 
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUri) ||
+            (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException($"Invalid or unsupported URL scheme. Only HTTP and HTTPS are allowed");
+        }
+
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
-            new ChatPluginDynamicResourceKeyDisplayBlock(
-                new FormattedDynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url, new DirectResourceKey(url))),
+            new ChatPluginDynamicLocaleKeyDisplayBlock(
+                new FormattedDynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_OpenUrl_Detail_Url, new DirectLocaleKey(url))),
         };
+        displaySink.AppendBlocks(detailBlock);
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
-
-        var script = $"""
-                      open location "{url}"
-                      """;
-
-        return await RunAppleScriptAsync(script, cancellationToken);
+        return await RunAppleScriptAsync($"open location \"{url}\"", cancellationToken);
     }
 
     [KernelFunction("execute_applescript")]
     [Description("Execute raw AppleScript. Use this only when other specific functions are not applicable.")]
-    [DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_Header)]
+    [DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_Header)]
     private async Task<string> ExecuteAppleScriptAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("A concise description for user, explaining what you are doing")] string description,
         [Description("The AppleScript code")] string script,
         CancellationToken cancellationToken)
@@ -652,23 +663,29 @@ public class SystemPlugin : BuiltInChatPlugin
 
         var consent = await userInterface.RequestConsentAsync(
             null,
-            new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header),
+            new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header),
             detailBlock,
-            cancellationToken);
+            cancellationToken: cancellationToken);
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException("User denied consent for AppleScript execution."),
-                new DynamicResourceKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage),
+                new UnauthorizedAccessException(consent.FormatReason("User denied consent for AppleScript execution.")),
+                new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage),
                 showDetails: false);
         }
 
-        userInterface.DisplaySink.AppendBlocks(detailBlock);
+        displaySink.AppendBlocks(detailBlock);
 
-        return await RunAppleScriptAsync(script, cancellationToken);
+        var rawResult = await RunRawAppleScriptAsync(script, cancellationToken);
+        return TokenHelper.Omit(rawResult, maxTokenCount: 40000);
     }
 
-    private async static Task<string> RunAppleScriptAsync(string script, CancellationToken cancellationToken)
+    private static async Task<string> RunAppleScriptAsync(FormattableString script, CancellationToken cancellationToken)
+    {
+        return await RunRawAppleScriptAsync(script.ToString(AppleScriptFormatter.Shared), cancellationToken);
+    }
+
+    private static async Task<string> RunRawAppleScriptAsync(string script, CancellationToken cancellationToken)
     {
         var psi = new ProcessStartInfo
         {
@@ -698,12 +715,40 @@ public class SystemPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new SystemException($"AppleScript execution failed: {errorOutput}"),
-                new FormattedDynamicResourceKey(
+                new FormattedDynamicLocaleKey(
                     LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ErrorMessage,
-                    new DirectResourceKey(errorOutput)),
+                    new DirectLocaleKey(errorOutput)),
                 showDetails: false);
         }
 
         return result;
+    }
+
+    private sealed class AppleScriptFormatter : IFormatProvider, ICustomFormatter
+    {
+        public static AppleScriptFormatter Shared { get; } = new();
+
+        private AppleScriptFormatter() { }
+
+        public object? GetFormat(Type? formatType) => formatType == typeof(ICustomFormatter) ? this : null;
+
+        public string Format(string? format, object? arg, IFormatProvider? formatProvider)
+        {
+            return arg switch
+            {
+                null => string.Empty,
+                RawScript rs => rs.Value,
+                FormattableString fs => fs.ToString(this),
+                string s => s.Replace("\\", "\\\\").Replace("\"", "\\\""),
+                IFormattable formattable => formattable.ToString(format, CultureInfo.InvariantCulture),
+                _ => arg.ToString() ?? string.Empty
+            };
+        }
+    }
+
+    private readonly struct RawScript(string value)
+    {
+        public string Value { get; } = value;
+        public override string ToString() => Value;
     }
 }

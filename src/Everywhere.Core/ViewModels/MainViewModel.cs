@@ -1,113 +1,158 @@
-﻿using System.Collections.ObjectModel;
-using System.Reactive.Disposables;
-using System.Reflection;
+﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using DynamicData;
+using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.Messages;
 using Everywhere.Views;
-using Lucide.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using ShadUI;
+using ZLinq;
 
 namespace Everywhere.ViewModels;
 
-public interface INavigationItem
+public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<MainViewNavigateMessage>
 {
-    DynamicResourceKeyBase TitleKey { get; }
+    [ObservableProperty] public partial NavigationBarItem? SelectedItem { get; set; }
 
-    object Content { get; }
-}
-
-public record NavigationItem(DynamicResourceKeyBase TitleKey, object Content) : INavigationItem;
-
-public sealed partial class MainViewModel : ReactiveViewModelBase, IDisposable
-{
-    public ReadOnlyObservableCollection<NavigationBarItem> Pages { get; }
-
-    public NavigationBarItem? SelectedPage
-    {
-        get;
-        set
-        {
-            if (!SetProperty(ref field, value)) return;
-            if (value is not null) Navigate(new ShadNavigationItem(value));
-        }
-    }
-
-    public ReadOnlyObservableCollection<INavigationItem> NavigationItems { get; }
-
-    [ObservableProperty] public partial INavigationItem? CurrentNavigationItem { get; private set; }
+    public IReadOnlyBindableList<NavigationBarItem> Items { get; }
 
     /// <summary>
     /// Use public property for MVVM binding
     /// </summary>
     public PersistentState PersistentState { get; }
 
-    private readonly SourceList<NavigationBarItem> _pagesSource = new();
-    private readonly SourceList<INavigationItem> _navigationItemsSource = new();
-    private readonly CompositeDisposable _disposables = new(2);
-
+    private readonly SourceList<NavigationBarItem> _itemsSource = new();
     private readonly IServiceProvider _serviceProvider;
     private readonly Settings _settings;
 
-    public MainViewModel(IServiceProvider serviceProvider, Settings settings, PersistentState persistentState)
+    private bool _isFirstLoad = true;
+
+    public MainViewModel(
+        IServiceProvider serviceProvider,
+        Settings settings,
+        PersistentState persistentState)
     {
-        PersistentState = persistentState;
         _serviceProvider = serviceProvider;
         _settings = settings;
+        PersistentState = persistentState;
 
-        Pages = _pagesSource
+        Items = _itemsSource
             .Connect()
-            .ObserveOnDispatcher()
-            .BindEx(_disposables);
+            .ObserveOnAvaloniaDispatcher()
+            .BindEx(LifetimeDisposables);
+        LifetimeDisposables.Add(_itemsSource);
+        InitializeNavigationBarItems();
 
-        NavigationItems = _navigationItemsSource
-            .Connect()
-            .ObserveOnDispatcher()
-            .BindEx(_disposables);
+        WeakReferenceMessenger.Default.Register(this);
     }
 
-    public void Navigate(INavigationItem navigationItem)
+    protected override void Dispose(bool disposing)
     {
-        _navigationItemsSource.Edit(items =>
+        if (disposing)
         {
-            if (!items.Contains(navigationItem))
-            {
-                items.Add(navigationItem);
-                if (items.Count > 10)
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+        }
+
+        base.Dispose(disposing);
+    }
+
+    protected internal override async Task ViewLoaded(CancellationToken cancellationToken)
+    {
+        if (_isFirstLoad)
+        {
+            _isFirstLoad = false;
+            ShowOobeDialogOnDemand();
+        }
+
+        await base.ViewLoaded(cancellationToken);
+    }
+
+    private void InitializeNavigationBarItems()
+    {
+        var allPages = _serviceProvider.GetServices<IMainViewNavigationItem>().AsValueEnumerable();
+        var topLevelPages = allPages.OfType<IMainViewNavigationTopLevelItem>();
+        var subPagesGroups = allPages.OfType<IMainViewNavigationSubItem>().GroupBy(p => p.GroupType);
+        var rootItems = new List<(int Index, NavigationBarItem Item)>();
+
+        foreach (var page in topLevelPages)
+        {
+            NavigationBarItem item;
+            rootItems.Add(
+                (page.Index, item = new NavigationBarItem
                 {
-                    items.RemoveAt(0);
-                }
+                    Icon = page.Icon,
+                    [!ContentControl.ContentProperty] = page.TitleKey.ToBinding(),
+                    [!NavigationBarItem.ToolTipProperty] = page.TitleKey.ToBinding(),
+                    Tag = page.RouteKey,
+                    Route = page,
+                }));
+
+            if (page is IMainViewNavigationTopLevelItemWithSubItems factory)
+            {
+                item.Children.AddRange(
+                    factory.CreateSubItems().Select(i => new NavigationBarItem
+                    {
+                        Icon = i.Icon,
+                        [!ContentControl.ContentProperty] = i.TitleKey.ToBinding(),
+                        [!NavigationBarItem.ToolTipProperty] = i.TitleKey.ToBinding(),
+                        Tag = i.RouteKey,
+                        Route = i
+                    }));
+            }
+        }
+
+        foreach (var group in subPagesGroups)
+        {
+            if (rootItems.AsValueEnumerable().FirstOrDefault(r => r.Item.Route?.GetType() == group.Key) is not (_, { } groupItem))
+            {
+                var topLevelItem = (IMainViewNavigationTopLevelItem)_serviceProvider.GetRequiredService(group.Key);
+                groupItem = new NavigationBarItem
+                {
+                    Icon = topLevelItem.Icon,
+                    [!ContentControl.ContentProperty] = topLevelItem.TitleKey.ToBinding(),
+                    [!NavigationBarItem.ToolTipProperty] = topLevelItem.TitleKey.ToBinding(),
+                    Tag = topLevelItem.RouteKey,
+                    Route = topLevelItem
+                };
+                rootItems.Add((topLevelItem.Index, groupItem));
             }
 
-            CurrentNavigationItem ??= navigationItem;
-        });
+            foreach (var subPage in group.AsValueEnumerable().OrderBy(p => p.Index))
+            {
+                var item = new NavigationBarItem
+                {
+                    [!ContentControl.ContentProperty] = subPage.TitleKey.ToBinding(),
+                    [!NavigationBarItem.ToolTipProperty] = subPage.TitleKey.ToBinding(),
+                    Tag = subPage.RouteKey,
+                    Route = subPage,
+                };
+                groupItem.Children.Add(item);
+            }
+        }
+
+        _itemsSource.AddRange(rootItems.OrderBy(x => x.Index).Select(x => x.Item));
+
+        SelectedItem = FindNavigationBarItem(_itemsSource.Items, i => i.Route is not null);
     }
 
-    protected internal override Task ViewLoaded(CancellationToken cancellationToken)
+    private static NavigationBarItem? FindNavigationBarItem(IEnumerable<NavigationBarItem> items, Predicate<NavigationBarItem> match)
     {
-        if (_pagesSource.Count > 0) return base.ViewLoaded(cancellationToken);
+        foreach (var item in items)
+        {
+            if (match(item)) return item;
+            if (item.Children.Count <= 0) continue;
 
-        _pagesSource.AddRange(
-            _serviceProvider
-                .GetServices<IMainViewPageFactory>()
-                .SelectMany(f => f.CreatePages())
-                .Concat(_serviceProvider.GetServices<IMainViewPage>())
-                .OrderBy(p => p.Index)
-                .Select(p => new NavigationBarItem
-                {
-                    Content = p.Title.ToTextBlock(),
-                    Route = p,
-                    Icon = new LucideIcon { Kind = p.Icon, Size = 20 },
-                    [!NavigationBarItem.ToolTipProperty] = p.Title.ToBinding()
-                }));
-        SelectedPage = _pagesSource.Items.FirstOrDefault();
+            var child = FindNavigationBarItem(item.Children, match);
+            if (child != null) return child;
+        }
 
-        ShowOobeDialogOnDemand();
-
-        return base.ViewLoaded(cancellationToken);
+        return null;
     }
 
     /// <summary>
@@ -115,23 +160,73 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IDisposable
     /// </summary>
     private void ShowOobeDialogOnDemand()
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        if (!Version.TryParse(PersistentState.PreviousLaunchVersion, out var previousLaunchVersion)) previousLaunchVersion = null;
         if (_settings.Model.CustomAssistants.Count == 0)
         {
             DialogManager
-                .CreateCustomDialog(ServiceLocator.Resolve<WelcomeView>())
-                .ShowAsync();
+                .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
+                .ShowAsync()
+                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         }
-        else if (previousLaunchVersion != version)
+        else
         {
-            DialogManager
-                .CreateCustomDialog(ServiceLocator.Resolve<ChangeLogView>())
-                .Dismissible()
-                .ShowAsync();
-        }
+            var currentVersion = RuntimeConstants.Version;
+            if (!SemanticVersion.TryParse(PersistentState.PreviousLaunchVersion, out var previousVersion))
+            {
+                previousVersion = new SemanticVersion(0);
+            }
 
-        PersistentState.PreviousLaunchVersion = version?.ToString();
+            if (previousVersion < currentVersion)
+            {
+                NavigateTo(_serviceProvider.GetRequiredService<ChangeLogView>());
+                ToastHost
+                    .CreateToast(LocaleResolver.MainViewModel_UpgradeSuccessfulToast_Title)
+                    .WithDurationSeconds(5)
+                    .ShowAsync()
+                    .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void NavigateToType(Type routeType)
+    {
+        var item = FindNavigationBarItem(
+            _itemsSource.Items,
+            i => i.Route?.GetType() == routeType || i.Children.Any(c => c.Route?.GetType() == routeType));
+        if (item != null) SelectedItem = item;
+    }
+
+    [RelayCommand]
+    public void NavigateTo(object route)
+    {
+        if (route is string { Length: > 0 } routeString)
+        {
+            var parts = routeString.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var items = _itemsSource.Items;
+            for (var index = 0; index < parts.Length; index++)
+            {
+                var part = parts[index];
+                var item = items.FirstOrDefault(i => string.Equals(part.Trim(), i.Tag as string, StringComparison.OrdinalIgnoreCase));
+                if (item == null)
+                {
+                    Log.ForContext<MainViewModel>().Warning("Failed to navigate to route {Route} because part {Part} was not found", route, part);
+                    break;
+                }
+
+                if (index == parts.Length - 1)
+                {
+                    SelectedItem = item;
+                    break;
+                }
+
+                items = item.Children;
+            }
+        }
+        else
+        {
+            var item = FindNavigationBarItem(_itemsSource.Items, i => i.Route == route);
+            SelectedItem = item ?? new NavigationBarItem(route); // This allows navigating to a route that is not in the navigation bar
+        }
     }
 
     protected internal override Task ViewUnloaded()
@@ -149,34 +244,10 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IDisposable
         PersistentState.IsHideToTrayIconNotificationShown = true;
     }
 
-    public void Dispose()
+    void IRecipient<MainViewNavigateMessage>.Receive(MainViewNavigateMessage message)
     {
-        _disposables.Dispose();
+        if (message.Route is Type routeType) NavigateToType(routeType);
+        else NavigateTo(message.Route);
     }
 
-    /// <summary>
-    /// A navigation item that wraps a ShadUI NavigationBarItem.
-    /// </summary>
-    private sealed class ShadNavigationItem : INavigationItem
-    {
-        public DynamicResourceKeyBase TitleKey { get; }
-
-        public object Content { get; }
-
-        private readonly NavigationBarItem _navigationBarItem;
-
-        public ShadNavigationItem(NavigationBarItem navigationBarItem)
-        {
-            _navigationBarItem = navigationBarItem;
-            var mainViewPage = navigationBarItem.Route.NotNull<IMainViewPage>();
-            TitleKey = mainViewPage.Title;
-            Content = mainViewPage;
-        }
-
-        public override bool Equals(object? obj) =>
-            obj is ShadNavigationItem other && other._navigationBarItem == _navigationBarItem ||
-            obj is NavigationBarItem item && item == _navigationBarItem;
-
-        public override int GetHashCode() => _navigationBarItem.GetHashCode();
-    }
 }

@@ -17,13 +17,16 @@
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
   </ItemGroup>
 
-  <Target Name="Debug" AfterTargets="Build">
-    <Message Text="Debug: $(RuntimeIdentifier)" Importance="high"/>
-    <Message Text="IsWindows: $(IsWindows)" Importance="high"/>
-    <Message Text="IsOSX: $(IsOSX)" Importance="high"/>
-    <Message Text="IsLinux: $(IsLinux)" Importance="high"/>
-    <Message Text="IsX64: $(IsX64)" Importance="high"/>
-    <Message Text="IsARM64: $(IsARM64)" Importance="high"/>
-  </Target>
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <PackageReference Include="Microsoft.Windows.CsWin32">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWindows)' == 'true'">
+    <None Remove="NativeMethods.txt" />
+    <AdditionalFiles Include="NativeMethods.txt" />
+  </ItemGroup>
 
 </Project>

@@ -1,9 +1,8 @@
 ﻿using ShadUI;
-using Window = ShadUI.Window;
 
 namespace Everywhere.Views;
 
-public sealed partial class TransientWindow : Window, IReactiveHost
+public sealed partial class TransientWindow : ShadWindow, IReactiveHost
 {
     public DialogHost DialogHost => PART_DialogHost;
 

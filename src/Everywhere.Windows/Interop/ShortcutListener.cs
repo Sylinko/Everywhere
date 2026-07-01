@@ -1,29 +1,41 @@
-﻿using Windows.Win32;
+﻿using System.Collections.Immutable;
+using System.Reactive.Disposables;
+using System.Runtime.InteropServices;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia.Input;
 using Everywhere.Interop;
+using Everywhere.Utilities;
 using Everywhere.Windows.Extensions;
+using Serilog;
+using ZLinq;
 
 namespace Everywhere.Windows.Interop;
 
-public unsafe class ShortcutListener : IShortcutListener
+public unsafe sealed class ShortcutListener : IShortcutListener, IDisposable
 {
+    /// <summary>
+    /// Indicates input events injected by this code to prevent self-interception in hooks.
+    /// Arbitrary value with high bits set to avoid conflicts with typical apps.
+    /// </summary>
+    private const nuint InjectExtra = 0x0d000721;
+
     private static HWND HWnd => MessageWindow.Shared.HWnd;
 
-    // Unique id generator for RegisterHotKey
+    /// <summary>
+    /// Global id of RegisterHotKey registrations
+    /// </summary>
     private static int _nextId = 1;
 
-    // OS-registered keyboard hotkeys: shortcut -> registration bundle (id + handlers)
-    private static readonly Dictionary<KeyboardShortcut, OsReg> OsRegs = new();
-    private static readonly Dictionary<int, OsReg> IdToOsReg = new();
+    private static readonly Lock SyncLock = new();
 
-    // Fallback keyboard hotkeys (when RegisterHotKey fails): (mods,key) -> handlers
-    private static readonly Dictionary<ShortcutSignature, HandlerList> HookKbHandlers = new();
+    private static IKeyboardShortcutScope? _currentKeyboardShortcutScope;
 
-    // Mouse hotkeys: per-button registrations (each has its own delay/handler/timer)
-    private static readonly Dictionary<MouseButton, List<MouseRegistration>> MouseRegs = new()
+    private readonly Dictionary<KeyboardShortcut, KeyboardRegistration> _keyboardRegistrations = new();
+    private readonly Dictionary<int, KeyboardRegistration> _keyboardRegistrationsById = new(); // Subset of above with Id > 0 (OS-registered) for quick lookup in WM_HOTKEY handler
+    private readonly Dictionary<MouseButton, List<MouseRegistration>> _mouseRegistrations = new()
     {
         { MouseButton.Left, [] },
         { MouseButton.Right, [] },
@@ -33,27 +45,21 @@ public unsafe class ShortcutListener : IShortcutListener
     };
 
     // Hooks (created on demand)
-    private static IDisposable? _keyboardHookSubscription;
-    private static IDisposable? _mouseHookSubscription;
+    private IDisposable? _keyboardHookSubscription;
+    private IDisposable? _mouseHookSubscription;
 
-    // Inject sentinel to ignore self-injected events
-    private const nuint InjectExtra = 0x0d000721;
-
-    // Concurrency: light lock for shortcut maps
-    private static readonly Lock SyncLock = new();
-
-    private static IKeyboardShortcutScope? _currentKeyboardShortcutScope;
-
-    static ShortcutListener()
+    public ShortcutListener()
     {
         MessageWindow.Shared.AddHandler(
             (uint)WINDOW_MESSAGE.WM_HOTKEY,
-            static (in msg) =>
+            (in msg) =>
             {
                 var id = (int)msg.wParam.Value;
-                OsReg? bundle;
-                lock (SyncLock) IdToOsReg.TryGetValue(id, out bundle);
-                if (bundle is not null) InvokeHandlers(bundle.Handlers);
+                KeyboardRegistration? registration;
+                lock (SyncLock) _keyboardRegistrationsById.TryGetValue(id, out registration);
+                if (registration is not { Id: > 0, Count: > 0 }) return;
+
+                ThreadPool.QueueUserWorkItem(_ => registration.SafeExecute());
             });
     }
 
@@ -69,58 +75,66 @@ public unsafe class ShortcutListener : IShortcutListener
     public IDisposable Register(KeyboardShortcut shortcut, Action handler)
     {
         if (shortcut.Key == Key.None || shortcut.Modifiers == KeyModifiers.None)
+        {
             throw new ArgumentException("Invalid keyboard shortcut.", nameof(shortcut));
+        }
+
         ArgumentNullException.ThrowIfNull(handler);
 
         lock (SyncLock)
         {
-            // If there is already an OS registration for this shortcut, reuse id and append handler.
-            if (OsRegs.TryGetValue(shortcut, out var reg))
+            if (_keyboardRegistrations.TryGetValue(shortcut, out var existingRegistration))
             {
-                reg.Handlers.Add(handler);
-                return new Disposer(() => UnregisterKeyboardHandlerOs(shortcut, handler));
+                existingRegistration.Add(handler);
+                return Disposable.Create(() => UnregisterKeyboardHandlerHook(shortcut, handler));
             }
 
             // Try OS registration (incl. MOD_WIN).
-            var mods = HOT_KEY_MODIFIERS.MOD_NOREPEAT;
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Control)) mods |= HOT_KEY_MODIFIERS.MOD_CONTROL;
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Shift)) mods |= HOT_KEY_MODIFIERS.MOD_SHIFT;
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Alt)) mods |= HOT_KEY_MODIFIERS.MOD_ALT;
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Meta)) mods |= HOT_KEY_MODIFIERS.MOD_WIN;
+            var modifiers = HOT_KEY_MODIFIERS.MOD_NOREPEAT;
+            if (shortcut.Modifiers.HasFlag(KeyModifiers.Control)) modifiers |= HOT_KEY_MODIFIERS.MOD_CONTROL;
+            if (shortcut.Modifiers.HasFlag(KeyModifiers.Shift)) modifiers |= HOT_KEY_MODIFIERS.MOD_SHIFT;
+            if (shortcut.Modifiers.HasFlag(KeyModifiers.Alt)) modifiers |= HOT_KEY_MODIFIERS.MOD_ALT;
+            if (shortcut.Modifiers.HasFlag(KeyModifiers.Meta)) modifiers |= HOT_KEY_MODIFIERS.MOD_WIN;
 
             var id = _nextId++;
-            if (PInvoke.RegisterHotKey(HWnd, id, mods, (uint)shortcut.Key.ToVirtualKey()))
+            if (!PInvoke.RegisterHotKey(HWnd, id, modifiers, (uint)shortcut.Key.ToVirtualKey()))
             {
-                var bundle = new OsReg(id, new List<Action> { handler });
-                OsRegs[shortcut] = bundle;
-                IdToOsReg[id] = bundle;
-                return new Disposer(() => UnregisterKeyboardHandlerOs(shortcut, handler));
+                // If RegisterHotKey failed, set id to 0, which means this registration will be handled by the LL keyboard hook.
+                Log.ForContext<ShortcutListener>().Warning(
+                    "RegisterHotKey failed for {Shortcut} with modifiers {Modifiers}. Error: {Error}. Falling back to keyboard hook.",
+                    shortcut.Key,
+                    shortcut.Modifiers,
+                    Marshal.GetLastWin32Error());
+
+                id = 0;
             }
 
-            // Fallback to LL keyboard hook with Win suppression/compensation.
-            var sig = new ShortcutSignature(shortcut.Modifiers, shortcut.Key);
-            if (!HookKbHandlers.TryGetValue(sig, out var list))
-            {
-                list = new HandlerList();
-                HookKbHandlers[sig] = list;
-            }
-            list.Add(handler);
+            var registration = new KeyboardRegistration(id, handler);
+            _keyboardRegistrations[shortcut] = registration;
 
-            EnsureKeyboardHook();
-            return new Disposer(() => UnregisterKeyboardHandlerHook(sig, handler));
+            if (id > 0)
+            {
+                _keyboardRegistrationsById[id] = registration;
+            }
+            else
+            {
+                _keyboardHookSubscription ??= LowLevelHook.CreateKeyboardHook(KeyboardHookProc);
+            }
+
+            return Disposable.Create(() => UnregisterKeyboardHandlerHook(shortcut, handler));
         }
     }
 
     public IDisposable Register(MouseShortcut shortcut, Action handler)
     {
-        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         lock (SyncLock)
         {
             var reg = new MouseRegistration(shortcut, handler);
-            MouseRegs[shortcut.Key].Add(reg);
-            EnsureMouseHook();
-            return new Disposer(() => UnregisterMouseHandler(reg));
+            _mouseRegistrations[shortcut.Key].Add(reg);
+            _mouseHookSubscription ??= LowLevelHook.CreateMouseHook(MouseHookProc);
+            return Disposable.Create(() => UnregisterMouseHandler(reg));
         }
     }
 
@@ -128,45 +142,18 @@ public unsafe class ShortcutListener : IShortcutListener
     {
         lock (SyncLock)
         {
-            // Unregister all OS hotkeys
-            foreach (var kv in OsRegs)
-            {
-                PInvoke.UnregisterHotKey(HWnd, kv.Value.Id);
-            }
-            OsRegs.Clear();
-            IdToOsReg.Clear();
+            foreach (var registration in _keyboardRegistrations.Values) registration.Dispose();
+            _keyboardRegistrations.Clear();
+            _keyboardRegistrationsById.Clear();
 
-            // Clear fallback handlers
-            HookKbHandlers.Clear();
-
-            // Clear mouse regs (and cancel timers)
-            foreach (var list in MouseRegs.Values)
+            foreach (var list in _mouseRegistrations.Values)
             {
                 foreach (var r in list) r.CancelTimer();
                 list.Clear();
             }
 
-            // Dispose hooks
-            _keyboardHookSubscription?.Dispose();
-            _keyboardHookSubscription = null;
-            _mouseHookSubscription?.Dispose();
-            _mouseHookSubscription = null;
-        }
-    }
-
-    private static void InvokeHandlers(List<Action> handlers)
-    {
-        // Execute handlers safely; avoid holding locks while invoking.
-        foreach (var handler in handlers.ToList())
-        {
-            try
-            {
-                handler();
-            }
-            catch
-            {
-                /* swallow */
-            }
+            DisposeHelper.DisposeToDefault(ref _keyboardHookSubscription);
+            DisposeHelper.DisposeToDefault(ref _mouseHookSubscription);
         }
     }
 
@@ -174,13 +161,7 @@ public unsafe class ShortcutListener : IShortcutListener
     // Reference: PowerToys
     // https://github.com/microsoft/PowerToys/blob/main/src/modules/cmdpal/CmdPalKeyboardService/KeyboardListener.cpp
 
-    private static void EnsureKeyboardHook()
-    {
-        if (_keyboardHookSubscription is not null) return;
-        _keyboardHookSubscription = LowLevelHook.CreateKeyboardHook(KeyboardHookProc);
-    }
-
-    private static void KeyboardHookProc(WINDOW_MESSAGE msg, ref KBDLLHOOKSTRUCT hookStruct, ref bool blockNext)
+    private void KeyboardHookProc(WINDOW_MESSAGE msg, ref KBDLLHOOKSTRUCT hookStruct, ref bool blockNext)
     {
         // Ignore self-injected events
         if (hookStruct.dwExtraInfo == InjectExtra) return;
@@ -188,36 +169,19 @@ public unsafe class ShortcutListener : IShortcutListener
         if (msg != WINDOW_MESSAGE.WM_KEYDOWN && msg != WINDOW_MESSAGE.WM_SYSKEYDOWN)
             return;
 
-        // Resolve current modifiers using GetAsyncKeyState (best-effort snapshot)
-        var mods = GetAsyncModifiers();
-
-        // Resolve main key from vkCode
         var vk = (VIRTUAL_KEY)hookStruct.vkCode;
         var key = vk.ToAvaloniaKey();
+        var modifiers = GetAsyncModifiers();
+        var shortcut = new KeyboardShortcut(key, modifiers);
 
-        // Build shortcut signature and lookup handlers
-        List<Action>? handlers = null;
-        var sig = new ShortcutSignature(mods, key);
+        KeyboardRegistration? registration;
+        lock (SyncLock) _keyboardRegistrations.TryGetValue(shortcut, out registration);
 
-        lock (SyncLock)
-        {
-            if (HookKbHandlers.TryGetValue(sig, out var list))
-            {
-                handlers = list.Snapshot();
-            }
-        }
-
-        if (handlers is null || handlers.Count == 0)
+        // Id > 0 means it should be handled by RegisterHotKey, so only handle if Id == 0 (fallback) and there are handlers to execute.
+        if (registration is not { Id: 0, Count: > 0 })
             return;
 
-        // Execute handlers outside the lock
-        foreach (var h in handlers)
-        {
-            try { h(); }
-            catch
-            { /* swallow */
-            }
-        }
+        ThreadPool.QueueUserWorkItem(_ => registration.SafeExecute());
 
         // Send a dummy key-up to prevent Start menu from activating on Win-key release
         SendDummyKeyUp();
@@ -230,20 +194,20 @@ public unsafe class ShortcutListener : IShortcutListener
     {
         // Note: Using async state to query left/right Win, Ctrl, Shift, Alt.
         // This mirrors the PowerToys approach and avoids maintaining custom state.
-        static bool Down(VIRTUAL_KEY v) => (PInvoke.GetAsyncKeyState((int)v) & 0x8000) != 0;
+        static bool IsDown(VIRTUAL_KEY v) => (PInvoke.GetAsyncKeyState((int)v) & 0x8000) != 0;
 
-        var mods = KeyModifiers.None;
+        var modifiers = KeyModifiers.None;
 
-        if (Down(VIRTUAL_KEY.VK_LWIN) || Down(VIRTUAL_KEY.VK_RWIN))
-            mods |= KeyModifiers.Meta;
+        if (IsDown(VIRTUAL_KEY.VK_LWIN) || IsDown(VIRTUAL_KEY.VK_RWIN))
+            modifiers |= KeyModifiers.Meta;
         if ((PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_CONTROL) & 0x8000) != 0)
-            mods |= KeyModifiers.Control;
+            modifiers |= KeyModifiers.Control;
         if ((PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_SHIFT) & 0x8000) != 0)
-            mods |= KeyModifiers.Shift;
+            modifiers |= KeyModifiers.Shift;
         if ((PInvoke.GetAsyncKeyState((int)VIRTUAL_KEY.VK_MENU) & 0x8000) != 0)
-            mods |= KeyModifiers.Alt;
+            modifiers |= KeyModifiers.Alt;
 
-        return mods;
+        return modifiers;
     }
 
     /// <summary>
@@ -274,15 +238,7 @@ public unsafe class ShortcutListener : IShortcutListener
         }
     }
 
-    // ---------- mouse hook ----------
-
-    private static void EnsureMouseHook()
-    {
-        if (_mouseHookSubscription is not null) return;
-        _mouseHookSubscription = LowLevelHook.CreateMouseHook(MouseHookProc);
-    }
-
-    private static void MouseHookProc(WINDOW_MESSAGE msg, ref MSLLHOOKSTRUCT hookStruct, ref bool blockNext)
+    private void MouseHookProc(WINDOW_MESSAGE msg, ref MSLLHOOKSTRUCT hookStruct, ref bool blockNext)
     {
         if (hookStruct.dwExtraInfo == InjectExtra) return;
 
@@ -327,51 +283,44 @@ public unsafe class ShortcutListener : IShortcutListener
             };
             if (mk == MouseButton.None) return null;
 
-            lock (SyncLock) return MouseRegs[mk].Count > 0 ? [..MouseRegs[mk]] : null;
+            lock (SyncLock) return _mouseRegistrations[mk].Count > 0 ? [.._mouseRegistrations[mk]] : null;
         }
     }
 
     // ---------- unregister helpers ----------
 
-    private static void UnregisterKeyboardHandlerOs(KeyboardShortcut shortcut, Action handler)
+    private void UnregisterKeyboardHandlerHook(KeyboardShortcut shortcut, Action handler)
     {
         lock (SyncLock)
         {
-            if (!OsRegs.TryGetValue(shortcut, out var bundle)) return;
-            bundle.Handlers.Remove(handler);
-            if (bundle.Handlers.Count > 0) return;
+            if (!_keyboardRegistrations.TryGetValue(shortcut, out var registration)) return;
 
-            OsRegs.Remove(shortcut);
-            IdToOsReg.Remove(bundle.Id);
-            PInvoke.UnregisterHotKey(HWnd, bundle.Id);
-        }
-    }
-
-    private static void UnregisterKeyboardHandlerHook(ShortcutSignature sig, Action handler)
-    {
-        lock (SyncLock)
-        {
-            if (!HookKbHandlers.TryGetValue(sig, out var list)) return;
-            list.Remove(handler);
-            if (list.Count == 0) HookKbHandlers.Remove(sig);
-            if (HookKbHandlers.Count == 0 && _keyboardHookSubscription is not null)
+            registration.Remove(handler);
+            if (registration.Count == 0)
             {
-                _keyboardHookSubscription.Dispose();
-                _keyboardHookSubscription = null;
+                _keyboardRegistrations.Remove(shortcut);
+                if (registration.Id > 0) _keyboardRegistrationsById.Remove(registration.Id);
+                registration.Dispose();
+            }
+
+            if (_keyboardRegistrations.Count == 0)
+            {
+                DisposeHelper.DisposeToDefault(ref _keyboardHookSubscription);
             }
         }
     }
 
-    private static void UnregisterMouseHandler(MouseRegistration reg)
+    private void UnregisterMouseHandler(MouseRegistration reg)
     {
         lock (SyncLock)
         {
-            if (MouseRegs.TryGetValue(reg.Shortcut.Key, out var list))
+            if (_mouseRegistrations.TryGetValue(reg.Shortcut.Key, out var list))
             {
                 list.Remove(reg);
                 reg.CancelTimer();
             }
-            if (MouseRegs.Values.Sum(l => l.Count) == 0 && _mouseHookSubscription is not null)
+
+            if (_mouseRegistrations.Values.AsValueEnumerable().Sum(l => l.Count) == 0 && _mouseHookSubscription is not null)
             {
                 _mouseHookSubscription.Dispose();
                 _mouseHookSubscription = null;
@@ -379,35 +328,37 @@ public unsafe class ShortcutListener : IShortcutListener
         }
     }
 
-    // ---------- small types ----------
-
-    private readonly record struct Disposer(Action DisposeAction) : IDisposable
-    {
-        public void Dispose() => DisposeAction?.Invoke();
-    }
-
-    private sealed class OsReg(int id, List<Action> handlers)
+    private sealed class KeyboardRegistration(int id, Action initialHandler) : IDisposable
     {
         public int Id { get; } = id;
-        public List<Action> Handlers { get; } = handlers;
-    }
+        private ImmutableArray<Action> _handlers = [initialHandler];
 
-    private readonly struct ShortcutSignature(KeyModifiers modifiers, Key key) : IEquatable<ShortcutSignature>
-    {
-        public KeyModifiers Modifiers { get; } = modifiers;
-        public Key Key { get; } = key;
-        public bool Equals(ShortcutSignature other) => Modifiers == other.Modifiers && Key == other.Key;
-        public override bool Equals(object? obj) => obj is ShortcutSignature o && Equals(o);
-        public override int GetHashCode() => ((int)Modifiers << 16) ^ (int)Key;
-    }
+        public void Add(Action h) => ImmutableInterlocked.Update(ref _handlers, x => x.Add(h));
+        public void Remove(Action h) => ImmutableInterlocked.Update(ref _handlers, x => x.Remove(h));
+        public int Count => _handlers.Length;
 
-    private sealed class HandlerList
-    {
-        private readonly List<Action> _handlers = [];
-        public void Add(Action h) => _handlers.Add(h);
-        public void Remove(Action h) => _handlers.Remove(h);
-        public int Count => _handlers.Count;
-        public List<Action> Snapshot() => [.._handlers];
+        /// <summary>
+        /// Ensures a snapshot of handlers to allow safe enumeration outside the lock, while allowing modifications to the original list.
+        /// </summary>
+        public void SafeExecute()
+        {
+            var handlersSnapshot = _handlers;
+            foreach (var handler in handlersSnapshot)
+            {
+                try { handler(); }
+                catch (Exception ex)
+                {
+                    // Ignore
+                    Log.ForContext<ShortcutListener>().Error(ex, "Exception in keyboard shortcut handler");
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            _handlers = ImmutableArray<Action>.Empty;
+            if (Id > 0) PInvoke.UnregisterHotKey(HWnd, Id);
+        }
     }
 
     // Per-registration mouse state (timer lifecycle)
@@ -486,6 +437,17 @@ public unsafe class ShortcutListener : IShortcutListener
         private void KeyboardHookCallback(WINDOW_MESSAGE msg, ref KBDLLHOOKSTRUCT hookStruct, ref bool blockNext)
         {
             var virtualKey = (VIRTUAL_KEY)hookStruct.vkCode;
+            if (virtualKey == VIRTUAL_KEY.VK_ESCAPE && msg is WINDOW_MESSAGE.WM_KEYDOWN or WINDOW_MESSAGE.WM_SYSKEYDOWN)
+            {
+                // Short circuit on ESC down to allow users to cancel the shortcut capturing by pressing ESC.
+                PressingShortcut = default;
+                PressingShortcutChanged?.Invoke(this, PressingShortcut);
+                ShortcutFinished?.Invoke(this, PressingShortcut);
+
+                blockNext = true;
+                return;
+            }
+
             var keyModifiers = virtualKey.ToKeyModifiers();
             bool? isKeyDown = msg switch
             {

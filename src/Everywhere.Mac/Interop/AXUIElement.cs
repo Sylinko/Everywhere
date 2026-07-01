@@ -1,9 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Avalonia;
-using Avalonia.Media.Imaging;
 using CoreFoundation;
 using Everywhere.Interop;
-using ImageIO;
 using ObjCRuntime;
 
 namespace Everywhere.Mac.Interop;
@@ -79,12 +77,12 @@ public partial class AXUIElement : NSObject, IVisualElement
                     AXRoleAttribute.AXRadioGroup or
                     AXRoleAttribute.AXSplitGroup or
                     AXRoleAttribute.AXBrowser or
-                    AXRoleAttribute.AXWindow or // Parent of AXWindow is AXApplication
                     AXRoleAttribute.AXSheet or
                     AXRoleAttribute.AXDrawer or
                     AXRoleAttribute.AXCell => VisualElementType.Panel,
 
-                AXRoleAttribute.AXApplication or
+                AXRoleAttribute.AXWindow or
+                    AXRoleAttribute.AXApplication or
                     AXRoleAttribute.AXSystemWide => VisualElementType.TopLevel,
 
                 AXRoleAttribute.AXSplitter => VisualElementType.Splitter,
@@ -244,100 +242,81 @@ public partial class AXUIElement : NSObject, IVisualElement
     /// <returns></returns>
     public string? GetSelectionText() => GetAttribute<NSObject>(AXAttributeConstants.SelectedText)?.ToString();
 
-    public Task<Bitmap> CaptureAsync(CancellationToken cancellationToken)
+    public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
     {
         var bounds = BoundingRectangle;
         var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
-        var windowId = NativeWindowHandle;
+
+        if (rect.Width < 1f && rect.Height < 1f)
+        {
+            return Task.FromResult<IVisualElement.ICapturedBitmapData>(CapturedBitmapData.Empty);
+        }
 
         // we use CGSHWCaptureWindowList because it can screenshot minimized windows, which CGWindowListCreateImage can't
         // Use BestResolution to get physical pixel size (matches BackingScaleFactor). 
         // NominalResolution returns 1x logical pixels which causes scaling mismatches when cropping with scale factor.
         using var cgImage = SkyLightInterop.HardwareCaptureWindowList(
-            [(uint)windowId],
+            [(uint)NativeWindowHandle],
             SkyLightInterop.CGSWindowCaptureOptions.IgnoreGlobalCLipShape |
             SkyLightInterop.CGSWindowCaptureOptions.BestResolution |
             SkyLightInterop.CGSWindowCaptureOptions.FullSize);
 
         if (cgImage is null)
         {
-            return Task.FromException<Bitmap>(new InvalidOperationException("Failed to capture screen image."));
+            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to capture screen image."));
         }
 
-        using var data = new NSMutableData();
-        using var dest = CGImageDestination.Create(data, "public.png", 1);
+        var screen = NSScreen.Screens.FirstOrDefault(s => s.Frame.IntersectsWith(rect));
+        var scale = screen?.BackingScaleFactor ?? 1.0;
 
-        if (dest is null)
+        // cgImage captures the window content starting at (0,0) in Window Local Coordinates.
+        // rect contains Screen Coordinates (including Dock/Menu bar offsets).
+        // To crop correctly, we must transform rect to Window-Relative coordinates.
+        double windowX = 0;
+        double windowY = 0;
+
+        // Try to find the parent window to get its screen position.
+        var windowRef = GetAttributeAsElement(AXAttributeConstants.Window);
+        if (windowRef != null)
         {
-            return Task.FromException<Bitmap>(new InvalidOperationException("Failed to create image destination."));
+            var wRect = windowRef.BoundingRectangle;
+            windowX = wRect.X;
+            windowY = wRect.Y;
         }
-
-        if (!rect.IsEmpty)
+        else if (Role == AXRoleAttribute.AXWindow)
         {
-            var screen = NSScreen.Screens.FirstOrDefault(s => s.Frame.IntersectsWith(rect));
-            var scale = screen?.BackingScaleFactor ?? 1.0;
-
-            var targetWidth = rect.Width * scale;
-            var targetHeight = rect.Height * scale;
-
-            // cgImage captures the window content starting at (0,0) in Window Local Coordinates.
-            // rect contains Screen Coordinates (including Dock/Menu bar offsets).
-            // To crop correctly, we must transform rect to Window-Relative coordinates.
-            double windowX = 0;
-            double windowY = 0;
-
-            // Try to find the parent window to get its screen position.
-            var windowRef = GetAttributeAsElement(AXAttributeConstants.Window);
-            if (windowRef != null)
-            {
-                var wRect = windowRef.BoundingRectangle;
-                windowX = wRect.X;
-                windowY = wRect.Y;
-            }
-            else if (Role == AXRoleAttribute.AXWindow)
-            {
-                // Fallback: if we are the window itself
-                windowX = rect.X;
-                windowY = rect.Y;
-            }
-
-            // Check if captured image approximately matches target size (allowing for rounding/shadows).
-            // If it matches, we assume full window capture and start at 0,0.
-            bool isFullWindow = cgImage.Width >= targetWidth - 2 && cgImage.Width <= targetWidth + 100;
-
-            // If full window, offset is 0. 
-            // If partial (element inside window), offset is (ElementScreenPos - WindowScreenPos).
-            var cropX = isFullWindow ? 0 : (rect.X - windowX) * scale;
-            var cropY = isFullWindow ? 0 : (rect.Y - windowY) * scale;
-
-            // Clamp invalid values
-            if (cropX < 0) cropX = 0;
-            if (cropY < 0) cropY = 0;
-
-            using var croppedImage = cgImage.WithImageInRect(
-                new CGRect(
-                    cropX,
-                    cropY,
-                    rect.Width * scale,
-                    rect.Height * scale));
-
-            if (croppedImage is null)
-            {
-                return Task.FromException<Bitmap>(new InvalidOperationException("Failed to crop image."));
-            }
-
-            dest.AddImage(croppedImage);
-            dest.Close();
-
-            // after this, we can safely dispose data
-            return Task.FromResult(new Bitmap(data.AsStream()));
+            // Fallback: if we are the window itself
+            windowX = rect.X;
+            windowY = rect.Y;
         }
 
-        dest.AddImage(cgImage);
-        dest.Close();
+        // Check if captured image approximately matches target size (allowing for rounding/shadows).
+        // If it matches, we assume full window capture and start at 0,0.
+        var targetWidth = rect.Width * scale;
+        var isFullWindow = cgImage.Width >= targetWidth - 2 && cgImage.Width <= targetWidth + 100;
 
-        // after this, we can safely dispose data
-        return Task.FromResult(new Bitmap(data.AsStream()));
+        // If full window, offset is 0.
+        // If partial (element inside window), offset is (ElementScreenPos - WindowScreenPos).
+        var cropX = isFullWindow ? 0 : (rect.X - windowX) * scale;
+        var cropY = isFullWindow ? 0 : (rect.Y - windowY) * scale;
+
+        // Clamp invalid values
+        if (cropX < 0) cropX = 0;
+        if (cropY < 0) cropY = 0;
+
+        using var croppedImage = cgImage.WithImageInRect(
+            new CGRect(
+                cropX,
+                cropY,
+                rect.Width * scale,
+                rect.Height * scale));
+
+        if (croppedImage is null)
+        {
+            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to crop image."));
+        }
+
+        return Task.FromResult<IVisualElement.ICapturedBitmapData>(new CapturedBitmapData(croppedImage, scale));
     }
 
     public bool SetAttribute(NSString attributeName, NSObject value)
@@ -404,6 +383,70 @@ public partial class AXUIElement : NSObject, IVisualElement
     {
         var handle = CreateApplication(pid);
         return handle != 0 ? new AXUIElement(handle) : null;
+    }
+
+    /// <summary>
+    /// Gets the AXUIElement corresponding to the specified CGWindowID.
+    /// This is a reverse lookup using _AXUIElementGetWindow under the hood.
+    /// </summary>
+    /// <param name="cgWindowId">The target CGWindowID.</param>
+    /// <returns>The matching AXUIElement, or null if not found.</returns>
+    public static AXUIElement? ElementFromWindowId(uint cgWindowId)
+    {
+        if (cgWindowId == 0) return null;
+
+        // 1. Get the owner PID from the CGWindowID using CoreGraphics
+        var ownerPid = 0;
+        var windowInfoArrayPtr = CGInterop.CGWindowListCopyWindowInfo(CGWindowListOption.IncludingWindow, cgWindowId);
+
+        if (windowInfoArrayPtr != 0)
+        {
+            // Take ownership of the CFArray returned by Create/Copy rule
+            using var windowInfoArray = Runtime.GetNSObject<NSArray>(windowInfoArrayPtr, owns: true);
+            if (windowInfoArray is { Count: > 0 })
+            {
+                using var windowInfo = windowInfoArray.GetItem<NSDictionary>(0);
+                using var pidKey = new NSString("kCGWindowOwnerPID");
+
+                if (windowInfo?.ObjectForKey(pidKey) is NSNumber pidNumber)
+                {
+                    ownerPid = pidNumber.Int32Value;
+                }
+            }
+        }
+
+        if (ownerPid == 0) return null;
+
+        // 2. Create the AXApplication element from the PID
+        using var appElement = ElementFromPid(ownerPid);
+        if (appElement is null) return null;
+
+        // 3. Get all windows of the application
+        // Note: Replace with AXAttributeConstants.Windows if you have it defined.
+        using var windowsKey = new NSString("AXWindows");
+        using var windows = appElement.GetAttribute<NSArray>(windowsKey);
+
+        if (windows is null) return null;
+
+        // 4. Iterate through the windows and find the matching CGWindowID
+        for (nuint i = 0; i < windows.Count; i++)
+        {
+            var windowElement = FromCopyArray(windows, i);
+            if (windowElement is null) continue;
+
+            // Use your existing property which correctly handles the _AXUIElementGetWindow P/Invoke
+            if (windowElement.NativeWindowHandle == (nint)cgWindowId)
+            {
+                // Found it! Return the retained element.
+                return windowElement;
+            }
+
+            // Not a match: explicitly dispose to release the CFRetain applied in FromCopyArray,
+            // avoiding memory leaks during traversal.
+            windowElement.Dispose();
+        }
+
+        return null;
     }
 
     [LibraryImport(AppServices, EntryPoint = "AXUIElementCreateSystemWide")]

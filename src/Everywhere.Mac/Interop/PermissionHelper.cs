@@ -23,7 +23,7 @@ public static partial class PermissionHelper
         if (isTrusted) return;
 
         NativeMessageBox.Show(
-            LocaleResolver.Common_Info,
+            CoreLocaleResolver.Common_Info,
             LocaleResolver.MacOS_PermissionHelper_PleaseGrantAccessibilityPermission);
         Environment.Exit(0);
     }

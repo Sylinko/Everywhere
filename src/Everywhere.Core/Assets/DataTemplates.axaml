@@ -1,9 +1,10 @@
-﻿<ResourceDictionary
+<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:c="clr-namespace:Everywhere.Configuration"
-  xmlns:common="clr-namespace:Everywhere.Common" xmlns:interop="clr-namespace:Everywhere.Interop"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
+  xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
+  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <DataTemplate
     x:Key="{x:Type aai:ModelProviderTemplate}"
     x:DataType="aai:ModelProviderTemplate">
@@ -16,7 +17,8 @@
               Width="{DynamicResource FontSizeXl}"
               Height="{DynamicResource FontSizeXl}"
               md:AsyncImageLoader.SizeToContent="Manual"
-              md:AsyncImageLoader.Source="{Binding DarkIconUrl, FallbackValue={x:Null}}"/>
+              md:AsyncImageLoader.Source="{Binding DarkIconUrl}"
+              mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
           </ControlTemplate>
         </shadui:ThemeToggleBlock.DarkContent>
         <shadui:ThemeToggleBlock.LightContent>
@@ -25,21 +27,22 @@
               Width="{DynamicResource FontSizeXl}"
               Height="{DynamicResource FontSizeXl}"
               md:AsyncImageLoader.SizeToContent="Manual"
-              md:AsyncImageLoader.Source="{Binding LightIconUrl, FallbackValue={x:Null}}"/>
+              md:AsyncImageLoader.Source="{Binding LightIconUrl}"
+              mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }"/>
           </ControlTemplate>
         </shadui:ThemeToggleBlock.LightContent>
       </shadui:ThemeToggleBlock>
 
       <TextBlock
         VerticalAlignment="Center"
-        Text="{Binding DisplayName, FallbackValue={x:Null}}"/>
+        Text="{Binding DisplayName}"/>
     </StackPanel>
   </DataTemplate>
 
   <DataTemplate
     x:Key="{x:Type aai:ModelDefinitionTemplate}"
     x:DataType="aai:ModelDefinitionTemplate">
-    <TextBlock Text="{Binding DisplayName, FallbackValue={x:Null}}"/>
+    <TextBlock Text="{Binding Name}"/>
   </DataTemplate>
 
   <DataTemplate x:Key="{x:Type interop:KeyboardShortcut}">
@@ -49,8 +52,19 @@
     </DataTemplate.DataType>
 
     <v:KeyboardShortcutInputBox
-      MinWidth="320" MinHeight="32"
-      HorizontalAlignment="Left"
+      MinWidth="160" MinHeight="32"
+      HorizontalAlignment="Right"
+      Shortcut="{Binding Value, Mode=TwoWay}"/>
+  </DataTemplate>
+
+  <DataTemplate x:Key="{x:Type c:CompositeKeyboardShortcut}">
+    <DataTemplate.DataType>
+      <x:Type
+        x:TypeArguments="c:CompositeKeyboardShortcut" TypeName="c:SettingsTemplatedItem"/>
+    </DataTemplate.DataType>
+
+    <v:CompositeKeyboardShortcutInputBox
+      MinHeight="32" HorizontalAlignment="Right"
       Shortcut="{Binding Value, Mode=TwoWay}"/>
   </DataTemplate>
 
@@ -79,9 +93,88 @@
     </Button>
   </DataTemplate>
 
+  <DataTemplate x:Key="{x:Type ai:SystemAssistant}">
+    <DataTemplate.DataType>
+      <x:Type
+        x:TypeArguments="ai:SystemAssistant" TypeName="c:SettingsTemplatedItem"/>
+    </DataTemplate.DataType>
+
+    <ToggleSwitch
+      Margin="6"
+      IsChecked="{Binding ((ai:SystemAssistant)Value).AutoSelect, FallbackValue={x:True}, Mode=TwoWay}"
+      OffContent="{I18N {x:Static LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"
+      OnContent="{I18N {x:Static LocaleKey.SystemAssistant_AutoSelectToggle_Content}}"/>
+  </DataTemplate>
+
   <DataTemplate
-    x:Key="{x:Type plugins:WebSearchEngineProvider}"
-    x:DataType="plugins:WebSearchEngineProvider">
-    <TextBlock Text="{Binding DisplayName, FallbackValue={x:Null}}"/>
+    x:Key="{x:Type ai:CustomAssistant}"
+    x:DataType="ai:CustomAssistant">
+    <Grid ColumnSpacing="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition/>
+        <ColumnDefinition
+          Width="Auto" SharedSizeGroup="Badges"/>
+      </Grid.ColumnDefinitions>
+
+      <v:IconPresenter
+        Grid.Column="0" Width="24"
+        Height="24" VerticalAlignment="Center"
+        FontSize="14"
+        Icon="{Binding Icon}"
+        IconSize="14"/>
+      <TextBlock
+        Grid.Column="1" Margin="4,0,0,0"
+        VerticalAlignment="Center"
+        Text="{Binding Name}"
+        TextTrimming="CharacterEllipsis"
+        ToolTip.Tip="{Binding Description}"/>
+
+      <StackPanel
+        Grid.Column="2" Margin="16,0,0,0"
+        HorizontalAlignment="Right" Orientation="Horizontal"
+        Spacing="2">
+        <StackPanel.Styles>
+          <Style Selector="shadui|Badge">
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Style Selector="^ LucideIcon">
+              <Setter Property="Size" Value="12"/>
+              <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
+            </Style>
+          </Style>
+        </StackPanel.Styles>
+
+        <shadui:Badge
+          Background="Chocolate"
+          IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
+          <LucideIcon Kind="Eye"/>
+        </shadui:Badge>
+        <shadui:Badge
+          Background="CadetBlue"
+          IsVisible="{Binding SupportsToolCall}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
+          <LucideIcon Kind="Hammer"/>
+        </shadui:Badge>
+        <shadui:Badge
+          Padding="6,0" Background="MediumSlateBlue">
+          <ToolTip.Tip>
+            <TextBlock>
+              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
+              <Run Text="{Binding ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+              <LineBreak/>
+              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
+              <Run Text="{Binding OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+            </TextBlock>
+          </ToolTip.Tip>
+
+          <TextBlock
+            FontSize="{DynamicResource FontSizeS}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
+            Text="{Binding ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
+        </shadui:Badge>
+      </StackPanel>
+    </Grid>
   </DataTemplate>
 </ResourceDictionary>

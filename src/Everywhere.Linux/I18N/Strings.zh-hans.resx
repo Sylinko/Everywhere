@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simplified Chinese (简体中文) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="Linux_ShortcutListener_Register_FailedToGrabHotkey" xml:space="preserve">
+        <value>无法注册快捷键。该组合键可能已被占用。</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Header" xml:space="preserve">
+        <value>fd-find</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_Description" xml:space="preserve">
+        <value>使用 fd-find (一个高性能本地文件搜索工具) 搜索计算机上的文件。该工具需要安装 fd-find 后才可使用。</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Header" xml:space="preserve">
+        <value>搜索文件</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_Description" xml:space="preserve">
+        <value>在 Linux 上使用 fd-find 搜索文件或目录。</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_FdFind_SearchFiles_DetailMessage" xml:space="preserve">
+        <value>找到 {0} 个文件</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_Bash_Description" xml:space="preserve">
+        <value>提供执行 bash 脚本的能力，允许直接与系统交互。然而，这也存在风险，可能导致意外文件删除或系统崩溃。</value>
+    </data>
+    <data name="Linux_BuiltInChatPlugin_Bash_Header" xml:space="preserve">
+        <value>Bash Shell</value>
+    </data>
+</root>

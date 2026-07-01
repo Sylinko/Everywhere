@@ -1,0 +1,111 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:AssistantConfiguratorSelector}"
+    TargetType="v:AssistantConfiguratorSelector">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="8">
+          <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
+          <ListBox
+            x:Name="PART_ListBox"
+            Background="{DynamicResource SettingsItemBackgroundColor}"
+            CornerRadius="{DynamicResource XlCornerRadius}"
+            ItemsSource="{Binding ConfiguratorModels, RelativeSource={RelativeSource TemplatedParent}}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+            SelectedValue="{Binding Assistant.ConfiguratorType, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"
+            SelectedValueBinding="{Binding Type, x:DataType=v:AssistantConfiguratorSelector+ConfiguratorModel}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid
+                  ColumnSpacing="4" Rows="1"/>
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.ItemContainerTheme>
+              <ControlTheme
+                BasedOn="{StaticResource TabListBoxItemTheme}"
+                TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
+              </ControlTheme>
+            </ListBox.ItemContainerTheme>
+
+            <ListBox.DataTemplates>
+              <DataTemplate DataType="v:AssistantConfiguratorSelector+OfficialConfiguratorModel">
+                <Panel>
+                  <Border
+                    Margin="-12,-8"
+                    CornerRadius="{DynamicResource LgCornerRadius}">
+                    <Border.Background>
+                      <ConicGradientBrush Center="100%,-50%">
+                        <GradientStop Offset="0.5" Color="#FF4EADFC"/>
+                        <GradientStop Offset="0.6" Color="#FFEE4BB5"/>
+                        <GradientStop Offset="0.73" Color="#FFDFDF62"/>
+                      </ConicGradientBrush>
+                    </Border.Background>
+
+                    <Border.OpacityMask>
+                      <!--  <DrawingBrush  -->
+                      <!--  Stretch="Fill" Transform="scale(1, 0.6)">  -->
+                      <!--   <DrawingBrush.Drawing> -->
+                      <!--     <DrawingGroup ClipGeometry="M0,0 V256 H1009 V0 H0 Z"> -->
+                      <!--       <GeometryDrawing Geometry="F1 M1009,256z M0,0z M0,0C46,183 149,88 302,63 409,48 556,265 769,256 860,252 1006,209 1006,209L1008,0 0,0z"> -->
+                      <!--         <GeometryDrawing.Brush> -->
+                      <!--           <LinearGradientBrush SpreadMethod="Pad" StartPoint="469,253" EndPoint="539,-47"> -->
+                      <!--             <GradientStop Offset="0" Color="#FFFFFFFF"/> -->
+                      <!--             <GradientStop Offset="1" Color="#FF000000"/> -->
+                      <!--           </LinearGradientBrush> -->
+                      <!--         </GeometryDrawing.Brush> -->
+                      <!--       </GeometryDrawing> -->
+                      <!--     </DrawingGroup> -->
+                      <!--   </DrawingBrush.Drawing> -->
+                      <!-- </DrawingBrush> -->
+                      <RadialGradientBrush Center="80%,0%" GradientOrigin="80%,0%" RadiusX="70%" RadiusY="50%">
+                        <GradientStop Offset="0.0" Color="#FFFFFFFF"/>
+                        <GradientStop Offset="1.0" Color="#00FFFFFF"/>
+                      </RadialGradientBrush>
+                    </Border.OpacityMask>
+                  </Border>
+
+                  <StackPanel
+                    Orientation="Vertical" Spacing="4">
+                    <TextBlock
+                      Classes="Large"
+                      Text="{Binding HeaderKey^}"
+                      TextWrapping="Wrap"/>
+                    <TextBlock
+                      Classes="Muted Caption"
+                      Text="{Binding DescriptionKey^}"
+                      TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Panel>
+              </DataTemplate>
+
+              <DataTemplate DataType="v:AssistantConfiguratorSelector+ConfiguratorModel">
+                <StackPanel
+                  Orientation="Vertical" Spacing="4">
+                  <TextBlock
+                    Classes="Large"
+                    Text="{Binding HeaderKey^}"
+                    TextWrapping="Wrap"/>
+                  <TextBlock
+                    Classes="Muted Caption"
+                    Text="{Binding DescriptionKey^}"
+                    TextWrapping="Wrap"/>
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.DataTemplates>
+          </ListBox>
+
+          <v:SettingsItemsControl
+            Margin="0"
+            IsVisible="{TemplateBinding IsSettingsVisible}"
+            ItemsSource="{Binding Assistant.Configurator.SettingsItems, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

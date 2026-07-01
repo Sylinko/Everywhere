@@ -1,17 +1,35 @@
-﻿<shadui:Window
+﻿<shadui:ShadWindow
   x:Class="Everywhere.Views.TransientWindow" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ew="clr-namespace:Everywhere"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" Title="Everywhere"
   Width="1280" Height="800"
   MinWidth="400" MinHeight="400"
   Focusable="True" Icon="avares://Everywhere.Core/Assets/Everywhere.png"
-  TitleFontWeight="SemiBold" TransparencyLevelHint="Mica,AcrylicBlur,Blur,None"
-  Version="{x:Static ew:App.Version}">
+  TransparencyLevelHint="Mica,AcrylicBlur,Blur,None">
+  <shadui:ShadWindow.TitleBarContent>
+    <StackPanel
+      HorizontalAlignment="Left" VerticalAlignment="Center"
+      IsHitTestVisible="False" Orientation="Horizontal"
+      Spacing="4">
+      <StackPanel.Margin>
+        <OnPlatform
+          x:TypeArguments="Thickness" Linux="16,0"
+          Windows="16,0" macOS="76,0,0,0"/>
+      </StackPanel.Margin>
 
-  <shadui:Window.Hosts>
-    <shadui:DialogHost
-      x:Name="PART_DialogHost"
-      Owner="{Binding RelativeSource={RelativeSource AncestorType=shadui:Window}}"/>
+      <TextBlock
+        VerticalAlignment="Center" FontWeight="SemiBold"
+        IsHitTestVisible="False" Text="Everywhere"/>
+      <TextBlock
+        VerticalAlignment="Center"
+        Foreground="{DynamicResource ForegroundLeadColor}"
+        IsHitTestVisible="False"
+        Text="{x:Static ew:App.Version}"/>
+    </StackPanel>
+  </shadui:ShadWindow.TitleBarContent>
+
+  <shadui:ShadWindow.Hosts>
+    <shadui:DialogHost x:Name="PART_DialogHost"/>
     <shadui:ToastHost x:Name="PART_ToastHost"/>
-  </shadui:Window.Hosts>
-</shadui:Window>
+  </shadui:ShadWindow.Hosts>
+</shadui:ShadWindow>

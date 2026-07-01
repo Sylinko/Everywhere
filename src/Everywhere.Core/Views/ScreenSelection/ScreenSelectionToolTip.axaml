@@ -34,7 +34,6 @@
               Text="{TemplateBinding SizeInfo}"/>
 
             <ListBox
-              Width="{Binding $parent[DockPanel].Bounds.Width}"
               ItemsSource="{Binding AllowedModes, RelativeSource={RelativeSource TemplatedParent}}"
               SelectedItem="{TemplateBinding Mode}">
               <ListBox.ItemsPanel>
@@ -55,7 +54,7 @@
                 <DataTemplate DataType="interop:ScreenSelectionMode">
                   <TextBlock
                     HorizontalAlignment="Center"
-                    Text="{Binding Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
+                    Text="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                 </DataTemplate>
               </ListBox.DataTemplates>
             </ListBox>

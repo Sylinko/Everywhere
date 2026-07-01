@@ -10,7 +10,7 @@ public sealed class GeneratedSettingsItemsAttribute : Attribute;
 /// This attribute is used to mark properties that should not be serialized or displayed in the UI.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-public class HiddenSettingsItemAttribute : Attribute;
+public class SettingsItemIgnoreAttribute : Attribute;
 
 /// <summary>
 /// Additional metadata for a settings item.
@@ -37,6 +37,18 @@ public class SettingsItemAttribute : Attribute
     /// Marks this settings item as experimental.
     /// </summary>
     public bool IsExperimental { get; set; }
+
+    /// <summary>
+    /// Optional documentation URL for this settings item.
+    /// </summary>
+    public string? DocumentUrl { get; set; }
+
+    /// <summary>
+    /// Groups multiple settings items under a common header.
+    /// Items with the same non-null Group value will be wrapped in a <see cref="SettingsGroupItem"/>.
+    /// If starts with "_", group header will hidden.
+    /// </summary>
+    public string? Group { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]
@@ -86,6 +98,12 @@ public class SettingsSelectionItemAttribute(string itemsSourceBindingPath) : Att
     /// An optional key to use for the DataTemplate to display each item.
     /// </summary>
     public object? DataTemplateKey { get; set; }
+
+    /// <summary>
+    /// Can user edit combobox
+    /// </summary>
+    /// TODO: This is complicated to impl
+    public bool IsEditable { get; set; }
 }
 
 /// <summary>
@@ -115,4 +133,6 @@ public class SettingsTemplatedItemAttribute : Attribute
 public class SettingsItemsAttribute : Attribute
 {
     public bool IsExpanded { get; set; }
+
+    public string? IsExpandableBindingPath { get; set; }
 }

@@ -1,4 +1,6 @@
 ﻿using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using SkiaSharp;
 
 namespace Everywhere.Interop;
 
@@ -250,13 +252,35 @@ public interface IVisualElement
     /// </summary>
     void SendShortcut(KeyboardShortcut shortcut);
 
-    // /// <summary>
-    // /// Get the selected text of the visual element.
-    // /// </summary>
-    // /// <returns></returns>
-    // string? GetSelectionText();
+    /// <summary>
+    /// Captures the visual element into a bitmap and returns a pointer to the bitmap data along with metadata.
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken);
 
-    Task<Bitmap> CaptureAsync(CancellationToken cancellationToken);
+    /// <summary>
+    /// Gets a pointer to the bitmap data of the visual element along with metadata.
+    /// </summary>
+    interface ICapturedBitmapData : IDisposable
+    {
+        PixelFormat Format { get; }
+
+        AlphaFormat AlphaFormat { get; }
+
+        nint Data { get; }
+
+        // TODO: actual bounds to solve ghoat window issues
+
+        /// <summary>
+        /// The actual size of the captured bitmap data. May not equal to CaptureRect.Size due to scaling.
+        /// </summary>
+        PixelSize Size { get; }
+
+        Vector Dpi { get; }
+
+        int Stride { get; }
+    }
 }
 
 public static class VisualElementExtension
@@ -287,6 +311,66 @@ public static class VisualElementExtension
             {
                 yield return current;
                 current = current.Parent;
+            }
+        }
+    }
+
+    extension(IVisualElement.ICapturedBitmapData data)
+    {
+        /// <summary>
+        /// Converts the captured bitmap data into an Avalonia Bitmap object.
+        /// </summary>
+        /// <returns>Converted Bitmap if successful, or null if the pixel data is empty.</returns>
+        public Bitmap? ToAvaloniaBitmap()
+        {
+            var pixelSize = data.Size;
+            return pixelSize.Width <= 0 || pixelSize.Height <= 0 ?
+                null :
+                new Bitmap(
+                    data.Format,
+                    data.AlphaFormat,
+                    data.Data,
+                    pixelSize,
+                    data.Dpi,
+                    data.Stride);
+        }
+
+        /// <summary>
+        /// Converts the captured bitmap data into a SkiaSharp SKImage object.
+        /// </summary>
+        /// <returns>Converted SKImage if successful, or null if the pixel data is empty.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        public SKImage? ToSKImage()
+        {
+            var pixelSize = data.Size;
+            if (pixelSize.Width <= 0 || pixelSize.Height <= 0) return null;
+
+            var info = new SKImageInfo(pixelSize.Width, pixelSize.Height, ToSkColorType(data.Format), ToSkAlphaType(data.AlphaFormat));
+            using var skData = SKData.CreateCopy(data.Data, data.Stride * pixelSize.Height);
+            return SKImage.FromPixels(info, skData, data.Stride);
+
+            static SKColorType ToSkColorType(PixelFormat fmt)
+            {
+                if (fmt == PixelFormat.Rgb565)
+                    return SKColorType.Rgb565;
+                if (fmt == PixelFormat.Bgra8888)
+                    return SKColorType.Bgra8888;
+                if (fmt == PixelFormat.Rgba8888)
+                    return SKColorType.Rgba8888;
+                if (fmt == PixelFormat.Rgb32)
+                    return SKColorType.Rgb888x;
+                throw new ArgumentException("Unknown pixel format: " + fmt);
+            }
+
+            static SKAlphaType ToSkAlphaType(AlphaFormat fmt)
+            {
+                return fmt switch
+                {
+                    AlphaFormat.Premul => SKAlphaType.Premul,
+                    AlphaFormat.Unpremul => SKAlphaType.Unpremul,
+                    AlphaFormat.Opaque => SKAlphaType.Opaque,
+                    _ => throw new ArgumentException($"Unknown alpha format: {fmt}")
+                };
             }
         }
     }

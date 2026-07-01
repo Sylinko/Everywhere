@@ -23,7 +23,7 @@ public readonly record struct FileRecord(
 {
     public string HumanizedSize => BytesSize switch
     {
-        >= 1024 => $"{BytesSize} bytes ({FileUtilities.HumanizeBytes(BytesSize)})",
+        >= 1024 => $"{BytesSize} bytes ({Humanizer.HumanizeBytes(BytesSize)})",
         > 0 => $"{BytesSize} bytes",
         0 => "0",
         _ => "<DIR>"

@@ -1,5 +1,6 @@
 ﻿using Avalonia.Input;
 using Everywhere.Interop;
+using Network;
 using UserNotifications;
 
 namespace Everywhere.Mac.Interop;
@@ -76,6 +77,18 @@ public sealed class NativeHelper : INativeHelper
     {
         get => throw new PlatformNotSupportedException();
         set => throw new PlatformNotSupportedException();
+    }
+
+    public bool IsLowDataModeActive
+    {
+        get
+        {
+            using var monitor = new NWPathMonitor();
+            var isConstrained = false;
+            monitor.SnapshotHandler = path => { isConstrained = path.IsConstrained; };
+            monitor.Start();
+            return isConstrained;
+        }
     }
 
     public void RestartAsAdministrator() => throw new PlatformNotSupportedException();

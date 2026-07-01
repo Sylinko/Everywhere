@@ -11,25 +11,25 @@ public enum ScreenSelectionMode
     /// <summary>
     /// Pick a whole screen.
     /// </summary>
-    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Screen)]
+    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Screen)]
     Screen,
 
     /// <summary>
     /// Pick a window.
     /// </summary>
-    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Window)]
+    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Window)]
     Window,
 
     /// <summary>
     /// Pick a specific element.
     /// </summary>
-    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Element)]
+    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Element)]
     Element,
 
     /// <summary>
     /// Free selection mode.
     /// </summary>
-    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Free)]
+    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Free)]
     Free
 }
 
@@ -80,13 +80,20 @@ public interface IVisualElementContext : IObservable<TextSelectionData>
     IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element);
 
     /// <summary>
+    /// Get the element from a native window handle.
+    /// </summary>
+    /// <param name="windowHandle"></param>
+    /// <returns></returns>
+    IVisualElement? ElementFromWindowHandle(nint windowHandle);
+
+    /// <summary>
     /// Let the user pick an element from the screen.
     /// </summary>
     /// <param name="initialMode">
     /// The initial pick mode to use. If null, it remembers the last used mode.
     /// </param>
     /// <returns></returns>
-    Task<IVisualElement?> PickElementAsync(ScreenSelectionMode? initialMode);
+    Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionMode? initialMode);
 
     /// <summary>
     /// Let the user take a screenshot of a selected area.
@@ -95,5 +102,5 @@ public interface IVisualElementContext : IObservable<TextSelectionData>
     /// The initial pick mode to use. If null, it remembers the last used mode.
     /// </param>
     /// <returns></returns>
-    Task<Bitmap?> ScreenshotAsync(ScreenSelectionMode? initialMode);
+    Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionMode? initialMode);
 }

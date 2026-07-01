@@ -4,7 +4,7 @@
 /// Represents a provider template for customizing assistant.
 /// This used for both online and local models.
 /// </summary>
-public record ModelProviderTemplate
+public sealed record ModelProviderTemplate
 {
     /// <summary>
     /// Unique identifier for the model provider.
@@ -67,7 +67,7 @@ public record ModelProviderTemplate
     /// </summary>
     public required IReadOnlyList<ModelDefinitionTemplate> ModelDefinitions { get; set; }
 
-    public virtual bool Equals(ModelProviderTemplate? other) => Id == other?.Id;
+    public bool Equals(ModelProviderTemplate? other) => Id == other?.Id;
 
     public override int GetHashCode() => Id.GetHashCode();
 }

@@ -1,13 +1,11 @@
 using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Media.Imaging;
 using Everywhere.Interop;
+using Everywhere.Linux.Interop.X11Backend;
 using Microsoft.Extensions.Logging;
 using X11;
-using Everywhere.Linux.Interop.X11Backend;
 using AvaloniaWindow = Avalonia.Controls.Window;
 using X11Window = X11.Window;
 
@@ -32,8 +30,8 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
     {
         // 1. Initialize Context (Thread & Display)
         Context = new X11Context(logger);
-        
-        if (Context.Display == IntPtr.Zero) 
+
+        if (Context.Display == IntPtr.Zero)
         {
             // Handle fatal error appropriately
             logger.LogError("X11 Backend failed to initialize context");
@@ -43,7 +41,7 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
         CoreServices = new X11CoreServices(Context);
         InputHandler = new X11InputHandler(logger, Context, CoreServices);
         WindowManager = new X11WindowManager(logger, Context, CoreServices);
-        Screenshot = new X11Screenshot(logger, Context, CoreServices);
+        Screenshot = new X11Screenshot(Context);
         SelectionHandler = new X11SelectionHandler(logger, Context, CoreServices);
     }
 
@@ -84,14 +82,14 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
     public IVisualElement? GetWindowElementByInfo(int pid, PixelRect rect)
     {
         X11Window target = X11Window.None;
-        WindowManager.ForEachTopLevelWindow(w => 
+        WindowManager.ForEachTopLevelWindow(w =>
         {
             if (WindowManager.GetWindowPid(w) == pid && WindowManager.GetWindowBounds(w) == rect) target = w;
         });
         return target != X11Window.None ? GetWindowElement(target) : null;
     }
 
-    public Bitmap Capture(IVisualElement? window, PixelRect rect)
+    public IVisualElement.ICapturedBitmapData Capture(IVisualElement? window, PixelRect rect)
     {
         var handle = window?.NativeWindowHandle != null ? (X11Window)window.NativeWindowHandle : Context.RootWindow;
         return Screenshot.Capture(handle, rect);
@@ -112,7 +110,7 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
         var handle = (X11Window?)window?.TryGetPlatformHandle()?.Handle ?? X11Window.None;
         WindowManager.ScanSkipWindow = handle;
     }
-    
+
     public bool GetKeyState(KeyModifiers keyModifier)
     {
         return WindowManager.GetKeyState(keyModifier);
@@ -129,49 +127,68 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
 
     public void SetFocusable(AvaloniaWindow window, bool focusable)
     {
-         if (window.TryGetPlatformHandle()?.Handle is { } X11Handle) 
-             WindowManager.SetFocusable((X11Window)X11Handle, focusable);
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            WindowManager.SetFocusable((X11Window)x11Handle, focusable);
     }
 
     public void SetHitTestVisible(AvaloniaWindow window, bool visible)
     {
-        if (window.TryGetPlatformHandle()?.Handle is { } X11Handle) {
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+        {
             var width = (ushort)window.Width;
             var height = (ushort)window.Height;
-            WindowManager.SetHitTestVisible((X11Window)X11Handle, visible, width, height);
+            WindowManager.SetHitTestVisible((X11Window)x11Handle, visible, width, height);
         }
     }
 
     public void SetOverrideRedirect(AvaloniaWindow window, bool redirect)
     {
-        if (window.TryGetPlatformHandle()?.Handle is { } X11Handle)
-            WindowManager.SetOverrideRedirect((X11Window)X11Handle, redirect);
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            WindowManager.SetOverrideRedirect((X11Window)x11Handle, redirect);
     }
 
     public void SetCloaked(AvaloniaWindow window, bool cloaked)
     {
-        if (cloaked) window.Hide(); else { window.Show(); window.Activate(); }
+        if (cloaked) window.Hide();
+        else
+        {
+            window.Show();
+            window.Activate();
+        }
         Xlib.XFlush(Context.Display);
     }
-    
+
     public bool GetEffectiveVisible(AvaloniaWindow window)
     {
-        if (window.TryGetPlatformHandle()?.Handle is { } X11Handle)
-            return WindowManager.GetEffectiveVisible((X11Window)X11Handle);
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            return WindowManager.GetEffectiveVisible((X11Window)x11Handle);
         return false;
     }
+
     public bool AnyModelDialogOpened(AvaloniaWindow window)
     {
-        if (window.TryGetPlatformHandle()?.Handle is { } X11Handle)
-            return WindowManager.AnyModelDialogOpened((X11Window)X11Handle);
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            return WindowManager.AnyModelDialogOpened((X11Window)x11Handle);
         return false;
     }
+
+    public void RequestUserAttention(AvaloniaWindow window)
+    {
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            WindowManager.RequestUserAttention((X11Window)x11Handle);
+    }
+
+    public void InitializeWindow(AvaloniaWindow window)
+    {
+
+    }
+
     public void SendKeyboardShortcut(KeyboardShortcut shortcut)
     {
         InputHandler.SendKeyboardShortcut(shortcut);
     }
 
-    public IEnumerable<IVisualElement> Screens => new[] { GetScreenElement() };
+    public IEnumerable<IVisualElement> Screens => [GetScreenElement()];
 
     public IDisposable Subscribe(IObserver<TextSelectionData> observer)
     {

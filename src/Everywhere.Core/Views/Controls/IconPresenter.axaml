@@ -19,17 +19,17 @@
             <MultiBinding Converter="{x:Static vc:CommonConverters.DefaultMultiValue}">
               <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
                 <Binding
-                  FallbackValue="{x:Null}"
-                  Path="Icon.BackgroundColor"
-                  RelativeSource="{RelativeSource TemplatedParent}"/>
+                  Path="Icon?.BackgroundColor"
+                  RelativeSource="{RelativeSource TemplatedParent}"
+                  TargetNullValue="{x:Null}"/>
                 <TemplateBinding Property="Background"/>
               </MultiBinding>
             </MultiBinding>
           </Border.Background>
 
-          <v:LazyContentControl
-            ContentDataContext="{TemplateBinding Icon}"
-            ItemIndex="{Binding Icon.Type, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=-1}">
+          <v:LazyIndexedContentControl
+            ContentDataBinding="{TemplateBinding Icon}"
+            ItemIndex="{Binding Icon?.Type, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue=-1}">
             <ControlTemplate x:DataType="common:ColoredIcon">
               <LucideIcon
                 HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -62,7 +62,7 @@
                 </TextBlock.Foreground>
               </TextBlock>
             </ControlTemplate>
-          </v:LazyContentControl>
+          </v:LazyIndexedContentControl>
         </Border>
       </ControlTemplate>
     </Setter>

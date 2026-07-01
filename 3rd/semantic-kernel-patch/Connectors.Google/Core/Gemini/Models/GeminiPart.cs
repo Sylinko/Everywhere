@@ -10,7 +10,7 @@ namespace Microsoft.SemanticKernel.Connectors.Google.Core;
 /// <summary>
 /// Union field data can be only one of properties in class GeminiPart
 /// </summary>
-internal sealed class GeminiPart : IJsonOnDeserialized
+public sealed class GeminiPart : IJsonOnDeserialized
 {
     /// <summary>
     /// Gets or sets the text data.
@@ -91,7 +91,7 @@ internal sealed class GeminiPart : IJsonOnDeserialized
     /// <summary>
     /// Inline media bytes like image or video data.
     /// </summary>
-    internal sealed class InlineDataPart
+    public sealed class InlineDataPart
     {
         /// <summary>
         /// The IANA standard MIME type of the source data.
@@ -114,7 +114,7 @@ internal sealed class GeminiPart : IJsonOnDeserialized
     /// <summary>
     /// File media bytes like image or video data.
     /// </summary>
-    internal sealed class FileDataPart
+    public sealed class FileDataPart
     {
         /// <summary>
         /// The IANA standard MIME type of the source data.
@@ -139,7 +139,7 @@ internal sealed class GeminiPart : IJsonOnDeserialized
     /// A predicted FunctionCall returned from the model that contains a
     /// string representing the FunctionDeclaration.name with the arguments and their values.
     /// </summary>
-    internal sealed class FunctionCallPart
+    public sealed class FunctionCallPart
     {
         /// <summary>
         /// Required. The name of the function to call. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 63.
@@ -166,7 +166,7 @@ internal sealed class GeminiPart : IJsonOnDeserialized
     /// The result output of a FunctionCall that contains a string representing the FunctionDeclaration.name and
     /// a structured JSON object containing any output from the function is used as context to the model.
     /// </summary>
-    internal sealed class FunctionResponsePart
+    public sealed class FunctionResponsePart
     {
         /// <summary>
         /// Required. The name of the function to call. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 63.
@@ -182,7 +182,7 @@ internal sealed class GeminiPart : IJsonOnDeserialized
         [JsonRequired]
         public FunctionResponseEntity Response { get; set; } = null!;
 
-        internal sealed class FunctionResponseEntity
+        public sealed class FunctionResponseEntity
         {
             [JsonConstructor]
             public FunctionResponseEntity() { }

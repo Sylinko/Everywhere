@@ -3,14 +3,15 @@
 /// <summary>
 /// Smaller numbers are initialized first.
 /// </summary>
-public enum AsyncInitializerPriority
+public enum AsyncInitializerIndex
 {
     Highest = int.MinValue,
 
     Database = 10,
 
     Settings = 100,
-    AfterSettings = 101,
+
+    Network = 200,
 
     Startup = int.MaxValue,
 }
@@ -20,7 +21,7 @@ public interface IAsyncInitializer
     /// <summary>
     /// Smaller numbers are initialized first.
     /// </summary>
-    AsyncInitializerPriority Priority { get; }
+    AsyncInitializerIndex Index { get; }
 
     Task InitializeAsync();
 }

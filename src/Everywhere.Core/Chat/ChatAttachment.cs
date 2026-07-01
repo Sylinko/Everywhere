@@ -1,6 +1,9 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.AI;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Utilities;
@@ -11,26 +14,33 @@ using Serilog;
 namespace Everywhere.Chat;
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[Union(0, typeof(ChatVisualElementAttachment))]
-[Union(1, typeof(ChatTextSelectionAttachment))]
-[Union(2, typeof(ChatTextAttachment))]
-[Union(3, typeof(ChatFileAttachment))]
-public abstract partial class ChatAttachment(DynamicResourceKeyBase headerKey) : ObservableObject
+[Union(0, typeof(VisualElementAttachment))]
+[Union(1, typeof(TextSelectionAttachment))]
+[Union(2, typeof(TextAttachment))]
+[Union(3, typeof(FileAttachment))]
+public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : ObservableObject
 {
     public abstract LucideIconKind Icon { get; }
 
     [Key(0)]
-    public virtual DynamicResourceKeyBase HeaderKey => headerKey;
+    public virtual IDynamicLocaleKey HeaderKey => headerKey;
 
     /// <summary>
     /// Indicates whether the attachment is presently focused in the UI.
     /// </summary>
     [IgnoreMember]
     public bool IsPrimary { get; set; }
+
+    /// <summary>
+    /// The opacity that bind to the view for animation.
+    /// </summary>
+    [IgnoreMember]
+    [ObservableProperty]
+    public partial double Opacity { get; set; } = 1d;
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class ChatVisualElementAttachment : ChatAttachment
+public partial class VisualElementAttachment : ChatAttachment
 {
     [Key(1)]
     public override LucideIconKind Icon { get; }
@@ -54,26 +64,80 @@ public partial class ChatVisualElementAttachment : ChatAttachment
     public bool IsElementValid => Element?.Target is not null;
 
     [SerializationConstructor]
-    protected ChatVisualElementAttachment(DynamicResourceKeyBase headerKey, LucideIconKind icon) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
     {
         Icon = icon;
     }
 
-    public ChatVisualElementAttachment(DynamicResourceKeyBase headerKey, LucideIconKind icon, IVisualElement? element) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, IVisualElement? element) : base(headerKey)
     {
         Icon = icon;
         Element = element is null ? null : new ResilientReference<IVisualElement>(element);
     }
+
+    public static VisualElementAttachment FromVisualElement(IVisualElement element)
+    {
+        DynamicLocaleKey headerKey;
+        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{element.Type}");
+        if (element.ProcessId > 0)
+        {
+            try
+            {
+                using var process = Process.GetProcessById(element.ProcessId);
+                headerKey = new FormattedDynamicLocaleKey("{0} - {1}", new DirectLocaleKey(process.ProcessName), elementTypeKey);
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or NotSupportedException)
+            {
+                headerKey = elementTypeKey;
+            }
+        }
+        else
+        {
+            headerKey = elementTypeKey;
+        }
+
+        return new VisualElementAttachment(
+            headerKey,
+            element.Type switch
+            {
+                VisualElementType.Label => LucideIconKind.Type,
+                VisualElementType.TextEdit => LucideIconKind.TextInitial,
+                VisualElementType.Document => LucideIconKind.FileText,
+                VisualElementType.Image => LucideIconKind.Image,
+                VisualElementType.CheckBox => LucideIconKind.SquareCheck,
+                VisualElementType.RadioButton => LucideIconKind.CircleCheckBig,
+                VisualElementType.ComboBox => LucideIconKind.ChevronDown,
+                VisualElementType.ListView => LucideIconKind.List,
+                VisualElementType.ListViewItem => LucideIconKind.List,
+                VisualElementType.TreeView => LucideIconKind.ListTree,
+                VisualElementType.TreeViewItem => LucideIconKind.ListTree,
+                VisualElementType.DataGrid => LucideIconKind.Table,
+                VisualElementType.DataGridItem => LucideIconKind.Table,
+                VisualElementType.TabControl or VisualElementType.TabItem => LucideIconKind.LayoutPanelTop,
+                VisualElementType.Table => LucideIconKind.Table,
+                VisualElementType.TableRow => LucideIconKind.Table,
+                VisualElementType.Menu => LucideIconKind.Menu,
+                VisualElementType.MenuItem => LucideIconKind.Menu,
+                VisualElementType.Slider => LucideIconKind.SlidersHorizontal,
+                VisualElementType.ScrollBar => LucideIconKind.Settings2,
+                VisualElementType.ProgressBar => LucideIconKind.Percent,
+                VisualElementType.Panel => LucideIconKind.Group,
+                VisualElementType.TopLevel => LucideIconKind.AppWindow,
+                VisualElementType.Screen => LucideIconKind.Monitor,
+                _ => LucideIconKind.Component
+            },
+            element);
+    }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class ChatTextSelectionAttachment : ChatVisualElementAttachment
+public sealed partial class TextSelectionAttachment : VisualElementAttachment
 {
     /// <summary>
     /// Override to prevent serialization of HeaderKey.
     /// </summary>
     [IgnoreMember]
-    public override DynamicResourceKeyBase HeaderKey => base.HeaderKey;
+    public override IDynamicLocaleKey HeaderKey => base.HeaderKey;
 
     [IgnoreMember]
     public override LucideIconKind Icon => LucideIconKind.TextCursorInput;
@@ -82,13 +146,13 @@ public partial class ChatTextSelectionAttachment : ChatVisualElementAttachment
     public string Text { get; }
 
     [SerializationConstructor]
-    private ChatTextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
+    private TextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
     {
         Text = text;
         IsPrimary = true;
     }
 
-    public ChatTextSelectionAttachment(string text, IVisualElement? element) : base(
+    public TextSelectionAttachment(string text, IVisualElement? element) : base(
         CreateHeaderKey(text),
         LucideIconKind.TextSelect,
         element)
@@ -102,11 +166,11 @@ public partial class ChatTextSelectionAttachment : ChatVisualElementAttachment
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private static DirectResourceKey CreateHeaderKey(string? text)
+    private static DirectLocaleKey CreateHeaderKey(string? text)
     {
         if (string.IsNullOrEmpty(text))
         {
-            return new DirectResourceKey(string.Empty);
+            return new DirectLocaleKey(string.Empty);
         }
 
         const int MaxLength = 30;
@@ -148,12 +212,12 @@ public partial class ChatTextSelectionAttachment : ChatVisualElementAttachment
             }
         });
 
-        return new DirectResourceKey(result);
+        return new DirectLocaleKey(result);
     }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class ChatTextAttachment(DynamicResourceKeyBase headerKey, string text) : ChatAttachment(headerKey)
+public sealed partial class TextAttachment(IDynamicLocaleKey headerKey, string text) : ChatAttachment(headerKey)
 {
     public override LucideIconKind Icon => LucideIconKind.TextInitial;
 
@@ -170,8 +234,8 @@ public partial class ChatTextAttachment(DynamicResourceKeyBase headerKey, string
 /// <param name="sha256"></param>
 /// <param name="mimeType"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class ChatFileAttachment(
-    DynamicResourceKeyBase headerKey,
+public sealed partial class FileAttachment(
+    IDynamicLocaleKey headerKey,
     string filePath,
     string sha256,
     string mimeType,
@@ -204,8 +268,12 @@ public partial class ChatFileAttachment(
     [Key(4)]
     public string? Description { get; set; } = description;
 
+    [JsonIgnore]
+    [IgnoreMember]
     public bool IsImage => FileUtilities.IsOfCategory(MimeType, FileTypeCategory.Image);
 
+    [JsonIgnore]
+    [IgnoreMember]
     public Bitmap? Image
     {
         get
@@ -221,7 +289,7 @@ public partial class ChatFileAttachment(
                 catch (Exception ex)
                 {
                     ex = HandledSystemException.Handle(ex);
-                    Log.Logger.ForContext<ChatFileAttachment>().Error(ex, "Failed to load image from file: {FilePath}", FilePath);
+                    Log.Logger.ForContext<FileAttachment>().Error(ex, "Failed to load image from file: {FilePath}", FilePath);
                     field = null;
                 }
                 finally
@@ -248,6 +316,18 @@ public partial class ChatFileAttachment(
         }
     }
 
+    [JsonIgnore]
+    [IgnoreMember]
+    public Modalities? RequiredModalities => FileUtilities.GetCategory(MimeType) switch
+    {
+        FileTypeCategory.Image => Modalities.Image,
+        FileTypeCategory.Audio => Modalities.Audio,
+        FileTypeCategory.Video => Modalities.Video,
+        FileTypeCategory.Document when MimeType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase) => Modalities.Pdf,
+        _ => null
+    };
+
+    [JsonIgnore]
     [IgnoreMember]
     private bool _isImageLoaded;
 
@@ -257,7 +337,7 @@ public partial class ChatFileAttachment(
     }
 
     /// <summary>
-    /// Creates a new ChatFileAttachment from a file path.
+    /// Creates a new FileAttachment from a file path.
     /// </summary>
     /// <param name="filePath"></param>
     /// <param name="mimeType">null for auto-detection</param>
@@ -271,7 +351,7 @@ public partial class ChatFileAttachment(
     /// <exception cref="OverflowException">
     /// Thrown if the file size exceeds the maximum allowed size.
     /// </exception>
-    public static Task<ChatFileAttachment> CreateAsync(
+    public static Task<FileAttachment> CreateAsync(
         string filePath,
         string? mimeType = null,
         string? description = null,
@@ -284,18 +364,17 @@ public partial class ChatFileAttachment(
             {
                 throw new HandledException(
                     new NotSupportedException($"File size exceeds the maximum allowed size of {maxBytesSize} bytes."),
-                    new FormattedDynamicResourceKey(
-                        LocaleKey.ChatFileAttachment_Create_FileTooLarge,
-                        new DirectResourceKey(FileUtilities.HumanizeBytes(stream.Length)),
-                        new DirectResourceKey(FileUtilities.HumanizeBytes(maxBytesSize))),
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.FileAttachment_Create_FileTooLarge,
+                        new DirectLocaleKey(Humanizer.HumanizeBytes(stream.Length)),
+                        new DirectLocaleKey(Humanizer.HumanizeBytes(maxBytesSize))),
                     showDetails: false);
             }
 
             mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
-
             var sha256 = await SHA256.HashDataAsync(stream, cancellationToken);
             var sha256String = Convert.ToHexString(sha256).ToLowerInvariant();
-            return new ChatFileAttachment(new DirectResourceKey(Path.GetFileName(filePath)), filePath, sha256String, mimeType, description);
+            return new FileAttachment(new DirectLocaleKey(Path.GetFileName(filePath)), filePath, sha256String, mimeType, description);
         },
         cancellationToken);
 

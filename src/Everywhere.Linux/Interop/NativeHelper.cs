@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Input;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Everywhere.Interop;
 
 namespace Everywhere.Linux.Interop;
@@ -68,10 +67,11 @@ public class NativeHelper(IEventHelper eventHelper) : INativeHelper
 
     public bool IsAdministratorStartupEnabled { get; set; }
 
+    public bool IsLowDataModeActive => throw new NotImplementedException();
+
     public void RestartAsAdministrator()
     {
-        // No-op on Linux by default. Could re-exec with sudo if desired.
-        ShowDesktopNotificationAsync(LocaleKey.Linux_NativeHelper_RestartAsAdministrator_DesktopNotification);
+        throw new NotSupportedException();
     }
 
     public bool GetKeyState(KeyModifiers keyModifiers)

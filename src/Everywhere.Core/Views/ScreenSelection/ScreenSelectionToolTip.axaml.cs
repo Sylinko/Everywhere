@@ -65,8 +65,8 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     {
         if (element is null) return LocaleResolver.Common_None;
 
-        DynamicResourceKey key;
-        var elementTypeKey = new DynamicResourceKey($"VisualElementType_{element.Type}");
+        DynamicLocaleKey key;
+        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{element.Type}");
         if (element.ProcessId > 0)
         {
             if (!_processNameCache.TryGetValue(element.ProcessId, out var processName))
@@ -85,7 +85,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
             key = processName.IsNullOrWhiteSpace() ?
                 elementTypeKey :
-                new FormattedDynamicResourceKey("{0} - {1}", new DirectResourceKey(processName), elementTypeKey);
+                new FormattedDynamicLocaleKey("{0} - {1}", new DirectLocaleKey(processName), elementTypeKey);
         }
         else
         {

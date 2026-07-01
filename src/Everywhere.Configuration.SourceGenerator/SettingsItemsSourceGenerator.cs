@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -49,7 +50,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         }
 
         // Collect metadata for all relevant properties of the class
-        var members = type.GetMembers()
+        var members = type.GetAllMembers()
             .OfType<IPropertySymbol>()
             .Where(p => p is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
             .Where(p => !p.IsHiddenItem())
@@ -79,7 +80,23 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine("[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]");
             sb.AppendLine("[global::System.Text.Json.Serialization.JsonIgnore]");
             sb.AppendLine("[field: global::System.Diagnostics.CodeAnalysis.AllowNull, global::System.Diagnostics.CodeAnalysis.MaybeNull]");
-            sb.AppendLine("public global::Everywhere.Configuration.SettingsItems SettingsItems").AppendLine("{");
+            sb.Append("public ");
+
+            // Append override modifier if the property is present in the base type with virtual or abstract modifier
+            // Another case is base type also has the [GeneratedSettingsItems] property
+            var baseProperty = type.BaseType?.GetAllMembers().OfType<IPropertySymbol>().FirstOrDefault(p => p.Name == "SettingsItems");
+            if ((baseProperty != null && (baseProperty.IsVirtual || baseProperty.IsAbstract)) ||
+                type.BaseType?.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == KnownAttributes.GeneratedSettingsItems) == true)
+            {
+                sb.Append("override ");
+            }
+            // else, add virtual if this class is not sealed and not static
+            else if (type is { IsSealed: false, IsStatic: false })
+            {
+                sb.Append("virtual ");
+            }
+
+            sb.AppendLine("global::Everywhere.Configuration.SettingsItems SettingsItems").AppendLine("{");
 
             // Constructor
             using (sb.Indent())
@@ -90,19 +107,41 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     sb.AppendLine("if (field is not null) return field;").AppendLine();
                     sb.AppendLine("field = new global::Everywhere.Configuration.SettingsItems();");
 
-                    foreach (var meta in members)
+                    foreach (var g in members.Where(meta => !string.IsNullOrWhiteSpace(meta.HeaderKey)).GroupBy(meta => meta.Group))
                     {
-                        if (string.IsNullOrWhiteSpace(meta.HeaderKey))
+                        if (g.Key is { } groupName)
                         {
-                            // Report diagnostic for missing DynamicResourceKey
-                            ctx.ReportDiagnostic(
-                                Diagnostic.Create(
-                                    Diagnostics.EmptyHeaderKey,
-                                    meta.Symbol.Locations.FirstOrDefault(),
-                                    meta.Name));
-                        }
+                            var groupVar = $"group_{EscapeVarName(groupName)}";
+                            sb.AppendLine($"var {groupVar} = new global::Everywhere.Configuration.SettingsGroupItem");
+                            sb.AppendLine("{");
+                            using (sb.Indent())
+                            {
+                                sb.AppendLine($"GroupName = \"{EscapeStringForCode(groupName)}\",");
+                                sb.AppendLine($"HeaderKey = new global::Everywhere.I18N.DirectLocaleKey(\"{EscapeStringForCode(groupName)}\"),");
+                            }
+                            sb.AppendLine("};");
+                            sb.AppendLine();
 
-                        EmitItemRecursive(ctx, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, "field");
+                            // Collect children into a list and assign to Children property
+                            var childrenVar = $"{groupVar}_children";
+                            sb.AppendLine($"var {childrenVar} = new global::Everywhere.Configuration.SettingsItems();");
+
+                            foreach (var meta in g)
+                            {
+                                EmitItemRecursive(ctx, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, childrenVar);
+                            }
+
+                            sb.AppendLine($"{groupVar}.Children = {childrenVar};");
+                            sb.AppendLine($"field.Add({groupVar});");
+                            sb.AppendLine();
+                        }
+                        else
+                        {
+                            foreach (var meta in g)
+                            {
+                                EmitItemRecursive(ctx, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, "field");
+                            }
+                        }
                     }
 
                     sb.AppendLine("return field;");
@@ -247,39 +286,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     }
 
                     var transformExpr = GetNamedArgValue(attribute, "I18N", "false") == "true" ?
-                        $"DynamicResourceKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
-                        "DirectResourceKey(k)";
+                        $"DynamicLocaleKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
+                        "DirectLocaleKey(k)";
 
-                    // If the type is INotifyPropertyChanged and IEnumerable<T>, use ToObservableChangeSet
-                    if (itemSourceType.AllInterfaces.Any(i =>
-                            i.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>") &&
-                        itemSourceType.AllInterfaces.Any(ii => ii.ToDisplayString() == "System.ComponentModel.INotifyPropertyChanged"))
-                    {
-                        converterBuilder.AppendLine("global::DynamicData.ObservableListEx.Bind(");
-                        using (converterBuilder.Indent())
-                        {
-                            converterBuilder.AppendLine("global::DynamicData.ObservableListEx.Transform(");
-                            using (converterBuilder.Indent())
-                            {
-                                converterBuilder.AppendLine("global::DynamicData.Binding.ObservableCollectionEx.ToObservableChangeSet(x),");
-                                converterBuilder.Append(
-                                    "k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
-                                converterBuilder.Append(transformExpr).Append(", ");
-                                converterBuilder.AppendLine("k, contentTemplate)), ");
-                            }
-                            converterBuilder.AppendLine("out var result).Subscribe();");
-                        }
-                        converterBuilder.AppendLine("return result;");
-                    }
-                    else
-                    {
-                        converterBuilder.Append("return x.OfType<");
-                        converterBuilder.Append(metadata.Type.ToDisplayString(NullableFlowState.NotNull));
-                        converterBuilder.Append(
-                            ">().Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
-                        converterBuilder.Append(transformExpr);
-                        converterBuilder.AppendLine(", k, contentTemplate)).ToList();");
-                    }
+                    converterBuilder.Append("return x.Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
+                    converterBuilder.Append(transformExpr);
+                    converterBuilder.AppendLine(", k, contentTemplate)).ToList();");
                 }
 
                 EmitBinding(
@@ -288,6 +300,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     BindingMode.OneWay,
                     converterBuilder.AppendLine("})").ToString());
                 sb.AppendLine(";");
+
+                sb.AppendLine($"{itemName}.IsEditable = {GetNamedArgValue(attribute, "IsEditable", "false")};");
                 break;
             }
             case ItemKind.Customizable:
@@ -439,6 +453,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine("});");
 
             ApplyHeaderAndDescription(sb, wrapperItemName, metadata);
+            ApplySettingsItemAttributes(sb, wrapperItemName, metadata);
 
             // Replace itemName with the wrapper
             itemName = wrapperItemName;
@@ -455,18 +470,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     {
         var headerExpr = string.IsNullOrWhiteSpace(metadata.HeaderKey) ?
             "null" :
-            $"new global::Everywhere.I18N.DynamicResourceKey({metadata.HeaderKey})";
+            $"new global::Everywhere.I18N.DynamicLocaleKey({metadata.HeaderKey})";
         sb.AppendLine($"{itemName}.HeaderKey = {headerExpr};");
 
         if (metadata.DescriptionKey is { Length: > 0 })
         {
-            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicResourceKey({metadata.DescriptionKey});");
+            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicLocaleKey({metadata.DescriptionKey});");
         }
     }
 
     /// <summary>
-    /// Matches DynamicResourceKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
-    /// DynamicResourceKey(
+    /// Matches DynamicLocaleKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
+    /// DynamicLocaleKey(
     ///     LocaleKey.CustomAssistant_Icon_Header,
     ///     LocaleKey.CustomAssistant_Icon_Description)
     /// </summary>
@@ -474,20 +489,42 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// We need to parse the syntax ourselves because sometimes the attribute arguments are also SourceGenerated,
     /// and thus we cannot rely on ConstantValue of the attribute data.
     /// </remarks>
-    private static readonly Regex DynamicResourceKeyRegex = new(
-        @"DynamicResourceKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
+    private static readonly Regex DynamicLocaleKeyRegex = new(
+        @"DynamicLocaleKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+
+    /// <summary>
+    /// Matches group name in SettingsItem(Group = LocaleKey.SomeGroup)
+    /// </summary>
+    private static readonly Regex GroupKeyRegex = new(
+        @"Group\s*=\s*LocaleKey\.(?<groupKey>\w+)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
     private static PropertyMetadata BuildPropertyMetadata(ISymbol symbol, ISymbol attributeOwner, string name, ITypeSymbol? type = null)
     {
         type ??= ((IPropertySymbol)symbol).Type;
         var kind = Classify(symbol, type);
-        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicResourceKey);
+        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicLocaleKey);
         var code = dynamicResourceKeyAttribute?.ApplicationSyntaxReference?.GetSyntax().ToString();
-        var match = code is not null ? DynamicResourceKeyRegex.Match(code) : null;
+        var match = code is not null ? DynamicLocaleKeyRegex.Match(code) : null;
         var headerKey = match?.Groups["headerKey"].Value.Trim() ?? string.Empty;
         var descriptionKey = match?.Groups["descriptionKey"].Success == true ? match.Groups["descriptionKey"].Value.Trim() : null;
-        return new PropertyMetadata(symbol, attributeOwner, name, kind, type, headerKey, descriptionKey);
+        var settingsItemAttribute = attributeOwner.GetAttribute(KnownAttributes.SettingsItem);
+        var group = settingsItemAttribute?.GetNamedArgument("Group") switch
+        {
+            { Kind: TypedConstantKind.Error } => settingsItemAttribute.ApplicationSyntaxReference?.GetSyntax().ToString() switch
+            {
+                { } syntax => GroupKeyRegex.Match(syntax) switch
+                {
+                    { Success: true } groupMatch => groupMatch.Groups["groupKey"].Value.Trim().Trim('"'),
+                    _ => null
+                },
+                _ => null,
+            },
+            { IsNull: false, Value: string g } => g,
+            _ => null
+        };
+        return new PropertyMetadata(symbol, attributeOwner, name, kind, type, headerKey, descriptionKey, group);
     }
 
     private static void ApplyTypeSpecificMetadata(IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
@@ -534,19 +571,20 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                 {
                     var enumMembers = metadata.Type.GetMembers()
                         .OfType<IFieldSymbol>()
-                        .Where(f => f.IsConst); // Enum members are constants
+                        .Where(f => f.IsConst) // Enum members are constants
+                        .Where(f => !f.HasAttribute("MessagePack.IgnoreMemberAttribute"));
 
                     foreach (var member in enumMembers)
                     {
                         var memberAccess = $"{enumTypeStr}.{member.Name}";
-                        // Check for [DynamicResourceKey] on the enum member
+                        // Check for [DynamicLocaleKey] on the enum member
                         string? headerKey = null;
-                        if (member.GetAttribute(KnownAttributes.DynamicResourceKey) is { } attr)
+                        if (member.GetAttribute(KnownAttributes.DynamicLocaleKey) is { } attr)
                         {
                             var code = attr.ApplicationSyntaxReference?.GetSyntax().ToString();
                             if (code is not null)
                             {
-                                var match = DynamicResourceKeyRegex.Match(code);
+                                var match = DynamicLocaleKeyRegex.Match(code);
                                 headerKey = match.Groups["headerKey"].Value.Trim();
                             }
                             else if (attr.ConstructorArguments.Length > 0 &&
@@ -557,8 +595,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                         }
 
                         var resourceKeyExpr = headerKey is not null ?
-                            $"new global::Everywhere.I18N.DynamicResourceKey({headerKey})" :
-                            $"new global::Everywhere.I18N.DynamicResourceKey(\"{metadata.Type.Name}_{member.Name}\")";
+                            $"new global::Everywhere.I18N.DynamicLocaleKey({headerKey})" :
+                            $"new global::Everywhere.I18N.DynamicLocaleKey(\"{metadata.Type.Name}_{member.Name}\")";
 
                         sb.AppendLine($"new global::Everywhere.Configuration.SettingsSelectionItem.Item({resourceKeyExpr}, {memberAccess}, null),");
                     }
@@ -579,14 +617,20 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         if (settingsItemAttribute.GetNamedArgument("Classes") is { IsNull: false, Values: { Length: > 0 } classesArray })
         {
             var classes = classesArray
-                .Where(c => c.Value is string)
-                .Select(c => $"\"{c.Value!.ToString()!.Replace("\"", "\\\"")}\"");
+                .Select(c => c.Value?.ToString())
+                .OfType<string>()
+                .Select(v => $"\"{v.Replace("\"", "\\\"")}\"");
             sb.AppendLine($"{itemName}.Classes.AddRange(new string[] {{ {string.Join(", ", classes)} }});");
         }
 
         if (settingsItemAttribute.GetNamedArgument("IsExperimental") is { IsNull: false, Value: bool isExperimental })
         {
             sb.AppendLine($"{itemName}.IsExperimental = {isExperimental.ToString().ToLowerInvariant()};");
+        }
+
+        if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string documentUrl })
+        {
+            sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
         }
 
         if (settingsItemAttribute.GetNamedArgument("IsEnabledBindingPath") is { IsNull: false, Value: string isEnabledBindingPath })
@@ -646,8 +690,25 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         // 3. Emit IsExpanded
         sb.AppendLine($"{itemName}.IsExpanded = {GetNamedArgValue(settingsItemsAttribute, "IsExpanded", "false")};");
 
+        // 4. Emit IsExpandableBindingPath
+        var isExpandableBindingPath = settingsItemsAttribute.GetNamedArgument("IsExpandableBindingPath") switch
+        {
+            { IsNull: false, Value: string path } => path,
+            _ => null
+        };
+
         sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsExpandableProperty] = ");
-        EmitBinding(sb, metadata.Name, BindingMode.OneWay, "global::Avalonia.Data.Converters.ObjectConverters.IsNotNull");
+        if (string.IsNullOrEmpty(isExpandableBindingPath))
+        {
+            // No IsExpandableBindingPath provided, use a default logic: if there are any children, it's expandable
+            EmitBinding(sb, metadata.Name, BindingMode.OneWay, "global::Avalonia.Data.Converters.ObjectConverters.IsNotNull");
+        }
+        else
+        {
+            // Emit binding for IsExpandable
+            EmitBinding(sb, isExpandableBindingPath!, BindingMode.OneWay);
+        }
+
         sb.AppendLine(";").AppendLine();
     }
 
@@ -815,22 +876,32 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         return value switch
         {
             null => "null",
-            string s => $"\"{EscapeString(s)}\"",
+            string s => $"\"{EscapeStringForCode(s)}\"",
             bool b => b ? "true" : "false",
-            double d => $"{d}d",
-            float f => $"{f}f",
+            double d => $"{d.ToString("R", CultureInfo.InvariantCulture)}d",
+            float f => $"{f.ToString("R", CultureInfo.InvariantCulture)}f",
             _ => value.ToString()
         };
+    }
 
-        static string EscapeString(string str)
+    private static string EscapeStringForCode(string str)
+    {
+        return str
+            .Replace("\\", @"\\")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t");
+    }
+
+    private static string EscapeVarName(string name)
+    {
+        var sb = new StringBuilder();
+        foreach (var c in name)
         {
-            return str
-                .Replace("\\", @"\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
+            sb.Append(char.IsLetterOrDigit(c) || c == '_' ? c : '_');
         }
+        return sb.ToString();
     }
 
     private static ItemKind Classify(ISymbol symbol, ITypeSymbol type)
@@ -982,7 +1053,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         ItemKind Kind,
         ITypeSymbol Type,
         string HeaderKey,
-        string? DescriptionKey
+        string? DescriptionKey,
+        string? Group
     );
 
     private enum BindingMode

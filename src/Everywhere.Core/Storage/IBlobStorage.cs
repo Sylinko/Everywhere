@@ -14,9 +14,10 @@ public interface IBlobStorage
     /// </summary>
     /// <param name="content">The stream containing the blob data.</param>
     /// <param name="mimeType">The MIME type of the blob.</param>
+    /// <param name="extension">The extension of the storage file. If null, it will be inferred from the MIME type or left empty.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The BlobEntity representing the stored blob.</returns>
-    Task<BlobEntity> StorageBlobAsync(Stream content, string mimeType, CancellationToken cancellationToken = default);
+    Task<BlobEntity> StorageBlobAsync(Stream content, string mimeType, string? extension = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a blob from a file path, calculates its SHA256 hash, and saves it to the blob store if it doesn't already exist.

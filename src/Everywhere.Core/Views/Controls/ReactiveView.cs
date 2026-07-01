@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
-using Everywhere.Common;
+using Microsoft.Extensions.DependencyInjection;
+using ShadUI;
 
 namespace Everywhere.Views;
 
@@ -7,31 +8,26 @@ public abstract class ReactiveUserControl<TViewModel> : UserControl where TViewM
 {
     public TViewModel ViewModel { get; }
 
-    protected ReactiveUserControl()
+    protected ReactiveUserControl(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {
-        ViewModel = ServiceLocator.Resolve<TViewModel>();
-        ViewModel.Bind(this);
+        ViewModel = serviceProvider.GetRequiredService<TViewModel>();
+        ViewModel.Bind(this, disposeOnUnloaded);
     }
 }
 
-public abstract class ReactiveWindow<TViewModel> : Window where TViewModel : ReactiveViewModelBase
+public abstract class ReactiveShadWindow<TViewModel> : ShadWindow where TViewModel : ReactiveViewModelBase
 {
     public TViewModel ViewModel { get; }
 
-    protected ReactiveWindow()
+    protected ReactiveShadWindow(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {
-        ViewModel = ServiceLocator.Resolve<TViewModel>();
-        ViewModel.Bind(this);
+        ViewModel = serviceProvider.GetRequiredService<TViewModel>();
+        ViewModel.Bind(this, disposeOnUnloaded);
     }
-}
 
-public abstract class ReactiveShadWindow<TViewModel> : ShadUI.Window where TViewModel : ReactiveViewModelBase
-{
-    public TViewModel ViewModel { get; }
-
-    protected ReactiveShadWindow()
+    protected override void OnClosed(EventArgs e)
     {
-        ViewModel = ServiceLocator.Resolve<TViewModel>();
-        ViewModel.Bind(this);
+        base.OnClosed(e);
+        ViewModel.Dispose();
     }
 }

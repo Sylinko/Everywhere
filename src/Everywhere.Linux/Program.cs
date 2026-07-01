@@ -10,13 +10,11 @@ using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Linux.Chat.Plugins;
-using Everywhere.Linux.Configuration;
+using Everywhere.Linux.Common;
 using Everywhere.Linux.Interop;
+using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Extensions.Logging;
-using SoftwareUpdater = Everywhere.Linux.Common.SoftwareUpdater;
 
 namespace Everywhere.Linux;
 
@@ -54,14 +52,12 @@ public static class Program
 
                 #region Basic
 
-                .AddLogging(builder => builder
-                    .AddSerilog(dispose: true)
-                    .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Debug))
-                .AddSingleton<IRuntimeConstantProvider, RuntimeConstantProvider>()
+                .AddApplicationLogging()
                 .AddWindowEventHelper()
                 .AddSingleton<IVisualElementContext, VisualElementContext>()
                 .AddSingleton<IShortcutListener, ShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
+                .AddSingleton<IPlatformUpdateHandler, LinuxUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
                 .AddWatchdogManager()
@@ -69,16 +65,13 @@ public static class Program
                 .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
+                .AddChatEssentials()
 
                 #endregion
 
                 #region Chat Plugins
 
-                .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
-                .AddTransient<BuiltInChatPlugin, WebBrowserPlugin>()
-                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
                 .AddTransient<BuiltInChatPlugin, FdFindPlugin>()
-                .AddTransient<BuiltInChatPlugin, BashPlugin>()
 
                 #endregion
 
@@ -91,6 +84,12 @@ public static class Program
 
                 #endregion
 
+                #region Strategy Engine
+
+                .AddStrategyEngine()
+
+                #endregion
+
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
@@ -100,11 +99,11 @@ public static class Program
 
         );
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
 
-    private static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
+    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
+        AppBuilder.Configure(() => new App(serviceProvider))
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();

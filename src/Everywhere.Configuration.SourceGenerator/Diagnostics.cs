@@ -14,14 +14,6 @@ internal static class Diagnostics
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor EmptyHeaderKey = new(
-        id: "STG002",
-        title: "Empty header key",
-        messageFormat: "Property '{0}' has no [DynamicResourceKey] or an empty header key in [DynamicResourceKey]",
-        category: Category,
-        DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
-
     public static readonly DiagnosticDescriptor NullableSettingsControl = new(
         id: "STG003",
         title: "Nullable SettingsControl",

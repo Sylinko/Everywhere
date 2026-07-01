@@ -8,11 +8,12 @@
     <Setter Property="Template">
       <ControlTemplate>
         <ComboBox
-          MinWidth="320" MinHeight="32"
+          x:Name="PART_ComboBox" MinWidth="240"
+          MinHeight="32"
           ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
           MaxDropDownHeight="320"
           SelectedValue="{Binding SelectedId, Mode=TwoWay, FallbackValue={x:Static system:Guid.Empty}, RelativeSource={RelativeSource TemplatedParent}}"
-          SelectedValueBinding="{Binding Id, DataType=c:ApiKey, FallbackValue={x:Static system:Guid.Empty}}">
+          SelectedValueBinding="{Binding Id, x:DataType=c:ApiKey, FallbackValue={x:Static system:Guid.Empty}}">
           <shadui:ControlAssist.Footer>
             <Border
               BorderBrush="{DynamicResource BorderColor}"

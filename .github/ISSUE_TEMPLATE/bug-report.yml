@@ -3,6 +3,7 @@ description: Submit bug reports to help improve
 title: "[Bug] "
 labels:
   - bug
+type: bug
 body:
   - type: checkboxes
     attributes:
@@ -10,7 +11,7 @@ body:
       options:
         - label: I have looked up relevant Issue
           required: true
-        - label: I understand that issues caused by unofficial APIs (e.g. relays, proxies) are not supported
+        - label: I acknowledge that compatibility issues with non-preset/non-native models fall outside the scope of the support.
           required: true
   - type: textarea
     id: description

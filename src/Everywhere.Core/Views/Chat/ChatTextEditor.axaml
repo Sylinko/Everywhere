@@ -1,0 +1,79 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit" xmlns:system="clr-namespace:System;assembly=System.Runtime"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:ChatTextEditor}"
+    TargetType="v:ChatTextEditor">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <avaloniaEdit:TextEditor
+            x:Name="PART_TextEditor" Focusable="True"
+            HorizontalScrollBarVisibility="Disabled" ShowLineNumbers="False"
+            SyntaxHighlighting="{x:Null}"
+            WordWrap="True">
+            <avaloniaEdit:TextEditor.Options>
+              <avaloniaEdit:TextEditorOptions
+                AcceptsTab="False" AllowScrollBelowDocument="False"
+                EnableRectangularSelection="False" EnableTextDragDrop="False"/>
+            </avaloniaEdit:TextEditor.Options>
+
+            <avaloniaEdit:TextEditor.MaxHeight>
+              <MultiBinding Converter="{x:Static vc:DoubleConverters.Product}">
+                <DynamicResource ResourceKey="LineHeightM"/>
+                <ReflectionBinding>
+                  <ReflectionBinding.Source>
+                    <system:Double>5</system:Double>
+                  </ReflectionBinding.Source>
+                </ReflectionBinding>
+              </MultiBinding>
+            </avaloniaEdit:TextEditor.MaxHeight>
+
+            <avaloniaEdit:TextEditor.ContextFlyout>
+              <MenuFlyout Placement="Bottom">
+                <MenuItem
+                  x:Name="TextBoxContextFlyoutCutItem"
+                  Command="{Binding $parent[v:ChatTextEditor].Cut}"
+                  Cursor="Hand"
+                  Header="{I18N {x:Static LocaleKey.ChatInputArea_ContextFlyout_CutMenuItem_Header}}"
+                  InputGesture="{x:Static TextBox.CutGesture}"
+                  IsEnabled="{Binding #PART_TextEditor.CanCut}"/>
+                <MenuItem
+                  x:Name="TextBoxContextFlyoutCopyItem"
+                  Command="{Binding $parent[v:ChatTextEditor].Copy}"
+                  Cursor="Hand"
+                  Header="{I18N {x:Static LocaleKey.Common_Copy}}"
+                  InputGesture="{x:Static TextBox.CopyGesture}"
+                  IsEnabled="{Binding #PART_TextEditor.CanCopy}"/>
+                <MenuItem
+                  x:Name="TextBoxContextFlyoutPasteItem"
+                  Command="{Binding $parent[v:ChatTextEditor].Paste}"
+                  Cursor="Hand"
+                  Header="{I18N {x:Static LocaleKey.ChatInputArea_ContextFlyout_PasteMenuItem_Header}}"
+                  InputGesture="{x:Static TextBox.PasteGesture}"
+                  IsEnabled="{Binding #PART_TextEditor.CanPaste}"/>
+              </MenuFlyout>
+            </avaloniaEdit:TextEditor.ContextFlyout>
+          </avaloniaEdit:TextEditor>
+
+          <Popup
+            x:Name="PART_PreeditPopup" Focusable="False"
+            IsHitTestVisible="False"
+            IsOpen="{TemplateBinding PreeditText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            Placement="AnchorAndGravity" PlacementGravity="Right"
+            PlacementRect="{TemplateBinding PreeditRect}">
+            <Border
+              Padding="2"
+              Background="{DynamicResource PopupBackgroundColor}"
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="1"
+              CornerRadius="{DynamicResource SmCornerRadius}">
+              <TextBlock Text="{TemplateBinding PreeditText}"/>
+            </Border>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

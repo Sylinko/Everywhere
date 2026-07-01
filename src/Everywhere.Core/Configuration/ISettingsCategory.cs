@@ -1,22 +1,11 @@
-﻿using Lucide.Avalonia;
+﻿using Everywhere.Views;
+using Everywhere.Views.Pages;
 
 namespace Everywhere.Configuration;
 
-/// <summary>
-/// Represents a category of settings in the application.
-/// Each category can have a display name and an icon associated with it.
-/// </summary>
-public interface ISettingsCategory
+public interface ISettingsCategory : IMainViewNavigationSubItem
 {
-    /// <summary>
-    /// The display name of the settings category.
-    /// </summary>
-    DynamicResourceKeyBase DisplayNameKey { get; }
+    Type IMainViewNavigationSubItem.GroupType => typeof(SettingsPage);
 
-    /// <summary>
-    /// The Icon of the settings category.
-    /// </summary>
-    LucideIconKind Icon { get; }
-
-    SettingsItems? SettingsItems { get; }
+    SettingsItems SettingsItems { get; }
 }

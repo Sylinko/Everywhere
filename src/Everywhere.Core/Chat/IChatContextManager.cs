@@ -20,11 +20,6 @@ public interface IChatContextManager : INotifyPropertyChanged
     ChatContextMetadata? CurrentMetadata { get; set; }
 
     /// <summary>
-    /// Gets recent chat context history, grouped by date. 10 ChatContext maximum.
-    /// </summary>
-    IReadOnlyList<ChatContextHistory> RecentHistory { get; }
-
-    /// <summary>
     /// Command to update recent chat context history.
     /// </summary>
     IRelayCommand UpdateRecentHistoryCommand { get; }
@@ -33,6 +28,16 @@ public interface IChatContextManager : INotifyPropertyChanged
     /// Gets all chat context history. 20 for initial load, all loaded on demand.
     /// </summary>
     IReadOnlyList<ChatContextHistory> AllHistory { get; }
+
+    /// <summary>
+    /// Gets the number of running ChatContexts in the background. This is used to show a badge on the history menu.
+    /// </summary>
+    int BackgroundBusyCount { get; }
+
+    /// <summary>
+    /// Gets the number of notified background tasks that are not yet acknowledged by the user. This is used to show a badge on the history menu.
+    /// </summary>
+    int BackgroundNotificationCount { get; }
 
     /// <summary>
     /// Command to load more chat context history.
@@ -48,11 +53,6 @@ public interface IChatContextManager : INotifyPropertyChanged
     /// Removes the given chat context.
     /// </summary>
     IRelayCommand<ChatContextMetadata> RemoveCommand { get; }
-
-    /// <summary>
-    /// Removes the selected chat context from history.
-    /// </summary>
-    IRelayCommand RemoveSelectedCommand { get; }
     
     /// <summary>
     /// Loads the full chat context for the given metadata.
@@ -61,19 +61,4 @@ public interface IChatContextManager : INotifyPropertyChanged
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<ChatContext?> LoadChatContextAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get and ensures the working directory for the given chat context.
-    /// </summary>
-    /// <returns>
-    /// Usually a temporary directory path like C:\Users\[UserName]\AppData\Roaming\Everywhere\plugins\2025-12-30
-    /// </returns>
-    string EnsureWorkingDirectory(ChatContext chatContext);
-
-    /// <summary>
-    /// Populates the system prompt for the given chat context.
-    /// </summary>
-    /// <param name="chatContext"></param>
-    /// <param name="systemPrompt"></param>
-    void PopulateSystemPrompt(ChatContext chatContext, string? systemPrompt);
 }

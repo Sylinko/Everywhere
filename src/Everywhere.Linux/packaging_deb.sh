@@ -66,7 +66,7 @@ cat > DEBIAN/control <<EOF
 Package: Everywhere
 Version: $VERSION
 Architecture: $DEBARCH
-Maintainer: DearVa 
+Maintainer: Sylinko 
 Description: Everywhere
 Depends: libc6,libx11-6,libglib2.0-0,libatspi2.0-0
 Section: utils

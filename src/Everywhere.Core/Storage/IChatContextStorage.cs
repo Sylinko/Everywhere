@@ -11,12 +11,21 @@ namespace Everywhere.Storage;
 public interface IChatContextStorage
 {
     /// <summary>
-    /// Soft-deletes a chat context by its ID. Implementations should mark <see cref="ChatContextEntity.IsDeleted"/> = true
+    /// Soft-deletes chat contexts by their IDs. Implementations should mark <see cref="ChatContextEntity.IsDeleted"/> = true
     /// and update <see cref="ChatContextEntity.UpdatedAt"/> for LWW resolution. Children rows should also be treated accordingly.
     /// </summary>
-    /// <param name="chatContextId">Context Id to delete.</param>
+    /// <param name="chatContextIds">Context Id to delete.</param>
     /// <param name="cancellationToken">Cancellation.</param>
-    Task DeleteChatContextAsync(Guid chatContextId, CancellationToken cancellationToken = default);
+    Task DeleteChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restores soft-deleted chat contexts by their IDs. Implementations should mark <see cref="ChatContextEntity.IsDeleted"/> = false
+    /// and update <see cref="ChatContextEntity.UpdatedAt"/> for LWW resolution. Children rows should also be treated accordingly.
+    /// </summary>
+    /// <param name="chatContextIds"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task RestoreChatContextsAsync(IEnumerable<Guid> chatContextIds, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Queries chat contexts metadata with simple cursor-based pagination.

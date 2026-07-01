@@ -85,11 +85,11 @@
 
       <DockPanel Grid.Row="2">
         <Button
-          DockPanel.Dock="Right" Click="HandleBuildXmlButtonClicked"
-          Content="Build XML"/>
+          DockPanel.Dock="Right" Click="HandleBuildButtonClicked"
+          Content="Build"/>
         <TextBox
-          x:Name="TokenLimitTextBox" Text="8000"
-          Watermark="Token limit"/>
+          x:Name="TokenLimitTextBox" PlaceholderText="Limit"
+          Text="8000"/>
       </DockPanel>
 
       <Button

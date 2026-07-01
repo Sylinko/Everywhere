@@ -1,12 +1,22 @@
 ﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Messages;
+using Everywhere.Utilities;
 using MessagePack;
 
 namespace Everywhere.Chat;
 
+[Flags]
+public enum ChatContextMetadataStates
+{
+    None = 0x0,
+    Busy = 0x1,
+    HasNotification = 0x2
+}
+
 /// <summary>Chat context metadata persisted along with the object graph.</summary>
-[MessagePackObject(AllowPrivate = true)]
+[MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, DateTimeOffset dateModified, string? topic) : ObservableObject
 {
     /// <summary>
@@ -19,15 +29,9 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
     public DateTimeOffset DateCreated { get; } = dateCreated;
 
     [Key(2)]
-    [field: IgnoreMember]
-    public DateTimeOffset DateModified
-    {
-        get;
-        set
-        {
-            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(LocalDateModified));
-        }
-    } = dateModified;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LocalDateModified))]
+    public partial DateTimeOffset DateModified { get; set; } = dateModified;
 
     [IgnoreMember]
     public DateTime LocalDateModified => DateModified.ToLocalTime().DateTime;
@@ -39,7 +43,7 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
         get;
         set
         {
-            if (SetProperty(ref field, value)) OnPropertyChanged(nameof(ActualTopic));
+            if (SetProperty(ref field, value.SafeSubstring(0, 100))) OnPropertyChanged(nameof(ActualTopic));
         }
     } = topic;
 
@@ -52,25 +56,37 @@ public partial class ChatContextMetadata(Guid id, DateTimeOffset dateCreated, Da
             if (string.IsNullOrWhiteSpace(Topic)) return LocaleResolver.ChatContext_Metadata_Topic_Default;
             return Topic;
         }
-        set => Topic = value?.Trim();
+        private set => Topic = value?.Trim();
     }
 
-    [IgnoreMember]
-    [ObservableProperty]
-    public partial bool IsTemporary { get; set; }
-
     /// <summary>
-    /// Used for selection in UI lists.
+    /// Indicates whether the topic is being generated.
     /// </summary>
     [IgnoreMember]
+    public AtomicBoolean IsGeneratingTopic => new(ref _isGeneratingTopicAtomic);
+
+    [IgnoreMember]
+    private int _isGeneratingTopicAtomic;
+
+    [IgnoreMember]
     [ObservableProperty]
-    public partial bool IsSelected { get; set; }
+    [NotifyPropertyChangedFor(nameof(ActualTopic))]
+    public partial bool IsTemporary { get; set; }
 
     [IgnoreMember]
     [ObservableProperty]
     public partial bool IsRenaming { get; set; }
 
-    public void StartRenaming() => IsRenaming = true;
+    [IgnoreMember]
+    [ObservableProperty]
+    public partial ChatContextMetadataStates States { get; set; }
+
+    /// <summary>
+    /// Indicates whether the context is temporarily deleted and not yet removed from the database.
+    /// Used for undo functionality and to prevent immediate hard deletion.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsTemporaryDeleted { get; set; }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {

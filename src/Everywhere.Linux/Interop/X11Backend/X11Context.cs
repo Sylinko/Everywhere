@@ -44,6 +44,7 @@ public sealed class X11Context : IDisposable
         "_NET_WM_STATE_FULLSCREEN",
         "_NET_WM_STATE_ABOVE",
         "_NET_WM_STATE_HIDDEN",
+        "_NET_WM_STATE_DEMANDS_ATTENTION",
         "_NET_WM_BYPASS_COMPOSITOR",
         "_NET_SUPPORTED",
         "_NET_CLIENT_LIST",

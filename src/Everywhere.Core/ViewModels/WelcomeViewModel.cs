@@ -2,12 +2,13 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
+using Everywhere.AI.Configurator;
+using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ShadUI;
 
 namespace Everywhere.ViewModels;
 
@@ -38,6 +39,8 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
 
     public CustomAssistant Assistant { get; }
 
+    public ICloudClient CloudClient { get; }
+
     [ObservableProperty]
     public partial bool IsConnectivityChecked { get; set; }
 
@@ -48,12 +51,13 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
     public WelcomeViewModel(IServiceProvider serviceProvider)
     {
         Settings = serviceProvider.GetRequiredService<Settings>();
+        CloudClient = serviceProvider.GetRequiredService<ICloudClient>();
 
         // Initialize a default custom assistant
         Assistant = new CustomAssistant
         {
             Name = LocaleResolver.CustomAssistant_Name_Default,
-            ConfiguratorType = ModelProviderConfiguratorType.PresetBased
+            ConfiguratorType = AssistantConfiguratorType.Official
         };
         Assistant.PropertyChanged += delegate
         {
@@ -64,7 +68,9 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
         _steps =
         [
             new WelcomeViewModelIntroStep(this),
+            new WelcomeViewModelSoftLoginStep(this),
             new WelcomeViewModelConfiguratorStep(this),
+            new WelcomeViewModelHardLoginStep(this),
             new WelcomeViewModelAssistantStep(this, serviceProvider),
             new WelcomeViewModelShortcutStep(this),
             new WelcomeViewModelTelemetryStep(this)
@@ -86,6 +92,16 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
     {
         IsPageTransitionReversed = true;
         _currentStepIndex--;
+        CurrentStep = _steps[_currentStepIndex];
+    }
+
+    public void MoveTo<TStep>() where TStep : WelcomeViewModelStep
+    {
+        var targetIndex = _steps.FindIndexOf(step => step is TStep);
+        if (targetIndex == -1) return;
+
+        IsPageTransitionReversed = targetIndex < _currentStepIndex;
+        _currentStepIndex = targetIndex;
         CurrentStep = _steps[_currentStepIndex];
     }
 
@@ -120,9 +136,58 @@ public abstract class WelcomeViewModelStep(WelcomeViewModel viewModel) : BusyVie
 /// The introduction step of the welcome view model.
 /// </summary>
 /// <param name="viewModel"></param>
-public sealed class WelcomeViewModelIntroStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel);
+public sealed partial class WelcomeViewModelIntroStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel)
+{
+    [RelayCommand]
+    private void MoveNext()
+    {
+        // Skip the soft login step if already logged in
+        if (ViewModel.CloudClient.UserProfile is not null)
+        {
+            ViewModel.MoveTo<WelcomeViewModelConfiguratorStep>();
+        }
+        else
+        {
+            ViewModel.MoveTo<WelcomeViewModelSoftLoginStep>();
+        }
 
-public sealed class WelcomeViewModelConfiguratorStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel);
+    }
+}
+
+public sealed class WelcomeViewModelSoftLoginStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel);
+
+public sealed partial class WelcomeViewModelConfiguratorStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel)
+{
+    [RelayCommand]
+    private void MovePrevious()
+    {
+        // Skip the soft login step if already logged in
+        if (ViewModel.CloudClient.UserProfile is not null)
+        {
+            ViewModel.MoveTo<WelcomeViewModelIntroStep>();
+        }
+        else
+        {
+            ViewModel.MoveTo<WelcomeViewModelSoftLoginStep>();
+        }
+    }
+
+    [RelayCommand]
+    private void MoveNext()
+    {
+        // Skip the hard login step if not using official configurator or already logged in
+        if (ViewModel.Assistant.ConfiguratorType != AssistantConfiguratorType.Official || ViewModel.CloudClient.UserProfile is not null)
+        {
+            ViewModel.MoveTo<WelcomeViewModelAssistantStep>();
+        }
+        else
+        {
+            ViewModel.MoveTo<WelcomeViewModelHardLoginStep>();
+        }
+    }
+}
+
+public sealed class WelcomeViewModelHardLoginStep(WelcomeViewModel viewModel) : WelcomeViewModelStep(viewModel);
 
 /// <summary>
 /// Message to trigger confetti effect in the UI.
@@ -136,6 +201,12 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
     private readonly ILogger<WelcomeViewModelAssistantStep> _logger = serviceProvider.GetRequiredService<ILogger<WelcomeViewModelAssistantStep>>();
 
     [RelayCommand]
+    private void MovePrevious()
+    {
+        ViewModel.MoveTo<WelcomeViewModelConfiguratorStep>();
+    }
+
+    [RelayCommand]
     private Task CheckConnectivityAsync()
     {
         ViewModel.IsConnectivityChecked = false;
@@ -144,22 +215,27 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
         return ExecuteBusyTaskAsync(
             async cancellationToken =>
             {
+                KernelMixin? kernelMixin = null;
                 try
                 {
-                    var kernelMixin = _kernelMixinFactory.GetOrCreate(ViewModel.Assistant);
+                    kernelMixin = _kernelMixinFactory.Create(ViewModel.Assistant);
                     await kernelMixin.CheckConnectivityAsync(cancellationToken);
                     StrongReferenceMessenger.Default.Send(new ShowConfettiEffectMessage());
                     ViewModel.IsConnectivityChecked = true;
                 }
                 catch (Exception ex)
                 {
-                    ex = HandledChatException.Handle(ex);
+                    ex = HandledChatException.Handle(ex, kernelMixin);
                     _logger.LogError(ex, "Failed to validate assistant connectivity");
-                    ToastManager
+                    ToastHost
                         .CreateToast(LocaleResolver.WelcomeViewModel_ValidateApiKey_FailedToast_Title)
                         .WithContent(ex.GetFriendlyMessage().ToTextBlock())
                         .DismissOnClick()
                         .ShowError();
+                }
+                finally
+                {
+                    kernelMixin?.Dispose();
                 }
             },
             cancellationToken: CancellationTokenSource.Token);

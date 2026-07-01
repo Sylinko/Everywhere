@@ -3,31 +3,26 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
-using Avalonia.Input;
-using Avalonia.Media.Imaging;
 using Everywhere.Extensions;
 using Everywhere.Interop;
-using Everywhere.Windows.Extensions;
-using FlaUI.Core;
-using FlaUI.Core.AutomationElements;
-using FlaUI.Core.Definitions;
-using FlaUI.Core.Identifiers;
+using Interop.UIAutomationClient;
 using Serilog;
+using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
 
 public partial class VisualElementContext
 {
-    private class AutomationVisualElementImpl(AutomationElement element) : IVisualElement
+    private class AutomationVisualElementImpl(IUIAutomationElement element) : IVisualElement
     {
-        private static readonly TextAttributeId IsSelectionActivePropertyId =
-            TextAttributeId.Register(AutomationType.UIA3, 30034, "IsSelectionActive");
+        private const int IsSelectionActiveAttributeId = 30034;
 
-        public string Id { get; } = string.Join('.', element.Properties.RuntimeId.ValueOrDefault ?? []);
+        public string Id { get; } = GetId(element);
 
         public IVisualElement? Parent
         {
@@ -42,7 +37,7 @@ public partial class VisualElementContext
                         return screen == HMONITOR.Null ? null : new ScreenVisualElementImpl(screen);
                     }
 
-                    var parent = TreeWalker.GetParent(_element);
+                    var parent = TreeWalker.GetParentElement(_element);
                     return parent is null ? null : new AutomationVisualElementImpl(parent);
                 }
                 catch
@@ -56,10 +51,10 @@ public partial class VisualElementContext
         {
             get
             {
-                AutomationElement? child;
+                IUIAutomationElement? child;
                 try
                 {
-                    child = TreeWalker.GetFirstChild(_element);
+                    child = TreeWalker.GetFirstChildElement(_element);
                 }
                 catch
                 {
@@ -82,7 +77,7 @@ public partial class VisualElementContext
 
                     try
                     {
-                        child = TreeWalker.GetNextSibling(child);
+                        child = TreeWalker.GetNextSiblingElement(child);
                     }
                     catch
                     {
@@ -100,45 +95,46 @@ public partial class VisualElementContext
             {
                 try
                 {
-                    return _element.Properties.ControlType.ValueOrDefault switch
+                    return _element.GetCurrentControlTypeOrDefault() switch
                     {
-                        ControlType.AppBar => VisualElementType.Menu,
-                        ControlType.Button => VisualElementType.Button,
-                        ControlType.Calendar => VisualElementType.Label,
-                        ControlType.CheckBox => VisualElementType.CheckBox,
-                        ControlType.ComboBox => VisualElementType.ComboBox,
-                        ControlType.DataGrid => VisualElementType.DataGrid,
-                        ControlType.DataItem => VisualElementType.DataGridItem,
-                        ControlType.Document => VisualElementType.Document,
-                        ControlType.Edit => VisualElementType.TextEdit,
-                        ControlType.Group => VisualElementType.Panel,
-                        ControlType.Header or ControlType.HeaderItem => VisualElementType.TableRow,
-                        ControlType.Hyperlink => VisualElementType.Hyperlink,
-                        ControlType.Image => VisualElementType.Image,
-                        ControlType.List => VisualElementType.ListView,
-                        ControlType.ListItem => VisualElementType.ListViewItem,
-                        ControlType.Menu or ControlType.MenuBar => VisualElementType.Menu,
-                        ControlType.MenuItem => VisualElementType.MenuItem,
-                        ControlType.Pane when IsTopLevelWindow => VisualElementType.TopLevel,
-                        ControlType.Pane => VisualElementType.Panel, // a child window, treat as panel
-                        ControlType.ProgressBar => VisualElementType.ProgressBar,
-                        ControlType.RadioButton => VisualElementType.RadioButton,
-                        ControlType.ScrollBar => VisualElementType.ScrollBar,
-                        ControlType.SemanticZoom => VisualElementType.ListView,
-                        ControlType.Separator => VisualElementType.Unknown,
-                        ControlType.Slider or ControlType.Spinner => VisualElementType.Slider,
-                        ControlType.SplitButton => VisualElementType.Button,
-                        ControlType.StatusBar => VisualElementType.Panel,
-                        ControlType.Tab => VisualElementType.TabControl,
-                        ControlType.TabItem => VisualElementType.TabItem,
-                        ControlType.Table => VisualElementType.Table,
-                        ControlType.Text => VisualElementType.Label,
-                        ControlType.Thumb => VisualElementType.Slider,
-                        ControlType.TitleBar or ControlType.ToolBar or ControlType.ToolTip => VisualElementType.Panel,
-                        ControlType.Tree => VisualElementType.TreeView,
-                        ControlType.TreeItem => VisualElementType.TreeViewItem,
-                        ControlType.Window when IsTopLevelWindow => VisualElementType.TopLevel,
-                        ControlType.Window => VisualElementType.Panel, // a child window, treat as panel
+                        UIA_ControlTypeIds.UIA_AppBarControlTypeId => VisualElementType.Menu,
+                        UIA_ControlTypeIds.UIA_ButtonControlTypeId => VisualElementType.Button,
+                        UIA_ControlTypeIds.UIA_CalendarControlTypeId => VisualElementType.Label,
+                        UIA_ControlTypeIds.UIA_CheckBoxControlTypeId => VisualElementType.CheckBox,
+                        UIA_ControlTypeIds.UIA_ComboBoxControlTypeId => VisualElementType.ComboBox,
+                        UIA_ControlTypeIds.UIA_DataGridControlTypeId => VisualElementType.DataGrid,
+                        UIA_ControlTypeIds.UIA_DataItemControlTypeId => VisualElementType.DataGridItem,
+                        UIA_ControlTypeIds.UIA_DocumentControlTypeId => VisualElementType.Document,
+                        UIA_ControlTypeIds.UIA_EditControlTypeId => VisualElementType.TextEdit,
+                        UIA_ControlTypeIds.UIA_GroupControlTypeId => VisualElementType.Panel,
+                        UIA_ControlTypeIds.UIA_HeaderControlTypeId or UIA_ControlTypeIds.UIA_HeaderItemControlTypeId => VisualElementType.TableRow,
+                        UIA_ControlTypeIds.UIA_HyperlinkControlTypeId => VisualElementType.Hyperlink,
+                        UIA_ControlTypeIds.UIA_ImageControlTypeId => VisualElementType.Image,
+                        UIA_ControlTypeIds.UIA_ListControlTypeId => VisualElementType.ListView,
+                        UIA_ControlTypeIds.UIA_ListItemControlTypeId => VisualElementType.ListViewItem,
+                        UIA_ControlTypeIds.UIA_MenuControlTypeId or UIA_ControlTypeIds.UIA_MenuBarControlTypeId => VisualElementType.Menu,
+                        UIA_ControlTypeIds.UIA_MenuItemControlTypeId => VisualElementType.MenuItem,
+                        UIA_ControlTypeIds.UIA_PaneControlTypeId when IsTopLevelWindow => VisualElementType.TopLevel,
+                        UIA_ControlTypeIds.UIA_PaneControlTypeId => VisualElementType.Panel, // a child window, treat as panel
+                        UIA_ControlTypeIds.UIA_ProgressBarControlTypeId => VisualElementType.ProgressBar,
+                        UIA_ControlTypeIds.UIA_RadioButtonControlTypeId => VisualElementType.RadioButton,
+                        UIA_ControlTypeIds.UIA_ScrollBarControlTypeId => VisualElementType.ScrollBar,
+                        UIA_ControlTypeIds.UIA_SemanticZoomControlTypeId => VisualElementType.ListView,
+                        UIA_ControlTypeIds.UIA_SeparatorControlTypeId => VisualElementType.Unknown,
+                        UIA_ControlTypeIds.UIA_SliderControlTypeId or UIA_ControlTypeIds.UIA_SpinnerControlTypeId => VisualElementType.Slider,
+                        UIA_ControlTypeIds.UIA_SplitButtonControlTypeId => VisualElementType.Button,
+                        UIA_ControlTypeIds.UIA_StatusBarControlTypeId => VisualElementType.Panel,
+                        UIA_ControlTypeIds.UIA_TabControlTypeId => VisualElementType.TabControl,
+                        UIA_ControlTypeIds.UIA_TabItemControlTypeId => VisualElementType.TabItem,
+                        UIA_ControlTypeIds.UIA_TableControlTypeId => VisualElementType.Table,
+                        UIA_ControlTypeIds.UIA_TextControlTypeId => VisualElementType.Label,
+                        UIA_ControlTypeIds.UIA_ThumbControlTypeId => VisualElementType.Slider,
+                        UIA_ControlTypeIds.UIA_TitleBarControlTypeId or UIA_ControlTypeIds.UIA_ToolBarControlTypeId or
+                            UIA_ControlTypeIds.UIA_ToolTipControlTypeId => VisualElementType.Panel,
+                        UIA_ControlTypeIds.UIA_TreeControlTypeId => VisualElementType.TreeView,
+                        UIA_ControlTypeIds.UIA_TreeItemControlTypeId => VisualElementType.TreeViewItem,
+                        UIA_ControlTypeIds.UIA_WindowControlTypeId when IsTopLevelWindow => VisualElementType.TopLevel,
+                        UIA_ControlTypeIds.UIA_WindowControlTypeId => VisualElementType.Panel, // a child window, treat as panel
                         _ => VisualElementType.Unknown
                     };
                 }
@@ -156,17 +152,17 @@ public partial class VisualElementContext
                 try
                 {
                     var states = VisualElementStates.None;
-                    if (_element.Properties.IsOffscreen.ValueOrDefault)
+                    if (_element.GetCurrentIsOffscreenOrDefault())
                         states |= VisualElementStates.Offscreen;
-                    if (!_element.Properties.IsEnabled.ValueOrDefault)
+                    if (!_element.GetCurrentIsEnabledOrDefault())
                         states |= VisualElementStates.Disabled;
-                    if (_element.Properties.HasKeyboardFocus.ValueOrDefault)
+                    if (_element.GetCurrentHasKeyboardFocusOrDefault())
                         states |= VisualElementStates.Focused;
-                    if (_element.TryGetSelectionItemPattern() is { IsSelected.ValueOrDefault: true })
+                    if (_element.TryGetSelectionItemPattern() is { CurrentIsSelected: not 0 })
                         states |= VisualElementStates.Selected;
-                    if (_element.TryGetValuePattern() is { IsReadOnly.ValueOrDefault: true })
+                    if (_element.TryGetValuePattern() is { CurrentIsReadOnly: not 0 })
                         states |= VisualElementStates.ReadOnly;
-                    if (_element.Properties.IsPassword.ValueOrDefault)
+                    if (_element.GetCurrentIsPasswordOrDefault())
                         states |= VisualElementStates.Password;
                     return states;
                 }
@@ -183,8 +179,9 @@ public partial class VisualElementContext
             {
                 try
                 {
-                    if (_element.Properties.Name.TryGetValue(out var name)) return name;
-                    if (_element.TryGetLegacyIAccessiblePattern() is { } accessiblePattern) return accessiblePattern.Name;
+                    var name = _element.GetCurrentNameOrDefault();
+                    if (!string.IsNullOrEmpty(name)) return name;
+                    if (_element.TryGetLegacyIAccessiblePattern() is { } accessiblePattern) return accessiblePattern.CurrentName;
                     return null;
                 }
                 catch
@@ -194,38 +191,21 @@ public partial class VisualElementContext
             }
         }
 
-        public PixelRect BoundingRectangle
-        {
-            get
-            {
-                try
-                {
-                    return _element.BoundingRectangle.To(r => new PixelRect(
-                        r.X,
-                        r.Y,
-                        r.Width,
-                        r.Height));
-                }
-                catch
-                {
-                    return default;
-                }
-            }
-        }
+        public PixelRect BoundingRectangle => GetBoundingRectangle(_element);
 
-        public int ProcessId { get; } = element.FrameworkAutomationElement.ProcessId.ValueOrDefault;
+        public int ProcessId { get; } = element.GetCurrentProcessIdOrDefault();
 
-        public nint NativeWindowHandle { get; } = element.FrameworkAutomationElement.NativeWindowHandle.ValueOrDefault;
+        public nint NativeWindowHandle { get; } = element.GetCurrentNativeWindowHandleOrDefault();
 
-        private readonly AutomationElement _element = element;
+        private readonly IUIAutomationElement _element = element;
 
         public string? GetText(int maxLength = -1)
         {
             try
             {
-                if (_element.TryGetValuePattern() is { } valuePattern) return valuePattern.Value;
+                if (_element.TryGetValuePattern() is { } valuePattern) return valuePattern.CurrentValue;
                 if (_element.TryGetTextPattern() is { } textPattern) return textPattern.DocumentRange.GetText(maxLength);
-                if (_element.TryGetLegacyIAccessiblePattern() is { } accessiblePattern) return accessiblePattern.Value;
+                if (_element.TryGetLegacyIAccessiblePattern() is { } accessiblePattern) return accessiblePattern.CurrentValue;
                 return null;
             }
             catch
@@ -282,8 +262,8 @@ public partial class VisualElementContext
             {
                 if (_element.TryGetExpandCollapsePattern() is { } expandCollapsePattern)
                 {
-                    var state = expandCollapsePattern.ExpandCollapseState.ValueOrDefault;
-                    if (state is ExpandCollapseState.Collapsed or ExpandCollapseState.PartiallyExpanded)
+                    var state = expandCollapsePattern.CurrentExpandCollapseState;
+                    if (state is ExpandCollapseState.ExpandCollapseState_Collapsed or ExpandCollapseState.ExpandCollapseState_PartiallyExpanded)
                     {
                         expandCollapsePattern.Expand();
                     }
@@ -342,7 +322,7 @@ public partial class VisualElementContext
             windowElement.FocusNative();
 
             // Ensure window is foreground
-            var windowFromPoint = PInvoke.WindowFromPoint(point);
+            var windowFromPoint = PInvoke.WindowFromPoint(new Point(point.X, point.Y));
             if (windowFromPoint == 0 || PInvoke.GetAncestor(windowFromPoint, GET_ANCESTOR_FLAGS.GA_ROOTOWNER) != rootHwnd)
             {
                 throw new InvalidOperationException("Failed to bring the target element's window to the foreground.");
@@ -350,49 +330,51 @@ public partial class VisualElementContext
 
             // Send mouse click to the point
             PInvoke.SendInput(
-            [
-                new INPUT
-                {
-                    Anonymous =
+                [
+                    new INPUT
                     {
-                        mi =
+                        Anonymous =
                         {
-                            dx = point.X * 65535 / PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CXSCREEN),
-                            dy = point.Y * 65535 / PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CYSCREEN),
-                            dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_ABSOLUTE | MOUSE_EVENT_FLAGS.MOUSEEVENTF_MOVE,
-                        }
+                            mi =
+                            {
+                                dx = point.X * 65535 / PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CXSCREEN),
+                                dy = point.Y * 65535 / PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CYSCREEN),
+                                dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_ABSOLUTE | MOUSE_EVENT_FLAGS.MOUSEEVENTF_MOVE,
+                            }
+                        },
+                        type = INPUT_TYPE.INPUT_MOUSE,
                     },
-                    type = INPUT_TYPE.INPUT_MOUSE,
-                },
-                new INPUT
-                {
-                    Anonymous =
+                    new INPUT
                     {
-                        mi =
+                        Anonymous =
                         {
-                            dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTDOWN,
-                        }
-                    },
-                    type = INPUT_TYPE.INPUT_MOUSE,
-                }
-            ], Unsafe.SizeOf<INPUT>());
+                            mi =
+                            {
+                                dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTDOWN,
+                            }
+                        },
+                        type = INPUT_TYPE.INPUT_MOUSE,
+                    }
+                ],
+                Unsafe.SizeOf<INPUT>());
 
             // A short delay to ensure the click is done before sending mouse up
             Thread.Sleep(30);
             PInvoke.SendInput(
-            [
-                new INPUT
-                {
-                    Anonymous =
+                [
+                    new INPUT
                     {
-                        mi =
+                        Anonymous =
                         {
-                            dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTUP,
-                        }
-                    },
-                    type = INPUT_TYPE.INPUT_MOUSE,
-                }
-            ], Unsafe.SizeOf<INPUT>());
+                            mi =
+                            {
+                                dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTUP,
+                            }
+                        },
+                        type = INPUT_TYPE.INPUT_MOUSE,
+                    }
+                ],
+                Unsafe.SizeOf<INPUT>());
 
             void LogError(Exception ex, string action) =>
                 Log.ForContext<AutomationVisualElementImpl>().Information(ex, "Failed to perform {Action} on element {Type}", action, Type);
@@ -404,20 +386,17 @@ public partial class VisualElementContext
             {
                 if (_element.TryGetValuePattern() is { } valuePattern)
                 {
-                    if (valuePattern.IsReadOnly.ValueOrDefault)
+                    if (valuePattern.CurrentIsReadOnly != 0)
                     {
                         throw new InvalidOperationException("The target element is read-only and cannot accept text.");
                     }
 
-                    _element.Focus();
-                    new TextBox(_element.FrameworkAutomationElement).Text = text;
+                    _element.FocusNative();
+                    valuePattern.SetValue(text);
+                    return;
                 }
             }
             catch (COMException ex)
-            {
-                throw new InvalidOperationException("Failed to set text on the element through UI Automation.", ex);
-            }
-            catch (Exception ex) when (IsAutomationException(ex))
             {
                 throw new InvalidOperationException("Failed to set text on the element through UI Automation.", ex);
             }
@@ -436,52 +415,7 @@ public partial class VisualElementContext
             if (rootHwnd != 0) PInvoke.SetForegroundWindow(rootHwnd);
 
             windowElement.FocusNative();
-
-            // Use PInvoke.SendInput to send the shortcut to the focused element.
-            var inputs = new List<INPUT>();
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Control)) MakeInputs(VIRTUAL_KEY.VK_CONTROL);
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Alt)) MakeInputs(VIRTUAL_KEY.VK_MENU);
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Shift)) MakeInputs(VIRTUAL_KEY.VK_SHIFT);
-            if (shortcut.Modifiers.HasFlag(KeyModifiers.Meta)) MakeInputs(VIRTUAL_KEY.VK_LWIN);
-            MakeInputs(shortcut.Key.ToVirtualKey());
-
-            var result = PInvoke.SendInput(CollectionsMarshal.AsSpan(inputs), Unsafe.SizeOf<INPUT>());
-            if (result == 0)
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to send keyboard input to the target element.");
-            }
-
-            void MakeInputs(VIRTUAL_KEY vk)
-            {
-                inputs.InsertRange(
-                    inputs.Count / 2,
-                    [
-                        new INPUT
-                        {
-                            type = INPUT_TYPE.INPUT_KEYBOARD,
-                            Anonymous = new INPUT._Anonymous_e__Union
-                            {
-                                ki = new KEYBDINPUT
-                                {
-                                    wVk = vk,
-                                    dwFlags = 0,
-                                }
-                            }
-                        },
-                        new INPUT
-                        {
-                            type = INPUT_TYPE.INPUT_KEYBOARD,
-                            Anonymous = new INPUT._Anonymous_e__Union
-                            {
-                                ki = new KEYBDINPUT
-                                {
-                                    wVk = vk,
-                                    dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP,
-                                }
-                            }
-                        },
-                    ]);
-            }
+            SendInput(shortcut);
         }
 
         public string? GetSelectionText()
@@ -496,7 +430,7 @@ public partial class VisualElementContext
                         var ranges = textPattern.GetSelection();
                         if (ranges is { Length: > 0 })
                         {
-                            var selected = string.Join(null, ranges.Select(r => r.GetText(-1)));
+                            var selected = GetSelectionText(ranges);
                             if (!string.IsNullOrEmpty(selected))
                                 return selected;
                         }
@@ -509,7 +443,7 @@ public partial class VisualElementContext
                     try
                     {
                         var documentRange = textPattern.DocumentRange;
-                        if (documentRange?.GetAttributeValue(IsSelectionActivePropertyId) is true)
+                        if (documentRange is not null && IsTruthy(documentRange.GetAttributeValue(IsSelectionActiveAttributeId)))
                         {
                             var selected = documentRange.GetText(-1);
                             if (!string.IsNullOrEmpty(selected))
@@ -530,7 +464,8 @@ public partial class VisualElementContext
             // 3) Fallback to LegacyIAccessible selection text
             try
             {
-                if (_element.TryGetLegacyIAccessiblePattern() is { Selection: { IsSupported: true, ValueOrDefault: { Length: > 0 } selection } })
+                var selection = _element.TryGetLegacyIAccessiblePattern()?.GetCurrentSelection();
+                if (selection is { Length: > 0 })
                 {
                     // UIA maps accSelection to an array of AutomationElements.
                     // This corresponds to VT_DISPATCH (single object) or VT_ARRAY (multiple objects) in MSAA.
@@ -539,24 +474,25 @@ public partial class VisualElementContext
                     // - VT_ARRAY: Try accValue of the first element.
                     // We combine these strategies: Check Name/Value of the first element.
 
-                    var selectedItem = selection[0];
+                    var selectedItem = selection.GetElement(0);
                     var itemLegacy = selectedItem.TryGetLegacyIAccessiblePattern();
 
                     if (itemLegacy != null)
                     {
                         // Try accName
-                        if (itemLegacy.Name.IsSupported && !string.IsNullOrEmpty(itemLegacy.Name.ValueOrDefault))
-                            return itemLegacy.Name.ValueOrDefault;
+                        if (!string.IsNullOrEmpty(itemLegacy.CurrentName))
+                            return itemLegacy.CurrentName;
 
                         // Try accValue
-                        if (itemLegacy.Value.IsSupported && !string.IsNullOrEmpty(itemLegacy.Value.ValueOrDefault))
-                            return itemLegacy.Value.ValueOrDefault;
+                        if (!string.IsNullOrEmpty(itemLegacy.CurrentValue))
+                            return itemLegacy.CurrentValue;
                     }
                     else
                     {
                         // Fallback if pattern unavailable
-                        if (!string.IsNullOrEmpty(selectedItem.Name))
-                            return selectedItem.Name;
+                        var name = selectedItem.GetCurrentNameOrDefault();
+                        if (!string.IsNullOrEmpty(name))
+                            return name;
                     }
                 }
             }
@@ -569,24 +505,37 @@ public partial class VisualElementContext
         }
 
         // BUG: For a minimized window, the captured image is buggy (but child elements are fine).
-        public Task<Bitmap> CaptureAsync(CancellationToken cancellationToken)
+        public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
         {
             var rect = BoundingRectangle;
             if (rect.Width <= 0 || rect.Height <= 0)
                 throw new InvalidOperationException("Cannot capture an element with zero width or height.");
 
-            if (TryGetAncestorWithNativeWindowHandle(_element, out var hWnd) is null ||
-                (hWnd = PInvoke.GetAncestor((HWND)hWnd, GET_ANCESTOR_FLAGS.GA_ROOTOWNER)) == 0)
-                throw new InvalidOperationException("Cannot capture an element without a valid window handle.");
+            var element = _element;
+            var hWnd = element.GetCurrentNativeWindowHandleOrDefault();
+            while (!IsTopLevelHWnd((HWND)hWnd))
+            {
+                // Get the window position of the toplevel
+                element = TreeWalker.GetParentElement(element);
+                if (element == null)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to find the hwnd of the element.");
+                }
 
-            if (!PInvoke.GetWindowRect((HWND)hWnd, out var windowRect))
-                throw new Win32Exception(Marshal.GetLastWin32Error());
+                hWnd = element.GetCurrentNativeWindowHandleOrDefault();
+            }
+
+            var windowPosition = GetBoundingRectangle(element).To(r => new PixelPoint(r.X, r.Y));
+            if (hWnd == 0)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to find the hwnd of the element.");
+            }
 
             return Direct3D11ScreenCapture.CaptureAsync(
                 hWnd,
                 new PixelRect(
-                    rect.X - windowRect.X,
-                    rect.Y - windowRect.Y,
+                    rect.X - windowPosition.X,
+                    rect.Y - windowPosition.Y,
                     rect.Width,
                     rect.Height),
                 cancellationToken);
@@ -594,22 +543,87 @@ public partial class VisualElementContext
 
         #region Interop
 
+        private static string GetId(IUIAutomationElement element)
+        {
+            var runtimeId = element.TryGetRuntimeId();
+            if (runtimeId is { Length: > 0 })
+            {
+                return string.Join('.', runtimeId.Select(x => x.ToString("X")));
+            }
+
+            var bounds = element.GetCurrentBoundingRectangleOrDefault();
+            return string.Join(
+                '.',
+                element.GetCurrentNativeWindowHandleOrDefault().ToString("X"),
+                element.GetCurrentControlTypeOrDefault().ToString("X"),
+                bounds.left.ToString("X"),
+                bounds.top.ToString("X"),
+                bounds.right.ToString("X"),
+                bounds.bottom.ToString("X"));
+        }
+
+        private static string? GetSelectionText(IUIAutomationTextRangeArray ranges)
+        {
+            var parts = new List<string>(ranges.Length);
+            for (var i = 0; i < ranges.Length; i++)
+            {
+                var text = ranges.GetElement(i).GetText(-1);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    parts.Add(text);
+                }
+            }
+
+            return parts.Count == 0 ? null : string.Join(null, parts);
+        }
+
+        private static bool IsTruthy(object? value) =>
+            value switch
+            {
+                bool boolValue => boolValue,
+                int intValue => intValue != 0,
+                _ => false
+            };
+
+        private static unsafe PixelRect GetBoundingRectangle(IUIAutomationElement element)
+        {
+            try
+            {
+                var hWnd = element.GetCurrentNativeWindowHandleOrDefault();
+                if (hWnd != 0 && IsTopLevelHWnd((HWND)hWnd))
+                {
+                    Span<byte> pvAttribute = stackalloc byte[sizeof(RECT)];
+                    if (PInvoke.DwmGetWindowAttribute((HWND)hWnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, pvAttribute) == 0)
+                    {
+                        var visualRect = Unsafe.As<byte, RECT>(ref MemoryMarshal.GetReference(pvAttribute));
+                        return new PixelRect(visualRect.X, visualRect.Y, visualRect.Width, visualRect.Height);
+                    }
+                }
+
+                return element.GetCurrentBoundingRectangleOrDefault().ToPixelRect();
+            }
+            catch
+            {
+                return default;
+            }
+        }
+
         /// <summary>
         ///     Attempts to find the nearest ancestor element that has a native window handle (HWND).
         /// </summary>
         /// <param name="element"></param>
         /// <param name="hWnd"></param>
         /// <returns></returns>
-        private static AutomationElement? TryGetAncestorWithNativeWindowHandle(AutomationElement? element, out nint hWnd)
+        private static IUIAutomationElement? TryGetAncestorWithNativeWindowHandle(IUIAutomationElement? element, out nint hWnd)
         {
             while (element != null)
             {
-                if (element.FrameworkAutomationElement.NativeWindowHandle.TryGetValue(out hWnd) && hWnd != 0)
+                if (element.TryGetCurrentNativeWindowHandle(out hWnd))
                 {
                     return element;
                 }
 
-                element = TreeWalker.GetParent(element);
+                element = TreeWalker.GetParentElement(element);
             }
 
             hWnd = 0;
@@ -622,9 +636,14 @@ public partial class VisualElementContext
         /// <remarks>
         ///     e.g. A control inside a window or a non-win32 element will return false.
         /// </remarks>
-        public bool IsTopLevelWindow =>
-            NativeWindowHandle != IntPtr.Zero &&
-            PInvoke.GetAncestor((HWND)NativeWindowHandle, GET_ANCESTOR_FLAGS.GA_ROOTOWNER) == NativeWindowHandle;
+        public bool IsTopLevelWindow => IsTopLevelHWnd((HWND)NativeWindowHandle);
+
+        private static bool IsTopLevelHWnd(HWND hWnd)
+        {
+            if (hWnd == HWND.Null) return false;
+            var style = PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+            return (style & (int)WINDOW_STYLE.WS_CHILD) == 0;
+        }
 
         #endregion
 
@@ -637,17 +656,27 @@ public partial class VisualElementContext
 
         public override int GetHashCode() => Id.GetHashCode();
 
-        public override string ToString() => $"({Id}) [{_element.ControlType}] {Name} - {GetText(128)}";
+        public override string ToString()
+        {
+            try
+            {
+                return $"({Id}) [{AutomationExtension.GetControlTypeName(_element.GetCurrentControlTypeOrDefault())}] {Name} - {GetText(128)}";
+            }
+            catch (Exception ex)
+            {
+                return $"({Id}) [Unknown] - Failed to get element info: {ex.Message}";
+            }
+        }
 
 
         private sealed class SiblingAccessorImpl(AutomationVisualElementImpl visualElement) : VisualElementSiblingAccessor
         {
             protected override IEnumerator<IVisualElement> CreateForwardEnumerator()
             {
-                AutomationElement? sibling;
+                IUIAutomationElement? sibling;
                 try
                 {
-                    sibling = TreeWalker.GetNextSibling(visualElement._element);
+                    sibling = TreeWalker.GetNextSiblingElement(visualElement._element);
                 }
                 catch
                 {
@@ -670,7 +699,7 @@ public partial class VisualElementContext
 
                     try
                     {
-                        sibling = TreeWalker.GetNextSibling(sibling);
+                        sibling = TreeWalker.GetNextSiblingElement(sibling);
                     }
                     catch
                     {
@@ -681,10 +710,10 @@ public partial class VisualElementContext
 
             protected override IEnumerator<IVisualElement> CreateBackwardEnumerator()
             {
-                AutomationElement? sibling;
+                IUIAutomationElement? sibling;
                 try
                 {
-                    sibling = TreeWalker.GetNextSibling(visualElement._element);
+                    sibling = TreeWalker.GetPreviousSiblingElement(visualElement._element);
                 }
                 catch
                 {
@@ -707,7 +736,7 @@ public partial class VisualElementContext
 
                     try
                     {
-                        sibling = TreeWalker.GetPreviousSibling(sibling);
+                        sibling = TreeWalker.GetPreviousSiblingElement(sibling);
                     }
                     catch
                     {

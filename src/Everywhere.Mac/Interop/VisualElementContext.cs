@@ -47,7 +47,7 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
 
     public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
     {
-        var point = Dispatcher.UIThread.InvokeOnDemand<PixelPoint?>(() =>
+        var point = Dispatcher.UIThread.Invoke<PixelPoint?>(() =>
         {
             // NSEvent.CurrentMouseLocation gives coordinates with the origin at the bottom-left of the primary screen.
             var mouseLocation = NSEvent.CurrentMouseLocation;
@@ -66,13 +66,18 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         return point is null ? null : ElementFromPoint(point.Value, mode);
     }
 
-    public Task<IVisualElement?> PickElementAsync(ScreenSelectionMode? initialMode)
+    public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)
+    {
+        return AXUIElement.ElementFromWindowId((uint)windowHandle);
+    }
+
+    public Task<IVisualElement?> PickVisualElementAsync(ScreenSelectionMode? initialMode)
     {
         return PickerSession.PickAsync(windowHelper, initialMode);
     }
 
-    public Task<Bitmap?> ScreenshotAsync(ScreenSelectionMode? initialMode)
+    public Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionMode? initialMode)
     {
-        return ScreenshotSession.ScreenshotAsync(windowHelper, initialMode);
+        return ScreenshotSession.TakeAsync(windowHelper, initialMode);
     }
 }

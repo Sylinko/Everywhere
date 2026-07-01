@@ -1,0 +1,153 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <Design.PreviewWith>
+    <v:ConsentDecisionCard/>
+  </Design.PreviewWith>
+
+  <ControlTheme
+    x:Key="{x:Type v:ConsentDecisionCard}"
+    TargetType="v:ConsentDecisionCard">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="v:ConsentDecisionCard">
+          <Border
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1" ClipToBounds="True"
+            CornerRadius="{DynamicResource MdCornerRadius}">
+            <Expander
+              Classes="ReverseIcon" Padding="8"
+              BorderThickness="0" CornerRadius="0"
+              IsExpanded="True">
+              <Expander.Styles>
+                <Style Selector="shadui|ContentExpandControl#PART_ContentExpand">
+                  <Setter Property="ClipToBounds" Value="False"/>
+                </Style>
+              </Expander.Styles>
+
+              <Expander.Header>
+                <!--  Question text  -->
+                <DockPanel
+                  HorizontalSpacing="4" IsHitTestVisible="False">
+                  <LucideIcon
+                    DockPanel.Dock="Left" Kind="CircleQuestionMark"
+                    Size="{DynamicResource FontSizeL}"/>
+
+                  <ContentPresenter
+                    Content="{TemplateBinding Header}"
+                    IsVisible="{TemplateBinding Header, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+              </Expander.Header>
+
+              <StackPanel Spacing="8">
+                <Border
+                  Margin="-8,0"
+                  Background="{DynamicResource SecondaryCardBackgroundColor}"
+                  BorderBrush="{DynamicResource BorderColor}"
+                  BorderThickness="0,1"
+                  IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}">
+                  <ScrollViewer
+                    MaxHeight="320" HorizontalScrollBarVisibility="Disabled">
+                    <v:ChatPluginDisplayBlockPresenter
+                      Background="Transparent"
+                      Content="{TemplateBinding Content}"/>
+                  </ScrollViewer>
+                </Border>
+
+                <DockPanel
+                  HorizontalAlignment="Right" HorizontalSpacing="4"
+                  IsVisible="{TemplateBinding IsReasonInputVisible, Converter={x:Static BoolConverters.Not}}">
+                  <shadui:ButtonGroup
+                    DockPanel.Dock="Left"
+                    CornerRadius="{DynamicResource SmCornerRadius}"
+                    Orientation="Horizontal">
+                    <Button
+                      Classes="Primary Compact"
+                      Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      CommandParameter="{x:Static permissions:ConsentDecision.AllowOnce}"
+                      Content="{I18N {x:Static LocaleKey.ConsentDecision_AllowOnce}}"/>
+                    <Button
+                      Classes="Primary Compact"
+                      IsVisible="{Binding CanRemember, RelativeSource={RelativeSource TemplatedParent}}">
+                      <Button.Flyout>
+                        <MenuFlyout>
+                          <MenuItem
+                            Command="{Binding $parent[v:ConsentDecisionCard].SubmitCommand}"
+                            CommandParameter="{x:Static permissions:ConsentDecision.AllowSession}"
+                            Header="{I18N {x:Static LocaleKey.ConsentDecision_AllowSession}}"
+                            IsVisible="{Binding $parent[v:ConsentDecisionCard].CanAllowSession}"/>
+                          <MenuItem
+                            Classes="Destructive"
+                            Command="{Binding $parent[v:ConsentDecisionCard].SubmitCommand}"
+                            CommandParameter="{x:Static permissions:ConsentDecision.AlwaysAllow}"
+                            Header="{I18N {x:Static LocaleKey.ConsentDecision_AlwaysAllow}}"
+                            IsVisible="{Binding $parent[v:ConsentDecisionCard].CanAlwaysAllow}"/>
+                        </MenuFlyout>
+                      </Button.Flyout>
+
+                      <LucideIcon
+                        Kind="ChevronDown"
+                        Size="{DynamicResource FontSizeM}"/>
+                    </Button>
+                  </shadui:ButtonGroup>
+
+                  <shadui:ButtonGroup
+                    CornerRadius="{DynamicResource SmCornerRadius}"
+                    Orientation="Horizontal">
+                    <Button
+                      Classes="Secondary Compact"
+                      Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                      CommandParameter="{x:Static permissions:ConsentDecision.Deny}"
+                      Content="{I18N {x:Static LocaleKey.ConsentDecision_Deny}}"/>
+                    <Button
+                      Classes="Secondary Compact"
+                      IsVisible="{TemplateBinding CanDenyWithReason}">
+                      <Button.Flyout>
+                        <MenuFlyout>
+                          <MenuItem
+                            Command="{Binding $parent[v:ConsentDecisionCard].SetIsReasonInputVisibleCommand}"
+                            CommandParameter="{x:True}"
+                            Header="{I18N {x:Static LocaleKey.ConsentDecisionCard_DenyWithReasonMenuItem_Header}}"/>
+                        </MenuFlyout>
+                      </Button.Flyout>
+
+                      <LucideIcon
+                        Kind="ChevronDown"
+                        Size="{DynamicResource FontSizeM}"/>
+                    </Button>
+                  </shadui:ButtonGroup>
+                </DockPanel>
+
+                <DockPanel
+                  HorizontalAlignment="Stretch" HorizontalSpacing="4"
+                  IsVisible="{TemplateBinding IsReasonInputVisible}">
+                  <Button
+                    Classes="Secondary Compact" DockPanel.Dock="Left"
+                    Command="{Binding SetIsReasonInputVisibleCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                    CommandParameter="{x:False}"
+                    Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
+
+                  <Button
+                    Classes="Primary Compact" DockPanel.Dock="Right"
+                    Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                    CommandParameter="{x:Static permissions:ConsentDecision.Deny}"
+                    Content="{I18N {x:Static LocaleKey.Common_Submit}}"/>
+
+                  <TextBox
+                    Classes="Compact" VerticalAlignment="Stretch"
+                    VerticalContentAlignment="Stretch" AcceptsReturn="False"
+                    AcceptsTab="False" MaxLines="1"
+                    PlaceholderText="{I18N {x:Static LocaleKey.ConsentDecisionCard_ReasonTextBox_PlaceholderText}}"
+                    Text="{TemplateBinding Reason, Mode=TwoWay}"
+                    TextWrapping="NoWrap"/>
+                </DockPanel>
+              </StackPanel>
+            </Expander>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

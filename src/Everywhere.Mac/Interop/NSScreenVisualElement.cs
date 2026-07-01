@@ -1,7 +1,5 @@
 using Avalonia;
-using Avalonia.Media.Imaging;
 using Everywhere.Interop;
-using ImageIO;
 
 namespace Everywhere.Mac.Interop;
 
@@ -78,7 +76,7 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
 
     public string? GetSelectionText() => null;
 
-    public Task<Bitmap> CaptureAsync(CancellationToken cancellationToken)
+    public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
     {
         var bounds = BoundingRectangle;
         var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
@@ -89,21 +87,10 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
 
         if (cgImage is null)
         {
-            return Task.FromException<Bitmap>(new InvalidOperationException("Failed to create CGImage wrapper."));
+            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to create CGImage wrapper."));
         }
 
-        using var data = new NSMutableData();
-        using var dest = CGImageDestination.Create(data, "public.png", 1);
-
-        if (dest is null)
-        {
-            return Task.FromException<Bitmap>(new InvalidOperationException("Failed to create image destination."));
-        }
-
-        dest.AddImage(cgImage);
-        dest.Close();
-
-        return Task.FromResult(new Bitmap(data.AsStream()));
+        return Task.FromResult<IVisualElement.ICapturedBitmapData>(new CapturedBitmapData(cgImage, 1d));
     }
 
     private static int GetScreenNumber(NSScreen screen)

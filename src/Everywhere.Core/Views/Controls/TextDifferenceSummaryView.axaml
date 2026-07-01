@@ -15,7 +15,7 @@
         <StackPanel Orientation="Vertical">
           <StackPanel.Styles>
             <Style Selector="Run.Monospace">
-              <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Menlo, 'Courier New', monospace"/>
+              <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
             </Style>
           </StackPanel.Styles>
 
@@ -53,11 +53,6 @@
             Margin="0,4,0,0"
             IsVisible="{Binding TextDifference.Acceptance, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=False, Converter={x:Static ObjectConverters.IsNull}}"
             Orientation="Horizontal" Spacing="4">
-            <StackPanel.Styles>
-              <Style Selector="Button.Compact">
-                <Setter Property="Padding" Value="8,4"/>
-              </Style>
-            </StackPanel.Styles>
             <Button
               Classes="Secondary Compact"
               shadui:ButtonAssist.Icon="{LucideIconContent SquarePen}"

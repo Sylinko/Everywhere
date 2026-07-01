@@ -1,9 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:valueConverters="clr-namespace:Everywhere.ValueConverters">
-
-  <valueConverters:DateTimeOffsetLocalizeConverter x:Key="DateTimeOffsetLocalizeConverter"/>
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
 
   <ControlTheme
     x:Key="{x:Type v:SoftwareUpdateControl}"
@@ -16,11 +14,11 @@
           CheckingUpdateTitle="{Binding UpdateOrCheckTitle^, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text}}}"
           Command="{Binding UpdateOrCheckCommand, RelativeSource={RelativeSource TemplatedParent}}"
           IsCheckingUpdate="{Binding UpdateOrCheckCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
-          IsUpdateAvailable="{Binding SoftwareUpdater.LatestVersion, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
-          LastUpdateCheckDate="{Binding Settings.Common.LastUpdateCheckTime, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={StaticResource DateTimeOffsetLocalizeConverter}}"
+          IsUpdateAvailable="{Binding SoftwareUpdater.LatestUpdate, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"
+          LastUpdateCheckDate="{Binding Settings.Common.LastUpdateCheckTime, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static vc:DateTimeOffsetConverters.Localize}}"
           LastUpdateCheckTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_LastUpdateCheckTitle_Text}}"
           NeverCheckedTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_NeverChecked_Text}}"
-          NewVersion="{Binding SoftwareUpdater.LatestVersion, RelativeSource={RelativeSource TemplatedParent}}"
+          NewVersion="{Binding SoftwareUpdater.LatestUpdate?.Version, RelativeSource={RelativeSource TemplatedParent}}"
           UpdateAvailableTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableTitle_Text}}"
           UpdateAvailableVersionTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateAvailableVersionTitle_Text}}"
           UpdateNotAvailableTitle="{I18N {x:Static LocaleKey.CommonSettings_SoftwareUpdate_UpdateNotAvailableTitle_Text}}"/>

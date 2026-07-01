@@ -4,12 +4,21 @@ using System.IO.Pipes;
 using System.Text;
 using Everywhere.Rpc;
 using MessagePack;
+#if WINDOWS
+using System.Runtime.Versioning;
+using Everywhere.Utilities;
+#endif
 
 namespace Everywhere.Watchdog;
 
+#if WINDOWS
+[SupportedOSPlatform("windows5.1.2600")]
+#endif
 public static class Program
 {
-    private static readonly ConcurrentDictionary<long, Process> MonitoredProcesses = new();
+    private static readonly ConcurrentDictionary<long, MonitoredProcess> MonitoredProcesses = new();
+
+    private record MonitoredProcess(Process Process, IDisposable? JobObject);
 
     public static async Task Main(string[] args)
     {
@@ -77,9 +86,32 @@ public static class Program
             {
                 try
                 {
-                    var process = Process.GetProcessById((int)registerCmd.ProcessId);
-                    MonitoredProcesses.TryAdd(process.Id, process);
-                    Console.WriteLine($"Registered process '{process.ProcessName}' (ID: {process.Id}).");
+                    MonitoredProcesses.GetOrAdd(
+                        registerCmd.ProcessId,
+                        id =>
+                        {
+                            var process = Process.GetProcessById((int)id);
+
+#if WINDOWS
+                            WindowsJobObject? windowsJobObject = null;
+                            try
+                            {
+                                windowsJobObject = new WindowsJobObject();
+                                windowsJobObject.AssignProcess(process);
+
+                                Console.WriteLine($"Registered process '{process.ProcessName}' (ID: {process.Id}).");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.Error.WriteLine($"Failed to assign process {process.Id} to Job Object: {ex.Message}");
+                                DisposeHelper.DisposeToDefault(ref windowsJobObject);
+                            }
+
+                            return new MonitoredProcess(process, windowsJobObject);
+#else
+                            return new MonitoredProcess(process, null);
+#endif
+                        });
                 }
                 catch (ArgumentException)
                 {
@@ -91,13 +123,26 @@ public static class Program
             {
                 if (MonitoredProcesses.TryRemove(unregisterCmd.ProcessId, out var p))
                 {
-                    Console.WriteLine($"Unregistered process '{p.ProcessName}' (ID: {p.Id}, KillIfRunning: {unregisterCmd.KillIfRunning}).");
+                    Console.WriteLine(
+                        $"Unregistered process '{p.Process.ProcessName}' (ID: {p.Process.Id}, KillIfRunning: {unregisterCmd.KillIfRunning}).");
 
-                    if (unregisterCmd.KillIfRunning && !p.HasExited)
+                    if (unregisterCmd.KillIfRunning && !p.Process.HasExited)
                     {
-                        Console.WriteLine($"Killing process '{p.ProcessName}' (ID: {p.Id}).");
-                        TerminateProcessTree(p.Id);
+                        Console.WriteLine($"Killing process '{p.Process.ProcessName}' (ID: {p.Process.Id}).");
+                        TerminateProcessTree(p);
                     }
+#if WINDOWS
+                    else if (!unregisterCmd.KillIfRunning)
+                    {
+                        if (p.JobObject is WindowsJobObject winJob)
+                        {
+                            winJob.ClearKillOnJobClose();
+                        }
+                    }
+#endif
+
+                    p.JobObject?.Dispose();
+                    p.Process.Dispose();
                 }
                 break;
             }
@@ -107,45 +152,56 @@ public static class Program
     private static void TerminateAllSubprocesses()
     {
         Console.WriteLine($"Terminating {MonitoredProcesses.Count} monitored process(es)...");
-        foreach (var pair in MonitoredProcesses)
+        foreach (var (key, value) in MonitoredProcesses)
         {
             try
             {
-                if (pair.Value.HasExited) continue;
+                if (value.Process.HasExited) continue;
 
-                Console.WriteLine($"Killing process '{pair.Value.ProcessName}' (ID: {pair.Key}).");
-                TerminateProcessTree(pair.Value.Id);
-                pair.Value.Dispose();
+                Console.WriteLine($"Killing process '{value.Process.ProcessName}' (ID: {key}).");
+                TerminateProcessTree(value);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Failed to terminate process {pair.Key}: {ex.Message}");
+                Console.Error.WriteLine($"Failed to terminate process {key}: {ex.Message}");
+            }
+            finally
+            {
+                value.JobObject?.Dispose();
+                value.Process.Dispose();
             }
         }
 
         MonitoredProcesses.Clear();
     }
 
-    private static void TerminateProcessTree(int pid)
+    private static void TerminateProcessTree(MonitoredProcess p)
     {
 #if WINDOWS
-            // Use taskkill to terminate the process tree on Windows
-            // /T: terminate child processes, /F: force termination
+        if (p.JobObject is WindowsJobObject winJob)
+        {
+            winJob.Terminate();
+        }
+        else
+        {
+            // Fallback if Job Object failed to create/assign
             Process.Start(
                 new ProcessStartInfo
                 {
                     FileName = "taskkill",
-                    Arguments = $"/PID {pid} /T /F",
+                    Arguments = $"/PID {p.Process.Id} /T /F",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                 })?.WaitForExit();
+        }
 #elif LINUX || MACOS
-        TerminateUnixProcessTree(pid);
+        TerminateUnixProcessTree(p.Process.Id);
 #else
         #error Unsupported platform
 #endif
     }
 
+#if LINUX || MACOS
     private static void TerminateUnixProcessTree(int pid)
     {
         try
@@ -160,7 +216,7 @@ public static class Program
             {
                 var current = queue.Dequeue();
                 if (!processMap.TryGetValue(current, out var children)) continue;
-                foreach (var child in children.Where(child => processesToKill.Add(child)))
+                foreach (var child in children.Where(processesToKill.Add))
                 {
                     queue.Enqueue(child);
                 }
@@ -233,17 +289,19 @@ public static class Program
                     var line = proc.StandardOutput.ReadLine();
                     if (string.IsNullOrWhiteSpace(line)) continue;
 
-                    var parts = line.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    var parts = line.Trim().Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length >= 2 && int.TryParse(parts[0], out var ppid) && int.TryParse(parts[1], out var childPid))
                     {
                         if (!map.TryGetValue(ppid, out var list))
                         {
-                            list = new List<int>();
+                            list = [];
                             map[ppid] = list;
                         }
+
                         list.Add(childPid);
                     }
                 }
+
                 proc.WaitForExit();
             }
         }
@@ -251,6 +309,8 @@ public static class Program
         {
             Console.Error.WriteLine($"Failed to get process map: {ex.Message}");
         }
+
         return map;
     }
+#endif
 }

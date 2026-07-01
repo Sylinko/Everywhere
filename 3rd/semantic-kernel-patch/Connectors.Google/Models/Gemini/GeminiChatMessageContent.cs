@@ -66,17 +66,19 @@ public sealed class GeminiChatMessageContent : ChatMessageContent
     /// <param name="modelId">The model ID used to generate the content</param>
     /// <param name="calledToolResult">The result of tool called by the kernel.</param>
     /// <param name="metadata">Additional metadata</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiChatMessageContent(
         AuthorRole role,
         string? content,
         string modelId,
         GeminiFunctionToolResult? calledToolResult = null,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
             modelId: modelId,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             encoding: Encoding.UTF8,
             metadata: metadata)
     {
@@ -91,17 +93,19 @@ public sealed class GeminiChatMessageContent : ChatMessageContent
     /// <param name="modelId">The model ID used to generate the content</param>
     /// <param name="calledToolResults">The results of tools called by the kernel.</param>
     /// <param name="metadata">Additional metadata</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiChatMessageContent(
         AuthorRole role,
         string? content,
         string modelId,
         IEnumerable<GeminiFunctionToolResult>? calledToolResults = null,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
             modelId: modelId,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             encoding: Encoding.UTF8,
             metadata: metadata)
     {
@@ -117,17 +121,19 @@ public sealed class GeminiChatMessageContent : ChatMessageContent
     /// <param name="modelId">The model ID used to generate the content</param>
     /// <param name="functionCallParts">Complete GeminiPart objects containing function calls and thoughtSignature</param>
     /// <param name="metadata">Additional metadata</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiChatMessageContent(
         AuthorRole role,
         string? content,
         string modelId,
         IEnumerable<GeminiPart>? functionCallParts,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
             modelId: modelId,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             encoding: Encoding.UTF8,
             metadata: metadata)
     {
@@ -146,17 +152,19 @@ public sealed class GeminiChatMessageContent : ChatMessageContent
     /// <param name="modelId">The model ID used to generate the content</param>
     /// <param name="functionsToolCalls">Tool calls parts returned by model</param>
     /// <param name="metadata">Additional metadata</param>
+    /// <param name="innerContent">The raw provider representation.</param>
     internal GeminiChatMessageContent(
         AuthorRole role,
         string? content,
         string modelId,
         IEnumerable<GeminiPart.FunctionCallPart>? functionsToolCalls,
-        GeminiMetadata? metadata = null)
+        GeminiMetadata? metadata = null,
+        object? innerContent = null)
         : base(
             role: role,
             content: content,
             modelId: modelId,
-            innerContent: content,
+            innerContent: innerContent ?? content,
             encoding: Encoding.UTF8,
             metadata: metadata)
     {

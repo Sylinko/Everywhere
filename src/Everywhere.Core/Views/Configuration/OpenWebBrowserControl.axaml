@@ -1,0 +1,19 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
+
+  <ControlTheme
+    x:Key="{x:Type v:OpenWebBrowserControl}"
+    TargetType="v:OpenWebBrowserControl">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Button
+          Classes="Outline" HorizontalAlignment="Left"
+          shadui:ButtonAssist.Icon="{LucideIconContent ExternalLink}"
+          shadui:ButtonAssist.ShowProgress="{Binding OpenBrowserCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
+          Command="{Binding OpenBrowserCommand, RelativeSource={RelativeSource TemplatedParent}}"
+          Content="{I18N {x:Static LocaleKey.OpenWebBrowserControl_OpenButton_Content}}"/>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

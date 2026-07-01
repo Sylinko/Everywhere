@@ -1,8 +1,15 @@
-﻿using Avalonia.Media;
+﻿using System.ComponentModel;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 
 namespace Everywhere.Common;
 
 [Serializable]
+[TypeConverter(typeof(SerializableColorTypeConverter))]
+[JsonConverter(typeof(SerializableColorJsonConverter))]
 public struct SerializableColor : IEquatable<SerializableColor>
 {
     public byte A { get; set; }
@@ -35,4 +42,54 @@ public struct SerializableColor : IEquatable<SerializableColor>
     {
         return !(left == right);
     }
+
+    public override string ToString()
+    {
+        return $"#{A:X2}{R:X2}{G:X2}{B:X2}";
+    }
+}
+
+public sealed class SerializableColorTypeConverter : TypeConverter
+{
+    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+    {
+        return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    }
+
+    public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
+    {
+        if (value is string colorString)
+        {
+            if (colorString.IsNullOrWhiteSpace()) return default(SerializableColor);
+            if (!Color.TryParse(colorString, out var color)) color = default;
+            return (SerializableColor)color;
+        }
+
+        return base.ConvertFrom(context, culture, value);
+    }
+}
+
+public sealed class SerializableColorJsonConverter : JsonConverter<SerializableColor>
+{
+    public override SerializableColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var colorString = reader.GetString();
+        if (colorString.IsNullOrWhiteSpace()) return default;
+        if (!Color.TryParse(colorString, out var color)) color = default;
+        return color;
+    }
+
+    public override void Write(Utf8JsonWriter writer, SerializableColor value, JsonSerializerOptions options)
+    {
+        var color = (Color)value;
+        var colorString = color.ToString();
+        writer.WriteStringValue(colorString);
+    }
+}
+
+public static class SerializableColorValueConverters
+{
+    public static IValueConverter ToColor { get; } = new FuncValueConverter<SerializableColor?, Color?>(color => color, color => color);
+
+    public static IValueConverter FromColor { get; } = new FuncValueConverter<Color?, SerializableColor?>(color => color, color => color);
 }

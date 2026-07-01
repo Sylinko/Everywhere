@@ -4,6 +4,7 @@
     <AssemblyName>Microsoft.SemanticKernel.Connectors.Google</AssemblyName>
     <RepoRoot>..\..\semantic-kernel</RepoRoot>
     <ProjectRoot>$(RepoRoot)\dotnet\src\Connectors\Connectors.Google</ProjectRoot>
+    <RootNamespace>Microsoft.SemanticKernel.Connectors.Google</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,15 +25,6 @@
     </Compile>
     <Compile Include="$(ProjectRoot)\Core\Gemini\GeminiPluginCollectionExtensions.cs">
       <Link>Core\Gemini\GeminiPluginCollectionExtensions.cs</Link>
-    </Compile>
-    <Compile Include="$(ProjectRoot)\Core\Gemini\Models\GeminiContent.cs">
-      <Link>Core\Gemini\Models\GeminiContent.cs</Link>
-    </Compile>
-    <Compile Include="$(ProjectRoot)\Core\Gemini\Models\GeminiResponse.cs">
-      <Link>Core\Gemini\Models\GeminiResponse.cs</Link>
-    </Compile>
-    <Compile Include="$(ProjectRoot)\Core\Gemini\Models\GeminiResponseCandidate.cs">
-      <Link>Core\Gemini\Models\GeminiResponseCandidate.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\Core\Gemini\Models\GeminiTool.cs">
       <Link>Core\Gemini\Models\GeminiTool.cs</Link>

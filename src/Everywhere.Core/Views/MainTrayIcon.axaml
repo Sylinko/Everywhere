@@ -1,0 +1,13 @@
+﻿<TrayIcon
+  x:Class="Everywhere.Views.MainTrayIcon" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="450"
+  d:DesignWidth="800" Clicked="HandleTrayIconClicked"
+  MacOSProperties.IsTemplateIcon="True" ToolTipText="Everywhere"
+  mc:Ignorable="d">
+  <TrayIcon.Icon>
+    <OnPlatform
+      x:TypeArguments="WindowIcon" Default="avares://Everywhere.Core/Assets/Everywhere.ico"
+      macOS="avares://Everywhere.Core/Assets/Everywhere-macOS.png"/>
+  </TrayIcon.Icon>
+</TrayIcon>

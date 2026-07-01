@@ -1,0 +1,47 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:OfficialWebSearchProviderSettingsControl}"
+    TargetType="v:OfficialWebSearchProviderSettingsControl">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Panel.Styles>
+            <Style Selector="v|SettingsItemsControl.Disabled">
+              <Setter Property="Effect">
+                <BlurEffect Radius="11"/>
+              </Setter>
+              <Setter Property="IsEnabled" Value="False"/>
+              <Setter Property="Opacity" Value="0.4"/>
+            </Style>
+          </Panel.Styles>
+
+          <v:SettingsItemsControl
+            Classes="Ghost"
+            Classes.Disabled="{Binding CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNull}, RelativeSource={RelativeSource TemplatedParent}}"
+            ItemsSource="{Binding SettingsItems, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+          <v:ConditionalContentControl
+            ClipToBounds="False"
+            Condition="{Binding CloudClient.UserProfile, Converter={x:Static ObjectConverters.IsNull}, RelativeSource={RelativeSource TemplatedParent}}"
+            ContentDataBinding="{Binding CloudClient, RelativeSource={RelativeSource TemplatedParent}}">
+            <v:ConditionalContentControl.TrueContent>
+              <DataTemplate x:DataType="cloud:ICloudClient">
+                <Border
+                  Background="{DynamicResource SecondaryCardBackgroundColor}"
+                  CornerRadius="{DynamicResource XlCornerRadius}">
+                  <v:UserProfileCard
+                    Width="240" Margin="16"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    ShowActionsButton="False"/>
+                </Border>
+              </DataTemplate>
+            </v:ConditionalContentControl.TrueContent>
+          </v:ConditionalContentControl>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

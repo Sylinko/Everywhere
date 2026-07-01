@@ -25,12 +25,6 @@ public class I18NExtension : MarkupExtension
     [Content, AssignBinding]
     public AvaloniaList<object> Arguments { get; set; } = [];
 
-    public IValueConverter? Converter { get; set; }
-
-    public object? ConverterParameter { get; set; }
-
-    public CultureInfo? ConverterCulture { get; set; }
-
     /// <summary>
     /// Whether to resolve the resource key immediately. If true, the extension will return the resolved value directly.
     /// If false, it will return a binding that resolves the value at runtime.
@@ -46,7 +40,7 @@ public class I18NExtension : MarkupExtension
     {
         var target = serviceProvider.GetService<IProvideValueTarget>();
 
-        if (Key is IBinding binding)
+        if (Key is BindingBase binding)
         {
             return new MultiBinding
             {
@@ -57,27 +51,18 @@ public class I18NExtension : MarkupExtension
 
         var dynamicResourceKey = Key switch
         {
-            DynamicResourceKeyBase key => key,
-            _ when Arguments is { Count: > 0 } args => new FormattedDynamicResourceKey(
+            IDynamicLocaleKey key => key,
+            _ when Arguments is { Count: > 0 } args => new FormattedDynamicLocaleKey(
                 Key,
                 args.AsValueEnumerable().Select(arg => arg switch
                 {
-                    IBinding b => new BindingResourceKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
-                    DynamicResourceKeyBase key => key,
-                    _ => new DynamicResourceKey(arg)
+                    BindingBase b => new BindingLocaleKey(b, target?.TargetObject as AvaloniaObject, target?.TargetProperty as AvaloniaProperty),
+                    IDynamicLocaleKey key => key,
+                    _ => new DynamicLocaleKey(arg)
                 }).ToList()),
-            _ => new DynamicResourceKey(Key)
+            _ => new DynamicLocaleKey(Key)
         };
-        return Resolve ?
-            dynamicResourceKey.ToString() ?? string.Empty :
-            new Binding
-            {
-                Path = $"{nameof(DynamicResourceKeyBase.Self)}^",
-                Source = dynamicResourceKey,
-                Converter = Converter,
-                ConverterParameter = ConverterParameter,
-                ConverterCulture = ConverterCulture,
-            };
+        return Resolve ? dynamicResourceKey.ToString() ?? string.Empty : dynamicResourceKey.ToBinding();
     }
 
     private sealed class BindingResolver : IObserver<object?>, IMultiValueConverter
@@ -96,7 +81,7 @@ public class I18NExtension : MarkupExtension
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             _subscription?.Dispose();
-            if (values is not [DynamicResourceKeyBase key]) return null;
+            if (values is not [IDynamicLocaleKey key]) return null;
 
             _subscription = key.Subscribe(this);
             return key.ToString(); // return resolved string immediately. If it changes, OnNext will be called to update the target.
@@ -119,33 +104,94 @@ public class I18NExtension : MarkupExtension
     /// <summary>
     /// This class is used to create a dynamic resource key for axaml Binding.
     /// </summary>
-    /// <param name="binding"></param>
-    /// <param name="target"></param>
-    /// <param name="property"></param>
-    private sealed class BindingResourceKey(IBinding binding, AvaloniaObject? target, AvaloniaProperty? property)
-        : DynamicResourceKeyBase, IObserver<object?>
+    private sealed class BindingLocaleKey : IDynamicLocaleKey, IObserver<object?>
     {
-#pragma warning disable CS0618
-        private readonly InstancedBinding? _bindingInstance = binding.Initiate(target ?? new AvaloniaObject(), property);
-#pragma warning restore CS0618
+        private readonly AvaloniaObject _target;
+        private readonly UntypedBindingExpressionBase? _expression;
+        private readonly List<IObserver<object?>> _observers = new(1);
 
-        private IDisposable? _selfSubscription;
-        private object? _value;
+        private IDisposable? _bindingSubscription;
 
-        public override IDisposable Subscribe(IObserver<object?> observer)
+        /// <summary>
+        /// The current value of the binding. This is used to determine if the value has changed and to notify observers.
+        /// </summary>
+        private string? _value;
+
+        /// <summary>
+        /// This class is used to create a dynamic resource key for axaml Binding.
+        /// </summary>
+        /// <param name="binding"></param>
+        /// <param name="target"></param>
+        /// <param name="property"></param>
+        public BindingLocaleKey(BindingBase binding, AvaloniaObject? target, AvaloniaProperty? property)
         {
-            DisposeCollector.DisposeToDefault(ref _selfSubscription);
-            _selfSubscription = _bindingInstance?.Source.Subscribe(this); // Subscribe to the binding so that we can get updates.
-
-            return _bindingInstance?.Source.Subscribe(observer) ?? Disposable.Empty;
+            _target = target ?? new AvaloniaObject();
+            _expression = CreateInstance(binding, _target, property, null) as UntypedBindingExpressionBase;
         }
 
-        public override string ToString() => _value?.ToString() ?? string.Empty;
+        public IDisposable Subscribe(IObserver<object?> observer)
+        {
+            if (_expression is null || ToObservable(_expression, _target) is not IObservable<object?> observable)
+            {
+                return Disposable.Empty;
+            }
 
-        public void OnCompleted() { }
+            _observers.Add(observer);
+            _bindingSubscription ??= observable.Subscribe(this);
 
-        public void OnError(Exception error) => _value = null;
+            return Disposable.Create(() => Unsubscribe(observer));
+        }
 
-        public void OnNext(object? value) => _value = value;
+        void IObserver<object?>.OnNext(object? value)
+        {
+            _value = value switch
+            {
+                BindingNotification => null,
+                _ => value?.ToString()
+            };
+
+            foreach (var observer in _observers)
+            {
+                observer.OnNext(_value);
+            }
+        }
+
+        void IObserver<object?>.OnCompleted() { }
+
+        void IObserver<object?>.OnError(Exception error) { }
+
+        /// <summary>
+        /// Unsubscribes an observer from the list of observers. If there are no more observers, it disposes of the binding subscription.
+        /// </summary>
+        /// <param name="observer"></param>
+        private void Unsubscribe(IObserver<object?> observer)
+        {
+            _observers.Remove(observer);
+
+            if (_observers.Count == 0)
+            {
+                DisposeHelper.DisposeToDefault(ref _bindingSubscription);
+            }
+        }
+
+        public override string? ToString() => _value;
+
+        // internal abstract BindingExpressionBase CreateInstance(
+        //     AvaloniaObject target,
+        //     AvaloniaProperty? targetProperty,
+        //     object? anchor);
+        [UnsafeAccessor(UnsafeAccessorKind.Method)]
+        private extern static BindingExpressionBase CreateInstance(
+            BindingBase binding,
+            AvaloniaObject target,
+            AvaloniaProperty? property,
+            object? anchor);
+
+        // internal IAvaloniaSubject<object?> ToObservable(AvaloniaObject? target = null)
+        [UnsafeAccessor(UnsafeAccessorKind.Method)]
+        [return: UnsafeAccessorType("Avalonia.Reactive.IAvaloniaSubject`1[[System.Object, System.Private.CoreLib]], Avalonia.Base")]
+        private extern static object ToObservable(
+            UntypedBindingExpressionBase binding,
+            AvaloniaObject? target = null);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Immutable;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Everywhere.Common;
@@ -27,7 +28,7 @@ file static class PropertyChangedEventCache
     public static readonly PropertyChangedEventArgs IndexerPropertyChanged = new("Item[]");
 }
 
-public class ObservableDictionary<TKey, TValue> :
+public sealed class ObservableDictionary<TKey, TValue> :
     IObservableDictionary,
     IDictionary<TKey, TValue>,
     IReadOnlyDictionary<TKey, TValue>,
@@ -135,10 +136,11 @@ public class ObservableDictionary<TKey, TValue> :
                 if (_dictionary.TryGetValue(key, out var oldValue))
                 {
                     _dictionary[key] = value;
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                        NotifyCollectionChangedAction.Replace,
-                        new DictionaryEventItem<TKey, TValue>(key, value),
-                        new DictionaryEventItem<TKey, TValue>(key, oldValue)));
+                    OnCollectionChanged(
+                        new NotifyCollectionChangedEventArgs(
+                            NotifyCollectionChangedAction.Replace,
+                            new DictionaryEventItem<TKey, TValue>(key, value),
+                            new DictionaryEventItem<TKey, TValue>(key, oldValue)));
                     OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
                     OnPropertyChanged(PropertyChangedEventCache.ValuesPropertyChanged);
                 }
@@ -153,12 +155,12 @@ public class ObservableDictionary<TKey, TValue> :
     public event PropertyChangedEventHandler? PropertyChanged;
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
-    protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
+    private void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         PropertyChanged?.Invoke(this, e);
     }
 
-    protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+    private void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
     {
         CollectionChanged?.Invoke(this, e);
     }
@@ -190,9 +192,10 @@ public class ObservableDictionary<TKey, TValue> :
         lock (SyncRoot)
         {
             ((IDictionary)_dictionary).Add(key, value);
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Add,
-                new DictionaryEventItem<TKey, TValue>((TKey)key, (TValue)value!)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Add,
+                    new DictionaryEventItem<TKey, TValue>((TKey)key, (TValue)value!)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -205,9 +208,10 @@ public class ObservableDictionary<TKey, TValue> :
         lock (SyncRoot)
         {
             _dictionary.Add(key, value);
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Add,
-                new DictionaryEventItem<TKey, TValue>(key, value)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Add,
+                    new DictionaryEventItem<TKey, TValue>(key, value)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -261,9 +265,10 @@ public class ObservableDictionary<TKey, TValue> :
                 !EqualityComparer<TValue>.Default.Equals(value, item.Value) ||
                 !_dictionary.Remove(item.Key, out var value2)) return false;
 
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Remove,
-                new DictionaryEventItem<TKey, TValue>(item.Key, value2)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Remove,
+                    new DictionaryEventItem<TKey, TValue>(item.Key, value2)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -321,10 +326,14 @@ public class ObservableDictionary<TKey, TValue> :
 
     IDictionaryEnumerator IDictionary.GetEnumerator()
     {
+        Dictionary<TKey,TValue> snapshot;
+
         lock (SyncRoot)
         {
-            return ((IDictionary)_dictionary).GetEnumerator();
+            snapshot = _dictionary.ToDictionary();
         }
+
+        return snapshot.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -361,9 +370,10 @@ public class ObservableDictionary<TKey, TValue> :
         {
             if (!_dictionary.Remove((TKey)key, out var value)) return;
 
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Remove,
-                new DictionaryEventItem<TKey, TValue>((TKey)key, value)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Remove,
+                    new DictionaryEventItem<TKey, TValue>((TKey)key, value)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -377,9 +387,10 @@ public class ObservableDictionary<TKey, TValue> :
         {
             if (!_dictionary.Remove(key, out var value)) return false;
 
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Remove,
-                new DictionaryEventItem<TKey, TValue>(key, value)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Remove,
+                    new DictionaryEventItem<TKey, TValue>(key, value)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -396,9 +407,10 @@ public class ObservableDictionary<TKey, TValue> :
                 !EqualityComparer<TValue>.Default.Equals(value, item.Value) ||
                 !_dictionary.Remove(item.Key, out var value2)) return false;
 
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                NotifyCollectionChangedAction.Remove,
-                new DictionaryEventItem<TKey, TValue>(item.Key, value2)));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    NotifyCollectionChangedAction.Remove,
+                    new DictionaryEventItem<TKey, TValue>(item.Key, value2)));
             OnPropertyChanged(PropertyChangedEventCache.CountPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.IndexerPropertyChanged);
             OnPropertyChanged(PropertyChangedEventCache.KeysPropertyChanged);
@@ -414,4 +426,127 @@ public class ObservableDictionary<TKey, TValue> :
             return _dictionary.TryGetValue(key, out value);
         }
     }
+}
+
+/// <summary>
+/// Only can create with initial items, modifies takes no effect. Used for configuration & observable scenario
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+/// <typeparam name="TValue"></typeparam>
+public sealed class ObservableImmutableDictionary<TKey, TValue> :
+    IObservableDictionary,
+    IDictionary<TKey, TValue>,
+    IReadOnlyDictionary<TKey, TValue>,
+    ICollection<ObservableKeyValuePair<TKey, TValue>>
+    where TKey : notnull
+{
+    public object SyncRoot { get; } = new();
+
+    public bool IsFixedSize => true;
+
+    public bool IsSynchronized => true;
+
+    public bool IsReadOnly => true;
+
+    public int Count => _dictionary.Count;
+
+    ICollection IDictionary.Keys => ((IDictionary)_dictionary).Keys;
+
+    public ICollection<TKey> Keys => ((IDictionary<TKey, TValue>)_dictionary).Keys;
+
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
+
+    ICollection IDictionary.Values => ((IDictionary)_dictionary).Values;
+
+    public ICollection<TValue> Values => ((IDictionary<TKey, TValue>)_dictionary).Values;
+
+    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+
+    public object? this[object key]
+    {
+        get => ((IDictionary)_dictionary)[key];
+        set { } // do nothing
+    }
+
+    public TValue this[TKey key]
+    {
+        get => _dictionary[key];
+        set { } // do nothing
+    }
+
+    #pragma warning disable CS0067
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
+    #pragma warning restore CS0067
+
+    private readonly ImmutableDictionary<TKey, TValue> _dictionary;
+
+    public ObservableImmutableDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer = null)
+    {
+        var builder = ImmutableDictionary.CreateBuilder<TKey, TValue>(comparer);
+        builder.AddRange(collection);
+        _dictionary = builder.ToImmutable();
+    }
+
+    public void Add(object key, object? value) { }
+
+    public void Add(TKey key, TValue value) { }
+
+    public void Add(KeyValuePair<TKey, TValue> item) { }
+
+    public void Add(ObservableKeyValuePair<TKey, TValue> item) { }
+
+    public void CopyTo(Array array, int index)
+    {
+        ((IDictionary)_dictionary).CopyTo(array, index);
+    }
+
+    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+    {
+        ((ICollection<KeyValuePair<TKey, TValue>>)_dictionary).CopyTo(array, arrayIndex);
+    }
+
+    public void CopyTo(ObservableKeyValuePair<TKey, TValue>[] array, int arrayIndex)
+    {
+        var i = arrayIndex;
+        foreach (var kvp in _dictionary)
+        {
+            array[i++] = new ObservableKeyValuePair<TKey, TValue>(kvp.Key, kvp.Value);
+        }
+    }
+
+    public bool Remove(ObservableKeyValuePair<TKey, TValue> item) => false;
+
+    public void Clear() { }
+
+    public bool Contains(object key) => ((IDictionary)_dictionary).Contains(key);
+
+    public bool Contains(KeyValuePair<TKey, TValue> item) => _dictionary.Contains(item);
+
+    public bool Contains(ObservableKeyValuePair<TKey, TValue> item) =>
+        _dictionary.TryGetValue(item.Key, out var value) && EqualityComparer<TValue>.Default.Equals(value, item.Value);
+
+    public bool ContainsKey(TKey key) => _dictionary.ContainsKey(key);
+
+    IDictionaryEnumerator IDictionary.GetEnumerator() => ((IDictionary)_dictionary).GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => ((IDictionary)_dictionary).GetEnumerator();
+
+    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _dictionary.GetEnumerator();
+
+    IEnumerator<ObservableKeyValuePair<TKey, TValue>> IEnumerable<ObservableKeyValuePair<TKey, TValue>>.GetEnumerator()
+    {
+        foreach (var kvp in _dictionary)
+        {
+            yield return new ObservableKeyValuePair<TKey, TValue>(kvp.Key, kvp.Value);
+        }
+    }
+
+    public void Remove(object key) { }
+
+    public bool Remove(TKey key) => false;
+
+    public bool Remove(KeyValuePair<TKey, TValue> item) => false;
+
+    public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => _dictionary.TryGetValue(key, out value);
 }

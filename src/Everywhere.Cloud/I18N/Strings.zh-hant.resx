@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Traditional Chinese (繁體中文) -->
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="OAuthCloudClient_UnpaidNotification_Title" xml:space="preserve">
+        <value>有未完成的支付，請盡快處理</value>
+    </data>
+    <data name="OAuthCloudClient_OAuthError" xml:space="preserve">
+        <value>授權失敗 ({0}): 您可能取消了操作，或伺服器拒絕了請求。{1}</value>
+    </data>
+    <data name="OAuthCloudClient_InvalidState" xml:space="preserve">
+        <value>登錄會話已過期或存在安全風險。為了您的帳號安全，請關閉頁面後重新發起登錄。</value>
+    </data>
+    <data name="OAuthCloudClient_MissingCode" xml:space="preserve">
+        <value>未能獲取到有效的授權憑證，請重試。</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidGrant" xml:space="preserve">
+        <value>本地保存的登入憑證已失效，或已在其他位置被刷新。請重新登入。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenInvalidClient" xml:space="preserve">
+        <value>登入服務拒絕了此應用的 OAuth 客戶端配置。請更新應用或聯繫支援。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenEndpointUnavailable" xml:space="preserve">
+        <value>登入服務暫時不可用，請稍後重試。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_TokenRejected" xml:space="preserve">
+        <value>登入服務拒絕了令牌請求。請嘗試重新登入。伺服器回傳：{0} - {1}</value>
+    </data>
+    <data name="OAuthCloudClient_BannedNotification_Title" xml:space="preserve">
+        <value>由於違反我們的服務條款，你已被封禁，詳情請聯繫支持。</value>
+    </data>
+    <data name="OAuthCloudClient_CreditsRunningLowNotification_Content" xml:space="preserve">
+        <value>你已使用超過 80% 的積分，可考慮換用更經濟的模型。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchRunningLowNotification_Content" xml:space="preserve">
+        <value>你已使用超過 80% 的免費雲搜索次數，超出免費次數的雲搜索將會扣減積分。</value>
+    </data>
+    <data name="OAuthCloudClient_FreeWebSearchDepletedNotification_Content" xml:space="preserve">
+        <value>你已用尽免費雲搜索次數，雲搜索將會扣減積分。</value>
+    </data>
+</root>

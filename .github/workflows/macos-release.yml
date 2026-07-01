@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 jobs:
   build-mac:
@@ -20,38 +19,27 @@ jobs:
     steps:
     - uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '26.2'
+        xcode-version: '26.3'
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         submodules: true
         lfs: true
 
-    - name: Verify Tag (Manual Trigger)
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        TAG=$(git describe --exact-match --tags HEAD 2>/dev/null || echo "")
-        if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-          echo "Error: Current commit is not tagged with a valid version (vX.X.X)."
-          echo "Current tag: $TAG"
-          exit 1
-        fi
-        echo "Found valid tag: $TAG"
-        echo "VERSION=${TAG#v}" >> $GITHUB_ENV
-        echo "GITHUB_REF=refs/tags/$TAG" >> $GITHUB_ENV
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
 
-    - name: Get version from tag
-      if: github.event_name != 'workflow_dispatch'
-      id: get_version
-      run: |
-        echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    - name: Resolve version
+      run: node scripts/resolve-release-tag.mjs "$GITHUB_REF_NAME"
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: 10.0.x
+        global-json-file: global.json
 
     - name: Import Code Signing Certificate
       env:
@@ -84,13 +72,20 @@ jobs:
       run: dotnet workload restore src/Everywhere.Mac/Everywhere.Mac.csproj
 
     - name: Restore
-      run: dotnet restore Everywhere.Mac.slnf -r ${{ matrix.runtime }} /p:RuntimeIdentifier=${{ matrix.runtime }}
+      run: |
+        dotnet restore Everywhere.Mac.slnx \
+          -r ${{ matrix.runtime }} \
+          /p:RuntimeIdentifier=${{ matrix.runtime }}
 
     - name: Publish
       env:
         CODE_SIGN_KEY: ${{ secrets.CODE_SIGN_KEY }}
         PACKAGE_SIGNING_KEY: ${{ secrets.PACKAGE_SIGNING_KEY }}
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
+        ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+        CLOUD_SYNC_BASE_URL: ${{ vars.CLOUD_SYNC_BASE_URL }}
       run: |
         dotnet publish src/Everywhere.Mac/Everywhere.Mac.csproj \
           -c Release \
@@ -98,8 +93,13 @@ jobs:
           /p:RuntimeIdentifier=${{ matrix.runtime }} \
           /p:CodesignKey="$CODE_SIGN_KEY" \
           /p:PackageSigningKey="$PACKAGE_SIGNING_KEY" \
-          /p:Version=${{ env.VERSION }} \
+          /p:Version="$VERSION_PREFIX" \
+          /p:SemanticVersion="$SEMANTIC_VERSION" \
           /p:SentryDsn="$SENTRY_DSN" \
+          /p:ClientId="$CLIENT_ID" \
+          /p:AIGatewayBaseUrl="$AI_GATEWAY_BASE_URL" \
+          /p:AccountBaseUrl="$ACCOUNT_BASE_URL" \
+          /p:CloudSyncBaseUrl="$CLOUD_SYNC_BASE_URL" \
           /p:IsPublish="true" \
           -o ./publish \
           --no-restore
@@ -135,6 +135,11 @@ jobs:
         mv "$PKG_PATH" ./release_assets/Everywhere-${{ matrix.asset_name }}-v${{ env.VERSION }}.pkg
 
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
+        draft: true
+        make_latest: false
+        prerelease: ${{ env.PRERELEASE }}
+        generate_release_notes: ${{ env.PRERELEASE }}
+        tag_name: ${{ env.RELEASE_TAG }}
         files: ./release_assets/*.pkg

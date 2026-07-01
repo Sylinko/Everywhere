@@ -24,9 +24,7 @@ public static class SettingsExtensions
                 // Forward compatibility: use FallbackGuidConverter to handle invalid GUIDs and set them to Guid.Empty
                 TypeDescriptor.AddAttributes(typeof(Guid), new TypeConverterAttribute(typeof(FallbackGuidConverter)));
 
-                var settingsJsonPath = Path.Combine(
-                    xx.GetRequiredService<IRuntimeConstantProvider>().Get<string>(RuntimeConstantType.WritableDataPath),
-                    "settings.json");
+                var settingsJsonPath = Path.Combine(RuntimeConstants.WritableFolderPath, "settings.json");
                 var loggerFactory = xx.GetRequiredService<ILoggerFactory>();
 
                 // Run Migrations
@@ -68,10 +66,12 @@ public static class SettingsExtensions
 #if WINDOWS
         .AddTransient<RestartAsAdministratorControl>()
 #endif
+        .AddTransient<OpenWebBrowserControl>()
         .AddTransient<DebugFeaturesControl>()
-        .AddSingleton<KeyValueStorage>()
-        .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<KeyValueStorage>())
-        .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<KeyValueStorage>())
+        .AddSingleton<PersistentKeyValueStorage>()
+        .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
+        .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
         .AddSingleton<PersistentState>()
-        .AddTransient<IAsyncInitializer, SettingsInitializer>();
+        .AddTransient<IAsyncInitializer, SettingsInitializer>()
+        .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 }

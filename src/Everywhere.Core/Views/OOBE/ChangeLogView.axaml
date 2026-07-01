@@ -1,74 +1,174 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.ChangeLogView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
   d:DesignHeight="450" d:DesignWidth="800"
+  x:DataType="{x:Type vm:ChangeLogViewModel}"
   mc:Ignorable="d">
-  <StackPanel
-    Margin="32,20" HorizontalAlignment="Center"
-    VerticalAlignment="Center" Spacing="16">
-    <StackPanel
-      HorizontalAlignment="Center" Orientation="Horizontal"
-      Spacing="8">
-      <Viewbox
-        Width="36" Height="36"
-        Margin="0,0,4,-4" VerticalAlignment="Center">
-        <ContentPresenter Content="{StaticResource AssistantAvatar}"/>
-      </Viewbox>
+  <shadui:NavigationView
+    MaxWidth="1600"
+    PageTransition="{x:Null}"
+    PaneWidth="240" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+    SelectedItem="{Binding SelectedReleaseInfo, Mode=TwoWay}">
+    <shadui:NavigationView.PaneHeader>
       <TextBlock
-        Classes="h2" VerticalAlignment="Center"
-        FontWeight="Normal"
-        Text="{I18N {x:Static LocaleKey.ChangeLogView_Header}}"/>
-    </StackPanel>
+        Classes="h4" Margin="0,0,0,8"
+        VerticalAlignment="Center"
+        Text="{I18N {x:Static LocaleKey.ChangeLogView_Title}}"
+        TextTrimming="CharacterEllipsis"/>
+    </shadui:NavigationView.PaneHeader>
 
-    <TextBlock
-      Width="620" HorizontalAlignment="Center"
-      LineHeight="22"
-      Text="{I18N {x:Static LocaleKey.ChangeLogView_Content}}"
-      TextAlignment="Center" TextWrapping="Wrap"/>
+    <shadui:NavigationView.PaneContent>
+      <Grid
+        Margin="0,0,0,12" RowDefinitions="Auto,*,Auto">
+        <Grid.Styles>
+          <Style Selector="ProgressBar.Hide">
+            <Setter Property="Opacity" Value="0"/>
+          </Style>
+        </Grid.Styles>
 
-    <ScrollViewer
-      Width="620" MaxHeight="300"
-      HorizontalAlignment="Center" HorizontalScrollBarVisibility="Disabled">
-      <md:MarkdownRenderer
-        Margin="0,0,4,0" LinkClick="HandleMarkdownRendererLinkClick"
-        MarkdownBuilder="{Binding $parent[v:ChangeLogView].MarkdownBuilder}"/>
-    </ScrollViewer>
+        <ProgressBar
+          Grid.Row="0"
+          Classes.Hide="{Binding IsNotBusy}"
+          IsIndeterminate="True">
+          <ProgressBar.Transitions>
+            <Transitions>
+              <DoubleTransition
+                Property="Opacity" Duration="0:0:0.3"/>
+            </Transitions>
+          </ProgressBar.Transitions>
+        </ProgressBar>
 
-    <StackPanel
-      HorizontalAlignment="Center" Orientation="Horizontal"
-      Spacing="8">
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.ChangeLogView_ViewOnGitHubHyperlinkButton_Content}}"
-        NavigateUri="https://github.com/DearVa/Everywhere/releases"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}"
-        NavigateUri="https://everywhere.sylinko.com"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.ChangeLogView_ReportBugHyperlinkButton_Content}}"
-        NavigateUri="{I18N {x:Static LocaleKey.ChangeLogView_ReportBugHyperlinkButton_NavigateUri}, Converter={x:Static vc:CommonConverters.StringToUri}}"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.ChangeLogView_FeatureRequestHyperlinkButton_Content}}"
-        NavigateUri="{I18N {x:Static LocaleKey.ChangeLogView_FeatureRequestHyperlinkButton_NavigateUri}, Converter={x:Static vc:CommonConverters.StringToUri}}"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"
-        NavigateUri="https://discord.gg/5fyg6nE3yn"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-      <HyperlinkButton
-        VerticalAlignment="Center"
-        Content="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"
-        NavigateUri="https://qm.qq.com/cgi-bin/qm/qr?k=wp9aDBBnLc7pYATqT99tB-N2ZP2ETmJC&amp;jump_from=webapi&amp;authKey=97qUJfsQoI70dUNcgBZ0C3HCZeiEn8inLT7pzg8x+KinbQwfIrHFu3dB2+aHMbRD"
-        TextElement.Foreground="{DynamicResource InfoColor}"/>
-    </StackPanel>
-  </StackPanel>
+        <ListBox
+          Classes="Draggable" Grid.Row="1"
+          Padding="0" BorderThickness="0"
+          ItemsSource="{Binding ReleaseInfos}"
+          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+          SelectedItem="{Binding SelectedReleaseInfo, Mode=TwoWay}">
+          <ListBox.Styles>
+            <Style Selector="ListBoxItem">
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            </Style>
+          </ListBox.Styles>
+
+          <ListBox.DataTemplates>
+            <DataTemplate DataType="vm:ReleaseInfo">
+              <Grid
+                ColumnDefinitions="*,Auto" ColumnSpacing="4"
+                RowDefinitions="Auto,Auto">
+                <TextBlock
+                  Classes="p" Grid.Row="0"
+                  Grid.Column="0"
+                  Text="{Binding Tag, FallbackValue={x:Null}}"
+                  TextTrimming="CharacterEllipsis"/>
+                <shadui:Badge
+                  Grid.Row="0" Grid.Column="1"
+                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                  Background="{DynamicResource PrimaryColor}"
+                  Content="{I18N {x:Static LocaleKey.ChangeLogView_CurrentBadge_Content}}"
+                  IsVisible="{Binding IsCurrent}"/>
+
+                <TextBlock
+                  Classes="Muted" Grid.Row="1"
+                  Grid.Column="0"
+                  Text="{Binding PublishedDate, Converter={x:Static vc:CommonConverters.DateTimeOffsetToString}, ConverterParameter=D}"
+                  TextTrimming="CharacterEllipsis"/>
+              </Grid>
+            </DataTemplate>
+          </ListBox.DataTemplates>
+        </ListBox>
+
+        <Button
+          Grid.Row="2" HorizontalAlignment="Stretch"
+          shadui:ButtonAssist.HoverBackground="{DynamicResource SuccessColor20}"
+          shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+          Background="{DynamicResource SuccessColor60}"
+          Command="{Binding PerformUpdateCommand}"
+          Content="{I18N {x:Static LocaleKey.ChangeLogView_UpdateButton_Content}}"
+          FontWeight="Bold"
+          IsVisible="{Binding SoftwareUpdater.LatestUpdate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+      </Grid>
+    </shadui:NavigationView.PaneContent>
+
+    <shadui:NavigationView.Header>
+      <shadui:ButtonGroup
+        Margin="0,0,12,12" HorizontalAlignment="Right"
+        VerticalAlignment="Center" Orientation="Horizontal">
+        <shadui:ButtonGroup.Styles>
+          <Style Selector="HyperlinkButton">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeM}"/>
+            <Setter Property="Background" Value="{DynamicResource SecondaryColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryForegroundColor}"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+          </Style>
+        </shadui:ButtonGroup.Styles>
+
+        <HyperlinkButton NavigateUri="{Binding SelectedReleaseInfo.HtmlUrl, FallbackValue={x:Null}}">
+          <StackPanel
+            Orientation="Horizontal" Spacing="4">
+            <Image
+              Width="{DynamicResource FontSizeL}"
+              Height="{DynamicResource FontSizeL}"
+              Source="{StaticResource GitHubDrawingImage}"/>
+            <TextBlock Text="{I18N {x:Static LocaleKey.ChangeLogView_ViewOnGitHubHyperlinkButton_Content}}"/>
+          </StackPanel>
+        </HyperlinkButton>
+        <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.OfficialWebsiteUri}">
+          <StackPanel
+            Orientation="Horizontal" Spacing="4">
+            <LucideIcon
+              Kind="BookOpen"
+              Size="{DynamicResource FontSizeL}"/>
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_OfficialDocsHyperlinkButton_Content}}"/>
+          </StackPanel>
+        </HyperlinkButton>
+        <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.AkaDiscordUri}">
+          <StackPanel
+            Orientation="Horizontal" Spacing="4">
+            <Image
+              Width="{DynamicResource FontSizeL}"
+              Height="{DynamicResource FontSizeL}"
+              Source="{StaticResource DiscordDrawingImage}"/>
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_DiscordHyperlinkButton_Content}}"/>
+          </StackPanel>
+        </HyperlinkButton>
+        <HyperlinkButton NavigateUri="{x:Static common:LinkConstants.AkaQQGroupUri}">
+          <StackPanel
+            Orientation="Horizontal" Spacing="4">
+            <Image
+              Width="{DynamicResource FontSizeL}"
+              Height="{DynamicResource FontSizeL}"
+              Source="{StaticResource QQDrawingImage}"/>
+            <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"/>
+          </StackPanel>
+        </HyperlinkButton>
+      </shadui:ButtonGroup>
+    </shadui:NavigationView.Header>
+
+    <shadui:NavigationView.ContentTemplate>
+      <DataTemplate DataType="vm:ReleaseInfo">
+        <Border
+          Background="{DynamicResource CardBackgroundColor}"
+          ClipToBounds="True"
+          CornerRadius="{DynamicResource MdCornerRadius}">
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <md:MarkdownRenderer
+              Margin="16" LinkClick="HandleMarkdownRendererLinkClick"
+              MarkdownBuilder="{Binding MarkdownBuilder}">
+              <md:MarkdownRenderer.Styles>
+                <Style Selector="md|MarkdownListGrid.ListBlock">
+                  <Setter Property="Margin" Value="16,8,16,16"/>
+                  <Setter Property="RowSpacing" Value="4"/>
+                </Style>
+              </md:MarkdownRenderer.Styles>
+            </md:MarkdownRenderer>
+          </ScrollViewer>
+        </Border>
+      </DataTemplate>
+    </shadui:NavigationView.ContentTemplate>
+  </shadui:NavigationView>
 </UserControl>

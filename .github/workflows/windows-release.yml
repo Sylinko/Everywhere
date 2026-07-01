@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 jobs:
   build-and-release:
@@ -15,70 +14,33 @@ jobs:
       run: git config --global core.longpaths true
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         submodules: true
         lfs: true
 
-    - name: Verify Tag (Manual Trigger)
-      if: github.event_name == 'workflow_dispatch'
-      shell: pwsh
-      run: |
-        $tag = git describe --exact-match --tags HEAD 2>$null
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "Error: Current commit is not tagged."
-          exit 1
-        }
-        if ($tag -notmatch '^v\d+\.\d+\.\d+') {
-          Write-Error "Error: Current commit tag '$tag' does not match vX.X.X format."
-          exit 1
-        }
-        Write-Host "Found valid tag: $tag"
-        echo "VERSION=$($tag -replace '^v','')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "GITHUB_REF=refs/tags/$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-    
-    - name: Get version from tag
-      if: github.event_name != 'workflow_dispatch'
-      id: get_version
-      shell: pwsh
-      run: |
-        $version = $env:GITHUB_REF -replace 'refs/tags/v', ''
-        echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
 
-    - name: Extract Release Notes from CHANGELOG.md
-      id: get_release_notes
+    - name: Resolve version
       shell: pwsh
-      run: |
-        $changelog = Get-Content -Path CHANGELOG.md -Raw
-        $version = "${{ env.VERSION }}"
-        # Use regex to match the content from the current version's header
-        # to the next version's header or the end of the file.
-        # (?s) makes . match newlines, (?m) makes ^ match the start of a line.
-        $pattern = "(?sm)(^##\s+\[v$([regex]::Escape($version))\].*?)(?=^##\s+\[v|\z)"
-        $match = [regex]::Match($changelog, $pattern)
-        
-        if (-not $match.Success) {
-          Write-Error "Could not find release notes for v${version} in CHANGELOG.md"
-          exit 1
-        }
-        
-        # Remove the first line (the version header)
-        $releaseBody = $match.Value.Split([System.Environment]::NewLine, 2)[1].Trim()
-        
-        # Set the multi-line output for the step
-        $delimiter = "EOF_$(Get-Random)"
-        echo "body<<$delimiter" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        echo $releaseBody | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        echo "$delimiter" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      run: node scripts/resolve-release-tag.mjs "$env:GITHUB_REF_NAME"
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4.3.1
+      uses: actions/setup-dotnet@v5
       with:
-        global-json-file: ${{ github.workspace }}/global.json
+        global-json-file: global.json
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
+
+    - name: Install Inno Setup
+      shell: pwsh
+      run: |
+        choco install innosetup
 
     - name: Install SimplySignDesktop
       shell: pwsh
@@ -112,23 +74,41 @@ jobs:
         Write-Host "SimplySignDesktop installed successfully."
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.10'
+
+    - name: Install Workloads
+      run: dotnet workload restore src/Everywhere.Windows/Everywhere.Windows.csproj
 
     - name: Restore
       shell: pwsh
       run: |
-        dotnet restore Everywhere.Windows.slnf -r win-x64
+        dotnet restore Everywhere.Windows.slnx -r win-x64
 
     - name: Publish Everywhere.Windows
       shell: pwsh
       env:
         SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
+        ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+        CLOUD_SYNC_BASE_URL: ${{ vars.CLOUD_SYNC_BASE_URL }}
       run: |
-        dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj -c Release --self-contained true -p:Version="$env:VERSION" -p:SentryDsn="$env:SENTRY_DSN" -o ./publish --no-restore
+        dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj `
+          -c Release `
+          --self-contained true `
+          -p:Version="$env:VERSION_PREFIX" `
+          -p:SemanticVersion="$env:SEMANTIC_VERSION" `
+          -p:SentryDsn="$env:SENTRY_DSN" `
+          -p:ClientId="$env:CLIENT_ID" `
+          -p:AIGatewayBaseUrl="$env:AI_GATEWAY_BASE_URL" `
+          -p:AccountBaseUrl="$env:ACCOUNT_BASE_URL" `
+          -p:CloudSyncBaseUrl="$env:CLOUD_SYNC_BASE_URL" `
+          -o ./publish `
+          --no-restore
 
-    - name: Login and Sign
+    - name: Login, Compile, and Sign
       shell: pwsh
       env:
         SIGN_USERNAME: ${{ secrets.CERTUM_USERNAME }}
@@ -136,35 +116,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyotp
-        python -u tools/sign_windows/sign.py ./publish
-
-    - name: Install Inno Setup
-      shell: pwsh
-      run: |
-        choco install innosetup
-
-    - name: Compile .ISS to .EXE Installer
-      shell: pwsh
-      run: |
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "tools/installer.iss" /O+
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "Inno Setup compilation failed with exit code $LASTEXITCODE"
-          exit $LASTEXITCODE
-        }
+        python -u tools/sign_and_pack.py ./publish tools/installer.iss
 
     - name: Create release zip
       shell: pwsh
       run: |
         Compress-Archive -Path ./publish/* -DestinationPath ./Everywhere-Windows-x64-v$env:VERSION.zip
 
-    - name: Create GitHub Release
-      id: create_release
-      uses: softprops/action-gh-release@v2
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v3
       with:
-        name: Everywhere v${{env.VERSION}}
-        body: ${{ steps.get_release_notes.outputs.body }}
-        draft: false
-        prerelease: false
+        draft: true
+        make_latest: false
+        prerelease: ${{ env.PRERELEASE }}
+        generate_release_notes: ${{ env.PRERELEASE }}
+        tag_name: ${{ env.RELEASE_TAG }}
         files: |
           ./Everywhere-Windows-x64-v${{env.VERSION}}.zip
           ./Everywhere-Windows-x64-Setup-v${{env.VERSION}}.exe

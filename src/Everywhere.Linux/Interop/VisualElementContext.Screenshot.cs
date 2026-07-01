@@ -1,9 +1,8 @@
+using System.Reactive.Disposables;
 using Avalonia;
-using Avalonia.Threading;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Everywhere.Interop;
-using Everywhere.Utilities;
-using System.Threading;
 
 namespace Everywhere.Linux.Interop;
 
@@ -12,7 +11,7 @@ public partial class VisualElementContext
     private sealed class ScreenshotPicker : ScreenSelectionSession
     {
         private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
-        public static async Task<Bitmap?> ScreenshotAsync(
+        public static async Task<Bitmap?> TakeAsync(
             VisualElementContext context,
             IWindowBackend backend,
             ScreenSelectionMode? initialMode)
@@ -27,7 +26,7 @@ public partial class VisualElementContext
         private readonly VisualElementContext _context;
         private Bitmap? _resultBitmap;
 
-        private readonly DisposeCollector _disposables = new();
+        private readonly CompositeDisposable _disposables = new();
         private IVisualElement? _selectedElement;
 
         // Free Mode State
@@ -196,7 +195,8 @@ public partial class VisualElementContext
 
                 // Use the backend's Capture method which handles X11 screenshot via XGetImage
                 // The backend will capture from the root window (screen)
-                return Backend.Capture(null, rect);
+                using var pointer = Backend.Capture(null, rect);
+                return pointer.ToAvaloniaBitmap();
             }
             catch (Exception)
             {

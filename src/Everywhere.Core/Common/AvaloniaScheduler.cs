@@ -88,6 +88,6 @@ public class AvaloniaScheduler : LocalScheduler
 
 public static class AvaloniaSchedulerExtension
 {
-    public static IObservable<TSource> ObserveOnDispatcher<TSource>(this IObservable<TSource> source) =>
+    public static IObservable<TSource> ObserveOnAvaloniaDispatcher<TSource>(this IObservable<TSource> source) =>
         source.ObserveOn(AvaloniaScheduler.Instance);
 }

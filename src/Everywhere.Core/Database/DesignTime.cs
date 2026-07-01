@@ -1,5 +1,6 @@
 ﻿#if DEBUG
 
+using Everywhere.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -9,15 +10,9 @@ public class ChatDbContextFactory : IDesignTimeDbContextFactory<ChatDbContext>
 {
     public ChatDbContext CreateDbContext(string[] args)
     {
-        var dbPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Everywhere",
-            "db");
-        Directory.CreateDirectory(dbPath);
-
         var optionsBuilder = new DbContextOptionsBuilder<ChatDbContext>();
-        optionsBuilder.UseSqlite($"Data Source=${Path.Combine(dbPath, "chat.db")}");
-
+        var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
+        optionsBuilder.UseSqlite($"Data Source={dbPath}");
         return new ChatDbContext(optionsBuilder.Options);
     }
 }

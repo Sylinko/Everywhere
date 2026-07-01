@@ -50,7 +50,7 @@
                               <Setter Property="Background" Value="{DynamicResource ErrorColor20}"/>
                             </Style>
                             <Style Selector="TextBlock.Code">
-                              <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Menlo, 'Courier New', monospace"/>
+                              <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
                               <Setter Property="VerticalAlignment" Value="Center"/>
                               <Style Selector="^.LineNumber">
                                 <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
