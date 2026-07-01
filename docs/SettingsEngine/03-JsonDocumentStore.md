@@ -130,7 +130,7 @@ File writes should be atomic:
 3. flush
 4. replace the target file
 
-Major migrations should keep a pre-migration backup or history snapshot before writing canonical JSON.
+Major migrations should keep a pre-migration backup or history snapshot before writing cleaned settings JSON.
 
 ## 10. Diagnostics
 

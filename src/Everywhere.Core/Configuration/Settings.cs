@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Configuration;
@@ -35,3 +36,7 @@ public sealed partial class Settings(IServiceProvider serviceProvider) : Setting
 
     public PluginSettings Plugin { get; } = new(serviceProvider);
 }
+
+[JsonSourceGenerationOptions(WriteIndented = true, GenerationMode = JsonSourceGenerationMode.Metadata)]
+[JsonSerializable(typeof(Settings))]
+public partial class SettingsJsonSerializerContext : JsonSerializerContext;

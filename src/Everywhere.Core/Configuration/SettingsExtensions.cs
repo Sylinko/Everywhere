@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Versioning;
+using System.Text.Json.Nodes;
 using Everywhere.Common;
 using Everywhere.Configuration.Engine;
 using Everywhere.Initialization;
@@ -26,12 +27,17 @@ public static class SettingsExtensions
                     .Select(Activator.CreateInstance)
                     .Cast<SettingsMigration>();
 
-                var migrator = new SettingsMigrator(settingsJsonPath, migrations, loggerFactory.CreateLogger<SettingsMigrator>());
+                var migrator = new SettingsMigrator(
+                    settingsJsonPath,
+                    migrations,
+                    loggerFactory.CreateLogger<SettingsMigrator>(),
+                    root => ValidateMigratedSettings(root, xx));
                 migrator.Migrate();
             }
             catch (Exception ex)
             {
                 loggerFactory.CreateLogger("SettingsMigration").LogError(ex, "Error running settings migrations");
+                throw;
             }
 
             return SettingsEngine.Load(settingsJsonPath, xx, loggerFactory);
@@ -48,4 +54,20 @@ public static class SettingsExtensions
         .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
         .AddSingleton<PersistentState>()
         .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
+
+    private static void ValidateMigratedSettings(JsonObject root, IServiceProvider serviceProvider)
+    {
+        var binder = new SettingsPatchBinder(serviceProvider);
+        binder.Patch(root, new Settings(serviceProvider));
+
+        var failures = binder.Diagnostics
+            .Where(static diagnostic => diagnostic.Severity != SettingsEngineDiagnosticSeverity.Info)
+            .Select(static diagnostic => $"{diagnostic.Kind} at '{diagnostic.Path}'")
+            .ToArray();
+
+        if (failures.Length > 0)
+        {
+            throw new InvalidDataException($"Migrated settings failed validation: {string.Join("; ", failures)}");
+        }
+    }
 }

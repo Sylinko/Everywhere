@@ -169,25 +169,3 @@ public sealed class SettingsUnknownMemberHandlingAttribute(SettingsUnknownMember
 {
     public SettingsUnknownMemberHandling Handling { get; } = handling;
 }
-
-public enum SettingsCollectionBinding
-{
-    /// <summary>
-    /// Keep the collection instance and replace its items to match the JSON array.
-    /// </summary>
-    ReplaceItems,
-
-    /// <summary>
-    /// Reserved for future keyed item patching.
-    /// </summary>
-    PatchByKey
-}
-
-/// <summary>
-/// Controls how a settings collection is synchronized from JSON.
-/// </summary>
-[AttributeUsage(AttributeTargets.Property)]
-public sealed class SettingsCollectionBindingAttribute(SettingsCollectionBinding binding) : Attribute
-{
-    public SettingsCollectionBinding Binding { get; } = binding;
-}

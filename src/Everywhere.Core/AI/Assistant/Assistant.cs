@@ -92,6 +92,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
+    [JsonIgnore]
     public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
 
     [DynamicLocaleKey(
@@ -101,6 +102,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public OpenAIOptions OpenAIOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsOpenAIResponses => Schema == ModelProviderSchema.OpenAIResponses;
 
     [DynamicLocaleKey(
@@ -110,6 +112,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public OpenAIResponsesOptions OpenAIResponsesOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsAnthropic => Schema == ModelProviderSchema.Anthropic;
 
     [DynamicLocaleKey(
@@ -119,6 +122,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public AnthropicOptions AnthropicOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsGoogle => Schema == ModelProviderSchema.Google;
 
     [DynamicLocaleKey(

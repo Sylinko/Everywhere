@@ -205,19 +205,44 @@ public sealed class SettingsPatchBinder
         var currentValue = property.GetValue(target);
         if (currentValue is IList { IsFixedSize: false, IsReadOnly: false } list)
         {
-            list.Clear();
             var elementType = property.ElementType ?? typeof(object);
-            for (var i = 0; i < array.Count; i++)
+            var commonCount = Math.Min(list.Count, array.Count);
+
+            // Keep the collection object stable for UI bindings and observers.
+            // Existing object items are patched in place by index; terminal values
+            // are replaced at the same index only after successful conversion.
+            for (var i = 0; i < commonCount; i++)
             {
-                if (TryDeserialize(
+                var entryPath = CombinePath(path, i.ToString(CultureInfo.InvariantCulture));
+                var result = PatchValue(
+                    array[i],
+                    elementType,
+                    list[i],
+                    entryPath,
+                    SettingsEngineDiagnosticKind.ScalarConversionFailure,
+                    out var itemReplacement);
+
+                if (result == ValuePatchResult.Replace)
+                {
+                    list[i] = itemReplacement;
+                }
+            }
+
+            for (var i = commonCount; i < array.Count; i++)
+            {
+                if (TryCreateValue(
                         array[i],
                         elementType,
                         CombinePath(path, i.ToString(CultureInfo.InvariantCulture)),
-                        SettingsEngineDiagnosticKind.ScalarConversionFailure,
                         out var item))
                 {
                     list.Add(item);
                 }
+            }
+
+            for (var i = list.Count - 1; i >= array.Count; i--)
+            {
+                list.RemoveAt(i);
             }
 
             return;
@@ -254,10 +279,13 @@ public sealed class SettingsPatchBinder
         var currentValue = property.GetValue(target);
         if (currentValue is IDictionary { IsFixedSize: false, IsReadOnly: false } dictionary)
         {
-            dictionary.Clear();
             var keyType = property.DictionaryKeyType ?? typeof(string);
             var valueType = property.DictionaryValueType ?? typeof(object);
+            var seenKeys = new HashSet<object>();
 
+            // Mutable dictionaries keep their identity. Matching object values
+            // are patched in place, while scalar values and serialized subtrees
+            // are replaced only after the JSON value converts successfully.
             foreach (var pair in obj)
             {
                 var entryPath = CombinePath(path, pair.Key);
@@ -266,12 +294,43 @@ public sealed class SettingsPatchBinder
                     continue;
                 }
 
-                if (TryDeserialize(pair.Value, valueType, entryPath, SettingsEngineDiagnosticKind.ScalarConversionFailure, out var value))
+                seenKeys.Add(key);
+
+                if (dictionary.Contains(key))
+                {
+                    var result = PatchValue(
+                        pair.Value,
+                        valueType,
+                        dictionary[key],
+                        entryPath,
+                        SettingsEngineDiagnosticKind.ScalarConversionFailure,
+                        out var valueReplacement);
+
+                    if (result == ValuePatchResult.Replace)
+                    {
+                        dictionary[key] = valueReplacement;
+                    }
+
+                    continue;
+                }
+
+                if (TryCreateValue(pair.Value, valueType, entryPath, out var value))
                 {
                     dictionary[key] = value;
                 }
             }
 
+            foreach (var key in dictionary.Keys.Cast<object>().Where(key => !seenKeys.Contains(key)).ToArray())
+            {
+                dictionary.Remove(key);
+            }
+
+            return;
+        }
+
+        if (currentValue is IDictionary { IsReadOnly: true } readOnlyDictionary &&
+            TryPatchReadOnlyDictionaryEntries(obj, readOnlyDictionary, property, path))
+        {
             return;
         }
 
@@ -289,6 +348,123 @@ public sealed class SettingsPatchBinder
         {
             property.SetValue(target, replacement);
         }
+    }
+
+    private bool TryPatchReadOnlyDictionaryEntries(
+        JsonObject obj,
+        IDictionary dictionary,
+        ISettingsPropertyDescriptor property,
+        string path)
+    {
+        var keyType = property.DictionaryKeyType ?? typeof(string);
+        var patchedAny = false;
+        var isObjectValueDictionary = property.DictionaryValueType is { } valueType &&
+            !ReflectionSettingsDescriptorProvider.IsScalarType(valueType);
+
+        foreach (var pair in obj)
+        {
+            var entryPath = CombinePath(path, pair.Key);
+            if (!TryConvertDictionaryKey(pair.Key, keyType, entryPath, out var key))
+            {
+                continue;
+            }
+
+            if (!dictionary.Contains(key))
+            {
+                continue;
+            }
+
+            var existingValue = dictionary[key];
+            if (existingValue is null || pair.Value is not JsonObject childObj)
+            {
+                continue;
+            }
+
+            patchedAny |= TryPatchObjectInPlace(childObj, existingValue, entryPath);
+        }
+
+        // Immutable dictionaries such as WebSearchEngineSettings.Providers keep
+        // stable object instances as values. Unknown keys are preserved in JSON,
+        // while matching entries are patched in place above.
+        return patchedAny || isObjectValueDictionary;
+    }
+
+    private ValuePatchResult PatchValue(
+        JsonNode? node,
+        Type declaredType,
+        object? existingValue,
+        string path,
+        SettingsEngineDiagnosticKind failureKind,
+        out object? replacement)
+    {
+        replacement = null;
+
+        if (existingValue is not null &&
+            node is JsonObject obj &&
+            TryPatchObjectInPlace(obj, existingValue, path))
+        {
+            return ValuePatchResult.PatchedInPlace;
+        }
+
+        return TryCreateValue(node, declaredType, path, failureKind, out replacement) ?
+            ValuePatchResult.Replace :
+            ValuePatchResult.Failed;
+    }
+
+    private bool TryCreateValue(JsonNode? node, Type declaredType, string path, out object? value) =>
+        TryCreateValue(node, declaredType, path, SettingsEngineDiagnosticKind.ScalarConversionFailure, out value);
+
+    private bool TryCreateValue(
+        JsonNode? node,
+        Type declaredType,
+        string path,
+        SettingsEngineDiagnosticKind failureKind,
+        out object? value)
+    {
+        value = null;
+        var normalizedType = Nullable.GetUnderlyingType(declaredType) ?? declaredType;
+
+        if (node is JsonObject obj &&
+            TryGetPatchDescriptor(normalizedType, out var descriptor) &&
+            descriptor.TryCreateInstance(_serviceProvider, out value) &&
+            value is not null)
+        {
+            PatchObject(obj, descriptor, value, path, descriptor.UnknownMemberHandling);
+            return true;
+        }
+
+        return TryDeserialize(node, declaredType, path, failureKind, out value);
+    }
+
+    private bool TryPatchObjectInPlace(JsonObject obj, object target, string path)
+    {
+        if (!TryGetPatchDescriptor(target.GetType(), out var descriptor))
+        {
+            return false;
+        }
+
+        PatchObject(obj, descriptor, target, path, descriptor.UnknownMemberHandling);
+        return true;
+    }
+
+    private bool TryGetPatchDescriptor(Type type, [NotNullWhen(true)] out ISettingsDescriptor? descriptor)
+    {
+        descriptor = null;
+        type = Nullable.GetUnderlyingType(type) ?? type;
+
+        if (type.IsAbstract || type.IsInterface) return false;
+        if (ReflectionSettingsDescriptorProvider.IsScalarType(type)) return false;
+        if (ReflectionSettingsDescriptorProvider.TryGetListElementType(type, out _)) return false;
+        if (ReflectionSettingsDescriptorProvider.TryGetDictionaryTypes(type, out _, out _)) return false;
+
+        descriptor = _descriptorProvider.GetDescriptor(type);
+        if (descriptor.IsSerializedSubtree)
+        {
+            descriptor = null;
+            return false;
+        }
+
+        return true;
     }
 
     private void PatchComplexObject(JsonNode? node, ISettingsPropertyDescriptor property, object target, string path)
@@ -527,6 +703,13 @@ public sealed class SettingsPatchBinder
 
     private static string[] SplitObservedPath(string observedPath) =>
         observedPath.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private enum ValuePatchResult
+    {
+        Failed,
+        PatchedInPlace,
+        Replace
+    }
 
     private readonly record struct PathResolution(SettingsJsonPath JsonPath, Type? DeclaredType);
 }

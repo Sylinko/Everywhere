@@ -4,7 +4,7 @@ using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
-public static class ChatPluginTodoItemsValueConverters
+public static class ChatPluginTodoItemsConverters
 {
     public static IValueConverter ToCompletedCount { get; } =
         new FuncValueConverter<IReadOnlyList<ChatPluginTodoItem>, int>(x =>

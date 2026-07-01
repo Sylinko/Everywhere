@@ -10,7 +10,7 @@ The goal is not to deserialize `settings.json` into a new `Settings` object. The
 2. preserve unknown JSON keys by default
 3. patch the existing runtime `Settings` object without breaking MVVM references
 4. support source-generated metadata for AOT-friendly binding
-5. normalize legacy `IConfiguration` values during migration
+5. run small versioned cleanups before binding
 6. prepare settings for later semantic sync
 
 ## 2. Fixed Decisions
@@ -20,8 +20,8 @@ Current fixed decisions:
 1. `_jsonObj` is the settings document source of truth.
 2. The runtime `Settings` object is patched from `_jsonObj`.
 3. `IConfiguration` should be removed from the core settings pipeline.
-4. First-stage migration uses hard-coded paths and explicit default values.
-5. Legacy `TypeConverter` behavior is migration-only and can be deleted after canonical JSON is produced.
+4. First-stage migration uses hard-coded paths for known cleanup shapes.
+5. Existing `settings.json` values are already typed JSON; migration must not assume string-only leaves.
 6. Default binding behavior is patching the existing object graph.
 7. Collections keep their collection instance, but their items are synchronized to the JSON array.
 8. Unknown JSON keys are preserved by default.
@@ -53,7 +53,7 @@ First-stage work should deliver:
 4. local write-back from settings changes to `_jsonObj`
 5. attribute-controlled serialized subtree boundaries
 6. attribute-controlled unknown member handling
-7. a migration from legacy `IConfiguration` JSON to canonical JSON
+7. a cleanup migration for known obsolete settings shapes
 8. removal of `IConfiguration` from the core settings read/write path
 
 ## 5. Non-goals
@@ -92,5 +92,5 @@ Useful existing code:
 | `02-BindingModel.md` | Binding behavior, `IConfiguration` compatibility analysis, and intentional differences. |
 | `03-JsonDocumentStore.md` | `_jsonObj`, write-back, unknown keys, and persistence behavior. |
 | `04-SourceGenerator.md` | Descriptor generation, metadata sources, and diagnostics. |
-| `05-Migration.md` | Legacy settings migration algorithm and converter cleanup. |
+| `05-Migration.md` | Versioned settings cleanup and validation rules. |
 | `06-ImplementationPlan.md` | Ordered implementation phases, tests, and acceptance criteria. |

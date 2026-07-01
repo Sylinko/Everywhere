@@ -45,8 +45,8 @@ Recommended first-stage rules:
 | getter-only complex object | patch existing instance if non-null |
 | scalar property | convert and set if JSON exists |
 | array | replace array value from JSON |
-| `ObservableCollection<T>` / `IList<T>` | keep collection instance, replace items to match JSON array |
-| dictionary | keep dictionary instance, patch keys according to unknown-member policy |
+| `ObservableCollection<T>` / `IList<T>` | keep collection instance, patch items by index, append JSON extras, remove runtime tail |
+| dictionary | keep dictionary instance, patch matching keys, add JSON extras, remove runtime keys missing from JSON |
 | missing JSON property | leave runtime value unchanged |
 | unknown JSON key | preserve in `_jsonObj` by default |
 
@@ -119,28 +119,17 @@ Possible policies:
 
 ## 7. Collection Policy
 
-Default collection policy:
+Settings Engine has one collection policy for now:
 
-```text
-ReplaceItems
-```
+1. keep mutable collection and dictionary instances
+2. patch existing object items when the JSON shape allows it
+3. replace scalar or serialized subtree items by index/key
+4. add values present in JSON
+5. remove mutable runtime items or keys that are absent from JSON
 
-For mutable collection instances, this means:
-
-1. keep the collection object instance
-2. clear or diff existing items
-3. populate items from the JSON array
-
-The engine can later add optimized keyed collection patching.
-
-Candidate metadata:
-
-```csharp
-[SettingsCollectionBinding(SettingsCollectionBinding.ReplaceItems)]
-[SettingsCollectionBinding(SettingsCollectionBinding.PatchByKey)]
-```
-
-`PatchByKey` is not required for the first implementation.
+There is no keyed collection binding policy in the runtime. If dynamic reload
+or semantic merge requires identity-aware collections later, that policy should
+be introduced as a separate design.
 
 ## 8. Failure Handling
 
@@ -150,7 +139,7 @@ Rules:
 
 1. Serialized subtree failure keeps the old object unchanged.
 2. Scalar conversion failure keeps the old value unchanged during normal load.
-3. Migration conversion failure writes the explicit migration default.
+3. Cleanup migration failure preserves the original file and stops startup.
 4. All failures should produce diagnostics for the settings page or logs.
 
-This differs from migration, where canonical JSON must be produced even for invalid legacy values.
+Migration should stay narrower than runtime binding. It should not add broad legacy scalar conversion behavior to the runtime binder.

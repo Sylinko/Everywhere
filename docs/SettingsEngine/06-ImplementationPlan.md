@@ -5,7 +5,7 @@
 Tasks:
 
 1. list all settings-reachable model types from `Settings`
-2. list all settings-reachable `TypeConverterAttribute` usages
+2. identify settings-reachable types that need explicit JSON conversion support
 3. list complex properties that must preserve runtime object references
 4. list collections and decide first-stage collection policies
 5. identify candidates for `SettingsSerializedSubtree`
@@ -14,7 +14,7 @@ Tasks:
 Acceptance criteria:
 
 1. implementation has a known settings graph
-2. legacy converter behavior is explicitly accounted for
+2. SettingsEngine does not depend on string-only configuration leaves
 3. `ColoredIcon` is selected as the serialized subtree test case
 
 ## 2. Phase 1: Attributes and Core Contracts
@@ -24,16 +24,14 @@ Tasks:
 1. add `SettingsSerializedSubtreeAttribute`
 2. add `SettingsUnknownMemberHandlingAttribute`
 3. add `SettingsUnknownMemberHandling` enum
-4. add `SettingsCollectionBindingAttribute`
-5. add `SettingsCollectionBinding` enum
-6. reserve merge metadata attributes only if needed for descriptor shape
-7. define settings descriptor interfaces
-8. define diagnostics model
+4. reserve merge metadata attributes only if needed for descriptor shape
+5. define settings descriptor interfaces
+6. define diagnostics model
 
 Acceptance criteria:
 
 1. attributes express the first-stage binding decisions
-2. descriptor contracts can represent patch, serialized subtree, unknown member policy, and collection policy
+2. descriptor contracts can represent patch, serialized subtree, and unknown member policy
 
 ## 3. Phase 2: JSON Document Store
 
@@ -80,7 +78,7 @@ Tasks:
 2. patch existing complex objects by default
 3. patch getter-only non-null complex objects
 4. implement scalar conversion through System.Text.Json/descriptor readers
-5. implement collection instance preservation with item replacement
+5. implement collection instance preservation with index/key patching
 6. implement dictionary handling with unknown member policy
 7. implement serialized subtree handling
 8. preserve original object when serialized subtree deserialization fails
@@ -108,24 +106,23 @@ Acceptance criteria:
 2. unknown keys are preserved by default
 3. `IConfiguration.Set` is no longer needed
 
-## 7. Phase 6: Legacy Migration
+## 7. Phase 6: Settings Cleanup Migration
 
 Tasks:
 
-1. implement the big versioned settings migration
-2. add hard-coded path normalization helpers
-3. encode legacy converter behavior as migration-local helpers
-4. use explicit default values
-5. migrate `ColoredIcon` to the serialized subtree shape
-6. validate canonical JSON with Settings Engine
-7. remove runtime dependency on fallback converters
+1. implement the narrow versioned cleanup migration
+2. use hard-coded paths for known obsolete assistant fields
+3. simplify legacy ARGB color objects to `SerializableColor` strings
+4. remove obsolete assistant root generation options
+5. validate cleaned JSON with SettingsEngine before writing
+6. keep backup and atomic write semantics
 
 Acceptance criteria:
 
-1. old `IConfiguration` JSON migrates to canonical JSON
-2. migration is deterministic across version spans
-3. invalid legacy values fall back to explicit defaults
-4. migration does not rely on runtime `TypeDescriptor`
+1. existing typed settings JSON loads through SettingsEngine
+2. cleanup is deterministic and idempotent
+3. invalid cleanup shapes preserve the original file
+4. migration does not introduce generic legacy scalar conversion
 
 ## 8. Phase 7: Remove IConfiguration Core Path
 
@@ -156,9 +153,9 @@ Required tests:
 7. unknown key pruning
 8. serialized subtree success
 9. serialized subtree failure keeps original object
-10. migration converter fallback
-11. `ColoredIcon` polymorphic migration
-12. canonical JSON stability
+10. cleanup migration for obsolete assistant fields
+11. ARGB color object cleanup
+12. cleaned JSON stability
 
 ## 10. Deferred Work
 

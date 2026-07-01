@@ -159,11 +159,6 @@ public interface ISettingsPropertyDescriptor
     SettingsUnknownMemberHandling UnknownMemberHandling { get; }
 
     /// <summary>
-    /// Gets how collection items are synchronized from JSON.
-    /// </summary>
-    SettingsCollectionBinding CollectionBinding { get; }
-
-    /// <summary>
     /// Gets the descriptor used to patch child properties, or <see langword="null"/> for terminal/scalar shapes.
     /// </summary>
     ISettingsDescriptor? ChildDescriptor { get; }
@@ -219,8 +214,6 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
         var propertyType = property.PropertyType;
         var jsonName = property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? property.Name;
         var unknownMemberHandling = GetUnknownMemberHandling(property, propertyType);
-        var collectionBinding = property.GetCustomAttribute<SettingsCollectionBindingAttribute>()?.Binding ??
-            SettingsCollectionBinding.ReplaceItems;
         var isArray = propertyType.IsArray;
         var isDictionary = TryGetDictionaryTypes(propertyType, out var dictionaryKeyType, out var dictionaryValueType);
         Type? elementType = null;
@@ -271,7 +264,6 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
             dictionaryKeyType,
             dictionaryValueType,
             unknownMemberHandling,
-            collectionBinding,
             childDescriptor);
     }
 
@@ -309,8 +301,8 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
             type == typeof(TimeOnly) ||
             type == typeof(TimeSpan) ||
             type == typeof(Uri) ||
-            type.GetCustomAttribute<TypeConverterAttribute>() is not null ||
-            type.GetCustomAttribute<JsonConverterAttribute>() is not null;
+            type == typeof(object) ||
+            type.GetCustomAttribute<TypeConverterAttribute>() is not null;
     }
 
     internal static bool TryGetListElementType(Type type, out Type? elementType)
@@ -321,19 +313,17 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
             return true;
         }
 
-        var listType = type == typeof(IList) ?
-            type :
-            type.GetInterfaces().AsValueEnumerable().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        var candidates = type.GetInterfaces().AsValueEnumerable().Append(type);
+
+        var listType = candidates.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
         if (listType is { IsGenericType: true })
         {
             elementType = listType.GetGenericArguments()[0];
             return true;
         }
 
-        var readOnlyListType = type
-            .GetInterfaces()
-            .AsValueEnumerable()
-            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>));
+        var readOnlyListType = candidates.FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>));
         if (readOnlyListType is not null)
         {
             elementType = readOnlyListType.GetGenericArguments()[0];
@@ -488,7 +478,6 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        SettingsCollectionBinding collectionBinding,
         ISettingsDescriptor? childDescriptor,
         Func<object, object?> getter,
         Action<object, object?>? setter)
@@ -503,7 +492,6 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
         DictionaryKeyType = dictionaryKeyType;
         DictionaryValueType = dictionaryValueType;
         UnknownMemberHandling = unknownMemberHandling;
-        CollectionBinding = collectionBinding;
         ChildDescriptor = childDescriptor;
         _getter = getter;
         _setter = setter;
@@ -542,9 +530,6 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
     public SettingsUnknownMemberHandling UnknownMemberHandling { get; }
 
     /// <inheritdoc />
-    public SettingsCollectionBinding CollectionBinding { get; }
-
-    /// <inheritdoc />
     public ISettingsDescriptor? ChildDescriptor { get; }
 
     /// <inheritdoc />
@@ -578,7 +563,6 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
         SettingsUnknownMemberHandling unknownMemberHandling,
-        SettingsCollectionBinding collectionBinding,
         ISettingsDescriptor? childDescriptor)
     {
         OwnerType = ownerType;
@@ -589,7 +573,6 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
         DictionaryKeyType = dictionaryKeyType;
         DictionaryValueType = dictionaryValueType;
         UnknownMemberHandling = unknownMemberHandling;
-        CollectionBinding = collectionBinding;
         ChildDescriptor = childDescriptor;
     }
 
@@ -624,9 +607,6 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
 
     /// <inheritdoc />
     public SettingsUnknownMemberHandling UnknownMemberHandling { get; }
-
-    /// <inheritdoc />
-    public SettingsCollectionBinding CollectionBinding { get; }
 
     /// <inheritdoc />
     public ISettingsDescriptor? ChildDescriptor { get; }

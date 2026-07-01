@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,6 +61,26 @@ public sealed class SettingsEngineTests
 
         Assert.That(childDescriptor.TryCreateInstance(serviceProvider, out var instance), Is.True);
         Assert.That(instance, Is.TypeOf<CommonSettings>());
+        Assert.That(typeof(ISettingsPropertyDescriptor).GetProperty("CollectionBinding"), Is.Null);
+    }
+
+    [Test]
+    public void Descriptor_ClassifiesConverterBackedObjectBySerializedSubtreeAttribute()
+    {
+        var provider = new ReflectionSettingsDescriptorProvider();
+        var descriptor = provider.GetDescriptor(typeof(TestRoot));
+
+        var customizable = descriptor.FindProperty(nameof(TestRoot.CustomText));
+        var color = descriptor.FindProperty(nameof(TestRoot.Color));
+
+        Assert.That(customizable, Is.Not.Null);
+        Assert.That(customizable!.Kind, Is.EqualTo(SettingsPropertyKind.Object));
+        Assert.That(customizable.ChildDescriptor, Is.Not.Null);
+        Assert.That(customizable.ChildDescriptor!.FindProperty(nameof(Customizable<string>.DefaultValue)), Is.Not.Null);
+        Assert.That(customizable.ChildDescriptor.FindProperty(nameof(Customizable<string>.CustomValue)), Is.Not.Null);
+
+        Assert.That(color, Is.Not.Null);
+        Assert.That(color!.Kind, Is.EqualTo(SettingsPropertyKind.Scalar));
     }
 
     [Test]
@@ -90,7 +112,7 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public void Patch_ReplacesCollectionItemsWhileKeepingCollectionInstance()
+    public void Patch_ListPatchesExistingItemsByIndexAndRemovesTail()
     {
         using var file = TestSettingsFile(
             """
@@ -104,13 +126,175 @@ public sealed class SettingsEngineTests
         using var store = JsonSettingsStorage.Load(file.Path);
 
         var target = new TestRoot();
-        target.Items.Add(new TestItem { Name = "old" });
+        var first = new TestItem { Name = "old-one" };
+        var second = new TestItem { Name = "old-two" };
+        var removed = new TestItem { Name = "old-three" };
+        target.Items.Add(first);
+        target.Items.Add(second);
+        target.Items.Add(removed);
         var items = target.Items;
 
         new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
 
         Assert.That(target.Items, Is.SameAs(items));
+        Assert.That(target.Items, Has.Count.EqualTo(2));
+        Assert.That(target.Items[0], Is.SameAs(first));
+        Assert.That(target.Items[1], Is.SameAs(second));
         Assert.That(target.Items.Select(i => i.Name), Is.EqualTo(new[] { "one", "two" }));
+    }
+
+    [Test]
+    public void Patch_ListAppendsNewObjectItems()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "Items": [
+                { "Name": "one" },
+                { "Name": "two" }
+              ]
+            }
+            """);
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var first = new TestItem { Name = "old" };
+        target.Items.Add(first);
+        var items = target.Items;
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.Items, Is.SameAs(items));
+        Assert.That(target.Items, Has.Count.EqualTo(2));
+        Assert.That(target.Items[0], Is.SameAs(first));
+        Assert.That(target.Items[0].Name, Is.EqualTo("one"));
+        Assert.That(target.Items[1].Name, Is.EqualTo("two"));
+    }
+
+    [Test]
+    public void Patch_ScalarListReplacesItemsByIndexAndRemovesTail()
+    {
+        using var file = TestSettingsFile("""{ "Numbers": [1, 2] }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        target.Numbers.Add(9);
+        target.Numbers.Add(8);
+        target.Numbers.Add(7);
+        var numbers = target.Numbers;
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.Numbers, Is.SameAs(numbers));
+        Assert.That(target.Numbers.ToArray(), Is.EqualTo(new[] { 1, 2 }));
+    }
+
+    [Test]
+    public void Patch_DictionaryPatchesExistingObjectValuesAndAddsAndRemovesKeys()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "ItemMap": {
+                "keep": { "Name": "new" },
+                "add": { "Name": "added" }
+              }
+            }
+            """);
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var kept = new TestItem { Name = "old" };
+        target.ItemMap["keep"] = kept;
+        target.ItemMap["remove"] = new TestItem { Name = "remove" };
+        var itemMap = target.ItemMap;
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.ItemMap, Is.SameAs(itemMap));
+        Assert.That(target.ItemMap.Keys, Is.EquivalentTo(new[] { "keep", "add" }));
+        Assert.That(target.ItemMap["keep"], Is.SameAs(kept));
+        Assert.That(target.ItemMap["keep"].Name, Is.EqualTo("new"));
+        Assert.That(target.ItemMap["add"].Name, Is.EqualTo("added"));
+    }
+
+    [Test]
+    public void Patch_DictionaryValueConversionFailureKeepsOldValue()
+    {
+        using var file = TestSettingsFile("""{ "Scores": { "bad": "not-int", "good": 7 } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        target.Scores["bad"] = 5;
+        target.Scores["remove"] = 9;
+        var scores = target.Scores;
+        var binder = new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider());
+
+        binder.Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.Scores, Is.SameAs(scores));
+        Assert.That(target.Scores["bad"], Is.EqualTo(5));
+        Assert.That(target.Scores["good"], Is.EqualTo(7));
+        Assert.That(target.Scores.ContainsKey("remove"), Is.False);
+        Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.ScalarConversionFailure), Is.True);
+    }
+
+    [Test]
+    public void Patch_ReadOnlyDictionaryOnlyPatchesExistingObjectValues()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "ReadOnlyItems": {
+                "existing": { "Name": "new" },
+                "new": { "Name": "added" }
+              }
+            }
+            """);
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var readOnlyItems = target.ReadOnlyItems;
+        var existing = target.ReadOnlyItems["existing"];
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.ReadOnlyItems, Is.SameAs(readOnlyItems));
+        Assert.That(target.ReadOnlyItems["existing"], Is.SameAs(existing));
+        Assert.That(target.ReadOnlyItems["existing"].Name, Is.EqualTo("new"));
+        Assert.That(target.ReadOnlyItems.ContainsKey("new"), Is.False);
+    }
+
+    [Test]
+    public void Patch_WritableReadOnlyListFallsBackToWholePropertyReplacement()
+    {
+        using var file = TestSettingsFile("""{ "WritableReadOnlyNumbers": [1, 2] }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var original = target.WritableReadOnlyNumbers;
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.WritableReadOnlyNumbers, Is.Not.SameAs(original));
+        Assert.That(target.WritableReadOnlyNumbers.ToArray(), Is.EqualTo(new[] { 1, 2 }));
+    }
+
+    [Test]
+    public void Patch_GetterOnlyReadOnlyListReportsDiagnostic()
+    {
+        using var file = TestSettingsFile("""{ "GetterOnlyReadOnlyNumbers": [1, 2] }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var original = target.GetterOnlyReadOnlyNumbers;
+        var binder = new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider());
+
+        binder.Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.GetterOnlyReadOnlyNumbers, Is.SameAs(original));
+        Assert.That(target.GetterOnlyReadOnlyNumbers.ToArray(), Is.EqualTo(new[] { 9 }));
+        Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.UnsupportedShape), Is.True);
     }
 
     [Test]
@@ -152,6 +336,117 @@ public sealed class SettingsEngineTests
         Assert.That(target.Serialized, Is.SameAs(original));
         Assert.That(target.Serialized.Value, Is.EqualTo(42));
         Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.SerializedSubtreeFailure), Is.True);
+    }
+
+    [Test]
+    public void Patch_CustomizableObjectPreservesMissingDefaultValue()
+    {
+        using var file = TestSettingsFile("""{ "CustomText": { "CustomValue": null } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var customizable = target.CustomText;
+        target.CustomText.CustomValue = "old-custom";
+        var binder = new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider());
+
+        binder.Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.CustomText, Is.SameAs(customizable));
+        Assert.That(target.CustomText.DefaultValue, Is.EqualTo("runtime-default"));
+        Assert.That(target.CustomText.CustomValue, Is.Null);
+        Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.ScalarConversionFailure), Is.False);
+    }
+
+    [Test]
+    public void Patch_CustomizableObjectPatchesCustomValue()
+    {
+        using var file = TestSettingsFile("""{ "CustomText": { "CustomValue": "json-custom" } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.CustomText.DefaultValue, Is.EqualTo("runtime-default"));
+        Assert.That(target.CustomText.CustomValue, Is.EqualTo("json-custom"));
+    }
+
+    [Test]
+    public void Patch_CustomizableObjectPatchesDefaultValueWhenWritable()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "MutableCustomText": {
+                "DefaultValue": "json-default",
+                "CustomValue": "json-custom"
+              }
+            }
+            """);
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.MutableCustomText.DefaultValue, Is.EqualTo("json-default"));
+        Assert.That(target.MutableCustomText.CustomValue, Is.EqualTo("json-custom"));
+    }
+
+    [Test]
+    public void CustomizableJsonConverter_PreservesNullCustomValueForValueTypes()
+    {
+        var value = JsonSerializer.Deserialize<Customizable<int>>(
+            """
+            {
+              "DefaultValue": 10,
+              "CustomValue": null
+            }
+            """);
+
+        Assert.That(value, Is.Not.Null);
+        Assert.That(value!.DefaultValue, Is.EqualTo(10));
+        Assert.That(value.CustomValue, Is.Null);
+        Assert.That(value.IsCustomValueSet, Is.False);
+        Assert.That(value.ActualValue, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void CustomizableJsonConverter_DoesNotTreatMissingCustomValueAsDefaultOfT()
+    {
+        var value = JsonSerializer.Deserialize<Customizable<int>>(
+            """
+            {
+              "Ignored": { "Nested": true },
+              "DefaultValue": 10
+            }
+            """);
+
+        Assert.That(value, Is.Not.Null);
+        Assert.That(value!.DefaultValue, Is.EqualTo(10));
+        Assert.That(value.CustomValue, Is.Null);
+        Assert.That(value.ActualValue, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void CustomizableJsonConverter_RoundTripsTypedCustomValue()
+    {
+        var value = JsonSerializer.Deserialize<Customizable<int>>(
+            """
+            {
+              "DefaultValue": 10,
+              "CustomValue": 0
+            }
+            """);
+
+        Assert.That(value, Is.Not.Null);
+        Assert.That(value!.CustomValue, Is.EqualTo(0));
+        Assert.That(value.IsCustomValueSet, Is.True);
+        Assert.That(value.ActualValue, Is.EqualTo(0));
+
+        var json = JsonSerializer.Serialize(value);
+
+        Assert.That(json, Does.Contain("\"CustomValue\":0"));
     }
 
     [Test]
@@ -331,8 +626,19 @@ public sealed class SettingsEngineTests
         public TestSection Section { get; set; } = new();
         public TestSection GetterOnly { get; } = new();
         public ObservableCollection<TestItem> Items { get; } = [];
+        public ObservableCollection<int> Numbers { get; } = [];
         public Dictionary<string, int> Scores { get; } = [];
+        public Dictionary<string, TestItem> ItemMap { get; } = [];
+        public ObservableImmutableDictionary<string, TestItem> ReadOnlyItems { get; } = new(
+        [
+            new KeyValuePair<string, TestItem>("existing", new TestItem { Name = "old" })
+        ]);
+        public IReadOnlyList<int> WritableReadOnlyNumbers { get; set; } = new ReadOnlyCollection<int>(new List<int> { 9 });
+        public IReadOnlyList<int> GetterOnlyReadOnlyNumbers { get; } = new ReadOnlyCollection<int>(new List<int> { 9 });
         public int Count { get; set; }
+        public Customizable<string> CustomText { get; } = new("runtime-default", isDefaultValueReadonly: true);
+        public Customizable<string> MutableCustomText { get; } = new("old-default");
+        public SerializableColor Color { get; set; }
 
         [SettingsUnknownMemberHandling(SettingsUnknownMemberHandling.Prune)]
         public TestSection Strict { get; set; } = new();

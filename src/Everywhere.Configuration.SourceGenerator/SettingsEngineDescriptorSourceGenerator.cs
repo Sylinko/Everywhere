@@ -25,6 +25,12 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
+    private static readonly SymbolDisplayFormat ValueTypeFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         context.RegisterSourceOutput(
@@ -231,7 +237,6 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             dictionaryKeyType,
             dictionaryValueType,
             GetUnknownMemberHandling(property, propertyType),
-            GetCollectionBinding(property),
             childType);
     }
 
@@ -355,8 +360,9 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
     {
         var ownerType = FormatType(property.OwnerType);
         var propertyType = FormatType(property.PropertyType);
+        var propertyValueType = FormatValueType(property.PropertyType);
         var setter = property.CanWrite ?
-            $"static (instance, value) => (({ownerType})instance).{property.ClrName} = CastPropertyValue<{propertyType}>(value)" :
+            $"static (instance, value) => (({ownerType})instance).{property.ClrName} = CastPropertyValue<{propertyValueType}>(value)" :
             "null";
         var childDescriptor = property.ChildType is null ? "null" : $"GetDescriptor(typeof({FormatType(property.ChildType)}))";
 
@@ -380,11 +386,6 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             .Append(ConfigurationGlobalPrefix)
             .Append(".SettingsUnknownMemberHandling.")
             .Append(property.UnknownMemberHandling)
-            .AppendLine(",");
-        sb.Append("                    ")
-            .Append(ConfigurationGlobalPrefix)
-            .Append(".SettingsCollectionBinding.")
-            .Append(property.CollectionBinding)
             .AppendLine(",");
         sb.Append("                    ").Append(childDescriptor).AppendLine(",");
         sb.Append("                    static instance => ((").Append(ownerType).Append(")instance).").Append(property.ClrName).AppendLine(",");
@@ -502,7 +503,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             "System.DateOnly",
             "System.TimeOnly",
             "System.TimeSpan",
-            "System.Uri"
+            "System.Uri",
+            "System.Object"
         };
 
         if (knownScalarNames.Any(name => IsType(type, compilation.GetTypeByMetadataName(name))))
@@ -510,8 +512,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             return true;
         }
 
-        return HasAttribute(type, KnownAttributes.TypeConverter) ||
-            HasAttribute(type, KnownAttributes.JsonConverter);
+        return HasAttribute(type, KnownAttributes.TypeConverter);
     }
 
     private static bool TryGetListElementType(ITypeSymbol type, out ITypeSymbol? elementType)
@@ -525,16 +526,18 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             return true;
         }
 
-        var listType = type.AllInterfaces.FirstOrDefault(i =>
-            IsGenericOriginalDefinition(i, "global::System.Collections.Generic.IList<T>"));
+        var candidates = type is INamedTypeSymbol listCandidate ? type.AllInterfaces.Concat([listCandidate]) : type.AllInterfaces;
+
+        // ReSharper disable once PossibleMultipleEnumeration
+        var listType = candidates.FirstOrDefault(i => IsGenericOriginalDefinition(i, "global::System.Collections.Generic.IList<T>"));
         if (listType is not null)
         {
             elementType = listType.TypeArguments[0];
             return true;
         }
 
-        var readOnlyListType = type.AllInterfaces.FirstOrDefault(i =>
-            IsGenericOriginalDefinition(i, "global::System.Collections.Generic.IReadOnlyList<T>"));
+        // ReSharper disable once PossibleMultipleEnumeration
+        var readOnlyListType = candidates.FirstOrDefault(i => IsGenericOriginalDefinition(i, "global::System.Collections.Generic.IReadOnlyList<T>"));
         if (readOnlyListType is not null)
         {
             elementType = readOnlyListType.TypeArguments[0];
@@ -590,17 +593,6 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         }
 
         return "Preserve";
-    }
-
-    private static string GetCollectionBinding(IPropertySymbol property)
-    {
-        if (GetAttribute(property, KnownAttributes.SettingsCollectionBinding) is { } attribute &&
-            GetEnumArgumentName(attribute.ConstructorArguments.FirstOrDefault()) is { } binding)
-        {
-            return binding;
-        }
-
-        return "ReplaceItems";
     }
 
     private static string? GetEnumArgumentName(TypedConstant constant)
@@ -661,6 +653,8 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
 
     private static string FormatType(ITypeSymbol type) => UnwrapNullableReference(type).ToDisplayString(TypeFormat);
 
+    private static string FormatValueType(ITypeSymbol type) => type.ToDisplayString(ValueTypeFormat);
+
     private static ITypeSymbol UnwrapNullableReference(ITypeSymbol type) => type;
 
     private static string FormatNullableTypeOf(ITypeSymbol? type) =>
@@ -710,7 +704,6 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         ITypeSymbol? DictionaryKeyType,
         ITypeSymbol? DictionaryValueType,
         string UnknownMemberHandling,
-        string CollectionBinding,
         INamedTypeSymbol? ChildType
     );
 }

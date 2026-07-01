@@ -13,10 +13,8 @@ internal static class KnownAttributes
     public const string SettingsItems = "Everywhere.Configuration.SettingsItemsAttribute";
     public const string SettingsSerializedSubtree = "Everywhere.Configuration.SettingsSerializedSubtreeAttribute";
     public const string SettingsUnknownMemberHandling = "Everywhere.Configuration.SettingsUnknownMemberHandlingAttribute";
-    public const string SettingsCollectionBinding = "Everywhere.Configuration.SettingsCollectionBindingAttribute";
     public const string DynamicLocaleKey = "Everywhere.I18N.DynamicLocaleKeyAttribute";
     public const string JsonIgnore = "System.Text.Json.Serialization.JsonIgnoreAttribute";
     public const string JsonPropertyName = "System.Text.Json.Serialization.JsonPropertyNameAttribute";
-    public const string JsonConverter = "System.Text.Json.Serialization.JsonConverterAttribute";
     public const string TypeConverter = "System.ComponentModel.TypeConverterAttribute";
 }
