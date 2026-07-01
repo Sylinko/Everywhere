@@ -99,7 +99,7 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
-
+*.github
 # Chutzpah Test files
 _Chutzpah*
 
