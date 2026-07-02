@@ -279,19 +279,19 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
             new(
                 new DynamicLocaleKey(LocaleKey.HomePage_Assistants),
                 LucideIconKind.Bot,
-                "CustomAssistantPage"),
+                MainViewNavigateMessage.CustomAssistantPageRoute),
             new(
                 new DynamicLocaleKey(LocaleKey.HomePage_BuiltInTools),
                 LucideIconKind.Hammer,
-                "ChatPluginPage"),
+                MainViewNavigateMessage.ChatPluginPageRoute),
             new(
                 new DynamicLocaleKey(LocaleKey.HomePage_Mcp),
                 LucideIconKind.Unplug,
-                "ChatPluginPage"),
+                MainViewNavigateMessage.ChatPluginPageRoute),
             new(
                 new DynamicLocaleKey(LocaleKey.HomePage_Skills),
                 LucideIconKind.Box,
-                "SkillPage")
+                MainViewNavigateMessage.SkillPageRoute)
         ];
 
         private readonly Settings _settings;

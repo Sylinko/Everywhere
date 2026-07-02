@@ -116,8 +116,7 @@ public sealed class ChatWindowNotificationService : IChatWindowNotificationServi
     private static void OpenAssistantSettings(Guid assistantId)
     {
         WeakReferenceMessenger.Default.Send<ApplicationMessage>(
-            new ShowWindowMessage(ShowWindowMessage.MainWindow, "CustomAssistantPage"));
-        WeakReferenceMessenger.Default.Send(new SelectCustomAssistantMessage(assistantId)); // TODO
+            new ShowWindowMessage(ShowWindowMessage.MainWindow, MainViewNavigateMessage.ToCustomAssistant(assistantId)));
     }
 
     public void Dispose()
