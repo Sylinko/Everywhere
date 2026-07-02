@@ -50,6 +50,8 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
 
     protected CompositeDisposable LifetimeDisposables { get; } = new();
 
+    protected virtual IExceptionHandler? LifetimeExceptionHandler => null;
+
     private bool _isLoaded;
     private bool _isDisposed;
     private TopLevel? _topLevel;
@@ -67,7 +69,11 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
     /// <returns></returns>
     protected internal virtual Task ViewUnloaded() => Task.CompletedTask;
 
-    protected virtual IExceptionHandler? LifetimeExceptionHandler => null;
+    /// <summary>
+    /// Invoked when main navigation targets this view model.
+    /// </summary>
+    /// <param name="remainingSegments">Decoded path segments after the matched main navigation route.</param>
+    protected internal virtual void OnNavigatedTo(IReadOnlyList<string> remainingSegments) { }
 
     private void HandleLifetimeException(string stage, Exception e)
     {

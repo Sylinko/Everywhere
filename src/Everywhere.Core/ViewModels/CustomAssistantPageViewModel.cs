@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Configurator;
 using Everywhere.Common;
@@ -16,7 +15,7 @@ using ShadUI;
 
 namespace Everywhere.ViewModels;
 
-public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IRecipient<SelectCustomAssistantMessage>
+public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
 {
     private readonly IKernelMixinFactory _kernelMixinFactory;
     private readonly Settings _settings;
@@ -31,8 +30,27 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
         _kernelMixinFactory = kernelMixinFactory;
         _settings = settings;
         SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
+    }
 
-        WeakReferenceMessenger.Default.Register(this);
+    protected internal override void OnNavigatedTo(IReadOnlyList<string> remainingSegments)
+    {
+        if (remainingSegments.Count == 0)
+        {
+            return;
+        }
+
+        var assistantIdText = remainingSegments[0];
+        if (!Guid.TryParse(assistantIdText, out var assistantId))
+        {
+            ClearSelectedAssistant();
+            ShowNavigationWarning($"Invalid assistant id in route: {assistantIdText}");
+            return;
+        }
+
+        if (!SelectAssistant(assistantId))
+        {
+            ShowNavigationWarning($"Assistant was not found: {assistantId}");
+        }
     }
 
     private static Color[] RandomAssistantIconBackgrounds { get; } =
@@ -155,12 +173,41 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IReci
         _settings.Model.SelectedCustomAssistant = _settings.Model.CustomAssistants.FirstOrDefault();
     }
 
-    public void Receive(SelectCustomAssistantMessage message)
+    private bool SelectAssistant(Guid assistantId)
     {
-        if (CustomAssistants.FirstOrDefault(a => a.Id == message.AssistantId) is { } assistant)
+        if (CustomAssistants.FirstOrDefault(a => a.Id == assistantId) is { } assistant)
         {
             SelectedCustomAssistant = assistant;
             _settings.Model.SelectedCustomAssistant = assistant;
+            return true;
+        }
+
+        ClearSelectedAssistant();
+        return false;
+    }
+
+    private void ClearSelectedAssistant()
+    {
+        SelectedCustomAssistant = null;
+        _settings.Model.SelectedCustomAssistant = null;
+    }
+
+    private void ShowNavigationWarning(string message)
+    {
+        try
+        {
+            ToastHost
+                .CreateToast(LocaleResolver.Common_Warning)
+                .WithContent(message)
+                .DismissOnClick()
+                .ShowWarning();
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.ForContext<CustomAssistantPageViewModel>().Warning(
+                ex,
+                "Failed to show custom assistant navigation warning: {Message}",
+                message);
         }
     }
 }
