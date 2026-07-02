@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
-using Everywhere.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Configuration;
 
 public interface ISettingsControl
 {
-    Control CreateControl();
+    Control CreateControl(IServiceProvider serviceProvider);
 }
 
 /// <summary>
@@ -35,16 +35,14 @@ public class SettingsControl<[DynamicallyAccessedMembers(DynamicallyAccessedMemb
         IsCacheEnabled = isCacheEnabled;
     }
 
-    public Control CreateControl()
+    public Control CreateControl(IServiceProvider serviceProvider)
     {
         if (_control is not null)
         {
             return _control;
         }
 
-        var control = _factory is not null ?
-            _factory(ServiceLocator.Resolve<IServiceProvider>()) :
-            ServiceLocator.Resolve<TControl>();
+        var control = _factory is not null ? _factory(serviceProvider) : serviceProvider.GetRequiredService<TControl>();
         if (IsCacheEnabled) _control = control;
         return control;
     }

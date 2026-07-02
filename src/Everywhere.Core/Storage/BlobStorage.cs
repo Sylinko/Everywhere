@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Utilities;

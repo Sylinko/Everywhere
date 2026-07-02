@@ -39,7 +39,7 @@ This evolution abandons runtime injection in favor of physically rewriting the t
 **Architectural Implementation:**
 
 1.  **The Weaving Tool:** We introduced a lightweight, cross-platform CLI tool (`Everywhere.BuildTask.Patcher`).
-2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Base`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
+2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Controls`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
 3.  **Pipeline Interception:** Within the main project's `.csproj`, we hook into the `ResolveAssemblyReferences` MSBuild target. The pipeline automatically resolves the official, unmodified NuGet DLLs, executes the Weaver tool to structurally fuse our custom IL into the target binaries, and dynamically swaps the `ReferencePath` in memory before compilation proceeds.
 
 **Outcomes:**

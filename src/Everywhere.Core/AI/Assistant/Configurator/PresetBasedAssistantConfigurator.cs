@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
+using Microsoft.Extensions.DependencyInjection;
 using ZLinq;
 
 namespace Everywhere.AI.Configurator;
@@ -68,7 +68,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
         LocaleKey.Assistant_ApiKey_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
-        new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
+        serviceProvider => new ApiKeyComboBox(serviceProvider.GetRequiredService<Settings>().Model.ApiKeys)
         {
             [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
                 (PresetBasedAssistantConfigurator x) => x.ApiKey,

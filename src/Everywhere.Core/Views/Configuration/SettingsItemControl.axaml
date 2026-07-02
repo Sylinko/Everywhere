@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:SettingsItemControl}"
@@ -213,10 +213,10 @@
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsControlItem">
-                          <ContentControl
+                          <v:SettingsControlPresenter
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
                             ClipToBounds="False"
-                            Content="{Binding Control}"/>
+                            Item="{Binding}"/>
                         </DataTemplate>
                       </ContentControl.DataTemplates>
                     </ContentControl>

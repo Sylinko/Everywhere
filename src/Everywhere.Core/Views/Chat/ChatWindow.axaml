@@ -790,7 +790,7 @@
                   <TextBlock.Text>
                     <I18N Key="{x:Static LocaleKey.ChatWindow_TodoList_Header}">
                       <Binding
-                        Converter="{x:Static vc:ChatPluginTodoItemsValueConverters.ToCompletedCount}"
+                        Converter="{x:Static vc:ChatPluginTodoItemsConverters.ToCompletedCount}"
                         Path="ChatContextManager.Current.UserInterfaceBroker.TodoItems" TargetNullValue="0"/>
                       <Binding
                         Path="ChatContextManager.Current.UserInterfaceBroker.TodoItems?.Count" TargetNullValue="0"/>

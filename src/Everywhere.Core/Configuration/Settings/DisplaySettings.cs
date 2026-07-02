@@ -10,7 +10,7 @@ using ShadUI.Themes;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
+public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
 {
     [SettingsItemIgnore]
     public int Index => 1;

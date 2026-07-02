@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Everywhere.Common;
-using Serilog;
 
 namespace Everywhere.Configuration;
 
@@ -24,23 +23,7 @@ public abstract class SettingsMigration
     /// </summary>
     /// <param name="root"></param>
     /// <returns>true if the migration made changes; otherwise, false.</returns>
-    internal bool Migrate(JsonObject root)
-    {
-        var modified = false;
-        foreach (var task in MigrationTasks)
-        {
-            try
-            {
-                modified |= task(root);
-            }
-            catch
-            {
-                // Ignore individual task errors to allow other tasks to run
-                Log.Warning("Migration task in {Migration} failed for version {Version}", GetType().Name, Version);
-            }
-        }
-        return modified;
-    }
+    internal bool Migrate(JsonObject root) => MigrationTasks.Aggregate(false, (current, task) => current | task(root));
 
     /// <summary>
     /// Helper to get a JsonNode value by a dot-separated path.

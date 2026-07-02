@@ -19,7 +19,8 @@
             <MultiBinding Converter="{x:Static vc:CommonConverters.DefaultMultiValue}">
               <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
                 <Binding
-                  Path="Icon?.BackgroundColor"
+                  Converter="{x:Static vc:SerializableColorConverters.ToColor}"
+                  Path="Icon?.Background"
                   RelativeSource="{RelativeSource TemplatedParent}"
                   TargetNullValue="{x:Null}"/>
                 <TemplateBinding Property="Background"/>
@@ -38,7 +39,9 @@
                 <LucideIcon.Foreground>
                   <MultiBinding Converter="{x:Static vc:CommonConverters.DefaultMultiValue}">
                     <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
-                      <Binding Path="ForegroundColor"/>
+                      <Binding
+                        Converter="{x:Static vc:SerializableColorConverters.ToColor}"
+                        Path="Foreground"/>
                       <Binding Path="$parent[v:IconPresenter].Foreground"/>
                     </MultiBinding>
                   </MultiBinding>
@@ -55,7 +58,9 @@
                 <TextBlock.Foreground>
                   <MultiBinding Converter="{x:Static vc:CommonConverters.DefaultMultiValue}">
                     <MultiBinding Converter="{x:Static vc:CommonConverters.FirstNotNull}">
-                      <Binding Path="ForegroundColor"/>
+                      <Binding
+                        Converter="{x:Static vc:SerializableColorConverters.ToColor}"
+                        Path="Foreground"/>
                       <Binding Path="$parent[v:IconPresenter].Foreground"/>
                     </MultiBinding>
                   </MultiBinding>

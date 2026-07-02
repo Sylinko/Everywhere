@@ -12,12 +12,12 @@ namespace Everywhere.AI;
 [TypeConverter(typeof(FallbackEnumConverter))]
 public enum ModelSpecializations : uint
 {
+    [JsonStringEnumMemberName("Default")]
     Default = 0x0,
-
-    [JsonStringEnumMemberName("title-generation")]
+    [JsonStringEnumMemberName("TitleGeneration")]
     TitleGeneration = 0x1,
-    [JsonStringEnumMemberName("context-compression")]
+    [JsonStringEnumMemberName("ContextCompression")]
     ContextCompression = 0x2,
-    [JsonStringEnumMemberName("image-understanding")]
+    [JsonStringEnumMemberName("ImageUnderstanding")]
     ImageUnderstanding = 0x4,
 }

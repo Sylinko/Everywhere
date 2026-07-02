@@ -5,6 +5,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Avalonia.Headless"/>
+    <PackageReference Include="Avalonia.Headless.NUnit"/>
     <PackageReference Include="Avalonia.Themes.Simple"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="NSubstitute" />

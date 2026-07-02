@@ -1,6 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Input;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
@@ -14,9 +15,9 @@ namespace Everywhere.Configuration;
 /// </summary>
 public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 {
-    public DynamicLocaleKey? HeaderKey { get; set; }
+    public IDynamicLocaleKey? HeaderKey { get; set; }
 
-    public DynamicLocaleKey? DescriptionKey { get; set; }
+    public IDynamicLocaleKey? DescriptionKey { get; set; }
 
     public Classes Classes { get; } = [];
 
@@ -471,12 +472,12 @@ public sealed class SettingsTemplatedItem<TType>(IDataTemplate? dataTemplate) : 
 /// A settings item that contains a custom control.
 /// </summary>
 /// <param name="controlFactory"></param>
-public sealed class SettingsControlItem(Func<Control> controlFactory) : SettingsItem
+public sealed class SettingsControlItem(Func<IServiceProvider, Control> controlFactory) : SettingsItem
 {
     /// <summary>
     /// Use lazy control creation to avoid unnecessary instantiation and potential UI thread issues.
     /// </summary>
-    public Control Control => controlFactory();
+    public Control CreateControl(IServiceProvider serviceProvider) => controlFactory(serviceProvider);
 }
 
 /// <summary>

@@ -18,7 +18,7 @@ public partial class Customizable<T> : ObservableObject where T : notnull
     public required T DefaultValue
     {
         get;
-        set
+        init
         {
             if (_isDefaultValueReadonly) return;
             if (!SetProperty(ref field, value)) return;
@@ -173,6 +173,7 @@ public partial class Customizable<T> : ObservableObject where T : notnull
 
             T? defaultValue = default;
             object? customValue = null;
+            var hasDefaultValue = false;
 
             while (reader.Read())
             {
@@ -192,17 +193,32 @@ public partial class Customizable<T> : ObservableObject where T : notnull
                 switch (propertyName)
                 {
                     case nameof(DefaultValue):
+                    {
+                        if (reader.TokenType == JsonTokenType.Null)
+                        {
+                            throw new JsonException($"Customizable<{typeof(T).Name}>.DefaultValue cannot be null.");
+                        }
+
                         defaultValue = JsonSerializer.Deserialize<T>(ref reader, options);
+                        hasDefaultValue = true;
                         break;
+                    }
                     case nameof(CustomValue):
-                        customValue = JsonSerializer.Deserialize<object>(ref reader, options);
+                    {
+                        customValue = reader.TokenType == JsonTokenType.Null ? null : JsonSerializer.Deserialize<T>(ref reader, options);
                         break;
+                    }
+                    default:
+                    {
+                        reader.Skip();
+                        break;
+                    }
                 }
             }
 
-            if (defaultValue is null)
+            if (!hasDefaultValue || defaultValue is null)
             {
-                throw new NotSupportedException("Customizable<T> must have a DefaultValue when deserialized from JSON.");
+                throw new NotSupportedException($"Customizable<{typeof(T).Name}> must have a DefaultValue when deserialized from JSON.");
             }
 
             var customizable = new Customizable<T>
@@ -225,7 +241,14 @@ public partial class Customizable<T> : ObservableObject where T : notnull
             }
 
             writer.WritePropertyName(nameof(CustomValue));
-            JsonSerializer.Serialize(writer, value.CustomValue, options);
+            if (value.CustomValue is T customValue)
+            {
+                JsonSerializer.Serialize(writer, customValue, options);
+            }
+            else
+            {
+                writer.WriteNullValue();
+            }
 
             writer.WriteEndObject();
         }

@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsDeploymentTarget>true</IsDeploymentTarget>
+    <EverywhereI18NNamespace>Everywhere.Cloud.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack\MessagePack.csproj"/>
@@ -8,10 +13,6 @@
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <EverywhereI18NNamespace>Everywhere.Cloud.I18N</EverywhereI18NNamespace>
-  </PropertyGroup>
 
   <ItemGroup>
     <EmbeddedResource Remove="I18N\Strings*.resx"/>

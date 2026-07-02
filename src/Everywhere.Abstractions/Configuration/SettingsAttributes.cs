@@ -136,3 +136,36 @@ public class SettingsItemsAttribute : Attribute
 
     public string? IsExpandableBindingPath { get; set; }
 }
+
+/// <summary>
+/// Marks a settings property or type as a terminal System.Text.Json subtree.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property)]
+public sealed class SettingsSerializedSubtreeAttribute : Attribute;
+
+public enum SettingsUnknownMemberHandling
+{
+    /// <summary>
+    /// Keep unknown JSON keys in the backing document.
+    /// </summary>
+    Preserve,
+
+    /// <summary>
+    /// Remove JSON keys that are not represented by the effective descriptor.
+    /// </summary>
+    Prune,
+
+    /// <summary>
+    /// Report a diagnostic when unknown JSON keys are present.
+    /// </summary>
+    Error
+}
+
+/// <summary>
+/// Controls how unknown JSON members are handled for a settings object subtree.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property)]
+public sealed class SettingsUnknownMemberHandlingAttribute(SettingsUnknownMemberHandling handling) : Attribute
+{
+    public SettingsUnknownMemberHandling Handling { get; } = handling;
+}
