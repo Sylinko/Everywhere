@@ -28,8 +28,27 @@ Current fixed decisions:
 9. Pruning unknown keys requires explicit metadata.
 10. Whole-subtree `System.Text.Json` handling is opt-in through `SettingsSerializedSubtree`.
 11. If serialized-subtree reading fails, keep the existing object unchanged and report a warning.
+12. `Settings` is registered directly as a singleton and may be injected before it has been patched from disk.
+13. `SettingsEngine` is a transient `IAsyncInitializer`, not a business-facing service.
+14. Settings migration, JSON load, runtime patching, and change observation happen in `AsyncInitializerIndex.Settings`.
+15. Initializer constructors must not read final settings values or subscribe to settings changes. They may keep references and should consume settings in `InitializeAsync`.
 
-## 3. Semantic Merge Scope
+## 3. Initialization Lifecycle
+
+`AddSettings()` should only register services. It should not run migrations or synchronously read/write `settings.json`.
+
+Startup lifecycle:
+
+1. DI creates the singleton `Settings` object with default values.
+2. DI may construct `IAsyncInitializer` instances before the settings phase.
+3. `SettingsEngine.InitializeAsync()` runs at `AsyncInitializerIndex.Settings`.
+4. SettingsEngine runs pending settings migrations against `settings.json`.
+5. SettingsEngine loads the JSON document, patches the existing `Settings` object in place, then starts observing changes for write-back.
+6. Later initializers read the patched settings object.
+
+SettingsEngine itself should not be injected by product code. If feature migrations need to inspect or edit the JSON document after settings initialization, expose only a narrow internal document-editing service for migration infrastructure. This keeps `SettingsEngine` out of normal application logic while avoiding external file edits that could race the JSON store.
+
+## 4. Semantic Merge Scope
 
 Semantic merge means cloud-sync conflict resolution using:
 
@@ -43,7 +62,7 @@ It is not the first-stage Settings Engine goal.
 
 The first stage should only reserve descriptor metadata that future semantic merge can use, such as item keys and unknown-member policies. It should not implement cloud-sync three-way merge yet.
 
-## 4. First-stage Goals
+## 5. First-stage Goals
 
 First-stage work should deliver:
 
@@ -56,7 +75,7 @@ First-stage work should deliver:
 7. a cleanup migration for known obsolete settings shapes
 8. removal of `IConfiguration` from the core settings read/write path
 
-## 5. Non-goals
+## 6. Non-goals
 
 First-stage work should not include:
 
@@ -70,7 +89,7 @@ First-stage work should not include:
 
 The engine should preserve unknown keys, but comment preservation is a separate capability. `JsonNode` parsing and writing will not preserve comments.
 
-## 6. Relationship to Existing Code
+## 7. Relationship to Existing Code
 
 Useful existing code:
 
@@ -78,13 +97,13 @@ Useful existing code:
 | --- | --- |
 | Current settings root | `src/Everywhere.Core/Configuration/Settings.cs` |
 | Current DI registration | `src/Everywhere.Core/Configuration/SettingsExtensions.cs` |
-| Current auto-save observer | `src/Everywhere.Core/Initialization/SettingsInitializer.cs` |
+| Settings lifecycle | `src/Everywhere.Core/Configuration/Engine/SettingsEngine.cs` |
 | Existing settings source generator | `src/Everywhere.Configuration.SourceGenerator` |
 | Current settings migrations | `src/Everywhere.Core/Configuration/Migrations` |
 | Writable JSON reference | `3rd/WritableJsonConfiguration` |
 | Binder reference | `3rd/Microsoft.Extensions.Configuration.Binder` |
 
-## 7. Document Map
+## 8. Document Map
 
 | Document | Purpose |
 | --- | --- |

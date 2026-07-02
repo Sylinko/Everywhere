@@ -1,5 +1,8 @@
+using System.Text.Json.Nodes;
+using Everywhere.Common;
 using Everywhere.Utilities;
 using Microsoft.Extensions.Logging;
+using ZLinq;
 
 namespace Everywhere.Configuration.Engine;
 
@@ -11,8 +14,18 @@ namespace Everywhere.Configuration.Engine;
 /// The JSON document remains the persistence source of truth, while the runtime
 /// object graph is patched in place so MVVM references stay stable.
 /// </remarks>
-public sealed class SettingsEngine : IDisposable
+public sealed class SettingsEngine : IAsyncInitializer
 {
+    private readonly string _filePath;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly SettingsPatchBinder _binder;
+    private readonly ISettingsDescriptor _rootDescriptor;
+    private readonly ObjectObserver _observer;
+    private JsonSettingsStorage? _storage;
+
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings;
+
     /// <summary>
     /// Gets the runtime settings object used by the rest of the application.
     /// </summary>
@@ -21,50 +34,96 @@ public sealed class SettingsEngine : IDisposable
     /// <summary>
     /// Gets the JSON document store used for persistence.
     /// </summary>
-    public JsonSettingsStorage Storage { get; }
+    public JsonSettingsStorage Storage =>
+        _storage ?? throw new InvalidOperationException("SettingsEngine has not been initialized.");
 
     /// <summary>
     /// Gets diagnostics reported by the document store and patch binder.
     /// </summary>
     public IEnumerable<SettingsEngineDiagnostic> Diagnostics =>
-        Storage.Diagnostics.Concat(_binder.Diagnostics);
-
-    private readonly SettingsPatchBinder _binder;
-    private readonly ISettingsDescriptor _rootDescriptor;
-    private readonly ObjectObserver _observer;
+        (_storage?.Diagnostics ?? []).Concat(_binder.Diagnostics);
 
     /// <summary>
-    /// Loads settings from disk, runs JSON patching into a fresh <see cref="Configuration.Settings"/> instance, and returns the engine.
+    /// Creates a settings engine over the singleton runtime settings object.
     /// </summary>
-    public static SettingsEngine Load(string filePath, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+    public SettingsEngine(Settings settings, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+        : this(
+            settings,
+            Path.Combine(RuntimeConstants.WritableFolderPath, "settings.json"),
+            serviceProvider,
+            loggerFactory)
     {
-        var store = JsonSettingsStorage.Load(filePath, loggerFactory.CreateLogger<JsonSettingsStorage>());
-        var engine = new SettingsEngine(new Settings(serviceProvider), store, serviceProvider);
-        engine.PatchSettings();
-        engine.StartObserveSettings();
-        return engine;
     }
 
     /// <summary>
-    /// Creates a settings engine over an existing runtime settings object and JSON document store.
+    /// Creates a settings engine over an existing runtime settings object and settings file.
     /// </summary>
-    private SettingsEngine(
-        Settings settings,
-        JsonSettingsStorage storage,
-        IServiceProvider serviceProvider,
-        SettingsPatchBinder? binder = null)
+    internal SettingsEngine(Settings settings, string filePath, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
     {
         Settings = settings;
-        Storage = storage;
+        _filePath = filePath;
+        _serviceProvider = serviceProvider;
+        _loggerFactory = loggerFactory;
 
-        _binder = binder ?? new SettingsPatchBinder(serviceProvider);
+        _binder = new SettingsPatchBinder(serviceProvider);
         _rootDescriptor = _binder.GetDescriptor(typeof(Settings));
         _observer = new ObjectObserver(HandleSettingsChanges);
+    }
+
+    public Task InitializeAsync()
+    {
+        RunMigrations();
+
+        _storage = JsonSettingsStorage.Load(_filePath, _loggerFactory.CreateLogger<JsonSettingsStorage>());
+        PatchSettings();
+        StartObserveSettings();
+
+        return Task.CompletedTask;
     }
 
     private void HandleSettingsChanges(in ObjectObserverChangedEventArgs e)
     {
         _binder.WriteObservedPath(Storage, _rootDescriptor, e.Path, e.Value);
+    }
+
+    private void RunMigrations()
+    {
+        try
+        {
+            var migrations = typeof(SettingsEngine).Assembly.GetTypes()
+                .Where(t => typeof(SettingsMigration).IsAssignableFrom(t) && !t.IsAbstract)
+                .Select(Activator.CreateInstance)
+                .Cast<SettingsMigration>();
+
+            var migrator = new SettingsMigrator(
+                _filePath,
+                migrations,
+                _loggerFactory.CreateLogger<SettingsMigrator>(),
+                ValidateMigratedSettings);
+            migrator.Migrate();
+        }
+        catch (Exception ex)
+        {
+            _loggerFactory.CreateLogger("SettingsMigration").LogError(ex, "Error running settings migrations");
+            throw;
+        }
+    }
+
+    private void ValidateMigratedSettings(JsonObject root)
+    {
+        var binder = new SettingsPatchBinder(_serviceProvider);
+        binder.Patch(root, new Settings(_serviceProvider));
+
+        var failures = binder.Diagnostics
+            .AsValueEnumerable()
+            .Where(static diagnostic => diagnostic.Severity != SettingsEngineDiagnosticSeverity.Info)
+            .Select(static diagnostic => $"{diagnostic.Kind} at '{diagnostic.Path}'")
+            .ToList();
+
+        if (failures.Count > 0)
+        {
+            throw new InvalidDataException($"Migrated settings failed validation: {string.Join("; ", failures)}");
+        }
     }
 
     /// <summary>
@@ -76,18 +135,4 @@ public sealed class SettingsEngine : IDisposable
     /// Starts observing the runtime settings object for changes and writing them to the JSON document.
     /// </summary>
     private void StartObserveSettings() => _observer.Observe(Settings);
-
-    /// <summary>
-    /// Forces pending JSON document changes to disk.
-    /// </summary>
-    public Task FlushAsync(CancellationToken cancellationToken = default) => Storage.FlushAsync(cancellationToken);
-
-    /// <summary>
-    /// Disposes the underlying JSON document store and save loop.
-    /// </summary>
-    public void Dispose()
-    {
-        Storage.Dispose();
-        _observer.Dispose();
-    }
 }

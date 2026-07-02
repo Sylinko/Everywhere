@@ -1,4 +1,5 @@
-﻿using Everywhere.AI;
+﻿using System.Runtime.Versioning;
+using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
@@ -6,7 +7,9 @@ using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
+using Everywhere.Configuration.Engine;
 using Everywhere.Database;
+using Everywhere.Initialization;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -33,6 +36,26 @@ public static class ServiceExtensions
 #endif
                 .AddSerilog(dispose: true)
                 .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning));
+
+
+#if WINDOWS
+        [SupportedOSPlatform("windows")]
+#endif
+        public IServiceCollection AddSettings() =>
+            services
+                .AddSingleton<Settings>()
+                .AddTransient<IAsyncInitializer, SettingsEngine>()
+                .AddTransient<SoftwareUpdateControl>()
+#if WINDOWS
+                .AddTransient<RestartAsAdministratorControl>()
+#endif
+                .AddTransient<OpenWebBrowserControl>()
+                .AddTransient<DebugFeaturesControl>()
+                .AddSingleton<PersistentKeyValueStorage>()
+                .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+                .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+                .AddSingleton<PersistentState>()
+                .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 
         public IServiceCollection AddAvaloniaBasicServices()
         {

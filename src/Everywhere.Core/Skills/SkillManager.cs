@@ -18,7 +18,7 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
 {
     public IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 1;
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 2;
 
     private readonly PersistentState _persistentState;
     private readonly SkillSource _skillSource;

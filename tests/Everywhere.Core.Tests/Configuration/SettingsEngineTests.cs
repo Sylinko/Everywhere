@@ -6,6 +6,7 @@ using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
+using Everywhere.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using SettingsDescriptorProviderFactory = Everywhere.Configuration.Engine.SettingsDescriptorProviderFactory;
@@ -15,13 +16,48 @@ namespace Everywhere.Core.Tests.Configuration;
 public sealed class SettingsEngineTests
 {
     [Test]
-    public void Load_EmptyDocumentInitializesRealSettingsRoot()
+    public async Task InitializeAsync_PatchesExistingSettingsRoot()
     {
-        using var file = TestSettingsFile("{}");
-        using var engine = SettingsEngine.Load(file.Path, new ServiceCollection().BuildServiceProvider(), NullLoggerFactory.Instance);
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "99.0.0",
+              "Common": {
+                "IsStatisticsEnabled": false
+              }
+            }
+            """);
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var settings = new Settings(serviceProvider);
+        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await engine.InitializeAsync();
 
-        Assert.That(engine.Settings, Is.Not.Null);
+        Assert.That(engine.Settings, Is.SameAs(settings));
+        Assert.That(settings.Version, Is.EqualTo("99.0.0"));
+        Assert.That(settings.Common.IsStatisticsEnabled, Is.False);
         Assert.That(engine.Diagnostics, Is.Empty);
+    }
+
+    [Test]
+    public void AddSettings_RegistersRuntimeSettingsAndInitializerOrder()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Pass("AddSettings registers Windows-only settings controls in Windows builds.");
+            return;
+        }
+
+        using var serviceProvider = new ServiceCollection()
+            .AddLogging()
+            .AddSettings()
+            .BuildServiceProvider();
+
+        Assert.That(serviceProvider.GetRequiredService<Settings>(), Is.Not.Null);
+        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<SettingsEngine>());
+
+        var initializers = serviceProvider.GetServices<IAsyncInitializer>().ToList();
+        Assert.That(initializers.OfType<SettingsEngine>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings));
+        Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings + 1));
     }
 
     [Test]

@@ -17,6 +17,24 @@ Acceptance criteria:
 2. SettingsEngine does not depend on string-only configuration leaves
 3. `ColoredIcon` is selected as the serialized subtree test case
 
+## 1.1. Phase 0.5: Startup Lifecycle
+
+Tasks:
+
+1. register `Settings` directly as a singleton
+2. register `SettingsEngine` only as a transient `IAsyncInitializer`
+3. move settings migration, JSON load, patch, and observe into `SettingsEngine.InitializeAsync`
+4. make `AsyncInitializerIndex.Settings` the settings initialization phase
+5. move `PersistentKeyValueStorage` and dependent initializers after the settings phase
+6. audit initializer constructors so they do not read final settings values before `InitializeAsync`
+
+Acceptance criteria:
+
+1. `AddSettings()` performs registration only
+2. existing services can receive the singleton `Settings` object before it is patched
+3. settings values are read and subscribed to only after SettingsEngine has patched the object
+4. SettingsEngine is not a business-facing injected service
+
 ## 2. Phase 1: Attributes and Core Contracts
 
 Tasks:
@@ -114,7 +132,7 @@ Tasks:
 2. use hard-coded paths for known obsolete assistant fields
 3. simplify legacy ARGB color objects to `SerializableColor` strings
 4. remove obsolete assistant root generation options
-5. validate cleaned JSON with SettingsEngine before writing
+5. validate cleaned JSON during SettingsEngine initialization before writing
 6. keep backup and atomic write semantics
 
 Acceptance criteria:
@@ -130,7 +148,7 @@ Tasks:
 
 1. remove `IConfiguration` registration for settings
 2. remove `WritableJsonConfiguration` as the core settings source
-3. update `SettingsInitializer` to use Settings Engine
+3. update `SettingsExtensions.AddSettings()` to register `Settings` and the SettingsEngine initializer
 4. update call sites that used keyed `IConfiguration`
 5. keep no write path through `IConfiguration`
 
@@ -162,7 +180,7 @@ Required tests:
 Deferred to later projects:
 
 1. semantic cloud-sync merge
-2. prompt manager migration integration
+2. general feature-migration UI and history
 3. WebDAV/RFC 6578 sync
 4. settings history UI
 5. comment-preserving JSON text edits
