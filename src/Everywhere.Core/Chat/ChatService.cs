@@ -4,6 +4,7 @@ using System.Reactive.Disposables;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
+using Everywhere.AI.Prompts;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -25,6 +26,7 @@ using ZLinq;
 using ChatMessageContent = Microsoft.SemanticKernel.ChatMessageContent;
 using FunctionCallContent = Microsoft.SemanticKernel.FunctionCallContent;
 using FunctionResultContent = Microsoft.SemanticKernel.FunctionResultContent;
+using PromptTemplateRenderer = Everywhere.AI.Prompts.PromptTemplateRenderer;
 
 namespace Everywhere.Chat;
 
@@ -36,6 +38,7 @@ public sealed partial class ChatService : IChatService
     private readonly IBlobStorage _blobStorage;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
+    private readonly IAssistantPromptResolver _assistantPromptResolver;
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
     private readonly ILogger<ChatService> _logger;
@@ -60,6 +63,7 @@ public sealed partial class ChatService : IChatService
         IBlobStorage blobStorage,
         Settings settings,
         PersistentState persistentState,
+        IAssistantPromptResolver assistantPromptResolver,
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
         ILogger<ChatService> logger)
@@ -70,6 +74,7 @@ public sealed partial class ChatService : IChatService
         _blobStorage = blobStorage;
         _settings = settings;
         _persistentState = persistentState;
+        _assistantPromptResolver = assistantPromptResolver;
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
         _logger = logger;
@@ -457,11 +462,13 @@ public sealed partial class ChatService : IChatService
             var promptVariables = chatContext.GetPromptVariables();
             promptVariables["SkillsPrompt"] = _skillPromptProvider.GetPrompt;
             var promptRenderer = new ScopedPromptRenderer(promptVariables);
-            var promptTemplate = systemPromptOverride ??
-                (assistant is ISystemPromptProvider { SystemPrompt: { Length: > 0 } providedSystemPrompt } ?
-                    providedSystemPrompt :
-                    Prompts.DefaultSystemPrompt);
-            var systemPrompt = promptRenderer.RenderSystemPrompt(promptTemplate);
+            var promptResolution = await _assistantPromptResolver.ResolveSystemPromptAsync(
+                assistant,
+                systemPromptOverride,
+                cancellationToken);
+            activity?.SetTag("prompt.id", promptResolution.PromptId?.ToString("D") ?? "override");
+            activity?.SetTag("prompt.fallback", promptResolution.UsedFallback);
+            var systemPrompt = promptRenderer.RenderSystemPrompt(promptResolution.Template);
 
             while (true)
             {
@@ -1167,11 +1174,11 @@ public sealed partial class ChatService : IChatService
             {
                 new ChatMessageContent(
                     AuthorRole.System,
-                    Prompts.TitleGeneratorSystemPrompt),
+                    DefaultPrompts.TitleGeneratorSystemPrompt),
                 new ChatMessageContent(
                     AuthorRole.User,
                     ScopedPromptRenderer.RenderPrompt(
-                        Prompts.TitleGeneratorUserPrompt,
+                        DefaultPrompts.TitleGeneratorUserPrompt,
                         key => key switch
                         {
                             "UserMessage" => userMessage.SafeSubstring(0, 2048),

@@ -1,10 +1,24 @@
 ﻿namespace Everywhere.AI;
 
 /// <summary>
-/// Contains predefined prompt strings for AI interactions.
+/// Contains the built-in prompt texts that ship with the application.
 /// </summary>
-public static class Prompts
+/// <remarks>
+/// These prompts are source-controlled product defaults, not user-managed Prompt Manager
+/// resources. User prompts can reference <see cref="DefaultSystemPrompt"/> through
+/// <c>{DefaultSystemPrompt}</c>, but the default prompt itself remains virtual and is not stored
+/// in <c>prompt.db</c>.
+/// </remarks>
+public static class DefaultPrompts
 {
+    /// <summary>
+    /// Base system prompt used when an assistant does not provide a custom prompt.
+    /// </summary>
+    /// <remarks>
+    /// Keep skill/tool instructions centralized by leaving the <c>{SkillsPrompt}</c> placeholder in
+    /// this prompt. Custom prompts that include <c>{DefaultSystemPrompt}</c> inherit those
+    /// instructions without duplicating them.
+    /// </remarks>
     public const string DefaultSystemPrompt =
         """
         You are a helpful assistant named "Everywhere", a precise and contextual digital assistant.
@@ -35,7 +49,7 @@ public static class Prompts
         </FunctionCallingInstructions>
         """;
 
-    // from: https://github.com/lobehub/lobe-chat/blob/main/src/chains/summaryTitle.ts#L4
+    // Source inspiration: https://github.com/lobehub/lobe-chat/blob/main/src/chains/summaryTitle.ts#L4
     public const string TitleGeneratorSystemPrompt = "You are a conversation assistant named Everywhere.";
 
     public const string TitleGeneratorUserPrompt =

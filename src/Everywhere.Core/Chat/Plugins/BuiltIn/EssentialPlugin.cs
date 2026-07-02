@@ -103,8 +103,8 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         };
         var systemPrompt = specializations switch
         {
-            ModelSpecializations.ImageUnderstanding => Prompts.ImageUnderstandingSystemPrompt,
-            _ => Prompts.DefaultSystemPrompt
+            ModelSpecializations.ImageUnderstanding => DefaultPrompts.ImageUnderstandingSystemPrompt,
+            _ => DefaultPrompts.DefaultSystemPrompt
         };
 
         await chatService.GenerateAsync(

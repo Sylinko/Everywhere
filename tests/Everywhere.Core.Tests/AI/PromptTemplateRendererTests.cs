@@ -1,5 +1,6 @@
 using Everywhere.AI;
-using Everywhere.Chat;
+using Everywhere.AI.Prompts;
+using PromptTemplateRenderer = Everywhere.AI.Prompts.PromptTemplateRenderer;
 
 namespace Everywhere.Core.Tests.AI;
 
@@ -23,13 +24,13 @@ public class PromptTemplateRendererTests
 
     // Resolver mimicking ChatContext.GetPromptVariables() + the new DefaultSystemPrompt variable.
     private static Func<string, string?> DefaultPromptResolver() => Resolver(Map(
-        ("DefaultSystemPrompt", Prompts.DefaultSystemPrompt),
+        ("DefaultSystemPrompt", DefaultPrompts.DefaultSystemPrompt),
         ("OS", "Windows"),
         ("Date", "Monday"),
         ("SystemLanguage", "English"),
         ("WorkingDirectory", "C:/wd")));
 
-    private static string ResolvedDefault() => Prompts.DefaultSystemPrompt
+    private static string ResolvedDefault() => DefaultPrompts.DefaultSystemPrompt
         .Replace("{OS}", "Windows")
         .Replace("{Date}", "Monday")
         .Replace("{SystemLanguage}", "English")
@@ -136,7 +137,7 @@ public class PromptTemplateRendererTests
         // The title generation resolver only knows {UserMessage}/{SystemLanguage}; a user-typed {Date}
         // inside the message must stay literal even under recursion (returns null -> left as-is).
         var resolver = Resolver(Map(("UserMessage", "hi {Date}"), ("SystemLanguage", "English")));
-        var result = PromptTemplateRenderer.Render(Prompts.TitleGeneratorUserPrompt, resolver);
+        var result = PromptTemplateRenderer.Render(DefaultPrompts.TitleGeneratorUserPrompt, resolver);
         Assert.Multiple(() =>
         {
             Assert.That(result, Does.Contain("hi {Date}"));   // inner unknown placeholder preserved

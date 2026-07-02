@@ -39,6 +39,42 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
+    public async Task InitializeAsync_RunsPureSettingsMigrationsWithoutPromptDatabaseServices()
+    {
+        using var file = TestSettingsFile(
+            """
+            {
+              "Version": "0.7.0",
+              "Shortcut": {
+                "ChatWindow": {
+                  "Key": "K",
+                  "Modifiers": "Control, Shift"
+                }
+              }
+            }
+            """);
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var settings = new Settings(serviceProvider);
+        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+        await engine.InitializeAsync();
+
+        var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
+        var chatWindow = Require(Require(root["Shortcut"])["ChatWindow"]).AsObject();
+        var main = Require(chatWindow["Main"]).AsObject();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.1-canary.20260629.12"));
+            Assert.That(Require(main["Key"]).GetValue<string>(), Is.EqualTo("K"));
+            Assert.That(Require(main["Modifiers"]).GetValue<string>(), Is.EqualTo("Control, Shift"));
+            Assert.That(chatWindow.ContainsKey("Key"), Is.False);
+            Assert.That(chatWindow.ContainsKey("Modifiers"), Is.False);
+            Assert.That(engine.Diagnostics, Is.Empty);
+        });
+    }
+
+    [Test]
     public void AddSettings_RegistersRuntimeSettingsAndInitializerOrder()
     {
         if (!OperatingSystem.IsWindows())

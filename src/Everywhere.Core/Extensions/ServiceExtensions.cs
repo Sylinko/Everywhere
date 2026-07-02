@@ -1,5 +1,7 @@
 ﻿using System.Runtime.Versioning;
 using Everywhere.AI;
+using Everywhere.AI.Prompts;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
@@ -94,11 +96,22 @@ public static class ServiceExtensions
                     var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
+                // Prompt Manager owns an isolated database. The built-in default prompt is virtual
+                // and is provided by IDefaultPromptProvider rather than inserted into this database.
+                .AddDbContextFactory<PromptDbContext>((_, options) =>
+                {
+                    var dbPath = RuntimeConstants.GetDatabasePath("prompt.db");
+                    options.UseSqlite($"Data Source={dbPath}");
+                })
                 .AddDbContextFactory<StatisticsDbContext>((_, options) =>
                 {
                     var dbPath = RuntimeConstants.GetDatabasePath("statistics.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
+                .AddSingleton<IDefaultPromptProvider, DefaultPromptProvider>()
+                .AddSingleton<IPromptService, PromptService>()
+                .AddSingleton<IAssistantPromptResolver, AssistantPromptResolver>()
+                .AddSingleton<IAssistantPromptReferenceService, AssistantPromptReferenceService>()
                 .AddSingleton<IBlobStorage, BlobStorage>()
                 .AddSingleton<IChatContextStorage, ChatContextStorage>()
                 .AddSingleton<NotificationCenter>()
@@ -107,6 +120,7 @@ public static class ServiceExtensions
                 .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
                 .AddSingleton<IStatisticsService, StatisticsService>()
                 .AddTransient<IAsyncInitializer, ChatDbInitializer>()
+                .AddTransient<IAsyncInitializer, PromptDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsBackfiller>();
 

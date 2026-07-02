@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.AI.Prompts;
 using Everywhere.Views;
 using Lucide.Avalonia;
 
@@ -13,7 +14,7 @@ namespace Everywhere.AI;
 /// Allowing users to define and manage their own custom AI assistants.
 /// </summary>
 [GeneratedSettingsItems]
-public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
+public sealed partial class CustomAssistant : Assistant
 {
     [SettingsItemIgnore]
     public Guid Id { get; set; } = Guid.CreateVersion7();
@@ -44,12 +45,15 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
             CustomAssistant = this
         });
 
+    /// <summary>
+    /// Prompt Manager prompt used as this assistant's active system prompt.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="PromptConstants.DefaultPromptId"/> means "use the built-in default prompt".
+    /// Non-empty IDs point at rows in <c>prompt.db</c>; the prompt body is intentionally no longer
+    /// stored inline with assistant settings.
+    /// </remarks>
     [ObservableProperty]
-    [DynamicLocaleKey(
-        LocaleKey.CustomAssistant_SystemPrompt_Header,
-        LocaleKey.CustomAssistant_SystemPrompt_Description)]
-    [SettingsItem(Classes = ["Ghost"])]
-    [SettingsStringItem(IsMultiline = true, MaxLength = 40960, PlaceholderText = Prompts.DefaultSystemPrompt)]
-    [DefaultValue(null)]
-    public partial string? SystemPrompt { get; set; }
+    [SettingsItemIgnore]
+    public partial Guid SystemPromptId { get; set; } = PromptConstants.DefaultPromptId;
 }

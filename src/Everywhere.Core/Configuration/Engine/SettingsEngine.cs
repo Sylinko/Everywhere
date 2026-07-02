@@ -1,6 +1,10 @@
 using System.Text.Json.Nodes;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Common;
+using Everywhere.Configuration.Migrations;
 using Everywhere.Utilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZLinq;
 
@@ -90,10 +94,8 @@ public sealed class SettingsEngine : IAsyncInitializer
     {
         try
         {
-            var migrations = typeof(SettingsEngine).Assembly.GetTypes()
-                .Where(t => typeof(SettingsMigration).IsAssignableFrom(t) && !t.IsAbstract)
-                .Select(Activator.CreateInstance)
-                .Cast<SettingsMigration>();
+            using var migrationProvider = BuildMigrationProvider();
+            var migrations = migrationProvider.GetServices<SettingsMigration>();
 
             var migrator = new SettingsMigrator(
                 _filePath,
@@ -107,6 +109,32 @@ public sealed class SettingsEngine : IAsyncInitializer
             _loggerFactory.CreateLogger("SettingsMigration").LogError(ex, "Error running settings migrations");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Builds a short-lived container that owns only settings migration construction.
+    /// </summary>
+    /// <remarks>
+    /// Migrations are registered explicitly so they stay strongly referenced and trim-friendly.
+    /// The application root provider supplies only already-registered infrastructure dependencies;
+    /// migrations themselves are not added to the application-wide DI graph.
+    /// </remarks>
+    private ServiceProvider BuildMigrationProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(_loggerFactory);
+        services.AddLogging();
+
+        services.AddTransient<SettingsMigration, _20260103124001_0_5_6>();
+        services.AddTransient<SettingsMigration, _20260106195452_0_5_9>();
+        services.AddTransient<SettingsMigration, _20260106195452_0_6_6>();
+        services.AddTransient<SettingsMigration, _20260208160256_0_7_0>();
+        services.AddTransient<SettingsMigration, _20260614154350_0_8_0>();
+        services.AddTransient<SettingsMigration, _20260629120000_0_8_1_canary_20260629_12>();
+        services.AddSingleton(_serviceProvider.GetRequiredService<IDbContextFactory<PromptDbContext>>());
+        services.AddTransient<SettingsMigration, _20260702120000_0_8_1_canary_20260702_12>();
+
+        return services.BuildServiceProvider();
     }
 
     private void ValidateMigratedSettings(JsonObject root)
