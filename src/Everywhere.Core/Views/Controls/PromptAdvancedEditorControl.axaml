@@ -1,0 +1,97 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels">
+  <ControlTheme
+    x:Key="{x:Type v:PromptAdvancedEditorControl}"
+    TargetType="v:PromptAdvancedEditorControl">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer
+          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+          <StackPanel Spacing="8">
+            <StackPanel Spacing="6">
+              <StackPanel
+                Orientation="Horizontal" Spacing="6">
+                <LucideIcon
+                  Foreground="{DynamicResource SecondaryForegroundColor}"
+                  Kind="TextInitial" Size="14"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.PromptEditor_NameLabel}}"/>
+              </StackPanel>
+              <TextBox
+                Classes="Clearable" CornerRadius="6"
+                PlaceholderText="{I18N {x:Static LocaleKey.PromptEditor_NamePlaceholder}}"
+                Text="{Binding PromptName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource TemplatedParent}}"/>
+            </StackPanel>
+
+            <StackPanel
+              Margin="0,4,0,0" Spacing="6">
+              <StackPanel
+                Orientation="Horizontal" Spacing="6">
+                <LucideIcon
+                  Foreground="{DynamicResource SecondaryForegroundColor}"
+                  Kind="Pencil" Size="14"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.PromptEditor_TemplateLabel}}"/>
+              </StackPanel>
+              <v:PromptTemplateEditor
+                MinHeight="460" Padding="8"
+                FontFamily="{StaticResource MonospaceFontFamily}"
+                Text="{Binding PromptText, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                <Interaction.Behaviors>
+                  <shadui:SwallowBringIntoViewEventBehavior/>
+                </Interaction.Behaviors>
+              </v:PromptTemplateEditor>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+              <StackPanel
+                Orientation="Horizontal" Spacing="6">
+                <LucideIcon
+                  Foreground="{DynamicResource SecondaryForegroundColor}"
+                  Kind="FileText" Size="14"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{I18N {x:Static LocaleKey.PromptEditor_PlaceholderReferencesTitle}}"/>
+              </StackPanel>
+              <ItemsControl ItemsSource="{Binding PlaceholderReferences, RelativeSource={RelativeSource TemplatedParent}}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="6"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:PromptPlaceholderReferenceItem">
+                    <Grid
+                      ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                      <Button
+                        Classes="Ghost" Padding="0"
+                        Command="{Binding CopyToClipboard}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.PromptEditor_CopyToClipboardButton_ToolTip}}">
+                        <TextBlock
+                          Classes="Caption"
+                          FontFamily="{StaticResource MonospaceFontFamily}"
+                          FontWeight="SemiBold"
+                          Foreground="{Binding PlaceholderBrush}"
+                          Text="{Binding PlaceholderText}"/>
+                      </Button>
+
+                      <TextBlock
+                        Classes="Muted Caption" Grid.Column="1"
+                        Text="{Binding DescriptionKey^}"
+                        TextWrapping="Wrap"/>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

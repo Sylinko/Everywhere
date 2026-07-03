@@ -630,7 +630,7 @@
         <value>用於 API 調用的模型標識，例如 gpt-4o。</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>聊天工具</value>
+        <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>聊天插件包括內置插件和 MCP 插件。支援工具呼叫的 LLMs 會在適當時使用這些插件（例如搜尋網頁或存取本地檔案），以獲得更強大的功能。</value>
@@ -3050,10 +3050,10 @@
         <value>版本</value>
     </data>
     <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Skills 已重新掃描。</value>
+        <value>技能已重新掃描。</value>
     </data>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
-        <value>無法重新掃描 Skills。</value>
+        <value>無法重新掃描技能。</value>
     </data>
     <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
         <value>無法打開文件位置。</value>

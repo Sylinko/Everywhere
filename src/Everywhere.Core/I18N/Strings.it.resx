@@ -630,7 +630,7 @@
         <value>Identificatore del modello per le chiamate API, ad esempio gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Strumenti Di Chat</value>
+        <value>Strumenti</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>I plugin di chat includono plugin integrati e plugin MCP. Gli LLM che supportano le chiamate agli strumenti utilizzeranno questi plugin nei momenti appropriati (come la ricerca sul web o l'accesso ai file locali) per ottenere funzionalità più potenti.</value>

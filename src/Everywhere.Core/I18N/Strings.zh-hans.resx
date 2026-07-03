@@ -630,7 +630,7 @@
         <value>用于 API 调用的模型标识，例如 gpt-4o。</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>聊天工具</value>
+        <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>聊天插件包括内置插件和 MCP 插件，支持工具调用的大语言模型 (LLMs) 会在合适的时机使用这些插件 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
@@ -1786,7 +1786,7 @@
         <value>提示词</value>
     </data>
     <data name="AssistantPromptSettings_Description" xml:space="preserve">
-        <value>选择此助手作为系统提示词使用的提示词。</value>
+        <value>选择此助手使用的提示词。</value>
     </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>添加 API 密钥</value>
@@ -2961,34 +2961,34 @@
         <value>对于后续的每个令牌，仅从排名前 K 的选项中进行采样。</value>
     </data>
     <data name="SkillPage_Title" xml:space="preserve">
-        <value>Skills</value>
+        <value>技能</value>
     </data>
     <data name="SkillPage_Description" xml:space="preserve">
-        <value>管理和配置 Everywhere 可以使用的 Skills。</value>
+        <value>管理和配置 Everywhere 可以使用的技能。</value>
     </data>
     <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
-        <value>重新扫描 Skills</value>
+        <value>重新扫描技能</value>
     </data>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>全部来源</value>
     </data>
     <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
-        <value>搜索 Skills...</value>
+        <value>搜索技能...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
         <value>清空搜索</value>
     </data>
     <data name="SkillPage_CountText" xml:space="preserve">
-        <value>共 {0} 个 Skill</value>
+        <value>共 {0} 个技能</value>
     </data>
     <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
         <value>启用或禁用此 Skill。这只会影响 Everywhere 自身的行为。</value>
     </data>
     <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
-        <value>没有匹配的 Skills</value>
+        <value>没有匹配的技能</value>
     </data>
     <data name="SkillPage_NoSkillsFound" xml:space="preserve">
-        <value>没有找到 Skills</value>
+        <value>没有找到技能</value>
     </data>
     <data name="SkillPage_OpenButton_Content" xml:space="preserve">
         <value>打开</value>
@@ -3000,7 +3000,7 @@
         <value>打开来源文件夹</value>
     </data>
     <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
-        <value>此来源中没有 Skills。打开文件夹即可添加。</value>
+        <value>此来源中没有技能。打开文件夹即可添加。</value>
     </data>
     <data name="SkillPage_Status_Enabled" xml:space="preserve">
         <value>已启用</value>
@@ -3063,10 +3063,10 @@
         <value>版本</value>
     </data>
     <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Skills 已重新扫描。</value>
+        <value>技能已重新扫描。</value>
     </data>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
-        <value>无法重新扫描 Skills。</value>
+        <value>无法重新扫描技能。</value>
     </data>
     <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
         <value>无法打开文件位置。</value>
@@ -3186,7 +3186,7 @@
         <value>内置工具</value>
     </data>
     <data name="HomePage_Skills" xml:space="preserve">
-        <value>Skills</value>
+        <value>技能</value>
     </data>
     <data name="HomePage_QuickConfiguration" xml:space="preserve">
         <value>快速配置</value>
@@ -3288,7 +3288,7 @@
         <value>{0} 个提示词</value>
     </data>
     <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
-        <value>默认系统提示词</value>
+        <value>默认提示词</value>
     </data>
     <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
         <value>未命名提示词</value>
@@ -3355,10 +3355,10 @@
         <value>复制失败</value>
     </data>
     <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
-        <value>提示词导航</value>
+        <value>无法打开提示词</value>
     </data>
     <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
-        <value>路由中的提示词 ID 无效：{0}</value>
+        <value>提示词链接无效：{0}</value>
     </data>
     <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
         <value>找不到提示词：{0}</value>
@@ -3379,7 +3379,7 @@
         <value>保存</value>
     </data>
     <data name="PromptEditor_NameLabel" xml:space="preserve">
-        <value>名称</value>
+        <value>名称（仅用于区分）</value>
     </data>
     <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
         <value>可选</value>
@@ -3388,13 +3388,13 @@
         <value>提示词内容</value>
     </data>
     <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
-        <value>占位符</value>
+        <value>可用占位符</value>
     </data>
     <data name="PromptEditor_PreviewLabel" xml:space="preserve">
         <value>预览</value>
     </data>
     <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
-        <value>提示词编辑器</value>
+        <value>无法编辑提示词</value>
     </data>
     <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
         <value>该提示词不存在或不可编辑。</value>
@@ -3406,7 +3406,7 @@
         <value>Everywhere 默认系统说明</value>
     </data>
     <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
-        <value>已启用技能说明</value>
+        <value>已启用技能的指导</value>
     </data>
     <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
         <value>当前日期</value>
@@ -3430,30 +3430,198 @@
         <value>未知占位符：{0}。</value>
     </data>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
-        <value>此提示词未包含技能说明。</value>
+        <value>此提示词既没有包含 {DefaultSystemPrompt}，也没有包含 {SkillsPrompt}，因此助手可能无法正确使用技能。</value>
     </data>
     <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
         <value>缺少 {Date}，提示词可能缺少时效性上下文。</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
-        <value>{Time} 精确到秒，可能会影响缓存命中率。如非必要，请使用 {Date}。</value>
+        <value>{Time} 精确到秒，可能会降低缓存命中率，提高使用成本。如非必要，请使用 {Date}。</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>找不到提示词：{0}。将改用默认提示词。</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
-        <value>自定义</value>
+        <value>手动创建</value>
     </data>
     <data name="PromptSource_Guided" xml:space="preserve">
-        <value>向导</value>
+        <value>引导创建</value>
     </data>
     <data name="PromptSource_Copy" xml:space="preserve">
-        <value>副本</value>
+        <value>复制创建</value>
     </data>
     <data name="PromptSource_Migration" xml:space="preserve">
-        <value>迁移</value>
+        <value>从旧设置迁移</value>
     </data>
     <data name="PromptSource_Import" xml:space="preserve">
-        <value>导入</value>
+        <value>导入创建</value>
     </data>
     <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
-        <value>点击复制</value>
+        <value>复制占位符</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>快速配置会根据几个选择生成一份可用的提示词。</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>高级编辑可以直接控制完整提示词内容。</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>切换到高级编辑</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>返回快速配置</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>人设</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>希望助手如何称呼你？</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>可选</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>工作场景（最多 3 个）</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>最多选择 3 个场景。</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>语气风格</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>回答详略</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>组织方式</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>额外要求</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>补充此提示词需要遵守的限制、参考资料或偏好。</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>实时预览</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>预览会实时渲染当前日期、时间等占位符内容。</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>放弃高级编辑内容？</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>返回快速配置会根据当前选择重新生成提示词内容，并放弃手动编辑。</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>放弃编辑</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 通用助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 专业顾问</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 编程助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ 写作编辑</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 翻译助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 研究助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 学习导师</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 产品与策略伙伴</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>通用问答</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>编程开发</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>代码审查</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>写作编辑</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>数据分析</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>学习教育</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>翻译语言</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>产品规划</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>问题排查</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>研究规划</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>专业严谨</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>友好耐心</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>简洁直接</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>启发式引导</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>正式商务</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>创意探索</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>简短</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>均衡</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>详细</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>结构化（推荐）</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>结论先行</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>步骤说明</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>要点列表</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>对比选项</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>示例优先</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>自然对话</value>
     </data>
 </root>

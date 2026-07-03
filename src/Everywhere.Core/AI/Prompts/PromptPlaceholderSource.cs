@@ -126,6 +126,9 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
             .Select(static placeholder => CreateDescriptor(placeholder))
             .ToDictionary(static descriptor => descriptor.Name, StringComparer.Ordinal);
 
+    private static readonly IReadOnlyList<PromptPlaceholderToken> DefaultSystemPromptPlaceholders =
+        PromptTemplateParser.ParsePlaceholders(DefaultPrompts.DefaultSystemPrompt);
+
     public static SystemPromptPlaceholderSource Instance { get; } = new();
 
     public IReadOnlyList<PromptPlaceholderDefinition> Definitions { get; } =
@@ -160,9 +163,10 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
     {
         var hasDefaultSystemPrompt = Contains(context.Placeholders, DefaultSystemPromptName);
         var hasSkillsPrompt = Contains(context.Placeholders, SkillsPromptName);
-        var hasDate = Contains(context.Placeholders, DateName);
+        var hasDate = ContainsEffective(context.Placeholders, hasDefaultSystemPrompt, DateName);
         var timeToken = First(context.Placeholders, TimeName);
-        var hasTime = timeToken is not null;
+        var hasTime = timeToken is not null ||
+            ContainsEffective(context.Placeholders, hasDefaultSystemPrompt, TimeName);
 
         if (!hasDate && !hasTime)
         {
@@ -174,14 +178,14 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
                     ActionId: "insert-date"));
         }
 
-        if (!hasDate && timeToken is not null)
+        if (!hasDate && hasTime)
         {
             diagnostics.Add(
                 new PromptDiagnostic(
                     PromptDiagnosticCode.TimeMayReduceCacheHitRate,
                     PromptDiagnosticSeverity.Warning,
                     new DynamicLocaleKey(LocaleKey.PromptDiagnostic_TimeMayReduceCacheHitRate),
-                    timeToken.Value.Span,
+                    timeToken?.Span,
                     "replace-time-with-date"));
         }
 
@@ -200,6 +204,13 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
 
     private static bool Contains(IReadOnlyList<PromptPlaceholderToken> placeholders, string name) =>
         placeholders.AsValueEnumerable().Any(placeholder => StringComparer.Ordinal.Equals(placeholder.Name, name));
+
+    private static bool ContainsEffective(
+        IReadOnlyList<PromptPlaceholderToken> placeholders,
+        bool hasDefaultSystemPrompt,
+        string name) =>
+        Contains(placeholders, name) ||
+        hasDefaultSystemPrompt && Contains(DefaultSystemPromptPlaceholders, name);
 
     private static PromptPlaceholderToken? First(IReadOnlyList<PromptPlaceholderToken> placeholders, string name)
     {

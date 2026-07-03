@@ -630,7 +630,7 @@
         <value>API 호출에 사용할 모델 식별자입니다. 예: gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>채팅 도구</value>
+        <value></value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>채팅 플러그인은 내장 플러그인과 MCP 플러그인을 포함합니다. 도구 호출을 지원하는 LLM은 적절한 시점에 이러한 플러그인을 사용하여 더 강력한 기능을 제공합니다 (예: 웹 검색 또는 로컬 파일 접근).</value>

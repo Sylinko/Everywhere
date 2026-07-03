@@ -123,7 +123,7 @@
     <shadui:NavigationView.Header>
       <Grid
         Height="36" Margin="0,14,0,14"
-        ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+        ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8"
         IsVisible="{Binding SelectedPromptItem, Converter={x:Static ObjectConverters.IsNotNull}}">
         <StackPanel
           Grid.Column="0" VerticalAlignment="Center"
@@ -150,27 +150,25 @@
           Content="{I18N {x:Static LocaleKey.Common_Copy}}"
           CornerRadius="{DynamicResource FullCornerRadius}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_CopyRenderedButton_ToolTip}}"/>
-
-        <shadui:ButtonGroup
-          Grid.Column="2"
+        <Button
+          Classes="Secondary" Grid.Column="2"
+          VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
+          Command="{Binding EditSelectedPromptCommand}"
+          Content="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_Content}}"
           CornerRadius="{DynamicResource FullCornerRadius}"
-          Orientation="Horizontal">
-          <Button
-            Classes="Secondary" VerticalAlignment="Center"
-            shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
-            Command="{Binding EditSelectedPromptCommand}"
-            Content="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_Content}}"
-            IsEnabled="{Binding CanEditSelectedPrompt}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_ToolTip}}"/>
-          <Button
-            Classes="Secondary" VerticalAlignment="Center"
-            shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
-            Command="{Binding DeleteSelectedPromptCommand}"
-            Content="{I18N {x:Static LocaleKey.Common_Delete}}"
-            Foreground="{DynamicResource DestructiveColor}"
-            IsEnabled="{Binding CanDeleteSelectedPrompt}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_DeletePromptButton_ToolTip}}"/>
-        </shadui:ButtonGroup>
+          IsEnabled="{Binding CanEditSelectedPrompt}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_ToolTip}}"/>
+        <Button
+          Classes="Secondary" Grid.Column="3"
+          VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+          Command="{Binding DeleteSelectedPromptCommand}"
+          Content="{I18N {x:Static LocaleKey.Common_Delete}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          Foreground="{DynamicResource DestructiveColor}"
+          IsEnabled="{Binding CanDeleteSelectedPrompt}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_DeletePromptButton_ToolTip}}"/>
       </Grid>
     </shadui:NavigationView.Header>
 

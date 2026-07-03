@@ -57,6 +57,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconPresenter.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/PromptAdvancedEditorControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/PromptTemplateEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceSummaryView.axaml"/>

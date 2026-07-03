@@ -630,7 +630,7 @@
         <value>Идентификатор модели для вызова API, например, gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Чат Плагины</value>
+        <value></value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Чат-плагины включают встроенные плагины и MCP-плагины. LLM, поддерживающие вызовы инструментов, будут использовать эти плагины в подходящее время (например, для поиска в интернете или доступа к локальным файлам), чтобы получить более мощные функции.</value>

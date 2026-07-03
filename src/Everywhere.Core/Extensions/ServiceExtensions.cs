@@ -76,7 +76,7 @@ public static class ServiceExtensions
                 .AddSingleton<PromptPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, PromptPage>()
                 .AddTransient<PromptEditorViewModel>()
-                .AddTransient<PromptEditorView>()
+                .AddTransient<PromptEditorPage>()
                 .AddSingleton<ChatPluginPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
                 .AddSingleton<SkillPageViewModel>()

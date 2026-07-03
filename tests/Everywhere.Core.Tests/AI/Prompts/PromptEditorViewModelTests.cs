@@ -4,75 +4,200 @@ using Everywhere.Messages;
 using Everywhere.Skills;
 using Everywhere.ViewModels;
 using MessagePack;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Everywhere.Core.Tests.AI.Prompts;
 
 public sealed class PromptEditorViewModelTests
 {
     [Test]
-    public async Task SaveCommand_CreateModeCreatesPromptAndNavigatesBackToPrompt()
+    public void ComposeTemplate_IncludesDefaultPromptAndSelectedRecipeSections()
     {
-        var promptService = new TestPromptService();
-        var viewModel = new PromptEditorViewModel(promptService, new TestSkillPromptProvider());
-        using var navigation = new NavigationCapture();
+        var snapshot = PromptRecipeCatalog.CreateDefaultSnapshot();
+        snapshot.PersonaId = "programming";
+        snapshot.ScenarioIds = ["programming-development", "code-review"];
+        snapshot.ToneId = "concise-direct";
+        snapshot.DetailLevelId = "detailed";
+        snapshot.OrganizationId = "step-by-step";
+        snapshot.PreferredUserName = "DearVa";
+        snapshot.AdditionalRequirements = "Prefer concrete examples.";
 
-        viewModel.OpenForCreate();
-        viewModel.Name = "Created prompt";
-        viewModel.Template = "{DefaultSystemPrompt}\n\nCreated body";
-
-        await viewModel.SaveCommand.ExecuteAsync(null);
+        var template = PromptRecipeCatalog.ComposeTemplate(snapshot);
 
         Assert.Multiple(() =>
         {
-            Assert.That(promptService.UserPrompts, Has.Count.EqualTo(1));
-            Assert.That(promptService.UserPrompts[0].Name, Is.EqualTo("Created prompt"));
-            Assert.That(promptService.UserPrompts[0].Template, Does.Contain("Created body"));
-            Assert.That(navigation.Routes.LastOrDefault(), Is.EqualTo(MainViewNavigateMessage.ToPrompt(promptService.UserPrompts[0].Id)));
+            Assert.That(template, Does.Contain("{DefaultSystemPrompt}"));
+            Assert.That(template, Does.Contain("programming assistant"));
+            Assert.That(template, Does.Contain("Programming and development"));
+            Assert.That(template, Does.Contain("Code review"));
+            Assert.That(template, Does.Contain("Be concise and direct."));
+            Assert.That(template, Does.Contain("Use detailed explanations"));
+            Assert.That(template, Does.Contain("Use step-by-step"));
+            Assert.That(template, Does.Contain("DearVa"));
+            Assert.That(template, Does.Contain("Prefer concrete examples."));
         });
     }
 
     [Test]
-    public async Task SaveCommand_EditModeUpdatesPromptAndDetachesGuidedMetadata()
+    public void NormalizeSnapshot_LimitsScenariosToThree()
     {
-        var snapshot = new PromptRecipeSnapshot
+        var snapshot = PromptRecipeCatalog.CreateDefaultSnapshot();
+        snapshot.ScenarioIds =
+        [
+            "general-qa",
+            "programming-development",
+            "code-review",
+            "writing-editing"
+        ];
+
+        var normalized = PromptRecipeCatalog.NormalizeSnapshot(snapshot, detached: false);
+
+        Assert.That(normalized.ScenarioIds, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public async Task SaveCommand_NewQuickPromptCreatesGuidedPrompt()
+    {
+        var promptService = new TestPromptService();
+        var viewModel = CreateViewModel(promptService);
+        using var navigation = new NavigationCapture();
+
+        viewModel.OpenForCreate();
+        viewModel.Name = "Guided prompt";
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var saved = promptService.UserPrompts.Single();
+        var snapshot = MessagePackSerializer.Deserialize<PromptRecipeSnapshot>(saved.MetadataPayload!);
+
+        Assert.Multiple(() =>
         {
-            SchemaVersion = 1,
-            PersonaId = "general",
-            IsDetachedFromRecipe = false
-        };
-        var metadata = MessagePackSerializer.Serialize(snapshot);
+            Assert.That(viewModel.IsQuickMode, Is.True);
+            Assert.That(saved.Name, Is.EqualTo("Guided prompt"));
+            Assert.That(saved.Source, Is.EqualTo(PromptSource.Guided));
+            Assert.That(saved.Template, Does.Contain("{DefaultSystemPrompt}"));
+            Assert.That(snapshot.IsDetachedFromRecipe, Is.False);
+            Assert.That(navigation.Routes.LastOrDefault(), Is.EqualTo(MainViewNavigateMessage.ToPrompt(saved.Id)));
+        });
+    }
+
+    [Test]
+    public async Task SaveCommand_NewAdvancedPromptDetachesGuidedMetadata()
+    {
+        var promptService = new TestPromptService();
+        var viewModel = CreateViewModel(promptService);
+        using var navigation = new NavigationCapture();
+
+        viewModel.OpenForCreate();
+        viewModel.SwitchToAdvancedCommand.Execute(null);
+        viewModel.Template += "\n\n# Manual Edit\nUse short examples.";
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var saved = promptService.UserPrompts.Single();
+        var snapshot = MessagePackSerializer.Deserialize<PromptRecipeSnapshot>(saved.MetadataPayload!);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsAdvancedMode, Is.True);
+            Assert.That(saved.Source, Is.EqualTo(PromptSource.Guided));
+            Assert.That(saved.Template, Does.Contain("Manual Edit"));
+            Assert.That(snapshot.IsDetachedFromRecipe, Is.True);
+            Assert.That(navigation.Routes.LastOrDefault(), Is.EqualTo(MainViewNavigateMessage.ToPrompt(saved.Id)));
+        });
+    }
+
+    [Test]
+    public async Task OpenForEdit_GuidedAttachedPromptUsesQuickModeAndSavesAttached()
+    {
+        var snapshot = PromptRecipeCatalog.CreateDefaultSnapshot();
+        snapshot.PersonaId = "programming";
+        var metadata = MessagePackSerializer.Serialize(PromptRecipeCatalog.NormalizeSnapshot(snapshot, detached: false));
         var prompt = UserPrompt(
-            "Old template",
+            PromptRecipeCatalog.ComposeTemplate(snapshot),
             "Old name",
             PromptSource.Guided,
             metadata);
         var promptService = new TestPromptService(prompt);
-        var viewModel = new PromptEditorViewModel(promptService, new TestSkillPromptProvider());
-        using var navigation = new NavigationCapture();
+        var viewModel = CreateViewModel(promptService);
 
         Assert.That(await viewModel.OpenForEditAsync(prompt.Id), Is.True);
         viewModel.Name = "Updated name";
-        viewModel.Template = "{DefaultSystemPrompt}\n\nUpdated template";
         await viewModel.SaveCommand.ExecuteAsync(null);
 
-        var updatedSnapshot = MessagePackSerializer.Deserialize<PromptRecipeSnapshot>(
+        var savedSnapshot = MessagePackSerializer.Deserialize<PromptRecipeSnapshot>(
             promptService.UserPrompts[0].MetadataPayload!);
 
         Assert.Multiple(() =>
         {
+            Assert.That(viewModel.IsQuickMode, Is.True);
             Assert.That(promptService.UserPrompts[0].Name, Is.EqualTo("Updated name"));
-            Assert.That(promptService.UserPrompts[0].Template, Does.Contain("Updated template"));
-            Assert.That(updatedSnapshot.IsDetachedFromRecipe, Is.True);
-            Assert.That(navigation.Routes.LastOrDefault(), Is.EqualTo(MainViewNavigateMessage.ToPrompt(prompt.Id)));
+            Assert.That(promptService.UserPrompts[0].Source, Is.EqualTo(PromptSource.Guided));
+            Assert.That(savedSnapshot.PersonaId, Is.EqualTo("programming"));
+            Assert.That(savedSnapshot.IsDetachedFromRecipe, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task OpenForEdit_GuidedDetachedPromptStartsAdvancedAndCanReturnToQuick()
+    {
+        var snapshot = PromptRecipeCatalog.CreateDefaultSnapshot();
+        var detachedSnapshot = PromptRecipeCatalog.NormalizeSnapshot(snapshot, detached: true);
+        var prompt = UserPrompt(
+            PromptRecipeCatalog.ComposeTemplate(snapshot),
+            "Detached",
+            PromptSource.Guided,
+            MessagePackSerializer.Serialize(detachedSnapshot));
+        var promptService = new TestPromptService(prompt);
+        var viewModel = CreateViewModel(promptService);
+
+        Assert.That(await viewModel.OpenForEditAsync(prompt.Id), Is.True);
+        Assert.That(viewModel.IsAdvancedMode, Is.True);
+
+        await viewModel.SwitchToQuickCommand.ExecuteAsync(null);
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        var savedSnapshot = MessagePackSerializer.Deserialize<PromptRecipeSnapshot>(
+            promptService.UserPrompts[0].MetadataPayload!);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsQuickMode, Is.True);
+            Assert.That(promptService.UserPrompts[0].Source, Is.EqualTo(PromptSource.Guided));
+            Assert.That(savedSnapshot.IsDetachedFromRecipe, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task SaveCommand_NonGuidedAdvancedEditPreservesOriginalSourceAndMetadata()
+    {
+        var metadata = new byte[] { 1, 2, 3 };
+        var prompt = UserPrompt(
+            "Original template",
+            "Imported",
+            PromptSource.Import,
+            metadata);
+        var promptService = new TestPromptService(prompt);
+        var viewModel = CreateViewModel(promptService);
+
+        Assert.That(await viewModel.OpenForEditAsync(prompt.Id), Is.True);
+        viewModel.Template = "Updated imported template";
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsAdvancedMode, Is.True);
+            Assert.That(promptService.UserPrompts[0].Template, Is.EqualTo("Updated imported template"));
+            Assert.That(promptService.UserPrompts[0].Source, Is.EqualTo(PromptSource.Import));
+            Assert.That(promptService.UserPrompts[0].MetadataPayload, Is.EqualTo(metadata));
         });
     }
 
     [Test]
     public void CanSave_EmptyTemplateIsFalse()
     {
-        var viewModel = new PromptEditorViewModel(new TestPromptService(), new TestSkillPromptProvider());
+        var viewModel = CreateViewModel(new TestPromptService());
 
         viewModel.OpenForCreate();
+        viewModel.SwitchToAdvancedCommand.Execute(null);
         viewModel.Template = "   ";
 
         Assert.Multiple(() =>
@@ -86,7 +211,7 @@ public sealed class PromptEditorViewModelTests
     public async Task CancelCommand_ReturnsToOriginalPromptWhenEditing()
     {
         var prompt = UserPrompt("Template", "Name");
-        var viewModel = new PromptEditorViewModel(new TestPromptService(prompt), new TestSkillPromptProvider());
+        var viewModel = CreateViewModel(new TestPromptService(prompt));
         using var navigation = new NavigationCapture();
 
         Assert.That(await viewModel.OpenForEditAsync(prompt.Id), Is.True);
@@ -107,7 +232,13 @@ public sealed class PromptEditorViewModelTests
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             source,
-            metadataPayload);
+            metadataPayload?.ToArray());
+
+    private static PromptEditorViewModel CreateViewModel(TestPromptService promptService) =>
+        new(
+            promptService,
+            new TestSkillPromptProvider(),
+            NullLogger<PromptEditorViewModel>.Instance);
 
     private sealed class TestPromptService(params PromptDefinition[] prompts) : IPromptService
     {

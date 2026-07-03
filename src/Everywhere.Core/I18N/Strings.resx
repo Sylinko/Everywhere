@@ -630,7 +630,7 @@
         <value>The model identifier for API calls, such as gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Chat Tools</value>
+        <value>Tools</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Chat plugins include built-in plugins and MCP plugins. LLMs that support tool calls will use these plugins at appropriate times (such as searching the web or accessing local files) to gain more powerful functionality.</value>
@@ -1785,7 +1785,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Prompt</value>
     </data>
     <data name="AssistantPromptSettings_Description" xml:space="preserve">
-        <value>Select the prompt this assistant uses as its system prompt.</value>
+        <value>Select the prompt this assistant uses.</value>
     </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>Add API Key</value>
@@ -3287,7 +3287,7 @@ Release date: {2}</value>
         <value>{0} prompts</value>
     </data>
     <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
-        <value>Default system prompt</value>
+        <value>Default prompt</value>
     </data>
     <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
         <value>Untitled prompt</value>
@@ -3354,10 +3354,10 @@ Delete "{1}" permanently?</value>
         <value>Copy failed</value>
     </data>
     <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
-        <value>Prompt navigation</value>
+        <value>Could not open prompt</value>
     </data>
     <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
-        <value>Invalid prompt id in route: {0}</value>
+        <value>Invalid prompt link: {0}</value>
     </data>
     <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
         <value>Prompt was not found: {0}</value>
@@ -3378,22 +3378,22 @@ Delete "{1}" permanently?</value>
         <value>Save</value>
     </data>
     <data name="PromptEditor_NameLabel" xml:space="preserve">
-        <value>Name</value>
+        <value>Name (for distinguishing only)</value>
     </data>
     <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
         <value>Optional</value>
     </data>
     <data name="PromptEditor_TemplateLabel" xml:space="preserve">
-        <value>Template</value>
+        <value>Prompt text</value>
     </data>
     <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
-        <value>Placeholders</value>
+        <value>Available placeholders</value>
     </data>
     <data name="PromptEditor_PreviewLabel" xml:space="preserve">
         <value>Preview</value>
     </data>
     <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
-        <value>Prompt editor</value>
+        <value>Could not edit prompt</value>
     </data>
     <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
         <value>This prompt cannot be edited or was not found.</value>
@@ -3423,19 +3423,22 @@ Delete "{1}" permanently?</value>
         <value>Working directory</value>
     </data>
     <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
-        <value>Prompt template cannot be empty.</value>
+        <value>Prompt text cannot be empty.</value>
     </data>
     <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
         <value>Unknown placeholder: {0}.</value>
     </data>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
-        <value>This prompt does not include skill instructions.</value>
+        <value></value>
     </data>
     <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
         <value>Missing {Date}; the prompt may lack timely context.</value>
     </data>
     <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
         <value>{Time} includes second-level precision and may reduce cache hit rate. Use {Date} instead unless exact time is needed.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>Prompt not found: {0}. The default prompt will be used instead.</value>
     </data>
     <data name="PromptSource_Blank" xml:space="preserve">
         <value>Custom</value>
@@ -3453,6 +3456,171 @@ Delete "{1}" permanently?</value>
         <value>Imported</value>
     </data>
     <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
-        <value>Click to Copy</value>
+        <value>Copy placeholder</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>New prompt</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Save</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Quick configuration creates a useful prompt from a few choices.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>Advanced editing gives direct control over the prompt text.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Switch to advanced editing</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Return to quick configuration</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Persona</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>How should the assistant address you?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>Optional</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Work scenarios (up to 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>Choose up to 3 scenarios.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Tone and style</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Answer detail</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Organization</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Additional requirements</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>Add constraints, references, or preferences for this prompt.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Live preview</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>The preview renders placeholders such as current date and time in real time.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Discard advanced edits?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Returning to quick configuration will regenerate the prompt text from your choices and discard manual edits.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Discard edits</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 General assistant</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Professional advisor</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Programming assistant</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Writing editor</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Translation assistant</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Research assistant</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Learning mentor</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Product and strategy partner</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>General Q&amp;A</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Programming and development</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Code review</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Writing and editing</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Data analysis</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Learning and education</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Translation and language</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Product planning</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Troubleshooting</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Research and planning</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Professional and rigorous</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Friendly and patient</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Concise and direct</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Socratic and guiding</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Formal business</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Creative and exploratory</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Concise</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Balanced</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Detailed</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Automatic (recommended)</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Conclusion first</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Step by step</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Key points</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Compare options</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Examples first</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Natural conversation</value>
     </data>
 </root>

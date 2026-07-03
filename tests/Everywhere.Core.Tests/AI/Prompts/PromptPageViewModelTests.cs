@@ -1,4 +1,5 @@
 using Everywhere.AI.Prompts;
+using Everywhere.I18N;
 using Everywhere.Skills;
 using Everywhere.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,12 +60,27 @@ public sealed class PromptPageViewModelTests
     private static PromptPageViewModel CreateViewModel(
         IReadOnlyList<PromptDefinition> prompts,
         IAssistantPromptReferenceService? referenceService = null,
-        ISkillPromptProvider? skillPromptProvider = null) =>
-        new(
+        ISkillPromptProvider? skillPromptProvider = null)
+    {
+        EnsureLocaleManager();
+        return new PromptPageViewModel(
             new TestPromptService(prompts),
             referenceService ?? new TestAssistantPromptReferenceService([]),
             skillPromptProvider ?? new TestSkillPromptProvider(string.Empty),
             new ServiceCollection().BuildServiceProvider());
+    }
+
+    private static void EnsureLocaleManager()
+    {
+        try
+        {
+            _ = LocaleManager.Shared;
+        }
+        catch (InvalidOperationException)
+        {
+            _ = new LocaleManager();
+        }
+    }
 
     private static PromptDefinition UserPrompt(
         string template,

@@ -34,15 +34,6 @@ public sealed partial class PromptPageViewModel(
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
     private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Instance;
 
-    private readonly BindableList<PromptItem> _prompts = [];
-    private readonly BindableList<PromptItem> _filteredPrompts = [];
-    private readonly BindableList<PromptDiagnosticItem> _selectedPromptDiagnostics = [];
-    private readonly BindableList<AssistantPromptReference> _selectedPromptReferences = [];
-
-    private bool _hasLoadedPrompts;
-    private Guid? _pendingRoutePromptId;
-    private DispatcherTimer? _previewRefreshTimer;
-
     /// <summary>
     /// Prompts matching the current search text. The built-in default prompt remains a normal item
     /// here, but it is supplied by <see cref="IPromptService"/> as a virtual definition.
@@ -94,6 +85,15 @@ public sealed partial class PromptPageViewModel(
 
     [ObservableProperty]
     public partial string RawTemplate { get; private set; } = string.Empty;
+
+    private readonly BindableList<PromptItem> _prompts = [];
+    private readonly BindableList<PromptItem> _filteredPrompts = [];
+    private readonly BindableList<PromptDiagnosticItem> _selectedPromptDiagnostics = [];
+    private readonly BindableList<AssistantPromptReference> _selectedPromptReferences = [];
+
+    private bool _hasLoadedPrompts;
+    private Guid? _pendingRoutePromptId;
+    private DispatcherTimer? _previewRefreshTimer;
 
     /// <inheritdoc />
     protected internal override async Task ViewLoaded(CancellationToken cancellationToken)
@@ -150,8 +150,7 @@ public sealed partial class PromptPageViewModel(
         if (!SelectPrompt(promptId))
         {
             _pendingRoutePromptId = promptId;
-            ExecuteBusyTaskAsync(LoadPromptsAsync, ToastExceptionHandler)
-                .Detach(ToastExceptionHandler);
+            ExecuteBusyTaskAsync(LoadPromptsAsync, ToastExceptionHandler).Detach(ToastExceptionHandler);
         }
     }
 
@@ -163,7 +162,7 @@ public sealed partial class PromptPageViewModel(
     [RelayCommand]
     private void CreatePrompt()
     {
-        var editorView = serviceProvider.GetRequiredService<PromptEditorView>();
+        var editorView = serviceProvider.GetRequiredService<PromptEditorPage>();
         editorView.ViewModel.OpenForCreate();
         WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(editorView));
     }
@@ -176,7 +175,7 @@ public sealed partial class PromptPageViewModel(
             return;
         }
 
-        var editorView = serviceProvider.GetRequiredService<PromptEditorView>();
+        var editorView = serviceProvider.GetRequiredService<PromptEditorPage>();
         if (await editorView.ViewModel.OpenForEditAsync(prompt.Id))
         {
             WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(editorView));
@@ -468,34 +467,22 @@ public sealed partial class PromptPageViewModel(
 
     public sealed class PromptItem(PromptDefinition prompt)
     {
-        public PromptDefinition Prompt { get; } = prompt;
+        public Guid Id => prompt.Id;
 
-        public Guid Id => Prompt.Id;
+        public string Template => prompt.Template;
 
-        public string Template => Prompt.Template;
+        public bool IsDefault => prompt.IsDefault;
 
-        public bool IsDefault => Prompt.IsDefault;
+        public bool IsBuiltIn => prompt.IsBuiltIn;
 
-        public bool IsBuiltIn => Prompt.IsBuiltIn;
+        public IDynamicLocaleKey DisplayNameKey => PromptDisplayNameProvider.GetDisplayNameKey(prompt);
 
-        public IDynamicLocaleKey DisplayNameKey =>
-            string.IsNullOrWhiteSpace(Prompt.Name) ?
-                new DynamicLocaleKey(
-                    Prompt.IsDefault ?
-                        LocaleKey.PromptPage_DefaultPrompt_DisplayName :
-                        LocaleKey.PromptPage_UntitledPrompt_DisplayName) :
-                new DirectLocaleKey(Prompt.Name);
-
-        public string DisplayName =>
-            string.IsNullOrWhiteSpace(Prompt.Name) ?
-                Prompt.IsDefault ?
-                    LocaleResolver.PromptPage_DefaultPrompt_DisplayName :
-                    LocaleResolver.PromptPage_UntitledPrompt_DisplayName :
-                Prompt.Name;
+        public string DisplayName => PromptDisplayNameProvider.GetDisplayName(prompt);
 
         public IReadOnlyList<string> SearchValues { get; } =
         [
             prompt.Id.ToString("D"),
+            PromptDisplayNameProvider.GetDisplayName(prompt),
             prompt.Name ?? string.Empty,
             prompt.Template,
             prompt.IsDefault ? LocaleResolver.PromptPage_DefaultPrompt_DisplayName : string.Empty,

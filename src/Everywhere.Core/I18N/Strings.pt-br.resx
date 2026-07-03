@@ -630,7 +630,7 @@
         <value>Identificador do modelo para chamadas de API, por exemplo, gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Chat</value>
+        <value></value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Os plugins de chat incluem plugins nativos e MCP, que utilizam grandes modelos de linguagem (LLMs) para chamar ferramentas quando necessário (como pesquisa na web, acessar arquivos locais, etc.) oferecendo funcionalidades mais robustas.</value>

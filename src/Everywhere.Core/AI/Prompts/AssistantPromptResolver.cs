@@ -89,6 +89,8 @@ public sealed class AssistantPromptResolver(
         new(
             PromptDiagnosticCode.UnresolvedReference,
             PromptDiagnosticSeverity.Warning,
-            new DirectLocaleKey($"Prompt reference could not be resolved: {promptId:D}."),
+            new FormattedDynamicLocaleKey(
+                LocaleKey.PromptDiagnostic_UnresolvedReference,
+                new DirectLocaleKey(promptId.ToString("D"))),
             ActionId: "select-default-prompt");
 }

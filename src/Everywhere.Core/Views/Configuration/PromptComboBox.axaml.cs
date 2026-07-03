@@ -71,7 +71,7 @@ public sealed partial class PromptComboBox(IPromptService promptService, IServic
     [RelayCommand]
     private void CreatePrompt()
     {
-        var editorView = serviceProvider.GetRequiredService<PromptEditorView>();
+        var editorView = serviceProvider.GetRequiredService<PromptEditorPage>();
         editorView.ViewModel.OpenForCreate();
         WeakReferenceMessenger.Default.Send(new MainViewNavigateMessage(editorView));
     }
@@ -118,10 +118,5 @@ public sealed record PromptComboBoxItem(Guid Id, IDynamicLocaleKey DisplayNameKe
     public static PromptComboBoxItem FromPrompt(PromptDefinition prompt) =>
         new(
             prompt.Id,
-            string.IsNullOrWhiteSpace(prompt.Name) ?
-                new DynamicLocaleKey(
-                    prompt.IsDefault ?
-                        LocaleKey.PromptPage_DefaultPrompt_DisplayName :
-                        LocaleKey.PromptPage_UntitledPrompt_DisplayName) :
-                new DirectLocaleKey(prompt.Name));
+            PromptDisplayNameProvider.GetDisplayNameKey(prompt));
 }
