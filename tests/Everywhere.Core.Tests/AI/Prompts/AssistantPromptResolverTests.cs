@@ -4,7 +4,7 @@ using Everywhere.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Everywhere.Core.Tests.AI.PromptManager;
+namespace Everywhere.Core.Tests.AI.Prompts;
 
 public sealed class AssistantPromptResolverTests
 {
@@ -15,14 +15,14 @@ public sealed class AssistantPromptResolverTests
         var resolver = CreateResolver(database);
         var assistant = new CustomAssistant
         {
-            SystemPromptId = PromptConstants.DefaultPromptId
+            SystemPromptId = Guid.Empty
         };
 
         var result = await resolver.ResolveSystemPromptAsync(assistant);
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.PromptId, Is.EqualTo(PromptConstants.DefaultPromptId));
+            Assert.That(result.PromptId, Is.EqualTo(Guid.Empty));
             Assert.That(result.Template, Is.EqualTo(DefaultPrompts.DefaultSystemPrompt));
             Assert.That(result.UsedFallback, Is.False);
             Assert.That(result.Diagnostics, Is.Empty);
@@ -46,7 +46,7 @@ public sealed class AssistantPromptResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.PromptId, Is.EqualTo(PromptConstants.DefaultPromptId));
+            Assert.That(result.PromptId, Is.EqualTo(Guid.Empty));
             Assert.That(result.Template, Is.EqualTo(DefaultPrompts.DefaultSystemPrompt));
             Assert.That(result.UsedFallback, Is.True);
             Assert.That(result.Diagnostics.Single().Code, Is.EqualTo(PromptDiagnosticCode.UnresolvedReference));
@@ -105,10 +105,10 @@ public sealed class AssistantPromptResolverTests
         Assert.Multiple(() =>
         {
             Assert.That(references, Has.Count.EqualTo(1));
-            Assert.That(references[0].AssistantName, Is.EqualTo("Uses persisted"));
+            Assert.That(references[0].Name, Is.EqualTo("Uses persisted"));
             Assert.That(unresolved, Has.Count.EqualTo(1));
-            Assert.That(unresolved[0].AssistantName, Is.EqualTo("Uses missing"));
-            Assert.That(unresolved[0].PromptId, Is.EqualTo(missingPromptId));
+            Assert.That(unresolved[0].Name, Is.EqualTo("Uses missing"));
+            Assert.That(unresolved[0].SystemPromptId, Is.EqualTo(missingPromptId));
             Assert.That(unresolved[0].Diagnostic.Code, Is.EqualTo(PromptDiagnosticCode.UnresolvedReference));
         });
     }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Everywhere.AI;
 using Everywhere.Common;
@@ -49,6 +50,7 @@ public sealed class _20260629120000_0_8_1_canary_20260629_12 : SettingsMigration
         {
             modified |= CleanupOfficialSchema(assistant);
             modified |= CleanupSpecializations(assistant);
+            modified |= FlattenCustomizable(assistant, "RequestTimeoutSeconds");
 
             if (assistant.TryGetPropertyValue("Icon", out var iconNode) && iconNode is JsonObject icon)
             {

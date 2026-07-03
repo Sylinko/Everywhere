@@ -4,7 +4,7 @@ namespace Everywhere.Views.Pages;
 
 public partial class SkillPage : ReactiveUserControl<SkillPageViewModel>, IMainViewNavigationTopLevelItem
 {
-    public int Index => 2;
+    public int Index => 3;
 
     public LucideIconKind Icon => LucideIconKind.Box;
 

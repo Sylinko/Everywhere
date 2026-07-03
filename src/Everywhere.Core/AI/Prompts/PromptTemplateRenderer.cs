@@ -42,14 +42,30 @@ public static partial class PromptTemplateRenderer
     public static PromptTemplateRenderResult RenderWithDiagnostics(
         string template,
         Func<string, string?> resolver,
-        IEnumerable<string>? knownPlaceholderNames = null)
+        IPromptPlaceholderSource? placeholderSource = null,
+        PromptPlaceholderContext? placeholderContext = null)
     {
-        var analysis = PromptTemplateAnalyzer.Analyze(template, knownPlaceholderNames);
+        var analysis = PromptTemplateAnalyzer.Analyze(template, placeholderSource, placeholderContext);
+        var segments = RenderSegments(template, resolver);
         return new PromptTemplateRenderResult(
-            Render(template, resolver),
+            string.Concat(segments.Select(static segment => segment.Text)),
             analysis.Placeholders,
-            analysis.Diagnostics);
+            analysis.Diagnostics,
+            segments);
     }
+
+    /// <summary>
+    /// Renders a template using a placeholder source and its explicit runtime context.
+    /// </summary>
+    public static PromptTemplateRenderResult RenderWithDiagnostics(
+        string template,
+        IPromptPlaceholderSource placeholderSource,
+        PromptPlaceholderContext placeholderContext) =>
+        RenderWithDiagnostics(
+            template,
+            name => placeholderSource.TryResolve(name, placeholderContext, out var value) ? value : null,
+            placeholderSource,
+            placeholderContext);
 
     private static string Expand(string text, Func<string, string?> resolver, HashSet<string> visiting, int depth)
     {
@@ -75,6 +91,149 @@ public static partial class PromptTemplateRenderer
             });
     }
 
+    /// <summary>
+    /// Renders a template into source-aware text segments for preview highlighting.
+    /// </summary>
+    /// <remarks>
+    /// The concatenated segment text is equivalent to <see cref="Render"/>. Segment metadata records
+    /// which placeholder produced each rendered value so UI previews can color filled values with the
+    /// same palette used for raw placeholder spans.
+    /// </remarks>
+    public static IReadOnlyList<PromptTemplateRenderSegment> RenderSegments(
+        string template,
+        Func<string, string?> resolver)
+    {
+        var segments = new List<PromptTemplateRenderSegment>();
+        ExpandSegments(
+            template,
+            resolver,
+            new HashSet<string>(StringComparer.Ordinal),
+            0,
+            null,
+            segments);
+        return MergeAdjacentSegments(segments);
+    }
+
+    /// <summary>
+    /// Renders source-aware segments using a placeholder source and explicit runtime context.
+    /// </summary>
+    public static IReadOnlyList<PromptTemplateRenderSegment> RenderSegments(
+        string template,
+        IPromptPlaceholderSource placeholderSource,
+        PromptPlaceholderContext placeholderContext) =>
+        RenderSegments(
+            template,
+            name => placeholderSource.TryResolve(name, placeholderContext, out var value) ? value : null);
+
+    private static void ExpandSegments(
+        string text,
+        Func<string, string?> resolver,
+        HashSet<string> visiting,
+        int depth,
+        string? inheritedPlaceholderName,
+        List<PromptTemplateRenderSegment> segments)
+    {
+        var cursor = 0;
+        foreach (Match match in PromptTemplateRegex().Matches(text))
+        {
+            if (match.Index > cursor)
+            {
+                AddLiteralSegment(text[cursor..match.Index], inheritedPlaceholderName, segments);
+            }
+
+            var name = match.Groups[PromptTemplateParser.PlaceholderNameGroup].Value;
+            var value = resolver(name);
+            if (value is null)
+            {
+                segments.Add(new PromptTemplateRenderSegment(
+                    match.Value,
+                    name,
+                    PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
+            }
+            else if (value.IndexOf('{') < 0 || depth >= MaxDepth)
+            {
+                segments.Add(new PromptTemplateRenderSegment(
+                    value,
+                    name,
+                    PromptTemplateRenderSegmentKind.PlaceholderValue));
+            }
+            else if (!visiting.Add(name))
+            {
+                segments.Add(new PromptTemplateRenderSegment(
+                    match.Value,
+                    name,
+                    PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
+            }
+            else
+            {
+                try
+                {
+                    ExpandSegments(value, resolver, visiting, depth + 1, name, segments);
+                }
+                finally
+                {
+                    visiting.Remove(name);
+                }
+            }
+
+            cursor = match.Index + match.Length;
+        }
+
+        if (cursor < text.Length)
+        {
+            AddLiteralSegment(text[cursor..], inheritedPlaceholderName, segments);
+        }
+    }
+
+    private static void AddLiteralSegment(
+        string text,
+        string? inheritedPlaceholderName,
+        List<PromptTemplateRenderSegment> segments)
+    {
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        segments.Add(inheritedPlaceholderName is null ?
+            new PromptTemplateRenderSegment(text, null, PromptTemplateRenderSegmentKind.Text) :
+            new PromptTemplateRenderSegment(
+                text,
+                inheritedPlaceholderName,
+                PromptTemplateRenderSegmentKind.PlaceholderValue));
+    }
+
+    private static IReadOnlyList<PromptTemplateRenderSegment> MergeAdjacentSegments(
+        List<PromptTemplateRenderSegment> segments)
+    {
+        if (segments.Count <= 1)
+        {
+            return segments;
+        }
+
+        var merged = new List<PromptTemplateRenderSegment>(segments.Count);
+        foreach (var segment in segments)
+        {
+            if (segment.Text.Length == 0)
+            {
+                continue;
+            }
+
+            if (merged.Count > 0 &&
+                merged[^1].PlaceholderName == segment.PlaceholderName &&
+                merged[^1].Kind == segment.Kind)
+            {
+                merged[^1] = merged[^1] with { Text = merged[^1].Text + segment.Text };
+            }
+            else
+            {
+                merged.Add(segment);
+            }
+        }
+
+        return merged;
+    }
+
     [GeneratedRegex(PromptTemplateParser.PlaceholderPattern)]
     private static partial Regex PromptTemplateRegex();
 }
@@ -85,5 +244,24 @@ public static partial class PromptTemplateRenderer
 public sealed record PromptTemplateRenderResult(
     string RenderedText,
     IReadOnlyList<PromptPlaceholderToken> Placeholders,
-    IReadOnlyList<PromptDiagnostic> Diagnostics
+    IReadOnlyList<PromptDiagnostic> Diagnostics,
+    IReadOnlyList<PromptTemplateRenderSegment> Segments
 );
+
+/// <summary>
+/// A rendered preview text segment with optional placeholder source metadata.
+/// </summary>
+/// <param name="PlaceholderName">
+/// Placeholder that produced this text. Null means the segment is literal template text.
+/// </param>
+public sealed record PromptTemplateRenderSegment(
+    string Text,
+    string? PlaceholderName,
+    PromptTemplateRenderSegmentKind Kind);
+
+public enum PromptTemplateRenderSegmentKind
+{
+    Text,
+    PlaceholderValue,
+    UnresolvedPlaceholder
+}

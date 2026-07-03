@@ -1,13 +1,12 @@
 using System.Text.Json.Nodes;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
-using Everywhere.AI.Prompts.Database;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Everywhere.Core.Tests.AI.PromptManager;
+namespace Everywhere.Core.Tests.AI.Prompts;
 
 public sealed class AssistantPromptSettingsMigrationTests
 {
@@ -30,7 +29,7 @@ public sealed class AssistantPromptSettingsMigrationTests
         Assert.Multiple(() =>
         {
             Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.1-canary.20260702.12"));
-            Assert.That(promptId, Is.Not.EqualTo(PromptConstants.DefaultPromptId));
+            Assert.That(promptId, Is.Not.EqualTo(Guid.Empty));
             Assert.That(assistant.ContainsKey("SystemPrompt"), Is.False);
             Assert.That(prompt.Id, Is.EqualTo(promptId));
             Assert.That(prompt.Name, Is.EqualTo("Coder system prompt"));
@@ -82,7 +81,7 @@ public sealed class AssistantPromptSettingsMigrationTests
             for (var i = 0; i < 3; i++)
             {
                 var assistant = ReadAssistant(root, i);
-                Assert.That(ReadPromptId(assistant), Is.EqualTo(PromptConstants.DefaultPromptId));
+                Assert.That(ReadPromptId(assistant), Is.EqualTo(Guid.Empty));
                 Assert.That(assistant.ContainsKey("SystemPrompt"), Is.False);
             }
 

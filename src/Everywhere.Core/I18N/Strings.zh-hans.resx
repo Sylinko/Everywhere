@@ -1221,7 +1221,7 @@
         <value>临时聊天模式</value>
     </data>
     <data name="ChatWindowSettings_TemporaryChatMode_Description" xml:space="preserve">
-        <value>新建聊天时是否使用临时聊天。</value>
+        <value>创建聊天时是否使用临时聊天。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Header" xml:space="preserve">
         <value>查找文件</value>
@@ -3265,5 +3265,180 @@
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
         <value>写入设置 JSON 到“{0}”失败（第 {1} 次尝试，内容长度 {2} 字节）。</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>提示词</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜索提示词</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} 个提示词</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>默认系统提示词</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>未命名提示词</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>内置默认</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>内置</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>复制预览内容</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>创建</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>编辑</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>编辑提示词</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>删除提示词</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>确定要永久删除此提示词吗？
+“{0}”将会被移除。</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>已有 1 个助手正在使用此提示词。
+删除后，该助手会暂时改用默认提示词，直到重新选择提示词。
+
+仍要永久删除“{0}”吗？</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>已有 {0} 个助手正在使用此提示词。
+删除后，这些助手会暂时改用默认提示词，直到重新选择提示词。
+
+仍要永久删除“{1}”吗？</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>没有匹配的提示词</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>预览</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>原始</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>使用此提示词的助手（{0}）</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>没有助手使用此提示词</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>选择一个提示词以查看预览</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>复制失败</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>提示词导航</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>路由中的提示词 ID 无效：{0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>找不到提示词：{0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>未命名助手</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>未选择模型</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>编辑提示词</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>名称</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>可选</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>提示词内容</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>占位符</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>预览</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>提示词编辑器</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>该提示词不存在或不可编辑。</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>保存提示词失败</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere 默认系统说明</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>已启用技能说明</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>当前日期</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>当前时间</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>操作系统</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>系统语言</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>工作目录</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>提示词内容不能为空。</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>未知占位符：{0}。</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>此提示词未包含技能说明。</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>缺少 {Date}，提示词可能缺少时效性上下文。</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} 精确到秒，可能会影响缓存命中率。如非必要，请使用 {Date}。</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>自定义</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>向导</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>副本</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>迁移</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>导入</value>
     </data>
 </root>

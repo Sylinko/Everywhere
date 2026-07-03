@@ -4,22 +4,16 @@ using Everywhere.I18N;
 using MessagePack;
 using PromptRecipeSnapshot = Everywhere.AI.Prompts.PromptRecipeSnapshot;
 
-namespace Everywhere.Core.Tests.AI.PromptManager;
+namespace Everywhere.Core.Tests.AI.Prompts;
 
 public sealed class PromptFoundationTests
 {
-    [Test]
-    public void PromptConstants_DefaultPromptId_IsGuidEmpty()
-    {
-        Assert.That(PromptConstants.DefaultPromptId, Is.EqualTo(Guid.Empty));
-    }
-
     [Test]
     public void DefaultSystemPrompt_IncludesSkillsPromptPlaceholder()
     {
         Assert.That(
             DefaultPrompts.DefaultSystemPrompt,
-            Does.Contain("{" + PromptConstants.SkillsPromptPlaceholder + "}"));
+            Does.Contain("{" + SystemPromptPlaceholderSource.SkillsPromptName + "}"));
     }
 
     [Test]
@@ -71,13 +65,7 @@ public sealed class PromptFoundationTests
         Assert.Multiple(() =>
         {
             Assert.That(roundTripped.SchemaVersion, Is.EqualTo(1));
-            Assert.That(roundTripped.PersonaId, Is.EqualTo("programming-assistant"));
-            Assert.That(roundTripped.PreferredUserName, Is.EqualTo("DearVa"));
             Assert.That(roundTripped.ScenarioIds, Is.EqualTo(new[] { "programming-and-development", "code-review" }));
-            Assert.That(roundTripped.ToneId, Is.EqualTo("concise-and-direct"));
-            Assert.That(roundTripped.DetailLevelId, Is.EqualTo("balanced"));
-            Assert.That(roundTripped.OrganizationId, Is.EqualTo("conclusion-first"));
-            Assert.That(roundTripped.AdditionalRequirements, Is.EqualTo("Prefer focused examples."));
             Assert.That(roundTripped.IsDetachedFromRecipe, Is.True);
         });
     }

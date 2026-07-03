@@ -30,5 +30,5 @@ public sealed record PromptDefinition(
     /// <summary>
     /// Returns whether this definition is the virtual default prompt reference.
     /// </summary>
-    public bool IsDefault => Id == PromptConstants.DefaultPromptId;
+    public bool IsDefault => Id == Guid.Empty;
 }

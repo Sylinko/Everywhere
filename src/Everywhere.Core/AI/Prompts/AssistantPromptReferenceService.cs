@@ -1,3 +1,4 @@
+using Everywhere.Common;
 using Everywhere.Configuration;
 using ZLinq;
 
@@ -7,9 +8,11 @@ namespace Everywhere.AI.Prompts;
 /// A custom assistant reference to a Prompt Manager prompt.
 /// </summary>
 public sealed record AssistantPromptReference(
-    Guid AssistantId,
-    string? AssistantName,
-    Guid PromptId
+    Guid Id,
+    string? Name,
+    Guid SystemPromptId,
+    ColoredIcon? Icon,
+    string? Description
 );
 
 /// <summary>
@@ -20,9 +23,9 @@ public sealed record AssistantPromptReference(
 /// assistant will fall back to the default prompt at runtime.
 /// </remarks>
 public sealed record UnresolvedAssistantPromptReference(
-    Guid AssistantId,
-    string? AssistantName,
-    Guid PromptId,
+    Guid Id,
+    string? Name,
+    Guid SystemPromptId,
     PromptDiagnostic Diagnostic
 );
 
@@ -39,8 +42,7 @@ public interface IAssistantPromptReferenceService
     /// <summary>
     /// Lists assistant prompt references that cannot be resolved to default or persisted prompts.
     /// </summary>
-    Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(
-        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -56,12 +58,13 @@ public sealed class AssistantPromptReferenceService(Settings settings, IPromptSe
             .Select(static assistant => new AssistantPromptReference(
                 assistant.Id,
                 assistant.Name,
-                assistant.SystemPromptId))
+                assistant.SystemPromptId,
+                assistant.Icon,
+                assistant.Description))
             .ToList();
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(CancellationToken cancellationToken = default)
     {
         var existingPromptIds = (await promptService.ListPromptsAsync(cancellationToken))
             .AsValueEnumerable()
@@ -70,7 +73,7 @@ public sealed class AssistantPromptReferenceService(Settings settings, IPromptSe
 
         return settings.Model.CustomAssistants
             .AsValueEnumerable()
-            .Where(assistant => assistant.SystemPromptId != PromptConstants.DefaultPromptId)
+            .Where(assistant => assistant.SystemPromptId != Guid.Empty)
             .Where(assistant => !existingPromptIds.Contains(assistant.SystemPromptId))
             .Select(static assistant => new UnresolvedAssistantPromptReference(
                 assistant.Id,

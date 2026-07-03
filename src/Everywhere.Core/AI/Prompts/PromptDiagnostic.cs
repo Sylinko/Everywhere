@@ -13,6 +13,8 @@ public enum PromptDiagnosticCode
     UnknownPlaceholder,
     MissingDefaultSystemPrompt,
     MissingSkillsPrompt,
+    MissingDate,
+    TimeMayReduceCacheHitRate,
     UnresolvedReference,
     RecursivePlaceholder
 }

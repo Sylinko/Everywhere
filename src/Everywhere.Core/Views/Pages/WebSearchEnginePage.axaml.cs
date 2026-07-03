@@ -4,7 +4,7 @@ namespace Everywhere.Views.Pages;
 
 public partial class WebSearchEnginePage : ReactiveUserControl<WebSearchEnginePageViewModel>, IMainViewNavigationTopLevelItem
 {
-    public int Index => 3;
+    public int Index => 4;
 
     public LucideIconKind Icon => LucideIconKind.Search;
 

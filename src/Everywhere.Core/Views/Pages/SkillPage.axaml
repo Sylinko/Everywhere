@@ -119,8 +119,13 @@
       <Grid
         RowDefinitions="Auto,*" RowSpacing="10">
         <TextBlock
-          Classes="Muted Caption" Grid.Row="0"
-          Text="{Binding FilteredSkillCountKey^}"/>
+          Classes="Muted Caption" Grid.Row="0">
+          <TextBlock.Text>
+            <I18N Key="{x:Static LocaleKey.SkillPage_CountText}">
+              <Binding Path="FilteredSkillCount"/>
+            </I18N>
+          </TextBlock.Text>
+        </TextBlock>
 
         <ScrollViewer
           Grid.Row="1" Margin="0,0,-12,8"

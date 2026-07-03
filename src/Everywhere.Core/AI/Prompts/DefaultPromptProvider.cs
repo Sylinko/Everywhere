@@ -19,7 +19,7 @@ public sealed class DefaultPromptProvider : IDefaultPromptProvider
 {
     public PromptDefinition DefaultPrompt =>
         new(
-            PromptConstants.DefaultPromptId,
+            Guid.Empty,
             null,
             DefaultPrompts.DefaultSystemPrompt,
             IsBuiltIn: true);

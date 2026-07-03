@@ -49,11 +49,11 @@ public sealed partial class CustomAssistant : Assistant
     /// Prompt Manager prompt used as this assistant's active system prompt.
     /// </summary>
     /// <remarks>
-    /// <see cref="PromptConstants.DefaultPromptId"/> means "use the built-in default prompt".
-    /// Non-empty IDs point at rows in <c>prompt.db</c>; the prompt body is intentionally no longer
+    /// <see cref="Guid.Empty"/> means "use the built-in default prompt". Non-empty IDs point at
+    /// rows in <c>prompt.db</c>; the prompt body is intentionally no longer
     /// stored inline with assistant settings.
     /// </remarks>
     [ObservableProperty]
     [SettingsItemIgnore]
-    public partial Guid SystemPromptId { get; set; } = PromptConstants.DefaultPromptId;
+    public partial Guid SystemPromptId { get; set; } = Guid.Empty;
 }

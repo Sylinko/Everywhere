@@ -24,8 +24,8 @@ public sealed record PromptCreateRequest(
 /// Input for replacing editable fields on an existing user prompt.
 /// </summary>
 /// <remarks>
-/// Prompt updates are full-template replacements. Passing <see cref="PromptConstants.DefaultPromptId"/>
-/// to the service is a no-op because the built-in default prompt is virtual and immutable.
+/// Prompt updates are full-template replacements. Passing <see cref="Guid.Empty"/> to the service
+/// is a no-op because the built-in default prompt is virtual and immutable.
 /// </remarks>
 /// <param name="Source">
 /// Optional replacement for source metadata. Leave null when an edit should keep the original source.

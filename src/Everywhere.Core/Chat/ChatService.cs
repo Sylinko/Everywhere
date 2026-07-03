@@ -459,9 +459,11 @@ public sealed partial class ChatService : IChatService
             // Because the custom assistant maybe changed, we need to re-render the system prompt.
             // But we only do this once per generation, even if the system time may change during function calls.
             // This can save prompt tokens because they may be cached by LLM providers.
-            var promptVariables = chatContext.GetPromptVariables();
-            promptVariables["SkillsPrompt"] = _skillPromptProvider.GetPrompt;
-            var promptRenderer = new ScopedPromptRenderer(promptVariables);
+            var promptRenderer = new ScopedPromptRenderer(
+                SystemPromptPlaceholderSource.Instance,
+                new PromptPlaceholderContext(
+                    SkillsPromptResolver: _skillPromptProvider.GetPrompt,
+                    WorkingDirectoryResolver: chatContext.EnsureWorkingDirectory));
             var promptResolution = await _assistantPromptResolver.ResolveSystemPromptAsync(
                 assistant,
                 systemPromptOverride,
@@ -1182,7 +1184,7 @@ public sealed partial class ChatService : IChatService
                         key => key switch
                         {
                             "UserMessage" => userMessage.SafeSubstring(0, 2048),
-                            "SystemLanguage" => language,
+                            SystemPromptPlaceholderSource.SystemLanguageName => language,
                             _ => null
                         })),
             };
@@ -1312,9 +1314,9 @@ public sealed partial class ChatService : IChatService
 
     #endregion
 
-    // TODO: this is shit
     private sealed class ScopedPromptRenderer(
-        IDictionary<string, Func<string>> promptVariables
+        IPromptPlaceholderSource promptPlaceholderSource,
+        PromptPlaceholderContext promptPlaceholderContext
     ) : IPromptRenderer
     {
         public static string RenderPrompt(string prompt, Func<string, string?> resolver) =>
@@ -1322,20 +1324,24 @@ public sealed partial class ChatService : IChatService
 
         public string RenderSystemPrompt(string prompt)
         {
-            return RenderPrompt(prompt, key => promptVariables.TryGetValue(key, out var getter) ? getter() : null);
+            return RenderPrompt(prompt, ResolveSharedPlaceholder);
         }
 
         public string RenderStrategyUserPrompt(string strategyBody, string? userInput, PreprocessorResult? preprocessorResult)
         {
+            var strategySource = new CompositePromptPlaceholderSource(
+            [
+                StrategyPromptPlaceholderSource.Instance,
+                promptPlaceholderSource
+            ]);
+            var strategyContext = promptPlaceholderContext with
+            {
+                Argument = userInput,
+                Variables = preprocessorResult?.Variables
+            };
             var renderedStrategy = RenderPrompt(
                 strategyBody,
-                key =>
-                {
-                    if (key == "Argument") return userInput ?? string.Empty;
-                    if (preprocessorResult?.Variables?.TryGetValue(key, out var val) == true) return val;
-                    if (promptVariables.TryGetValue(key, out var getter)) return getter();
-                    return null;
-                });
+                key => strategySource.TryResolve(key, strategyContext, out var value) ? value : null);
 
             if (string.IsNullOrEmpty(userInput))
             {
@@ -1348,5 +1354,8 @@ public sealed partial class ChatService : IChatService
                 .Append(userInput)
                 .ToString();
         }
+
+        private string? ResolveSharedPlaceholder(string key) =>
+            promptPlaceholderSource.TryResolve(key, promptPlaceholderContext, out var value) ? value : null;
     }
 }

@@ -14,7 +14,7 @@ namespace Everywhere.AI.Prompts;
 public interface IPromptService
 {
     /// <summary>
-    /// Virtual built-in default prompt. It is returned by lookups for <see cref="PromptConstants.DefaultPromptId"/>.
+    /// Virtual built-in default prompt. It is returned by lookups for <see cref="Guid.Empty"/>.
     /// </summary>
     PromptDefinition DefaultPrompt { get; }
 
@@ -29,7 +29,7 @@ public interface IPromptService
     Task<IReadOnlyList<PromptDefinition>> ListUserPromptsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a prompt by ID, resolving <see cref="PromptConstants.DefaultPromptId"/> to the virtual default prompt.
+    /// Gets a prompt by ID, resolving <see cref="Guid.Empty"/> to the virtual default prompt.
     /// </summary>
     Task<PromptDefinition?> GetPromptAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -37,7 +37,7 @@ public interface IPromptService
     /// Creates a persisted user prompt.
     /// </summary>
     /// <exception cref="ArgumentException">
-    /// Thrown when the template is empty or the requested ID is <see cref="PromptConstants.DefaultPromptId"/>.
+    /// Thrown when the template is empty or the requested ID is <see cref="Guid.Empty"/>.
     /// </exception>
     Task<PromptDefinition> CreatePromptAsync(PromptCreateRequest request, CancellationToken cancellationToken = default);
 
@@ -56,9 +56,9 @@ public interface IPromptService
 /// SQLite-backed Prompt Manager service.
 /// </summary>
 /// <remarks>
-/// The implementation never persists <see cref="PromptConstants.DefaultPromptId"/>. That invariant
-/// keeps <see cref="Guid.Empty"/> available as a stable reference to the built-in default prompt and
-/// prevents "blank prompt" from becoming ambiguous with "use default prompt".
+/// The implementation never persists <see cref="Guid.Empty"/>. That invariant keeps the empty GUID
+/// available as a stable reference to the built-in default prompt and prevents "blank prompt" from
+/// becoming ambiguous with "use default prompt".
 /// </remarks>
 public sealed class PromptService(
     IDbContextFactory<PromptDbContext> dbFactory,
@@ -91,7 +91,7 @@ public sealed class PromptService(
     /// <inheritdoc />
     public async Task<PromptDefinition?> GetPromptAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        if (id == PromptConstants.DefaultPromptId) return DefaultPrompt;
+        if (id == Guid.Empty) return DefaultPrompt;
 
         await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
         var entity = await dbContext.Prompts
@@ -107,7 +107,7 @@ public sealed class PromptService(
         ValidateTemplate(request.Template);
 
         var id = request.Id ?? Guid.CreateVersion7();
-        if (id == PromptConstants.DefaultPromptId)
+        if (id == Guid.Empty)
         {
             throw new ArgumentException("User prompts must use a non-empty GUID.", nameof(request));
         }
@@ -134,7 +134,7 @@ public sealed class PromptService(
     /// <inheritdoc />
     public async Task<PromptDefinition?> UpdatePromptAsync(Guid id, PromptUpdateRequest request, CancellationToken cancellationToken = default)
     {
-        if (id == PromptConstants.DefaultPromptId) return null;
+        if (id == Guid.Empty) return null;
 
         ValidateTemplate(request.Template);
 
@@ -159,7 +159,7 @@ public sealed class PromptService(
     /// <inheritdoc />
     public async Task<bool> DeletePromptAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        if (id == PromptConstants.DefaultPromptId) return false;
+        if (id == Guid.Empty) return false;
 
         await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
         var deleted = await dbContext.Prompts

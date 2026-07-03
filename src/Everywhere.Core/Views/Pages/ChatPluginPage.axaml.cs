@@ -4,7 +4,7 @@ namespace Everywhere.Views.Pages;
 
 public partial class ChatPluginPage : ReactiveUserControl<ChatPluginPageViewModel>, IMainViewNavigationTopLevelItem
 {
-    public int Index => 1;
+    public int Index => 2;
 
     public LucideIconKind Icon => LucideIconKind.Hammer;
 

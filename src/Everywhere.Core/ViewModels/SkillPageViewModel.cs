@@ -42,10 +42,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     [ObservableProperty]
     public partial int FilteredSkillCount { get; private set; }
 
-    [ObservableProperty]
-    public partial IDynamicLocaleKey FilteredSkillCountKey { get; private set; } =
-        new FormattedDynamicLocaleKey(LocaleKey.SkillPage_CountText, new DirectLocaleKey(0));
-
     public IReadOnlyBindableList<SkillSourceFilterItem> SourceFilterItems { get; }
 
     public IReadOnlyBindableList<SkillSourceGroupItem> FilteredSourceGroups { get; }
@@ -109,13 +105,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         SyncSkillsFromManager();
         skillManager.SourceGroups.CollectionChanged += HandleSourceGroupsCollectionChanged;
         LifetimeDisposables.Add(Disposable.Create(() => skillManager.SourceGroups.CollectionChanged -= HandleSourceGroupsCollectionChanged));
-    }
-
-    partial void OnFilteredSkillCountChanged(int value)
-    {
-        FilteredSkillCountKey = new FormattedDynamicLocaleKey(
-            LocaleKey.SkillPage_CountText,
-            new DirectLocaleKey(value));
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -287,9 +276,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
             .Where(IsSourceGroupVisible)
             .ToList();
 
-        foreach (var sourceGroup in visibleSourceGroups)
+        foreach (var sourceKey in visibleSourceGroups.AsValueEnumerable().Select(GetSourceKey))
         {
-            var sourceKey = GetSourceKey(sourceGroup);
             if (!_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
             {
                 continue;
@@ -305,9 +293,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         }
 
         _filteredSourceGroups.Clear();
-        foreach (var sourceGroup in visibleSourceGroups)
+        foreach (var sourceKey in visibleSourceGroups.AsValueEnumerable().Select(GetSourceKey))
         {
-            var sourceKey = GetSourceKey(sourceGroup);
             if (_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
             {
                 _filteredSourceGroups.Add(groupItem);

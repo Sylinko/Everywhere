@@ -1,8 +1,7 @@
-using Everywhere.AI;
 using Everywhere.AI.Prompts.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Everywhere.Core.Tests.AI.PromptManager;
+namespace Everywhere.Core.Tests.AI.Prompts;
 
 internal sealed class PromptTestDatabase : IDisposable
 {

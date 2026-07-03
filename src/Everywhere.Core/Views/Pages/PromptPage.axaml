@@ -1,0 +1,321 @@
+<UserControl
+  x:Class="Everywhere.Views.Pages.PromptPage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:prompts="clr-namespace:Everywhere.AI.Prompts"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="vm:PromptPageViewModel" ClipToBounds="False">
+  <UserControl.Styles>
+    <Style Selector="ListBox#PromptListBox">
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource TransparentColor}"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Style Selector="^ ListBoxItem">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Margin" Value="0,2"/>
+      </Style>
+    </Style>
+
+    <Style Selector="DockPanel#SelectedPromptContentBody">
+      <Style Selector="^.narrow &gt; DockPanel#PromptReferencesPanel">
+        <Setter Property="DockPanel.Dock" Value="Bottom"/>
+      </Style>
+
+      <Style Selector="^.wide &gt; DockPanel#PromptReferencesPanel">
+        <Setter Property="DockPanel.Dock" Value="Right"/>
+        <Setter Property="MinWidth" Value="200"/>
+      </Style>
+    </Style>
+  </UserControl.Styles>
+
+  <shadui:NavigationView
+    Padding="24,0,24,20" HeaderMaxWidth="1000"
+    PageTransition="{x:Null}"
+    PaneWidth="260"
+    SelectedItem="{Binding SelectedPromptItem, Mode=TwoWay}">
+    <shadui:NavigationView.PaneHeader>
+      <StackPanel
+        Margin="0,14,0,12" Spacing="12">
+        <DockPanel>
+          <Button
+            Classes="Secondary" DockPanel.Dock="Right"
+            VerticalAlignment="Center"
+            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            Command="{Binding CreatePromptCommand}"
+            Content="{I18N {x:Static LocaleKey.PromptPage_NewPromptButton_Content}}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_NewPromptButton_ToolTip}}"/>
+
+          <TextBlock
+            Classes="h4" VerticalAlignment="Center"
+            Text="{I18N {x:Static LocaleKey.PromptPage_Title}}"
+            TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+
+        <TextBox
+          Classes="Clearable" CornerRadius="6"
+          FontWeight="Normal"
+          PlaceholderText="{I18N {x:Static LocaleKey.PromptPage_SearchBox_PlaceholderText}}"
+          Text="{Binding SearchText, Mode=TwoWay, Delay=500}"/>
+      </StackPanel>
+    </shadui:NavigationView.PaneHeader>
+
+    <shadui:NavigationView.PaneContent>
+      <Grid
+        RowDefinitions="Auto,*" RowSpacing="8">
+        <TextBlock
+          Classes="Muted Caption" Grid.Row="0"
+          Text="{Binding FilteredPromptCountKey^}"/>
+
+        <Panel Grid.Row="1">
+          <ListBox
+            x:Name="PromptListBox" Margin="0,0,4,0"
+            IsVisible="{Binding !!FilteredPrompts.Count}"
+            ItemsSource="{Binding FilteredPrompts}"
+            SelectedItem="{Binding SelectedPromptItem, Mode=TwoWay}">
+            <ListBox.DataTemplates>
+              <DataTemplate DataType="vm:PromptPageViewModel+PromptItem">
+                <Grid
+                  ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                  <StackPanel
+                    Grid.Column="0" VerticalAlignment="Center"
+                    Spacing="3">
+                    <TextBlock
+                      Classes="p" IsHitTestVisible="False"
+                      Text="{Binding DisplayNameKey^}"
+                      TextTrimming="CharacterEllipsis"
+                      ToolTip.Tip="{Binding DisplayNameKey^}"/>
+                    <TextBlock
+                      Classes="Muted Caption" IsHitTestVisible="False"
+                      MaxLines="2"
+                      Text="{Binding Template}"
+                      TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+                  </StackPanel>
+
+                  <shadui:Badge
+                    Grid.Column="1" VerticalAlignment="Center"
+                    Background="{DynamicResource SuccessColor60}"
+                    Content="{I18N {x:Static LocaleKey.Common_Default}}"
+                    Foreground="{DynamicResource BadgeForegroundColor}"
+                    IsVisible="{Binding IsDefault}"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.DataTemplates>
+          </ListBox>
+
+          <StackPanel
+            HorizontalAlignment="Center" VerticalAlignment="Center"
+            IsVisible="{Binding !FilteredPrompts.Count}"
+            Spacing="12">
+            <Image
+              Height="96" HorizontalAlignment="Center"
+              Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+            <TextBlock
+              Classes="p"
+              Text="{I18N {x:Static LocaleKey.PromptPage_NoMatchingPrompts}}"
+              TextAlignment="Center" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Panel>
+      </Grid>
+    </shadui:NavigationView.PaneContent>
+
+    <shadui:NavigationView.Header>
+      <Grid
+        Height="36" Margin="0,14,0,14"
+        ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+        IsVisible="{Binding SelectedPromptItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel
+          Grid.Column="0" VerticalAlignment="Center"
+          Orientation="Horizontal" Spacing="8">
+          <TextBlock
+            Classes="h4"
+            Text="{Binding SelectedPromptItem?.DisplayNameKey^}"
+            TextTrimming="CharacterEllipsis"
+            ToolTip.Tip="{Binding SelectedPromptItem?.DisplayNameKey^}"/>
+
+          <shadui:Badge
+            VerticalAlignment="Center"
+            Background="{DynamicResource SuccessColor60}"
+            Content="{I18N {x:Static LocaleKey.PromptPage_BuiltInBadge_Content}}"
+            Foreground="{DynamicResource BadgeForegroundColor}"
+            IsVisible="{Binding SelectedPromptItem?.IsBuiltIn, TargetNullValue={x:False}}"/>
+        </StackPanel>
+
+        <Button
+          Classes="Secondary" Grid.Column="1"
+          VerticalAlignment="Center"
+          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+          Command="{Binding CopyRenderedPreviewCommand}"
+          Content="{I18N {x:Static LocaleKey.Common_Copy}}"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_CopyRenderedButton_ToolTip}}"/>
+
+        <shadui:ButtonGroup
+          Grid.Column="2"
+          CornerRadius="{DynamicResource FullCornerRadius}"
+          Orientation="Horizontal">
+          <Button
+            Classes="Secondary" VerticalAlignment="Center"
+            shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
+            Command="{Binding EditSelectedPromptCommand}"
+            Content="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_Content}}"
+            IsEnabled="{Binding CanEditSelectedPrompt}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_ToolTip}}"/>
+          <Button
+            Classes="Secondary" VerticalAlignment="Center"
+            shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+            Command="{Binding DeleteSelectedPromptCommand}"
+            Content="{I18N {x:Static LocaleKey.Common_Delete}}"
+            Foreground="{DynamicResource DestructiveColor}"
+            IsEnabled="{Binding CanDeleteSelectedPrompt}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_DeletePromptButton_ToolTip}}"/>
+        </shadui:ButtonGroup>
+      </Grid>
+    </shadui:NavigationView.Header>
+
+    <shadui:NavigationView.ContentTemplate>
+      <DataTemplate DataType="vm:PromptPageViewModel+PromptItem">
+        <DockPanel
+          MaxWidth="1000" VerticalSpacing="12">
+          <ItemsControl
+            DockPanel.Dock="Top"
+            IsVisible="{Binding !!#Self.ViewModel.SelectedPromptDiagnostics.Count}"
+            ItemsSource="{Binding #Self.ViewModel.SelectedPromptDiagnostics}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="8"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:PromptPageViewModel+PromptDiagnosticItem">
+                <shadui:Toast
+                  Title="{Binding MessageKey^}"
+                  HorizontalAlignment="Stretch" CanDismiss="False"
+                  CanDismissByClicking="False"
+                  Notification="{Binding Type, Converter={x:Static shadui:NotificationTypeToNotificationConverter.Shared}}"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!--  Only the selected prompt body changes layout; the outer navigation and prompt list stay stable.  -->
+          <DockPanel
+            x:Name="SelectedPromptContentBody" HorizontalSpacing="12"
+            LastChildFill="True" VerticalSpacing="12">
+            <Interaction.Behaviors>
+              <AdaptiveBehavior>
+                <AdaptiveClassSetter
+                  MinWidth="0" MaxWidth="480"
+                  ClassName="narrow" MaxWidthOperator="LessThan"
+                  MinWidthOperator="GreaterThanOrEqual"/>
+                <AdaptiveClassSetter
+                  MinWidth="480" MaxWidth="Infinity"
+                  ClassName="wide" MaxWidthOperator="LessThan"
+                  MinWidthOperator="GreaterThanOrEqual"/>
+              </AdaptiveBehavior>
+            </Interaction.Behaviors>
+
+            <DockPanel
+              x:Name="PromptReferencesPanel" LastChildFill="True">
+              <TextBlock
+                Classes="p" DockPanel.Dock="Top"
+                Margin="4,4,0,8">
+                <TextBlock.Text>
+                  <I18N Key="{x:Static LocaleKey.PromptPage_AssistantsUsingPromptTitle}">
+                    <Binding Path="#Self.ViewModel.SelectedPromptReferences.Count"/>
+                  </I18N>
+                </TextBlock.Text>
+              </TextBlock>
+
+              <ItemsControl ItemsSource="{Binding #Self.ViewModel.SelectedPromptReferences}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="8"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="prompts:AssistantPromptReference">
+                    <Button
+                      Classes="Ghost" HorizontalContentAlignment="Stretch"
+                      Command="{Binding #Self.ViewModel.OpenAssistantReferenceCommand}"
+                      CommandParameter="{Binding}">
+                      <DockPanel
+                        HorizontalSpacing="8" LastChildFill="True">
+                        <v:IconPresenter
+                          DockPanel.Dock="Left" Width="40"
+                          Height="40"
+                          CornerRadius="{DynamicResource FullCornerRadius}"
+                          FontSize="{DynamicResource FontSize2Xl}"
+                          Icon="{Binding Icon}"
+                          IconSize="{DynamicResource FontSize2Xl}"
+                          LineHeight="{DynamicResource LineHeight2Xl}"/>
+
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock
+                            Classes="p"
+                            Text="{Binding Name}"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding $self.Text}"/>
+
+                          <TextBlock
+                            Classes="Muted"
+                            IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Text="{Binding Description}"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding $self.Text}"/>
+                        </StackPanel>
+                      </DockPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TextBlock
+                Classes="Muted Caption" HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding !#Self.ViewModel.SelectedPromptReferences.Count}"
+                Text="{I18N {x:Static LocaleKey.PromptPage_NoAssistantsUsingPrompt}}"
+                TextAlignment="Center" TextWrapping="Wrap"/>
+            </DockPanel>
+
+            <TabControl x:Name="PromptContentTabControl">
+              <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Preview}}">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                  <v:PromptTemplateTextBlock
+                    Margin="8,8,16,8"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    PromptSegments="{Binding #Self.ViewModel.RenderedPreviewSegments}"
+                    TextWrapping="Wrap"/>
+                </ScrollViewer>
+              </TabItem>
+
+              <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Raw}}">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                  <v:PromptTemplateTextBlock
+                    Margin="8,8,16,8"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    PromptText="{Binding #Self.ViewModel.RawTemplate}"
+                    TextWrapping="Wrap"/>
+                </ScrollViewer>
+              </TabItem>
+            </TabControl>
+          </DockPanel>
+        </DockPanel>
+      </DataTemplate>
+    </shadui:NavigationView.ContentTemplate>
+
+    <shadui:NavigationView.EmptyContent>
+      <StackPanel
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        Spacing="16">
+        <Image
+          Height="128" HorizontalAlignment="Center"
+          Source="avares://Everywhere.Core/Assets/Images/EmptyList.png" Stretch="Uniform"/>
+        <TextBlock
+          Classes="p"
+          Text="{I18N {x:Static LocaleKey.PromptPage_EmptyContent_SelectInstruction}}"
+          TextAlignment="Center" TextWrapping="Wrap"/>
+      </StackPanel>
+    </shadui:NavigationView.EmptyContent>
+  </shadui:NavigationView>
+</UserControl>

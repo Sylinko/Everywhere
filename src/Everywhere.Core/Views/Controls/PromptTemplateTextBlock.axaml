@@ -1,0 +1,17 @@
+<Styles
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <Style Selector="v|PromptTemplateTextBlock">
+    <Style Selector="^ Run.PromptPlaceholder">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="^ Run.PromptPlaceholder.DefaultSystemPrompt">
+      <Setter Property="FontWeight" Value="Normal"/>
+    </Style>
+
+    <Style Selector="^ Run.PromptPlaceholder.Unknown">
+      <Setter Property="TextDecorations" Value="Underline"/>
+    </Style>
+  </Style>
+</Styles>

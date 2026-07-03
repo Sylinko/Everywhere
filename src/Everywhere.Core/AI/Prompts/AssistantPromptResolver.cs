@@ -56,9 +56,9 @@ public sealed class AssistantPromptResolver(
             return new AssistantPromptResolution(null, systemPromptOverride, false, []);
         }
 
-        var promptId = assistant is CustomAssistant customAssistant ? customAssistant.SystemPromptId : PromptConstants.DefaultPromptId;
+        var promptId = assistant is CustomAssistant customAssistant ? customAssistant.SystemPromptId : Guid.Empty;
 
-        if (promptId == PromptConstants.DefaultPromptId)
+        if (promptId == Guid.Empty)
         {
             return DefaultResolution();
         }
@@ -76,14 +76,14 @@ public sealed class AssistantPromptResolver(
             promptId);
 
         return new AssistantPromptResolution(
-            PromptConstants.DefaultPromptId,
+            Guid.Empty,
             promptService.DefaultPrompt.Template,
             true,
             [diagnostic]);
     }
 
     private AssistantPromptResolution DefaultResolution() =>
-        new(PromptConstants.DefaultPromptId, promptService.DefaultPrompt.Template, false, []);
+        new(Guid.Empty, promptService.DefaultPrompt.Template, false, []);
 
     internal static PromptDiagnostic CreateUnresolvedReferenceDiagnostic(Guid promptId) =>
         new(

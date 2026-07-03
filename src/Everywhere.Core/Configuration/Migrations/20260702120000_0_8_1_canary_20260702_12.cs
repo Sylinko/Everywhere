@@ -52,7 +52,7 @@ public sealed class _20260702120000_0_8_1_canary_20260702_12(
             if (!TryReadString(legacyPromptNode, out var legacyPrompt))
             {
                 logger.LogWarning("Legacy assistant SystemPrompt had a non-string JSON value and will be mapped to the default prompt.");
-                modified |= SetPromptId(assistant, PromptConstants.DefaultPromptId);
+                modified |= SetPromptId(assistant, Guid.Empty);
                 modified |= assistant.Remove(LegacySystemPromptPropertyName);
                 continue;
             }
@@ -61,7 +61,7 @@ public sealed class _20260702120000_0_8_1_canary_20260702_12(
             if (string.IsNullOrWhiteSpace(normalizedPrompt) ||
                 string.Equals(normalizedPrompt, NormalizePromptText(DefaultPrompts.DefaultSystemPrompt), StringComparison.Ordinal))
             {
-                modified |= SetPromptId(assistant, PromptConstants.DefaultPromptId);
+                modified |= SetPromptId(assistant, Guid.Empty);
                 modified |= assistant.Remove(LegacySystemPromptPropertyName);
                 continue;
             }
@@ -138,7 +138,7 @@ public sealed class _20260702120000_0_8_1_canary_20260702_12(
             return false;
         }
 
-        assistant[SystemPromptIdPropertyName] = PromptConstants.DefaultPromptId.ToString("D");
+        assistant[SystemPromptIdPropertyName] = Guid.Empty.ToString("D");
         return true;
     }
 

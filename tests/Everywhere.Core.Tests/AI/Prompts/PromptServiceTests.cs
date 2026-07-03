@@ -4,7 +4,7 @@ using Everywhere.AI.Prompts.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Everywhere.Core.Tests.AI.PromptManager;
+namespace Everywhere.Core.Tests.AI.Prompts;
 
 public sealed class PromptServiceTests
 {
@@ -34,7 +34,7 @@ public sealed class PromptServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(prompts, Has.Count.EqualTo(2));
-            Assert.That(prompts[0].Id, Is.EqualTo(PromptConstants.DefaultPromptId));
+            Assert.That(prompts[0].Id, Is.EqualTo(Guid.Empty));
             Assert.That(prompts[0].IsBuiltIn, Is.True);
             Assert.That(prompts[0].Template, Is.EqualTo(DefaultPrompts.DefaultSystemPrompt));
             Assert.That(prompts[1].Id, Is.EqualTo(userPrompt.Id));
@@ -42,23 +42,19 @@ public sealed class PromptServiceTests
     }
 
     [Test]
-    public async Task CreatePromptAsync_PersistsUserPromptWithMetadata()
+    public async Task CreatePromptAsync_PersistsUserPrompt()
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
         var service = CreateService(database);
         var id = Guid.CreateVersion7();
-        var metadata = new byte[] { 1, 2, 3 };
 
         var prompt = await service.CreatePromptAsync(
             new PromptCreateRequest(
                 "Template",
                 "  Name  ",
-                PromptSource.Guided,
-                metadata,
-                id));
+                Id: id));
 
-        metadata[0] = 9;
         var saved = await service.GetPromptAsync(id);
 
         Assert.Multiple(() =>
@@ -66,12 +62,8 @@ public sealed class PromptServiceTests
             Assert.That(prompt.Id, Is.EqualTo(id));
             Assert.That(prompt.Name, Is.EqualTo("Name"));
             Assert.That(prompt.Template, Is.EqualTo("Template"));
-            Assert.That(prompt.Source, Is.EqualTo(PromptSource.Guided));
-            Assert.That(prompt.CreatedAt, Is.Not.Null);
-            Assert.That(prompt.UpdatedAt, Is.Not.Null);
-            Assert.That(prompt.MetadataPayload, Is.EqualTo(new byte[] { 1, 2, 3 }));
             Assert.That(saved, Is.Not.Null);
-            Assert.That(saved!.MetadataPayload, Is.EqualTo(new byte[] { 1, 2, 3 }));
+            Assert.That(saved!.Template, Is.EqualTo("Template"));
         });
     }
 
@@ -82,15 +74,12 @@ public sealed class PromptServiceTests
         await database.MigrateAsync();
         var service = CreateService(database);
         var prompt = await service.CreatePromptAsync(new PromptCreateRequest("Old", "Old name", PromptSource.Blank));
-        var oldUpdatedAt = prompt.UpdatedAt.GetValueOrDefault();
 
         var updated = await service.UpdatePromptAsync(
             prompt.Id,
             new PromptUpdateRequest(
                 "New",
-                "New name",
-                new byte[] { 4, 5 },
-                PromptSource.Copy));
+                "New name"));
 
         Assert.Multiple(() =>
         {
@@ -98,11 +87,6 @@ public sealed class PromptServiceTests
             Assert.That(updated!.Id, Is.EqualTo(prompt.Id));
             Assert.That(updated.Name, Is.EqualTo("New name"));
             Assert.That(updated.Template, Is.EqualTo("New"));
-            Assert.That(updated.Source, Is.EqualTo(PromptSource.Copy));
-            Assert.That(updated.MetadataPayload, Is.EqualTo(new byte[] { 4, 5 }));
-            Assert.That(prompt.UpdatedAt, Is.Not.Null);
-            Assert.That(updated.UpdatedAt, Is.Not.Null);
-            Assert.That(updated.UpdatedAt.GetValueOrDefault(), Is.GreaterThanOrEqualTo(oldUpdatedAt));
         });
     }
 
@@ -114,7 +98,7 @@ public sealed class PromptServiceTests
         var service = CreateService(database);
         var prompt = await service.CreatePromptAsync(new PromptCreateRequest("Template"));
 
-        var deletedDefault = await service.DeletePromptAsync(PromptConstants.DefaultPromptId);
+        var deletedDefault = await service.DeletePromptAsync(Guid.Empty);
         var deletedUser = await service.DeletePromptAsync(prompt.Id);
         var missing = await service.GetPromptAsync(prompt.Id);
 
@@ -134,7 +118,7 @@ public sealed class PromptServiceTests
 
         Assert.ThrowsAsync<ArgumentException>(
             async () => await service.CreatePromptAsync(
-                new PromptCreateRequest("Template", Id: PromptConstants.DefaultPromptId)));
+                new PromptCreateRequest("Template", Id: Guid.Empty)));
     }
 
     [Test]

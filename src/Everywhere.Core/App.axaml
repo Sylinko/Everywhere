@@ -8,6 +8,7 @@
     <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>
     <StyleInclude Source="avares://Everywhere.Core/Assets/Styles.axaml"/>
     <StyleInclude Source="avares://Everywhere.Core/Assets/AvaloniaEditStyles.axaml"/>
+    <StyleInclude Source="avares://Everywhere.Core/Views/Controls/PromptTemplateTextBlock.axaml"/>
   </Application.Styles>
 
   <Application.Resources>
@@ -54,6 +55,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconPresenter.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/PromptTemplateEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/TextDifferenceSummaryView.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/ScreenSelection/ScreenSelectionToolTip.axaml"/>

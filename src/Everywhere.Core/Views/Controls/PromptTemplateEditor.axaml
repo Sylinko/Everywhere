@@ -1,0 +1,35 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+  xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:PromptTemplateEditor}"
+    TargetType="v:PromptTemplateEditor">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          Background="{DynamicResource CardBackgroundColor}"
+          BorderBrush="{DynamicResource BorderColor}"
+          BorderThickness="1" ClipToBounds="True"
+          CornerRadius="{DynamicResource MdCornerRadius}">
+          <avaloniaEdit:TextEditor
+            x:Name="PART_TextEditor" Focusable="True"
+            Padding="{TemplateBinding Padding}"
+            Background="Transparent"
+            Foreground="{DynamicResource ForegroundColor}"
+            HorizontalScrollBarVisibility="Auto"
+            ShowLineNumbers="False"
+            SyntaxHighlighting="{x:Null}"
+            VerticalScrollBarVisibility="Auto"
+            WordWrap="True">
+            <avaloniaEdit:TextEditor.Options>
+              <avaloniaEdit:TextEditorOptions
+                AcceptsTab="True" AllowScrollBelowDocument="False"
+                EnableRectangularSelection="False" EnableTextDragDrop="False"/>
+            </avaloniaEdit:TextEditor.Options>
+          </avaloniaEdit:TextEditor>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
