@@ -3107,7 +3107,7 @@
         <value>오늘</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>다시 오신 것을 환영합니다,</value>
+        <value>다시 오신 것을 환영합니다, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>당신의 AI 비서가 데스크탑 곳곳에서 작업할 준비가 되어 있으며, 각 애플리케이션의 맥락을 연결합니다.</value>

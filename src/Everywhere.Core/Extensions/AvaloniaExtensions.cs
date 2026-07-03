@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Media;
 using Everywhere.Common;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,42 +25,6 @@ public static class AvaloniaExtensions
         {
             Classes = { nameof(DynamicLocaleKey) },
             [!TextBlock.TextProperty] = dynamicResourceKey.ToBinding()
-        };
-    }
-
-    /// <summary>
-    /// Creates a toast whose visible text stays bound to a dynamic locale key.
-    /// </summary>
-    /// <remarks>
-    /// ShadUI's toast title is a plain string, so localized Prompt Manager toasts place the
-    /// title text in the content area as a bound <see cref="TextBlock"/> instead of resolving
-    /// the key once before the toast is displayed.
-    /// </remarks>
-    public static ToastBuilder CreateToast(this ToastHost toastHost, IDynamicLocaleKey titleKey) =>
-        toastHost.CreateToast(string.Empty).WithContent(titleKey.ToTextBlock());
-
-    /// <summary>
-    /// Creates a toast with localized title and body content.
-    /// </summary>
-    public static ToastBuilder CreateToast(
-        this ToastHost toastHost,
-        IDynamicLocaleKey titleKey,
-        IDynamicLocaleKey contentKey) =>
-        toastHost.CreateToast(string.Empty).WithContent(CreateToastContent(titleKey, contentKey));
-
-    private static StackPanel CreateToastContent(IDynamicLocaleKey titleKey, IDynamicLocaleKey contentKey)
-    {
-        var title = titleKey.ToTextBlock();
-        title.FontWeight = FontWeight.DemiBold;
-
-        return new StackPanel
-        {
-            Spacing = 4,
-            Children =
-            {
-                title,
-                contentKey.ToTextBlock()
-            }
         };
     }
 

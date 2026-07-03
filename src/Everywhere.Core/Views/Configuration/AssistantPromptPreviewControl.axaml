@@ -1,0 +1,37 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:AssistantPromptPreviewControl}"
+    TargetType="v:AssistantPromptPreviewControl">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <TabControl>
+          <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Preview}}">
+            <ScrollViewer
+              MaxHeight="260" HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollBarVisibility="Auto">
+              <v:PromptTemplateTextBlock
+                Margin="8,8,16,8"
+                FontFamily="{StaticResource MonospaceFontFamily}"
+                PromptSegments="{Binding RenderedPreviewSegments, RelativeSource={RelativeSource TemplatedParent}}"
+                TextWrapping="Wrap"/>
+            </ScrollViewer>
+          </TabItem>
+
+          <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Raw}}">
+            <ScrollViewer
+              MaxHeight="260" HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollBarVisibility="Auto">
+              <v:PromptTemplateTextBlock
+                Margin="8,8,16,8"
+                FontFamily="{StaticResource MonospaceFontFamily}"
+                PromptText="{Binding RawTemplate, RelativeSource={RelativeSource TemplatedParent}}"
+                TextWrapping="Wrap"/>
+            </ScrollViewer>
+          </TabItem>
+        </TabControl>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

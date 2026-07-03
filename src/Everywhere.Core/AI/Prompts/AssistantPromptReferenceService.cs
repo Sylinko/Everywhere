@@ -43,6 +43,12 @@ public interface IAssistantPromptReferenceService
     /// Lists assistant prompt references that cannot be resolved to default or persisted prompts.
     /// </summary>
     Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resets assistants that point at the specified prompt to the built-in default prompt.
+    /// </summary>
+    /// <returns>The number of assistant references that were changed.</returns>
+    int ResetReferencesToDefault(Guid promptId);
 }
 
 /// <summary>
@@ -81,5 +87,28 @@ public sealed class AssistantPromptReferenceService(Settings settings, IPromptSe
                 assistant.SystemPromptId,
                 AssistantPromptResolver.CreateUnresolvedReferenceDiagnostic(assistant.SystemPromptId)))
             .ToList();
+    }
+
+    /// <inheritdoc />
+    public int ResetReferencesToDefault(Guid promptId)
+    {
+        if (promptId == Guid.Empty)
+        {
+            return 0;
+        }
+
+        var count = 0;
+        foreach (var assistant in settings.Model.CustomAssistants)
+        {
+            if (assistant.SystemPromptId != promptId)
+            {
+                continue;
+            }
+
+            assistant.SystemPromptId = Guid.Empty;
+            count++;
+        }
+
+        return count;
     }
 }

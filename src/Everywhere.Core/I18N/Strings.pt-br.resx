@@ -420,7 +420,7 @@
         <value>Entenda o conteúdo da sua tela em tempo real, ultrapasse as barreiras dos aplicativos e conte com assistência inteligente que realmente se adapta ao contexto, transformando sua área de trabalho em um ambiente fluido e inteligente.</value>
     </data>
     <data name="AboutPage_Version" xml:space="preserve">
-        <value>Versão:</value>
+        <value>Versão: </value>
     </data>
     <data name="AboutPage_GitHubRepo" xml:space="preserve">
         <value>Repositório no GitHub</value>
@@ -736,7 +736,7 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
         <value>Dica: você pode clicar em 'Sobre - Página de Boas-Vindas' para reabrir esta mensagem.</value>
     </data>
     <data name="WelcomeView_IntroStep_Message5" xml:space="preserve">
-        <value>Links Úteis:</value>
+        <value>Links Úteis: </value>
     </data>
     <data name="WelcomeView_IntroStep_Message3" xml:space="preserve">
         <value>Você pode me chamar a qualquer hora e em qualquer lugar. Eu entendo o contexto do seu trabalho atual, seja e-mail, artigo ou página da web, e ajudo você a resolver problemas de forma mais inteligente!</value>
@@ -1200,7 +1200,7 @@ Você pode usar placeholders no prompt, delimitados por {}, que serão substitu�
         <value>Permitir que &quot;{0}&quot; seja executado? Ele requer a permissão &quot;{1}&quot;</value>
     </data>
     <data name="Common_Comma" xml:space="preserve">
-        <value>,</value>
+        <value>, </value>
     </data>
     <data name="ChatWindow_ScrollToBottom_ToolTip" xml:space="preserve">
         <value>Rolar para o final</value>
@@ -3108,7 +3108,7 @@ Data de lançamento: {2}</value>
         <value>Hoje</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>Bem-vindo de volta,</value>
+        <value>Bem-vindo de volta, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>Seu assistente de IA está pronto para atuar em toda a área de trabalho, conectando o contexto de cada aplicativo.</value>

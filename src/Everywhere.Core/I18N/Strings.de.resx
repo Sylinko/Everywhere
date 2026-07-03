@@ -359,7 +359,8 @@
         <value>Unbekannter Fehler, bitte versuchen Sie es später erneut.</value>
     </data>
     <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Ein oder mehrere Fehler sind aufgetreten.</value>
+        <value>Ein oder mehrere Fehler sind aufgetreten.
+{0}</value>
     </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Aufgabe abgebrochen.</value>

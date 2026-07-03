@@ -33,12 +33,13 @@
     </Grid>
 
     <Grid
-      ColumnDefinitions="3*,2*" ColumnSpacing="12">
+      ColumnDefinitions="3*,2*" ColumnSpacing="4">
       <ScrollViewer
         Grid.Column="0" HorizontalScrollBarVisibility="Disabled"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="10">
-          <StackPanel Spacing="4">
+        VerticalScrollBarVisibility="Hidden">
+        <StackPanel
+          Margin="0,0,8,0" Spacing="8">
+          <StackPanel Spacing="6">
             <TextBlock
               Classes="Muted Caption"
               Text="{I18N {x:Static LocaleKey.PromptEditor_NameLabel}}"/>
@@ -48,14 +49,18 @@
               Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
           </StackPanel>
 
-          <StackPanel Spacing="4">
+          <StackPanel Spacing="6">
             <TextBlock
               Classes="Muted Caption"
               Text="{I18N {x:Static LocaleKey.PromptEditor_TemplateLabel}}"/>
             <v:PromptTemplateEditor
-              MinHeight="460" Padding="10"
+              MinHeight="460" Padding="8"
               FontFamily="{StaticResource MonospaceFontFamily}"
-              Text="{Binding Template, Mode=TwoWay}"/>
+              Text="{Binding Template, Mode=TwoWay}">
+              <Interaction.Behaviors>
+                <shadui:SwallowBringIntoViewEventBehavior/>
+              </Interaction.Behaviors>
+            </v:PromptTemplateEditor>
           </StackPanel>
 
           <StackPanel Spacing="6">
@@ -72,12 +77,18 @@
                 <DataTemplate DataType="vm:PromptEditorViewModel+PlaceholderReferenceItem">
                   <Grid
                     ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                    <TextBlock
-                      Classes="Caption"
-                      FontFamily="{StaticResource MonospaceFontFamily}"
-                      FontWeight="SemiBold"
-                      Foreground="{Binding PlaceholderBrush}"
-                      Text="{Binding PlaceholderText}"/>
+                    <Button
+                      Classes="Ghost" Padding="0"
+                      Command="{Binding CopyToClipboard}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.PromptEditor_CopyToClipboardButton_ToolTip}}">
+                      <TextBlock
+                        Classes="Caption"
+                        FontFamily="{StaticResource MonospaceFontFamily}"
+                        FontWeight="SemiBold"
+                        Foreground="{Binding PlaceholderBrush}"
+                        Text="{Binding PlaceholderText}"/>
+                    </Button>
+
                     <TextBlock
                       Classes="Muted Caption" Grid.Column="1"
                       Text="{Binding DescriptionKey^}"
@@ -92,7 +103,7 @@
 
       <DockPanel
         Grid.Column="1" LastChildFill="True"
-        VerticalSpacing="10">
+        VerticalSpacing="8">
         <ItemsControl
           DockPanel.Dock="Bottom"
           IsVisible="{Binding !!Diagnostics.Count}"
@@ -127,7 +138,7 @@
           CornerRadius="{DynamicResource MdCornerRadius}">
           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
             <v:PromptTemplateTextBlock
-              Margin="10"
+              Margin="8"
               FontFamily="{StaticResource MonospaceFontFamily}"
               PromptSegments="{Binding RenderedPreviewSegments}"
               TextWrapping="Wrap"/>

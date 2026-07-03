@@ -280,7 +280,8 @@
 
             <TabControl x:Name="PromptContentTabControl">
               <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Preview}}">
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer
+                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                   <v:PromptTemplateTextBlock
                     Margin="8,8,16,8"
                     FontFamily="{StaticResource MonospaceFontFamily}"
@@ -290,7 +291,8 @@
               </TabItem>
 
               <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Raw}}">
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer
+                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                   <v:PromptTemplateTextBlock
                     Margin="8,8,16,8"
                     FontFamily="{StaticResource MonospaceFontFamily}"

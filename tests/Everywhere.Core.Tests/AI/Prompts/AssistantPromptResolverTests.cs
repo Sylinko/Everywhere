@@ -75,7 +75,7 @@ public sealed class AssistantPromptResolverTests
     }
 
     [Test]
-    public async Task ReferenceService_ReturnsMatchingReferencesAndUnresolvedReferences()
+    public async Task ReferenceService_ReturnsMatchingReferencesUnresolvedReferencesAndResetsPromptReferences()
     {
         using var database = PromptTestDatabase.Create();
         await database.MigrateAsync();
@@ -101,6 +101,8 @@ public sealed class AssistantPromptResolverTests
 
         var references = referenceService.ListReferences(prompt.Id);
         var unresolved = await referenceService.ListUnresolvedReferencesAsync();
+        var resetCount = referenceService.ResetReferencesToDefault(prompt.Id);
+        var referencesAfterReset = referenceService.ListReferences(prompt.Id);
 
         Assert.Multiple(() =>
         {
@@ -110,6 +112,10 @@ public sealed class AssistantPromptResolverTests
             Assert.That(unresolved[0].Name, Is.EqualTo("Uses missing"));
             Assert.That(unresolved[0].SystemPromptId, Is.EqualTo(missingPromptId));
             Assert.That(unresolved[0].Diagnostic.Code, Is.EqualTo(PromptDiagnosticCode.UnresolvedReference));
+            Assert.That(resetCount, Is.EqualTo(1));
+            Assert.That(settings.Model.CustomAssistants[0].SystemPromptId, Is.EqualTo(Guid.Empty));
+            Assert.That(settings.Model.CustomAssistants[1].SystemPromptId, Is.EqualTo(missingPromptId));
+            Assert.That(referencesAfterReset, Is.Empty);
         });
     }
 

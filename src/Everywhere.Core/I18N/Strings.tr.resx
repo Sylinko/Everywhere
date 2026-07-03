@@ -359,7 +359,8 @@
         <value>Bilinmeyen hata, lütfen daha sonra tekrar deneyin.</value>
     </data>
     <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Bir veya birden fazla hata oluştu.\n{0}</value>
+        <value>Bir veya birden fazla hata oluştu.
+{0}</value>
     </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Görev iptal edildi.</value>
@@ -3106,7 +3107,7 @@ Yayın tarihi: {2}</value>
         <value>Bugün</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>Hoş geldin,</value>
+        <value>Hoş geldin, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>AI asistanın masaüstünde her yerde çalışmaya hazır, her uygulamanın bağlamını bağlıyor.</value>

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Messages;
 using Everywhere.Skills;
 using Everywhere.Views.Pages;
@@ -129,10 +130,14 @@ public sealed partial class PromptPageViewModel(
         {
             _pendingRoutePromptId = null;
             ClearSelectedPrompt();
-            ShowNavigationWarning(
-                new FormattedDynamicLocaleKey(
-                    LocaleKey.PromptPage_InvalidRoutePrompt_Content,
-                    new DirectLocaleKey(promptIdText)));
+            ToastHost
+                .CreateToast(
+                    LocaleResolver.PromptPage_NavigationWarning_Title,
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.PromptPage_InvalidRoutePrompt_Content,
+                        new DirectLocaleKey(promptIdText)))
+                .DismissOnClick()
+                .ShowWarning();
             return;
         }
 
@@ -201,8 +206,10 @@ public sealed partial class PromptPageViewModel(
         await ExecuteBusyTaskAsync(
             async cancellationToken =>
             {
+                assistantPromptReferenceService.ResetReferencesToDefault(prompt.Id);
                 if (!await promptService.DeletePromptAsync(prompt.Id, cancellationToken))
                 {
+                    RefreshSelectedPromptDetails(prompt);
                     return;
                 }
 
@@ -213,9 +220,8 @@ public sealed partial class PromptPageViewModel(
     }
 
     /// <summary>
-    /// Creates a stronger confirmation message when deleting the prompt would leave assistants with
-    /// unresolved prompt references. Runtime still falls back to the default prompt, but the warning
-    /// needs to make that implicit safety net visible before the destructive action.
+    /// Creates a stronger confirmation message when deleting the prompt will reset assistant prompt
+    /// references. This mirrors the actual delete behavior so users see the effect before confirming.
     /// </summary>
     private static string CreateDeletePromptDialogMessage(PromptItem prompt, int referenceCount) =>
         referenceCount switch
@@ -237,7 +243,12 @@ public sealed partial class PromptPageViewModel(
         }
         catch (Exception ex)
         {
-            ShowErrorToast(new DynamicLocaleKey(LocaleKey.PromptPage_CopyFailedToast_Title), ex.GetFriendlyMessage());
+            ToastHost
+                .CreateToast(
+                    LocaleResolver.PromptPage_CopyFailedToast_Title,
+                    HandledSystemException.Handle(ex).GetFriendlyMessage())
+                .DismissOnClick()
+                .ShowError();
         }
     }
 
@@ -266,10 +277,14 @@ public sealed partial class PromptPageViewModel(
         {
             if (!SelectPrompt(promptId) && shouldWarnForPendingRoute)
             {
-                ShowNavigationWarning(
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.PromptPage_MissingRoutePrompt_Content,
-                        new DirectLocaleKey(promptId)));
+                ToastHost
+                    .CreateToast(
+                        LocaleResolver.PromptPage_NavigationWarning_Title,
+                        new FormattedDynamicLocaleKey(
+                            LocaleKey.PromptPage_MissingRoutePrompt_Content,
+                            new DirectLocaleKey(promptId)))
+                    .DismissOnClick()
+                    .ShowWarning();
             }
         }
         else
@@ -434,16 +449,10 @@ public sealed partial class PromptPageViewModel(
 
     private void ShowCopiedToast()
     {
-        ToastHost.CreateToast(new DynamicLocaleKey(LocaleKey.Common_Copied))
+        ToastHost
+            .CreateToast(LocaleResolver.Common_Copied)
             .DismissOnClick()
             .ShowSuccess();
-    }
-
-    private void ShowErrorToast(IDynamicLocaleKey titleKey, IDynamicLocaleKey contentKey)
-    {
-        ToastHost.CreateToast(titleKey, contentKey)
-            .DismissOnClick()
-            .ShowError();
     }
 
     /// <summary>
@@ -456,15 +465,6 @@ public sealed partial class PromptPageViewModel(
     /// </remarks>
     private PromptPlaceholderContext CreatePromptContext() =>
         new(SkillsPromptResolver: skillPromptProvider.GetPrompt);
-
-    private void ShowNavigationWarning(IDynamicLocaleKey messageKey)
-    {
-        ToastHost.CreateToast(
-                new DynamicLocaleKey(LocaleKey.PromptPage_NavigationWarning_Title),
-                messageKey)
-            .DismissOnClick()
-            .ShowWarning();
-    }
 
     public sealed class PromptItem(PromptDefinition prompt)
     {
@@ -486,14 +486,11 @@ public sealed partial class PromptPageViewModel(
                         LocaleKey.PromptPage_UntitledPrompt_DisplayName) :
                 new DirectLocaleKey(Prompt.Name);
 
-        public PromptSource Source => Prompt.Source;
-
         public string DisplayName =>
             string.IsNullOrWhiteSpace(Prompt.Name) ?
-                ResolveLocaleOrFallback(
-                    Prompt.IsDefault ?
-                        LocaleKey.PromptPage_DefaultPrompt_DisplayName :
-                        LocaleKey.PromptPage_UntitledPrompt_DisplayName) :
+                Prompt.IsDefault ?
+                    LocaleResolver.PromptPage_DefaultPrompt_DisplayName :
+                    LocaleResolver.PromptPage_UntitledPrompt_DisplayName :
                 Prompt.Name;
 
         public IReadOnlyList<string> SearchValues { get; } =
@@ -501,8 +498,8 @@ public sealed partial class PromptPageViewModel(
             prompt.Id.ToString("D"),
             prompt.Name ?? string.Empty,
             prompt.Template,
-            prompt.IsDefault ? ResolveLocaleOrFallback(LocaleKey.PromptPage_DefaultPrompt_DisplayName) : string.Empty,
-            prompt.IsDefault ? ResolveLocaleOrFallback(LocaleKey.PromptPage_Source_BuiltInDefault) : ResolveSourceLabelOrFallback(prompt.Source),
+            prompt.IsDefault ? LocaleResolver.PromptPage_DefaultPrompt_DisplayName : string.Empty,
+            prompt.IsDefault ? LocaleResolver.PromptPage_Source_BuiltInDefault : ResolveSourceLabelOrFallback(prompt.Source),
             prompt.Source.ToString()
         ];
 
@@ -515,18 +512,6 @@ public sealed partial class PromptPageViewModel(
             catch (InvalidOperationException)
             {
                 return source.ToString();
-            }
-        }
-
-        private static string ResolveLocaleOrFallback(object key)
-        {
-            try
-            {
-                return DynamicLocaleKey.Resolve(key);
-            }
-            catch (InvalidOperationException)
-            {
-                return key.ToString() ?? string.Empty;
             }
         }
     }

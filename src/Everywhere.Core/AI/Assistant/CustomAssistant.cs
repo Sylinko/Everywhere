@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.AI.Prompts;
 using Everywhere.Views;
 using Lucide.Avalonia;
 
@@ -44,6 +43,18 @@ public sealed partial class CustomAssistant : Assistant
         {
             CustomAssistant = this
         });
+
+    /// <summary>
+    /// Settings UI for selecting and previewing this assistant's Prompt Manager prompt.
+    /// </summary>
+    /// <remarks>
+    /// This object is UI-only. The persisted value remains <see cref="SystemPromptId"/> so existing
+    /// migration, runtime resolution, and settings JSON shape stay unchanged.
+    /// </remarks>
+    [JsonIgnore]
+    [DynamicLocaleKey(LocaleKey.AssistantPromptSettings_Header, LocaleKey.AssistantPromptSettings_Description)]
+    [SettingsItems(IsExpanded = false)]
+    public AssistantPromptSettings PromptSettings => new(this);
 
     /// <summary>
     /// Prompt Manager prompt used as this assistant's active system prompt.

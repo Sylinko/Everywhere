@@ -87,9 +87,9 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == IsExpandableProperty)
+        if (change.Property == IsExpandableProperty && change.NewValue is false)
         {
-            IsExpanded = change.NewValue is true;
+            IsExpanded = false;
         }
     }
 

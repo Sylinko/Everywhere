@@ -110,6 +110,8 @@ public sealed class PromptPageViewModelTests
         public Task<IReadOnlyList<UnresolvedAssistantPromptReference>> ListUnresolvedReferencesAsync(
             CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<UnresolvedAssistantPromptReference>>([]);
+
+        public int ResetReferencesToDefault(Guid promptId) => 0;
     }
 
     private sealed class TestSkillPromptProvider(string prompt) : ISkillPromptProvider

@@ -3107,7 +3107,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Hoy</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>Bienvenido de nuevo,</value>
+        <value>Bienvenido de nuevo, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>Tu asistente AI está listo para trabajar en todo el escritorio, conectando el contexto de cada aplicación.</value>

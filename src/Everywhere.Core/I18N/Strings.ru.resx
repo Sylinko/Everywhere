@@ -3107,7 +3107,7 @@
         <value>Сегодня</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>С возвращением,</value>
+        <value>С возвращением, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>Ваш AI помощник готов работать на рабочем столе, связывая контекст каждого приложения.</value>

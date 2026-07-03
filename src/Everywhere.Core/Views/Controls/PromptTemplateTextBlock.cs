@@ -249,7 +249,7 @@ internal sealed class PromptTemplateInlineSynchronizer(IReadOnlySet<string> know
         run.Classes.Remove("PromptPlaceholder");
         run.Classes.Remove("DefaultSystemPrompt");
         run.Classes.Remove("Unknown");
-        run.Foreground = null;
+        run.ClearValue(Run.ForegroundProperty);
     }
 
     private IReadOnlyList<PromptTemplateInlineSegment> BuildTemplateSegments(string text)

@@ -9,43 +9,32 @@ namespace Everywhere.AI.Configurator;
 /// Configurator for the Everywhere official model provider.
 /// </summary>
 [GeneratedSettingsItems]
-public sealed partial class OfficialAssistantConfigurator : AssistantConfigurator
+public sealed partial class OfficialAssistantConfigurator(Assistant owner) : AssistantConfigurator
 {
     [DynamicLocaleKey(LocaleKey.Empty)]
-    public SettingsControl<OfficialModelDefinitionForm> ModelDefinitionForm { get; }
-
-    private readonly Assistant _owner;
-
-    /// <summary>
-    /// Configurator for the Everywhere official model provider.
-    /// </summary>
-    public OfficialAssistantConfigurator(Assistant owner)
-    {
-        _owner = owner;
-
-        ModelDefinitionForm = new SettingsControl<OfficialModelDefinitionForm>(x => new OfficialModelDefinitionForm(x, owner), false);
-    }
+    public SettingsControl<OfficialModelDefinitionForm> ModelDefinitionForm =>
+        new(x => new OfficialModelDefinitionForm(x, owner), false);
 
     public override void Backup()
     {
-        Backup(_owner.ModelId);
+        Backup(owner.ModelId);
     }
 
     public override void Apply()
     {
-        _owner.ModelProviderTemplateId = null;
-        _owner.Endpoint = null;
-        _owner.RequestTimeoutSeconds = 20;
+        owner.ModelProviderTemplateId = null;
+        owner.Endpoint = null;
+        owner.RequestTimeoutSeconds = 20;
 
-        _owner.ModelId = Restore(_owner.ModelId);
+        owner.ModelId = Restore(owner.ModelId);
     }
 
     public override Assistant ResolveAssistant(ModelSpecializations specialization)
     {
-        if (specialization == ModelSpecializations.Default || _owner.Specializations.HasFlag(specialization))
+        if (specialization == ModelSpecializations.Default || owner.Specializations.HasFlag(specialization))
         {
             // If the current assistant already has the specialization, return it directly.
-            return _owner;
+            return owner;
         }
 
         var modelDefinitionTemplate = ServiceLocator.Resolve<IOfficialModelProvider>()
@@ -53,7 +42,7 @@ public sealed partial class OfficialAssistantConfigurator : AssistantConfigurato
             .FirstOrDefault(m => m.Specializations.HasFlag(specialization));
 
         // Not found, fallback to selected owner
-        if (modelDefinitionTemplate is null) return _owner;
+        if (modelDefinitionTemplate is null) return owner;
 
         var systemAssistant = new SystemAssistant(specialization)
         {

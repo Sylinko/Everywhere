@@ -1,0 +1,67 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:PromptComboBox}"
+    TargetType="v:PromptComboBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ComboBox
+          x:Name="PART_ComboBox" MinWidth="240"
+          MinHeight="32"
+          ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
+          MaxDropDownHeight="320"
+          SelectedValue="{Binding SelectedId, Mode=TwoWay, FallbackValue={x:Static system:Guid.Empty}, RelativeSource={RelativeSource TemplatedParent}}"
+          SelectedValueBinding="{Binding Id, x:DataType=v:PromptComboBoxItem, FallbackValue={x:Static system:Guid.Empty}}">
+          <shadui:ControlAssist.Footer>
+            <Border
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="0,1,0,0">
+              <StackPanel
+                Margin="4" Spacing="2">
+                <Button
+                  Padding="12,6"
+                  shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                  BorderThickness="0"
+                  Content="{I18N {x:Static LocaleKey.PromptComboBox_NewPrompt}}"
+                  CornerRadius="6">
+                  <Interaction.Behaviors>
+                    <ButtonClickEventTriggerBehavior>
+                      <ButtonClickEventTriggerBehavior.Actions>
+                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
+                        <InvokeCommandAction Command="{Binding $parent[v:PromptComboBox].CreatePromptCommand}"/>
+                      </ButtonClickEventTriggerBehavior.Actions>
+                    </ButtonClickEventTriggerBehavior>
+                  </Interaction.Behaviors>
+                </Button>
+
+                <Button
+                  Padding="12,6"
+                  shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                  BorderThickness="0"
+                  Content="{I18N {x:Static LocaleKey.PromptComboBox_ManagePrompts}}"
+                  CornerRadius="6">
+                  <Interaction.Behaviors>
+                    <ButtonClickEventTriggerBehavior>
+                      <ButtonClickEventTriggerBehavior.Actions>
+                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
+                        <InvokeCommandAction Command="{Binding $parent[v:PromptComboBox].ManagePromptsCommand}"/>
+                      </ButtonClickEventTriggerBehavior.Actions>
+                    </ButtonClickEventTriggerBehavior>
+                  </Interaction.Behaviors>
+                </Button>
+              </StackPanel>
+            </Border>
+          </shadui:ControlAssist.Footer>
+
+          <ComboBox.DataTemplates>
+            <DataTemplate x:DataType="v:PromptComboBoxItem">
+              <TextBlock Text="{Binding DisplayNameKey^}"/>
+            </DataTemplate>
+          </ComboBox.DataTemplates>
+        </ComboBox>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

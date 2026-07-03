@@ -1,4 +1,5 @@
 using Avalonia.Controls.Notifications;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,10 +8,13 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Messages;
 using Everywhere.Skills;
 using Everywhere.Views;
 using MessagePack;
+using Microsoft.Extensions.Logging;
+using ShadUI;
 using ZLinq;
 
 namespace Everywhere.ViewModels;
@@ -31,7 +35,8 @@ public enum PromptEditorMode
 /// </remarks>
 public sealed partial class PromptEditorViewModel(
     IPromptService promptService,
-    ISkillPromptProvider skillPromptProvider
+    ISkillPromptProvider skillPromptProvider,
+    ILogger<PromptEditorViewModel> logger
 ) : BusyViewModelBase
 {
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
@@ -132,8 +137,8 @@ public sealed partial class PromptEditorViewModel(
         {
             ToastHost
                 .CreateToast(
-                    new DynamicLocaleKey(LocaleKey.PromptEditor_OpenFailedToast_Title),
-                    new DynamicLocaleKey(LocaleKey.PromptEditor_OpenFailedToast_Content))
+                    LocaleResolver.PromptEditor_OpenFailedToast_Title,
+                    LocaleResolver.PromptEditor_OpenFailedToast_Content)
                 .DismissOnClick()
                 .ShowWarning();
 
@@ -185,7 +190,7 @@ public sealed partial class PromptEditorViewModel(
             if (savedPrompt is null)
             {
                 ToastHost
-                    .CreateToast(new DynamicLocaleKey(LocaleKey.PromptEditor_SaveFailedToast_Title))
+                    .CreateToast(LocaleResolver.PromptEditor_SaveFailedToast_Title)
                     .DismissOnClick()
                     .ShowWarning();
 
@@ -198,8 +203,12 @@ public sealed partial class PromptEditorViewModel(
         }
         catch (Exception ex)
         {
+            ex = HandledSystemException.Handle(ex);
+            logger.LogError(ex, "Failed to save prompt.");
+
             ToastHost
-                .CreateToast(new DynamicLocaleKey(LocaleKey.PromptEditor_SaveFailedToast_Title), ex.GetFriendlyMessage())
+                .CreateToast(LocaleResolver.PromptEditor_SaveFailedToast_Title)
+                .WithContent(ex.GetFriendlyMessage())
                 .DismissOnClick()
                 .ShowError();
         }
@@ -336,8 +345,7 @@ public sealed partial class PromptEditorViewModel(
         IBrush PlaceholderBrush
     )
     {
-        public static IReadOnlyList<PlaceholderReferenceItem> CreateDefaultItems(
-            IReadOnlyList<PromptPlaceholderDefinition> definitions)
+        public static IReadOnlyList<PlaceholderReferenceItem> CreateDefaultItems(IReadOnlyList<PromptPlaceholderDefinition> definitions)
         {
             var colorSlots = PromptPlaceholderPalette.AssignColorSlots([.. definitions.Select(static definition => definition.Name)]);
             return
@@ -348,6 +356,20 @@ public sealed partial class PromptEditorViewModel(
                         definition.DescriptionKey,
                         PromptPlaceholderPalette.GetBrush(definition.Name, colorSlots[definition.Name]))),
             ];
+        }
+
+        public async void CopyToClipboard()
+        {
+            try
+            {
+                await App.Clipboard.SetTextAsync(PlaceholderText);
+                ToastManager.Success(LocaleResolver.Common_Copied);
+            }
+            catch (Exception ex)
+            {
+                ex = HandledSystemException.Handle(ex);
+                ToastManager.Error(LocaleResolver.Common_Error, ex.GetFriendlyMessage());
+            }
         }
     }
 }
