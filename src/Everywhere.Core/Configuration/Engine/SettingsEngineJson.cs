@@ -2,7 +2,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Everywhere.Configuration.Engine;
 
@@ -31,7 +30,7 @@ internal static class SettingsEngineJson
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             IgnoreReadOnlyProperties = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+            TypeInfoResolver = SettingsJsonSerializerContext.Default,
             WriteIndented = true
         };
 

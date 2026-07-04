@@ -144,6 +144,17 @@ public interface ISettingsPropertyDescriptor
     Type? DictionaryValueType { get; }
 
     /// <summary>
+    /// Converts a JSON object member name into this dictionary property's CLR key type.
+    /// </summary>
+    /// <remarks>
+    /// JSON object member names are always strings, while CLR dictionary keys may
+    /// be enums, numbers, GUIDs, or other STJ-supported key types. Generated
+    /// descriptors provide a closed generic delegate here so the binder does not
+    /// need runtime generic construction on the normal Settings path.
+    /// </remarks>
+    Func<string, object?>? DictionaryKeyReader { get; }
+
+    /// <summary>
     /// Gets whether the property can be replaced through its setter.
     /// </summary>
     bool CanWrite { get; }
@@ -194,7 +205,7 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
     private SettingsObjectDescriptor CreateDescriptor(Type type)
     {
         var properties = type
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .AsValueEnumerable()
             .Where(ShouldIncludeProperty)
             .Select(p => CreatePropertyDescriptor(type, p))
@@ -263,6 +274,7 @@ public sealed class ReflectionSettingsDescriptorProvider : ISettingsDescriptorPr
             elementType,
             dictionaryKeyType,
             dictionaryValueType,
+            dictionaryKeyType is null ? null : DictionaryKeyReader.Create(dictionaryKeyType),
             unknownMemberHandling,
             childDescriptor);
     }
@@ -477,6 +489,7 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
         Type? elementType,
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
+        Func<string, object?>? dictionaryKeyReader,
         SettingsUnknownMemberHandling unknownMemberHandling,
         ISettingsDescriptor? childDescriptor,
         Func<object, object?> getter,
@@ -491,6 +504,7 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
         ElementType = elementType;
         DictionaryKeyType = dictionaryKeyType;
         DictionaryValueType = dictionaryValueType;
+        DictionaryKeyReader = dictionaryKeyReader;
         UnknownMemberHandling = unknownMemberHandling;
         ChildDescriptor = childDescriptor;
         _getter = getter;
@@ -519,6 +533,9 @@ internal sealed class DelegateSettingsPropertyDescriptor : ISettingsPropertyDesc
 
     /// <inheritdoc />
     public Type? DictionaryValueType { get; }
+
+    /// <inheritdoc />
+    public Func<string, object?>? DictionaryKeyReader { get; }
 
     /// <inheritdoc />
     public bool CanWrite { get; }
@@ -562,6 +579,7 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
         Type? elementType,
         Type? dictionaryKeyType,
         Type? dictionaryValueType,
+        Func<string, object?>? dictionaryKeyReader,
         SettingsUnknownMemberHandling unknownMemberHandling,
         ISettingsDescriptor? childDescriptor)
     {
@@ -572,6 +590,7 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
         ElementType = elementType;
         DictionaryKeyType = dictionaryKeyType;
         DictionaryValueType = dictionaryValueType;
+        DictionaryKeyReader = dictionaryKeyReader;
         UnknownMemberHandling = unknownMemberHandling;
         ChildDescriptor = childDescriptor;
     }
@@ -598,6 +617,9 @@ public sealed class SettingsPropertyDescriptor : ISettingsPropertyDescriptor
 
     /// <inheritdoc />
     public Type? DictionaryValueType { get; }
+
+    /// <inheritdoc />
+    public Func<string, object?>? DictionaryKeyReader { get; }
 
     /// <inheritdoc />
     public bool CanWrite => _property is { CanWrite: true, SetMethod.IsStatic: false };

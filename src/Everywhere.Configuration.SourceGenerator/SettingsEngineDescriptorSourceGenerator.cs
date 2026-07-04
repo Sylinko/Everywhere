@@ -365,6 +365,9 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             $"static (instance, value) => (({ownerType})instance).{property.ClrName} = CastPropertyValue<{propertyValueType}>(value)" :
             "null";
         var childDescriptor = property.ChildType is null ? "null" : $"GetDescriptor(typeof({FormatType(property.ChildType)}))";
+        var dictionaryKeyReader = property.DictionaryKeyType is null ?
+            "null" :
+            $"static keyText => {EngineGlobalPrefix}.DictionaryKeyReader<{FormatType(property.DictionaryKeyType)}>.ReadObject(keyText)";
 
         sb.Append("                new ")
             .Append(EngineGlobalPrefix)
@@ -382,6 +385,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         sb.Append("                    ").Append(FormatNullableTypeOf(property.ElementType)).AppendLine(",");
         sb.Append("                    ").Append(FormatNullableTypeOf(property.DictionaryKeyType)).AppendLine(",");
         sb.Append("                    ").Append(FormatNullableTypeOf(property.DictionaryValueType)).AppendLine(",");
+        sb.Append("                    ").Append(dictionaryKeyReader).AppendLine(",");
         sb.Append("                    ")
             .Append(ConfigurationGlobalPrefix)
             .Append(".SettingsUnknownMemberHandling.")

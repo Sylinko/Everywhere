@@ -257,6 +257,55 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
+    public void Patch_DictionaryConvertsIntegerKeysFromJsonMemberNames()
+    {
+        using var file = TestSettingsFile("""{ "NumberedNames": { "1": "one", "2": "two" } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        target.NumberedNames[9] = "remove";
+        var numberedNames = target.NumberedNames;
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.NumberedNames, Is.SameAs(numberedNames));
+        Assert.That(target.NumberedNames.Keys, Is.EquivalentTo(new[] { 1, 2 }));
+        Assert.That(target.NumberedNames[1], Is.EqualTo("one"));
+        Assert.That(target.NumberedNames[2], Is.EqualTo("two"));
+    }
+
+    [Test]
+    public void Patch_DictionaryInvalidKeyReportsDiagnosticAndSkipsEntry()
+    {
+        using var file = TestSettingsFile("""{ "NumberedNames": { "bad": "bad", "1": "one" } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+        var binder = new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider());
+
+        binder.Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.NumberedNames.Keys, Is.EqualTo(new[] { 1 }));
+        Assert.That(target.NumberedNames[1], Is.EqualTo("one"));
+        Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.ScalarConversionFailure), Is.True);
+    }
+
+    [Test]
+    public void Patch_DictionaryKeepsEnumKeyConversionWorking()
+    {
+        using var file = TestSettingsFile("""{ "EnumNames": { "First": "one", "Second": "two" } }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+
+        var target = new TestRoot();
+
+        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
+
+        Assert.That(target.EnumNames.Keys, Is.EquivalentTo(new[] { TestDictionaryKey.First, TestDictionaryKey.Second }));
+        Assert.That(target.EnumNames[TestDictionaryKey.First], Is.EqualTo("one"));
+        Assert.That(target.EnumNames[TestDictionaryKey.Second], Is.EqualTo("two"));
+    }
+
+    [Test]
     public void Patch_ReadOnlyDictionaryOnlyPatchesExistingObjectValues()
     {
         using var file = TestSettingsFile(
@@ -535,6 +584,8 @@ public sealed class SettingsEngineTests
         public ObservableCollection<int> Numbers { get; } = [];
         public Dictionary<string, int> Scores { get; } = [];
         public Dictionary<string, TestItem> ItemMap { get; } = [];
+        public Dictionary<int, string> NumberedNames { get; } = [];
+        public Dictionary<TestDictionaryKey, string> EnumNames { get; } = [];
         public ObservableImmutableDictionary<string, TestItem> ReadOnlyItems { get; } = new(
         [
             new KeyValuePair<string, TestItem>("existing", new TestItem { Name = "old" })
@@ -567,6 +618,12 @@ public sealed class SettingsEngineTests
     private sealed class TestItem
     {
         public string? Name { get; set; }
+    }
+
+    private enum TestDictionaryKey
+    {
+        First,
+        Second
     }
 
     private sealed class SerializedThing

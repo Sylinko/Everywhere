@@ -207,7 +207,8 @@ public sealed class JsonSettingsStorage : IDisposable
             try
             {
                 var json = File.ReadAllText(filePath);
-                root = JsonNode.Parse(json, null, SettingsEngineJson.DocumentOptions) as JsonObject;
+                root = JsonNode.Parse(json, null, SettingsEngineJson.DocumentOptions) as JsonObject ??
+                    throw new JsonException("The settings document root must be a JSON object.");
             }
             catch (Exception ex) when (ex is JsonException or InvalidDataException)
             {

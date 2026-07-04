@@ -279,7 +279,6 @@ public sealed class SettingsPatchBinder
         var currentValue = property.GetValue(target);
         if (currentValue is IDictionary { IsFixedSize: false, IsReadOnly: false } dictionary)
         {
-            var keyType = property.DictionaryKeyType ?? typeof(string);
             var valueType = property.DictionaryValueType ?? typeof(object);
             var seenKeys = new HashSet<object>();
 
@@ -289,7 +288,7 @@ public sealed class SettingsPatchBinder
             foreach (var pair in obj)
             {
                 var entryPath = CombinePath(path, pair.Key);
-                if (!TryConvertDictionaryKey(pair.Key, keyType, entryPath, out var key))
+                if (!TryConvertDictionaryKey(pair.Key, property, entryPath, out var key))
                 {
                     continue;
                 }
@@ -356,7 +355,6 @@ public sealed class SettingsPatchBinder
         ISettingsPropertyDescriptor property,
         string path)
     {
-        var keyType = property.DictionaryKeyType ?? typeof(string);
         var patchedAny = false;
         var isObjectValueDictionary = property.DictionaryValueType is { } valueType &&
             !ReflectionSettingsDescriptorProvider.IsScalarType(valueType);
@@ -364,7 +362,7 @@ public sealed class SettingsPatchBinder
         foreach (var pair in obj)
         {
             var entryPath = CombinePath(path, pair.Key);
-            if (!TryConvertDictionaryKey(pair.Key, keyType, entryPath, out var key))
+            if (!TryConvertDictionaryKey(pair.Key, property, entryPath, out var key))
             {
                 continue;
             }
@@ -572,11 +570,22 @@ public sealed class SettingsPatchBinder
         }
     }
 
-    private bool TryConvertDictionaryKey(string keyText, Type keyType, string path, [NotNullWhen(true)] out object? key)
+    private bool TryConvertDictionaryKey(
+        string keyText,
+        ISettingsPropertyDescriptor property,
+        string path,
+        [NotNullWhen(true)] out object? key)
     {
+        var keyType = property.DictionaryKeyType ?? typeof(string);
+
         try
         {
-            key = keyType == typeof(string) ? keyText : SettingsEngineJson.Deserialize(JsonValue.Create(keyText), keyType);
+            if (property.DictionaryKeyReader is not { } reader)
+            {
+                throw new InvalidOperationException($"Settings property '{property.ClrName}' does not have a dictionary key reader.");
+            }
+
+            key = reader(keyText);
             if (key is not null) return true;
 
             AddDiagnostic(
