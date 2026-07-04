@@ -1781,11 +1781,23 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="Assistant_ConfiguratorSelector_Header" xml:space="preserve">
         <value>Anbieter</value>
     </data>
+    <data name="AssistantPromptSettings_Header" xml:space="preserve">
+        <value>Eingabeaufforderungen</value>
+    </data>
+    <data name="AssistantPromptSettings_Description" xml:space="preserve">
+        <value>Wählen Sie die Eingabeaufforderungen, die dieser Assistent verwenden soll.</value>
+    </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>API-Schlüssel hinzufügen</value>
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>API-Schlüssel verwalten</value>
+    </data>
+    <data name="PromptComboBox_NewPrompt" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="PromptComboBox_ManagePrompts" xml:space="preserve">
+        <value>Eingabeaufforderungen verwalten</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
@@ -3264,5 +3276,357 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
         <value>Fehler beim Schreiben des Einstellungs-JSON in „{0}“ (Versuch {1}, Inhaltslänge {2} Bytes).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Eingabeaufforderungen suchen</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>Standard-Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>Unbenannte Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>Integriert Standard</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>Integriert</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>Vorschauinhalt kopieren</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>Erstellen</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>Bearbeiten</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung bearbeiten</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung löschen</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>Möchten Sie diese Eingabeaufforderung dauerhaft löschen?
+„{0}“ wird entfernt.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>1 Assistent verwendet bereits diese Eingabeaufforderung.
+Nach dem Löschen verwendet dieser Assistent die Standard-Eingabeaufforderung, bis eine neue ausgewählt wird.
+
+Möchten Sie „{0}“ trotzdem dauerhaft löschen?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>{0} Assistenten verwenden bereits diese Eingabeaufforderung.
+Nach dem Löschen verwenden diese Assistenten die Standard-Eingabeaufforderung, bis eine neue ausgewählt wird.
+
+Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>Keine passenden Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>Vorschau</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>Roh</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>Assistenten, die diese Eingabeaufforderung verwenden ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>Keine Assistenten verwenden diese Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Wählen Sie eine Eingabeaufforderung, um die Vorschau anzuzeigen</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>Kopieren fehlgeschlagen</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>Eingabeaufforderung kann nicht geöffnet werden</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>Ungültiger Eingabeaufforderungslink: {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>Eingabeaufforderung nicht gefunden: {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>Unbenannter Assistent</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>Kein Modell ausgewählt</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>Eingabeaufforderung bearbeiten</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>Speichern</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>Name (nur zur Unterscheidung)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>Optional</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>Inhalt der Eingabeaufforderung</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>Verfügbare Platzhalter</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>Vorschau</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>Bearbeiten der Eingabeaufforderung fehlgeschlagen</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>Diese Eingabeaufforderung existiert nicht oder kann nicht bearbeitet werden.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>Speichern der Eingabeaufforderung fehlgeschlagen</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere Standard-Systembeschreibung</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>Anleitung für aktivierte Fähigkeiten</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>Aktuelles Datum</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>Aktuelle Uhrzeit</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>Betriebssystem</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>Systemsprache</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>Arbeitsverzeichnis</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>Der Inhalt der Eingabeaufforderung darf nicht leer sein.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>Unbekannter Platzhalter: {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>Diese Eingabeaufforderung enthält weder {DefaultSystemPrompt} noch {SkillsPrompt}, daher kann der Assistent möglicherweise die Fähigkeiten nicht korrekt nutzen.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>Fehlendes {Date}, die Eingabeaufforderung könnte an zeitlichem Kontext mangeln.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} auf die Sekunde genau kann die Cache-Trefferquote verringern und die Nutzungskosten erhöhen. Verwenden Sie, wenn möglich, {Date}.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>Eingabeaufforderung nicht gefunden: {0}. Es wird auf die Standard-Eingabeaufforderung zurückgegriffen.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>Manuell erstellt</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>Geführt erstellt</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>Kopiert erstellt</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>Von alten Einstellungen migriert</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>Importieren Erstellen</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>Platzhalter Kopieren</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>Prompt Erstellen</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Speichern</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Der Schnellmodus erstellt einen verwendbaren Prompt basierend auf wenigen Auswahlmöglichkeiten.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>Der erweiterte Modus ermöglicht die direkte Kontrolle über den gesamten Inhalt des Prompts.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Zu Erweitertem Modus Wechseln</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Zurück zum Schnellmodus</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Persona</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>Wie möchtest du, dass der Assistent dich anspricht?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>Optional</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Arbeitszenarien (max. 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>Wähle bis zu 3 Szenarien aus.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Tonfall</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Antwortdetails</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Organisationsweise</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Zusätzliche Anforderungen</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>Gib Einschränkungen, Referenzen oder Präferenzen an, die für diesen Prompt gelten sollen.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Echtzeitvorschau</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>Die Vorschau rendert in Echtzeit den aktuellen Datum-, Uhrzeit- und andere Platzhalterinhalte.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Fortschrittliche Bearbeitung verwerfen?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Die Rückkehr zur Schnellkonfiguration wird den Inhalt der Eingabeaufforderung basierend auf der aktuellen Auswahl neu generieren und die manuelle Bearbeitung aufgeben.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Bearbeitung verwerfen</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 Allgemeiner Assistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Professioneller Berater</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Programmierassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Schreibeditor</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Übersetzungsassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Forschungsassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Lernmentor</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Produkt- und Strategiepartner</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>Allgemeine Fragen und Antworten</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Programmierung und Entwicklung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Codeüberprüfung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Schreiben und Bearbeiten</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Datenanalyse</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Lernen und Bildung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Übersetzung von Sprachen</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Produktplanung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Fehlerbehebung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Forschungsplanung</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Professionell und Streng</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Freundlich und Geduldig</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Klar und Direkt</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Sokratische Anleitung</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Formell und Geschäftlich</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Kreativ und Erkundend</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Kurz</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Ausgewogen</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Detailliert</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Strukturiert (Empfohlen)</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Schlussfolgerung Zuerst</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Schritt-für-Schritt</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Stichpunktliste</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Optionen Vergleichen</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Beispiele Zuerst</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Natürliche Konversation</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>Ungültige Assistenten-ID im Routing: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>Assistent nicht gefunden: {0}</value>
     </data>
 </root>

@@ -1781,11 +1781,23 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
     <data name="Assistant_ConfiguratorSelector_Header" xml:space="preserve">
         <value>Fournisseur de services</value>
     </data>
+    <data name="AssistantPromptSettings_Header" xml:space="preserve">
+        <value>Prompts</value>
+    </data>
+    <data name="AssistantPromptSettings_Description" xml:space="preserve">
+        <value>Sélectionnez les prompts utilisés par cet assistant.</value>
+    </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>Ajouter une clé API</value>
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>Gérer les clés API</value>
+    </data>
+    <data name="PromptComboBox_NewPrompt" xml:space="preserve">
+        <value>Créer un Prompt</value>
+    </data>
+    <data name="PromptComboBox_ManagePrompts" xml:space="preserve">
+        <value>Gérer les Prompts</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Êtes-vous sûr de vouloir supprimer {0} clés API ? Cette action est irréversible !</value>
@@ -3264,5 +3276,357 @@ Date de publication : {2}</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
         <value>Échec de l'écriture du JSON de configuration dans « {0} » (tentative {1}, longueur du contenu {2} octets).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>Prompts</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Rechercher des Prompts</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} Prompts</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>Prompt par Défaut</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>Prompt Sans Titre</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>Par Défaut Intégré</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>Intégré</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>Copier le Contenu de l'Aperçu</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>Créer</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>Créer un Prompt</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>Éditer</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>Éditer le Prompt</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>Supprimer le Prompt</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>Êtes-vous sûr de vouloir supprimer ce prompt de façon permanente ?
+“{0}” sera supprimé.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>1 assistant utilise déjà ce prompt.
+Après suppression, cet assistant utilisera le prompt par défaut jusqu'à ce qu'un nouveau prompt soit sélectionné.
+
+Voulez-vous toujours supprimer “{0}” de façon permanente ?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>{0} assistants utilisent déjà ce prompt.
+Après suppression, ces assistants utiliseront le prompt par défaut jusqu'à ce qu'un nouveau prompt soit sélectionné.
+
+Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>Aucun prompt correspondant</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>Aperçu</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>Brut</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>Assistants utilisant ce prompt ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>Aucun assistant n'utilise ce prompt</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Sélectionnez un prompt pour voir l'aperçu</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>Échec de la copie</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>Impossible d'ouvrir le prompt</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>Lien de prompt invalide : {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>Prompt introuvable : {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>Assistant sans nom</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>Aucun modèle sélectionné</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>Créer un prompt</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>Modifier un prompt</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>Enregistrer</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>Nom (uniquement pour distinction)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>Optionnel</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>Contenu du prompt</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>Placeholder disponibles</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>Aperçu</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>Impossible d'éditer le prompt</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>Ce prompt n'existe pas ou n'est pas éditable.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>Échec de la sauvegarde du prompt</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Description système par défaut d'Everywhere</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>Guide pour les compétences activées</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>Date actuelle</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>Heure actuelle</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>Système d'exploitation</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>Langue du système</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>Répertoire de travail</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>Le contenu du prompt ne peut pas être vide.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>Placeholder inconnu : {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>Ce prompt ne contient ni {DefaultSystemPrompt} ni {SkillsPrompt}, donc l'assistant pourrait ne pas utiliser correctement les compétences.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>Date manquante : {Date}, le prompt pourrait manquer de contexte temporel.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} précis à la seconde, cela pourrait réduire le taux de réussite du cache et augmenter les coûts d'utilisation. Si ce n'est pas nécessaire, utilisez {Date}.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>Prompt introuvable : {0}. Le prompt par défaut sera utilisé.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>Création manuelle</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>Création guidée</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>Création par copie</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>Migration depuis les anciens paramètres</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>Importation Création</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>Copier le Placeholder</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>Créer un Prompt</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Enregistrer</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Le mode rapide génère un prompt utilisable basé sur quelques choix.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>L'édition avancée permet de contrôler directement le contenu complet du prompt.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Passer à l'Édition Avancée</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Retourner à la Configuration Rapide</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Personnage</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>Comment souhaitez-vous que l'assistant vous appelle ?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>Optionnel</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Scénarios de Travail (jusqu'à 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>Sélectionnez jusqu'à 3 scénarios.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Style de Ton</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Détails de la Réponse</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Mode d'Organisation</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Exigences Supplémentaires</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>Ajoutez des restrictions, des références ou des préférences à respecter pour ce prompt.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Aperçu en Direct</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>L'aperçu rendra en temps réel le contenu des placeholders comme la date et l'heure actuelles.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Abandonner les modifications avancées ?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Revenir à la configuration rapide régénérera le contenu des invites en fonction de la sélection actuelle et abandonnera l'édition manuelle.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Abandonner l'édition</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 Assistant Général</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Conseiller Professionnel</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Assistant Programmation</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Éditeur de Rédaction</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Assistant Traduction</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Assistant Recherche</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Mentor d'Apprentissage</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Partenaire Produit et Stratégie</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>Questions-Réponses Générales</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Développement Programmation</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Revue de Code</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Édition de Rédaction</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Analyse de Données</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Éducation et Apprentissage</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Langue de Traduction</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Planification de Produit</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Dépannage</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Planification de recherche</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Professionnel et rigoureux</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Amical et patient</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Concise et direct</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Guidage socratique</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Formel et professionnel</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Créatif et exploratoire</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Bref</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Équilibré</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Détaillé</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Structuré (recommandé)</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Conclusion en premier</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Étapes détaillées</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Liste des points clés</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Comparer les options</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Exemples en premier</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Conversation naturelle</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>ID d'assistant invalide dans le routage : {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>Assistant non trouvé : {0}</value>
     </data>
 </root>

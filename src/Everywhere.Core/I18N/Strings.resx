@@ -3318,19 +3318,19 @@ Release date: {2}</value>
     </data>
     <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
         <value>Delete this prompt permanently?
-"{0}" will be removed.</value>
+&quot;{0}&quot; will be removed.</value>
     </data>
     <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
         <value>This prompt is currently used by 1 assistant.
 Deleting it will change that assistant to the default prompt until another prompt is selected.
 
-Delete "{0}" permanently?</value>
+Delete &quot;{0}&quot; permanently?</value>
     </data>
     <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
         <value>This prompt is currently used by {0} assistants.
 Deleting it will change those assistants to the default prompt until another prompt is selected.
 
-Delete "{1}" permanently?</value>
+Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
         <value>No matching prompts</value>
@@ -3429,7 +3429,7 @@ Delete "{1}" permanently?</value>
         <value>Unknown placeholder: {0}.</value>
     </data>
     <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
-        <value></value>
+        <value>This prompt does not include {DefaultSystemPrompt} or {SkillsPrompt}, so the assistant may not be able to use skills correctly.</value>
     </data>
     <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
         <value>Missing {Date}; the prompt may lack timely context.</value>

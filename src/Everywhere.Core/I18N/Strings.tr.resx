@@ -630,7 +630,7 @@
         <value>API çağrıları için model kimliği, örneğin gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value></value>
+        <value>Eklentiler</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Soğbet eklentileri, yerleşik eklentiler ve MCP eklentilerini içerir. Araç çağrılarını destekleyen LLM'ler, daha güçlü işlevsellik elde etmek için (web arama veya yerel dosyalara erişim gibi) bu eklentileri uygun zamanlarda kullanır.</value>
@@ -1781,11 +1781,23 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="Assistant_ConfiguratorSelector_Header" xml:space="preserve">
         <value>Hizmet Sağlayıcı</value>
     </data>
+    <data name="AssistantPromptSettings_Header" xml:space="preserve">
+        <value>İpucu Metinleri</value>
+    </data>
+    <data name="AssistantPromptSettings_Description" xml:space="preserve">
+        <value>Bu asistanın kullanacağı ipucu metinlerini seçin.</value>
+    </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>API anahtarı ekle</value>
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>API Anahtarını Yönet</value>
+    </data>
+    <data name="PromptComboBox_NewPrompt" xml:space="preserve">
+        <value>İpucu Metni Oluştur</value>
+    </data>
+    <data name="PromptComboBox_ManagePrompts" xml:space="preserve">
+        <value>İpucu Metinlerini Yönet</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} adet API anahtarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
@@ -3264,5 +3276,357 @@ Yayın tarihi: {2}</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
         <value>Ayar JSON'unu &quot;{0}&quot;'a yazmak başarısız oldu (deneme {1}, içerik uzunluğu {2} bayt).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>İpucu Metinleri</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>İpucu Metinlerini Ara</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} İpucu Metni</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>Varsayılan İpucu Metni</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>İsimsiz İpucu Metni</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>Yerleşik Varsayılan</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>Yerleşik</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>Önizleme İçeriğini Kopyala</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>Oluştur</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metni Oluştur</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>Düzenle</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metnini Düzenle</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metnini Sil</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>Bu ipucu metnini kalıcı olarak silmek istediğinize emin misiniz?
+“{0}” kaldırılacaktır.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>Bu ipucu metnini kullanan 1 asistan var.
+Silindikten sonra, bu asistan varsayılan ipucu metnini kullanacaktır, ta ki yeni bir ipucu metni seçene kadar.
+
+Yine de “{0}” ipucu metnini kalıcı olarak silmek istiyor musunuz?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>{0} asistan bu ipucunu kullanıyor.
+Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni bir ipucu seçene kadar.
+
+“{1}”ı kalıcı olarak silmek istiyor musunuz?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>Eşleşen ipucu yok</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>Önizleme</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>Ham</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>Bu ipucunu kullanan asistanlar ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>Bu ipucunu kullanan asistan yok</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Önizleme görmek için bir ipucu seçin</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>Kopyalama başarısız</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>İpucu açılamıyor</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>İpucu bağlantısı geçersiz: {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>İpucu bulunamadı: {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>İsimsiz asistan</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>Model seçilmedi</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>İpucu oluştur</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>İpucu düzenle</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>Kaydet</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>İsim (ayırıcı olarak)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>isteğe bağlı</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>İpucu içeriği</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>Kullanılabilir yer tutucular</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>Önizleme</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>İpucu Düzenlenemiyor</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>Bu ipucu mevcut değil veya düzenlenemiyor.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>İpucu Kaydedilemedi</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere Varsayılan Sistem Açıklaması</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>Etkin beceriler için rehberlik</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>Geçerli tarih</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>Geçerli saat</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>İşletim sistemi</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>Sistem dili</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>Çalışma dizini</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>İpucu içeriği boş olamaz.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>Bilinmeyen yer tutucu: {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>Bu ipucu ne {DefaultSystemPrompt} ne de {SkillsPrompt} içeriyor, bu nedenle asistan becerileri doğru şekilde kullanamayabilir.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>{Date} eksik, ipucu zaman bağlamını kaybedebilir.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} saniye hassasiyetinde, önbellek hit oranını azaltabilir ve maliyeti artırabilir. Gerekmedikçe {Date} kullanın.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>İpucu bulunamadı: {0}. Varsayılan ipucu kullanılacak.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>Manuel Oluştur</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>Rehberli Oluştur</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>Kopyala ile Oluştur</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>Eski Ayarları Taşı</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>İçe Aktar</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>Yer Tutucuyu Kopyala</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>İpucu Oluştur</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Kaydet</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Hızlı yapılandırma, birkaç seçimle kullanılabilir bir ipucu oluşturur.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>Gelişmiş düzenleme, tam ipucu içeriğini doğrudan kontrol etmenizi sağlar.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Gelişmiş Düzenlemeye Geç</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Hızlı Yapılandırmaya Dön</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Kişilik</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>Asistanın seni nasıl çağırmasını istersin?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>isteğe bağlı</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Çalışma Senaryosu (en fazla 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>En fazla 3 senaryo seçebilirsiniz.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Üslup</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Cevap Detayı</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Organizasyon</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Ekstra Gereksinimler</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>Bu ipucu için uyulması gereken sınırlamalar, referanslar veya tercihleri ekleyin.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Canlı Önizleme</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>Önizleme, mevcut tarih, saat gibi yer tutucu içeriklerini anlık olarak render eder.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Gelişmiş düzenlemeleri bırakmak istiyor musunuz?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Hızlı yapılandırmaya dönmek, mevcut seçime göre öneri içeriğini yeniden oluşturacak ve manuel düzenlemeleri bırakacaktır.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Düzenlemeyi bırak</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 Genel Asistan</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Profesyonel Danışman</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Programlama Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Yazım Editörü</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Çeviri Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Araştırma Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Öğrenme Mentorü</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Ürün ve Strateji Ortağı</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>Genel Soru-Cevap</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Programlama Geliştirme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Kod İncelemesi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Yazım Düzenleme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Veri Analizi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Öğrenme Eğitimi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Dil Çevirisi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Ürün Planlama</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Sorun Giderme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Araştırma Planlama</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Profesyonel ve Titiz</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Samimi ve Sabırlı</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Kısa ve Net</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Sokratik Yöntemle Rehberlik</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Resmi İş</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Yaratıcı Keşif</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Kısa</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Dengeli</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Ayrıntılı</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Yapılandırılmış (Önerilen)</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Önce Sonuç</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Adım Adım</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Anahtar Noktalar</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Seçenekleri Karşılaştır</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Önce Örnekler</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Doğal Konuşma</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>Yolda geçersiz asistan ID'si: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>Bu asistan bulunamadı: {0}</value>
     </data>
 </root>

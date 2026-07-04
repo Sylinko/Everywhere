@@ -630,7 +630,7 @@
         <value>API 호출에 사용할 모델 식별자입니다. 예: gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value></value>
+        <value>도구</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>채팅 플러그인은 내장 플러그인과 MCP 플러그인을 포함합니다. 도구 호출을 지원하는 LLM은 적절한 시점에 이러한 플러그인을 사용하여 더 강력한 기능을 제공합니다 (예: 웹 검색 또는 로컬 파일 접근).</value>
@@ -1781,11 +1781,23 @@
     <data name="Assistant_ConfiguratorSelector_Header" xml:space="preserve">
         <value>서비스 제공자</value>
     </data>
+    <data name="AssistantPromptSettings_Header" xml:space="preserve">
+        <value>프롬프트</value>
+    </data>
+    <data name="AssistantPromptSettings_Description" xml:space="preserve">
+        <value>이 도우미가 사용할 프롬프트를 선택하세요.</value>
+    </data>
     <data name="ApiKeyComboBox_AddApiKey" xml:space="preserve">
         <value>API 키 추가</value>
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>API 키 관리</value>
+    </data>
+    <data name="PromptComboBox_NewPrompt" xml:space="preserve">
+        <value>프롬프트 생성</value>
+    </data>
+    <data name="PromptComboBox_ManagePrompts" xml:space="preserve">
+        <value>프롬프트 관리</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 개의 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
@@ -3264,5 +3276,357 @@
     </data>
     <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
         <value>설정 JSON을 &quot;{0}&quot;에 쓰기 실패 (시도 {1}회, 내용 길이 {2} 바이트).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>프롬프트</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>프롬프트 검색</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} 개의 프롬프트</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>기본 프롬프트</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>제목 없음 프롬프트</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>내장 기본</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>내장</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>미리보기 내용 복사</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>생성</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>프롬프트 생성</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>편집</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>프롬프트 편집</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>프롬프트 삭제</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>이 프롬프트를 영구 삭제하시겠습니까?
+“{0}”이(가) 제거됩니다.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>현재 1개의 도우미가 이 프롬프트를 사용 중입니다.
+삭제 후, 해당 도우미는 기본 프롬프트로 변경되며, 프롬프트를 다시 선택할 때까지 유지됩니다.
+
+그래도 “{0}”을(를) 영구 삭제하시겠습니까?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>이미 {0}명의 어시스턴트가 이 프롬프트를 사용 중입니다.
+삭제하면 이 어시스턴트는 기본 프롬프트로 변경되며, 다시 프롬프트를 선택할 때까지 유지됩니다.
+
+“{1}”을(를) 영구적으로 삭제하시겠습니까?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>일치하는 프롬프트가 없습니다</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>미리보기</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>원본</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>이 프롬프트를 사용하는 어시스턴트 ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>이 프롬프트를 사용하는 어시스턴트가 없습니다</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>미리보기를 보려면 프롬프트를 선택하세요</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>복사 실패</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>프롬프트를 열 수 없습니다</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>프롬프트 링크가 유효하지 않습니다: {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>프롬프트를 찾을 수 없습니다: {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>이름 없는 어시스턴트</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>모델이 선택되지 않았습니다</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>프롬프트 만들기</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>프롬프트 편집</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>저장</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>이름(구분용)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>선택 사항</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>프롬프트 내용</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>사용 가능한 자리 표시자</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>미리보기</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>프롬프트 편집 실패</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>해당 프롬프트가 존재하지 않거나 편집할 수 없습니다.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>프롬프트 저장 실패</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere 기본 시스템 설명</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>활성화된 기술 안내</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>현재 날짜</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>현재 시간</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>운영 체제</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>시스템 언어</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>작업 디렉토리</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>프롬프트 내용은 비워둘 수 없습니다.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>알 수 없는 자리 표시자: {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>이 프롬프트에는 {DefaultSystemPrompt}와 {SkillsPrompt}가 모두 포함되어 있지 않아, 도우미가 기술을 올바르게 사용할 수 없습니다.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>{Date}가 누락되어, 프롬프트가 시의적절한 맥락을 잃을 수 있습니다.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time}이 초 단위로 정확하면 캐시 적중률이 낮아져 사용 비용이 증가할 수 있습니다. 필요하지 않다면 {Date}를 사용하세요.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>프롬프트를 찾을 수 없습니다: {0}. 기본 프롬프트로 대체됩니다.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>수동 생성</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>가이드 생성</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>복사 생성</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>구 설정 마이그레이션</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>가져오기 생성</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>플레이스홀더 복사</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>프롬프트 생성</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>저장</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>빠른 구성은 몇 가지 선택에 따라 유용한 프롬프트를 생성합니다.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>고급 편집은 전체 프롬프트 내용을 직접 제어할 수 있습니다.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>고급 편집으로 전환</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>빠른 구성으로 돌아가기</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>페르소나</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>어떻게 불리길 원하시나요?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>선택 사항</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>작업 시나리오 (최대 3개)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>최대 3개의 시나리오를 선택하세요.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>어조 스타일</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>답변 상세도</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>조직 방식</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>추가 요구 사항</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>이 프롬프트에 따라야 할 제한 사항, 참고 자료 또는 선호 사항을 추가하세요.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>실시간 미리보기</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>현재 날짜, 시간 등의 자리 표시자 내용을 실시간으로 렌더링합니다.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>고급 편집 내용을 포기하시겠습니까?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>빠른 구성으로 돌아가면 현재 선택에 따라 프롬프트 내용을 다시 생성하고 수동 편집을 포기합니다.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>편집 포기</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 일반 도우미</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 전문 상담가</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 프로그래밍 도우미</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ 글쓰기 편집자</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 번역 도우미</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 연구 도우미</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 학습 멘토</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 제품 및 전략 파트너</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>일반 질문 및 답변</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>프로그래밍 개발</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>코드 리뷰</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>글쓰기 편집</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>데이터 분석</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>학습 교육</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>번역 언어</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>제품 계획</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>문제 해결</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>연구 계획</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>전문적이고 철저함</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>친절하고 인내심 있는</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>간결하고 직접적인</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>소크라테스식 안내</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>격식 있는 비즈니스</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>창의적 탐색</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>간단</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>균형 잡힌</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>상세한</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>구조화된(추천)</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>결론 우선</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>단계별 설명</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>핵심 요점 목록</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>옵션 비교</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>예시 우선</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>자연스러운 대화</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>라우트의 어시스턴트 ID가 유효하지 않습니다: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>해당 어시스턴트를 찾을 수 없습니다: {0}</value>
     </data>
 </root>
