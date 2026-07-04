@@ -53,4 +53,12 @@ internal static class Diagnostics
         category: Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidSettingsItemModifier = new(
+        id: "STG008",
+        title: "Invalid SettingsItem Modifier",
+        messageFormat: "Property '{0}' has invalid SettingsItem modifier '{1}'",
+        category: Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

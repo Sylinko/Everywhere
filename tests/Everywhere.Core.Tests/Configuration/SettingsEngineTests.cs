@@ -101,25 +101,6 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public void Descriptor_ClassifiesConverterBackedObjectBySerializedSubtreeAttribute()
-    {
-        var provider = new ReflectionSettingsDescriptorProvider();
-        var descriptor = provider.GetDescriptor(typeof(TestRoot));
-
-        var customizable = descriptor.FindProperty(nameof(TestRoot.CustomText));
-        var color = descriptor.FindProperty(nameof(TestRoot.Color));
-
-        Assert.That(customizable, Is.Not.Null);
-        Assert.That(customizable!.Kind, Is.EqualTo(SettingsPropertyKind.Object));
-        Assert.That(customizable.ChildDescriptor, Is.Not.Null);
-        Assert.That(customizable.ChildDescriptor!.FindProperty(nameof(Customizable<string>.DefaultValue)), Is.Not.Null);
-        Assert.That(customizable.ChildDescriptor.FindProperty(nameof(Customizable<string>.CustomValue)), Is.Not.Null);
-
-        Assert.That(color, Is.Not.Null);
-        Assert.That(color!.Kind, Is.EqualTo(SettingsPropertyKind.Scalar));
-    }
-
-    [Test]
     public void Patch_PreservesExistingObjectReferences()
     {
         using var file = TestSettingsFile(
@@ -375,117 +356,6 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public void Patch_CustomizableObjectPreservesMissingDefaultValue()
-    {
-        using var file = TestSettingsFile("""{ "CustomText": { "CustomValue": null } }""");
-        using var store = JsonSettingsStorage.Load(file.Path);
-
-        var target = new TestRoot();
-        var customizable = target.CustomText;
-        target.CustomText.CustomValue = "old-custom";
-        var binder = new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider());
-
-        binder.Patch(store.CreateSnapshot(), target);
-
-        Assert.That(target.CustomText, Is.SameAs(customizable));
-        Assert.That(target.CustomText.DefaultValue, Is.EqualTo("runtime-default"));
-        Assert.That(target.CustomText.CustomValue, Is.Null);
-        Assert.That(binder.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.ScalarConversionFailure), Is.False);
-    }
-
-    [Test]
-    public void Patch_CustomizableObjectPatchesCustomValue()
-    {
-        using var file = TestSettingsFile("""{ "CustomText": { "CustomValue": "json-custom" } }""");
-        using var store = JsonSettingsStorage.Load(file.Path);
-
-        var target = new TestRoot();
-
-        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
-
-        Assert.That(target.CustomText.DefaultValue, Is.EqualTo("runtime-default"));
-        Assert.That(target.CustomText.CustomValue, Is.EqualTo("json-custom"));
-    }
-
-    [Test]
-    public void Patch_CustomizableObjectPatchesDefaultValueWhenWritable()
-    {
-        using var file = TestSettingsFile(
-            """
-            {
-              "MutableCustomText": {
-                "DefaultValue": "json-default",
-                "CustomValue": "json-custom"
-              }
-            }
-            """);
-        using var store = JsonSettingsStorage.Load(file.Path);
-
-        var target = new TestRoot();
-
-        new SettingsPatchBinder(new ServiceCollection().BuildServiceProvider()).Patch(store.CreateSnapshot(), target);
-
-        Assert.That(target.MutableCustomText.DefaultValue, Is.EqualTo("json-default"));
-        Assert.That(target.MutableCustomText.CustomValue, Is.EqualTo("json-custom"));
-    }
-
-    [Test]
-    public void CustomizableJsonConverter_PreservesNullCustomValueForValueTypes()
-    {
-        var value = JsonSerializer.Deserialize<Customizable<int>>(
-            """
-            {
-              "DefaultValue": 10,
-              "CustomValue": null
-            }
-            """);
-
-        Assert.That(value, Is.Not.Null);
-        Assert.That(value!.DefaultValue, Is.EqualTo(10));
-        Assert.That(value.CustomValue, Is.Null);
-        Assert.That(value.IsCustomValueSet, Is.False);
-        Assert.That(value.ActualValue, Is.EqualTo(10));
-    }
-
-    [Test]
-    public void CustomizableJsonConverter_DoesNotTreatMissingCustomValueAsDefaultOfT()
-    {
-        var value = JsonSerializer.Deserialize<Customizable<int>>(
-            """
-            {
-              "Ignored": { "Nested": true },
-              "DefaultValue": 10
-            }
-            """);
-
-        Assert.That(value, Is.Not.Null);
-        Assert.That(value!.DefaultValue, Is.EqualTo(10));
-        Assert.That(value.CustomValue, Is.Null);
-        Assert.That(value.ActualValue, Is.EqualTo(10));
-    }
-
-    [Test]
-    public void CustomizableJsonConverter_RoundTripsTypedCustomValue()
-    {
-        var value = JsonSerializer.Deserialize<Customizable<int>>(
-            """
-            {
-              "DefaultValue": 10,
-              "CustomValue": 0
-            }
-            """);
-
-        Assert.That(value, Is.Not.Null);
-        Assert.That(value!.CustomValue, Is.EqualTo(0));
-        Assert.That(value.IsCustomValueSet, Is.True);
-        Assert.That(value.ActualValue, Is.EqualTo(0));
-
-        var json = JsonSerializer.Serialize(value);
-
-        Assert.That(json, Does.Contain("\"CustomValue\":0"));
-    }
-
-    [Test]
     public void WriteObservedPath_PreservesUnknownSiblingKeys()
     {
         using var file = TestSettingsFile(
@@ -672,8 +542,6 @@ public sealed class SettingsEngineTests
         public IReadOnlyList<int> WritableReadOnlyNumbers { get; set; } = new ReadOnlyCollection<int>(new List<int> { 9 });
         public IReadOnlyList<int> GetterOnlyReadOnlyNumbers { get; } = new ReadOnlyCollection<int>(new List<int> { 9 });
         public int Count { get; set; }
-        public Customizable<string> CustomText { get; } = new("runtime-default", isDefaultValueReadonly: true);
-        public Customizable<string> MutableCustomText { get; } = new("old-default");
         public SerializableColor Color { get; set; }
 
         [SettingsUnknownMemberHandling(SettingsUnknownMemberHandling.Prune)]

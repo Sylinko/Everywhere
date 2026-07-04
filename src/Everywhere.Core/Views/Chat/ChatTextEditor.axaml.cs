@@ -57,13 +57,13 @@ public class ChatTextEditor : TemplatedControl
         set => SetValue(MaxLengthProperty, value);
     }
 
-    public static readonly StyledProperty<string?> WatermarkProperty =
-        AvaloniaProperty.Register<ChatTextEditor, string?>(nameof(Watermark));
+    public static readonly StyledProperty<string?> PlaceholderTextProperty =
+        AvaloniaProperty.Register<ChatTextEditor, string?>(nameof(PlaceholderText));
 
-    public string? Watermark
+    public string? PlaceholderText
     {
-        get => GetValue(WatermarkProperty);
-        set => SetValue(WatermarkProperty, value);
+        get => GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
     }
 
     public string SelectedText
@@ -114,7 +114,7 @@ public class ChatTextEditor : TemplatedControl
         _textEditor = e.NameScope.Find<TextEditor>("PART_TextEditor").NotNull();
         _textEditor.Text = _text;
         _textEditor.TextArea.TextView.ElementGenerators.Add(new LeadingContentElementGenerator(this, _textEditor));
-        _textEditor.TextArea.TextView.BackgroundRenderers.Add(new WatermarkRenderer(this, _textEditor));
+        _textEditor.TextArea.TextView.BackgroundRenderers.Add(new PlaceholderTextRenderer(this, _textEditor));
 
         _textEditor.TextChanged += HandleTextEditorTextChanged;
         _textChangedSubscription = Disposable.Create(() => _textEditor.TextChanged -= HandleTextEditorTextChanged);
@@ -181,7 +181,7 @@ public class ChatTextEditor : TemplatedControl
                 }
             }
         }
-        else if (change.Property == WatermarkProperty && _textEditor != null)
+        else if (change.Property == PlaceholderTextProperty && _textEditor != null)
         {
             _textEditor.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
         }
@@ -405,14 +405,14 @@ file class CenteredInlineObjectRun(int length, TextRunProperties? properties, Co
     }
 }
 
-file class WatermarkRenderer(ChatTextEditor chatTextEditor, TextEditor textEditor) : IBackgroundRenderer
+file class PlaceholderTextRenderer(ChatTextEditor chatTextEditor, TextEditor textEditor) : IBackgroundRenderer
 {
     public KnownLayer Layer => KnownLayer.Background;
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
-        var watermark = chatTextEditor.Watermark;
-        if (string.IsNullOrEmpty(watermark)) return;
+        var placeholderText = chatTextEditor.PlaceholderText;
+        if (string.IsNullOrEmpty(placeholderText)) return;
 
         var document = textEditor.Document;
         if (document == null) return;
@@ -420,7 +420,7 @@ file class WatermarkRenderer(ChatTextEditor chatTextEditor, TextEditor textEdito
         {
             var typeface = new Typeface(textEditor.FontFamily, textEditor.FontStyle, textEditor.FontWeight, textEditor.FontStretch);
             var formattedText = new FormattedText(
-                watermark,
+                placeholderText,
                 CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 typeface,

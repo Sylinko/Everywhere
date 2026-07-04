@@ -82,12 +82,12 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 new AnySearchConnector(
                     apiKey: anySearch.ApiKey != Guid.Empty ? EnsureApiKey(anySearch.ApiKey) : null,
                     _httpClientFactory.CreateClient(),
-                    EnsureUri(anySearch.EndPoint)),
+                    EnsureUri(anySearch.ActualEndPoint)),
             // ReSharper disable once IdentifierTypo
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Bocha } bocha =>
-                new BoChaConnector(EnsureApiKey(bocha.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(bocha.EndPoint)),
+                new BoChaConnector(EnsureApiKey(bocha.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(bocha.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Brave } brave =>
-                new BraveConnector(EnsureApiKey(brave.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(brave.EndPoint)),
+                new BraveConnector(EnsureApiKey(brave.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(brave.ActualEndPoint)),
             GoogleWebSearchEngineProvider google => new GoogleConnector(
                 EnsureApiKey(google.ApiKey),
                 google.SearchEngineId ??
@@ -96,27 +96,26 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                     new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
                     showDetails: false),
                 _httpClientFactory.CreateClient(),
-                EnsureUri(google.EndPoint)),
+                EnsureUri(google.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Jina } jina =>
-                new JinaConnector(EnsureApiKey(jina.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(jina.EndPoint)),
+                new JinaConnector(EnsureApiKey(jina.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(jina.ActualEndPoint)),
             // ReSharper disable once InconsistentNaming
             SearXNGWebSearchEngineProvider searXNG =>
-                new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.EndPoint)),
+                new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Tavily } tavily =>
-                new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.EndPoint)),
+                new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.ActualEndPoint)),
             // ReSharper disable once IdentifierTypo
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.UniFuncs } uniFuncs =>
-                new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.EndPoint)),
+                new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.ActualEndPoint)),
             _ => throw new HandledException(
                 new NotSupportedException($"Web search engine provider '{provider.Id}' is not supported."),
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage),
                 showDetails: false)
         };
 
-        Uri EnsureUri(Customizable<string> url)
+        Uri EnsureUri(string? url)
         {
-            if (!Uri.TryCreate(url.ActualValue, UriKind.Absolute, out var uri) ||
-                uri.Scheme is not "http" and not "https")
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not "http" and not "https")
             {
                 throw new HandledException(
                     new ArgumentException(

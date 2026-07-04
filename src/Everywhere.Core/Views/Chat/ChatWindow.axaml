@@ -918,15 +918,15 @@
               LeadingContent="{Binding SelectedStrategy, Mode=TwoWay}"
               MaxChatAttachmentCount="{Binding PersistentState.MaxChatAttachmentCount}"
               MaxLength="{Binding ChatInputAreaTextMaxLength}"
+              PlaceholderText="{Binding ChatInputAreaWatermarkKey^, FallbackValue={x:Null}}"
               RemoveAttachmentCommand="{Binding RemoveAttachmentCommand}"
               SelectedCustomAssistant="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
               SoftwareUpdater="{Binding SoftwareUpdater, Mode=OneTime}"
-              Text="{Binding ChatInputAreaText, Mode=TwoWay}"
-              Watermark="{Binding ChatInputAreaWatermarkKey^, FallbackValue={x:Null}}">
+              Text="{Binding ChatInputAreaText, Mode=TwoWay}">
               <v:ChatInputArea.Transitions>
                 <Transitions>
                   <shadui:StringTransition
-                    Easing="CubicEaseInOut" Property="Watermark"
+                    Easing="CubicEaseInOut" Property="PlaceholderText"
                     Duration="0:0:0.2"/>
                 </Transitions>
               </v:ChatInputArea.Transitions>

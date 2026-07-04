@@ -117,7 +117,7 @@
                             MaxLength="{Binding MaxLength}"
                             MaxLines="6"
                             PasswordChar="{Binding PasswordChar}"
-                            PlaceholderText="{Binding Watermark}"
+                            PlaceholderText="{Binding PlaceholderText}"
                             Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             TextWrapping="{Binding TextWrapping}"/>
                         </DataTemplate>
@@ -167,7 +167,7 @@
                           </StackPanel>
                         </DataTemplate>
 
-                        <DataTemplate DataType="c:SettingsCustomizableItem">
+                        <DataTemplate DataType="c:SettingsDefaultValueItem">
                           <DockPanel
                             HorizontalAlignment="Left"
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"

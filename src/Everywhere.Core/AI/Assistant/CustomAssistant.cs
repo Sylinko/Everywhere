@@ -49,7 +49,7 @@ public sealed partial class CustomAssistant : Assistant, ISystemPromptProvider
         LocaleKey.CustomAssistant_SystemPrompt_Header,
         LocaleKey.CustomAssistant_SystemPrompt_Description)]
     [SettingsItem(Classes = ["Ghost"])]
-    [SettingsStringItem(IsMultiline = true, MaxLength = 40960, Watermark = Prompts.DefaultSystemPrompt)]
+    [SettingsStringItem(IsMultiline = true, MaxLength = 40960, PlaceholderText = Prompts.DefaultSystemPrompt)]
     [DefaultValue(null)]
     public partial string? SystemPrompt { get; set; }
 }

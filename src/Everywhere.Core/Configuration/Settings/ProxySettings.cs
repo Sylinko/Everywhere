@@ -29,7 +29,7 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
         LocaleKey.ProxySettings_Endpoint_Header,
         LocaleKey.ProxySettings_Endpoint_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
-    [SettingsStringItem(Watermark = "http://127.0.0.1:7890")]
+    [SettingsStringItem(PlaceholderText = "http://127.0.0.1:7890")]
     public partial string? Endpoint { get; set; }
 
     [ObservableProperty]
@@ -44,7 +44,7 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
         LocaleKey.ProxySettings_BypassList_Header,
         LocaleKey.ProxySettings_BypassList_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
-    [SettingsStringItem(Watermark = "www.example.com", IsMultiline = true, Height = 96)]
+    [SettingsStringItem(PlaceholderText = "www.example.com", IsMultiline = true, Height = 96)]
     public partial string? BypassList { get; set; }
 
     [ObservableProperty]

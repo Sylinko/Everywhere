@@ -137,15 +137,17 @@ public class SettingsBooleanItem : SettingsItem
 
 public class SettingsStringItem : SettingsItem
 {
-    public static readonly StyledProperty<string?> WatermarkProperty = AvaloniaProperty.Register<SettingsStringItem, string?>(nameof(Watermark));
+    public static readonly StyledProperty<string?> PlaceholderTextProperty =
+        AvaloniaProperty.Register<SettingsStringItem, string?>(nameof(PlaceholderText));
 
-    public string? Watermark
+    public string? PlaceholderText
     {
-        get => GetValue(WatermarkProperty);
-        set => SetValue(WatermarkProperty, value);
+        get => GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
     }
 
-    public static readonly StyledProperty<int> MaxLengthProperty = AvaloniaProperty.Register<SettingsStringItem, int>(nameof(MaxLength));
+    public static readonly StyledProperty<int> MaxLengthProperty =
+        AvaloniaProperty.Register<SettingsStringItem, int>(nameof(MaxLength));
 
     public int MaxLength
     {
@@ -412,12 +414,16 @@ public class SettingsSelectionItem : SettingsItem
     }
 }
 
-public class SettingsCustomizableItem(SettingsItem customValueItem) : SettingsItem
+/// <summary>
+/// A settings item that holds a default value and allows resetting to that value.
+/// </summary>
+/// <param name="defaultValueItem"></param>
+public class SettingsDefaultValueItem(SettingsItem defaultValueItem) : SettingsItem
 {
-    public SettingsItem CustomValueItem => customValueItem;
+    public SettingsItem CustomValueItem => defaultValueItem;
 
     public static readonly StyledProperty<ICommand?> ResetCommandProperty =
-        AvaloniaProperty.Register<SettingsCustomizableItem, ICommand?>(nameof(ResetCommand));
+        AvaloniaProperty.Register<SettingsDefaultValueItem, ICommand?>(nameof(ResetCommand));
 
     public ICommand? ResetCommand
     {

@@ -156,7 +156,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// A settings item may be nested, e.g. Customizable`, so we use recursion here.
+    /// A settings item may be nested, so we use recursion here.
     /// </summary>
     /// <param name="ctx"></param>
     /// <param name="sb"></param>
@@ -304,33 +304,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                 sb.AppendLine($"{itemName}.IsEditable = {GetNamedArgValue(attribute, "IsEditable", "false")};");
                 break;
             }
-            case ItemKind.Customizable:
-            {
-                var innerType = ((INamedTypeSymbol)metadata.Type).TypeArguments[0];
-                var innerMetadata = BuildPropertyMetadata(metadata.Symbol, metadata.AttributeOwner, metadata.Name, innerType);
-
-                var innerItemName = itemName + "_inner";
-                // Recursive call for the wrapped item
-                EmitItemRecursive(
-                    in ctx,
-                    sb,
-                    innerMetadata,
-                    innerItemName,
-                    $"{bindingPath}.BindableValue",
-                    null);
-
-                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsCustomizableItem({innerItemName});");
-                sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsCustomizableItem.ResetCommandProperty] = ");
-                EmitBinding(sb, $"{bindingPath}.ResetCommand", BindingMode.OneWay).AppendLine(";");
-
-                // Special case from reflection code: set watermark for string properties
-                if (innerMetadata.Kind == ItemKind.String)
-                {
-                    sb.Append($"{innerItemName}[!global::Everywhere.Configuration.SettingsStringItem.WatermarkProperty] = ");
-                    EmitBinding(sb, $"{bindingPath}.DefaultValue", BindingMode.OneWay).AppendLine(";");
-                }
-                break;
-            }
             case ItemKind.SettingsControl:
             {
                 // In this case, we need to call the property itself to get the ISettingsControl instance
@@ -436,19 +409,24 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
         EmitBinding(sb, bindingPath, BindingMode.TwoWay).AppendLine(";");
 
-        // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsCustomizableItem to enable the Reset button.
-        if (metadata.Kind != ItemKind.Customizable &&
-            metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
+        // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsDefaultValueItem to enable the Reset button.
+        if (metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
         {
             var defaultValueLiteral = ToLiteral(defaultValue.Value);
+            var resetValueLiteral = metadata is { Kind: ItemKind.String, Type.NullableAnnotation: NullableAnnotation.Annotated } ? "null" : defaultValueLiteral;
             var wrapperItemName = $"{itemName}_wrapper";
 
-            sb.AppendLine($"var {wrapperItemName} = new global::Everywhere.Configuration.SettingsCustomizableItem({itemName});");
+            if (metadata.Kind == ItemKind.String && defaultValue.Value is string)
+            {
+                sb.AppendLine($"{itemName}.PlaceholderText = {defaultValueLiteral};");
+            }
+
+            sb.AppendLine($"var {wrapperItemName} = new global::Everywhere.Configuration.SettingsDefaultValueItem({itemName});");
             sb.AppendLine($"{wrapperItemName}.ResetCommand = new global::CommunityToolkit.Mvvm.Input.RelayCommand(() =>");
             sb.AppendLine("{");
             using (sb.Indent())
             {
-                sb.AppendLine($"this.{bindingPath} = {defaultValueLiteral};");
+                sb.AppendLine($"this.{bindingPath} = {resetValueLiteral};");
             }
             sb.AppendLine("});");
 
@@ -459,10 +437,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             itemName = wrapperItemName;
         }
 
+        var finalItemName = $"{itemName}_final";
+        sb.AppendLine($"global::Everywhere.Configuration.SettingsItem {finalItemName} = {itemName};");
+
+        if (ResolveSettingsItemModifier(ctx, metadata) is { } modifier)
+        {
+            EmitSettingsItemModifier(sb, modifier, itemName, finalItemName, metadata);
+        }
+
         // Add the generated item to its parent collection
         if (!string.IsNullOrEmpty(parentCollection))
         {
-            sb.AppendLine($"{parentCollection}.Add({itemName});").AppendLine();
+            sb.AppendLine($"{parentCollection}.Add({finalItemName});").AppendLine();
         }
     }
 
@@ -533,7 +519,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         {
             case ItemKind.String when metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsStringItem) is { } attribute:
             {
-                sb.AppendLine($"{itemName}.Watermark = {GetNamedArgValue(attribute, "Watermark", "null")};");
+                sb.AppendLine($"{itemName}.PlaceholderText = {GetNamedArgValue(attribute, "PlaceholderText", "null")};");
                 sb.AppendLine($"{itemName}.MaxLength = {GetNamedArgValue(attribute, "MaxLength", "int.MaxValue")};");
                 sb.AppendLine($"{itemName}.IsMultiline = {GetNamedArgValue(attribute, "IsMultiline", "false")};");
                 sb.AppendLine(
@@ -712,6 +698,102 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         sb.AppendLine(";").AppendLine();
     }
 
+    private static SettingsItemModifier? ResolveSettingsItemModifier(in SourceProductionContext ctx, in PropertyMetadata metadata)
+    {
+        var modifierName = metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsItem)?.GetNamedArgument("Modifier") switch
+        {
+            { IsNull: false, Value: string value } when !string.IsNullOrWhiteSpace(value) => value,
+            _ => null
+        };
+
+        if (modifierName is null) return null;
+
+        var ownerType = metadata.Symbol.ContainingType;
+        var candidates = ownerType.GetAllMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => m.Name == modifierName && IsAccessibleSettingsItemModifier(m, ownerType))
+            .ToList();
+        var validCandidates = candidates
+            .Where(IsValidSettingsItemModifier)
+            .ToList();
+
+        if (validCandidates.Count == 1)
+        {
+            var method = validCandidates[0];
+            var target = method.IsStatic ? method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : "this";
+            return new SettingsItemModifier(target, method.Name, !method.ReturnsVoid);
+        }
+
+        ctx.ReportDiagnostic(
+            Diagnostic.Create(
+                Diagnostics.InvalidSettingsItemModifier,
+                metadata.Symbol.Locations.FirstOrDefault(),
+                metadata.Name,
+                modifierName));
+        return null;
+    }
+
+    private static bool IsAccessibleSettingsItemModifier(IMethodSymbol method, INamedTypeSymbol ownerType)
+    {
+        if (SymbolEqualityComparer.Default.Equals(method.ContainingType, ownerType)) return true;
+
+        return method.DeclaredAccessibility switch
+        {
+            Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+            Accessibility.Internal or Accessibility.ProtectedAndInternal
+                when SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, ownerType.ContainingAssembly) => true,
+            _ => false
+        };
+    }
+
+    private static bool IsValidSettingsItemModifier(IMethodSymbol method)
+    {
+        return method is { MethodKind: MethodKind.Ordinary, IsGenericMethod: false, Parameters.Length: 1 } &&
+            IsSettingsItemType(method.Parameters[0].Type) &&
+            (method.ReturnsVoid || IsSettingsItemType(method.ReturnType));
+    }
+
+    private static bool IsSettingsItemType(ITypeSymbol type)
+    {
+        for (var current = type; current is INamedTypeSymbol namedType; current = namedType.BaseType)
+        {
+            if (namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ==
+                "global::Everywhere.Configuration.SettingsItem")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void EmitSettingsItemModifier(
+        IndentedStringBuilder sb,
+        SettingsItemModifier modifier,
+        string modifierArgumentName,
+        string finalItemName,
+        in PropertyMetadata metadata)
+    {
+        var call = $"{modifier.Target}.{modifier.MethodName}({modifierArgumentName})";
+        if (!modifier.ReturnsSettingsItem)
+        {
+            sb.AppendLine($"{call};");
+            return;
+        }
+
+        var modifiedItemName = $"{modifierArgumentName}_modified";
+        sb.AppendLine($"var {modifiedItemName} = {call};");
+        sb.AppendLine($"if (!global::System.Object.ReferenceEquals({modifiedItemName}, {finalItemName}))");
+        sb.AppendLine("{");
+        using (sb.Indent())
+        {
+            sb.AppendLine($"{finalItemName} = {modifiedItemName};");
+            ApplyHeaderAndDescription(sb, finalItemName, metadata);
+            ApplySettingsItemAttributes(sb, finalItemName, metadata);
+        }
+        sb.AppendLine("}");
+    }
+
     /// <summary>
     /// Emit the whole IBinding that represents the binding logic.
     /// for simple paths, this is just a Binding; for complex logical expressions, this may involve MultiBindings.
@@ -720,7 +802,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// e.g.
     /// new CompiledBinding
     /// {
-    ///     Path = "SelectedWebSearchEngineProvider.EndPoint.ActualValue",
+    ///     Path = "SelectedWebSearchEngineProvider.EndPoint",
     ///     Source = this,
     ///     Mode = global::Avalonia.Data.BindingMode.TwoWay,
     ///     Converter = ...
@@ -923,8 +1005,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
         return type switch
         {
-            INamedTypeSymbol { IsGenericType: true } nts when
-                nts.ConstructedFrom.ToDisplayString() == "Everywhere.Configuration.Customizable<T>" => ItemKind.Customizable,
             { SpecialType: SpecialType.System_Boolean } => ItemKind.Bool,
             {
                 OriginalDefinition: INamedTypeSymbol
@@ -1039,7 +1119,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         String,
         Int,
         Double,
-        Customizable,
         Enum,
         Templated,
         SettingsControl,
@@ -1055,6 +1134,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         string HeaderKey,
         string? DescriptionKey,
         string? Group
+    );
+
+    private readonly record struct SettingsItemModifier(
+        string Target,
+        string MethodName,
+        bool ReturnsSettingsItem
     );
 
     private enum BindingMode

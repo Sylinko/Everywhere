@@ -46,8 +46,8 @@
             LeadingContent="{TemplateBinding LeadingContent, Mode=TwoWay}"
             LeadingContentTemplate="{TemplateBinding LeadingContentTemplate}"
             MaxLength="{TemplateBinding MaxLength}"
-            Text="{TemplateBinding Text, Mode=TwoWay}"
-            Watermark="{TemplateBinding Watermark}"/>
+            PlaceholderText="{TemplateBinding PlaceholderText}"
+            Text="{TemplateBinding Text, Mode=TwoWay}"/>
 
           <ScrollViewer
             Grid.Row="1" Grid.Column="0"

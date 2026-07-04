@@ -28,8 +28,8 @@ public sealed partial class ChatInputArea : TemplatedControl
     public static readonly StyledProperty<int> MaxLengthProperty =
         ChatTextEditor.MaxLengthProperty.AddOwner<ChatInputArea>();
 
-    public static readonly StyledProperty<string?> WatermarkProperty =
-        ChatTextEditor.WatermarkProperty.AddOwner<ChatInputArea>();
+    public static readonly StyledProperty<string?> PlaceholderTextProperty =
+        ChatTextEditor.PlaceholderTextProperty.AddOwner<ChatInputArea>();
 
     public static readonly StyledProperty<bool> PressCtrlEnterToSendProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(PressCtrlEnterToSend));
@@ -106,10 +106,10 @@ public sealed partial class ChatInputArea : TemplatedControl
         set => SetValue(MaxLengthProperty, value);
     }
 
-    public string? Watermark
+    public string? PlaceholderText
     {
-        get => GetValue(WatermarkProperty);
-        set => SetValue(WatermarkProperty, value);
+        get => GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
     }
 
     /// <summary>

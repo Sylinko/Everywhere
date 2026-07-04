@@ -44,6 +44,11 @@ public class SettingsItemAttribute : Attribute
     public string? DocumentUrl { get; set; }
 
     /// <summary>
+    /// An optional method name used to modify or replace the generated settings item before it is added to the UI.
+    /// </summary>
+    public string? Modifier { get; set; }
+
+    /// <summary>
     /// Groups multiple settings items under a common header.
     /// Items with the same non-null Group value will be wrapped in a <see cref="SettingsGroupItem"/>.
     /// If starts with "_", group header will hidden.
@@ -54,7 +59,7 @@ public class SettingsItemAttribute : Attribute
 [AttributeUsage(AttributeTargets.Property)]
 public class SettingsStringItemAttribute : Attribute
 {
-    public string? Watermark { get; set; }
+    public string? PlaceholderText { get; set; }
     public int MaxLength { get; set; } = int.MaxValue;
     public bool IsMultiline { get; set; }
     public bool IsPassword { get; set; }

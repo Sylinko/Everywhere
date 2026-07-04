@@ -106,14 +106,7 @@ public sealed class _20260629120000_0_8_1_canary_20260629_12 : SettingsMigration
         var modified = false;
         foreach (var provider in providers.AsValueEnumerable().Select(static pair => pair.Value).OfType<JsonObject>())
         {
-            if (provider.ContainsKey("EndPoint") || !provider.TryGetPropertyValue("Endpoint", out var endpoint))
-            {
-                continue;
-            }
-
-            provider.Remove("Endpoint");
-            provider["EndPoint"] = endpoint?.DeepClone();
-            modified = true;
+            modified |= FlattenCustomizable(provider, "EndPoint");
         }
 
         return modified;

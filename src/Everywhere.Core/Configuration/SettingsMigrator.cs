@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -109,6 +110,7 @@ public class SettingsMigrator
                 _logger.LogInformation("Created backup for unreadable settings file: {BackupPath}", backupPath);
             }
 
+            ExceptionDispatchInfo.Capture(ex).Throw();
             throw;
         }
     }

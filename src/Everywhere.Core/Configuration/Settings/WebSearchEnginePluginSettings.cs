@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
 using Everywhere.Views;
 using Everywhere.Web;
@@ -132,6 +133,8 @@ public abstract class ThirdPartyWebSearchEngineProvider : ObservableValidator, I
 [GeneratedSettingsItems]
 public sealed partial class GoogleWebSearchEngineProvider(ObservableCollection<ApiKey> apiKeys) : ThirdPartyWebSearchEngineProvider
 {
+    private const string DefaultEndPoint = "https://customsearch.googleapis.com";
+
     [JsonIgnore]
     [SettingsItemIgnore]
     public override WebSearchEngineProviderId Id => WebSearchEngineProviderId.Google;
@@ -148,11 +151,18 @@ public sealed partial class GoogleWebSearchEngineProvider(ObservableCollection<A
     [SettingsItemIgnore]
     public override string DocsUrl => "https://developers.google.com/custom-search/v1/overview";
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineProvider_EndPoint_Header,
         LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
     [SettingsItem(Group = "_")]
-    public Customizable<string> EndPoint { get; } = new("https://customsearch.googleapis.com", isDefaultValueReadonly: true);
+    [DefaultValue(DefaultEndPoint)]
+    public partial string? EndPoint { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint;
 
     [ObservableProperty]
     [SettingsItemIgnore]
@@ -200,6 +210,7 @@ public sealed partial class ApiKeyWebSearchEngineProvider(
     IDynamicLocaleKey headerKey,
     string iconUrl,
     string? docsUrl,
+    string defaultEndPoint,
     ObservableCollection<ApiKey> apiKeys
 ) : ThirdPartyWebSearchEngineProvider
 {
@@ -219,11 +230,17 @@ public sealed partial class ApiKeyWebSearchEngineProvider(
     [SettingsItemIgnore]
     public override string? DocsUrl { get; } = docsUrl;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineProvider_EndPoint_Header,
         LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
-    [SettingsItem(Group = "_")]
-    public required Customizable<string> EndPoint { get; init; }
+    [SettingsItem(Group = "_", Modifier = nameof(ApplyEndPointDefaultValueItem))]
+    public partial string? EndPoint { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? defaultEndPoint : EndPoint;
 
     [ObservableProperty]
     [SettingsItemIgnore]
@@ -244,6 +261,15 @@ public sealed partial class ApiKeyWebSearchEngineProvider(
                 source: this,
                 mode: BindingMode.TwoWay)
         });
+
+    private SettingsDefaultValueItem ApplyEndPointDefaultValueItem(SettingsStringItem item)
+    {
+        item.PlaceholderText = defaultEndPoint;
+        return new SettingsDefaultValueItem(item)
+        {
+            ResetCommand = new RelayCommand(() => EndPoint = null)
+        };
+    }
 }
 
 [GeneratedSettingsItems]
@@ -252,6 +278,7 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
     IDynamicLocaleKey headerKey,
     string iconUrl,
     string? docsUrl,
+    string defaultEndPoint,
     ObservableCollection<ApiKey> apiKeys
 ) : ThirdPartyWebSearchEngineProvider
 {
@@ -271,11 +298,17 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
     [SettingsItemIgnore]
     public override string? DocsUrl { get; } = docsUrl;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineProvider_EndPoint_Header,
         LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
-    [SettingsItem(Group = "_")]
-    public required Customizable<string> EndPoint { get; init; }
+    [SettingsItem(Group = "_", Modifier = nameof(ApplyEndPointDefaultValueItem))]
+    public partial string? EndPoint { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? defaultEndPoint : EndPoint;
 
     [ObservableProperty]
     [SettingsItemIgnore]
@@ -294,11 +327,22 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
                 source: this,
                 mode: BindingMode.TwoWay)
         });
+
+    private SettingsDefaultValueItem ApplyEndPointDefaultValueItem(SettingsStringItem item)
+    {
+        item.PlaceholderText = defaultEndPoint;
+        return new SettingsDefaultValueItem(item)
+        {
+            ResetCommand = new RelayCommand(() => EndPoint = null)
+        };
+    }
 }
 
 [GeneratedSettingsItems]
 public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearchEngineProvider
 {
+    private const string DefaultEndPoint = "https://searxng.example.com/search";
+
     [JsonIgnore]
     [SettingsItemIgnore]
     public override WebSearchEngineProviderId Id => WebSearchEngineProviderId.SearXNG;
@@ -315,10 +359,17 @@ public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearch
     [SettingsItemIgnore]
     public override string DocsUrl => "https://docs.searxng.org";
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineProvider_EndPoint_Header,
         LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
-    public Customizable<string> EndPoint { get; } = new("https://searxng.example.com/search", isDefaultValueReadonly: true);
+    [DefaultValue(DefaultEndPoint)]
+    public partial string? EndPoint { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint;
 }
 
 [GeneratedSettingsItems]
@@ -363,10 +414,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DirectLocaleKey("AnySearch"),
                     "avares://Everywhere.Core/Assets/Icons/anysearch-color.png",
                     "https://www.anysearch.com",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://api.anysearch.com/v1/search", isDefaultValueReadonly: true)
-                }),
+                    "https://api.anysearch.com/v1/search",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.Bocha,
                 new ApiKeyWebSearchEngineProvider(
@@ -374,10 +423,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DynamicLocaleKey(LocaleKey.WebSearchEngineProvider_Bocha),
                     "avares://Everywhere.Core/Assets/Icons/bocha-color.png",
                     "https://open.bochaai.com",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://api.bocha.cn/v1/web-search", isDefaultValueReadonly: true)
-                }),
+                    "https://api.bocha.cn/v1/web-search",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.Brave,
                 new ApiKeyWebSearchEngineProvider(
@@ -385,10 +432,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DirectLocaleKey("Brave"),
                     "avares://Everywhere.Core/Assets/Icons/brave-color.png",
                     "https://brave.com/search/api",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://api.search.brave.com/res/v1/web/search", isDefaultValueReadonly: true)
-                }),
+                    "https://api.search.brave.com/res/v1/web/search",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.Google,
                 new GoogleWebSearchEngineProvider(ApiKeys)),
@@ -399,10 +444,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DirectLocaleKey("Jina"),
                     "avares://Everywhere.Core/Assets/Icons/jina-light.svg",
                     "https://jina.ai",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://s.jina.ai", isDefaultValueReadonly: true)
-                }),
+                    "https://s.jina.ai",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.SearXNG,
                 new SearXNGWebSearchEngineProvider()),
@@ -413,10 +456,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DirectLocaleKey("Tavily"),
                     "avares://Everywhere.Core/Assets/Icons/tavily-color.svg",
                     "https://tavily.com",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://api.tavily.com/search", isDefaultValueReadonly: true)
-                }),
+                    "https://api.tavily.com/search",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.UniFuncs,
                 new ApiKeyWebSearchEngineProvider(
@@ -424,10 +465,8 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
                     new DirectLocaleKey("UniFuncs"),
                     "avares://Everywhere.Core/Assets/Icons/unifuncs-color.png",
                     "https://www.unifuncs.com",
-                    ApiKeys)
-                {
-                    EndPoint = new Customizable<string>("https://api.unifuncs.com/api/web-search/search", isDefaultValueReadonly: true)
-                }),
+                    "https://api.unifuncs.com/api/web-search/search",
+                    ApiKeys)),
         ]);
     }
 }
