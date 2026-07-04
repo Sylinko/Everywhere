@@ -8,7 +8,6 @@ using Everywhere.AI;
 using Everywhere.AI.Configurator;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.Messages;
 using Lucide.Avalonia;
 using Serilog;
 using ShadUI;
@@ -43,13 +42,27 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         if (!Guid.TryParse(assistantIdText, out var assistantId))
         {
             ClearSelectedAssistant();
-            ShowNavigationWarning($"Invalid assistant id in route: {assistantIdText}");
+            ToastHost
+                .CreateToast(
+                    LocaleResolver.Common_Warning,
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.CustomAssistantPage_InvalidRouteAssistant_Content,
+                        new DirectLocaleKey(assistantIdText)))
+                .DismissOnClick()
+                .ShowWarning();
             return;
         }
 
         if (!SelectAssistant(assistantId))
         {
-            ShowNavigationWarning($"Assistant was not found: {assistantId}");
+            ToastHost
+                .CreateToast(
+                    LocaleResolver.Common_Warning,
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.CustomAssistantPage_MissingRouteAssistant_Content,
+                        new DirectLocaleKey(assistantId)))
+                .DismissOnClick()
+                .ShowWarning();
         }
     }
 
@@ -190,24 +203,5 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
     {
         SelectedCustomAssistant = null;
         _settings.Model.SelectedCustomAssistant = null;
-    }
-
-    private void ShowNavigationWarning(string message)
-    {
-        try
-        {
-            ToastHost
-                .CreateToast(LocaleResolver.Common_Warning)
-                .WithContent(message)
-                .DismissOnClick()
-                .ShowWarning();
-        }
-        catch (Exception ex)
-        {
-            Log.Logger.ForContext<CustomAssistantPageViewModel>().Warning(
-                ex,
-                "Failed to show custom assistant navigation warning: {Message}",
-                message);
-        }
     }
 }

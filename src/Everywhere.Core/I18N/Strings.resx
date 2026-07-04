@@ -3623,4 +3623,10 @@ Delete "{1}" permanently?</value>
     <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
         <value>Natural conversation</value>
     </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>The assistant id in the route is invalid: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>The assistant was not found: {0}</value>
+    </data>
 </root>

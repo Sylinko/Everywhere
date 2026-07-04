@@ -164,8 +164,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         {
             DialogManager
                 .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
-                .ShowAsync()
-                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+                .Show();
         }
         else
         {
@@ -181,8 +180,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
                 ToastHost
                     .CreateToast(LocaleResolver.MainViewModel_UpgradeSuccessfulToast_Title)
                     .WithDurationSeconds(5)
-                    .ShowAsync()
-                    .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+                    .Show();
             }
         }
     }
@@ -190,9 +188,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     [RelayCommand]
     private void NavigateToType(Type routeType)
     {
-        var item = FindNavigationBarItem(
-            _itemsSource.Items,
-            i => i.Route?.GetType() == routeType || i.Children.AsValueEnumerable().Any(c => c.Route?.GetType() == routeType));
+        var item = FindNavigationBarItem(_itemsSource.Items, i => i.Route?.GetType() == routeType);
         if (item != null)
         {
             NavigateToItem(item, []);

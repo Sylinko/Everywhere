@@ -613,8 +613,7 @@ public sealed partial class PromptEditorViewModel(
             catch (Exception ex)
             {
                 // Corrupt authoring metadata should not block editing the persisted prompt text.
-                HandledSystemException.Handle(ex);
-                Log.ForContext<PromptEditorViewModel>().Warning(ex, "Failed to read recipe snapshot");
+                Log.ForContext<PromptEditorViewModel>().Warning(HandledSystemException.Handle(ex), "Failed to read recipe snapshot");
             }
         }
 

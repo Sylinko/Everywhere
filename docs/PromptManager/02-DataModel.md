@@ -72,7 +72,7 @@ CustomAssistant.SystemPromptId == Guid.Empty -> default prompt
 
 The old direct prompt text field should be migrated away from the active runtime model.
 
-If a non-empty referenced prompt is missing, the UI should show an unresolved reference state. Runtime behavior should fall back to the default prompt and record a warning.
+If a non-empty referenced prompt is missing, the UI should show an unresolved reference state. Runtime behavior should fall back to the default prompt and record an error-level diagnostic.
 
 ## 4. Guided Creation Recipe
 
@@ -122,9 +122,9 @@ Suggested shape:
 | --- | --- |
 | `Code` | Stable diagnostic code. |
 | `Severity` | Info, warning, or error. |
-| `Message` | User-facing message. |
+| `MessageKey` | Localized diagnostic text. |
 | `Span` | Optional template range. |
-| `Action` | Optional quick fix. |
+| `ActionId` | Optional quick-fix command ID. |
 
 Diagnostics are used by the editor, guided creator, and save/assign workflows.
 

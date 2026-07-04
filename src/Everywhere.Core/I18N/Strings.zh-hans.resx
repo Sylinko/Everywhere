@@ -3624,4 +3624,10 @@
     <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
         <value>自然对话</value>
     </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>路由中的助手 ID 无效：{0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>未找到该助手：{0}</value>
+    </data>
 </root>
