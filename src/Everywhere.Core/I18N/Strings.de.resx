@@ -3219,4 +3219,49 @@ Veröffentlichungsdatum: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Die ersten Statistiken stammen aus der Analyse historischer Chats und können Ungenauigkeiten aufweisen.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Fehler beim Schreiben des Einstellungs-Pfades „{0}“.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Der Typ „{0}“ für die Einstellungs-Eigenschaft „{1}“ wird nicht unterstützt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Der serialisierte Teilbaum „{0}“ kann nicht ersetzt werden, da die Eigenschaft nicht beschreibbar ist.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>Die Einstellungs-Liste „{0}“ benötigt ein JSON-Array.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>Die Einstellungs-Liste „{0}“ ist unveränderlich und kann nicht ersetzt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Das Einstellungs-Wörterbuch „{0}“ benötigt ein JSON-Objekt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Das Einstellungs-Wörterbuch „{0}“ ist unveränderlich und kann nicht ersetzt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>Das Einstellungs-Objekt „{0}“ benötigt ein JSON-Objekt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>Das Einstellungs-Objekt „{0}“ ist null und kann nicht erstellt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Unbekanntes Einstellungsmitglied „{0}“.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Kann null nicht dem nicht-nullbaren Einstellungswert „{0}“ zuweisen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Konnte den Einstellungswert „{0}“ nicht als „{1}“ lesen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Konnte den Schlüssel des Einstellungs-Wörterbuchs „{0}“ nicht als „{1}“ lesen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Fehler beim Parsen des Einstellungsdokuments „{0}“, ein neues In-Memory-Dokument wurde erstellt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Fehler beim Schreiben des Einstellungs-JSON in „{0}“ (Versuch {1}, Inhaltslänge {2} Bytes).</value>
+    </data>
 </root>

@@ -3219,4 +3219,49 @@ Yayın tarihi: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>İlk istatistik verileri geçmiş sohbet verileri analizinden gelmektedir, hatalar olabilir.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Ayar yolu &quot;{0}&quot; yazılamadı.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Ayar özelliği &quot;{1}&quot; için tür &quot;{0}&quot; desteklenmiyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Serileştirilmiş alt ağaç &quot;{0}&quot; değiştirilemez, çünkü bu özellik yazılabilir değil.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>Ayar listesi &quot;{0}&quot; için JSON dizisi bekleniyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>Ayar listesi &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Ayar sözlüğü &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Ayar sözlüğü &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>Ayar nesnesi &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>Ayar nesnesi &quot;{0}&quot; boş ve oluşturulamıyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Bilinmeyen ayar üyesi &quot;{0}&quot;.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Boş değeri &quot;{0}&quot; için atanamaz, çünkü bu ayar değeri boş olamaz.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Ayar değeri &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Ayar sözlüğü anahtarı &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Ayar belgesi &quot;{0}&quot; ayrıştırılamadı, yeni bir bellek belgesi oluşturuldu.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Ayar JSON'unu &quot;{0}&quot;'a yazmak başarısız oldu (deneme {1}, içerik uzunluğu {2} bayt).</value>
+    </data>
 </root>

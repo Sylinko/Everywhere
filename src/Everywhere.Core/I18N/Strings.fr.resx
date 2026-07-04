@@ -3220,4 +3220,49 @@ Date de publication : {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Les premières statistiques proviennent de l'analyse des données de chat historiques et peuvent comporter des erreurs.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Échec de l'écriture du chemin de configuration « {0} ».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Le type « {0} » de la propriété de configuration « {1} » n'est pas pris en charge.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Le sous-arbre sérialisé « {0} » ne peut pas être remplacé car cette propriété n'est pas écrivable.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>La liste de configuration « {0} » nécessite un tableau JSON.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>La liste de configuration « {0} » est immuable et ne peut pas être remplacée.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Le dictionnaire de configuration « {0} » nécessite un objet JSON.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Le dictionnaire de configuration « {0} » est immuable et ne peut pas être remplacé.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>L'objet de configuration « {0} » nécessite un objet JSON.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>L'objet de configuration « {0} » est nul et ne peut pas être créé.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Membre de configuration inconnu « {0} ».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Impossible d'assigner null à la valeur de configuration non nullable « {0} ».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Échec de la lecture de la valeur de configuration « {0} » en tant que « {1} ».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Échec de la lecture de la clé du dictionnaire de configuration « {0} » en tant que « {1} ».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Échec de l'analyse du document de configuration « {0} », un nouveau document en mémoire a été créé.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Échec de l'écriture du JSON de configuration dans « {0} » (tentative {1}, longueur du contenu {2} octets).</value>
+    </data>
 </root>

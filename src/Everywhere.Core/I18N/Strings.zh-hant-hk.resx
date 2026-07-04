@@ -3220,4 +3220,49 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>首次統計數據來自歷史聊天數據分析，可能存在誤差。</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>寫入設置路徑「{0}」失敗。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>設置屬性「{1}」的類型「{0}」暫不支持。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>序列化子樹「{0}」無法替換，因為該屬性不可寫。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>設置列表「{0}」需要 JSON 陣列。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>設置列表「{0}」不可變，無法替換。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>設置字典「{0}」需要 JSON 對象。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>設置字典「{0}」不可變，無法替換。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>設置對象「{0}」需要 JSON 對象。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>設置對象「{0}」為空，且無法創建。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>未知設置成員「{0}」。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>無法把 null 分配給不可為空的設置值「{0}」。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>無法將設置值「{0}」讀取為「{1}」。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>無法將設置字典鍵「{0}」讀取為「{1}」。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>解析設置文檔「{0}」失敗，已創建新的內存文檔。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>寫入設置 JSON 到「{0}」失敗（第 {1} 次嘗試，內容長度 {2} 字節）。</value>
+    </data>
 </root>

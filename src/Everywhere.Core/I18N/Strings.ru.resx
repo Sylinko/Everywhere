@@ -3220,4 +3220,49 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Первичные статистические данные получены из анализа исторических чатов и могут содержать погрешности.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Не удалось записать путь настроек «{0}».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Тип свойства настроек «{1}» — «{0}» — не поддерживается.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Сериализованное поддерево «{0}» не может быть заменено, так как это свойство не доступно для записи.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>Для списка настроек «{0}» требуется JSON массив.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>Список настроек «{0}» неизменяемый, замена невозможна.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Для словаря настроек «{0}» требуется JSON объект.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Словарь настроек «{0}» неизменяемый, замена невозможна.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>Для объекта настроек «{0}» требуется JSON объект.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>Объект настроек «{0}» пуст и не может быть создан.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Неизвестный член настроек «{0}».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Невозможно присвоить null непустому значению настроек «{0}».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Не удалось прочитать значение настроек «{0}» как «{1}».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Не удалось прочитать ключ словаря настроек «{0}» как «{1}».</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Не удалось разобрать документ настроек «{0}», создан новый документ в памяти.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Не удалось записать JSON настроек в «{0}» (попытка {1}, длина содержимого {2} байт).</value>
+    </data>
 </root>

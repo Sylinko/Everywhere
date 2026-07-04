@@ -3220,4 +3220,49 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>첫 통계 데이터는 과거 채팅 데이터 분석에서 가져온 것으로, 오차가 있을 수 있습니다.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>설정 경로 &quot;{0}&quot; 쓰기 실패.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>설정 속성 &quot;{1}&quot;의 유형 &quot;{0}&quot;은 지원되지 않습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>직렬화된 하위 트리 &quot;{0}&quot;는 읽기 전용 속성으로 교체할 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>설정 목록 &quot;{0}&quot;에는 JSON 배열이 필요합니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>설정 목록 &quot;{0}&quot;은 변경할 수 없으며 교체할 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>설정 사전 &quot;{0}&quot;에는 JSON 객체가 필요합니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>설정 사전 &quot;{0}&quot;은 변경할 수 없으며 교체할 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>설정 객체 &quot;{0}&quot;에는 JSON 객체가 필요합니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>설정 객체 &quot;{0}&quot;가 비어 있으며 생성할 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>알 수 없는 설정 구성원 &quot;{0}&quot;입니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>null을 비nullable 설정 값 &quot;{0}&quot;에 할당할 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>설정 값 &quot;{0}&quot;을(를) &quot;{1}&quot;로 읽을 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>설정 사전 키 &quot;{0}&quot;을(를) &quot;{1}&quot;로 읽을 수 없습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>설정 문서 &quot;{0}&quot; 구문 분석 실패, 새로운 메모리 문서가 생성되었습니다.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>설정 JSON을 &quot;{0}&quot;에 쓰기 실패 (시도 {1}회, 내용 길이 {2} 바이트).</value>
+    </data>
 </root>
