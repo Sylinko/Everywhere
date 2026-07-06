@@ -420,6 +420,12 @@ public sealed class SettingsPatchBinder
         out object? value)
     {
         value = null;
+
+        if (TryDeserialize(node, declaredType, path, failureKind, out value, reportDiagnostic: false))
+        {
+            return true;
+        }
+
         var normalizedType = Nullable.GetUnderlyingType(declaredType) ?? declaredType;
 
         if (node is JsonObject obj &&
@@ -534,7 +540,8 @@ public sealed class SettingsPatchBinder
         Type type,
         string path,
         SettingsEngineDiagnosticKind failureKind,
-        out object? value)
+        out object? value,
+        bool reportDiagnostic = true)
     {
         value = null;
 
@@ -545,11 +552,14 @@ public sealed class SettingsPatchBinder
                 return true;
             }
 
-            AddDiagnostic(
-                failureKind,
-                SettingsEngineDiagnosticSeverity.Warning,
-                path,
-                DiagnosticMessage(LocaleKey.SettingsEngine_Diagnostic_NullForNonNullable, path));
+            if (reportDiagnostic)
+            {
+                AddDiagnostic(
+                    failureKind,
+                    SettingsEngineDiagnosticSeverity.Warning,
+                    path,
+                    DiagnosticMessage(LocaleKey.SettingsEngine_Diagnostic_NullForNonNullable, path));
+            }
             return false;
         }
 
@@ -560,12 +570,15 @@ public sealed class SettingsPatchBinder
         }
         catch (Exception ex)
         {
-            AddDiagnostic(
-                failureKind,
-                SettingsEngineDiagnosticSeverity.Warning,
-                path,
-                DiagnosticMessage(LocaleKey.SettingsEngine_Diagnostic_ReadValueFailed, path, type.Name),
-                ex);
+            if (reportDiagnostic)
+            {
+                AddDiagnostic(
+                    failureKind,
+                    SettingsEngineDiagnosticSeverity.Warning,
+                    path,
+                    DiagnosticMessage(LocaleKey.SettingsEngine_Diagnostic_ReadValueFailed, path, type.Name),
+                    ex);
+            }
             return false;
         }
     }
