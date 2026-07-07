@@ -63,7 +63,9 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 #if DEBUG
         if (Design.IsDesignMode)
         {
-            ServiceLocator.Build(x => x.AddAvaloniaBasicServices());
+            var services = new ServiceCollection();
+            services.AddAvaloniaBasicServices();
+            ServiceLocator.SetProvider(services.BuildServiceProvider());
             return;
         }
 

@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))"/>
+  <PropertyGroup>
+    <!-- This can filiter out the Pure.DI package from the central management, so that it can be updated independently. -->
+    <!-- <ManagePackageVersionsCentrally Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Pure.DI'))">false</ManagePackageVersionsCentrally> -->
+    <ManagePackageVersionsCentrally Condition="'$(ManagePackageVersionsCentrally)' == ''">true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,9 @@
+<Project>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\3rd\Pure.DI\src\Pure.DI.Core\Pure.DI.Core.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all" />
+    <Compile Include="$(MSBuildThisFilePath)..\..\3rd\Pure.DI\src\Pure.DI.MS\any\Pure.DI\MS\ServiceCollectionFactory.g.cs" Link="DependencyInjection\Pure.DI.MS\ServiceCollectionFactory.g.cs" />
+    <Compile Include="$(MSBuildThisFilePath)..\..\3rd\Pure.DI\src\Pure.DI.MS\any\Pure.DI\MS\ServiceProviderFactory.g.cs" Link="DependencyInjection\Pure.DI.MS\ServiceProviderFactory.g.cs" />
+  </ItemGroup>
+
+</Project>

@@ -11,7 +11,7 @@
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <PublishTrimmed>true</PublishTrimmed>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
-    <NoWarn>$(NoWarn),IL2057</NoWarn>
+    <NoWarn>$(NoWarn);IL2057;CS0436</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,6 +25,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Pure.DI">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Pure.DI.MS"/>
     <PackageReference Include="SkiaSharp.NativeAssets.Win32"/>
     <PackageReference Include="Vortice.Direct3D11"/>
     <PackageReference Include="Vortice.DirectComposition"/>
@@ -34,8 +39,8 @@
     <ProjectReference Include="..\..\3rd\EverythingNetCore\EverythingNet\EverythingNet.csproj"/>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
-    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -62,7 +67,7 @@
     <None Remove="Assets\Icons\Windows11.svg"/>
   </ItemGroup>
 
-  <Import Project="..\Build.Patches.targets" />
+  <Import Project="..\Build.Patches.targets"/>
   <Import Project="..\Build.Watchdog.targets"/>
 
   <ItemGroup>
@@ -106,13 +111,13 @@
   <!-- Prune WPF/WinForms assemblies and localized resources natively without an external PowerShell script -->
   <Target Name="FilterPublishOutput" AfterTargets="ComputeResolvedFilesToPublishList">
     <ItemGroup>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('Presentation'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('System.Windows.Forms'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsBase'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsFormsIntegration'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('wpfgfx'))" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.xml'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('Presentation'))"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('System.Windows.Forms'))"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsBase'))"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsFormsIntegration'))"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('wpfgfx'))"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'"/>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.xml'"/>
     </ItemGroup>
   </Target>
 

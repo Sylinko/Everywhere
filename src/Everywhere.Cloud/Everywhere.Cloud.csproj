@@ -3,15 +3,16 @@
   <PropertyGroup>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <EverywhereI18NNamespace>Everywhere.Cloud.I18N</EverywhereI18NNamespace>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack\MessagePack.csproj"/>
-    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,14 @@
     <AdditionalFiles Include="I18N\Strings*.resx"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Pure.DI">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Pure.DI.MS"/>
+  </ItemGroup>
+
   <Import Project="..\Build.Generate.Cloud.targets"/>
-  
+
 </Project>

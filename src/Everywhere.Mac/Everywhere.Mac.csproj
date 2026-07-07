@@ -12,6 +12,7 @@
     <UseAppHost>true</UseAppHost>
     <CreateAppBundle>true</CreateAppBundle>
     <BundleCreateDump>true</BundleCreateDump>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
 
     <!-- The signing and packaging by SDK is broken for macOS, so we disable it and do it ourselves -->
     <CreatePackage>false</CreatePackage>
@@ -20,13 +21,13 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
 
-  <Import Project="..\Build.Patches.targets" />
+  <Import Project="..\Build.Patches.targets"/>
 
   <!-- Workaround for TextMateSharp.Grammars libonigwrap.dylib failing in install_name_tool due to lack of header padding -->
   <Target Name="_SkipInstallNameToolForLibOnigWrap" BeforeTargets="_InstallNameTool">
-    <Message Text="Skipping install_name_tool for libonigwrap.dylib to avoid 'larger updated load commands do not fit' error..." Importance="high" />
+    <Message Text="Skipping install_name_tool for libonigwrap.dylib to avoid 'larger updated load commands do not fit' error..." Importance="high"/>
     <ItemGroup>
-      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'"/>
     </ItemGroup>
   </Target>
 
@@ -47,26 +48,26 @@
 
   <!-- Workaround for TextMateSharp libonigwrap.dylib failing in install_name_tool and causing dyld crash on launch -->
   <Target Name="_HideLibOnigWrapFromMacSdk" BeforeTargets="_ComputeDynamicLibrariesToReidentify;_LinkNativeExecutable;_InstallNameTool">
-    <Message Text="Intercepting libonigwrap.dylib to prevent dyld static linking crashes..." Importance="high" />
+    <Message Text="Intercepting libonigwrap.dylib to prevent dyld static linking crashes..." Importance="high"/>
     <ItemGroup>
-      <_ExtractedLibOnigWrap Include="@(_FileNativeReference)" Condition="'%(Filename)' == 'libonigwrap'" />
-      <_FileNativeReference Remove="@(_ExtractedLibOnigWrap)" />
-      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+      <_ExtractedLibOnigWrap Include="@(_FileNativeReference)" Condition="'%(Filename)' == 'libonigwrap'"/>
+      <_FileNativeReference Remove="@(_ExtractedLibOnigWrap)"/>
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'"/>
     </ItemGroup>
   </Target>
 
   <Target Name="_CopyLibOnigWrapToBundle" AfterTargets="_CreateAppBundle">
-    <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')" />
-    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''" />
+    <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')"/>
+    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''"/>
   </Target>
 
   <!-- When not publishing, we sign the build output for local debugging -->
-  <Target Name="SignOnBuild" AfterTargets="Build" Condition="'$(IsPublish)' != 'true'">
+  <Target Name="SignOnBuild" AfterTargets="Build" Condition="'$(IsPublish)' != 'true' and '$(IsOSX)' == 'true'">
     <Message Text="[Dev Workflow] Processing build output for local debugging..." Importance="high"/>
     <CallTarget Targets="_CoreSignAppBundle"/>
   </Target>
 
-  <Target Name="SignAndPackageOnPublish" AfterTargets="Publish" Condition="'$(IsPublish)' == 'true'">
+  <Target Name="SignAndPackageOnPublish" AfterTargets="Publish" Condition="'$(IsPublish)' == 'true' and '$(IsOSX)' == 'true'">
     <Message Text="[Publish Workflow] Processing publish output for distribution..." Importance="high"/>
 
     <PropertyGroup>
@@ -144,13 +145,18 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
+    <PackageReference Include="Pure.DI">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Pure.DI.MS" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj" />
+    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
-    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <ItemGroup>
