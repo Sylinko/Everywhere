@@ -10,21 +10,28 @@
     <ApplicationIcon>..\..\img\Everywhere.ico</ApplicationIcon>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <UseAppHost>true</UseAppHost>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="SkiaSharp" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
-    <PackageReference Include="Tmds.LibC" />
-    <PackageReference Include="X11.Net" />
-    <PackageReference Include="GirCore.GObject-2.0" />
+    <PackageReference Include="Avalonia.Desktop"/>
+    <PackageReference Include="Pure.DI">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Pure.DI.MS"/>
+    <PackageReference Include="SkiaSharp"/>
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux"/>
+    <PackageReference Include="Tmds.LibC"/>
+    <PackageReference Include="X11.Net"/>
+    <PackageReference Include="GirCore.GObject-2.0"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
+    <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +50,7 @@
     </Content>
   </ItemGroup>
 
-  <Import Project="..\Build.Patches.targets" />
+  <Import Project="..\Build.Patches.targets"/>
+  <Import Project="..\Build.Watchdog.targets"/>
 
-  <Import Project="..\Build.Watchdog.targets" />
 </Project>

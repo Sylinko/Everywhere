@@ -4,17 +4,12 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Chat.Plugins;
-using Everywhere.Cloud;
+using Everywhere.Cloud.DependencyInjection;
 using Everywhere.Common;
-using Everywhere.Extensions;
-using Everywhere.Initialization;
-using Everywhere.Interop;
+using Everywhere.DependencyInjection;
 using Everywhere.Messages;
-using Everywhere.StrategyEngine;
 using Everywhere.Windows.Chat.Plugins;
-using Everywhere.Windows.Common;
-using Everywhere.Windows.Interop;
+using Everywhere.Windows.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Serilog;
@@ -44,50 +39,34 @@ public static class Program
 
         RegisterUrlProtocol();
 
-        ServiceLocator.Build(x => x
+        var serviceProvider = CreateServiceProvider();
+        ServiceLocator.SetProvider(serviceProvider);
 
-                #region Basic
+        BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+    }
 
-                .AddApplicationLogging()
-                .AddSingleton<IVisualElementContext, VisualElementContext>()
-                .AddSingleton<IShortcutListener, ShortcutListener>()
-                .AddSingleton<INativeHelper, NativeHelper>()
-                .AddSingleton<IWindowHelper, WindowHelper>()
-                .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
-                .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
-                .AddSettings()
-                .AddWatchdogManager()
-                .ConfigureNetwork()
-                .AddAvaloniaBasicServices()
-                .AddViewsAndViewModels()
-                .AddDatabaseAndStorage()
-                .AddCloudClient()
-                .AddChatEssentials()
+    private static ServiceProvider CreateServiceProvider()
+    {
+        var services = new ServiceCollection();
+        ApplicationServiceCollection.Configure(services);
+        CloudServiceCollection.Configure(services);
 
-                #endregion
+        var coreComposition = new CoreComposition();
+        var cloudComposition = new CloudComposition();
+        var windowsComposition = new WindowsComposition();
 
-                #region Chat Plugins
+        coreComposition.CreateBuilder(services);
+        cloudComposition.CreateBuilder(services);
+        windowsComposition.CreateBuilder(services);
+        ApplicationServiceCollection.ConfigureCoreAliases(services);
+        CloudServiceCollection.ConfigureAliases(services);
+        ApplicationServiceCollection.ConfigurePlatformAliases<EverythingPlugin>(services);
 
-                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
-
-                #endregion
-
-                #region Strategy Engine
-
-                .AddStrategyEngine()
-
-                #endregion
-
-                #region Initialize
-
-                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
-
-            #endregion
-
-        );
-
-        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        var serviceProvider = services.BuildServiceProvider();
+        coreComposition.ServiceProvider = serviceProvider;
+        cloudComposition.ServiceProvider = serviceProvider;
+        windowsComposition.ServiceProvider = serviceProvider;
+        return serviceProvider;
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>

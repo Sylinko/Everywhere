@@ -28,6 +28,8 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
 
     public X11WindowBackend(ILogger<X11WindowBackend> logger)
     {
+        ValidateEnvironment(logger);
+
         // 1. Initialize Context (Thread & Display)
         Context = new X11Context(logger);
 
@@ -43,6 +45,19 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
         WindowManager = new X11WindowManager(logger, Context, CoreServices);
         Screenshot = new X11Screenshot(Context);
         SelectionHandler = new X11SelectionHandler(logger, Context, CoreServices);
+    }
+
+    private static void ValidateEnvironment(ILogger<X11WindowBackend> logger)
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
+        {
+            throw new InvalidOperationException("Fatal Error: DISPLAY environment variable is not set. You should start in GUI env.");
+        }
+
+        if (Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") != "x11")
+        {
+            logger.LogWarning("Not X11 Session, Maybe not supported well");
+        }
     }
 
     ~X11WindowBackend()

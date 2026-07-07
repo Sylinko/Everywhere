@@ -1,15 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Chat.Plugins;
-using Everywhere.Cloud;
+using Everywhere.Cloud.DependencyInjection;
 using Everywhere.Common;
-using Everywhere.Extensions;
-using Everywhere.Initialization;
+using Everywhere.DependencyInjection;
 using Everywhere.Interop;
 using Everywhere.Mac.Chat.Plugin;
-using Everywhere.Mac.Common;
-using Everywhere.Mac.Interop;
-using Everywhere.StrategyEngine;
+using Everywhere.Mac.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Mac;
@@ -25,54 +21,38 @@ public static class Program
 
         await Entrance.InitializeAsync(args);
 
-        ServiceLocator.Build(x => x
-
-                #region Basic
-
-                .AddApplicationLogging()
-                .AddSingleton<IVisualElementContext, VisualElementContext>()
-                .AddSingleton<IShortcutListener, CGEventShortcutListener>()
-                .AddSingleton<INativeHelper, NativeHelper>()
-                .AddSingleton<IWindowHelper, WindowHelper>()
-                .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
-                .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
-                .AddSettings()
-                .AddWatchdogManager()
-                .ConfigureNetwork()
-                .AddAvaloniaBasicServices()
-                .AddViewsAndViewModels()
-                .AddDatabaseAndStorage()
-                .AddCloudClient()
-                .AddChatEssentials()
-
-                #endregion
-
-                #region Chat Plugins
-
-                .AddTransient<BuiltInChatPlugin, SystemPlugin>()
-
-                #endregion
-                
-                #region Strategy Engine
-
-                .AddStrategyEngine()
-
-                #endregion
-
-                #region Initialize
-
-                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
-
-            #endregion
-
-        );
+        var serviceProvider = CreateServiceProvider();
+        ServiceLocator.SetProvider(serviceProvider);
 
         NSApplication.CheckForIllegalCrossThreadCalls = false;
         NSApplication.Init();
         NSApplication.SharedApplication.Delegate = new AppDelegate();
 
-        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+    }
+
+    private static ServiceProvider CreateServiceProvider()
+    {
+        var services = new ServiceCollection();
+        ApplicationServiceCollection.Configure(services);
+        CloudServiceCollection.Configure(services);
+
+        var coreComposition = new CoreComposition();
+        var cloudComposition = new CloudComposition();
+        var macComposition = new MacComposition();
+
+        coreComposition.CreateBuilder(services);
+        cloudComposition.CreateBuilder(services);
+        macComposition.CreateBuilder(services);
+        ApplicationServiceCollection.ConfigureCoreAliases(services);
+        CloudServiceCollection.ConfigureAliases(services);
+        ApplicationServiceCollection.ConfigurePlatformAliases<SystemPlugin>(services);
+
+        var serviceProvider = services.BuildServiceProvider();
+        coreComposition.ServiceProvider = serviceProvider;
+        cloudComposition.ServiceProvider = serviceProvider;
+        macComposition.ServiceProvider = serviceProvider;
+        return serviceProvider;
     }
 
     private static NativeMessageBoxResult MessageBoxHandler(string title, string message, NativeMessageBoxButtons buttons, NativeMessageBoxIcon icon)
