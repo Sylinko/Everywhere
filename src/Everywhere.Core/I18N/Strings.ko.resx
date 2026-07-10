@@ -970,7 +970,7 @@
         <value>표시 및 구분 목적으로만 사용되는 어시스턴트의 설명을 지정하세요.</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>시스템 프롬프트 선택</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>시스템 프롬프트</value>
@@ -2800,28 +2800,28 @@
         <value>문서 열기</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI 채팅 완성 설정</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>OpenAI 채팅 완성 API의 매개변수를 구성합니다.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI 응답 설정</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>OpenAI 응답 API의 매개변수를 구성합니다.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Anthropic 메시지 설정</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Anthropic 메시지 API의 매개변수를 구성합니다.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini 설정</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini API의 매개변수를 구성합니다.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>reasoning_content 유지</value>
@@ -3621,5 +3621,8 @@
     </data>
     <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
         <value>해당 어시스턴트를 찾을 수 없습니다: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>고급 설정</value>
     </data>
 </root>

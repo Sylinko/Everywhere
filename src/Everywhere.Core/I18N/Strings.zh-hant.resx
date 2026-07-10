@@ -970,7 +970,7 @@
         <value>指定助理的描述，僅用於顯示和區分。</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>選擇系統提示詞</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>系統提示</value>
@@ -2800,28 +2800,28 @@
         <value>打開文檔</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Chat Completions 設定</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>配置 OpenAI Chat Completions API 的參數。</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Responses 設定</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>配置 OpenAI Responses API 的參數。</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Anthropic Messages 設定</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>配置 Anthropic Messages API 的參數。</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini 設定</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>配置 Google Gemini API 的參數。</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>保留 reasoning_content</value>
@@ -3621,5 +3621,8 @@
     </data>
     <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
         <value>未找到該助手：{0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>高級設定</value>
     </data>
 </root>

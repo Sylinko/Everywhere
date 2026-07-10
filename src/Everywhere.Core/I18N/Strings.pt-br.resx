@@ -970,7 +970,7 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
         <value>Defina a descrição do assistente, usada apenas para exibição e identificação.</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>Selecionar Prompt do Sistema</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>Prompt do Sistema</value>
@@ -2801,28 +2801,28 @@ Data de lançamento: {2}</value>
         <value>Abrir documento</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Configurações do OpenAI Chat Completions</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Configure os parâmetros da API do OpenAI Chat Completions.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Configurações do OpenAI Responses</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Configure os parâmetros da API do OpenAI Responses.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Configurações do Anthropic Messages</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Configure os parâmetros da API do Anthropic Messages.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Configurações do Google Gemini</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Configure os parâmetros da API do Google Gemini.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>Incluir conteúdo de raciocínio</value>
@@ -3622,5 +3622,8 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     </data>
     <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
         <value>Assistente não encontrado: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>Configurações Avançadas</value>
     </data>
 </root>

@@ -970,7 +970,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Asistanın açıklamasını belirtin; yalnızca görüntüleme ve ayırt etme amacıyla kullanılır.</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>Sistem İfadelerini Seçin</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>Sistem İstemi</value>
@@ -2800,28 +2800,28 @@ Yayın tarihi: {2}</value>
         <value>Belgeyi Aç</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Chat Tamamlamaları Ayarları</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Chat Tamamlamaları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Yanıtları Ayarları</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Yanıtları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Anthropic Mesajları Ayarları</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Anthropic Mesajları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini Ayarları</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>reasoning_content'ı Koruyun</value>
@@ -3621,5 +3621,8 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
         <value>Bu asistan bulunamadı: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>Gelişmiş Ayarlar</value>
     </data>
 </root>

@@ -970,7 +970,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Specify the description of the assistant for display and differentiation purposes.</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>Select System Prompt</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>System Prompt</value>

@@ -970,7 +970,7 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
         <value>Geben Sie die Beschreibung des Assistenten an, die ausschließlich zu Anzeige- und Unterscheidungszwecken verwendet wird.</value>
     </data>
     <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
-        <value></value>
+        <value>System-Prompt auswählen</value>
     </data>
     <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>Systemaufforderung</value>
@@ -2800,28 +2800,28 @@ Veröffentlichungsdatum: {2}</value>
         <value>Dokument öffnen</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Chat Completions Einstellungen</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Parameter für die OpenAI Chat Completions API konfigurieren.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>OpenAI Responses Einstellungen</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Parameter für die OpenAI Responses API konfigurieren.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Anthropic Messages Einstellungen</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Parameter für die Anthropic Messages API konfigurieren.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value></value>
+        <value>Google Gemini Einstellungen</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value></value>
+        <value>Parameter für die Google Gemini API konfigurieren.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>Reasoning_Content beibehalten</value>
@@ -3621,5 +3621,8 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     </data>
     <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
         <value>Assistent nicht gefunden: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>Erweiterte Einstellungen</value>
     </data>
 </root>
