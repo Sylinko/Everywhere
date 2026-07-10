@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <MicrosoftPackageVersion>10.0.9</MicrosoftPackageVersion>
     <MEAIVersion>10.5.2</MEAIVersion>
     <EntityFrameworkVersion>10.0.9</EntityFrameworkVersion>

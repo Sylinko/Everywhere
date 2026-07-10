@@ -16,8 +16,10 @@
     <File Path=".github/workflows/windows-release.yml" />
   </Folder>
   <Folder Name="/3rd/">
+    <File Path="3rd/Directory.Packages.props" />
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />
     <Project Path="3rd/EverythingNetCore/EverythingNet/EverythingNet.csproj" />
+    <Project Path="3rd/OfficeCLI/src/officecli/officecli.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />
   </Folder>
   <Folder Name="/3rd/MessagePack/">
@@ -56,6 +58,8 @@
     <Project Path="src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" />
   </Folder>
   <Folder Name="/patches/">
+    <File Path="patches/Directory.Build.props" />
+    <File Path="patches/Directory.Packages.props" />
     <Project Path="patches/Everywhere.BuildTask.Patcher/Everywhere.BuildTask.Patcher.csproj" />
     <Project Path="patches/Everywhere.Patches.Avalonia.Controls/Everywhere.Patches.Avalonia.Controls.csproj" />
     <Project Path="patches/Everywhere.Patches.Avalonia.Native/Everywhere.Patches.Avalonia.Native.csproj" />
@@ -70,6 +74,7 @@
     <File Path="src/Build.Watchdog.targets" />
   </Folder>
   <Folder Name="/tests/">
+    <File Path="tests/Directory.Packages.props" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />

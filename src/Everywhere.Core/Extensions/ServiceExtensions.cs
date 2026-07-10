@@ -139,11 +139,12 @@ public static class ServiceExtensions
                 .AddManagedMcp()
 
                 // Add built-in plugins
-                .AddTransient<BuiltInChatPlugin, EssentialPlugin>()
-                .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
-                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
-                .AddTransient<BuiltInChatPlugin, WebPlugin>()
-                .AddTransient<BuiltInChatPlugin, TerminalPlugin>();
+                .AddSingleton<BuiltInChatPlugin, EssentialPlugin>()
+                .AddSingleton<BuiltInChatPlugin, VisualContextPlugin>()
+                .AddSingleton<BuiltInChatPlugin, FileSystemPlugin>()
+                .AddSingleton<BuiltInChatPlugin, WebPlugin>()
+                .AddSingleton<BuiltInChatPlugin, TerminalPlugin>()
+                .AddSingleton<BuiltInChatPlugin, OfficeCLIPlugin>();
 
     }
 }

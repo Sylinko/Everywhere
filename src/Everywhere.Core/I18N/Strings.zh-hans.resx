@@ -3668,4 +3668,13 @@
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>已完成</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLI 是首款专为 AI 代理设计的 Office 套件，旨在帮助其读取、编辑和自动化处理 Word、Excel 和 PowerPoint 文件，也是同类产品中的佼佼者。该软件免费、开源，目前内置于 Everywhere 中，无需安装 Office。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>执行 OfficeCLI 命令</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>执行</value>
+    </data>
 </root>

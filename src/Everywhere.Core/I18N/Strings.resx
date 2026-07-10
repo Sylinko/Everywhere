@@ -3667,4 +3667,13 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>Completed</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value></value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value></value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value></value>
+    </data>
 </root>

@@ -5,12 +5,15 @@
     <TargetFramework>$(TargetFrameworkPrefix)</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <WarningsAsErrors>nullable</WarningsAsErrors>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <NoWarn>$(NoWarn),CA1826,SKEXP0001,SKEXP0010,SKEXP0050,SKEXP0110,KMEXP00,OPENAI001,AVLN3001,AVA3001</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CETCompat>false</CETCompat>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarningsAsErrors Condition="'$(MSBuildProjectName)' != 'officecli'">nullable</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>

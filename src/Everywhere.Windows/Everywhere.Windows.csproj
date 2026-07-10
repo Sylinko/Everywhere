@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\EverythingNetCore\EverythingNet\EverythingNet.csproj"/>
+    <ProjectReference Include="..\..\3rd\OfficeCLI\src\officecli\officecli.csproj" />
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
@@ -87,6 +88,7 @@
     <TrimmerRootAssembly Include="Microsoft.SemanticKernel.Core"/>
     <TrimmerRootAssembly Include="ModelContextProtocol"/>
     <TrimmerRootAssembly Include="ModelContextProtocol.Core"/>
+    <TrimmerRootAssembly Include="officecli"/>
     <TrimmerRootAssembly Include="OllamaSharp"/>
     <TrimmerRootAssembly Include="OpenAI"/>
     <TrimmerRootAssembly Include="PuppeteerSharp"/>

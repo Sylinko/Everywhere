@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))"/>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally Condition="'$(MSBuildProjectName)' == 'officecli'">false</ManagePackageVersionsCentrally>
+    <ManagePackageVersionsCentrally Condition="'$(ManagePackageVersionsCentrally)' == ''">true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

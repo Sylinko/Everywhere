@@ -16,3 +16,6 @@
 [submodule "3rd/ClassicDiagnostics.Avalonia"]
 	path = 3rd/ClassicDiagnostics.Avalonia
 	url = https://github.com/Sylinko/ClassicDiagnostics.Avalonia
+[submodule "3rd/OfficeCLI"]
+	path = 3rd/OfficeCLI
+	url = https://github.com/iOfficeAI/OfficeCLI

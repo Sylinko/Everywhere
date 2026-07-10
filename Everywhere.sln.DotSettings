@@ -5,6 +5,7 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/XamlNaming/Abbreviations/=QQ/@EntryIndexedValue">QQ</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=lucide/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=modder/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=officecli/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=oobe/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=pwsh/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=shadui/@EntryIndexedValue">True</s:Boolean>
