@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
 using System.Reactive.Disposables;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -33,7 +33,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     private DynamicLocaleKey? ObsoleteHeaderKey
     {
         get => null; // for forward compatibility
-        set => HeaderKey = value;
+        init => HeaderKey = value;
     }
 
     [Key(3)]
@@ -72,7 +72,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks
     {
         get => _displaySink.Items;
-        set => _displaySink.Edit(list => list.Reset(value));
+        init => _displaySink.Reset(value);
     }
 
     /// <summary>
@@ -97,6 +97,33 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     [IgnoreMember]
     public IChatPluginDisplaySink DisplaySink => _displaySink;
 
+    /// <summary>
+    /// Gets the most recently updated preview among the tool invocations that are still active in
+    /// this function-call message.
+    /// </summary>
+    /// <remarks>
+    /// Preview slots are runtime-only and are never serialized. Each invocation writes only to its
+    /// own slot; this aggregate getter is read by the presentation layer and therefore does not
+    /// expose registration or cleanup operations to plugins.
+    /// </remarks>
+    [IgnoreMember]
+    [JsonIgnore]
+    public ChatPluginActivityPreview? ActivityPreview
+    {
+        get
+        {
+            ActivityPreviewSnapshot? latest = null;
+            foreach (var pair in _activityPreviewSlots)
+            {
+                var snapshot = pair.Value.Snapshot;
+                if (snapshot.Preview is null || latest is not null && snapshot.Revision <= latest.Revision) continue;
+                latest = snapshot;
+            }
+
+            return latest?.Preview;
+        }
+    }
+
     // [Key(11)]
     // [ObservableProperty]
     // public partial bool IsExpanded { get; set; } = true;
@@ -112,7 +139,9 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public IEnumerable<ChatAttachment> Attachments => Results.Select(r => r.Result).OfType<ChatAttachment>();
 
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
+    [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPreviewSlot> _activityPreviewSlots = new();
     [IgnoreMember] private readonly CompositeDisposable _disposables = new(3);
+    [IgnoreMember] private long _activityPreviewRevision;
 
     [SerializationConstructor]
     private FunctionCallChatMessage() : this(default, null)
@@ -142,8 +171,68 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         _disposables.Add(_displaySink);
     }
 
+    /// <summary>
+    /// Registers the runtime preview slot owned by one concrete tool invocation.
+    /// </summary>
+    /// <remarks>
+    /// The slot itself is stable for the invocation lifetime. Updating its value never mutates the
+    /// registry, so a late writer cannot accidentally re-register a slot after its invocation has
+    /// ended. The concurrent dictionary is needed only for the much rarer registration/removal
+    /// operations when multiple tool invocations overlap.
+    /// </remarks>
+    public ActivityPreviewSlot RegisterActivityPreview(string invocationId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(invocationId);
+
+        var slot = new ActivityPreviewSlot(this);
+        if (!_activityPreviewSlots.TryAdd(invocationId, slot))
+            throw new InvalidOperationException($"An activity preview is already registered for invocation '{invocationId}'.");
+
+        return slot;
+    }
+
+    /// <summary>
+    /// Removes an invocation's complete preview slot. Remaining invocations are left untouched and
+    /// the aggregate getter naturally falls back to the latest remaining non-null preview.
+    /// </summary>
+    public void UnregisterActivityPreview(string invocationId, ActivityPreviewSlot slot)
+    {
+        if (!_activityPreviewSlots.TryGetValue(invocationId, out var registered) || !ReferenceEquals(registered, slot)) return;
+        if (_activityPreviewSlots.TryRemove(invocationId, out _)) NotifyActivityPreviewChanged();
+    }
+
+    private long NextActivityPreviewRevision() => Interlocked.Increment(ref _activityPreviewRevision);
+
+    private void NotifyActivityPreviewChanged() => OnPropertyChanged(nameof(ActivityPreview));
+
     public void Dispose()
     {
+        _activityPreviewSlots.Clear();
         _disposables.Dispose();
     }
+
+    /// <summary>
+    /// Stores the invocation-local preview as one atomically replaceable snapshot. Plugins have a
+    /// single logical writer per invocation, while the presentation reads from the UI thread; an
+    /// immutable snapshot keeps the value and its ordering revision coherent without a lock.
+    /// </summary>
+    public sealed class ActivityPreviewSlot(FunctionCallChatMessage owner)
+    {
+        private ActivityPreviewSnapshot _snapshot = new(null, 0);
+
+        public ChatPluginActivityPreview? Preview
+        {
+            get => Volatile.Read(ref _snapshot).Preview;
+            set
+            {
+                var revision = value is null ? 0 : owner.NextActivityPreviewRevision();
+                Interlocked.Exchange(ref _snapshot, new ActivityPreviewSnapshot(value, revision));
+                owner.NotifyActivityPreviewChanged();
+            }
+        }
+
+        internal ActivityPreviewSnapshot Snapshot => Volatile.Read(ref _snapshot);
+    }
+
+    internal sealed record ActivityPreviewSnapshot(ChatPluginActivityPreview? Preview, long Revision);
 }

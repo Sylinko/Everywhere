@@ -280,7 +280,7 @@ public sealed class ChatPresentation
     private sealed class ChatTurnPresentation : IChatPresentationSegment
     {
         private static readonly IDynamicLocaleKey ReasoningHeader = new DynamicLocaleKey(LocaleKey.ChatMessageControl_Assistant_Reasoning);
-        private static readonly IDynamicLocaleKey GenericHeader = new DynamicLocaleKey(LocaleKey.ChatActivity_GenericActivity);
+        private static readonly IDynamicLocaleKey GenericHeader = new DynamicLocaleKey(LocaleKey.ChatPresentation_GenericActivity);
 
         private readonly SourceList<ChatPresentationRow> _visibleRows = new();
         private readonly Dictionary<ChatMessageNode, ChatMessagePresentationRow> _messageRows = new(ReferenceEqualityComparer.Instance);

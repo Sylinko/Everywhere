@@ -5,17 +5,75 @@ using Microsoft.SemanticKernel;
 namespace Everywhere.Chat;
 
 /// <summary>
-/// A frame that contains all context duration one function calling
+/// Represents the ambient state of one concrete tool invocation.
 /// </summary>
-public sealed record FunctionCallContext(
-    Kernel Kernel,
-    ChatContext ChatContext,
-    ChatPlugin ChatPlugin,
-    ChatFunction ChatFunction,
-    FunctionCallChatMessage FunctionCallChatMessage,
-    IDictionary<string, bool> IsPermissionGrantedRecords
-) : IChatPluginUserInterface
+/// <remarks>
+/// A <see cref="FunctionCallChatMessage"/> may aggregate multiple calls to the same function. This
+/// context intentionally belongs to one <see cref="FunctionCallContent"/> instead of that aggregate
+/// message, allowing its AsyncLocal value and activity preview to remain unambiguous when calls are
+/// executed concurrently in the future.
+/// </remarks>
+public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
 {
+    public Kernel Kernel { get; }
+
+    public ChatContext ChatContext { get; }
+
+    public ChatPlugin ChatPlugin { get; }
+
+    public ChatFunction ChatFunction { get; }
+
+    public FunctionCallChatMessage FunctionCallChatMessage { get; }
+
+    public FunctionCallContent FunctionCallContent { get; }
+
+    /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
+    public string InvocationId { get; }
+
+    public IDictionary<string, bool> IsPermissionGrantedRecords { get; }
+
+    public IChatPluginDisplaySink DisplaySink { get; }
+
+    /// <summary>
+    /// Gets or sets the lightweight preview owned exclusively by this invocation.
+    /// </summary>
+    /// <remarks>
+    /// Assigning the property replaces one stable slot; it does not mutate the aggregate
+    /// invocation registry. The slot is removed as a whole when this context is disposed, so
+    /// callers normally do not need to assign <see langword="null"/> explicitly.
+    /// </remarks>
+    public ChatPluginActivityPreview? ActivityPreview
+    {
+        get => _activityPreviewSlot.Preview;
+        set => _activityPreviewSlot.Preview = value;
+    }
+
+    private readonly FunctionCallChatMessage.ActivityPreviewSlot _activityPreviewSlot;
+
+    public FunctionCallContext(
+        Kernel kernel,
+        ChatContext chatContext,
+        ChatPlugin chatPlugin,
+        ChatFunction chatFunction,
+        FunctionCallChatMessage functionCallChatMessage,
+        FunctionCallContent functionCallContent,
+        IDictionary<string, bool> isPermissionGrantedRecords)
+    {
+        if (functionCallContent.Id.IsNullOrEmpty())
+            throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
+
+        Kernel = kernel;
+        ChatContext = chatContext;
+        ChatPlugin = chatPlugin;
+        ChatFunction = chatFunction;
+        FunctionCallChatMessage = functionCallChatMessage;
+        FunctionCallContent = functionCallContent;
+        InvocationId = functionCallContent.Id;
+        IsPermissionGrantedRecords = isPermissionGrantedRecords;
+        DisplaySink = functionCallChatMessage.DisplaySink;
+        _activityPreviewSlot = functionCallChatMessage.RegisterActivityPreview(InvocationId);
+    }
+
     public string PermissionKey => $"{ChatPlugin.Key}.{ChatFunction.KernelFunction.Name}";
 
     public bool IsPermissionGranted
@@ -37,8 +95,6 @@ public sealed record FunctionCallContext(
     }
 
     #region IChatPluginUserInterface implementation
-
-    public IChatPluginDisplaySink DisplaySink => FunctionCallChatMessage.DisplaySink;
 
     public async Task<RequestConsentResult> RequestConsentAsync(
         string? id,
@@ -95,4 +151,10 @@ public sealed record FunctionCallContext(
     }
 
     #endregion
+
+    /// <summary>
+    /// Ends the invocation-scoped preview lifetime. Removing the stable slot cannot clear or
+    /// overwrite a preview owned by another invocation in the same aggregate message.
+    /// </summary>
+    public void Dispose() => FunctionCallChatMessage.UnregisterActivityPreview(InvocationId, _activityPreviewSlot);
 }

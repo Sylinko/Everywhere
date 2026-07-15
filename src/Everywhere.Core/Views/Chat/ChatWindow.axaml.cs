@@ -6,7 +6,6 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
@@ -14,10 +13,8 @@ using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
-using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using Serilog;
-using ShadUI;
 
 namespace Everywhere.Views;
 
@@ -121,7 +118,7 @@ public partial class ChatWindow :
         {
             case { Key: Key.Escape }:
             {
-                if (ViewModel.EditingUserMessageNode is not null)
+                if (ViewModel.EditingMessageNode is not null)
                 {
                     ViewModel.CancelEditing();
                 }
@@ -364,13 +361,6 @@ public partial class ChatWindow :
 
         if (!_canCloseWindow)
             Log.ForContext<ChatWindow>().Error("Chat window was closed unexpectedly. This should not happen.");
-    }
-
-    [RelayCommand]
-    private static Task LaunchLink(LinkClickedEventArgs e)
-    {
-        // currently we only support http(s) links for safety reasons
-        return e.HRef is not { Scheme: "http" or "https" } uri ? Task.CompletedTask : App.Launcher.LaunchUriAsync(uri);
     }
 
     private void HandleDragEnter(object? sender, DragEventArgs e)

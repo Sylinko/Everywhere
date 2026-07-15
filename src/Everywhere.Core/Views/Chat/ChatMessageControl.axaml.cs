@@ -7,4 +7,4 @@ namespace Everywhere.Views;
 /// Node-level actions belong to <see cref="ChatMessageNodeControl"/> and are accessed through
 /// its explicit <c>Node</c> property by the message templates.
 /// </summary>
-public class ChatMessageControl : ContentControl;
+public sealed class ChatMessageControl : ContentControl;

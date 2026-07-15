@@ -587,7 +587,13 @@
             <v:ChatMessageItemsControl
               Margin="12,8,12,0"
               ChatContext="{Binding ChatContextManager.Current}"
+              ContinueMessageNodeCommand="{Binding ContinueMessageNodeCommand}"
+              CopyMessageCommand="{Binding CopyMessageCommand}"
+              EditMessageNodeCommand="{Binding EditMessageNodeCommand}"
+              EditingMessageNode="{Binding EditingMessageNode, Mode=TwoWay}"
               IsVisible="{Binding $self.ItemCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}"
+              RetryMessageNodeCommand="{Binding RetryMessageNodeCommand}"
+              ShowStatistics="{Binding Settings.ChatWindow.ShowChatStatistics}"
               SupportedModalities="{Binding Settings.Model.SelectedCustomAssistant?.InputModalities, TargetNullValue={x:Static ai:Modalities.None}}"/>
           </StackPanel>
         </ScrollViewer>
@@ -857,8 +863,9 @@
             <Border
               Padding="8,2"
               Background="{DynamicResource WarningColor20}"
-              IsVisible="{Binding EditingUserMessageNode, Converter={x:Static ObjectConverters.IsNotNull}}">
-              <DockPanel LastChildFill="True">
+              IsVisible="{Binding EditingMessageNode, Converter={x:Static ObjectConverters.IsNotNull}}">
+              <DockPanel
+                Margin="0,4,0,2" LastChildFill="True">
                 <Button
                   Classes="Ghost Compact Uniform" DockPanel.Dock="Right"
                   Padding="1" VerticalAlignment="Center"

@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
-using Everywhere.Common;
+using LiveMarkdown.Avalonia;
 using ShadUI;
 
 namespace Everywhere.Views;
@@ -56,6 +56,84 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
         set => SetValue(SupportedModalitiesProperty, value);
     }
 
+    /// <summary>
+    /// Defines the <see cref="CopyMessageCommand"/> property, which is a command that can be used to copy a chat message.
+    /// </summary>
+    public static readonly StyledProperty<IRelayCommand<ChatMessage>?> CopyMessageCommandProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessage>?>(nameof(CopyMessageCommand));
+
+    /// <summary>
+    /// Gets or sets the command that can be used to copy a chat message. This command can be bound to UI elements to provide functionality for copying messages.
+    /// </summary>
+    public IRelayCommand<ChatMessage>? CopyMessageCommand
+    {
+        get => GetValue(CopyMessageCommandProperty);
+        set => SetValue(CopyMessageCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="EditMessageNodeCommand"/> property, which is a command that can be used to edit a chat message node.
+    /// </summary>
+    public static readonly StyledProperty<IRelayCommand<ChatMessageNode>?> EditMessageNodeCommandProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessageNode>?>(nameof(EditMessageNodeCommand));
+
+    /// <summary>
+    /// Gets or sets the command that can be used to edit a chat message node. This command can be bound to UI elements to provide functionality for editing message nodes.
+    /// </summary>
+    public IRelayCommand<ChatMessageNode>? EditMessageNodeCommand
+    {
+        get => GetValue(EditMessageNodeCommandProperty);
+        set => SetValue(EditMessageNodeCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="RetryMessageNodeCommand"/> property, which is a command that can be used to retry a chat message node.
+    /// </summary>
+    public static readonly StyledProperty<IRelayCommand<ChatMessageNode>?> RetryMessageNodeCommandProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessageNode>?>(nameof(RetryMessageNodeCommand));
+
+    /// <summary>
+    /// Gets or sets the command that can be used to retry a chat message node. This command can be bound to UI elements to provide functionality for retrying message nodes.
+    /// </summary>
+    public IRelayCommand<ChatMessageNode>? RetryMessageNodeCommand
+    {
+        get => GetValue(RetryMessageNodeCommandProperty);
+        set => SetValue(RetryMessageNodeCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="ContinueMessageNodeCommand"/> property, which is a command that can be used to continue a chat message node.
+    /// </summary>
+    public static readonly StyledProperty<IRelayCommand<ChatMessageNode>?> ContinueMessageNodeCommandProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, IRelayCommand<ChatMessageNode>?>(nameof(ContinueMessageNodeCommand));
+
+    /// <summary>
+    /// Gets or sets the command that can be used to continue a chat message node. This command can be bound to UI elements to provide functionality for continuing message nodes.
+    /// </summary>
+    public IRelayCommand<ChatMessageNode>? ContinueMessageNodeCommand
+    {
+        get => GetValue(ContinueMessageNodeCommandProperty);
+        set => SetValue(ContinueMessageNodeCommandProperty, value);
+    }
+
+    public static readonly StyledProperty<ChatMessageNode?> EditingMessageNodeProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, ChatMessageNode?>(nameof(EditingMessageNode));
+
+    public ChatMessageNode? EditingMessageNode
+    {
+        get => GetValue(EditingMessageNodeProperty);
+        set => SetValue(EditingMessageNodeProperty, value);
+    }
+
+    public static readonly StyledProperty<bool> ShowStatisticsProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, bool>(nameof(ShowStatistics));
+
+    public bool ShowStatistics
+    {
+        get => GetValue(ShowStatisticsProperty);
+        set => SetValue(ShowStatisticsProperty, value);
+    }
+
     static ChatMessageItemsControl()
     {
         ChatContextProperty.Changed.AddClassHandler<ChatMessageItemsControl>((control, _) => control.ResetItemsSource());
@@ -77,10 +155,16 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     [RelayCommand]
     private static Task<bool> OpenUrlAsync(object? value)
     {
-        if (value is not Uri uri && !Uri.TryCreate(value?.ToString(), UriKind.Absolute, out uri!))
-            return Task.FromResult(false);
+        var uri = value switch
+        {
+            Uri u => u,
+            LinkClickedEventArgs e => e.HRef,
+            _ when Uri.TryCreate(value?.ToString(), UriKind.Absolute, out var u) => u,
+            _ => null,
+        };
 
-        return App.Launcher.LaunchUriAsync(uri);
+        // TODO: schema?
+        return uri is not { Scheme: "http" or "https" or "file" } ? Task.FromResult(false) : App.Launcher.LaunchUriAsync(uri);
     }
 
     /// <summary>

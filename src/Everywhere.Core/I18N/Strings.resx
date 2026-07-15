@@ -2706,6 +2706,9 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Execute In Terminal</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>Running {0}</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Shell script execution failed: {0}</value>
     </data>
@@ -3625,28 +3628,25 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>Advanced Settings</value>
     </data>
-    <data name="ChatActivity_ReasoningCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
         <value>Reasoning {0}</value>
     </data>
-    <data name="ChatActivity_ToolCallCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
         <value>Tools {0}</value>
     </data>
-    <data name="ChatActivity_SubagentCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
         <value>Subagents {0}</value>
     </data>
-    <data name="ChatActivity_NoResponse" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>No response was produced.</value>
     </data>
-    <data name="ChatActivity_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Open subagent</value>
     </data>
-    <data name="ChatActivity_Back" xml:space="preserve">
-        <value>Back</value>
-    </data>
-    <data name="ChatActivity_CompletedActivities" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>Completed {0} activities</value>
     </data>
-    <data name="ChatActivity_Working" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>In Progress</value>
     </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
@@ -3661,16 +3661,10 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
         <value>{0}d {1}h</value>
     </data>
-    <data name="ChatActivity_GenericActivity" xml:space="preserve">
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
         <value>Working</value>
     </data>
-    <data name="ChatActivity_TerminalRunning" xml:space="preserve">
-        <value>Running {0}</value>
-    </data>
-    <data name="ChatActivity_TerminalFinished" xml:space="preserve">
-        <value>Ran {0}</value>
-    </data>
-    <data name="ChatActivity_Completed" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>Completed</value>
     </data>
 </root>

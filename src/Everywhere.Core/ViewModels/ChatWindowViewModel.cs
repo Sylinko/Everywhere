@@ -71,10 +71,10 @@ public sealed partial class ChatWindowViewModel :
     public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(EditCommand))]
-    public partial ChatMessageNode? EditingUserMessageNode { get; private set; }
+    [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
+    public partial ChatMessageNode? EditingMessageNode { get; private set; }
 
-    public bool CanEdit => !IsBusy && EditingUserMessageNode is null;
+    public bool CanEdit => !IsBusy && EditingMessageNode is null;
 
     [ObservableProperty]
     public partial Strategy? SelectedStrategy { get; set; }
@@ -91,7 +91,7 @@ public sealed partial class ChatWindowViewModel :
         {
             value = value.SafeSubstring(0, ChatInputAreaTextMaxLength);
             if (!SetProperty(ref field, value)) return;
-            if (EditingUserMessageNode is null) PersistentState.ChatInputAreaText = value;
+            if (EditingMessageNode is null) PersistentState.ChatInputAreaText = value;
         }
     }
 
@@ -591,7 +591,7 @@ public sealed partial class ChatWindowViewModel :
             userMessage = new UserChatMessage(message, attachments!);
         }
 
-        if (EditingUserMessageNode is { } oldNode)
+        if (EditingMessageNode is { } oldNode)
         {
             CancelEditing();
             _chatService.Edit(oldNode, userMessage);
@@ -603,14 +603,14 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
-    private void Edit(ChatMessageNode userChatMessageNode)
+    private void EditMessageNode(ChatMessageNode userChatMessageNode)
     {
         if (userChatMessageNode is not { Message: UserChatMessage userChatMessage }) return;
 
         var textBeforeEdit = ChatInputAreaText;
         var strategyCommandBeforeEdit = SelectedStrategy;
 
-        EditingUserMessageNode = userChatMessageNode;
+        EditingMessageNode = userChatMessageNode;
         ChatInputAreaText = userChatMessage.Content;
         SelectedStrategy = userChatMessage.As<UserStrategyChatMessage>()?.Strategy;
 
@@ -628,9 +628,9 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     public void CancelEditing()
     {
-        if (EditingUserMessageNode is null) return;
+        if (EditingMessageNode is null) return;
 
-        EditingUserMessageNode = null;
+        EditingMessageNode = null;
         _chatAttachmentsSource.Edit(list =>
         {
             list.Clear();
@@ -645,13 +645,13 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void Retry(ChatMessageNode chatMessageNode)
+    private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Retry(chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void Continue(ChatMessageNode chatMessageNode)
+    private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Continue(chatMessageNode);
     }
@@ -663,7 +663,7 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private Task CopyAsync(ChatMessage chatMessage)
+    private Task CopyMessageAsync(ChatMessage chatMessage)
     {
         return Clipboard.SetTextAsync(chatMessage.ToString());
     }
@@ -775,9 +775,9 @@ public sealed partial class ChatWindowViewModel :
     partial void OnIsBusyChanged(bool value)
     {
         SendMessageCommand.NotifyCanExecuteChanged();
-        EditCommand.NotifyCanExecuteChanged();
-        RetryCommand.NotifyCanExecuteChanged();
-        ContinueCommand.NotifyCanExecuteChanged();
+        EditMessageNodeCommand.NotifyCanExecuteChanged();
+        RetryMessageNodeCommand.NotifyCanExecuteChanged();
+        ContinueMessageNodeCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
 
         UpdateWatermark(value, SelectedStrategy);

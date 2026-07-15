@@ -107,6 +107,10 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             throw new ArgumentException("Script cannot be empty or whitespace.", nameof(command));
         }
 
+        // The command preview remains a single lightweight TextBlock while the detailed terminal
+        // block below is created only when the activity item is explicitly expanded.
+        userInterface.ActivityPreview = new ChatPluginCommandActivityPreview(command);
+
         var (shellPath, shellType) = DetectShell();
         if (shellType == ShellType.Unknown)
         {

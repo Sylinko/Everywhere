@@ -99,6 +99,24 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     [IgnoreMember]
     public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
 
+    /// <summary>
+    /// Enters one invocation context for the current asynchronous execution flow and restores the
+    /// previous value when the returned scope is disposed.
+    /// </summary>
+    /// <remarks>
+    /// Restoring the captured value, rather than assigning <see langword="null"/>, is essential for
+    /// nested tool execution. AsyncLocal then carries each invocation independently when sibling
+    /// operations are scheduled in separate execution contexts.
+    /// </remarks>
+    internal IDisposable EnterFunctionCallContext(FunctionCallContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var previous = FunctionCallContext.Value;
+        FunctionCallContext.Value = context;
+        return Disposable.Create(() => FunctionCallContext.Value = previous);
+    }
+
     [IgnoreMember]
     public IChatPluginUserInterfaceBroker UserInterfaceBroker { get; }
 

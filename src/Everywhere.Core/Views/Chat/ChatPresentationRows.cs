@@ -147,26 +147,9 @@ public sealed class FunctionCallActivityItemPresentationRow(
     public override string? PreviewText => functionCall.Content;
     public IDynamicLocaleKey? ErrorMessageKey => functionCall.ErrorMessageKey;
     public int CallCount => functionCall.Calls.Count;
-    public ChatPluginDisplayBlock? PreviewBlock => FindPreviewBlock(functionCall.DisplayBlocks);
+    public ChatPluginActivityPreview? ActivityPreview => functionCall.ActivityPreview;
+    public bool HasPreview => ActivityPreview is not null || !string.IsNullOrEmpty(PreviewText);
     public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => functionCall.DisplayBlocks;
-
-    private static ChatPluginDisplayBlock? FindPreviewBlock(IReadOnlyList<ChatPluginDisplayBlock> blocks)
-    {
-        for (var i = blocks.Count - 1; i >= 0; i--)
-        {
-            var block = FindPreviewBlock(blocks[i]);
-            if (block is not null) return block;
-        }
-
-        return null;
-    }
-
-    private static ChatPluginDisplayBlock? FindPreviewBlock(ChatPluginDisplayBlock block) => block switch
-    {
-        ChatPluginSeparatorDisplayBlock => null,
-        ChatPluginContainerDisplayBlock container => FindPreviewBlock(container.Children),
-        _ => block,
-    };
 
     /// <inheritdoc/>
     public override void Refresh()
@@ -174,7 +157,8 @@ public sealed class FunctionCallActivityItemPresentationRow(
         base.Refresh();
         OnPropertyChanged(nameof(ErrorMessageKey));
         OnPropertyChanged(nameof(CallCount));
-        OnPropertyChanged(nameof(PreviewBlock));
+        OnPropertyChanged(nameof(ActivityPreview));
+        OnPropertyChanged(nameof(HasPreview));
         // DisplayBlocks is the same source-backed bindable list for the lifetime of the function
         // call. Its own collection notifications update the lazy detail ItemsControl; raising
         // PropertyChanged here would make that control rebind the identical list unnecessarily.
@@ -277,9 +261,6 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
     /// </summary>
     public bool IsRunning => LatestItem.IsRunning || _isAwaitingContinuation;
 
-    public ChatPluginDisplayBlock? LatestPreviewBlock =>
-        (LatestItem as FunctionCallActivityItemPresentationRow)?.PreviewBlock;
-
     /// <summary>
     /// Gets the local statistics snapshot for this contiguous activity segment.
     /// </summary>
@@ -376,7 +357,6 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
         OnPropertyChanged(nameof(CreatedAt));
         OnPropertyChanged(nameof(FinishedAt));
         OnPropertyChanged(nameof(IsRunning));
-        OnPropertyChanged(nameof(LatestPreviewBlock));
         SetProperty(ref _statistics, ChatActivityStatistics.Calculate(Items), nameof(Statistics));
     }
 

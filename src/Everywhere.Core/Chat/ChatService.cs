@@ -394,7 +394,7 @@ public sealed partial class ChatService : IChatService
         builder.Services.AddSingleton(chatContext);
         builder.Services.AddSingleton(assistant);
         builder.Services.AddTransient<IChatPluginDisplaySink>(static x =>
-            x.GetRequiredService<ChatContext>().FunctionCallContext.Value?.FunctionCallChatMessage.DisplaySink ??
+            x.GetRequiredService<ChatContext>().FunctionCallContext.Value?.DisplaySink ??
             throw new InvalidOperationException($"No {nameof(IChatPluginDisplaySink)} is available in current function call context."));
         builder.Services.AddTransient<IChatPluginUserInterface>(static x =>
             x.GetRequiredService<ChatContext>().FunctionCallContext.Value ??
@@ -923,15 +923,6 @@ public sealed partial class ChatService : IChatService
                 functionCallChatMessage.IsBusy = true;
                 functionCallSpan.Add(functionCallChatMessage); // functionCallSpan will dispose FunctionCallChatMessage
 
-                var functionCallContext = new FunctionCallContext(
-                    kernel,
-                    chatContext,
-                    chatPlugin,
-                    chatFunction,
-                    functionCallChatMessage,
-                    _settings.Plugin.IsPermissionGrantedRecords);
-                chatContext.FunctionCallContext.Value = functionCallContext;
-
                 try
                 {
                     // Iterate through the function call contents in the group.
@@ -947,6 +938,22 @@ public sealed partial class ChatService : IChatService
                             throw new InvalidOperationException("Tool call must have an ID");
                         }
 
+                        // Each FunctionCallContent receives its own ambient context even though the
+                        // visible FunctionCallChatMessage may aggregate calls to the same function.
+                        // This keeps AsyncLocal services and runtime previews invocation-local. It
+                        // does not by itself make the shared Calls/Results collections safe for a
+                        // future parallel execution strategy; those collections have their own
+                        // concurrency boundary.
+                        using var functionCallContext = new FunctionCallContext(
+                            kernel,
+                            chatContext,
+                            chatPlugin,
+                            chatFunction,
+                            functionCallChatMessage,
+                            functionCallContent,
+                            _settings.Plugin.IsPermissionGrantedRecords);
+                        using var functionCallContextScope = chatContext.EnterFunctionCallContext(functionCallContext);
+
                         // Add the function call content to the function call chat message.
                         // This will record the function call in the database.
                         functionCallChatMessage.Calls.Add(functionCallContent);
@@ -954,7 +961,7 @@ public sealed partial class ChatService : IChatService
                         // Also add a display block for the function call content.
                         // This will allow the UI to display the function call content.
                         var friendlyContent = chatFunction.GetFriendlyCallContent(functionCallContent);
-                        if (friendlyContent is not null) functionCallChatMessage.DisplaySink.AppendBlock(friendlyContent);
+                        if (friendlyContent is not null) functionCallContext.DisplaySink.AppendBlock(friendlyContent);
 
                         var resultContent = await InvokeFunctionAsync(
                             kernelMixin,
@@ -981,7 +988,6 @@ public sealed partial class ChatService : IChatService
                 {
                     functionCallChatMessage.FinishedAt = DateTimeOffset.UtcNow;
                     functionCallChatMessage.IsBusy = false;
-                    chatContext.FunctionCallContext.Value = null;
 
                     if (cancellationToken.IsCancellationRequested)
                     {

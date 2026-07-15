@@ -92,7 +92,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private string SearchFiles(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Regex search pattern to match file and directory names")] string filePattern = ".*",
@@ -111,6 +111,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             maxCount);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path, filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var regex = new Regex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, RegexTimeout);
@@ -192,13 +194,15 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private string GetFileInformation(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path)
     {
         _logger.LogDebug("Getting file information for path: {Path}", path);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path);
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var info = EnsureFileSystemInfo(path);
@@ -228,7 +232,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> SearchFileContentAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description("File or directory path to search")] string path,
         [Description("Text or regex pattern to search for within the file")] string pattern,
@@ -248,6 +252,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             filePattern);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path, new DirectLocaleKey(pattern));
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var regexOptions = RegexOptions.Compiled | RegexOptions.Multiline;
@@ -403,7 +409,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<object> ReadFileAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Optional: the 1-based line number or bytes to start reading from. If not specified, reads from the beginning.")]
@@ -421,6 +427,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             attachment);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path);
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var fileInfo = EnsureFileInfo(path);
@@ -577,7 +585,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task MoveFileAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description("Source file or directory path.")] string source,
@@ -588,6 +595,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         ExpandFullPath(chatContext, ref source);
         ExpandFullPath(chatContext, ref destination);
+        userInterface.ActivityPreview = new ChatPluginFileTransferActivityPreview(
+            new ChatPluginFileReference(source),
+            new ChatPluginFileReference(destination));
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(
             new ChatPluginFileReference(source),
             new ChatPluginFileReference(destination));
@@ -646,7 +657,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> DeleteFilesAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description("File or directory path to delete.")] string path,
@@ -660,6 +670,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         _logger.LogDebug("Deleting file at {Path}", path);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(
+            path,
+            filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         if (Path.GetDirectoryName(path) is null)
@@ -775,7 +789,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectory(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
@@ -784,6 +797,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         _logger.LogDebug("Creating directory at {Path}", path);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path);
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         await RequestFileOperationConsentAsync(
@@ -804,7 +819,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task WriteToFileAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
@@ -815,6 +829,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         _logger.LogDebug("Writing text file at {Path}, append: {Append}", path, append);
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path);
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var fileExists = File.Exists(path);
@@ -852,7 +868,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> ReplaceFileContentAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
         [Description("Text or regex patterns to search for within the file.")] IReadOnlyList<string> patterns,
@@ -887,6 +903,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
 
         ExpandFullPath(chatContext, ref path);
+        userInterface.ActivityPreview = CreateFilePreview(path);
+        var displaySink = userInterface.DisplaySink;
         displaySink.AppendFileReferences(new ChatPluginFileReference(path));
 
         var fileInfo = EnsureFileInfo(path);
@@ -1008,11 +1026,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     }
 
     internal static string GetWriteConsentDescriptionKey(bool append, bool fileExists) =>
-        fileExists
-            ? append
-                ? LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_AppendConsent_Description
-                : LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description
-            : LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_CreateConsent_Description;
+        fileExists ?
+            append ?
+                LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_AppendConsent_Description :
+                LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description :
+            LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_CreateConsent_Description;
+
+    /// <summary>
+    /// Creates the compact request preview used by file operations. The detailed file reference is
+    /// still appended to the display sink separately, so this helper never duplicates durable output
+    /// or exposes operation results in the running activity row.
+    /// </summary>
+    private static ChatPluginFileReferencesActivityPreview CreateFilePreview(string path, IDynamicLocaleKey? prefixKey = null) =>
+        new([new ChatPluginFileReference(path)], prefixKey);
 
     private static async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
@@ -1034,11 +1060,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             container.Add(new ChatPluginDynamicLocaleKeyDisplayBlock(descriptionKey));
         }
 
-        container.Add(new ChatPluginFileReferencesDisplayBlock(
-            paths.AsValueEnumerable().Select(path => new ChatPluginFileReference(path)).ToList())
-        {
-            TotalReferenceCount = paths.Count
-        });
+        container.Add(
+            new ChatPluginFileReferencesDisplayBlock(
+                paths.AsValueEnumerable().Select(path => new ChatPluginFileReference(path)).ToList())
+            {
+                TotalReferenceCount = paths.Count
+            });
 
         var consent = await userInterface.RequestConsentAsync(
             BuildConsentId(paths),

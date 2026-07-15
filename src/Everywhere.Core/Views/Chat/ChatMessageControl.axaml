@@ -20,6 +20,7 @@
               <Setter Property="Padding" Value="12,6"/>
               <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
               <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
+              <Setter Property="BorderThickness" Value="1"/>
             </Style>
 
             <Style Selector="Border.Invalid">
@@ -70,7 +71,7 @@
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
                   <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
-                  <Binding Path="$parent[v:ChatWindow].ViewModel.EditingUserMessageNode"/>
+                  <Binding Path="$parent[v:ChatMessageItemsControl].EditingMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
               <SelectableTextBlock>
@@ -106,15 +107,15 @@
                       Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand}"
                       CommandParameter="{Binding Mode=OneTime}"
                       Content="{LucideIconContent SquarePen}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
-                      CommandParameter="{Binding Mode=OneTime}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
+                      CommandParameter="{Binding Message, Mode=OneTime}"
                       Content="{LucideIconContent Copy}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
@@ -142,7 +143,7 @@
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
                   <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
-                  <Binding Path="$parent[v:ChatWindow].ViewModel.EditingUserMessageNode"/>
+                  <Binding Path="$parent[v:ChatMessageItemsControl].EditingMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
               <SelectableTextBlock Text="{Binding Content}"/>
@@ -150,31 +151,31 @@
 
             <v:ChatAttachmentItemsControl
               ItemsSource="{Binding Attachments}"
-              SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"/>
+              SupportedModalities="{Binding $parent[v:ChatMessageItemsControl].SupportedModalities}"/>
 
             <v:ConditionalContentControl
-              Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}, Mode=OneTime}"
-              ContentDataBinding="{Binding Node, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageNodeControl}}}">
+              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
+              ContentDataBinding="{Binding $parent[v:ChatMessageNodeControl].Node, Mode=OneTime}">
               <v:ConditionalContentControl.FalseContent>
                 <DataTemplate x:DataType="chat:ChatMessageNode">
                   <v:ChatMessageOperationPanel>
                     <NumericUpDown
                       x:Name="ChoiceSelector" Margin="0,0,4,0"
-                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue={x:False}, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
                       Maximum="{Binding Parent.ChoiceCount, FallbackValue=1}"
                       Minimum="1"
                       Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].EditMessageNodeCommand, Mode=OneTime}"
                       CommandParameter="{Binding Mode=OneTime}"
                       Content="{LucideIconContent SquarePen}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
-                      CommandParameter="{Binding Mode=OneTime}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand, Mode=OneTime}"
+                      CommandParameter="{Binding Message, Mode=OneTime}"
                       Content="{LucideIconContent Copy}"
                       Focusable="False"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>

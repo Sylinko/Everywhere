@@ -110,6 +110,17 @@ public interface IChatPluginUserInterface
     IChatPluginDisplaySink DisplaySink { get; }
 
     /// <summary>
+    /// Gets or sets the lightweight, runtime-only preview for the current tool invocation.
+    /// </summary>
+    /// <remarks>
+    /// This property belongs to the invocation context rather than <see cref="DisplaySink"/>:
+    /// detailed display blocks are durable message content, while a preview is visible only while
+    /// its invocation is alive. Assigning <see langword="null"/> hides the preview early; otherwise
+    /// the invocation scope removes it automatically when the tool call completes.
+    /// </remarks>
+    ChatPluginActivityPreview? ActivityPreview { get; set; }
+
+    /// <summary>
     /// Requests user consent for a permission request.
     /// </summary>
     /// <remarks>

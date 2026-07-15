@@ -2707,6 +2707,9 @@
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在终端中执行</value>
     </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>正在运行 {0}</value>
+    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>脚本执行失败: {0}</value>
     </data>
@@ -3626,28 +3629,25 @@
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>高级设置</value>
     </data>
-    <data name="ChatActivity_ReasoningCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
         <value>思考 {0} 次</value>
     </data>
-    <data name="ChatActivity_ToolCallCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
         <value>工具调用 {0} 次</value>
     </data>
-    <data name="ChatActivity_SubagentCount" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
         <value>子助手 {0} 个</value>
     </data>
-    <data name="ChatActivity_NoResponse" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>本轮未生成回复。</value>
     </data>
-    <data name="ChatActivity_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>查看子助手</value>
     </data>
-    <data name="ChatActivity_Back" xml:space="preserve">
-        <value>返回</value>
-    </data>
-    <data name="ChatActivity_CompletedActivities" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
         <value>已完成 {0} 项活动</value>
     </data>
-    <data name="ChatActivity_Working" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>进行中</value>
     </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
@@ -3662,16 +3662,10 @@
     <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
         <value>{0} 天 {1} 小时</value>
     </data>
-    <data name="ChatActivity_GenericActivity" xml:space="preserve">
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
         <value>正在处理</value>
     </data>
-    <data name="ChatActivity_TerminalRunning" xml:space="preserve">
-        <value>正在运行 {0}</value>
-    </data>
-    <data name="ChatActivity_TerminalFinished" xml:space="preserve">
-        <value>已运行 {0}</value>
-    </data>
-    <data name="ChatActivity_Completed" xml:space="preserve">
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>已完成</value>
     </data>
 </root>

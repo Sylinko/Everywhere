@@ -162,13 +162,12 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                         new DirectLocaleKey(items.Count)));
                 return "Todo list reset successfully";
             }
-            case TodoAction.Read when chatContext.UserInterfaceBroker.TodoItems.Count is not > 0:
+            case TodoAction.Read when chatContext.UserInterfaceBroker.TodoItems.Count <= 0:
             {
                 displaySink.AppendDynamicLocaleKey(
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Read,
                         new DirectLocaleKey(0)));
-
                 return "Todo list is empty";
             }
             case TodoAction.Read:

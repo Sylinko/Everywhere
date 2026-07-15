@@ -193,10 +193,12 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
     [Description("Fetch and extract the main content from a web page. This tool is useful for summarizing or analyzing the content of a webpage.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
     private async Task<string> ExtractAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [Description("An array of URLs to fetch content from. Maximum 10.")] IReadOnlyList<string> urls,
         CancellationToken cancellationToken = default)
     {
+        var displaySink = userInterface.DisplaySink;
+
         switch (urls.Count)
         {
             case 0:
@@ -215,33 +217,47 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             }
         }
 
-        var extractions = await Task.WhenAll(
-            urls.DistinctBy(u => u.Trim()).Select(async url =>
-            {
-                displaySink.AppendDynamicLocaleKey(
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.BuiltInChatPlugin_Web_WebExtract_Visiting,
-                        new DirectLocaleKey(url)));
+        // Uri equality normalizes the scheme and host without incorrectly treating the path as
+        // case-insensitive. Some HTTP servers distinguish /Page from /page, so a string comparer
+        // would be too aggressive here.
+        var validatedUrls = urls
+            .AsValueEnumerable()
+            .Select(url => Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" ?
+                uri :
+                throw new HandledFunctionInvokingException(
+                    HandledFunctionInvokingExceptionType.ArgumentError,
+                    nameof(urls),
+                    new ArgumentException($"Invalid URL format: {url}. Only absolute http/https URLs are allowed.")))
+            .Distinct()
+            .ToList();
 
+        // The invocation preview contains only validated URIs. Host labels and favicon locations
+        // are derived by the View, where AsyncImageLoader can reuse its normal image cache instead
+        // of making the plugin fetch presentation metadata.
+        userInterface.ActivityPreview = new ChatPluginUrlsActivityPreview(validatedUrls);
+
+        // Keep one compact durable URL block for the explicitly expanded history view. This
+        // replaces the previous per-worker "visiting" text blocks, which were transient status
+        // messages but were unnecessarily serialized as detailed output.
+        displaySink.AppendUrls(
+            validatedUrls
+                .Select(uri => new ChatPluginUrl(uri.AbsoluteUri, new DirectLocaleKey(uri.Host)))
+                .ToList());
+
+        var extractions = await Task.WhenAll(
+            validatedUrls.Select(async uri =>
+            {
+                var absoluteUri = uri.AbsoluteUri;
                 try
                 {
-                    if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-                        uri.Scheme is not "http" and not "https")
-                    {
-                        throw new HandledFunctionInvokingException(
-                            HandledFunctionInvokingExceptionType.ArgumentError,
-                            nameof(urls),
-                            new ArgumentException("Invalid URL format. Only absolute http/https URLs are allowed."));
-                    }
-
-                    var extraction = await _webBrowserHost.ExtractPageAsync(url, cancellationToken);
-                    return (url, extraction, error: null);
+                    var extraction = await _webBrowserHost.ExtractPageAsync(absoluteUri, cancellationToken);
+                    return (absoluteUri, extraction, error: null);
                 }
                 catch (Exception ex)
                 {
                     ex = HandledFunctionInvokingException.Handle(ex);
-                    _logger.LogError(ex, "Failed to extract content from URL: {Url}", url);
-                    return (url, extraction: default(WebPageExtractionResult), error: (string?)ex.Message);
+                    _logger.LogError(ex, "Failed to extract content from URL: {Url}", absoluteUri);
+                    return (absoluteUri, extraction: default(WebPageExtractionResult), error: (string?)ex.Message);
                 }
             }));
 

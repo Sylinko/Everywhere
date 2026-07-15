@@ -75,7 +75,7 @@
                 </v:TrimmingStackPanel.Styles>
 
                 <TextBlock
-                  Text="{I18N {x:Static LocaleKey.ChatActivity_Completed}}"
+                  Text="{I18N {x:Static LocaleKey.ChatPresentationRowPresenter_Completed}}"
                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                 <TextBlock
                   IsVisible="{Binding Statistics.ReasoningCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
@@ -83,7 +83,7 @@
                   <Run Text="•"/>
                   <Run>
                     <Run.Text>
-                      <I18N Key="{x:Static LocaleKey.ChatActivity_ReasoningCount}">
+                      <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_ReasoningCount}">
                         <Binding
                           Mode="OneWay" Path="Statistics.ReasoningCount"/>
                       </I18N>
@@ -96,7 +96,7 @@
                   <Run Text="•"/>
                   <Run>
                     <Run.Text>
-                      <I18N Key="{x:Static LocaleKey.ChatActivity_ToolCallCount}">
+                      <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_ToolCallCount}">
                         <Binding
                           Mode="OneWay" Path="Statistics.ToolCallCount"/>
                       </I18N>
@@ -109,7 +109,7 @@
                   <Run Text="•"/>
                   <Run>
                     <Run.Text>
-                      <I18N Key="{x:Static LocaleKey.ChatActivity_SubagentCount}">
+                      <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_SubagentCount}">
                         <Binding
                           Mode="OneWay" Path="Statistics.SubagentCount"/>
                       </I18N>
@@ -168,7 +168,7 @@
                         <TextBlock
                           VerticalAlignment="Center"
                           FontSize="{DynamicResource FontSizeS}"
-                          Text="{I18N {x:Static LocaleKey.ChatActivity_Working}}"
+                          Text="{I18N {x:Static LocaleKey.ChatPresentationRowPresenter_Working}}"
                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                       </DataTemplate>
                     </v:ConditionalContentControl.TrueContent>
@@ -182,7 +182,7 @@
                             FontSize="{DynamicResource FontSizeS}"
                             TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
                             <TextBlock.Text>
-                              <I18N Key="{x:Static LocaleKey.ChatActivity_CompletedActivities}">
+                              <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_CompletedActivities}">
                                 <Binding
                                   Mode="OneWay" Path="Items.Count"/>
                               </I18N>
@@ -196,7 +196,7 @@
                             <Run Text="•"/>
                             <Run>
                               <Run.Text>
-                                <I18N Key="{x:Static LocaleKey.ChatActivity_ReasoningCount}">
+                                <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_ReasoningCount}">
                                   <Binding
                                     Mode="OneWay" Path="Statistics.ReasoningCount"/>
                                 </I18N>
@@ -211,7 +211,7 @@
                             <Run Text="•"/>
                             <Run>
                               <Run.Text>
-                                <I18N Key="{x:Static LocaleKey.ChatActivity_ToolCallCount}">
+                                <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_ToolCallCount}">
                                   <Binding
                                     Mode="OneWay" Path="Statistics.ToolCallCount"/>
                                 </I18N>
@@ -226,7 +226,7 @@
                             <Run Text="•"/>
                             <Run>
                               <Run.Text>
-                                <I18N Key="{x:Static LocaleKey.ChatActivity_SubagentCount}">
+                                <I18N Key="{x:Static LocaleKey.ChatPresentationRowPresenter_SubagentCount}">
                                   <Binding
                                     Mode="OneWay" Path="Statistics.SubagentCount"/>
                                 </I18N>
@@ -401,19 +401,28 @@
             </v:ActivityMarker.Header>
 
             <v:ActivityMarker.SecondaryHeader>
-              <TextBlock
-                Classes="Muted" VerticalAlignment="Center"
-                FontSize="{DynamicResource FontSizeXs}"
-                MaxLines="1"
-                Text="{Binding PreviewText}"
-                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+              <Grid>
+                <!--
+                  Structured activity previews are runtime-only and deliberately use their own
+                  inexpensive presenter. The text fallback preserves existing tools that have not
+                  opted into the structured preview channel yet.
+                -->
+                <v:ChatActivityPreviewPresenter
+                  Content="{Binding ActivityPreview}"
+                  IsVisible="{Binding ActivityPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                <TextBlock
+                  Classes="Muted" VerticalAlignment="Center"
+                  FontSize="{DynamicResource FontSizeXs}"
+                  IsVisible="{Binding ActivityPreview, Converter={x:Static ObjectConverters.IsNull}}"
+                  MaxLines="1"
+                  Text="{Binding PreviewText}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+              </Grid>
             </v:ActivityMarker.SecondaryHeader>
 
             <v:ActivityMarker.IsSecondaryHeaderVisible>
               <MultiBinding Converter="{x:Static BoolConverters.And}">
-                <Binding
-                  Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
-                  Path="PreviewText"/>
+                <Binding Path="HasPreview"/>
                 <Binding Path="IsRunning"/>
                 <Binding
                   Converter="{x:Static BoolConverters.Not}"
@@ -480,7 +489,7 @@
             <ContentControl.DataTemplates>
               <DataTemplate x:DataType="chat:AssistantChatMessageTextSpan">
                 <md:MarkdownRenderer
-                  LinkCommand="{Binding $parent[v:ChatWindow].LaunchLinkCommand}"
+                  LinkCommand="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
                   MarkdownBuilder="{Binding ContentMarkdownBuilder}"/>
               </DataTemplate>
               <DataTemplate x:DataType="chat:AssistantChatMessageImageSpan">
@@ -505,7 +514,7 @@
             </Border>
             <Button
               Classes="Primary Compact" HorizontalAlignment="Left"
-              Command="{Binding $parent[v:ChatWindow].ViewModel.ContinueCommand}"
+              Command="{Binding $parent[v:ChatMessageItemsControl].ContinueMessageNodeCommand}"
               CommandParameter="{Binding AssistantNode}"
               Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}">
               <Button.IsVisible>
@@ -521,14 +530,14 @@
         <DataTemplate x:DataType="v:NoResponsePresentationRow">
           <TextBlock
             Classes="Muted" Margin="4,0"
-            Text="{I18N {x:Static LocaleKey.ChatActivity_NoResponse}}"/>
+            Text="{I18N {x:Static LocaleKey.ChatPresentationRowPresenter_NoResponse}}"/>
         </DataTemplate>
 
         <DataTemplate x:DataType="v:TurnFooterPresentationRow">
           <StackPanel
             Margin="4,0" Spacing="3">
             <v:ConditionalContentControl
-              Condition="{Binding $parent[v:ChatWindow].ViewModel.Settings.ChatWindow.ShowChatStatistics}"
+              Condition="{Binding $parent[v:ChatMessageItemsControl].ShowStatistics}"
               ContentDataBinding="{Binding AssistantMessage, Mode=OneTime}">
               <v:ConditionalContentControl.TrueContent>
                 <DataTemplate x:DataType="chat:AssistantChatMessage">
@@ -578,13 +587,13 @@
                       Value="{Binding Parent?.ChoiceIndex, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.RetryCommand}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].RetryMessageNodeCommand}"
                       CommandParameter="{Binding Mode=OneTime}"
                       Content="{LucideIconContent RefreshCcw}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_RetryButton_Content}}"/>
                     <Button
                       Classes="Ghost Compact Uniform"
-                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
+                      Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
                       CommandParameter="{Binding Message, Mode=OneTime}"
                       Content="{LucideIconContent Copy}"
                       ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>

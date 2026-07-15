@@ -36,7 +36,6 @@ public class ChatPresentationTests
             ReasoningActivityItemPresentationRow, AssistantOutputPresentationRow,
             ActivityGroupPresentationRow, TurnFooterPresentationRow>(rows);
 
-        var reasoningItem = rows.OfType<ReasoningActivityItemPresentationRow>().Single();
         var functionGroup = rows.OfType<ActivityGroupPresentationRow>().Single();
         var functionItem = functionGroup.Items.OfType<FunctionCallActivityItemPresentationRow>().Single();
         Assert.Multiple(() =>
@@ -110,7 +109,7 @@ public class ChatPresentationTests
         var before = presentation.Rows.ToArray();
         var group = presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
         var collectionEvents = 0;
-        ((INotifyCollectionChanged)presentation.Rows).CollectionChanged += (_, _) => collectionEvents++;
+        presentation.Rows.CollectionChanged += (_, _) => collectionEvents++;
 
         function.Content = "A newer preview";
 
@@ -138,7 +137,7 @@ public class ChatPresentationTests
         var unchangedUserRow = presentation.Rows[0];
         var unchangedRows = presentation.Rows.ToArray();
         var actions = new List<NotifyCollectionChangedAction>();
-        ((INotifyCollectionChanged)presentation.Rows).CollectionChanged += (_, e) => actions.Add(e.Action);
+        presentation.Rows.CollectionChanged += (_, e) => actions.Add(e.Action);
 
         group.IsExpanded = true;
         var item = group.Items
@@ -347,7 +346,7 @@ public class ChatPresentationTests
         var assistant = new AssistantChatMessage { IsBusy = true };
         using var context = Context(new UserChatMessage("Prepare tools", []), assistant);
         var presentation = context.Presentation;
-        using var busyActivity = context.SetBusyActivity(
+        var busyActivity = context.SetBusyActivity(
             LucideIconKind.Server,
             new DirectLocaleKey("Starting MCP"));
 
