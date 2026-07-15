@@ -96,15 +96,37 @@ public sealed class PeriodicRefreshTextBehavior : PeriodicRefreshBindingBehavior
         switch (AssociatedObject)
         {
             case Run run:
-                BindingOperations.GetBindingExpressionBase(run, Run.TextProperty)?.UpdateTarget();
+                RealUpdateTarget(BindingOperations.GetBindingExpressionBase(run, Run.TextProperty));
                 break;
             case TextBlock { Inlines: { Count: > 0 } inlines }:
                 foreach (var run in inlines.AsValueEnumerable().OfType<Run>())
-                    BindingOperations.GetBindingExpressionBase(run, Run.TextProperty)?.UpdateTarget();
+                    RealUpdateTarget(BindingOperations.GetBindingExpressionBase(run, Run.TextProperty));
                 break;
             case TextBlock textBlock:
-                BindingOperations.GetBindingExpressionBase(textBlock, TextBlock.TextProperty)?.UpdateTarget();
+                RealUpdateTarget(BindingOperations.GetBindingExpressionBase(textBlock, TextBlock.TextProperty));
                 break;
         }
     }
+
+    /// <summary>
+    /// Workaround fix: `MultiBindingExpression` does not override the `UpdateTarget` method
+    /// </summary>
+    /// <param name="expression"></param>
+    private static void RealUpdateTarget(BindingExpressionBase? expression)
+    {
+        if (expression is null) return;
+
+        if (expression.GetType().Name == "MultiBindingExpression")
+        {
+            MultiBindingExpression_PublishValue(expression);
+        }
+        else
+        {
+            expression.UpdateTarget();
+        }
+    }
+
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "PublishValue")]
+    private static extern void MultiBindingExpression_PublishValue(
+        [UnsafeAccessorType("Avalonia.Data.Core.MultiBindingExpression, Avalonia.Base")] object multiBindingExpression);
 }
