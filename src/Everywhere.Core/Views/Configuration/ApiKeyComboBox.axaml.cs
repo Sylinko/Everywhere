@@ -64,7 +64,7 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
     private async Task AddApiKeyAsync(CancellationToken cancellationToken)
     {
         var form = new CreateApiKeyForm(DefaultName);
-        var result = await ServiceLocator.Resolve<DialogManager>()
+        var result = await DialogManager
             .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
@@ -82,7 +82,7 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
     private async Task ManageApiKeyAsync(CancellationToken cancellationToken)
     {
         using var form = new ManageApiKeyForm(_itemsSource, DefaultName);
-        await ServiceLocator.Resolve<DialogManager>()
+        await DialogManager
             .CreateDialog(form, LocaleResolver.ApiKeyComboBox_ManageApiKey)
             .WithPrimaryButton(LocaleResolver.Common_OK)
             .ShowAsync(cancellationToken);

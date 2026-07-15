@@ -177,7 +177,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     [RelayCommand]
     private void OpenWelcomeDialog()
     {
-        DialogManager
+        DialogHost
             .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
             .ShowAsync();
     }

@@ -191,7 +191,7 @@ public sealed partial class PromptPageViewModel(
         }
 
         var references = assistantPromptReferenceService.ListReferences(prompt.Id);
-        var result = await DialogManager.CreateDialog(
+        var result = await DialogHost.CreateDialog(
                 CreateDeletePromptDialogMessage(prompt, references.Count),
                 LocaleResolver.Common_Warning)
             .WithPrimaryButton(LocaleResolver.Common_Delete, buttonStyle: ButtonStyle.Destructive)

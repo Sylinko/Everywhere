@@ -81,7 +81,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
     private async Task AddMcpPluginAsync(CancellationToken cancellationToken)
     {
         var form = new McpTransportConfigurationForm();
-        var result = await DialogManager
+        var result = await DialogHost
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_AddMcpPlugin_DialogTitle)
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
@@ -108,7 +108,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
     private async Task ImportMcpPluginAsync()
     {
         var form = new McpImportForm();
-        var result = await DialogManager
+        var result = await DialogHost
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle)
             .WithPrimaryButton(LocaleResolver.Common_OK)
             .WithCancelButton(LocaleResolver.Common_Cancel)
@@ -337,7 +337,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
                             McpTransportConfigurationJsonSerializerContext.Default.McpTransportConfiguration),
                         McpTransportConfigurationJsonSerializerContext.Default.McpTransportConfiguration) ?? new StdioMcpTransportConfiguration()
                 };
-                var result = await DialogManager
+                var result = await DialogHost
                     .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_EditMcpPlugin_DialogTitle)
                     .WithPrimaryButton(
                         LocaleResolver.Common_OK,
@@ -361,7 +361,7 @@ public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyV
         return ExecuteBusyTaskAsync(
             async token =>
             {
-                var result = await DialogManager
+                var result = await DialogHost
                     .CreateDialog(LocaleResolver.ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage.Format(plugin.HeaderKey))
                     .WithPrimaryButton(LocaleResolver.Common_Yes)
                     .WithCancelButton(LocaleResolver.Common_No)

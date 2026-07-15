@@ -23,16 +23,11 @@ namespace Everywhere.Views;
 
 public partial class ChatWindow :
     ReactiveShadWindow<ChatWindowViewModel>,
-    IReactiveHost,
     IRecipient<CloakChatWindowMessage>,
     IRecipient<FlashChatWindowMessage>,
     IRecipient<ApplicationMessage>,
     IVisualElementAnimationTarget
 {
-    public DialogHost DialogHost => PART_DialogHost;
-
-    public ToastHost ToastHost => PART_ToastHost;
-
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
     /// </summary>
@@ -479,7 +474,7 @@ public partial class ChatWindow :
         DragDropOverlay.IsVisible = false;
         e.Handled = true;
 
-        HandleDropAsync().Detach(ToastHost.ToExceptionHandler());
+        HandleDropAsync().Detach(PART_ToastHost.ToExceptionHandler());
 
         async Task HandleDropAsync()
         {

@@ -162,7 +162,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     {
         if (_settings.Model.CustomAssistants.Count == 0)
         {
-            DialogManager
+            DialogHost
                 .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
                 .Show();
         }

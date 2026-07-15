@@ -329,7 +329,7 @@ public sealed partial class PromptEditorViewModel(
         var quickTemplate = PromptRecipeCatalog.ComposeTemplate(snapshot);
         if (!string.Equals(Template, quickTemplate, StringComparison.Ordinal))
         {
-            var result = await DialogManager
+            var result = await DialogHost
                 .CreateDialog(
                     LocaleResolver.PromptCreate_DiscardAdvanced_DialogMessage,
                     LocaleResolver.PromptCreate_DiscardAdvanced_DialogTitle)

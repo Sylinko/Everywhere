@@ -110,7 +110,7 @@
               <DataTemplate DataType="plugins:ChatPluginUrl">
                 <Button
                   Classes="Ghost Compact"
-                  Command="{Binding $parent[v:ChatActivityPreviewPresenter].OpenUrlCommand}"
+                  Command="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
                   CommandParameter="{Binding Url}">
                   <StackPanel
                     Orientation="Horizontal" Spacing="3">
@@ -129,7 +129,7 @@
         <DataTemplate DataType="plugins:ChatPluginSubagentDisplayBlock">
           <Button
             Classes="Ghost Compact" HorizontalAlignment="Left"
-            Command="{Binding $parent[v:ChatActivityPreviewPresenter].OpenSubagentCommand}"
+            Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
             CommandParameter="{Binding}">
             <StackPanel
               Orientation="Horizontal" Spacing="5">

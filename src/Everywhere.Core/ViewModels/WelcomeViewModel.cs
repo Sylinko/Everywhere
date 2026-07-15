@@ -115,7 +115,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
         }
 
         CurrentStep?.CancellationTokenSource.Cancel();
-        DialogManager.CloseAll();
+        DialogHost.CloseAll();
     }
 }
 

@@ -59,11 +59,6 @@ public static class ServiceExtensions
                 .AddSingleton<PersistentState>()
                 .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 
-        public IServiceCollection AddAvaloniaBasicServices()
-        {
-            return services.AddDialogManagerAndToastManager();
-        }
-
         public IServiceCollection AddViewsAndViewModels() =>
             services
                 .AddSingleton<VisualTreeDebugger>()

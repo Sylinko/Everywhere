@@ -174,7 +174,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
     private async Task DeleteCustomAssistantAsync()
     {
         if (SelectedCustomAssistant is not { } customAssistant) return;
-        var result = await DialogManager.CreateDialog(
+        var result = await DialogHost.CreateDialog(
                 LocaleResolver.CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message.Format(customAssistant.Name),
                 LocaleResolver.Common_Warning)
             .WithPrimaryButton(LocaleResolver.Common_Yes)

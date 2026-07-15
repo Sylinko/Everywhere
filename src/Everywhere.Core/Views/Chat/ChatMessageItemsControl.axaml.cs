@@ -1,10 +1,14 @@
 using Avalonia.Controls;
+using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Chat.Plugins;
+using Everywhere.Common;
+using ShadUI;
 
 namespace Everywhere.Views;
 
-public sealed class ChatMessageItemsControl : ItemsControl
+public sealed partial class ChatMessageItemsControl : ItemsControl
 {
     /// <summary>
     /// Defines the <see cref="ChatContext"/> property.
@@ -63,6 +67,41 @@ public sealed class ChatMessageItemsControl : ItemsControl
         // binding, not the rows' presentation state; attaching another view to the same context
         // receives the same IReadOnlyBindableList and stable row instances.
         SetCurrentValue(ItemsSourceProperty, ChatContext?.Presentation.Rows);
+    }
+
+    /// <summary>
+    /// Opens a URL surfaced by either a lightweight activity preview or a detailed plugin display
+    /// block. Both presentations belong to this chat root, so the command is intentionally hosted
+    /// here instead of being duplicated by individual presenters.
+    /// </summary>
+    [RelayCommand]
+    private static Task<bool> OpenUrlAsync(object? value)
+    {
+        if (value is not Uri uri && !Uri.TryCreate(value?.ToString(), UriKind.Absolute, out uri!))
+            return Task.FromResult(false);
+
+        return App.Launcher.LaunchUriAsync(uri);
+    }
+
+    /// <summary>
+    /// Opens a subagent conversation in its independent dialog. A nested subagent view creates its
+    /// own <see cref="ChatMessageItemsControl"/>, so recursive subagent conversations retain the
+    /// same command boundary without coupling either display-block presenter to dialog services.
+    /// </summary>
+    [RelayCommand]
+    private void OpenSubagent(ChatPluginSubagentDisplayBlock? block)
+    {
+        if (block is null) return;
+
+        DialogManager
+            .CreateCustomDialog(
+                new ChatSubagentView
+                {
+                    ChatContext = block.ChatContext,
+                    SupportedModalities = SupportedModalities,
+                })
+            .Dismissible()
+            .Show();
     }
 
     protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey)

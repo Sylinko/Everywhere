@@ -2,12 +2,8 @@
 
 namespace Everywhere.Views;
 
-public sealed partial class TransientWindow : ShadWindow, IReactiveHost
+public sealed partial class TransientWindow : ShadWindow
 {
-    public DialogHost DialogHost => PART_DialogHost;
-
-    public ToastHost ToastHost => PART_ToastHost;
-
     public TransientWindow()
     {
         InitializeComponent();

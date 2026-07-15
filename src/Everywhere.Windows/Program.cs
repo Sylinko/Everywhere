@@ -58,7 +58,6 @@ public static class Program
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()
-                .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
