@@ -1,0 +1,72 @@
+﻿<Styles
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <Style Selector="v|ChatMessageOperationPanel">
+    <Setter Property="Orientation" Value="Horizontal"/>
+
+    <Style Selector="^ Button LucideIcon">
+      <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
+    </Style>
+
+    <Style Selector="^ NumericUpDown">
+      <Setter Property="Background" Value="{x:Null}"/>
+      <Setter Property="BorderBrush" Value="{x:Null}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+      <Setter Property="Template">
+        <ControlTemplate TargetType="NumericUpDown">
+          <ButtonSpinner
+            Name="PART_Spinner" HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center">
+            <Panel>
+              <!--  TextBox is useless but necessary for NumericUpDown  -->
+              <TextBox
+                x:Name="PART_TextBox" IsVisible="False">
+                <TextBox.Template>
+                  <ControlTemplate TargetType="TextBox">
+                    <TextPresenter x:Name="PART_TextPresenter"/>
+                  </ControlTemplate>
+                </TextBox.Template>
+              </TextBox>
+              <TextBlock
+                VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                Foreground="{TemplateBinding Foreground}"
+                TextAlignment="Center" TextWrapping="NoWrap">
+                <Run Text="{Binding Value, StringFormat={}{0:F0}, RelativeSource={RelativeSource TemplatedParent}}"/>
+                <Run Text="/"/>
+                <Run Text="{Binding Maximum, StringFormat={}{0:F0}, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </TextBlock>
+            </Panel>
+          </ButtonSpinner>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^ ButtonSpinner">
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Button
+                x:Name="PART_DecreaseButton" Classes="Ghost Compact Uniform"
+                Grid.Column="0"
+                Content="{LucideIconContent ChevronLeft, Size=18}"
+                Focusable="False"
+                Foreground="{TemplateBinding Foreground}"/>
+              <ContentPresenter
+                x:Name="PART_ContentPresenter" Grid.Column="1"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                Content="{TemplateBinding Content}"
+                TabIndex="1"/>
+              <Button
+                x:Name="PART_IncreaseButton" Classes="Ghost Compact Uniform"
+                Grid.Column="2"
+                Content="{LucideIconContent ChevronRight, Size=18}"
+                Focusable="False"
+                Foreground="{TemplateBinding Foreground}"/>
+            </Grid>
+          </ControlTemplate>
+        </Setter>
+      </Style>
+    </Style>
+  </Style>
+</Styles>

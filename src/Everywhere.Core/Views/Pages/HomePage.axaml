@@ -52,7 +52,7 @@
     </Style>
 
     <Style Selector="Button.Secondary">
-      <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
+      <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}"/>
       <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource SettingsItemHoverBackgroundColor}"/>
     </Style>
@@ -285,7 +285,7 @@
               </StackPanel>
               <TextBlock
                 Classes="h2"
-                Text="{Binding Overview?.TopicCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                Text="{Binding Overview?.TopicCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
               <TextBlock
                 Classes="Muted Caption" HorizontalAlignment="Left">
                 <TextBlock.Text>
@@ -312,7 +312,7 @@
               </StackPanel>
               <TextBlock
                 Classes="h2"
-                Text="{Binding Overview?.TurnCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                Text="{Binding Overview?.TurnCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
               <TextBlock
                 Classes="Muted Caption" HorizontalAlignment="Left"
                 Text="{Binding TurnAverageKey^}"/>
@@ -332,7 +332,7 @@
               </StackPanel>
               <TextBlock
                 Classes="h2"
-                Text="{Binding Overview?.TokenSummary?.TotalTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}">
+                Text="{Binding Overview?.TokenSummary?.TotalTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}">
                 <ToolTip.Tip>
                   <I18N Key="{x:Static LocaleKey.HomePage_TotalTokensToolTip}">
                     <Binding
@@ -364,7 +364,7 @@
                       Kind="ArrowDownToLine" Size="14"/>
                     <TextBlock
                       FontWeight="SemiBold"
-                      Text="{Binding Overview?.TokenSummary?.InputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                      Text="{Binding Overview?.TokenSummary?.InputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
                   </StackPanel>
 
                   <StackPanel
@@ -382,7 +382,7 @@
                       Kind="ArrowUpFromLine" Size="14"/>
                     <TextBlock
                       FontWeight="SemiBold"
-                      Text="{Binding Overview?.TokenSummary?.OutputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                      Text="{Binding Overview?.TokenSummary?.OutputTokenCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
                   </StackPanel>
 
                   <StackPanel
@@ -423,7 +423,7 @@
               </StackPanel>
               <TextBlock
                 Classes="h2"
-                Text="{Binding Overview?.VisualElementCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.Humanize}}"/>
+                Text="{Binding Overview?.VisualElementCount, TargetNullValue=0, Converter={x:Static vc:Int64Converters.HumanizeNumber}}"/>
               <TextBlock
                 x:Name="VisualContextDetailText" Classes="Muted Caption"
                 HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"
@@ -566,7 +566,7 @@
                 Days="{Binding HeatmapDays}"
                 FontSize="{DynamicResource FontSizeS}"
                 HighBrush="{DynamicResource PrimaryColor}"
-                LowBrush="{DynamicResource SettingsItemBackgroundColor}"
+                LowBrush="{DynamicResource LightCardBackgroundColor}"
                 Months="6"/>
 
               <StackPanel

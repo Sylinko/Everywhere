@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:aai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:common="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:configuration="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions"
-  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:common="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ChatInputArea}"
     TargetType="v:ChatInputArea">
@@ -33,7 +33,7 @@
     </Style>
 
     <Setter Property="FontSize" Value="{DynamicResource FontSizeM}"/>
-    <Setter Property="Padding" Value="6"/>
+    <Setter Property="Padding" Value="4"/>
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="Template">
       <ControlTemplate>
@@ -43,6 +43,7 @@
           <v:ChatTextEditor
             x:Name="PART_ChatTextEditor" Grid.Row="0"
             Grid.Column="0" Grid.ColumnSpan="2"
+            Margin="{TemplateBinding Padding}"
             LeadingContent="{TemplateBinding LeadingContent, Mode=TwoWay}"
             LeadingContentTemplate="{TemplateBinding LeadingContentTemplate}"
             MaxLength="{TemplateBinding MaxLength}"

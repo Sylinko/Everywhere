@@ -206,6 +206,19 @@ ul, ol { padding-left: 2em; }
   <Style Selector="md|MarkdownRenderer">
     <Setter Property="CodeBlockColorTheme" Value="{DynamicResource ColorTheme}"/>
 
+    <Style Selector="^ StackPanel">
+      <Setter Property="Spacing" Value="6"/>
+    </Style>
+
+    <Style Selector="^ md|MarkdownListGrid">
+      <Setter Property="ColumnSpacing" Value="4"/>
+      <Setter Property="RowSpacing" Value="6"/>
+
+      <Style Selector="^ md|MarkdownListGrid">
+        <Setter Property="Margin" Value="0,6,0,4"/>
+      </Style>
+    </Style>
+
     <Style Selector="^ InlineUIContainer.Code">
       <Style Selector="^ md|MarkdownTextBlock">
         <Setter Property="Foreground" Value="{DynamicResource QuoteColor}"/>

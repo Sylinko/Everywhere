@@ -398,7 +398,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
         var desiredViewportTop = GetOffsetForIndex(anchor.Index) + anchor.Delta;
         var correction = desiredViewportTop - oldViewportTop;
-        if (!(Math.Abs(correction) > double.Epsilon))
+        if (Math.Abs(correction) > double.Epsilon)
         {
             _pendingScrollOffsetCorrection += correction;
             if (double.IsNaN(_pendingScrollOffsetCorrectionBaseY) &&

@@ -1,8 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <Design.PreviewWith>
     <v:ChatPluginDisplayBlockPresenter/>
   </Design.PreviewWith>
@@ -182,19 +182,8 @@
             Language="{Binding Language}"/>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginChatContextDisplayBlock">
-          <ScrollViewer
-            MaxHeight="600" HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
-            <Interaction.Behaviors>
-              <in:AutoScrollBehavior/>
-            </Interaction.Behaviors>
-
-            <v:ChatMessageItemsControl
-              Margin="4,0" Padding="8,0"
-              IsReadonly="True"
-              ItemsSource="{Binding ChatContext.DisplayItems}"/>
-          </ScrollViewer>
+        <DataTemplate DataType="plugins:ChatPluginSubagentDisplayBlock">
+          <v:ChatActivityPreviewPresenter Content="{Binding}"/>
         </DataTemplate>
 
         <DataTemplate DataType="plugins:ChatPluginTerminalDisplayBlock">

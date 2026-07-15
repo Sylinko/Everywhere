@@ -1,0 +1,149 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ActivityMarker}"
+    TargetType="v:ActivityMarker">
+    <Setter Property="HorizontalSpacing" Value="4"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel>
+          <ToggleButton
+            x:Name="PART_ToggleButton" Classes="NoScale"
+            DockPanel.Dock="Top" Padding="0"
+            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+            shadui:ButtonAssist.CheckedBackground="Transparent"
+            shadui:ButtonAssist.CheckedForeground="{DynamicResource ForegroundColor}"
+            shadui:ButtonAssist.HoverBackground="Transparent" Background="Transparent"
+            BorderThickness="0"
+            Foreground="{DynamicResource MutedColor}"
+            IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+            IsHitTestVisible="{TemplateBinding IsExpandable}">
+            <DockPanel
+              x:Name="PART_HeaderPanel"
+              HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
+              <ContentPresenter
+                DockPanel.Dock="Left"
+                Content="{TemplateBinding Icon}"
+                IsHitTestVisible="False"
+                IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+              <StackPanel Spacing="{TemplateBinding VerticalSpacing}">
+                <DockPanel
+                  HorizontalAlignment="Left"
+                  HorizontalSpacing="{TemplateBinding HorizontalSpacing}">
+                  <PathIcon
+                    x:Name="PART_ChevronIcon" DockPanel.Dock="Right"
+                    Width="6" VerticalAlignment="Center"
+                    Data="{x:Static shadui:Icons.ChevronRight}"
+                    IsHitTestVisible="False" Opacity="0">
+                    <PathIcon.Transitions>
+                      <Transitions>
+                        <TransformOperationsTransition
+                          Easing="CubicEaseInOut" Property="RenderTransform"
+                          Duration="0:0:0.3"/>
+                      </Transitions>
+                    </PathIcon.Transitions>
+                  </PathIcon>
+
+                  <ContentPresenter
+                    HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+                    Content="{TemplateBinding Header}"/>
+                </DockPanel>
+
+                <ContentPresenter Content="{TemplateBinding SecondaryHeader}">
+                  <ContentPresenter.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <TemplateBinding Property="IsSecondaryHeaderVisible"/>
+                      <TemplateBinding
+                        Converter="{x:Static ObjectConverters.IsNotNull}"
+                        Property="SecondaryHeader"/>
+                    </MultiBinding>
+                  </ContentPresenter.IsVisible>
+                </ContentPresenter>
+              </StackPanel>
+            </DockPanel>
+          </ToggleButton>
+
+          <Border
+            x:Name="ContentBorder" Opacity="0.5"
+            RenderTransform="translateY(-16px)">
+            <Border.Transitions>
+              <Transitions>
+                <DoubleTransition
+                  Easing="CubicEaseOut" Property="Opacity"
+                  Duration="0:0:0.25"/>
+                <TransformOperationsTransition
+                  Easing="CubicEaseOut" Property="RenderTransform"
+                  Duration="0:0:0.3"/>
+              </Transitions>
+            </Border.Transitions>
+
+            <shadui:ContentExpandControl
+              x:Name="PART_ContentExpand"
+              Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
+              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"
+              IsVisible="{TemplateBinding IsExpanded}"/>
+          </Border>
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:pointerover /template/ PathIcon#PART_ChevronIcon">
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="^:expanded">
+      <Style Selector="^ /template/ PathIcon#PART_ChevronIcon">
+        <Setter Property="RenderTransform" Value="Rotate(90deg)"/>
+        <Setter Property="Opacity" Value="1"/>
+      </Style>
+
+      <Style Selector="^ /template/ Border#ContentBorder">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="RenderTransform" Value="translateY(0)"/>
+      </Style>
+    </Style>
+
+    <!--
+      Keep the completed marker fully opaque and attach the repeating animation only while the source activity is running.
+      Animating OpacityMask itself lets Avalonia interpolate the two gradient positions without a code-behind timer or a layout-affecting transform.
+      The high-opacity band starts and finishes outside the header,
+      so every cycle returns to the same quiet base opacity instead of visibly jumping at the repeat boundary.
+    -->
+    <Style Selector="^[IsRunning=True] /template/ DockPanel#PART_HeaderPanel">
+      <Style.Animations>
+        <Animation
+          IterationCount="Infinite" Duration="0:0:1.8">
+          <KeyFrame Cue="0%">
+            <Setter Property="OpacityMask">
+              <LinearGradientBrush StartPoint="-65%,0%" EndPoint="0%,0%">
+                <GradientStop Offset="0" Color="#B8FFFFFF"/>
+                <GradientStop Offset="0.38" Color="#B8FFFFFF"/>
+                <GradientStop Offset="0.5" Color="#FFFFFFFF"/>
+                <GradientStop Offset="0.62" Color="#B8FFFFFF"/>
+                <GradientStop Offset="1" Color="#B8FFFFFF"/>
+              </LinearGradientBrush>
+            </Setter>
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="OpacityMask">
+              <LinearGradientBrush StartPoint="100%,0%" EndPoint="165%,0%">
+                <GradientStop Offset="0" Color="#B8FFFFFF"/>
+                <GradientStop Offset="0.38" Color="#B8FFFFFF"/>
+                <GradientStop Offset="0.5" Color="#FFFFFFFF"/>
+                <GradientStop Offset="0.62" Color="#B8FFFFFF"/>
+                <GradientStop Offset="1" Color="#B8FFFFFF"/>
+              </LinearGradientBrush>
+            </Setter>
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

@@ -6,7 +6,7 @@ using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
-public class NumberConverters<T> where T : struct, INumber<T>
+public abstract class NumberConverters<T> where T : struct, INumber<T>
 {
     private static T ChangeType(object? value) => value is UnsetValueType ? default : (T)(Convert.ChangeType(value, typeof(T)) ?? default(T));
 
@@ -60,7 +60,21 @@ public class NumberConverters<T> where T : struct, INumber<T>
 
     public static IValueConverter FromEnum { get; } = new FromEnumConverter();
 
-    public static IValueConverter Humanize { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeNumber(n));
+    public static IValueConverter FromBoolean { get; } = new BidirectionalFuncValueConverter<bool, T>(
+        convert: static (b, _) => b ? T.One : T.Zero,
+        convertBack: static (n, _) => n != T.Zero
+    );
+
+    /// <summary>
+    /// Converts a number into a human-readable string with appropriate suffixes (K for thousands, M for millions, B for billions).
+    /// </summary>
+    public static IValueConverter HumanizeNumber { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeNumber(n));
+
+    /// <summary>
+    /// Converts a byte size into a human-readable string with appropriate units.
+    /// e.g., 1024 -> "1 KB", 1048576 -> "1 MB"
+    /// </summary>
+    public static IValueConverter HumanizeBytes { get; } = new FuncValueConverter<T, string>(n => Humanizer.HumanizeBytes(long.CreateChecked(n)));
 
     private sealed class SumConverter : IMultiValueConverter
     {
@@ -92,11 +106,8 @@ public class NumberConverters<T> where T : struct, INumber<T>
     }
 }
 
-public class Int32Converters : NumberConverters<int>;
-public class Int64Converters : NumberConverters<long>
-{
-    public static IValueConverter HumanizeBytes { get; } = new FuncValueConverter<long, string>(Humanizer.HumanizeBytes);
-}
-public class DoubleConverters : NumberConverters<double>;
-public class SingleConverters : NumberConverters<float>;
-public class DecimalConverters : NumberConverters<decimal>;
+public sealed class Int32Converters : NumberConverters<int>;
+public sealed class Int64Converters : NumberConverters<long>;
+public sealed class DoubleConverters : NumberConverters<double>;
+public sealed class SingleConverters : NumberConverters<float>;
+public sealed class DecimalConverters : NumberConverters<decimal>;

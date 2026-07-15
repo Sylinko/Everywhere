@@ -1,11 +1,26 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Everywhere.AI;
 using Everywhere.Chat;
 
 namespace Everywhere.Views;
 
-public class ChatMessageItemsControl : ItemsControl
+public sealed class ChatMessageItemsControl : ItemsControl
 {
+    /// <summary>
+    /// Defines the <see cref="ChatContext"/> property.
+    /// </summary>
+    public static readonly StyledProperty<ChatContext?> ChatContextProperty =
+        AvaloniaProperty.Register<ChatMessageItemsControl, ChatContext?>(nameof(ChatContext));
+
+    /// <summary>
+    /// Gets or sets the chat context whose selected branch is projected incrementally.
+    /// </summary>
+    public ChatContext? ChatContext
+    {
+        get => GetValue(ChatContextProperty);
+        set => SetValue(ChatContextProperty, value);
+    }
+
     /// <summary>
     /// Defines the <see cref="IsReadonly"/> property.
     /// </summary>
@@ -28,7 +43,8 @@ public class ChatMessageItemsControl : ItemsControl
         AvaloniaProperty.Register<ChatMessageItemsControl, Modalities>(nameof(SupportedModalities));
 
     /// <summary>
-    /// Gets or sets the modalities supported by this control. This can be used to determine which types of content (e.g., text, images, videos) the control can display or interact with.
+    /// Gets or sets the modalities supported by this control. This can be used to determine which
+    /// types of content (for example text, images, or videos) can be displayed or interacted with.
     /// </summary>
     public Modalities SupportedModalities
     {
@@ -36,94 +52,57 @@ public class ChatMessageItemsControl : ItemsControl
         set => SetValue(SupportedModalitiesProperty, value);
     }
 
-    private ChatMessageControl? _lastMessageControl;
+    static ChatMessageItemsControl()
+    {
+        ChatContextProperty.Changed.AddClassHandler<ChatMessageItemsControl>((control, _) => control.ResetItemsSource());
+    }
+
+    private void ResetItemsSource()
+    {
+        // ChatContext owns the projection companion. Detaching a view therefore releases only its
+        // binding, not the rows' presentation state; attaching another view to the same context
+        // receives the same IReadOnlyBindableList and stable row instances.
+        SetCurrentValue(ItemsSourceProperty, ChatContext?.Presentation.Rows);
+    }
 
     protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey)
     {
-        if (item is ChatMessageNode or ChatMessage)
+        if (item is ChatPresentationRow)
         {
-            recycleKey = typeof(ChatMessageControl);
+            recycleKey = typeof(ChatPresentationRowPresenter);
             return true;
         }
 
+        // The projection is the only supported source for this control.  Let the base
+        // ItemsControl handle an unexpected value rather than reviving the old raw-node
+        // compatibility path.
         return base.NeedsContainerOverride(item, index, out recycleKey);
     }
 
-    protected override void ContainerIndexChangedOverride(Control container, int oldIndex, int newIndex)
-    {
-        base.ContainerIndexChangedOverride(container, oldIndex, newIndex);
-
-        UpdateLastMessageControl(container as ChatMessageControl, newIndex);
-    }
-
-    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
-    {
-        return item switch
-        {
-            ChatMessageNode or ChatMessage => new ChatMessageControl(),
-            _ => base.CreateContainerForItemOverride(item, index, recycleKey)
-        };
-    }
+    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) =>
+        item is ChatPresentationRow ? new ChatPresentationRowPresenter() : base.CreateContainerForItemOverride(item, index, recycleKey);
 
     protected override void PrepareContainerForItemOverride(Control container, object? item, int index)
     {
         base.PrepareContainerForItemOverride(container, item, index);
 
-        if (container is not ChatMessageControl chatMessageControl)
-            return;
-
-        switch (item)
+        if (container is ChatPresentationRowPresenter presentationControl && item is ChatPresentationRow row)
         {
-            case ChatMessageNode chatMessageNode:
-                chatMessageControl.DataContext = chatMessageNode;
-                chatMessageControl.Content = chatMessageNode.Message;
-                break;
-            case ChatMessage chatMessage:
-                chatMessageControl.DataContext = chatMessage;
-                chatMessageControl.Content = chatMessage;
-                break;
+            presentationControl.SetRow(row, row.TryMarkPresented());
         }
-
-        UpdateLastMessageControl(chatMessageControl, index);
     }
 
     protected override void ClearContainerForItemOverride(Control container)
     {
-        if (container is ChatMessageControl chatMessageControl)
+        switch (container)
         {
-            if (ReferenceEquals(_lastMessageControl, chatMessageControl))
+            case ChatPresentationRowPresenter presentationControl:
             {
-                _lastMessageControl = null;
+                presentationControl.ClearRow();
+                break;
             }
-
-            chatMessageControl.IsLast = false;
-            chatMessageControl.Content = null;
-            chatMessageControl.DataContext = null;
         }
 
         base.ClearContainerForItemOverride(container);
-    }
-
-    private void UpdateLastMessageControl(ChatMessageControl? control, int index)
-    {
-        if (control is null)
-            return;
-
-        var isLast = index == Items.Count - 1;
-        if (isLast)
-        {
-            _lastMessageControl?.IsLast = false;
-            _lastMessageControl = control;
-            _lastMessageControl.IsLast = true;
-        }
-        else
-        {
-            if (ReferenceEquals(_lastMessageControl, control))
-            {
-                _lastMessageControl = null;
-            }
-
-            control.IsLast = false;
-        }
     }
 }

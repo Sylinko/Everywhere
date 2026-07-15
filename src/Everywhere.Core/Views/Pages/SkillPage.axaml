@@ -295,7 +295,7 @@
               <StackPanel Spacing="12">
                 <Border
                   Padding="14"
-                  Background="{DynamicResource SettingsItemBackgroundColor}"
+                  Background="{DynamicResource LightCardBackgroundColor}"
                   BorderBrush="{DynamicResource BorderColor}"
                   BorderThickness="1"
                   CornerRadius="{DynamicResource MdCornerRadius}">
@@ -341,7 +341,7 @@
 
                 <Border
                   Padding="14"
-                  Background="{DynamicResource SettingsItemBackgroundColor}"
+                  Background="{DynamicResource LightCardBackgroundColor}"
                   BorderBrush="{DynamicResource BorderColor}"
                   BorderThickness="1"
                   CornerRadius="{DynamicResource MdCornerRadius}">

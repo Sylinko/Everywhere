@@ -137,7 +137,7 @@
           VerticalAlignment="Center"
           Text="{I18N {x:Static LocaleKey.ChatPluginPage_Title}}"/>
 
-        <shadui:ButtonGroup
+        <shadui:ControlGroup
           HorizontalAlignment="Right" VerticalAlignment="Center"
           IsVisible="{Binding #McpTabItem.IsSelected}"
           Orientation="Horizontal">
@@ -155,7 +155,7 @@
               Kind="Import"
               Size="{DynamicResource FontSizeL}"/>
           </Button>
-        </shadui:ButtonGroup>
+        </shadui:ControlGroup>
       </DockPanel>
     </shadui:NavigationView.PaneHeader>
 
@@ -362,7 +362,7 @@
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+FunctionsTabItem">
                 <Panel>
                   <DataGrid
-                    Background="{DynamicResource SettingsItemBackgroundColor}"
+                    Background="{DynamicResource LightCardBackgroundColor}"
                     BorderBrush="{DynamicResource BorderColor}"
                     BorderThickness="1" CanUserReorderColumns="False"
                     CanUserResizeColumns="True" CanUserSortColumns="True"
@@ -468,7 +468,7 @@
                   <DockPanel LastChildFill="True">
                     <Border
                       DockPanel.Dock="Top" Padding="6,4"
-                      Background="{DynamicResource SettingsItemBackgroundColor}">
+                      Background="{DynamicResource LightCardBackgroundColor}">
                       <Grid ColumnDefinitions="Auto,Auto,*">
                         <ToggleSwitch
                           Grid.Column="0" Margin="8,0"

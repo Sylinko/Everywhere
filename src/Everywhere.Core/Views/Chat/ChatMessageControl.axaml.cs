@@ -2,21 +2,9 @@
 
 namespace Everywhere.Views;
 
-public class ChatMessageControl : ContentControl
-{
-    /// <summary>
-    /// Defines the <see cref="IsLast"/> property.
-    /// </summary>
-    public static readonly StyledProperty<bool> IsLastProperty =
-        AvaloniaProperty.Register<ChatMessageControl, bool>(nameof(IsLast));
-
-    /// <summary>
-    /// Gets or sets a value indicating whether this chat message is the last message in the chat history.
-    /// This can be used to control the visibility of certain UI elements, such as a "Continue" button for assistant messages.
-    /// </summary>
-    public bool IsLast
-    {
-        get => GetValue(IsLastProperty);
-        set => SetValue(IsLastProperty, value);
-    }
-}
+/// <summary>
+/// Renders an <see cref="Everywhere.Chat.ChatMessage"/> supplied through <see cref="ContentControl.Content"/>.
+/// Node-level actions belong to <see cref="ChatMessageNodeControl"/> and are accessed through
+/// its explicit <c>Node</c> property by the message templates.
+/// </summary>
+public class ChatMessageControl : ContentControl;

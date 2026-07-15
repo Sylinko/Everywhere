@@ -1,4 +1,5 @@
-﻿using Everywhere.Common;
+﻿using Everywhere.AI.Prompts;
+using Everywhere.Common;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 

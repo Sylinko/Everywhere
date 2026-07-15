@@ -59,7 +59,7 @@
                 <DockPanel
                   HorizontalAlignment="Right" HorizontalSpacing="4"
                   IsVisible="{TemplateBinding IsReasonInputVisible, Converter={x:Static BoolConverters.Not}}">
-                  <shadui:ButtonGroup
+                  <shadui:ControlGroup
                     DockPanel.Dock="Left"
                     CornerRadius="{DynamicResource SmCornerRadius}"
                     Orientation="Horizontal">
@@ -91,9 +91,9 @@
                         Kind="ChevronDown"
                         Size="{DynamicResource FontSizeM}"/>
                     </Button>
-                  </shadui:ButtonGroup>
+                  </shadui:ControlGroup>
 
-                  <shadui:ButtonGroup
+                  <shadui:ControlGroup
                     CornerRadius="{DynamicResource SmCornerRadius}"
                     Orientation="Horizontal">
                     <Button
@@ -117,7 +117,7 @@
                         Kind="ChevronDown"
                         Size="{DynamicResource FontSizeM}"/>
                     </Button>
-                  </shadui:ButtonGroup>
+                  </shadui:ControlGroup>
                 </DockPanel>
 
                 <DockPanel

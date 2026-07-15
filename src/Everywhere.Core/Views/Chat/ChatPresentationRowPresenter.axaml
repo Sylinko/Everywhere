@@ -1,0 +1,615 @@
+﻿<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:ChatPresentationRowPresenter}"
+    TargetType="v:ChatPresentationRowPresenter">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:ChatPresentationRowPresenter">
+        <ContentPresenter
+          x:Name="PART_RowContentPresenter"
+          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+          Content="{TemplateBinding Content}"
+          ContentTemplate="{TemplateBinding ContentTemplate}">
+          <ContentPresenter.Transitions>
+            <Transitions>
+              <DoubleTransition
+                Easing="CubicEaseOut" Property="Opacity"
+                Duration="0:0:0.16"/>
+              <TransformOperationsTransition
+                Easing="CubicEaseOut" Property="RenderTransform"
+                Duration="0:0:0.18"/>
+            </Transitions>
+          </ContentPresenter.Transitions>
+        </ContentPresenter>
+      </ControlTemplate>
+    </Setter>
+
+    <Setter Property="shadui:BindingAssist.DataTemplates">
+      <DataTemplates>
+        <DataTemplate x:DataType="v:ChatMessagePresentationRow">
+          <v:ChatMessageNodeControl Node="{Binding Node}"/>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:PendingAssistantPresentationRow">
+          <StackPanel
+            Margin="4,8,4,4" Spacing="6">
+            <shadui:Skeleton
+              Width="100" Height="20"
+              HorizontalAlignment="Left" CornerRadius="10"/>
+            <shadui:Skeleton
+              Height="14" CornerRadius="4"/>
+            <shadui:Skeleton
+              Width="220" Height="14"
+              HorizontalAlignment="Left" CornerRadius="4"/>
+          </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:ProcessSummaryPresentationRow">
+          <Border
+            Margin="0,12" Padding="0,0,0,6"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="0,0,0,1">
+            <ToggleButton
+              Classes="NoScale" DockPanel.Dock="Left"
+              Margin="0" Padding="0"
+              HorizontalContentAlignment="Left"
+              shadui:ButtonAssist.CheckedBackground="{DynamicResource TransparentColor}"
+              shadui:ButtonAssist.HoverBackground="{DynamicResource TransparentColor}"
+              shadui:ButtonAssist.HoverForeground="{DynamicResource ForegroundColor}"
+              BorderThickness="0" CornerRadius="0"
+              Foreground="{DynamicResource MutedColor}"
+              IsChecked="{Binding IsExpanded, Mode=TwoWay}">
+              <v:TrimmingStackPanel
+                IsHitTestVisible="False" MinimumLeadingVisibleItems="1"
+                MinimumTrailingVisibleItems="1" Orientation="Horizontal"
+                Spacing="4"
+                TextElement.Foreground="{Binding $parent[ToggleButton].Foreground}">
+                <v:TrimmingStackPanel.Styles>
+                  <Style Selector="LucideIcon#PART_Icon.Checked">
+                    <Setter Property="RenderTransform" Value="Rotate(90deg)"/>
+                  </Style>
+                </v:TrimmingStackPanel.Styles>
+
+                <TextBlock
+                  Text="{I18N {x:Static LocaleKey.ChatActivity_Completed}}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                <TextBlock
+                  IsVisible="{Binding Statistics.ReasoningCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                  <Run Text="•"/>
+                  <Run>
+                    <Run.Text>
+                      <I18N Key="{x:Static LocaleKey.ChatActivity_ReasoningCount}">
+                        <Binding
+                          Mode="OneWay" Path="Statistics.ReasoningCount"/>
+                      </I18N>
+                    </Run.Text>
+                  </Run>
+                </TextBlock>
+                <TextBlock
+                  IsVisible="{Binding Statistics.ToolCallCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                  <Run Text="•"/>
+                  <Run>
+                    <Run.Text>
+                      <I18N Key="{x:Static LocaleKey.ChatActivity_ToolCallCount}">
+                        <Binding
+                          Mode="OneWay" Path="Statistics.ToolCallCount"/>
+                      </I18N>
+                    </Run.Text>
+                  </Run>
+                </TextBlock>
+                <TextBlock
+                  IsVisible="{Binding Statistics.SubagentCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                  <Run Text="•"/>
+                  <Run>
+                    <Run.Text>
+                      <I18N Key="{x:Static LocaleKey.ChatActivity_SubagentCount}">
+                        <Binding
+                          Mode="OneWay" Path="Statistics.SubagentCount"/>
+                      </I18N>
+                    </Run.Text>
+                  </Run>
+                </TextBlock>
+
+                <LucideIcon
+                  x:Name="PART_Icon"
+                  Classes.Checked="{Binding $parent[ToggleButton].IsChecked}"
+                  Kind="ChevronRight"
+                  Size="{DynamicResource FontSizeM}">
+                  <LucideIcon.Transitions>
+                    <Transitions>
+                      <TransformOperationsTransition
+                        Easing="CubicEaseInOut" Property="RenderTransform"
+                        Duration="0:0:0.3"/>
+                    </Transitions>
+                  </LucideIcon.Transitions>
+                </LucideIcon>
+              </v:TrimmingStackPanel>
+            </ToggleButton>
+          </Border>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
+          <Panel>
+            <Expander
+              x:Name="PART_GroupExpander" Padding="12,8"
+              Background="{DynamicResource CardBackgroundColor}"
+              BorderBrush="{DynamicResource BorderColor60}"
+              Classes.Running="{Binding IsRunning}"
+              CornerRadius="{DynamicResource XlCornerRadius}"
+              IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+              <Expander.Header>
+                <Grid
+                  ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8"
+                  IsHitTestVisible="False">
+                  <Panel
+                    Width="18" Height="18"
+                    VerticalAlignment="Center">
+                    <shadui:Loading
+                      Width="16" Height="16"
+                      IsVisible="{Binding IsRunning}"/>
+                    <LucideIcon
+                      Foreground="{DynamicResource SuccessColor60}"
+                      IsVisible="{Binding !IsRunning}"
+                      Kind="CircleCheck" Size="18"/>
+                  </Panel>
+
+                  <v:ConditionalContentControl
+                    Grid.Column="1"
+                    Condition="{Binding IsRunning, Mode=OneWay}">
+                    <v:ConditionalContentControl.TrueContent>
+                      <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
+                        <TextBlock
+                          VerticalAlignment="Center"
+                          FontSize="{DynamicResource FontSizeS}"
+                          Text="{I18N {x:Static LocaleKey.ChatActivity_Working}}"
+                          TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                      </DataTemplate>
+                    </v:ConditionalContentControl.TrueContent>
+                    <v:ConditionalContentControl.FalseContent>
+                      <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
+                        <v:TrimmingStackPanel
+                          MinimumLeadingVisibleItems="1" Orientation="Horizontal"
+                          Spacing="4">
+                          <TextBlock
+                            Classes="Muted"
+                            FontSize="{DynamicResource FontSizeS}"
+                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                            <TextBlock.Text>
+                              <I18N Key="{x:Static LocaleKey.ChatActivity_CompletedActivities}">
+                                <Binding
+                                  Mode="OneWay" Path="Items.Count"/>
+                              </I18N>
+                            </TextBlock.Text>
+                          </TextBlock>
+                          <TextBlock
+                            Classes="Muted"
+                            FontSize="{DynamicResource FontSizeS}"
+                            IsVisible="{Binding Statistics.ReasoningCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                            <Run Text="•"/>
+                            <Run>
+                              <Run.Text>
+                                <I18N Key="{x:Static LocaleKey.ChatActivity_ReasoningCount}">
+                                  <Binding
+                                    Mode="OneWay" Path="Statistics.ReasoningCount"/>
+                                </I18N>
+                              </Run.Text>
+                            </Run>
+                          </TextBlock>
+                          <TextBlock
+                            Classes="Muted"
+                            FontSize="{DynamicResource FontSizeS}"
+                            IsVisible="{Binding Statistics.ToolCallCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                            <Run Text="•"/>
+                            <Run>
+                              <Run.Text>
+                                <I18N Key="{x:Static LocaleKey.ChatActivity_ToolCallCount}">
+                                  <Binding
+                                    Mode="OneWay" Path="Statistics.ToolCallCount"/>
+                                </I18N>
+                              </Run.Text>
+                            </Run>
+                          </TextBlock>
+                          <TextBlock
+                            Classes="Muted"
+                            FontSize="{DynamicResource FontSizeS}"
+                            IsVisible="{Binding Statistics.SubagentCount, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                            <Run Text="•"/>
+                            <Run>
+                              <Run.Text>
+                                <I18N Key="{x:Static LocaleKey.ChatActivity_SubagentCount}">
+                                  <Binding
+                                    Mode="OneWay" Path="Statistics.SubagentCount"/>
+                                </I18N>
+                              </Run.Text>
+                            </Run>
+                          </TextBlock>
+                        </v:TrimmingStackPanel>
+                      </DataTemplate>
+                    </v:ConditionalContentControl.FalseContent>
+                  </v:ConditionalContentControl>
+
+                  <TextBlock
+                    Classes="Muted Small" Grid.Column="2"
+                    VerticalAlignment="Center">
+                    <Interaction.Behaviors>
+                      <in:PeriodicRefreshTextBehavior IsEnabled="{Binding IsRunning}"/>
+                    </Interaction.Behaviors>
+
+                    <TextBlock.Text>
+                      <MultiBinding Converter="{x:Static vc:LiveElapsedConverters.ToDisplayText}">
+                        <Binding
+                          Mode="OneWay" Path="CreatedAt"/>
+                        <Binding
+                          Mode="OneWay" Path="FinishedAt"/>
+                      </MultiBinding>
+                    </TextBlock.Text>
+                  </TextBlock>
+                </Grid>
+              </Expander.Header>
+
+              <v:ConditionalContentControl Condition="{Binding IsExpanded}">
+                <v:ConditionalContentControl.TrueContent>
+                  <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
+                    <ScrollViewer
+                      MaxHeight="320" Margin="0,8,0,0"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                      <shadui:Timeline
+                        Margin="9,0,0,0" Padding="-12,0,0,0"
+                        DotSize="0" Spacing="12"
+                        Stroke="{DynamicResource BorderColor}"
+                        StrokeThickness="2">
+                        <ItemsControl ItemsSource="{Binding Items}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Spacing="8"/>
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="v:ActivityItemPresentationRow">
+                              <v:ChatPresentationRowPresenter
+                                Classes="Nested"
+                                shadui:Timeline.IsLoading="{Binding IsRunning}"
+                                Content="{Binding}"/>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </shadui:Timeline>
+                    </ScrollViewer>
+                  </DataTemplate>
+                </v:ConditionalContentControl.TrueContent>
+              </v:ConditionalContentControl>
+            </Expander>
+
+            <v:GlowBorderOverlay
+              CornerRadius="{DynamicResource XlCornerRadius}"
+              GlowColor="{DynamicResource PrimaryColor}"
+              GlowOpacity="{Binding IsRunning, Mode=OneWay, Converter={x:Static vc:DoubleConverters.FromBoolean}}">
+              <v:GlowBorderOverlay.Transitions>
+                <Transitions>
+                  <!--
+                    The projection waits 400 ms before changing the completed Group's structural shape.
+                    This independent 320 ms opacity transition therefore finishes before a small Group is lifted into direct activity rows or a large Group is collapsed.
+                  -->
+                  <DoubleTransition
+                    Easing="CubicEaseOut" Property="GlowOpacity"
+                    Duration="0:0:0.32"/>
+                </Transitions>
+              </v:GlowBorderOverlay.Transitions>
+            </v:GlowBorderOverlay>
+          </Panel>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:ReasoningActivityItemPresentationRow">
+          <v:ActivityMarker
+            Margin="4,0" HorizontalSpacing="10"
+            IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+            IsRunning="{Binding IsRunning}"
+            VerticalSpacing="2">
+            <v:ActivityMarker.Icon>
+              <LucideIcon
+                shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
+                Kind="{Binding Icon}"
+                Size="{DynamicResource FontSizeL}"/>
+            </v:ActivityMarker.Icon>
+
+            <v:ActivityMarker.Header>
+              <TextBlock
+                VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                FontWeight="SemiBold" IsHitTestVisible="False"
+                MaxLines="1"
+                Text="{Binding HeaderKey^}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.Header>
+
+            <v:ActivityMarker.SecondaryHeader>
+              <TextBlock
+                Classes="Muted" VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeXs}"
+                IsHitTestVisible="False" MaxLines="1"
+                Text="{Binding PreviewText}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.SecondaryHeader>
+
+            <v:ActivityMarker.IsSecondaryHeaderVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding
+                  Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                  Path="PreviewText"/>
+                <Binding Path="IsRunning"/>
+                <Binding
+                  Converter="{x:Static BoolConverters.Not}"
+                  Path="IsExpanded"/>
+              </MultiBinding>
+            </v:ActivityMarker.IsSecondaryHeaderVisible>
+
+            <!--
+              Reasoning Markdown is intentionally built only after the item is expanded.
+              This is important for Group timelines: collapsed activity rows stay cheap,
+              and a virtualized outer container never constructs a hidden Markdown visual tree on their behalf.
+            -->
+            <v:ConditionalContentControl Condition="{Binding IsExpanded}">
+              <v:ConditionalContentControl.TrueContent>
+                <DataTemplate x:DataType="v:ReasoningActivityItemPresentationRow">
+                  <ScrollViewer
+                    MaxHeight="360" Margin="26,2,0,0"
+                    HorizontalScrollBarVisibility="Disabled">
+                    <SelectableTextBlock
+                      FontSize="{DynamicResource FontSizeS}"
+                      Foreground="{DynamicResource MutedColor}"
+                      Text="{Binding ReasoningSpan?.ReasoningOutput}"
+                      TextWrapping="Wrap"/>
+                  </ScrollViewer>
+                </DataTemplate>
+              </v:ConditionalContentControl.TrueContent>
+            </v:ConditionalContentControl>
+          </v:ActivityMarker>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
+          <v:ActivityMarker
+            Margin="4,0" HorizontalSpacing="10"
+            IsExpandable="{Binding DisplayBlocks.Count, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+            IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+            IsRunning="{Binding IsRunning}"
+            VerticalSpacing="2">
+            <v:ActivityMarker.Icon>
+              <LucideIcon
+                shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
+                Kind="{Binding Icon}"
+                Size="{DynamicResource FontSizeL}"/>
+            </v:ActivityMarker.Icon>
+
+            <v:ActivityMarker.Header>
+              <TextBlock
+                VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                FontWeight="SemiBold" MaxLines="1"
+                Text="{Binding HeaderKey^}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.Header>
+
+            <v:ActivityMarker.SecondaryHeader>
+              <TextBlock
+                Classes="Muted" VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeXs}"
+                MaxLines="1"
+                Text="{Binding PreviewText}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.SecondaryHeader>
+
+            <v:ActivityMarker.IsSecondaryHeaderVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding
+                  Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                  Path="PreviewText"/>
+                <Binding Path="IsRunning"/>
+                <Binding
+                  Converter="{x:Static BoolConverters.Not}"
+                  Path="IsExpanded"/>
+              </MultiBinding>
+            </v:ActivityMarker.IsSecondaryHeaderVisible>
+
+            <!--
+              Full plugin blocks remain available through the existing presenter,
+              but are created only while this item is expanded.
+              TerminalView and other heavyweight blocks therefore do not enter the visual tree merely because a function call produced a result.
+            -->
+            <v:ConditionalContentControl Condition="{Binding IsExpanded}">
+              <v:ConditionalContentControl.TrueContent>
+                <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
+                  <ItemsControl ItemsSource="{Binding DisplayBlocks}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <v:ChatPluginDisplayBlockPresenter
+                          Margin="26,2,0,0"
+                          Content="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </DataTemplate>
+              </v:ConditionalContentControl.TrueContent>
+            </v:ConditionalContentControl>
+          </v:ActivityMarker>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:BusyActivityItemPresentationRow">
+          <!--
+            Runtime-only busy activities never construct a detail VisualTree.
+            They still use the same lightweight marker as persisted activities so their icon, title, shimmer, and Group timeline alignment remain visually consistent.
+          -->
+          <v:ActivityMarker
+            Margin="4,0" HorizontalSpacing="10"
+            IsExpandable="False"
+            IsRunning="{Binding IsRunning}"
+            VerticalSpacing="2">
+            <v:ActivityMarker.Icon>
+              <LucideIcon
+                shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
+                Kind="{Binding Icon}"
+                Size="{DynamicResource FontSizeL}"/>
+            </v:ActivityMarker.Icon>
+
+            <v:ActivityMarker.Header>
+              <TextBlock
+                VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeS}"
+                FontWeight="SemiBold" IsHitTestVisible="False"
+                MaxLines="1"
+                Text="{Binding HeaderKey^}"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </v:ActivityMarker.Header>
+          </v:ActivityMarker>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:AssistantOutputPresentationRow">
+          <ContentControl
+            Margin="4,8"
+            Content="{Binding Span}">
+            <ContentControl.DataTemplates>
+              <DataTemplate x:DataType="chat:AssistantChatMessageTextSpan">
+                <md:MarkdownRenderer
+                  LinkCommand="{Binding $parent[v:ChatWindow].LaunchLinkCommand}"
+                  MarkdownBuilder="{Binding ContentMarkdownBuilder}"/>
+              </DataTemplate>
+              <DataTemplate x:DataType="chat:AssistantChatMessageImageSpan">
+                <Image
+                  MaxHeight="{Binding $parent[ContentControl].Bounds.Width}"
+                  Source="{Binding ImageOutput.Image, FallbackValue={x:Null}}"/>
+              </DataTemplate>
+            </ContentControl.DataTemplates>
+          </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:AssistantErrorPresentationRow">
+          <StackPanel
+            Margin="4,0" Spacing="4">
+            <Border
+              Padding="8,4" HorizontalAlignment="Left"
+              Background="{DynamicResource ErrorColor20}"
+              CornerRadius="4">
+              <SelectableTextBlock
+                Text="{Binding Assistant.ErrorMessageKey^, FallbackValue={x:Null}}"
+                TextWrapping="Wrap"/>
+            </Border>
+            <Button
+              Classes="Primary Compact" HorizontalAlignment="Left"
+              Command="{Binding $parent[v:ChatWindow].ViewModel.ContinueCommand}"
+              CommandParameter="{Binding AssistantNode}"
+              Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}">
+              <Button.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="IsTerminal"/>
+                  <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
+                </MultiBinding>
+              </Button.IsVisible>
+            </Button>
+          </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:NoResponsePresentationRow">
+          <TextBlock
+            Classes="Muted" Margin="4,0"
+            Text="{I18N {x:Static LocaleKey.ChatActivity_NoResponse}}"/>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:TurnFooterPresentationRow">
+          <StackPanel
+            Margin="4,0" Spacing="3">
+            <v:ConditionalContentControl
+              Condition="{Binding $parent[v:ChatWindow].ViewModel.Settings.ChatWindow.ShowChatStatistics}"
+              ContentDataBinding="{Binding AssistantMessage, Mode=OneTime}">
+              <v:ConditionalContentControl.TrueContent>
+                <DataTemplate x:DataType="chat:AssistantChatMessage">
+                  <SelectableTextBlock
+                    Classes="Muted" HorizontalAlignment="Left"
+                    FontSize="11" TextWrapping="Wrap">
+                    <Interaction.Behaviors>
+                      <in:PeriodicRefreshTextBehavior IsEnabled="{Binding IsBusy}"/>
+                    </Interaction.Behaviors>
+
+                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_InputTokenCountRun}}"/>
+                    <Run Text="{Binding UsageDetails.InputTokenCount, Mode=OneWay}"/><Run Text=" · "/>
+                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_OutputTokenCountRun}}"/>
+                    <Run Text="{Binding UsageDetails.OutputTokenCount, Mode=OneWay}"/><Run Text=" · "/>
+                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun}}"/>
+                    <Run Text="{Binding UsageDetails.TotalTokenCount, Mode=OneWay}"/><Run Text=" · "/>
+                    <Run Text="{Binding UsageDetails.TokensPerSecond, StringFormat='{}{0:F1} tokens/s', Mode=OneWay}"/><Run Text=" · "/>
+                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun}}"/>
+                    <Run>
+                      <Run.Text>
+                        <MultiBinding Converter="{x:Static vc:LiveElapsedConverters.ToDisplayText}">
+                          <Binding
+                            Mode="OneWay" Path="CreatedAt"/>
+                          <Binding
+                            Mode="OneWay" Path="FinishedAt"/>
+                          <Binding
+                            Mode="OneWay" Path="IsBusy"/>
+                        </MultiBinding>
+                      </Run.Text>
+                    </Run>
+                  </SelectableTextBlock>
+                </DataTemplate>
+              </v:ConditionalContentControl.TrueContent>
+            </v:ConditionalContentControl>
+
+            <v:ConditionalContentControl
+              Condition="{Binding $parent[v:ChatMessageItemsControl].IsReadonly, Mode=OneTime}"
+              ContentDataBinding="{Binding AssistantNode, Mode=OneTime}">
+              <v:ConditionalContentControl.FalseContent>
+                <DataTemplate x:DataType="chat:ChatMessageNode">
+                  <v:ChatMessageOperationPanel>
+                    <NumericUpDown
+                      Margin="0,0,4,0"
+                      IsVisible="{Binding Parent?.ChoiceCount, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding Parent?.ChoiceCount, FallbackValue=1}"
+                      Minimum="1"
+                      Value="{Binding Parent?.ChoiceIndex, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.RetryCommand}"
+                      CommandParameter="{Binding Mode=OneTime}"
+                      Content="{LucideIconContent RefreshCcw}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_RetryButton_Content}}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
+                      CommandParameter="{Binding Message, Mode=OneTime}"
+                      Content="{LucideIconContent Copy}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                  </v:ChatMessageOperationPanel>
+                </DataTemplate>
+              </v:ConditionalContentControl.FalseContent>
+            </v:ConditionalContentControl>
+          </StackPanel>
+        </DataTemplate>
+      </DataTemplates>
+    </Setter>
+
+    <Style Selector="^.Nested /template/ v|ActivityMarker[IsRunning=True]">
+      <Setter Property="Icon">
+        <Template>
+          <Control
+            Width="{DynamicResource FontSizeL}"
+            Height="1"
+            shadui:Timeline.Anchor="{Binding $self.Width, Converter={x:Static shadui:TimelineConverters.HalfDouble}}"/>
+        </Template>
+      </Setter>
+    </Style>
+
+    <Style Selector="^ /template/ Expander#PART_GroupExpander.Running">
+      <Setter Property="shadui:ExpanderAssist.HeaderBackground" Value="{x:Null}"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

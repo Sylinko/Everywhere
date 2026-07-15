@@ -1,4 +1,4 @@
-﻿namespace Everywhere.AI;
+﻿namespace Everywhere.AI.Prompts;
 
 /// <summary>
 /// Contains the built-in prompt texts that ship with the application.
@@ -44,6 +44,7 @@ public static class DefaultPrompts
         
         <FunctionCallingInstructions>
         Functions can be dynamic and may change at any time. Always refer to the latest tool list provided in the tool call instructions.
+        Prefer call multiple tools in parallel if possible instead of sequentially to improve efficiency.
         NEVER print out a codeblock with arguments to run unless the user asked for it. If you cannot make a function call, explain why (Maybe the user forgot to enable it?).
         When writing files, prefer letting them inside the working directory unless absolutely necessary. Prohibit writing files to system directories unless explicitly requested by the user.
         </FunctionCallingInstructions>

@@ -1,0 +1,147 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ChatActivityPreviewPresenter}"
+    TargetType="v:ChatActivityPreviewPresenter">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:ChatActivityPreviewPresenter">
+        <ContentPresenter
+          Content="{TemplateBinding Content}"
+          ContentTemplate="{TemplateBinding ContentTemplate}"/>
+      </ControlTemplate>
+    </Setter>
+
+    <Setter Property="shadui:BindingAssist.DataTemplates">
+      <DataTemplates>
+        <DataTemplate DataType="plugins:ChatPluginTextDisplayBlock">
+          <TextBlock
+            Classes="Muted" FontSize="11"
+            MaxLines="2"
+            Text="{Binding Text}"
+            TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginDynamicLocaleKeyDisplayBlock">
+          <TextBlock
+            Classes="Muted" FontSize="11"
+            MaxLines="2"
+            Text="{Binding Key^}"
+            TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginProgressDisplayBlock">
+          <StackPanel Spacing="3">
+            <TextBlock
+              Classes="Muted" FontSize="11"
+              Text="{Binding HeaderKey^}"/>
+            <ProgressBar
+              Height="3" Maximum="1"
+              Minimum="0"
+              Value="{Binding Progress}"/>
+          </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginTerminalDisplayBlock">
+          <StackPanel
+            Orientation="Horizontal" Spacing="5">
+            <LucideIcon
+              Kind="SquareTerminal" Size="13"/>
+            <TextBlock
+              Classes="Muted" FontSize="11"
+              IsVisible="{Binding FinishedAt, Converter={x:Static ObjectConverters.IsNull}}"
+              TextTrimming="CharacterEllipsis">
+              <TextBlock.Text>
+                <I18N Key="{x:Static LocaleKey.ChatActivity_TerminalRunning}">
+                  <Binding Path="Command"/>
+                </I18N>
+              </TextBlock.Text>
+            </TextBlock>
+            <TextBlock
+              Classes="Muted" FontSize="11"
+              IsVisible="{Binding FinishedAt, Converter={x:Static ObjectConverters.IsNotNull}}"
+              TextTrimming="CharacterEllipsis">
+              <TextBlock.Text>
+                <I18N Key="{x:Static LocaleKey.ChatActivity_TerminalFinished}">
+                  <Binding Path="Command"/>
+                </I18N>
+              </TextBlock.Text>
+            </TextBlock>
+          </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginFileReferencesDisplayBlock">
+          <ItemsControl ItemsSource="{Binding References}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel ItemSpacing="4"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="plugins:ChatPluginFileReference">
+                <Button
+                  Classes="Ghost Compact"
+                  Command="{Binding OpenFileLocationCommand}"
+                  ToolTip.Tip="{Binding FullPath}">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="3">
+                    <LucideIcon
+                      Kind="File" Size="12"/>
+                    <TextBlock
+                      FontSize="11"
+                      Text="{Binding FullPath}"
+                      TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginUrlsDisplayBlock">
+          <ItemsControl ItemsSource="{Binding Urls}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel ItemSpacing="4"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="plugins:ChatPluginUrl">
+                <Button
+                  Classes="Ghost Compact"
+                  Command="{Binding $parent[v:ChatActivityPreviewPresenter].OpenUrlCommand}"
+                  CommandParameter="{Binding Url}">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="3">
+                    <LucideIcon
+                      Kind="Link" Size="12"/>
+                    <TextBlock
+                      FontSize="11"
+                      Text="{Binding DisplayNameKey^}"/>
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="plugins:ChatPluginSubagentDisplayBlock">
+          <Button
+            Classes="Ghost Compact" HorizontalAlignment="Left"
+            Command="{Binding $parent[v:ChatActivityPreviewPresenter].OpenSubagentCommand}"
+            CommandParameter="{Binding}">
+            <StackPanel
+              Orientation="Horizontal" Spacing="5">
+              <LucideIcon
+                Kind="Bot" Size="13"/>
+              <TextBlock
+                FontSize="11"
+                Text="{I18N {x:Static LocaleKey.ChatActivity_OpenSubagent}}"/>
+            </StackPanel>
+          </Button>
+        </DataTemplate>
+      </DataTemplates>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

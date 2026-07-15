@@ -1,0 +1,40 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:GlowBorder}"
+    TargetType="v:GlowBorder">
+    <Setter Property="GlowOpacity" Value="0"/>
+    <Setter Property="ClipToBounds" Value="True"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:GlowBorder">
+        <!--
+          Content clipping and glow rasterization intentionally live on sibling layers. The
+          content still follows the host CornerRadius, while GlowBorderOverlay supplies its own
+          antialiased SKRoundRect and is not multiplied by a second rounded clip coverage mask.
+        -->
+        <Panel>
+          <Border
+            ClipToBounds="{TemplateBinding ClipToBounds}"
+            CornerRadius="{TemplateBinding CornerRadius}">
+            <ContentPresenter
+              Content="{TemplateBinding Content}"
+              ContentTemplate="{TemplateBinding ContentTemplate}"/>
+          </Border>
+          <v:GlowBorderOverlay
+            CornerRadius="{TemplateBinding CornerRadius}"
+            GlowColor="{TemplateBinding GlowColor}"
+            GlowOpacity="{TemplateBinding GlowOpacity}"
+            IsHitTestVisible="False"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition
+          Easing="CubicEaseOut" Property="GlowOpacity"
+          Duration="0:0:0.32"/>
+      </Transitions>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

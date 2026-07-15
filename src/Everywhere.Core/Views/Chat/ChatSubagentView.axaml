@@ -1,0 +1,12 @@
+<v:ChatSubagentView
+  x:Class="Everywhere.Views.ChatSubagentView" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="using:Everywhere.Views">
+  <Border
+    MinWidth="480" MaxHeight="720"
+    Padding="12" ClipToBounds="False">
+    <v:ChatMessageItemsControl
+      Padding="4,0"
+      ChatContext="{Binding ChatContext, RelativeSource={RelativeSource AncestorType=v:ChatSubagentView}}"
+      SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType=v:ChatSubagentView}}"/>
+  </Border>
+</v:ChatSubagentView>

@@ -265,27 +265,24 @@
                 </Transitions>
               </Border.Transitions>
 
-              <ContentControl
-                x:Name="ContentExpandControlContainer"
+              <shadui:ContentExpandControl
+                x:Name="PART_ContentExpand"
+                Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
+                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                 IsVisible="{Binding ElementName=PART_ToggleButton, Path=IsChecked}">
-                <shadui:ContentExpandControl
-                  x:Name="PART_ContentExpand"
-                  Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
-                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
-                  <v:ConditionalContentControl
-                    Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
-                    <v:ConditionalContentControl.TrueContent>
-                      <DataTemplate x:DataType="c:SettingsItem">
-                        <v:SettingsItemsControl
-                          Margin="0,16,0,0" HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding Children}"/>
-                      </DataTemplate>
-                    </v:ConditionalContentControl.TrueContent>
-                  </v:ConditionalContentControl>
-                </shadui:ContentExpandControl>
-              </ContentControl>
+                <v:ConditionalContentControl
+                  Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
+                  <v:ConditionalContentControl.TrueContent>
+                    <DataTemplate x:DataType="c:SettingsItem">
+                      <v:SettingsItemsControl
+                        Margin="0,16,0,0" HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding Children}"/>
+                    </DataTemplate>
+                  </v:ConditionalContentControl.TrueContent>
+                </v:ConditionalContentControl>
+              </shadui:ContentExpandControl>
             </Border>
           </DockPanel>
         </Border>

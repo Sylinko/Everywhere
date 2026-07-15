@@ -10,7 +10,7 @@
           <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
           <ListBox
             x:Name="PART_ListBox"
-            Background="{DynamicResource SettingsItemBackgroundColor}"
+            Background="{DynamicResource LightCardBackgroundColor}"
             CornerRadius="{DynamicResource XlCornerRadius}"
             ItemsSource="{Binding ConfiguratorModels, RelativeSource={RelativeSource TemplatedParent}}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"

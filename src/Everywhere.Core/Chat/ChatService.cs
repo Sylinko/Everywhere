@@ -587,7 +587,7 @@ public sealed partial class ChatService : IChatService
         activity?.SetTag("gen_ai.messages.count", chatHistory.Count);
 
         AuthorRole? authorRole = null;
-        IDisposable? callingToolsBusyMessage = null;
+        IDisposable? callingToolsActivity = null;
         AssistantChatMessageSpan? span = null;
 
         var usage = new ChatUsageDetails(); // Each generation has its own usage details.
@@ -704,9 +704,11 @@ public sealed partial class ChatService : IChatService
                 authorRole ??= streamingContent.Role;
                 var hasFunctionCallUpdates = functionCallContentBuilder.Append(streamingContent);
 
-                if (callingToolsBusyMessage is null && hasFunctionCallUpdates)
+                if (callingToolsActivity is null && hasFunctionCallUpdates)
                 {
-                    callingToolsBusyMessage = chatContext.SetBusyMessage(new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
+                    callingToolsActivity = chatContext.SetBusyActivity(
+                        LucideIconKind.Hammer,
+                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
                 }
             }
         }
@@ -730,7 +732,7 @@ public sealed partial class ChatService : IChatService
             if (assistantChatMessage.Spans is { Count: > 0 } spans)
                 spans[^1].FinishedAt ??= generationEndTime;
 
-            callingToolsBusyMessage?.Dispose();
+            callingToolsActivity?.Dispose();
             await _statisticsRecorder.CompleteModelInvocationAsync(
                 invocationId,
                 invocationUsage,

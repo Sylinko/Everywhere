@@ -3625,4 +3625,52 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>Advanced Settings</value>
     </data>
+    <data name="ChatActivity_ReasoningCount" xml:space="preserve">
+        <value>Reasoning {0}</value>
+    </data>
+    <data name="ChatActivity_ToolCallCount" xml:space="preserve">
+        <value>Tools {0}</value>
+    </data>
+    <data name="ChatActivity_SubagentCount" xml:space="preserve">
+        <value>Subagents {0}</value>
+    </data>
+    <data name="ChatActivity_NoResponse" xml:space="preserve">
+        <value>No response was produced.</value>
+    </data>
+    <data name="ChatActivity_OpenSubagent" xml:space="preserve">
+        <value>Open subagent</value>
+    </data>
+    <data name="ChatActivity_Back" xml:space="preserve">
+        <value>Back</value>
+    </data>
+    <data name="ChatActivity_CompletedActivities" xml:space="preserve">
+        <value>Completed {0} activities</value>
+    </data>
+    <data name="ChatActivity_Working" xml:space="preserve">
+        <value>In Progress</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0}s</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0}m {1}s</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0}h {1}m</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0}d {1}h</value>
+    </data>
+    <data name="ChatActivity_GenericActivity" xml:space="preserve">
+        <value>Working</value>
+    </data>
+    <data name="ChatActivity_TerminalRunning" xml:space="preserve">
+        <value>Running {0}</value>
+    </data>
+    <data name="ChatActivity_TerminalFinished" xml:space="preserve">
+        <value>Ran {0}</value>
+    </data>
+    <data name="ChatActivity_Completed" xml:space="preserve">
+        <value>Completed</value>
+    </data>
 </root>

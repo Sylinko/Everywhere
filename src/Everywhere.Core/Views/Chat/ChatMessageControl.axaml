@@ -1,8 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ChatMessageControl}"
     TargetType="v:ChatMessageControl">
@@ -17,21 +17,15 @@
             </Style>
 
             <Style Selector="Border.ChatBubble">
-              <Setter Property="Padding" Value="8,4"/>
-              <Setter Property="CornerRadius" Value="12"/>
-              <Setter Property="BorderThickness" Value="1"/>
-              <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
-              <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+              <Setter Property="Padding" Value="12,6"/>
+              <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
+              <Setter Property="Background" Value="{DynamicResource PrimaryColor10}"/>
             </Style>
 
             <Style Selector="Border.Invalid">
               <Setter Property="Background" Value="{DynamicResource ErrorColor20}"/>
               <Setter Property="BorderThickness" Value="0"/>
               <Setter Property="ToolTip.Tip" Value="Invalid"/>
-            </Style>
-
-            <Style Selector="Button LucideIcon">
-              <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
             </Style>
 
             <Style Selector="SelectableTextBlock">
@@ -52,67 +46,6 @@
             <Style Selector="ItemsControl:empty">
               <Setter Property="IsVisible" Value="False"/>
             </Style>
-
-            <Style Selector="NumericUpDown">
-              <Setter Property="Background" Value="{x:Null}"/>
-              <Setter Property="BorderBrush" Value="{x:Null}"/>
-              <Setter Property="BorderThickness" Value="0"/>
-              <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
-              <Setter Property="Template">
-                <ControlTemplate TargetType="NumericUpDown">
-                  <ButtonSpinner
-                    Name="PART_Spinner" HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center">
-                    <Panel>
-                      <!--  TextBox is useless but necessary for NumericUpDown  -->
-                      <TextBox
-                        x:Name="PART_TextBox" IsVisible="False"/>
-                      <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="{DynamicResource FontSizeS}"
-                        Foreground="{TemplateBinding Foreground}"
-                        TextAlignment="Center" TextWrapping="NoWrap">
-                        <Run Text="{Binding Value, StringFormat={}{0:F0}, RelativeSource={RelativeSource TemplatedParent}}"/>
-                        <Run Text="/"/>
-                        <Run Text="{Binding Maximum, StringFormat={}{0:F0}, RelativeSource={RelativeSource TemplatedParent}}"/>
-                      </TextBlock>
-                    </Panel>
-                  </ButtonSpinner>
-                </ControlTemplate>
-              </Setter>
-
-              <Style Selector="^ ButtonSpinner">
-                <Setter Property="Template">
-                  <ControlTemplate>
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                      <RepeatButton
-                        Name="PART_DecreaseButton" Grid.Column="0"
-                        Padding="2"
-                        Background="{DynamicResource TransparentColor}"
-                        BorderBrush="{x:Null}"
-                        BorderThickness="0"
-                        Content="{LucideIconContent ChevronLeft, Size=18}"
-                        Focusable="False"
-                        Foreground="{TemplateBinding Foreground}"/>
-                      <ContentPresenter
-                        Name="PART_ContentPresenter" Grid.Column="1"
-                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                        Content="{TemplateBinding Content}"
-                        TabIndex="1"/>
-                      <RepeatButton
-                        Name="PART_IncreaseButton" Grid.Column="2"
-                        Padding="2"
-                        Background="{DynamicResource TransparentColor}"
-                        BorderBrush="{x:Null}"
-                        BorderThickness="0"
-                        Content="{LucideIconContent ChevronRight, Size=18}"
-                        Focusable="False"
-                        Foreground="{TemplateBinding Foreground}"/>
-                    </Grid>
-                  </ControlTemplate>
-                </Setter>
-              </Style>
-            </Style>
           </ContentPresenter.Styles>
         </ContentPresenter>
       </ControlTemplate>
@@ -120,327 +53,6 @@
     <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="shadui:BindingAssist.DataTemplates">
       <DataTemplates>
-        <DataTemplate x:DataType="chat:AssistantChatMessage">
-          <StackPanel
-            Classes="ChatMessage Assistant" Background="Transparent"
-            Orientation="Vertical" Spacing="4">
-            <v:ConditionalContentControl
-              x:Name="LoadingSkeleton" Margin="4,8,4,4"
-              Condition="{Binding $self.IsVisible}">
-              <v:LazyIndexedContentControl.IsVisible>
-                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding Path="IsBusy"/>
-                  <Binding
-                    Converter="{x:Static vc:Int32Converters.IsZero}"
-                    Path="Spans.Count"/>
-                </MultiBinding>
-              </v:LazyIndexedContentControl.IsVisible>
-
-              <v:ConditionalContentControl.TrueContent>
-                <DataTemplate>
-                  <StackPanel Spacing="6">
-                    <shadui:Skeleton
-                      Width="100"
-                      Height="{DynamicResource FontSizeXl}"
-                      HorizontalAlignment="Left"
-                      Background="{DynamicResource BorderColor60}"
-                      CornerRadius="12"/>
-                    <Grid
-                      ColumnDefinitions="3*,30,*" ColumnSpacing="6">
-                      <shadui:Skeleton
-                        Grid.Column="0"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                      <shadui:Skeleton
-                        Grid.Column="1"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                      <shadui:Skeleton
-                        Grid.Column="2"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                    </Grid>
-                    <Grid
-                      ColumnDefinitions="40,6*,3*,*" ColumnSpacing="6">
-                      <shadui:Skeleton
-                        Grid.Column="0"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                      <shadui:Skeleton
-                        Grid.Column="1"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                      <shadui:Skeleton
-                        Grid.Column="2"
-                        Height="{DynamicResource FontSizeM}"
-                        Background="{DynamicResource MutedColor}"
-                        CornerRadius="4"/>
-                    </Grid>
-                  </StackPanel>
-                </DataTemplate>
-              </v:ConditionalContentControl.TrueContent>
-            </v:ConditionalContentControl>
-
-            <ItemsControl
-              ClipToBounds="False"
-              ItemsSource="{Binding Spans}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel Spacing="8"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-
-              <ItemsControl.Styles>
-                <Style Selector="MenuFlyoutPresenter">
-                  <Setter Property="ItemsPanel">
-                    <ItemsPanelTemplate>
-                      <StackPanel Spacing="0"/>
-                    </ItemsPanelTemplate>
-                  </Setter>
-                </Style>
-
-                <Style Selector="Panel#ReasoningPanel">
-                  <Style Selector="^ &gt; ScrollViewer.Collapsed">
-                    <Setter Property="MaxHeight" Value="160"/>
-                  </Style>
-
-                  <Style Selector="^:pointerover &gt; ToggleButton#ExpandReasoningButton">
-                    <Setter Property="IsHitTestVisible" Value="True"/>
-                    <Setter Property="Opacity" Value="1"/>
-                  </Style>
-                </Style>
-              </ItemsControl.Styles>
-
-              <ItemsControl.DataTemplates>
-                <DataTemplate x:DataType="chat:AssistantChatMessageTextSpan">
-                  <md:MarkdownRenderer
-                    Margin="4,0"
-                    shadui:Timeline.Anchor="{Binding $self.(TextBlock.LineHeight), Converter={x:Static shadui:TimelineConverters.HalfDouble}}"
-                    shadui:Timeline.IsLoading="{Binding FinishedAt, Converter={x:Static ObjectConverters.IsNull}}"
-                    LinkCommand="{Binding $parent[v:ChatWindow].LaunchLinkCommand}"
-                    MarkdownBuilder="{Binding ContentMarkdownBuilder}"
-                    TextBlock.LineHeight="{DynamicResource LineHeightM}">
-                    <md:MarkdownRenderer.ContextFlyout>
-                      <MenuFlyout Placement="Bottom">
-                        <MenuItem
-                          x:Name="MarkdownRendererContextFlyoutCopyItem"
-                          Command="{Binding $parent[md:MarkdownRenderer].Copy}"
-                          Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.Common_Copy}}"
-                          InputGesture="{Binding $parent[md:MarkdownRenderer].CopyGesture}"
-                          IsEnabled="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
-                      </MenuFlyout>
-                    </md:MarkdownRenderer.ContextFlyout>
-                    <md:MarkdownRenderer.LinkContextMenu>
-                      <ContextMenu>
-                        <MenuItem
-                          Command="{Binding OpenCommand, x:DataType=md:Link}"
-                          Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.ChatMessageControl_ContextFlyout_OpenLink}}"
-                          Icon="{LucideIconContent ExternalLink}"/>
-                        <MenuItem
-                          Command="{Binding CopyCommand, x:DataType=md:Link}"
-                          Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.ChatMessageControl_ContextFlyout_CopyLink}}"
-                          Icon="{LucideIconContent Link}"/>
-                        <Separator IsVisible="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
-                        <MenuItem
-                          Command="{Binding $parent[md:MarkdownRenderer].Copy}"
-                          Cursor="Hand"
-                          Header="{I18N {x:Static LocaleKey.Common_Copy}}"
-                          Icon="{LucideIconContent Copy}"
-                          InputGesture="{Binding $parent[md:MarkdownRenderer].CopyGesture}"
-                          IsVisible="{Binding $parent[md:MarkdownRenderer].CanCopy}"/>
-                      </ContextMenu>
-                    </md:MarkdownRenderer.LinkContextMenu>
-                  </md:MarkdownRenderer>
-                </DataTemplate>
-
-                <DataTemplate x:DataType="chat:AssistantChatMessageReasoningSpan">
-                  <v:ChatActionBubble
-                    ElapsedSeconds="{Binding ElapsedSeconds}"
-                    Header="{I18N {x:Static LocaleKey.ChatMessageControl_Assistant_Reasoning}}"
-                    Icon="Brain"
-                    IsBusy="{Binding FinishedAt, Converter={x:Static ObjectConverters.IsNull}}"
-                    IsExpanded="{Binding $self.IsBusy, Mode=OneWay, Delay=3000}">
-                    <Panel x:Name="ReasoningPanel">
-                      <ScrollViewer
-                        Classes.Collapsed="{Binding !#ExpandReasoningButton.IsChecked}"
-                        HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
-                        <Interaction.Behaviors>
-                          <in:AutoScrollBehavior/>
-                        </Interaction.Behaviors>
-
-                        <md:MarkdownRenderer MarkdownBuilder="{Binding ReasoningMarkdownBuilder}">
-                          <md:MarkdownRenderer.Styles>
-                            <Style Selector="md|MarkdownTextBlock.ParagraphBlock">
-                              <Setter Property="Foreground" Value="{DynamicResource MutedColor}"/>
-                            </Style>
-                          </md:MarkdownRenderer.Styles>
-                        </md:MarkdownRenderer>
-                      </ScrollViewer>
-
-                      <ToggleButton
-                        x:Name="ExpandReasoningButton" Classes="Ghost Compact Uniform"
-                        HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Content="{LucideIconContent Maximize2, Size=16}"
-                        Focusable="False" IsHitTestVisible="False"
-                        Opacity="0">
-                        <ToggleButton.Transitions>
-                          <Transitions>
-                            <DoubleTransition
-                              Easing="CubicEaseInOut" Property="Opacity"
-                              Duration="0:0:0.25"/>
-                          </Transitions>
-                        </ToggleButton.Transitions>
-                      </ToggleButton>
-                    </Panel>
-                  </v:ChatActionBubble>
-                </DataTemplate>
-
-                <DataTemplate x:DataType="chat:AssistantChatMessageFunctionCallSpan">
-                  <ItemsControl
-                    ClipToBounds="False"
-                    IsVisible="{Binding !!$self.ItemCount}"
-                    ItemsSource="{Binding FunctionCalls}">
-                    <ItemsControl.ItemsPanel>
-                      <ItemsPanelTemplate>
-                        <StackPanel Spacing="8"/>
-                      </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate>
-                        <v:ChatMessageControl Content="{Binding}"/>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </DataTemplate>
-
-                <DataTemplate x:DataType="chat:AssistantChatMessageImageSpan">
-                  <Image
-                    MaxHeight="{Binding $parent[ItemsControl].Bounds.Width}"
-                    Margin="0,0,8,0" shadui:Timeline.Anchor="0,5"
-                    Source="{Binding ImageOutput.Image, FallbackValue={x:Null}}"/>
-                </DataTemplate>
-              </ItemsControl.DataTemplates>
-            </ItemsControl>
-
-            <v:ConditionalContentControl
-              Margin="4,0"
-              Condition="{Binding ErrorMessageKey, Converter={x:Static ObjectConverters.IsNotNull}}">
-              <v:ConditionalContentControl.TrueContent>
-                <DataTemplate x:DataType="chat:AssistantChatMessage">
-                  <StackPanel
-                    Orientation="Vertical" Spacing="4">
-                    <Border
-                      Padding="8,4" HorizontalAlignment="Left"
-                      Background="{DynamicResource ErrorColor20}"
-                      CornerRadius="4">
-                      <SelectableTextBlock
-                        Text="{Binding ErrorMessageKey^, FallbackValue={x:Null}}"
-                        TextWrapping="Wrap"/>
-                    </Border>
-
-                    <Button
-                      Classes="Primary Compact" HorizontalAlignment="Left"
-                      shadui:ButtonAssist.Icon="{LucideIconContent ChevronsRight}"
-                      shadui:ButtonAssist.IconSize="{DynamicResource FontSizeXl}"
-                      Command="{Binding ViewModel.ContinueCommand, RelativeSource={RelativeSource AncestorType=v:ChatWindow}}"
-                      CommandParameter="{Binding DataContext, RelativeSource={RelativeSource AncestorType=v:ChatMessageControl}}"
-                      Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}"
-                      Focusable="False" ToolTip.Placement="Right"
-                      ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_ToolTip}}">
-                      <Button.IsVisible>
-                        <MultiBinding Converter="{x:Static BoolConverters.And}">
-                          <Binding
-                            Path="!IsReadonly"
-                            RelativeSource="{RelativeSource AncestorType=v:ChatMessageItemsControl}"/>
-                          <Binding
-                            Path="IsLast"
-                            RelativeSource="{RelativeSource AncestorType=v:ChatMessageControl}"/>
-                        </MultiBinding>
-                      </Button.IsVisible>
-                    </Button>
-                  </StackPanel>
-                </DataTemplate>
-              </v:ConditionalContentControl.TrueContent>
-            </v:ConditionalContentControl>
-
-            <v:ConditionalContentControl Margin="4,0">
-              <v:ConditionalContentControl.Condition>
-                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding Path="$parent[v:ChatWindow].ViewModel.Settings.ChatWindow.ShowChatStatistics"/>
-                  <Binding Path="!IsBusy"/>
-                </MultiBinding>
-              </v:ConditionalContentControl.Condition>
-
-              <v:ConditionalContentControl.TrueContent>
-                <DataTemplate x:DataType="chat:AssistantChatMessage">
-                  <SelectableTextBlock
-                    Classes="Muted" HorizontalAlignment="Left"
-                    FontSize="{DynamicResource FontSizeS}"
-                    TextWrapping="Wrap"
-                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_ToolTip_Tip}}">
-                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_InputTokenCountRun}}"/>
-                    <Run Text="{Binding UsageDetails.InputTokenCount}"/>
-                    <Run Text="·"/>
-                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_OutputTokenCountRun}}"/>
-                    <Run Text="{Binding UsageDetails.OutputTokenCount}"/>
-                    <Run Text="·"/>
-                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun}}"/>
-                    <Run Text="{Binding UsageDetails.TotalTokenCount}"/>
-                    <Run Text="·"/>
-                    <Run Text="{Binding UsageDetails.TokensPerSecond, StringFormat='{}{0:F1}', Mode=OneWay}"/>
-                    <Run Text="tokens/s"/>
-                    <Run Text="·"/>
-                    <Run Text="{I18N {x:Static LocaleKey.ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun}}"/>
-                    <Run Text="{Binding ElapsedSeconds, StringFormat='{}{0:F1}s', Mode=OneWay}"/>
-                  </SelectableTextBlock>
-                </DataTemplate>
-              </v:ConditionalContentControl.TrueContent>
-            </v:ConditionalContentControl>
-
-            <StackPanel
-              x:Name="ChatMessageOperationPanel" shadui:Timeline.Anchor="0,0"
-              shadui:Timeline.IsBreak="True" Orientation="Horizontal">
-              <StackPanel.IsVisible>
-                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                  <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
-                  <Binding Path="!IsBusy"/>
-                </MultiBinding>
-              </StackPanel.IsVisible>
-
-              <NumericUpDown
-                x:Name="ChoiceSelector" Margin="0,0,4,0"
-                IsVisible="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                Maximum="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=1}"
-                Minimum="1"
-                Value="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
-
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.RetryCommand}"
-                CommandParameter="{Binding $parent[ContentControl].DataContext}"
-                Content="{LucideIconContent RefreshCcw}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_RetryButton_Content}}"/>
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
-                CommandParameter="{Binding}"
-                Content="{LucideIconContent Copy}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
-            </StackPanel>
-          </StackPanel>
-        </DataTemplate>
-
         <DataTemplate x:DataType="chat:UserStrategyChatMessage">
           <StackPanel
             Classes="ChatMessage User" Margin="36,0,0,0"
@@ -457,7 +69,7 @@
               Classes="ChatBubble" HorizontalAlignment="Right">
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                  <Binding Path="$parent[ContentControl].DataContext"/>
+                  <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
                   <Binding Path="$parent[v:ChatWindow].ViewModel.EditingUserMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
@@ -478,34 +90,38 @@
 
             <v:ChatAttachmentItemsControl
               ItemsSource="{Binding Attachments}"
-              SupportedModalities="{Binding $parent[v:ChatMessageItemsControl].SupportedModalities}"/>
+              SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"/>
 
-            <StackPanel
-              x:Name="ChatMessageOperationPanel"
-              IsVisible="{Binding !$parent[v:ChatMessageItemsControl].IsReadonly}"
-              Orientation="Horizontal">
-              <NumericUpDown
-                x:Name="ChoiceSelector" Margin="0,0,4,0"
-                IsVisible="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                Maximum="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=1}"
-                Minimum="1"
-                Value="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
-
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
-                CommandParameter="{Binding $parent[ContentControl].DataContext}"
-                Content="{LucideIconContent SquarePen}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
-                CommandParameter="{Binding}"
-                Content="{LucideIconContent Copy}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
-            </StackPanel>
+            <v:ConditionalContentControl
+              Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}, Mode=OneTime}"
+              ContentDataBinding="{Binding Node, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageNodeControl}}}">
+              <v:ConditionalContentControl.FalseContent>
+                <DataTemplate x:DataType="chat:ChatMessageNode">
+                  <v:ChatMessageOperationPanel>
+                    <NumericUpDown
+                      x:Name="ChoiceSelector" Margin="0,0,4,0"
+                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding Parent.ChoiceCount, FallbackValue=1}"
+                      Minimum="1"
+                      Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
+                      CommandParameter="{Binding Mode=OneTime}"
+                      Content="{LucideIconContent SquarePen}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
+                      CommandParameter="{Binding Mode=OneTime}"
+                      Content="{LucideIconContent Copy}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                  </v:ChatMessageOperationPanel>
+                </DataTemplate>
+              </v:ConditionalContentControl.FalseContent>
+            </v:ConditionalContentControl>
           </StackPanel>
         </DataTemplate>
 
@@ -525,7 +141,7 @@
               Classes="ChatBubble" HorizontalAlignment="Right">
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                  <Binding Path="$parent[ContentControl].DataContext"/>
+                  <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>
                   <Binding Path="$parent[v:ChatWindow].ViewModel.EditingUserMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
@@ -534,42 +150,46 @@
 
             <v:ChatAttachmentItemsControl
               ItemsSource="{Binding Attachments}"
-              SupportedModalities="{Binding $parent[v:ChatMessageItemsControl].SupportedModalities}"/>
+              SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}}"/>
 
-            <StackPanel
-              x:Name="ChatMessageOperationPanel"
-              IsVisible="{Binding !$parent[v:ChatMessageItemsControl].IsReadonly}"
-              Orientation="Horizontal">
-              <NumericUpDown
-                x:Name="ChoiceSelector" Margin="0,0,4,0"
-                IsVisible="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
-                Maximum="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceCount, FallbackValue=1}"
-                Minimum="1"
-                Value="{Binding $parent[ContentControl].((chat:ChatMessageNode)DataContext).Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
-
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
-                CommandParameter="{Binding $parent[ContentControl].DataContext}"
-                Content="{LucideIconContent SquarePen}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
-              <Button
-                Classes="Ghost Compact Uniform"
-                Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
-                CommandParameter="{Binding}"
-                Content="{LucideIconContent Copy}"
-                Focusable="False"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
-            </StackPanel>
+            <v:ConditionalContentControl
+              Condition="{Binding IsReadonly, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageItemsControl}}, Mode=OneTime}"
+              ContentDataBinding="{Binding Node, RelativeSource={RelativeSource AncestorType={x:Type v:ChatMessageNodeControl}}}">
+              <v:ConditionalContentControl.FalseContent>
+                <DataTemplate x:DataType="chat:ChatMessageNode">
+                  <v:ChatMessageOperationPanel>
+                    <NumericUpDown
+                      x:Name="ChoiceSelector" Margin="0,0,4,0"
+                      IsVisible="{Binding Parent.ChoiceCount, FallbackValue=False, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=1}"
+                      Maximum="{Binding Parent.ChoiceCount, FallbackValue=1}"
+                      Minimum="1"
+                      Value="{Binding Parent.ChoiceIndex, FallbackValue=1, Converter={x:Static vc:Int32Converters.Plus}, ConverterParameter=1}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.EditCommand}"
+                      CommandParameter="{Binding Mode=OneTime}"
+                      Content="{LucideIconContent SquarePen}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.ChatMessageControl_EditButton_Content}}"/>
+                    <Button
+                      Classes="Ghost Compact Uniform"
+                      Command="{Binding $parent[v:ChatWindow].ViewModel.CopyCommand}"
+                      CommandParameter="{Binding Mode=OneTime}"
+                      Content="{LucideIconContent Copy}"
+                      Focusable="False"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                  </v:ChatMessageOperationPanel>
+                </DataTemplate>
+              </v:ConditionalContentControl.FalseContent>
+            </v:ConditionalContentControl>
           </StackPanel>
         </DataTemplate>
 
         <DataTemplate DataType="chat:UserActionChatMessage">
           <StackPanel
-            Classes="ChatMessage User" Margin="36,0,0,0"
-            HorizontalAlignment="Right" Background="Transparent"
-            Orientation="Vertical" Spacing="4">
+            Margin="36,0,0,0" HorizontalAlignment="Right"
+            Background="Transparent" Orientation="Vertical"
+            Spacing="4">
             <Border
               Classes="ChatBubble" HorizontalAlignment="Right">
               <StackPanel

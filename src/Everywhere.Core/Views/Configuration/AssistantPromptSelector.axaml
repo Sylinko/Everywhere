@@ -7,7 +7,7 @@
     TargetType="v:AssistantPromptSelector">
     <Setter Property="Padding" Value="16"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
+    <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
     <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}"/>
     <Setter Property="Template">

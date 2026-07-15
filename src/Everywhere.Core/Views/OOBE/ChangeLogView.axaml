@@ -93,10 +93,10 @@
     </shadui:NavigationView.PaneContent>
 
     <shadui:NavigationView.Header>
-      <shadui:ButtonGroup
+      <shadui:ControlGroup
         Margin="0,0,12,12" HorizontalAlignment="Right"
         VerticalAlignment="Center" Orientation="Horizontal">
-        <shadui:ButtonGroup.Styles>
+        <shadui:ControlGroup.Styles>
           <Style Selector="HyperlinkButton">
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="FontSize" Value="{DynamicResource FontSizeM}"/>
@@ -105,7 +105,7 @@
             <Setter Property="VerticalAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
           </Style>
-        </shadui:ButtonGroup.Styles>
+        </shadui:ControlGroup.Styles>
 
         <HyperlinkButton NavigateUri="{Binding SelectedReleaseInfo.HtmlUrl, FallbackValue={x:Null}}">
           <StackPanel
@@ -146,7 +146,7 @@
             <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_QQGroupHyperlinkButton_Content}}"/>
           </StackPanel>
         </HyperlinkButton>
-      </shadui:ButtonGroup>
+      </shadui:ControlGroup>
     </shadui:NavigationView.Header>
 
     <shadui:NavigationView.ContentTemplate>

@@ -10,7 +10,7 @@
     <Setter Property="Template">
       <ControlTemplate TargetType="v:ManageApiKeyForm">
         <DockPanel VerticalSpacing="8">
-          <shadui:ButtonGroup
+          <shadui:ControlGroup
             DockPanel.Dock="Top" HorizontalAlignment="Right"
             Orientation="Horizontal">
             <Button
@@ -24,7 +24,7 @@
               Command="{Binding DeleteApiKeysCommand, RelativeSource={RelativeSource TemplatedParent}}"
               Content="{I18N {x:Static LocaleKey.ManageApiKeyForm_DeleteApiKeysButton_Content}}"
               Foreground="{DynamicResource DestructiveColor}"/>
-          </shadui:ButtonGroup>
+          </shadui:ControlGroup>
 
           <DataGrid
             CanUserReorderColumns="False" CanUserResizeColumns="True"

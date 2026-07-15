@@ -26,7 +26,7 @@ namespace Everywhere.Chat.Plugins;
 [Union(7, typeof(ChatPluginUrlsDisplayBlock))]
 [Union(8, typeof(ChatPluginSeparatorDisplayBlock))]
 [Union(9, typeof(ChatPluginCodeBlockDisplayBlock))]
-[Union(10, typeof(ChatPluginChatContextDisplayBlock))]
+[Union(10, typeof(ChatPluginSubagentDisplayBlock))]
 [Union(11, typeof(ChatPluginTerminalDisplayBlock))]
 public abstract partial class ChatPluginDisplayBlock : ObservableObject
 {
@@ -297,7 +297,7 @@ public sealed partial class ChatPluginCodeBlockDisplayBlock(string code, string?
 /// </remarks>
 /// <param name="chatContext"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginChatContextDisplayBlock(ChatContext chatContext) : ChatPluginDisplayBlock, IDisposable
+public sealed partial class ChatPluginSubagentDisplayBlock(ChatContext chatContext) : ChatPluginDisplayBlock, IDisposable
 {
     [Key(0)]
     public ChatContext ChatContext { get; } = chatContext;
@@ -337,10 +337,7 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
 
     [IgnoreMember] private TerminalSession? _session;
 
-    public ChatPluginTerminalDisplayBlock(
-        ShellType shellType,
-        TerminalRun run,
-        TerminalSession session)
+    public ChatPluginTerminalDisplayBlock(ShellType shellType, TerminalRun run, TerminalSession session)
     {
         ShellType = shellType;
         Command = run.CommandLine;

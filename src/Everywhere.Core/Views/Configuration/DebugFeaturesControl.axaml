@@ -8,7 +8,7 @@
 
     <Setter Property="Template">
       <ControlTemplate>
-        <shadui:ButtonGroup
+        <shadui:ControlGroup
           VerticalAlignment="Center" Orientation="Horizontal">
           <Button
             Classes="Outline"
@@ -33,7 +33,7 @@
               </OnPlatform>
             </Button.IsVisible>
           </Button>
-        </shadui:ButtonGroup>
+        </shadui:ControlGroup>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

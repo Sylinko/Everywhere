@@ -475,7 +475,7 @@ public class ChatPluginManager : IChatPluginManager
         var pluginNameDeduplicator = new NumberedDeduplicator();
         var functionNameDeduplicator = new NumberedDeduplicator();
         var resultPlugins = new List<ChatPluginSnapshot>();
-        IDisposable? startingMcpMessageDisplay = null;
+        IDisposable? startingMcpActivity = null;
 
         try
         {
@@ -489,7 +489,9 @@ public class ChatPluginManager : IChatPluginManager
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
-                    startingMcpMessageDisplay ??= chatContext.SetBusyMessage(new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp));
+                    startingMcpActivity ??= chatContext.SetBusyActivity(
+                        LucideIconKind.Server,
+                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp));
 
                     try
                     {
@@ -533,7 +535,7 @@ public class ChatPluginManager : IChatPluginManager
         }
         finally
         {
-            startingMcpMessageDisplay?.Dispose();
+            startingMcpActivity?.Dispose();
         }
     }
 

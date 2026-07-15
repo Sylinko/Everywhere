@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
+using Everywhere.AI.Prompts;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -88,7 +89,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         forkedChatContext.Add(assistantChatMessage);
 
         // Display the chat context in the UI
-        displaySink.AppendChatContext(forkedChatContext);
+        displaySink.AppendSubagent(forkedChatContext);
 
         var specializations = specialization?.ToLower() switch
         {

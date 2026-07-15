@@ -14,6 +14,8 @@ using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
+using Everywhere.Views;
+using Lucide.Avalonia;
 using MessagePack;
 using Serilog;
 using ZLinq;
@@ -41,6 +43,23 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     [IgnoreMember]
     public IReadOnlyBindableList<ChatMessageNode> DisplayItems { get; }
+
+    /// <summary>
+    /// Gets the non-serialized presentation companion for this context. It is created lazily so
+    /// nested or background chat contexts pay no projection cost until a view or runtime activity
+    /// actually needs it. Keeping the companion here preserves row identity, expansion state, and
+    /// first-presentation state when a chat view is detached and later reattached.
+    /// </summary>
+    [IgnoreMember]
+    public ChatPresentation Presentation
+    {
+        get
+        {
+            using var _ = _presentationLock.EnterScope();
+            if (_isDisposed) throw new ObjectDisposedException(nameof(ChatContext));
+            return _presentation ??= new ChatPresentation(this);
+        }
+    }
 
     /// <summary>
     /// Messages in the current branch.
@@ -92,14 +111,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public partial bool IsBusy { get; private set; }
 
     /// <summary>
-    /// Resource key for the busy message to show when waiting for a response.
-    /// This can be set temporarily using <see cref="SetBusyMessage(IDynamicLocaleKey?)"/>.
-    /// </summary>
-    [IgnoreMember]
-    [ObservableProperty]
-    public partial IDynamicLocaleKey? BusyMessageKey { get; private set; }
-
-    /// <summary>
     /// Backing store for MessagePack (de)serialization: nodes are persisted as a collection, and linked by Ids.
     /// </summary>
     [Key(1)]
@@ -125,6 +136,8 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     [IgnoreMember] private readonly Dictionary<Guid, ChatMessageNode> _messageNodeMap = new();
     [IgnoreMember] private readonly Lock _graphMutationLock = new();
+    [IgnoreMember] private readonly Lock _presentationLock = new();
+    [IgnoreMember] private ChatPresentation? _presentation;
 
     /// <summary>
     /// Nodes on the currently selected branch. [0] is always the root node.
@@ -401,19 +414,27 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     }
 
     /// <summary>
-    /// Sets the busy message resource key for the duration of the returned IDisposable.
+    /// Adds a non-persisted activity to the current assistant turn for the lifetime of the returned
+    /// scope. Disposing the scope completes the activity while retaining its presentation row in
+    /// the current in-memory chronology.
     /// </summary>
-    /// <param name="busyMessage"></param>
-    /// <returns></returns>
-    public IDisposable SetBusyMessage(IDynamicLocaleKey? busyMessage)
-    {
-        var previous = BusyMessageKey;
-        BusyMessageKey = busyMessage;
-        return Disposable.Create(() => BusyMessageKey = previous);
-    }
+    /// <param name="icon">The reliable icon describing the operation category.</param>
+    /// <param name="headerKey">The localized running activity title.</param>
+    /// <returns>A scope whose disposal marks the runtime activity as completed.</returns>
+    public IDisposable SetBusyActivity(LucideIconKind icon, IDynamicLocaleKey headerKey) =>
+        Presentation.SetBusyActivity(icon, headerKey);
 
     public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Connect(predicate);
+
+    /// <summary>
+    /// Connects to the currently selected chat branch while excluding the internal root prompt
+    /// node. Unlike <see cref="DisplayItems"/>, this preserves DynamicData change-set semantics for
+    /// presentation projections that must update incrementally. The observable preserves the
+    /// source notification thread; each consumer is responsible for choosing its own scheduler.
+    /// </summary>
+    public IObservable<IChangeSet<ChatMessageNode>> ConnectDisplayItems() =>
+        _branchNodesSourceList.Connect(node => node != _rootNode);
 
     public IObservable<IChangeSet<ChatMessageNode>> Preview(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Preview(predicate);
@@ -505,6 +526,17 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
 
         _isDisposed = true;
+
+        // The presentation subscribes to the branch and must be torn down before the branch source
+        // itself. Clear the field under its dedicated lock so no concurrent lazy getter can publish
+        // a new companion after disposal has started.
+        ChatPresentation? presentation;
+        using (_presentationLock.EnterScope())
+        {
+            presentation = _presentation;
+            _presentation = null;
+        }
+        presentation?.Dispose();
 
         using (_graphMutationLock.EnterScope())
         {

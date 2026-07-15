@@ -86,5 +86,5 @@ public interface IChatPluginDisplaySink
     /// Appends chat context information to the display sink. Used for subagents that need to display a subconversation.
     /// </summary>
     /// <param name="chatContext"></param>
-    void AppendChatContext(ChatContext chatContext);
+    void AppendSubagent(ChatContext chatContext);
 }
