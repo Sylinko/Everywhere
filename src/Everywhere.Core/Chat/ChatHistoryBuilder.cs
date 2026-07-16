@@ -1,5 +1,6 @@
 ﻿using System.Security;
 using Everywhere.AI;
+using Everywhere.Chat.Documents;
 using Everywhere.Common;
 using Everywhere.Utilities;
 using Microsoft.SemanticKernel;
@@ -119,11 +120,28 @@ public static class ChatHistoryBuilder
                                     }
 
                                     var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
-                                    resultItems.Add(
-                                        resultContent ?? new FunctionResultContent(
-                                            call,
-                                            $"Error: No result found for function call ID '{callId}'. " +
-                                            $"This may caused by an error during function execution or user cancellation."));
+                                    if (resultContent?.Result is PromptNode promptNode)
+                                    {
+                                        // Preserve the node in chat history and render only the temporary
+                                        // provider-facing copy, including any declared local token limit.
+                                        resultItems.Add(new FunctionResultContent(
+                                            resultContent.FunctionName,
+                                            resultContent.PluginName,
+                                            resultContent.CallId,
+                                            promptNode.ToString())
+                                        {
+                                            Metadata = resultContent.Metadata,
+                                            InnerContent = resultContent.InnerContent
+                                        });
+                                    }
+                                    else
+                                    {
+                                        resultItems.Add(
+                                            resultContent ?? new FunctionResultContent(
+                                                call,
+                                                $"Error: No result found for function call ID '{callId}'. " +
+                                                $"This may caused by an error during function execution or user cancellation."));
+                                    }
 
                                     // If the function call result is a ChatAttachment, add it as extra attachment message(s).
                                     if (resultContent?.Result is ChatAttachment extraToolCallResult)
