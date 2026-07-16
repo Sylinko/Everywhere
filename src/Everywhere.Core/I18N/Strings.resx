@@ -633,7 +633,7 @@
         <value>Tools</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Chat plugins include built-in plugins and MCP plugins. LLMs that support tool calls will use these plugins at appropriate times (such as searching the web or accessing local files) to gain more powerful functionality.</value>
+        <value></value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Search Engine Provider</value>
@@ -654,7 +654,7 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Enables browsing the web. The knowledge of major models often becomes fixed after release, leading to hallucinations when addressing timeliness issues. This plugin allows the assistant to browse web content in real-time, enhancing its capabilities.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>File System</value>
@@ -1396,19 +1396,19 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Extracts the main content of a webpage. This runs a hidden web browser in the background using Puppeteer to access the webpage. For compatibility, the first launch may automatically download the web browser, which may take some time depending on network conditions.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>Web search engine provider is not selected. Please configure it in the web browser of plugin settings.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Provided endpoint is invalid; please ensure it is a valid absolute URI.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>Google Search Engine ID is not set. Please configure it in the plugin settings.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>Web search engine provider is not supported. Please switch it in the plugin settings.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>API key is not set. Please configure it in the plugin settings.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Failed to connect to the Puppeteer browser download URL.</value>
@@ -1586,10 +1586,10 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Please input value</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Edit MCP Plugin (Fields marked with * are required)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Add MCP Plugin (Fields marked with * are required)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>Are you sure you want to remove “{0}”?</value>
@@ -1607,7 +1607,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Invalid MCP configuration.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Failed to start MCP plugin &quot;{0}&quot;</value>
+        <value></value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Starting MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>Tool invocation is generating</value>
+        <value></value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Failed to load chat context.</value>
@@ -1877,7 +1877,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Import from JSON</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Import MCP Plugin</value>
+        <value></value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Paste your MCP configuration JSON below, or import it from a local file.</value>
@@ -1886,19 +1886,19 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Open</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>Imported {0} MCP plugins</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>Failed to import MCP Plugins</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>No valid MCP plugins found</value>
+        <value></value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Server</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>Successfully imported {0} plugins, {1} failed</value>
+        <value></value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Open Chat Window</value>

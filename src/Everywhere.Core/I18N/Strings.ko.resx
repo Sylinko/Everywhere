@@ -633,7 +633,7 @@
         <value>도구</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>채팅 플러그인은 내장 플러그인과 MCP 플러그인을 포함합니다. 도구 호출을 지원하는 LLM은 적절한 시점에 이러한 플러그인을 사용하여 더 강력한 기능을 제공합니다 (예: 웹 검색 또는 로컬 파일 접근).</value>
+        <value></value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>웹 검색 엔진 제공자</value>
@@ -654,7 +654,7 @@
         <value>웹</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>웹 페이지를 탐색할 수 있는 기능을 제공합니다. 대형 모델들은 출시 후 지식이 고정되며, 시의성 문제를 처리할 때 환각이 발생하기 쉽습니다. 이 플러그인은 도우미가 웹 콘텐츠를 실시간으로 탐색하여 능력을 향상시킵니다.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>파일 시스템</value>
@@ -1396,19 +1396,19 @@
         <value>웹 페이지의 주요 내용을 추출합니다. 이는 백그라운드에서 Puppeteer를 통해 숨겨진 웹 브라우저를 실행하고, 이 브라우저를 통해 웹 페이지에 접근합니다. 호환성 문제로 인해 처음 열 때 자동으로 웹 브라우저를 다운로드할 수 있으며, 네트워크 상황에 따라 시간이 걸릴 수 있습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>웹 검색 엔진 제공자가 선택되지 않았습니다. 플러그인 설정의 웹 브라우저에서 구성해 주세요.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>제공된 엔드포인트가 유효하지 않습니다; 유효한 절대 URI인지 확인해 주세요.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>Google 검색 엔진 ID가 설정되지 않았습니다. 플러그인 설정에서 구성해 주세요.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>웹 검색 엔진 제공자가 지원되지 않습니다. 플러그인 설정에서 변경해 주세요.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>API 키가 설정되지 않았습니다. 플러그인 설정에서 구성해 주세요.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Puppeteer 브라우저 다운로드 URL에 연결하지 못했습니다.</value>
@@ -1586,10 +1586,10 @@
         <value>값을 입력하세요</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP 플러그인 편집 (필수 항목은 *로 표시됨)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP 플러그인 추가 (필수 항목은 *로 표시됨)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>정말로 “{0}”를 제거하시겠습니까?</value>
@@ -1607,7 +1607,7 @@
         <value>잘못된 MCP 구성입니다.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>MCP 플러그인 &quot;{0}&quot; 시작 실패</value>
+        <value></value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@
         <value>MCP 시작 중</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>도구 호출 생성 중</value>
+        <value></value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>채팅 컨텍스트를 로드하지 못했습니다.</value>
@@ -1877,7 +1877,7 @@
         <value>JSON에서 가져오기</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP 플러그인 가져오기</value>
+        <value></value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>아래에 MCP 구성 JSON을 붙여넣거나 로컬 파일에서 가져오세요.</value>
@@ -1886,19 +1886,19 @@
         <value>열기</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>{0} MCP 플러그인이 가져와졌습니다.</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>MCP 플러그인 가져오기 실패</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>유효한 MCP 플러그인이 없습니다.</value>
+        <value></value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP 서버</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>{0} 플러그인이 성공적으로 가져와졌고, {1}개가 실패했습니다.</value>
+        <value></value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>채팅 창 열기</value>

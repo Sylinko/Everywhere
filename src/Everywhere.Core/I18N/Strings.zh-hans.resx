@@ -633,7 +633,7 @@
         <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>聊天插件包括内置插件和 MCP 插件，支持工具调用的大语言模型 (LLMs) 会在合适的时机使用这些插件 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
+        <value>聊天工具包括内置工具和 MCP 工具，支持工具调用的大语言模型 (LLMs) 会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>网络搜索引擎提供方</value>
@@ -654,7 +654,7 @@
         <value>网页</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供浏览网页的能力。各家大模型在发布之后的知识往往已固定且在处理时效性问题时容易出现幻觉。此插件允许助手实时浏览网页内容从而提高助手能力。</value>
+        <value>提供浏览网页的能力，允许助手实时浏览网页内容从而提高助手能力。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>文件系统</value>
@@ -1397,19 +1397,19 @@
         <value>提取网页的主要内容。这会在后台通过 Puppeteer 运行一个隐藏的网络浏览器，并通过此浏览器访问网页。出于兼容性考虑，首次打开可能会自动下载网络浏览器，视网络情况可能需要较长的时间。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>未选择网页搜索引擎，请在插件设置中的网络浏览器配置搜索引擎。</value>
+        <value>未选择网页搜索引擎，请在工具设置中的网络浏览器配置搜索引擎。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>提供的端点地址无效，请检查是否为完整的 URI</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>未设置谷歌搜索引擎 ID，请在插件设置中配置。</value>
+        <value>未设置谷歌搜索引擎 ID，请在工具设置中配置。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>不支持的搜索引擎提供商，请在插件设置中更换。</value>
+        <value>不支持的搜索引擎提供商，请在工具设置中更换。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>未设置 API 密钥，请在插件设置中配置。</value>
+        <value>未设置 API 密钥，请在工具设置中配置。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>无法连接到 Puppeteer 浏览器下载地址。</value>
@@ -1587,10 +1587,10 @@
         <value>值</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>编辑 MCP 插件 (带 * 的为必填项)</value>
+        <value>编辑 MCP 工具 (带 * 的为必填项)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>添加 MCP 插件 (带 * 的为必填项)</value>
+        <value>添加 MCP 工具 (带 * 的为必填项)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>你确定要移除 "{0}" 吗？</value>
@@ -1608,7 +1608,7 @@
         <value>MCP 配置不正确。</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>无法启动 MCP 插件 "{0}"</value>
+        <value>无法启动 MCP 工具 "{0}"</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>这个 MCP 服务器需要 {0}，但 Everywhere 没有找到它。</value>
@@ -1647,7 +1647,7 @@
         <value>正在启动 MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>正在生成工具调用</value>
+        <value>准备工具调用</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>加载聊天内容失败。</value>
@@ -1878,7 +1878,7 @@
         <value>从 JSON 导入</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>导入 MCP 插件</value>
+        <value>导入 MCP 工具</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>请将 MCP 配置的 JSON 内容粘贴至下方，或直接从本地文件导入。</value>
@@ -1887,10 +1887,10 @@
         <value>打开</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>导入了 {0} 个 MCP 插件</value>
+        <value>导入了 {0} 个 MCP 工具</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>导入 MCP 插件失败</value>
+        <value>导入 MCP 工具失败</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
         <value>未找到有效的 MCP 配置</value>
@@ -1899,7 +1899,7 @@
         <value>MCP 服务器</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>成功导入了 {0} 个 MCP 插件，但有 {1} 个失败</value>
+        <value>成功导入了 {0} 个 MCP 工具，但有 {1} 个失败</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>打开聊天窗口</value>

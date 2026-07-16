@@ -633,7 +633,7 @@
         <value>Herramientas</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Los plugins de chat incluyen plugins integrados y plugins MCP. Los LLM que soportan llamadas a herramientas usarán estos plugins en momentos apropiados (como buscar en la web o acceder a archivos locales) para obtener funcionalidades más potentes.</value>
+        <value></value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Proveedor del Motor de Búsqueda Web</value>
@@ -654,7 +654,7 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Proporciona la capacidad de navegar por la web. Los grandes modelos a menudo tienen un conocimiento fijo después de su lanzamiento y pueden tener ilusiones al tratar problemas de actualidad. Este plugin permite al asistente navegar en tiempo real por el contenido de la web, mejorando así sus capacidades.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Sistema de Archivos</value>
@@ -1396,19 +1396,19 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
         <value>Extrae el contenido principal de la página web. Esto ejecutará un navegador web oculto en segundo plano a través de Puppeteer y accederá a la página web mediante este navegador. Por razones de compatibilidad, la primera vez que se abra puede descargar automáticamente el navegador, lo que puede tardar un tiempo dependiendo de la conexión.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>El proveedor del motor de búsqueda web no está seleccionado. Por favor, configúralo en la configuración del navegador web del plugin.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>El endpoint proporcionado es inválido; asegúrate de que sea una URI absoluta válida.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>El ID del motor de búsqueda de Google no está configurado. Por favor, configúralo en la configuración del plugin.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>El proveedor del motor de búsqueda web no es compatible. Por favor, cámbialo en la configuración del plugin.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>La clave API no está configurada. Por favor, configúralo en la configuración del plugin.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Error al conectar con la URL de descarga del navegador Puppeteer.</value>
@@ -1586,10 +1586,10 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Por favor, ingrese el valor</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Editar plugin MCP (Los campos marcados con * son obligatorios)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Agregar plugin MCP (Los campos marcados con * son obligatorios)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>¿Está seguro de que desea eliminar “{0}”?</value>
@@ -1607,7 +1607,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Configuración MCP inválida.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Error al iniciar el plugin MCP &quot;{0}&quot;</value>
+        <value></value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Iniciando MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>La invocación de herramientas se está generando</value>
+        <value></value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Error al cargar el contexto del chat.</value>
@@ -1877,7 +1877,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Importar desde JSON</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Importar plugin MCP</value>
+        <value></value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Pega tu configuración MCP en formato JSON a continuación, o impórtala desde un archivo local.</value>
@@ -1886,19 +1886,19 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Abrir</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>Importados {0} plugins MCP</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>Error al importar plugins MCP</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>No se encontraron plugins MCP válidos</value>
+        <value></value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>Servidor MCP</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>Se importaron con éxito {0} plugins, {1} fallaron</value>
+        <value></value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Abrir ventana de chat</value>

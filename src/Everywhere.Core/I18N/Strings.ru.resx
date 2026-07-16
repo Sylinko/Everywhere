@@ -633,7 +633,7 @@
         <value>Плагины</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Чат-плагины включают встроенные плагины и MCP-плагины. LLM, поддерживающие вызовы инструментов, будут использовать эти плагины в подходящее время (например, для поиска в интернете или доступа к локальным файлам), чтобы получить более мощные функции.</value>
+        <value></value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Поставщик поисковой системы</value>
@@ -654,7 +654,7 @@
         <value>Веб</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Предоставляет возможность просматривать веб-страницы. Знания крупных моделей часто фиксированы после выпуска и могут возникать проблемы с актуальностью. Этот плагин позволяет ассистенту в реальном времени просматривать содержимое веб-страниц, что улучшает его возможности.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Файловая система</value>
@@ -1396,19 +1396,19 @@
         <value>Извлекает основное содержимое веб-страницы. Это будет выполняться в фоновом режиме с помощью Puppeteer, который запускает скрытый веб-браузер и получает доступ к веб-странице. Для совместимости при первом открытии может потребоваться автоматическая загрузка веб-браузера, в зависимости от сети это может занять продолжительное время.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>Поставщик веб-поиска не выбран. Пожалуйста, настройте его в настройках веб-браузера плагина.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Предоставленный конечный пункт недействителен; пожалуйста, убедитесь, что это действительный абсолютный URI.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>Идентификатор поисковой системы Google не установлен. Пожалуйста, настройте его в настройках плагина.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>Поставщик веб-поиска не поддерживается. Пожалуйста, измените его в настройках плагина.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>Ключ API не установлен. Пожалуйста, настройте его в настройках плагина.</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Не удалось подключиться к URL-адресу загрузки браузера Puppeteer.</value>
@@ -1586,10 +1586,10 @@
         <value>Пожалуйста, введите значение</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Редактировать MCP плагин (поля, отмеченные *, обязательны)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Добавить MCP плагин (поля, отмеченные *, обязательны)</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>Вы уверены, что хотите удалить “{0}”?</value>
@@ -1607,7 +1607,7 @@
         <value>Недействительная конфигурация MCP.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Не удалось запустить MCP плагин &quot;{0}&quot;</value>
+        <value></value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@
         <value>Запуск MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>Вызов инструмента генерируется</value>
+        <value></value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Не удалось загрузить контекст чата.</value>
@@ -1877,7 +1877,7 @@
         <value>Импортировать из JSON</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>Импортировать MCP плагин</value>
+        <value></value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Вставьте ваш JSON конфигурации MCP ниже или импортируйте его из локального файла.</value>
@@ -1886,19 +1886,19 @@
         <value>Открыть</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>Импортировано {0} MCP плагинов</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>Не удалось импортировать MCP плагины</value>
+        <value></value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>Не найдено действительных MCP плагинов</value>
+        <value></value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Сервер</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>Успешно импортировано {0} плагинов, {1} не удалось</value>
+        <value></value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Открыть окно чата</value>
