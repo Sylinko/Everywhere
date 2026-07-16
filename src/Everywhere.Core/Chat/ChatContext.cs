@@ -49,6 +49,13 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// nested or background chat contexts pay no projection cost until a view or runtime activity
     /// actually needs it. Keeping the companion here preserves row identity, expansion state, and
     /// first-presentation state when a chat view is detached and later reattached.
+    ///
+    /// <para>
+    /// The companion is an Avalonia view-layer object and is therefore UI-thread-affine. UI code may
+    /// access this property directly. Background chat work must use an explicit dispatcher boundary,
+    /// such as <see cref="SetBusyActivityAsync"/>; it must not force lazy construction on its worker
+    /// thread.
+    /// </para>
     /// </summary>
     [IgnoreMember]
     public ChatPresentation Presentation
@@ -436,11 +443,17 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// scope. Disposing the scope completes the activity while retaining its presentation row in
     /// the current in-memory chronology.
     /// </summary>
+    /// <remarks>
+    /// ChatPresentation owns DynamicData lists and Avalonia-facing row state. ChatService and
+    /// plugin startup normally call this method from worker tasks, so even lazy construction of
+    /// the presentation must be marshaled to the dispatcher; otherwise a context without an
+    /// attached view could create its projection on a worker and later bind it from the UI.
+    /// </remarks>
     /// <param name="icon">The reliable icon describing the operation category.</param>
     /// <param name="headerKey">The localized running activity title.</param>
     /// <returns>A scope whose disposal marks the runtime activity as completed.</returns>
-    public IDisposable SetBusyActivity(LucideIconKind icon, IDynamicLocaleKey headerKey) =>
-        Presentation.SetBusyActivity(icon, headerKey);
+    public Task<IDisposable> SetBusyActivityAsync(LucideIconKind icon, IDynamicLocaleKey headerKey) =>
+        Dispatcher.UIThread.InvokeOnDemandAsync(() => Presentation.SetBusyActivity(icon, headerKey));
 
     public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Connect(predicate);
@@ -536,6 +549,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     public void Dispose()
     {
+        // ChatPresentation owns Avalonia-facing DynamicData lists. ChatContext disposal is therefore
+        // expected to be initiated by the UI lifetime owner, just like construction through the
+        // Presentation property. Background operations only publish their final state; they do not
+        // dispose the view projection directly.
         Debug.Assert(!_isDisposed);
         if (_isDisposed)
         {

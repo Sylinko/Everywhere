@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reactive.Disposables;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,7 +18,13 @@ namespace Everywhere.Views;
 /// turns and their child row lists retain identity; a positional segmented list applies their
 /// DynamicData changes without recreating unaffected rows or controls.
 /// </summary>
-public sealed class ChatPresentation
+/// <remarks>
+/// The projection is UI-thread-affine. The chat model is intentionally allowed to stream from
+/// worker tasks, so notification handlers marshal into the Avalonia dispatcher before touching any
+/// row, source list, or subscription state. The branch change-set subscription keeps its own
+/// interlocked coalescing flag because that observable preserves the producer's worker thread.
+/// </remarks>
+public sealed class ChatPresentation : IDisposable
 {
     /// <summary>
     /// Gets the stable, flat list consumed by the outer virtualizing chat ItemsControl. Expansion
@@ -73,8 +80,9 @@ public sealed class ChatPresentation
     /// stable activity row; it does not remove it, allowing the current in-memory presentation to
     /// retain an accurate chronology while persisted messages remain completely unchanged.
     /// </summary>
-    internal IDisposable SetBusyActivity(LucideIconKind icon, IDynamicLocaleKey headerKey)
+    public IDisposable SetBusyActivity(LucideIconKind icon, IDynamicLocaleKey headerKey)
     {
+        Debug.Assert(Dispatcher.UIThread.CheckAccess());
         ArgumentNullException.ThrowIfNull(headerKey);
         var scope = new BusyActivityScope(this, new BusyActivityItemPresentationRow(icon, headerKey, DateTimeOffset.UtcNow));
         DispatchBusyActivityUpdate(scope);
@@ -88,6 +96,7 @@ public sealed class ChatPresentation
 
     private void SynchronizeBusyActivity(BusyActivityScope scope)
     {
+        Debug.Assert(Dispatcher.UIThread.CheckAccess());
         if (_isDisposed) return;
 
         if (!scope.IsAttached)
@@ -95,7 +104,7 @@ public sealed class ChatPresentation
             scope.IsAttached = true;
             var assistantNode = _context.Items.Count > 0 ? _context.Items[^1] : null;
 
-            // SetBusyActivity is normally entered after ChatService has appended the busy assistant
+            // SetBusyActivityAsync is normally entered after ChatService has appended the busy assistant
             // node. If a future caller violates that ordering, silently omit the visual activity
             // instead of manufacturing a message node or weakening the persistence boundary.
             if (assistantNode?.Message is not AssistantChatMessage assistant) return;
@@ -111,6 +120,9 @@ public sealed class ChatPresentation
 
     private void Repartition()
     {
+        // This is the only method that changes the outer segment projection. Construction, branch
+        // change-set delivery, and busy-activity synchronization all enter it on the dispatcher;
+        // model PropertyChanged/CollectionChanged callbacks never call it directly.
         if (_isDisposed) return;
 
         var descriptors = BuildTurnDescriptors(_context.Items.AsValueEnumerable().Where(node => node.Message is not RootChatMessage).ToList());
@@ -220,7 +232,7 @@ public sealed class ChatPresentation
     /// this method, ensuring a view cannot accidentally invalidate presentation shared by another
     /// view of the same context.
     /// </summary>
-    internal void Dispose()
+    public void Dispose()
     {
         if (_isDisposed) return;
         _isDisposed = true;
@@ -245,10 +257,7 @@ public sealed class ChatPresentation
     /// timestamp crosses threads; all row attachment and SourceList work is dispatched through the
     /// owning presentation on Avalonia's UI thread.
     /// </summary>
-    private sealed class BusyActivityScope(
-        ChatPresentation owner,
-        BusyActivityItemPresentationRow row
-    ) : IDisposable
+    private sealed class BusyActivityScope(ChatPresentation owner, BusyActivityItemPresentationRow row) : IDisposable
     {
         private long _finishedAtUtcTicks;
 
@@ -282,6 +291,12 @@ public sealed class ChatPresentation
         private static readonly IDynamicLocaleKey ReasoningHeader = new DynamicLocaleKey(LocaleKey.ChatMessageControl_Assistant_Reasoning);
         private static readonly IDynamicLocaleKey GenericHeader = new DynamicLocaleKey(LocaleKey.ChatPresentation_GenericActivity);
 
+        /// <summary>
+        /// Completed activity collections at or below this size are shown as direct activity rows.
+        /// Larger collections keep their aggregate container to avoid overwhelming the conversation.
+        /// </summary>
+        private const int InlineActivityLimit = 2;
+
         private readonly SourceList<ChatPresentationRow> _visibleRows = new();
         private readonly Dictionary<ChatMessageNode, ChatMessagePresentationRow> _messageRows = new(ReferenceEqualityComparer.Instance);
         private readonly Dictionary<object, ActivityItemPresentationRow> _activityRows = new(ReferenceEqualityComparer.Instance);
@@ -297,7 +312,15 @@ public sealed class ChatPresentation
         private IReadOnlyList<ChatMessageNode> _nodes = [];
         private IReadOnlyList<BusyActivityItemPresentationRow> _busyActivities = [];
         private bool _isDisposed;
-        private int _isRefreshScheduled;
+
+        // All fields below are UI-thread-only. Model notifications enter through the two handlers
+        // below, which use PostOnDemand before changing these flags. Keeping the state local to the
+        // dispatcher makes the refresh protocol easier to reason about and avoids a lock around a
+        // state machine that can never be legitimately advanced by two threads at once.
+        private bool _refreshPosted;
+        private bool _refreshRequested;
+        private bool _rewireRequested;
+        private bool _isApplyingRefresh;
 
         public IObservableList<ChatPresentationRow> Rows => _visibleRows;
         private ProcessSummaryPresentationRow SummaryRow => field ??= new ProcessSummaryPresentationRow(RowsChanged);
@@ -310,6 +333,10 @@ public sealed class ChatPresentation
         /// </summary>
         public void UpdateSources(IReadOnlyList<ChatMessageNode> nodes, IReadOnlyList<BusyActivityItemPresentationRow> busyActivities)
         {
+            // Called by ChatPresentation.Repartition on the dispatcher. Keeping this method
+            // synchronous is intentional: it lets a branch snapshot and its row reconciliation
+            // complete as one UI transaction, while streamed source notifications use the refresh
+            // coalescer below instead of entering this method from a worker.
             var nodesChanged = !ReferencesEqual(_nodes, nodes);
             var busyActivitiesChanged = !ReferencesEqual(_busyActivities, busyActivities);
             if (!nodesChanged && !busyActivitiesChanged)
@@ -334,36 +361,68 @@ public sealed class ChatPresentation
         {
             if (_isDisposed) return;
 
-            // Collection membership changes are much less frequent than streamed property changes.
-            // Rebuilding this turn-local subscription set keeps removal/disposal exact without
-            // maintaining a second nested ownership graph; it never touches another turn's rows.
-            _subscriptions.Dispose();
-            _subscriptions = new CompositeDisposable();
-            var visited = new HashSet<object>(ReferenceEqualityComparer.Instance);
-            foreach (var node in _nodes.AsValueEnumerable())
+            // Rewire can be called synchronously by the outer turn projection. Mark the whole
+            // operation as a projection pass so a source callback raised while subscriptions are
+            // being replaced is queued instead of recursively entering another pass.
+            var wasApplyingRefresh = _isApplyingRefresh;
+            _isApplyingRefresh = true;
+            try
             {
-                SubscribeProperties(node.Message, visited);
-                if (node.Message is not AssistantChatMessage assistant) continue;
-                SubscribeCollection(assistant.Spans, visited);
-                foreach (var span in assistant.Spans.AsValueEnumerable())
+                // Collection membership changes are much less frequent than streamed property changes.
+                // Rebuilding this turn-local subscription set keeps removal/disposal exact without
+                // maintaining a second nested ownership graph; it never touches another turn's rows.
+                _subscriptions.Dispose();
+                _subscriptions = new CompositeDisposable();
+                var visited = new HashSet<object>(ReferenceEqualityComparer.Instance);
+                var activeActivitySources = new HashSet<object>(ReferenceEqualityComparer.Instance);
+                foreach (var node in _nodes.AsValueEnumerable())
                 {
-                    SubscribeProperties(span, visited);
-                    if (span is not AssistantChatMessageFunctionCallSpan functions) continue;
-                    SubscribeCollection(functions.FunctionCalls, visited);
-                    foreach (var function in functions.FunctionCalls.AsValueEnumerable())
+                    SubscribeProperties(node.Message, visited);
+                    if (node.Message is not AssistantChatMessage assistant) continue;
+                    SubscribeCollection(assistant.Spans, visited);
+                    // A deserialized branch should contain only real span instances, but filtering
+                    // here keeps a malformed/null entry from taking down the entire UI refresh pass.
+                    foreach (var span in assistant.Spans.AsValueEnumerable().OfType<AssistantChatMessageSpan>())
                     {
-                        SubscribeProperties(function, visited);
-                        SubscribeCollection(function.DisplayBlocks, visited);
-                        foreach (var block in function.DisplayBlocks.AsValueEnumerable()) SubscribeBlock(block, visited);
+                        SubscribeProperties(span, visited);
+                        if (span is AssistantChatMessageFunctionCallSpan functions)
+                        {
+                            SubscribeCollection(functions.FunctionCalls, visited);
+                            foreach (var function in functions.FunctionCalls.AsValueEnumerable().OfType<FunctionCallChatMessage>())
+                            {
+                                activeActivitySources.Add(function);
+                                SubscribeProperties(function, visited);
+                                SubscribeCollection(function.DisplayBlocks, visited);
+                                foreach (var block in function.DisplayBlocks.AsValueEnumerable().OfType<ChatPluginDisplayBlock>())
+                                    SubscribeBlock(block, visited);
+                            }
+                        }
+                        else if (span is AssistantChatMessageReasoningSpan reasoning)
+                        {
+                            activeActivitySources.Add(reasoning);
+                        }
                     }
                 }
-            }
 
-            RebuildVisibleRows();
+                // Rows are stable while their source remains on the selected branch. Once a branch
+                // replacement removes a span or function call, retaining its row in this cache would
+                // make every later streamed text update refresh a disposed, no-longer-visible source.
+                foreach (var source in _activityRows.Keys.AsValueEnumerable().Where(source => !activeActivitySources.Contains(source)).ToList())
+                {
+                    _activityRows.Remove(source);
+                }
+
+                RebuildVisibleRows();
+            }
+            finally
+            {
+                _isApplyingRefresh = wasApplyingRefresh;
+            }
         }
 
-        private void SubscribeBlock(ChatPluginDisplayBlock block, HashSet<object> visited)
+        private void SubscribeBlock(ChatPluginDisplayBlock? block, HashSet<object> visited)
         {
+            if (block is null) return;
             if (!visited.Add(block)) return;
 
             block.PropertyChanged += HandlePropertyChanged;
@@ -374,16 +433,18 @@ public sealed class ChatPresentation
             foreach (var child in container.Children) SubscribeBlock(child, visited);
         }
 
-        private void SubscribeCollection(object source, HashSet<object> visited)
+        private void SubscribeCollection(INotifyCollectionChanged? source, HashSet<object> visited)
         {
-            if (!visited.Add(source) || source is not INotifyCollectionChanged collection) return;
+            if (source is null) return;
+            if (!visited.Add(source)) return;
 
-            collection.CollectionChanged += HandleCollectionChanged;
-            _subscriptions.Add(Disposable.Create(() => collection.CollectionChanged -= HandleCollectionChanged));
+            source.CollectionChanged += HandleCollectionChanged;
+            _subscriptions.Add(Disposable.Create(() => source.CollectionChanged -= HandleCollectionChanged));
         }
 
-        private void SubscribeProperties(ObservableObject source, HashSet<object> visited)
+        private void SubscribeProperties(ObservableObject? source, HashSet<object> visited)
         {
+            if (source is null) return;
             if (!visited.Add(source)) return;
 
             source.PropertyChanged += HandlePropertyChanged;
@@ -392,36 +453,114 @@ public sealed class ChatPresentation
 
         private void HandleCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Span, function-call, and display-block membership is normally produced by the worker
-            // that executes ChatService. Membership changes are much less frequent than streamed
-            // property updates, so PostOnDemand keeps the ownership rule obvious without adding a
-            // second coalescing state machine or delaying changes already raised on the UI thread.
-            Dispatcher.UIThread.PostOnDemand(Rewire);
+            Debug.Assert(Dispatcher.UIThread.CheckAccess());
+            RequestRefresh(rewire: true);
         }
 
         private void HandlePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            // Model/tool completion may be raised from the worker executing the chat. Collapse a
-            // burst into one UI-thread projection refresh rather than posting once per streamed
-            // property notification. PostOnDemand preserves synchronous UI-thread updates.
-            if (Interlocked.Exchange(ref _isRefreshScheduled, 1) == 0)
+            // A streamed model property (for example, a markdown builder or IsBusy) can be raised
+            // by the worker that owns the chat request. Do not even touch the UI-only refresh flags
+            // until the notification has crossed the dispatcher boundary.
+            Dispatcher.UIThread.PostOnDemand(() => RequestRefresh());
+        }
+
+        private void RequestRefresh(bool rewire = false)
+        {
+            Debug.Assert(Dispatcher.UIThread.CheckAccess());
+
+            _refreshRequested = true;
+            _rewireRequested |= rewire;
+            if (_refreshPosted) return;
+
+            _refreshPosted = true;
+            // Preserve synchronous UI updates when the projection is idle. A callback raised while
+            // Rewire or RefreshFromSources is in progress is deferred to the already-coalesced
+            // dispatcher pass and therefore cannot recursively enter either operation.
+            if (!_isApplyingRefresh)
             {
-                Dispatcher.UIThread.PostOnDemand(() =>
-                {
-                    Interlocked.Exchange(ref _isRefreshScheduled, 0);
-                    RefreshFromSources();
-                });
+                DrainRefresh();
             }
+            else Dispatcher.UIThread.Post(DrainRefresh);
+        }
+
+        private void DrainRefresh()
+        {
+            Debug.Assert(Dispatcher.UIThread.CheckAccess());
+            var shouldRepost = false;
+            try
+            {
+                while (true)
+                {
+                    var refreshRequested = _refreshRequested;
+                    var rewireRequested = _rewireRequested;
+                    _refreshRequested = false;
+                    _rewireRequested = false;
+
+                    if (!refreshRequested && !rewireRequested)
+                    {
+                        break;
+                    }
+
+                    if (_isDisposed) break;
+
+                    // Rewire already performs one structural rebuild. If the same burst also carried
+                    // a property notification, retain that part of the request: rebuilding
+                    // subscriptions alone does not raise the row-level PropertyChanged events that
+                    // bindings use for source-backed previews and counters.
+                    if (rewireRequested)
+                    {
+                        Rewire();
+                        if (refreshRequested) RefreshFromSources();
+                    }
+                    else if (refreshRequested)
+                    {
+                        RefreshFromSources();
+                    }
+                }
+            }
+            finally
+            {
+                if (_isDisposed)
+                {
+                    _refreshRequested = false;
+                    _rewireRequested = false;
+                    _refreshPosted = false;
+                }
+                else if (_refreshRequested || _rewireRequested)
+                {
+                    // A notification can arrive while the current pass is running. The current
+                    // callback finishes before another dispatcher pass starts; no lock is needed
+                    // because both the callback and this cleanup execute on the UI thread.
+                    _refreshPosted = false;
+                    shouldRepost = true;
+                }
+                else
+                {
+                    _refreshPosted = false;
+                }
+            }
+
+            if (shouldRepost) RequestRefresh();
         }
 
         private void RefreshFromSources()
         {
             if (_isDisposed) return;
 
-            // Rows read most values directly from source objects. Refresh their bindings first, then
-            // reconcile structural state in case completion promoted output or changed a group.
-            foreach (var activity in _activityRows.Values) activity.Refresh();
-            RebuildVisibleRows();
+            var wasApplyingRefresh = _isApplyingRefresh;
+            _isApplyingRefresh = true;
+            try
+            {
+                // Rows read most values directly from source objects. Refresh their bindings first, then
+                // reconcile structural state in case completion promoted output or changed a group.
+                foreach (var activity in _activityRows.Values) activity.Refresh();
+                RebuildVisibleRows();
+            }
+            finally
+            {
+                _isApplyingRefresh = wasApplyingRefresh;
+            }
         }
 
         private void RowsChanged() => RebuildVisibleRows();
@@ -458,10 +597,12 @@ public sealed class ChatPresentation
 
             if (latest.ErrorMessageKey is not null)
             {
-                AppendCompletedProcess(BuildEntries(
-                    assistants,
-                    includeLatestError: false,
-                    keepTrailingActivityOpen: false), desired);
+                AppendCompletedProcess(
+                    BuildEntries(
+                        assistants,
+                        includeLatestError: false,
+                        keepTrailingActivityOpen: false),
+                    desired);
                 desired.Add(GetErrorRow(latestNode, true));
                 desired.Add(GetFooterRow(latestNode));
                 ReconcileByReference(_visibleRows, desired);
@@ -512,7 +653,7 @@ public sealed class ChatPresentation
                 var node = assistants[assistantIndex];
                 var assistant = (AssistantChatMessage)node.Message;
                 AppendBusyActivities(node, null);
-                foreach (var span in assistant.Spans.AsValueEnumerable())
+                foreach (var span in assistant.Spans.AsValueEnumerable().OfType<AssistantChatMessageSpan>())
                 {
                     switch (span)
                     {
@@ -520,7 +661,11 @@ public sealed class ChatPresentation
                             pending.Add(GetReasoningRow(reasoning));
                             break;
                         case AssistantChatMessageFunctionCallSpan functionSpan:
-                            pending.AddRange(functionSpan.FunctionCalls.Select(GetFunctionRow));
+                            pending.AddRange(
+                                functionSpan.FunctionCalls.AsValueEnumerable()
+                                    .OfType<FunctionCallChatMessage>()
+                                    .Select(GetFunctionRow)
+                                    .ToList());
                             break;
                         case AssistantChatMessageTextSpan:
                         case AssistantChatMessageImageSpan:
@@ -558,7 +703,7 @@ public sealed class ChatPresentation
             // glow is still fading. The delayed callback rebuilds this turn after the visual morph,
             // at which point the normal direct-row or summary rule is applied.
             if (entries.OfType<GroupEntry>().Any(entry => _groupsAwaitingFinalPlacement.Contains(entry.Group)) ||
-                items.Count is > 0 and <= ChatActivityPresentationPolicy.InlineActivityLimit)
+                items.Count is > 0 and <= InlineActivityLimit)
             {
                 AppendEntries(entries, desired, false);
                 return;
@@ -592,7 +737,7 @@ public sealed class ChatPresentation
                         // as one collapsed outer row.
                         if (!group.Group.IsRunning &&
                             !_groupsAwaitingFinalPlacement.Contains(group.Group) &&
-                            group.Group.Items.Count <= ChatActivityPresentationPolicy.InlineActivityLimit)
+                            group.Group.Items.Count <= InlineActivityLimit)
                         {
                             desired.AddRange(group.Group.Items);
                             break;
@@ -658,7 +803,7 @@ public sealed class ChatPresentation
                     group.SetExpandedFromPresentation(false);
                     RebuildVisibleRows();
                 },
-                ChatActivityPresentationPolicy.CompletionPlacementDelay);
+                TimeSpan.FromMilliseconds(400)); // Leaves a just-completed running Group in place long enough for the 320 ms glow transition
         }
 
         public void Dispose()

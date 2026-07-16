@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.I18N;
@@ -120,6 +121,31 @@ public class ChatPresentationTests
             Assert.That(presentation.Rows.Zip(before).All(pair => ReferenceEquals(pair.First, pair.Second)), Is.True);
             Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single().PreviewText,
                 Is.EqualTo("A newer preview"));
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task WorkerPropertyNotification_IsAppliedOnUiThread()
+    {
+        var assistant = new AssistantChatMessage { IsBusy = true };
+        var function = FunctionMessage("Read", 1, true);
+        assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(function));
+        using var context = Context(new UserChatMessage("Worker refresh", []), assistant);
+        var presentation = context.Presentation;
+        var group = presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+        var item = group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single();
+
+        // FunctionCallChatMessage may be updated by the streaming worker. The projection must not
+        // inspect or mutate its UI-owned flags on that worker; the dispatcher pass should refresh
+        // the same row instance after the notification crosses the boundary.
+        await Task.Run(() => function.Content = "worker preview");
+        await Dispatcher.UIThread.InvokeAsync(() => { });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(item, Is.SameAs(group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single()));
+            Assert.That(item.PreviewText, Is.EqualTo("worker preview"));
+            Assert.That(presentation.Rows.OfType<ActivityGroupPresentationRow>().Single(), Is.SameAs(group));
         });
     }
 
@@ -346,7 +372,7 @@ public class ChatPresentationTests
         var assistant = new AssistantChatMessage { IsBusy = true };
         using var context = Context(new UserChatMessage("Prepare tools", []), assistant);
         var presentation = context.Presentation;
-        var busyActivity = context.SetBusyActivity(
+        var busyActivity = await context.SetBusyActivityAsync(
             LucideIconKind.Server,
             new DirectLocaleKey("Starting MCP"));
 

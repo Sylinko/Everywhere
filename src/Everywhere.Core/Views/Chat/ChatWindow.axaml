@@ -22,9 +22,10 @@
   </v:ReactiveShadWindow.BorderThickness>
 
   <v:ReactiveShadWindow.Hosts>
-    <shadui:DialogHost x:Name="PART_DialogHost"/>
+    <shadui:DialogHost
+      x:Name="PART_DialogHost" Padding="16,52,16,16"/>
     <shadui:ToastHost
-      x:Name="PART_ToastHost" Margin="0,36,0,0"/>
+      x:Name="PART_ToastHost" Margin="0,52,0,0"/>
   </v:ReactiveShadWindow.Hosts>
 
   <v:ReactiveShadWindow.TitleBarContent>

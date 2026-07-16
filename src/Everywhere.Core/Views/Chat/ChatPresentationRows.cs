@@ -8,26 +8,6 @@ using Lucide.Avalonia;
 namespace Everywhere.Views;
 
 /// <summary>
-/// Centralizes the two small structural constants shared by whole-turn and local activity
-/// presentation. They deliberately describe presentation policy only and never affect persisted
-/// chat messages or their spans.
-/// </summary>
-internal static class ChatActivityPresentationPolicy
-{
-    /// <summary>
-    /// Completed activity collections at or below this size are shown as direct activity rows.
-    /// Larger collections keep their aggregate container to avoid overwhelming the conversation.
-    /// </summary>
-    public const int InlineActivityLimit = 2;
-
-    /// <summary>
-    /// Leaves a just-completed running Group in place long enough for the 320 ms glow transition
-    /// to finish before the row is collapsed or replaced by its direct activity rows.
-    /// </summary>
-    public static readonly TimeSpan CompletionPlacementDelay = TimeSpan.FromMilliseconds(400);
-}
-
-/// <summary>
 /// Base class for stable, presentation-only rows. Row identity is ordinary reference identity;
 /// source changes update properties on the existing instance rather than replacing the row.
 /// </summary>

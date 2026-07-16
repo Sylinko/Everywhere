@@ -706,7 +706,7 @@ public sealed partial class ChatService : IChatService
 
                 if (callingToolsActivity is null && hasFunctionCallUpdates)
                 {
-                    callingToolsActivity = chatContext.SetBusyActivity(
+                    callingToolsActivity = await chatContext.SetBusyActivityAsync(
                         LucideIconKind.Hammer,
                         new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
                 }

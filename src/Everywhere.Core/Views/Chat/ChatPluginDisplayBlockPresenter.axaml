@@ -186,15 +186,15 @@
           <Button
             Classes="Ghost Compact" HorizontalAlignment="Left"
             Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
-            CommandParameter="{Binding}">
-            <StackPanel
-              Orientation="Horizontal" Spacing="5">
-              <LucideIcon
-                Kind="Bot" Size="13"/>
-              <TextBlock
-                FontSize="11"
-                Text="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}"/>
-            </StackPanel>
+            CommandParameter="{Binding}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}">
+            <TextBlock
+              MaxWidth="200"
+              FontSize="{DynamicResource FontSizeS}"
+              MaxLines="1"
+              Text="{Binding ChatContext.Metadata.Topic}"
+              TextTrimming="CharacterEllipsis"/>
           </Button>
         </DataTemplate>
 

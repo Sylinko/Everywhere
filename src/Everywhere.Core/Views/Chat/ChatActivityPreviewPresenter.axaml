@@ -46,7 +46,7 @@
               Classes="Muted" VerticalAlignment="Center"
               FontSize="{DynamicResource FontSizeXs}"
               IsVisible="{Binding PrefixKey, Converter={x:Static ObjectConverters.IsNotNull}}"
-              Text="{Binding PrefixKey^}"
+              Text="{Binding PrefixKey^, FallbackValue={x:Null}}"
               TextWrapping="NoWrap"/>
             <ItemsControl
               Grid.Column="1" HorizontalAlignment="Stretch"
@@ -99,8 +99,8 @@
               </StackPanel>
             </Button>
             <TextBlock
-              Classes="Muted" Text="→"
-              VerticalAlignment="Center"/>
+              Classes="Muted" VerticalAlignment="Center"
+              Text="→"/>
             <Button
               Classes="Ghost Compact" Padding="5,1"
               Command="{Binding Destination.OpenFileLocationCommand}"
@@ -120,52 +120,67 @@
 
         <DataTemplate DataType="plugins:ChatPluginUrlsActivityPreview">
           <ItemsControl ItemsSource="{Binding Urls}">
-              <ItemsControl.Styles>
-                <Style Selector="Button.Link">
-                  <Setter Property="Background" Value="{DynamicResource BorderColor30}"/>
-                  <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource SelectionColor}"/>
-                  <Setter Property="Padding" Value="5,1"/>
-                  <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
-                </Style>
-              </ItemsControl.Styles>
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <v:TrimmingStackPanel
-                    MinimumLeadingVisibleItems="1" Orientation="Horizontal"
-                    Spacing="4"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button
-                    Classes="Ghost Compact Link"
-                    Command="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
-                    CommandParameter="{Binding}"
-                    ToolTip.Tip="{Binding AbsoluteUri}">
-                    <Grid
-                      ColumnDefinitions="Auto,*" ColumnSpacing="3">
-                      <Panel
-                        Width="12" Height="12">
-                        <Image
-                          x:Name="FaviconImage" MaxWidth="12"
-                          MaxHeight="12" md:AsyncImageLoader.SizeToContent="Manual"
-                          md:AsyncImageLoader.Source="{Binding Converter={x:Static vc:UrlConverters.ToFaviconUrl}}"/>
-                        <LucideIcon
-                          IsVisible="{Binding #FaviconImage.Bounds.Width, Converter={x:Static vc:DoubleConverters.NotGreaterThan}, ConverterParameter=1}"
-                          Kind="Link" Size="12"/>
-                      </Panel>
-                      <TextBlock
-                        Grid.Column="1"
-                        FontSize="{DynamicResource FontSizeXs}"
-                        Text="{Binding Converter={x:Static vc:UrlConverters.ToHost}}"
-                        TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
-                    </Grid>
-                  </Button>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
+            <ItemsControl.Styles>
+              <Style Selector="Button.Link">
+                <Setter Property="Background" Value="{DynamicResource BorderColor30}"/>
+                <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource SelectionColor}"/>
+                <Setter Property="Padding" Value="5,1"/>
+                <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
+              </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <v:TrimmingStackPanel
+                  MinimumLeadingVisibleItems="1" Orientation="Horizontal"
+                  Spacing="4"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button
+                  Classes="Ghost Compact Link"
+                  Command="{Binding $parent[v:ChatMessageItemsControl].OpenUrlCommand}"
+                  CommandParameter="{Binding}"
+                  ToolTip.Tip="{Binding AbsoluteUri}">
+                  <Grid
+                    ColumnDefinitions="Auto,*" ColumnSpacing="3">
+                    <Panel
+                      Width="12" Height="12">
+                      <Image
+                        x:Name="FaviconImage" MaxWidth="12"
+                        MaxHeight="12" md:AsyncImageLoader.SizeToContent="Manual"
+                        md:AsyncImageLoader.Source="{Binding Converter={x:Static vc:UrlConverters.ToFaviconUrl}}"/>
+                      <LucideIcon
+                        IsVisible="{Binding #FaviconImage.Bounds.Width, Converter={x:Static vc:DoubleConverters.NotGreaterThan}, ConverterParameter=1}"
+                        Kind="Link" Size="12"/>
+                    </Panel>
+                    <TextBlock
+                      Grid.Column="1"
+                      FontSize="{DynamicResource FontSizeXs}"
+                      Text="{Binding Converter={x:Static vc:UrlConverters.ToHost}}"
+                      TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
           </ItemsControl>
         </DataTemplate>
 
+        <DataTemplate x:DataType="plugins:ChatPluginSubagentActivityPreview">
+          <Button
+            Classes="Ghost Compact" HorizontalAlignment="Left"
+            Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
+            CommandParameter="{Binding}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}">
+            <TextBlock
+              MaxWidth="200"
+              FontSize="{DynamicResource FontSizeS}"
+              MaxLines="1"
+              Text="{Binding ChatContext.Metadata.Topic}"
+              TextTrimming="CharacterEllipsis"/>
+          </Button>
+        </DataTemplate>
       </DataTemplates>
     </Setter>
   </ControlTheme>

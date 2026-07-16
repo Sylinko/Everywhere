@@ -155,10 +155,16 @@ public class FileSystemPluginTests
 
         Assert.That(method, Is.Not.Null);
 
+        // The plugin now receives the complete invocation UI facade so it can publish a transient
+        // ActivityPreview as well as durable display blocks. This test only exercises the latter;
+        // keep the sink supplied by the test and let NSubstitute provide the unused UI members.
+        var userInterface = Substitute.For<IChatPluginUserInterface>();
+        userInterface.DisplaySink.Returns(displaySink);
+
         return (Task<string>)method!.Invoke(
             plugin,
             [
-                displaySink,
+                userInterface,
                 chatContext,
                 path,
                 patterns,
