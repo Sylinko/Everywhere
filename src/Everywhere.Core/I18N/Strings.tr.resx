@@ -633,7 +633,7 @@
         <value>Eklentiler</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value></value>
+        <value>Sohbet araçları, yerleşik araçlar ve MCP sunucuları içerir; büyük dil modelleri, uygun zamanlarda bu araçları kullanarak (örneğin, web araması, yerel dosyalara erişim vb.) daha güçlü işlevsellik sunar.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Arama Motoru Sağlayıcısı</value>
@@ -654,7 +654,7 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value></value>
+        <value>Web sayfalarını gezme yeteneği sağlar, böylece asistanın yeteneklerini artırmak için gerçek zamanlı olarak web içeriğini görüntülemesine olanak tanır.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dosya Sistemi</value>
@@ -1396,19 +1396,19 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Web'in ana içeriğini çıkarır. Bu, arka planda Puppeteer kullanarak gizli bir web tarayıcısı çalıştırır ve bu tarayıcı aracılığıyla web sayfasına erişir. Uyumluluk açısından, ilk açılışta otomatik olarak web tarayıcısı indirilebilir, internet durumuna bağlı olarak bu işlem uzun sürebilir.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Web arama motoru seçilmedi, lütfen araç ayarlarında web tarayıcısı yapılandırmasını kontrol edin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Verilen uç nokta geçersiz; lütfen geçerli bir mutlak URI olduğundan emin olun.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Google arama motoru kimliği ayarlanmamış, lütfen araç ayarlarında yapılandırın.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Desteklenmeyen arama motoru sağlayıcısı, lütfen araç ayarlarında değiştirin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>API anahtarı ayarlanmamış, lütfen araç ayarlarında yapılandırın.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Puppeteer tarayıcı indirme URL'sine bağlanılamadı.</value>
@@ -1586,10 +1586,10 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Lütfen değeri girin</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP Sunucusunu Düzenle (* ile işaretli alanlar zorunludur)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP Sunucusu Ekle (* ile işaretli alanlar zorunludur)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>“{0}” kaldırmak istediğinizden emin misiniz?</value>
@@ -1607,7 +1607,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Geçersiz MCP yapılandırması.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value></value>
+        <value>MCP &quot;{0}&quot; başlatılamadı</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>MCP Başlatılıyor</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value></value>
+        <value>Araç çağrısı hazırlanıyor</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Sohbet bağlamı yüklenemedi.</value>
@@ -1877,7 +1877,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>JSON'dan içe aktar</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP Sunucusunu İçe Aktar</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Aşağıya MCP yapılandırma JSON'unuzu yapıştırın veya yerel bir dosyadan içe aktarın.</value>
@@ -1886,19 +1886,19 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Aç</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0} MCP sunucusu içe aktarıldı</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value></value>
+        <value>MCP sunucusu içe aktarılamadı</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Geçerli bir MCP yapılandırması bulunamadı</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Sunucusu</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0} MCP sunucusu başarıyla içe aktarıldı, ancak {1} tanesi başarısız oldu</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Sohbet Penceresini Aç</value>
@@ -2705,6 +2705,9 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Terminalde Çalıştır</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>{0} çalıştırılıyor</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Script çalıştırma hatası: {0}</value>
@@ -3624,5 +3627,44 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>Gelişmiş Ayarlar</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>{0} kez düşünüldü</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>{0} kez araç çağrıldı</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>{0} alt asistan</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>Bu turda yanıt üretilmedi.</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>Alt Asistanı Aç</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>Tamamlanan {0} Etkinlik</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>Devam Ediyor</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} Saniye</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} Dakika {1} Saniye</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} Saat {1} Dakika</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} Gün {1} Saat</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>İşleniyor</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>Tamamlandı</value>
     </data>
 </root>

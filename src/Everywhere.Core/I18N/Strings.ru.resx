@@ -633,7 +633,7 @@
         <value>Плагины</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value></value>
+        <value>Чат-плагины включают встроенные инструменты и серверы MCP, которые используют большие языковые модели для вызова инструментов в подходящий момент (например, для поиска в интернете, доступа к локальным файлам и т.д.) для повышения функциональности.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Поставщик поисковой системы</value>
@@ -654,7 +654,7 @@
         <value>Веб</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value></value>
+        <value>Предоставляет возможность просмотра веб-страниц, позволяя помощнику в реальном времени просматривать содержимое веб-страниц и тем самым повышать его возможности.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Файловая система</value>
@@ -1396,19 +1396,19 @@
         <value>Извлекает основное содержимое веб-страницы. Это будет выполняться в фоновом режиме с помощью Puppeteer, который запускает скрытый веб-браузер и получает доступ к веб-странице. Для совместимости при первом открытии может потребоваться автоматическая загрузка веб-браузера, в зависимости от сети это может занять продолжительное время.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Не выбран веб-поисковый движок, пожалуйста, настройте поисковый движок в конфигурации веб-браузера в настройках инструментов.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Предоставленный конечный пункт недействителен; пожалуйста, убедитесь, что это действительный абсолютный URI.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Не установлен идентификатор поискового движка Google, пожалуйста, настройте его в настройках инструментов.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Неподдерживаемый поставщик поискового движка, пожалуйста, замените его в настройках инструментов.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Не установлен API-ключ, пожалуйста, настройте его в настройках инструментов.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Не удалось подключиться к URL-адресу загрузки браузера Puppeteer.</value>
@@ -1586,10 +1586,10 @@
         <value>Пожалуйста, введите значение</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>Редактировать сервер MCP (поля с * обязательны для заполнения)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>Добавить сервер MCP (поля с * обязательны для заполнения)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>Вы уверены, что хотите удалить “{0}”?</value>
@@ -1607,7 +1607,7 @@
         <value>Недействительная конфигурация MCP.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value></value>
+        <value>Не удалось запустить MCP &quot;{0}&quot;</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@
         <value>Запуск MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value></value>
+        <value>Подготовка к вызову инструментов</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Не удалось загрузить контекст чата.</value>
@@ -1877,7 +1877,7 @@
         <value>Импортировать из JSON</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>Импортировать сервер MCP</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Вставьте ваш JSON конфигурации MCP ниже или импортируйте его из локального файла.</value>
@@ -1886,19 +1886,19 @@
         <value>Открыть</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Импортировано {0} серверов MCP</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Не удалось импортировать сервер MCP</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Не найдена действительная конфигурация MCP</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Сервер</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Успешно импортировано {0} серверов MCP, но {1} не удалось</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Открыть окно чата</value>
@@ -2705,6 +2705,9 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Выполнить в терминале</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>Запуск {0}</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Ошибка выполнения скрипта: {0}</value>
@@ -3624,5 +3627,44 @@
     </data>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>Расширенные настройки</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>Размышлений {0}</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>Вызовов инструментов {0}</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>Подпомощников {0}</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>Ответ не был сгенерирован в этом раунде.</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>Открыть подассистента</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>Завершено {0} действий</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>В процессе</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} секунд</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} мин {1} сек</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} ч {1} мин</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} д {1} ч</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>Обрабатывается</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>Завершено</value>
     </data>
 </root>

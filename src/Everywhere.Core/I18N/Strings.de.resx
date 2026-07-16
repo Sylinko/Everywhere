@@ -633,7 +633,7 @@
         <value>Tools</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value></value>
+        <value>Die Chat-Tools umfassen integrierte Werkzeuge und den MCP-Server. Sprachmodelle, die Werkzeugaufrufe unterstützen, nutzen diese Werkzeuge zur richtigen Zeit (z. B. Websuche, Zugriff auf lokale Dateien usw.), um leistungsfähigere Funktionen zu bieten.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web-Suchmaschinenanbieter</value>
@@ -654,7 +654,7 @@
         <value>Webseite</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value></value>
+        <value>Bietet die Möglichkeit, Webseiten zu durchsuchen, sodass der Assistent in Echtzeit auf Webseiteninhalte zugreifen kann, um seine Fähigkeiten zu verbessern.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dateisystem</value>
@@ -1396,19 +1396,19 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
         <value>Extrahiert die Hauptinhalte einer Webseite. Dies geschieht im Hintergrund durch die Ausführung eines versteckten Webbrowsers mit Puppeteer, der auf die Webseite zugreift. Aus Kompatibilitätsgründen kann es beim ersten Öffnen erforderlich sein, den Webbrowser automatisch herunterzuladen, was je nach Netzwerkbedingungen länger dauern kann.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Kein Websuchmaschinenanbieter ausgewählt. Bitte konfigurieren Sie die Suchmaschine in den Einstellungen des Webbrowsers.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Der angegebene Endpunkt ist ungültig; bitte stellen Sie sicher, dass es sich um eine gültige absolute URI handelt.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Die Google-Suchmaschinen-ID ist nicht festgelegt. Bitte konfigurieren Sie sie in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Nicht unterstützter Suchmaschinenanbieter. Bitte wechseln Sie den Anbieter in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Der API-Schlüssel ist nicht festgelegt. Bitte konfigurieren Sie ihn in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Verbindung zur Puppeteer-Browser-Download-URL fehlgeschlagen.</value>
@@ -1586,10 +1586,10 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Value</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP-Server bearbeiten (Felder mit * sind erforderlich)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP-Server hinzufügen (Felder mit * sind erforderlich)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie „{0}“ entfernen möchten?</value>
@@ -1607,7 +1607,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Ungültige MCP-Konfiguration.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value></value>
+        <value>Konnte MCP &quot;{0}&quot; nicht starten</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>MCP wird gestartet</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value></value>
+        <value>Bereite Werkzeugaufruf vor</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Fehler beim Laden des Chat-Kontexts.</value>
@@ -1877,7 +1877,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Von JSON importieren</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCP-Server importieren</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Fügen Sie Ihre MCP-Konfigurations-JSON unten ein oder importieren Sie sie von einer lokalen Datei.</value>
@@ -1886,19 +1886,19 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Öffnen</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0} MCP-Server importiert</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Import des MCP-Servers fehlgeschlagen</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value></value>
+        <value>Keine gültige MCP-Konfiguration gefunden</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP-Server</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0} MCP-Server erfolgreich importiert, aber {1} fehlgeschlagen</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Chatfenster öffnen</value>
@@ -2705,6 +2705,9 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Im Terminal Ausführen</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>Führe {0} aus</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Skript-Ausführung fehlgeschlagen: {0}</value>
@@ -3624,5 +3627,44 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     </data>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>Erweiterte Einstellungen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>{0} Überlegungen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>{0} Werkzeugaufrufe</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>{0} Unterassistenten</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>In dieser Runde wurde keine Antwort generiert.</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>Unterassistent anzeigen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>Erledigte {0} Aktivitäten</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>Wird bearbeitet</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} Sekunden</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} Min {1} Sek</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} Std {1} Min</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} Tage {1} Std</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>Wird bearbeitet</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>Abgeschlossen</value>
     </data>
 </root>

@@ -633,7 +633,7 @@
         <value>ツール</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value></value>
+        <value>チャットツールには、組み込みツールとMCPサーバーが含まれており、ツール呼び出しをサポートする大規模言語モデルが適切なタイミングでこれらのツールを使用して、より強力な機能を提供します。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>ウェブ検索エンジンプロバイダー</value>
@@ -654,7 +654,7 @@
         <value>ウェブ</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value></value>
+        <value>ウェブページをブラウジングする能力を提供し、アシスタントがリアルタイムでウェブコンテンツを閲覧することで、アシスタントの能力を向上させます。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>ファイルシステム</value>
@@ -1396,19 +1396,19 @@
         <value>ウェブページの主要なコンテンツを抽出します。バックグラウンドでPuppeteerを使用して隠れたウェブブラウザを実行し、このブラウザを介してウェブページにアクセスします。互換性のため、初回起動時に自動的にウェブブラウザがダウンロードされる場合があり、ネットワーク状況によっては時間がかかることがあります。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>ウェブ検索エンジンが選択されていません。ツール設定のウェブブラウザで検索エンジンを設定してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>提供されたエンドポイントが無効です。有効な絶対URIであることを確認してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>Google検索エンジンIDが設定されていません。ツール設定で構成してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>サポートされていない検索エンジンプロバイダーです。ツール設定で変更してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value></value>
+        <value>APIキーが設定されていません。ツール設定で構成してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>PuppeteerブラウザのダウンロードURLに接続できませんでした。</value>
@@ -1586,10 +1586,10 @@
         <value>値</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCPサーバーの編集（*は必須項目です）</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCPサーバーの追加（*は必須項目です）</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>本当に「{0}」を削除してもよろしいですか？</value>
@@ -1607,7 +1607,7 @@
         <value>無効なMCP構成です。</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value></value>
+        <value>MCP &quot;{0}&quot;の起動に失敗しました。</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1646,7 @@
         <value>MCPを開始しています</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value></value>
+        <value>ツール呼び出しの準備中</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>チャットコンテキストの読み込みに失敗しました。</value>
@@ -1877,7 +1877,7 @@
         <value>JSONからインポート</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value></value>
+        <value>MCPサーバーのインポート</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>以下にMCP設定JSONを貼り付けるか、ローカルファイルからインポートしてください。</value>
@@ -1886,19 +1886,19 @@
         <value>開く</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0}個のMCPサーバーがインポートされました。</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value></value>
+        <value>MCPサーバーのインポートに失敗しました。</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value></value>
+        <value>有効なMCP構成が見つかりませんでした。</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCPサーバー</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value></value>
+        <value>{0}個のMCPサーバーが成功裏にインポートされましたが、{1}個は失敗しました。</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>チャットウィンドウを開く</value>
@@ -2705,6 +2705,9 @@
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>ターミナルで実行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>{0}を実行中</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>スクリプトの実行に失敗しました: {0}</value>
@@ -3624,5 +3627,44 @@
     </data>
     <data name="Assistant_AdvancedSettings" xml:space="preserve">
         <value>詳細設定</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>{0}回考えました</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>{0}回ツールを呼び出しました</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>{0}個のサブアシスタント</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>このラウンドでは応答が生成されませんでした。</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>子助手を表示</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>完了した活動: {0} 件</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>作業中</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} 秒</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} 分 {1} 秒</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} 時間 {1} 分</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} 日 {1} 時間</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>処理中</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>完了</value>
     </data>
 </root>
