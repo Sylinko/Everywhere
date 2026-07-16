@@ -47,6 +47,11 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
 
+    // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
+    // arrive while the first error dialog is still open; without this guard every nested exception
+    // would open another modal box and eventually overflow the process stack.
+    private static int _isShowingDispatcherException;
+
     /// <summary>
     /// Flag to prevent multiple calls to ShowWindow method from event loop.
     /// </summary>
@@ -101,15 +106,50 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     {
         Dispatcher.UIThread.UnhandledException += (_, e) =>
         {
-            Log.Logger.Error(e.Exception, "UI Thread Unhandled Exception");
-
-            NativeMessageBox.Show(
-                "Unexpected Error",
-                $"An unexpected error occurred:\n{e.Exception.Message}\n\nPlease check the logs for more details.",
-                NativeMessageBoxButtons.Ok,
-                NativeMessageBoxIcon.Error);
-
+            // Mark the dispatcher event handled before doing any logging or UI work. MessageBoxW is
+            // synchronous and pumps messages, so leaving this until after Show would let the same
+            // failing dispatcher operation re-enter this handler.
             e.Handled = true;
+
+            if (Interlocked.Exchange(ref _isShowingDispatcherException, 1) != 0)
+            {
+                // The first dialog owns the user-facing notification. Nested failures are handled
+                // silently; attempting to log or display each one would only amplify the modal-loop
+                // recursion that caused the original crash.
+                return;
+            }
+
+            try
+            {
+                try
+                {
+                    Log.Logger.Error(e.Exception, "UI Thread Unhandled Exception");
+                }
+                catch (Exception loggingException)
+                {
+                    // Error reporting must never become a second unhandled exception.
+                    Debug.WriteLine(loggingException);
+                }
+
+                try
+                {
+                    NativeMessageBox.Show(
+                        "Unexpected Error",
+                        $"An unexpected error occurred:\n{e.Exception.Message}\n\nPlease check the logs for more details.",
+                        NativeMessageBoxButtons.Ok,
+                        NativeMessageBoxIcon.Error);
+                }
+                catch (Exception messageBoxException)
+                {
+                    // A platform message-box failure should not re-enter the dispatcher exception
+                    // path. The original exception has already been marked handled and logged.
+                    Debug.WriteLine(messageBoxException);
+                }
+            }
+            finally
+            {
+                Volatile.Write(ref _isShowingDispatcherException, 0);
+            }
         };
     }
 
