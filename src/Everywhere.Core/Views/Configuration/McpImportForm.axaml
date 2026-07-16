@@ -15,8 +15,9 @@
     <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="views:McpImportForm">
-        <StackPanel Spacing="8">
-          <DockPanel Margin="0,-8,0,0">
+        <DockPanel VerticalSpacing="8">
+          <DockPanel
+            Margin="0,-8,0,0" Dock="Top">
             <Button
               Classes="Secondary" DockPanel.Dock="Right"
               Margin="0,-16,0,0" VerticalAlignment="Top"
@@ -36,7 +37,7 @@
               ShowLineNumbers="True"
               Watermark="{x:Static views:McpImportForm.McpJsonWatermark}"/>
           </Border>
-        </StackPanel>
+        </DockPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>
