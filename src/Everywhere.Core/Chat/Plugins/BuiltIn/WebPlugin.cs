@@ -253,6 +253,14 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                     var extraction = await _webBrowserHost.ExtractPageAsync(absoluteUri, cancellationToken);
                     return (absoluteUri, extraction, error: null);
                 }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // A cancellation requested by ChatService belongs to the whole tool
+                    // invocation, not to one URL. Let it escape this per-URL task so Task.WhenAll
+                    // propagates cancellation instead of turning an aborted request into a normal
+                    // extraction error that would be sent back to the model.
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     ex = HandledFunctionInvokingException.Handle(ex);

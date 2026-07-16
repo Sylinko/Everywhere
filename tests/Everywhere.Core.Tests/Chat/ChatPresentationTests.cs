@@ -226,6 +226,38 @@ public class ChatPresentationTests
         Assert.That(group.Items, Has.Count.EqualTo(3));
     }
 
+    [Test]
+    public void CompletedGroup_RemainsRunningWhileEarlierParallelActivityIsBusy()
+    {
+        var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
+        var earlierBusy = FunctionMessage("Earlier", 1, true);
+        var middleCompleted = FunctionMessage("Middle", 1, false);
+        var latestCompleted = FunctionMessage("Latest", 1, false);
+        assistant.AddSpan(new AssistantChatMessageFunctionCallSpan([
+            earlierBusy,
+            middleCompleted,
+            latestCompleted,
+        ]));
+        assistant.AddSpan(FinishedText("Done"));
+        using var context = Context(new UserChatMessage("Parallel calls", []), assistant);
+        var presentation = context.Presentation;
+
+        // Three items force the completed process segment to stay behind its summary row. Opening
+        // the summary exposes the same stable Group object whose latest item has already finished.
+        presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single().IsExpanded = true;
+        var group = presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(group.LatestItem.Source, Is.SameAs(latestCompleted));
+            Assert.That(group.LatestItem.IsRunning, Is.False);
+            Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>()
+                .First().IsRunning, Is.True);
+            Assert.That(group.IsRunning, Is.True);
+            Assert.That(group.FinishedAt, Is.Null);
+        });
+    }
+
     [AvaloniaTest]
     public void CompletedTool_KeepsOnlyTrailingGroupRunning_WhileAssistantAwaitsContinuation()
     {

@@ -4,6 +4,7 @@ using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Lucide.Avalonia;
+using ZLinq;
 
 namespace Everywhere.Views;
 
@@ -236,10 +237,11 @@ public sealed class ActivityGroupPresentationRow : ChatPresentationRow
 
     /// <summary>
     /// Gets whether this is the current active process segment. Item state remains authoritative
-    /// for the work represented by that item; <see cref="_isAwaitingContinuation"/> only keeps the
-    /// outer Group active during the real gap between a completed tool and the model's next output.
+    /// for every activity in the segment, including parallel calls that are not the latest item;
+    /// <see cref="_isAwaitingContinuation"/> only keeps the outer Group active during the real gap
+    /// between a completed tool and the model's next output.
     /// </summary>
-    public bool IsRunning => LatestItem.IsRunning || _isAwaitingContinuation;
+    public bool IsRunning => Items.AsValueEnumerable().Any(item => item.IsRunning) || _isAwaitingContinuation;
 
     /// <summary>
     /// Gets the local statistics snapshot for this contiguous activity segment.

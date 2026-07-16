@@ -36,12 +36,16 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
     protected static ILauncher Launcher => BetterBclLauncher.Shared;
 
     protected AnonymousExceptionHandler DialogExceptionHandler => new((exception, message, _, _) =>
-        DialogHost.CreateDialog(
-            exception.GetFriendlyMessage().ToString() ?? LocaleResolver.Common_Unknown,
-            message ?? LocaleResolver.Common_Error));
+        DialogHost
+            .CreateDialog(
+                exception.GetFriendlyMessage().ToString() ?? LocaleResolver.Common_Unknown,
+                message ?? LocaleResolver.Common_Error)
+            .ShowAsync()
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException));
 
     protected AnonymousExceptionHandler ToastExceptionHandler => new((exception, message, _, _) =>
-        ToastHost.CreateToast(message ?? LocaleResolver.Common_Error)
+        ToastHost
+            .CreateToast(message ?? LocaleResolver.Common_Error)
             .WithContent(exception.GetFriendlyMessage())
             .DismissOnClick()
             .ShowError());
@@ -131,9 +135,6 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
                 }
                 finally
                 {
-                    _dialogHost = null;
-                    _toastHost = null;
-                    _topLevel = null;
                     DisposeHelper.DisposeToDefault(ref cancellationTokenSource);
                 }
 
@@ -145,6 +146,13 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
             catch (Exception e)
             {
                 HandleLifetimeException(nameof(ViewUnloaded), e);
+            }
+            finally
+            {
+                // HandleLifetimeException may use Dialog or Toast for error reporting, so we must clear the references after the call.
+                _dialogHost = null;
+                _toastHost = null;
+                _topLevel = null;
             }
         }
 

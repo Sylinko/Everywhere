@@ -398,7 +398,9 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
         var desiredViewportTop = GetOffsetForIndex(anchor.Index) + anchor.Delta;
         var correction = desiredViewportTop - oldViewportTop;
-        if (Math.Abs(correction) > double.Epsilon)
+        // Layout coordinates are DIP values calculated through several floating-point operations.
+        // The shared IsCloseTo tolerance prevents sub-pixel noise from scheduling a scroll pass.
+        if (!correction.IsCloseTo(0))
         {
             _pendingScrollOffsetCorrection += correction;
             if (double.IsNaN(_pendingScrollOffsetCorrectionBaseY) &&
@@ -942,8 +944,13 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
 
     private void ApplyPendingScrollOffsetCorrection()
     {
-        if (Math.Abs(_pendingScrollOffsetCorrection) <= double.Epsilon)
+        // A sequence of opposing layout changes can cancel to a value below the shared DIP
+        // tolerance. Discard that noise and its anchor together; retaining the old base would make
+        // a later, real correction compare against a stale scroll position.
+        if (_pendingScrollOffsetCorrection.IsCloseTo(0))
         {
+            _pendingScrollOffsetCorrection = 0;
+            _pendingScrollOffsetCorrectionBaseY = double.NaN;
             return;
         }
 
@@ -965,8 +972,7 @@ public class VariableHeightVirtualizingStackPanel : VirtualizingPanel
                     return;
                 }
 
-                if (double.IsFinite(baseY) &&
-                    !(Math.Abs(scrollViewer.Offset.Y - baseY) <= double.Epsilon))
+                if (double.IsFinite(baseY) && !scrollViewer.Offset.Y.IsCloseTo(baseY))
                 {
                     _pendingScrollOffsetCorrectionBaseY = double.NaN;
                     return;

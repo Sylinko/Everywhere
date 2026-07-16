@@ -16,7 +16,7 @@
 
     <Setter Property="shadui:BindingAssist.DataTemplates">
       <DataTemplates>
-        <DataTemplate DataType="plugins:ChatPluginTextActivityPreview">
+        <DataTemplate x:DataType="plugins:ChatPluginTextActivityPreview">
           <TextBlock
             Classes="Muted"
             FontSize="{DynamicResource FontSizeXs}"
@@ -25,7 +25,7 @@
             TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginCommandActivityPreview">
+        <DataTemplate x:DataType="plugins:ChatPluginCommandActivityPreview">
           <TextBlock
             Classes="Muted"
             FontSize="{DynamicResource FontSizeXs}"
@@ -39,7 +39,7 @@
           </TextBlock>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginFileReferencesActivityPreview">
+        <DataTemplate x:DataType="plugins:ChatPluginFileReferencesActivityPreview">
           <Grid
             ColumnDefinitions="Auto,*" ColumnSpacing="4">
             <TextBlock
@@ -59,7 +59,7 @@
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="plugins:ChatPluginFileReference">
+                <DataTemplate x:DataType="plugins:ChatPluginFileReference">
                   <Button
                     Classes="Ghost Compact" Padding="5,1"
                     Command="{Binding OpenFileLocationCommand}"
@@ -81,7 +81,7 @@
           </Grid>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginFileTransferActivityPreview">
+        <DataTemplate x:DataType="plugins:ChatPluginFileTransferActivityPreview">
           <StackPanel
             Orientation="Horizontal" Spacing="4">
             <Button
@@ -118,7 +118,7 @@
           </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginUrlsActivityPreview">
+        <DataTemplate x:DataType="plugins:ChatPluginUrlsActivityPreview">
           <ItemsControl ItemsSource="{Binding Urls}">
             <ItemsControl.Styles>
               <Style Selector="Button.Link">

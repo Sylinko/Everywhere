@@ -163,8 +163,8 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
             _ => null,
         };
 
-        // TODO: schema?
-        return uri is not { Scheme: "http" or "https" or "file" } ? Task.FromResult(false) : App.Launcher.LaunchUriAsync(uri);
+        // TODO: file schema and more with safety check.
+        return uri is not { Scheme: "http" or "https" } ? Task.FromResult(false) : App.Launcher.LaunchUriAsync(uri);
     }
 
     /// <summary>
@@ -173,10 +173,8 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
     /// same command boundary without coupling either display-block presenter to dialog services.
     /// </summary>
     [RelayCommand]
-    private void OpenSubagent(ChatPluginSubagentDisplayBlock? block)
+    private static void OpenSubagent(ChatPluginSubagentDisplayBlock block)
     {
-        if (block is null) return;
-
         DialogManager
             .CreateCustomDialog(
                 new ChatSubagentView

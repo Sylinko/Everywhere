@@ -3,7 +3,7 @@ using Avalonia.Controls.Templates;
 
 namespace Everywhere.Views;
 
-public class ConditionalContentControl : Decorator
+public sealed class ConditionalContentControl : Decorator
 {
     /// <summary>
     /// Defines the <see cref="Condition"/> property.
@@ -93,20 +93,20 @@ public class ConditionalContentControl : Decorator
             change.Property == FalseContentProperty ||
             change.Property == NullContentProperty)
         {
-            UpdateContent();
+            UpdateContent(true);
         }
         else if (change.Property == ContentDataBindingProperty)
         {
-            Child?.DataContext = change.NewValue ?? DataContext;
+            UpdateContent(false);
         }
     }
 
     protected override void OnInitialized()
     {
-        UpdateContent();
+        UpdateContent(true);
     }
 
-    private void UpdateContent()
+    private void UpdateContent(bool rebuild)
     {
         var content = Condition switch
         {
@@ -116,10 +116,23 @@ public class ConditionalContentControl : Decorator
         };
 
         var dataContext = ContentDataBinding ?? DataContext;
-        if (content?.Match(dataContext) is not true) return;
+        if (content?.Match(dataContext) is not true)
+        {
+            Child = null;
+            return;
+        }
 
-        var control = content.Build(this);
-        control?.DataContext = ContentDataBinding ?? DataContext;
-        Child = control;
+        Control? control;
+        if (rebuild)
+        {
+            control = content.Build(this);
+            Child = control;
+        }
+        else
+        {
+            control = Child;
+        }
+
+        control?.DataContext = dataContext;
     }
 }

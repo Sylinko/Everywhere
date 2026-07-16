@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using DynamicData.Binding;
 using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using ShadUI;
 using ZLinq;
@@ -169,7 +169,7 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
     {
         var form = new CreateApiKeyForm(_defaultName);
         var result = await DialogManager
-            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
+            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey, TopLevel.GetTopLevel(this))
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.ApiKey.ValidateAndSave())
@@ -199,7 +199,8 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
 
         var result = await DialogManager.CreateDialog(
                 LocaleResolver.ManageApiKeyForm_DeleteApiKeys_Dialog_Message.Format(keysToDelete.Count),
-                LocaleResolver.Common_Warning)
+                LocaleResolver.Common_Warning,
+                TopLevel.GetTopLevel(this))
             .WithPrimaryButton(LocaleResolver.Common_Yes)
             .WithCancelButton(LocaleResolver.Common_No)
             .ShowAsync();

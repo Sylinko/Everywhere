@@ -269,8 +269,16 @@
                 x:Name="PART_ContentExpand"
                 Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
                 HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                IsVisible="{Binding ElementName=PART_ToggleButton, Path=IsChecked}">
+                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                <shadui:ContentExpandControl.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <TemplateBinding
+                      Mode="OneWay" Property="IsExpanded"/>
+                    <TemplateBinding
+                      Mode="OneWay" Property="IsExpandable"/>
+                  </MultiBinding>
+                </shadui:ContentExpandControl.IsVisible>
+
                 <v:ConditionalContentControl
                   Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
                   ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
@@ -312,9 +320,6 @@
       </Style>
       <Style Selector="^ ToggleButton#PART_ToggleButton">
         <Setter Property="IsHitTestVisible" Value="False"/>
-      </Style>
-      <Style Selector="^ ContentControl#ContentExpandControlContainer">
-        <Setter Property="IsVisible" Value="False"/>
       </Style>
     </Style>
 
