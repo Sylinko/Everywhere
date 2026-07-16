@@ -298,7 +298,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// This is useful for running sub-agents in a separate context while maintaining the same VisualElements and permissions.
     /// </summary>
     /// <returns></returns>
-    public ChatContext ForkSubagent()
+    public ChatContext ForkSubagent(string topic)
     {
         return new ChatContext(
             VisualElements,
@@ -315,6 +315,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         {
             Metadata =
             {
+                Topic = topic,
                 IsTemporary = true
             }
         };

@@ -37,7 +37,7 @@ public sealed class ChatPluginFileReferencesActivityPreview(
 {
     public IDynamicLocaleKey? PrefixKey { get; } = prefixKey;
 
-    public IReadOnlyList<ChatPluginFileReference> References { get; } = references.ToArray();
+    public IReadOnlyList<ChatPluginFileReference> References { get; } = references;
 }
 
 /// <summary>
@@ -61,4 +61,14 @@ public sealed class ChatPluginFileTransferActivityPreview(
 public sealed class ChatPluginUrlsActivityPreview(IReadOnlyList<Uri> urls) : ChatPluginActivityPreview
 {
     public IReadOnlyList<Uri> Urls { get; } = urls.ToArray();
+}
+
+/// <summary>
+/// Displays a subagent conversation header with its own independent dialog. The subagent's
+/// <see cref="ChatContext"/> is projected into the dialog, so the subagent's conversation is fully interactive without coupling the plugin to dialog services.
+/// </summary>
+/// <param name="chatContext"></param>
+public sealed class ChatPluginSubagentActivityPreview(ChatContext chatContext) : ChatPluginActivityPreview
+{
+    public ChatContext ChatContext { get; } = chatContext;
 }

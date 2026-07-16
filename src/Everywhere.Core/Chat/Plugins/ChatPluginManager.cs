@@ -489,7 +489,7 @@ public class ChatPluginManager : IChatPluginManager
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
-                    startingMcpActivity ??= chatContext.SetBusyActivity(
+                    startingMcpActivity ??= await chatContext.SetBusyActivityAsync(
                         LucideIconKind.Server,
                         new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_StartingMcp));
 

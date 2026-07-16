@@ -181,8 +181,7 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
             .CreateCustomDialog(
                 new ChatSubagentView
                 {
-                    ChatContext = block.ChatContext,
-                    SupportedModalities = SupportedModalities,
+                    ChatContext = block.ChatContext
                 })
             .Dismissible()
             .Show();

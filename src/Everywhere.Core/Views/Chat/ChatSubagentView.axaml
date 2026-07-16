@@ -1,12 +1,31 @@
-<v:ChatSubagentView
-  x:Class="Everywhere.Views.ChatSubagentView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="using:Everywhere.Views">
-  <Border
-    MinWidth="480" MaxHeight="720"
-    Padding="12" ClipToBounds="False">
-    <v:ChatMessageItemsControl
-      Padding="4,0"
-      ChatContext="{Binding ChatContext, RelativeSource={RelativeSource AncestorType=v:ChatSubagentView}}"
-      SupportedModalities="{Binding SupportedModalities, RelativeSource={RelativeSource AncestorType=v:ChatSubagentView}}"/>
-  </Border>
-</v:ChatSubagentView>
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ChatSubagentView}"
+    TargetType="v:ChatSubagentView">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:ChatSubagentView">
+        <DockPanel>
+          <Border
+            DockPanel.Dock="Top" Height="36">
+            <TextBlock
+              Classes="Large" Margin="12,0,36,0"
+              VerticalAlignment="Center"
+              Text="{Binding ChatContext?.Metadata.Topic, RelativeSource={RelativeSource TemplatedParent}}"
+              TextTrimming="CharacterEllipsis"/>
+          </Border>
+
+          <ScrollViewer
+            HorizontalContentAlignment="Stretch" BringIntoViewOnFocusChange="False"
+            HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <v:ChatMessageItemsControl
+              Margin="12,8,12,0"
+              ChatContext="{TemplateBinding ChatContext}"
+              IsReadonly="True"/>
+          </ScrollViewer>
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

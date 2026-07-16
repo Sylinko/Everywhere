@@ -1,5 +1,4 @@
-using Avalonia.Controls;
-using Everywhere.AI;
+using Avalonia.Controls.Primitives;
 using Everywhere.Chat;
 
 namespace Everywhere.Views;
@@ -9,7 +8,7 @@ namespace Everywhere.Views;
 /// The dialog deliberately contains only a normal chat projection; it does not navigate or
 /// mutate the outer chat viewport.
 /// </summary>
-public partial class ChatSubagentView : UserControl
+public sealed class ChatSubagentView : TemplatedControl
 {
     /// <summary>
     /// Defines the <see cref="ChatContext"/> property.
@@ -24,25 +23,5 @@ public partial class ChatSubagentView : UserControl
     {
         get => GetValue(ChatContextProperty);
         set => SetValue(ChatContextProperty, value);
-    }
-
-    /// <summary>
-    /// Defines the <see cref="SupportedModalities"/> property.
-    /// </summary>
-    public static readonly StyledProperty<Modalities> SupportedModalitiesProperty =
-        AvaloniaProperty.Register<ChatSubagentView, Modalities>(nameof(SupportedModalities));
-
-    /// <summary>
-    /// Gets or sets the input modalities inherited from the outer chat surface.
-    /// </summary>
-    public Modalities SupportedModalities
-    {
-        get => GetValue(SupportedModalitiesProperty);
-        set => SetValue(SupportedModalitiesProperty, value);
-    }
-
-    public ChatSubagentView()
-    {
-        InitializeComponent();
     }
 }

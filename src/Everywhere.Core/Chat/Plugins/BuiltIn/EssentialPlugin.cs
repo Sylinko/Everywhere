@@ -68,7 +68,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
     private async Task<string> RunSubagentAsync(
         [FromKernelServices] IChatService chatService,
         [FromKernelServices] Assistant assistant,
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description("A detailed description of the task for the agent to perform, inject into system prompt")] string prompt,
         [Description("A concise title for the agent's task")] string title,
@@ -76,20 +76,15 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         string? specialization = null,
         CancellationToken cancellationToken = default)
     {
-        displaySink.AppendDynamicLocaleKey(
-            new FormattedDynamicLocaleKey(
-                LocaleKey.BuiltInChatPlugin_Essential_RunSubagent_Title,
-                new DirectLocaleKey(title)),
-            "Large");
-
         // Fork a temporary chat context for the subagent
-        var forkedChatContext = chatContext.ForkSubagent();
+        var forkedChatContext = chatContext.ForkSubagent(title);
         forkedChatContext.Add(new UserChatMessage(prompt, []));
         var assistantChatMessage = new AssistantChatMessage();
         forkedChatContext.Add(assistantChatMessage);
 
         // Display the chat context in the UI
-        displaySink.AppendSubagent(forkedChatContext);
+        userInterface.ActivityPreview = new ChatPluginSubagentActivityPreview(forkedChatContext);
+        userInterface.DisplaySink.AppendSubagent(forkedChatContext);
 
         var specializations = specialization?.ToLower() switch
         {

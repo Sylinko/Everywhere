@@ -26,9 +26,10 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatInputArea.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatMessageControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatMessageItemsControl.axaml"/>
-        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatPresentationRowPresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatPluginDisplayBlockPresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatPluginUserInterfaceHost.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatPresentationRowPresenter.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatSubagentView.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatTextEditor.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ConsentDecisionCard.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/TerminalView.axaml"/>
