@@ -1345,7 +1345,7 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>Remplacer le contenu d'un fichier texte.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>La taille du fichier dépasse 10 Mo ; l'opération de lecture n'est pas prise en charge.</value>
+        <value>La taille du fichier dépasse 100 Mo ; l'opération de lecture n'est pas prise en charge.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Échec de la création du répertoire.</value>

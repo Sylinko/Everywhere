@@ -8,7 +8,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 /// </summary>
 public abstract class LocalFileHandler : FileHandler
 {
-    internal sealed override async ValueTask<FileHandlerContext?> TryCreateContextAsync(
+    public sealed override async ValueTask<FileHandlerContext?> TryCreateContextAsync(
         string path,
         string workingDirectory,
         CancellationToken cancellationToken)
@@ -86,10 +86,12 @@ public abstract class LocalFileHandler : FileHandler
         while (directories.TryPop(out var current))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            IEnumerable<string> entries;
+            string[] entries;
             try
             {
-                entries = Directory.EnumerateFileSystemEntries(current.Path);
+                // Directory.EnumerateFileSystemEntries is lazy; materialize this directory while the
+                // exception guard is active so failures from MoveNext do not abort the whole traversal.
+                entries = Directory.EnumerateFileSystemEntries(current.Path).ToArray();
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {

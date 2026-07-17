@@ -10,7 +10,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 /// </summary>
 public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
 {
-    internal override ValueTask<FileHandlerContext?> TryCreateContextAsync(
+    public override ValueTask<FileHandlerContext?> TryCreateContextAsync(
         string path,
         string workingDirectory,
         CancellationToken cancellationToken)
@@ -130,7 +130,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         var resource = Resolve(context);
         if (resource.IsDirectory || resource.Length > 10L * 1024 * 1024)
         {
-            return new FileContentSearchResult([]);
+            return new FileContentSearchResult([], LimitHit: resource.Length > 10L * 1024 * 1024);
         }
 
         await using var stream = resource.OpenRead();
@@ -161,7 +161,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         int limit,
         CancellationToken cancellationToken)
     {
-        var startByte = Math.Max(0, offset - 1);
+        var startByte = ToZeroBasedOffset(offset);
         var maxBytes = Math.Clamp(limit == 2000 ? 10240 : limit, 1, 1024 * 1024);
         stream.Seek(startByte, SeekOrigin.Begin);
         var items = new List<FileReadResult.Item>();
@@ -178,7 +178,7 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         return new FileReadResult
         {
             Items = items,
-            Offset = startByte + 1,
+            Offset = ToOneBasedOffset(startByte),
             Unit = "byte",
             Total = resource.Length <= int.MaxValue ? (int)resource.Length : null,
             HasMore = stream.Position < stream.Length

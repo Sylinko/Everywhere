@@ -1,15 +1,14 @@
+using System.Reflection;
 using Everywhere.Chat;
-using Everywhere.Chat.Plugins.BuiltIn;
-using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Chat.Documents;
 using Everywhere.Chat.Plugins;
-using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
-using Everywhere.I18N;
 using Everywhere.Core.I18N;
+using Everywhere.I18N;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using System.Reflection;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -20,7 +19,7 @@ public class FileSystemPluginTests
     {
         var sink = new ChatPluginDisplaySink();
         var path = Path.Combine(Path.GetTempPath(), "same-line.txt");
-        IReadOnlyList<FileContentMatch> matches =
+        List<FileContentMatch> matches =
         [
             new(path, "needle and needle", 5, 1, 6),
             new(path, "needle and needle", 5, 12, 6),
@@ -96,8 +95,8 @@ public class FileSystemPluginTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(FileSystemPlugin.IsPathInsideDirectory(root, root), Is.True);
-            Assert.That(FileSystemPlugin.IsPathInsideDirectory(child, root), Is.True);
+            Assert.That(PathContainment.IsInsideDirectory(root, root), Is.True);
+            Assert.That(PathContainment.IsInsideDirectory(child, root), Is.True);
         });
     }
 
@@ -108,7 +107,37 @@ public class FileSystemPluginTests
         var root = Path.Combine(parent, "work");
         var siblingPrefix = Path.Combine(parent, "work2", "file.txt");
 
-        Assert.That(FileSystemPlugin.IsPathInsideDirectory(siblingPrefix, root), Is.False);
+        Assert.That(PathContainment.IsInsideDirectory(siblingPrefix, root), Is.False);
+    }
+
+    [Test]
+    public void IsPathInsideDirectory_RejectsLinkThatResolvesOutsideRoot()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var outside = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var link = Path.Combine(root, "linked");
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(outside);
+        try
+        {
+            try
+            {
+                Directory.CreateSymbolicLink(link, outside);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
+            {
+                Assert.Ignore($"Symbolic links are unavailable: {ex.Message}");
+            }
+
+            Assert.That(
+                PathContainment.IsInsideDirectory(Path.Combine(link, "file.txt"), root),
+                Is.False);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+            if (Directory.Exists(outside)) Directory.Delete(outside, true);
+        }
     }
 
     [Test]
@@ -178,7 +207,7 @@ public class FileSystemPluginTests
     }
 
     [Test]
-    public async Task WriteToFileAsync_DeniedConsent_DoesNotCreateFile()
+    public void WriteToFileAsync_DeniedConsent_DoesNotCreateFile()
     {
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
         var displaySink = new ChatPluginDisplaySink();

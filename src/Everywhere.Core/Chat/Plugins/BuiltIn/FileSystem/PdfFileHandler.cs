@@ -107,7 +107,8 @@ public sealed class PdfFileHandler : LocalFileHandler
     {
         const int maxMatches = 2000;
         var file = EnsureFile(context);
-        if (file.Length > 10L * 1024 * 1024) return new FileContentSearchResult([]);
+        if (file.Length > 10L * 1024 * 1024) return new FileContentSearchResult([], LimitHit: true);
+
         using var document = OpenDocument(file.FullName);
         var results = new List<FileContentMatch>();
         var linesBeforePage = 0;

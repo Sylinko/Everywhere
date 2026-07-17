@@ -16,12 +16,6 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// </summary>
 public sealed class FileSystemPlugin : BuiltInChatPlugin
 {
-#if WINDOWS
-    private static StringComparison PathComparer => StringComparison.OrdinalIgnoreCase;
-#else
-    private static StringComparison PathComparer => StringComparison.Ordinal;
-#endif
-
     private static TimeSpan RegexTimeout => TimeSpan.FromSeconds(3);
 
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
@@ -188,6 +182,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(root.Path));
 
         maxResults = Math.Clamp(maxResults, 1, 200);
+        var internalMaxResults = maxResults * 5;
         var matches = new List<FileContentMatch>();
         var limitHit = false;
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -197,13 +192,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             await foreach (var item in root.Handler.EnumerateAsync(root, fileRegex, true, true, cts.Token))
             {
-                if (matches.Count >= maxResults * 5) break;
+                if (matches.Count >= internalMaxResults)
+                {
+                    limitHit = true;
+                    break;
+                }
+
                 var context = await _contextFactory.CreateAsync(item, root.WorkingDirectory, cts.Token);
                 try
                 {
                     var result = await context.Handler.SearchContentAsync(context, searchRegex, cts.Token);
-                    matches.AddRange(result.Matches.Take(maxResults * 5 - matches.Count));
-                    limitHit |= result.LimitHit;
+                    var remaining = internalMaxResults - matches.Count;
+                    limitHit |= result.LimitHit || result.Matches.Count > remaining;
+                    matches.AddRange(result.Matches.Take(remaining));
                 }
                 catch (HandledException ex) when (ex.InnerException is NotSupportedException)
                 {
@@ -571,11 +572,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         if (result.HasMore)
         {
-            // This note is pruned before content lines. If pruning occurs, their numeric prefixes
-            // still let the model continue after the last line it actually received.
+            // Keep the continuation instruction while content lines are pruned. Their numeric
+            // prefixes still let the model continue after the last line it actually received.
             output.Add(
                 new PromptText($"{Environment.NewLine}[More content is available. Continue with offset={result.NextOffset}.]{Environment.NewLine}")
-                    .WithPriority(int.MinValue));
+                    .WithPriority(int.MaxValue));
         }
 
         return output;
@@ -761,13 +762,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         return Path.GetFullPath(Environment.ExpandEnvironmentVariables(path), workingDirectory);
     }
 
-    internal static bool IsPathInsideDirectory(string path, string directory)
-    {
-        var fullPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
-        var fullDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
-        return fullPath.Equals(fullDirectory, PathComparer) || fullPath.StartsWith(fullDirectory + Path.DirectorySeparatorChar, PathComparer);
-    }
-
     internal static string GetWriteConsentDescriptionKey(bool append, bool fileExists) =>
         fileExists ?
             append ?
@@ -792,7 +786,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken)
     {
         var workingDirectory = chatContext.EnsureWorkingDirectory();
-        if (paths.Count > 0 && paths.All(path => Path.IsPathFullyQualified(path) && IsPathInsideDirectory(path, workingDirectory))) return;
+        if (paths.Count > 0 && paths.All(path => Path.IsPathFullyQualified(path) && PathContainment.IsInsideDirectory(path, workingDirectory)))
+        {
+            return;
+        }
+
         var container = new ChatPluginContainerDisplayBlock();
         if (descriptionKey is not null)
         {

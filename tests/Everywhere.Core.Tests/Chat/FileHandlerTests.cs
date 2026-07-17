@@ -98,6 +98,54 @@ public class FileHandlerTests
     }
 
     [Test]
+    public async Task BinaryHandler_ClampsExtremeNegativeOffset()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".bin");
+        var bytes = new byte[] { 0, 1, 2, 3, 4 };
+        await File.WriteAllBytesAsync(path, bytes);
+        try
+        {
+            var context = await CreateLocalFactory().CreateAsync(path, Path.GetTempPath());
+            var result = await context.Handler.ReadAsync(context, int.MinValue, 4, CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Offset, Is.EqualTo(1));
+                Assert.That(result.Items.Single().Content, Is.EqualTo("00-01-02-03"));
+            });
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task TextHandler_SearchTracksLineNumbersAcrossMatches()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        await File.WriteAllTextAsync(path, "prefix\nneedle first\nmiddle\nneedle second\n");
+        try
+        {
+            var context = await CreateLocalFactory().CreateAsync(path, Path.GetTempPath());
+            var result = await context.Handler.SearchContentAsync(
+                context,
+                new Regex("needle", RegexOptions.CultureInvariant),
+                CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Matches.Select(match => match.Line), Is.EqualTo(new[] { 2, 4 }));
+                Assert.That(result.Matches.Select(match => match.Preview), Is.EqualTo(new[] { "needle first", "needle second" }));
+            });
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
     public async Task TextHandler_WritesAndAppends_WhileBinaryRejectsWrite()
     {
         var directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -310,6 +358,75 @@ public class FileHandlerTests
         }
     }
 
+    [Test]
+    public async Task SkillHandler_BinaryReadClampsExtremeNegativeOffset()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            using var source = new SkillSource(
+                Substitute.For<ILogger<SkillSource>>(),
+                () => []);
+            using var manager = new SkillManager(
+                new PersistentState(new InMemoryKeyValueStorage()),
+                source,
+                [new StaticVirtualSkillProvider(
+                    new VirtualSkill(
+                        "builtin.binary",
+                        "---\nname: Binary\ndescription: Binary sample\n---\n# Binary",
+                        new Dictionary<string, ReadOnlyMemory<byte>>
+                        {
+                            ["data.bin"] = new byte[] { 0, 1, 2, 3, 4 }
+                        }))],
+                Substitute.For<ILogger<SkillManager>>());
+            await manager.RefreshAsync();
+
+            var context = await new FileHandlerContextFactory([new SkillFileHandler(manager)])
+                .CreateAsync("skill://builtin.binary/data.bin", root);
+            var result = await context.Handler.ReadAsync(context, int.MinValue, 4, CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Offset, Is.EqualTo(1));
+                Assert.That(result.Items.Single().Content, Is.EqualTo("00-01-02-03"));
+            });
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
+    public void LocalSkillResourceStore_RejectsEscapingLink()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var outside = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var link = Path.Combine(root, "linked");
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(outside);
+        try
+        {
+            try
+            {
+                Directory.CreateSymbolicLink(link, outside);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
+            {
+                Assert.Ignore($"Symbolic links are unavailable: {ex.Message}");
+            }
+
+            var store = new LocalSkillResourceStore(root);
+            Assert.Throws<UnauthorizedAccessException>(() => store.Resolve("agents.sample", "linked/secret.txt"));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+            if (Directory.Exists(outside)) Directory.Delete(outside, true);
+        }
+    }
+
     private static FileHandlerContextFactory CreateLocalFactory() =>
         new([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]);
 
@@ -317,14 +434,13 @@ public class FileHandlerTests
     {
         public int MatchCount { get; private set; }
 
-        internal override ValueTask<FileHandlerContext?> TryCreateContextAsync(
+        public override ValueTask<FileHandlerContext?> TryCreateContextAsync(
             string path,
             string workingDirectory,
             CancellationToken cancellationToken)
         {
             MatchCount++;
-            return ValueTask.FromResult<FileHandlerContext?>(
-                result ? new FileHandlerContext(this, path, workingDirectory) : null);
+            return ValueTask.FromResult(result ? new FileHandlerContext(this, path, workingDirectory) : null);
         }
     }
 

@@ -1346,7 +1346,7 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
         <value>Substitua o conteúdo em um arquivo de texto específico.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>O tamanho do arquivo excede 10 MB e não pode ser lido.</value>
+        <value>O tamanho do arquivo excede 100 MB e não pode ser lido.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Não foi possível criar a pasta.</value>

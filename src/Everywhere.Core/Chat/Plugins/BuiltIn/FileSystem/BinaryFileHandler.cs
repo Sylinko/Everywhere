@@ -27,7 +27,7 @@ public sealed class BinaryFileHandler : LocalFileHandler
                 LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage);
         }
 
-        var startByte = Math.Max(0, offset - 1);
+        var startByte = ToZeroBasedOffset(offset);
         var maxBytes = Math.Clamp(limit == 2000 ? 10240 : limit, 1, 1024 * 1024);
         await using var stream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);
         stream.Seek(startByte, SeekOrigin.Begin);
@@ -45,7 +45,7 @@ public sealed class BinaryFileHandler : LocalFileHandler
         return new FileReadResult
         {
             Items = items,
-            Offset = Math.Min(int.MaxValue, startByte + 1),
+            Offset = ToOneBasedOffset(startByte),
             Unit = "byte",
             Total = file.Length <= int.MaxValue ? (int)file.Length : null,
             HasMore = stream.Position < stream.Length

@@ -83,7 +83,7 @@ public sealed class TextFileHandler : LocalFileHandler
         CancellationToken cancellationToken)
     {
         var file = EnsureFile(context);
-        if (file.Length > 10L * 1024 * 1024) return new FileContentSearchResult([]);
+        if (file.Length > 10L * 1024 * 1024) return new FileContentSearchResult([], LimitHit: true);
 
         await using var stream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);
         var encoding = await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken);

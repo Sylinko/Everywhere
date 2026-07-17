@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text;
+using Everywhere.Common;
 using ZLinq;
 
 namespace Everywhere.Skills;
@@ -22,23 +23,7 @@ public abstract class SkillResourceStore
             $"skill://{skillId}/{string.Join('/', relativePath.Split('/').Select(Uri.EscapeDataString))}";
 
     protected static bool IsPathInsideDirectory(string path, string directory)
-    {
-        var fullPath = Path.GetFullPath(path);
-        var fullDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
-        if (fullPath.Equals(fullDirectory, GetPathComparison())) return true;
-
-        var prefix = fullDirectory + Path.DirectorySeparatorChar;
-        return fullPath.StartsWith(prefix, GetPathComparison());
-    }
-
-    private static StringComparison GetPathComparison()
-    {
-#if WINDOWS
-        return StringComparison.OrdinalIgnoreCase;
-#else
-        return StringComparison.Ordinal;
-#endif
-    }
+        => PathContainment.IsInsideDirectory(path, directory);
 }
 
 /// <summary>
@@ -65,13 +50,19 @@ public sealed class LocalSkillResourceStore(string skillDirectory) : SkillResour
         string relativePath,
         bool recurseSubdirectories)
     {
+        var resolvedSkillDirectory = GetPhysicalPath(string.Empty);
         var physicalRoot = GetPhysicalPath(relativePath);
         if (!Directory.Exists(physicalRoot)) yield break;
 
-        var option = recurseSubdirectories ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        foreach (var path in Directory.EnumerateFileSystemEntries(physicalRoot, "*", option))
+        var options = new EnumerationOptions
         {
-            var relative = Path.GetRelativePath(_skillDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
+            RecurseSubdirectories = recurseSubdirectories,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
+        foreach (var path in Directory.EnumerateFileSystemEntries(physicalRoot, "*", options))
+        {
+            var relative = Path.GetRelativePath(resolvedSkillDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
             yield return Resolve(skillId, relative);
         }
     }
@@ -81,12 +72,12 @@ public sealed class LocalSkillResourceStore(string skillDirectory) : SkillResour
         var physicalPath = relativePath.Length == 0 ?
             _skillDirectory :
             Path.GetFullPath(Path.Combine(_skillDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar)));
-        if (!IsPathInsideDirectory(physicalPath, _skillDirectory))
+        if (!PathContainment.TryResolvePathInsideDirectory(physicalPath, _skillDirectory, out var resolvedPath))
         {
             throw new UnauthorizedAccessException("Skill resource path escapes the skill directory.");
         }
 
-        return physicalPath;
+        return resolvedPath;
     }
 }
 
