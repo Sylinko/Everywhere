@@ -540,8 +540,8 @@ public sealed class ChatContextStorage(
     private byte[] SerializeMessage(ChatMessage message) =>
         MessagePackSerializer.Serialize(message, serializerOptions);
 
-    private static ChatMessage DeserializeMessage(byte[] payload) =>
-        MessagePackSerializer.Deserialize<ChatMessage>(payload);
+    private ChatMessage DeserializeMessage(byte[] payload) =>
+        MessagePackSerializer.Deserialize<ChatMessage>(payload, serializerOptions);
 
     private static long GetOrderKey(Guid id)
     {
