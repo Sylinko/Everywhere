@@ -83,7 +83,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
             throw new InvalidOperationException("Failed to start the officecli process.");
         }
 
-        cancellationToken.Register(() =>
+        await using var cancellationRegistration = cancellationToken.Register(() =>
         {
             try
             {
@@ -100,10 +100,14 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
             }
         });
 
-        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+        // Start both drains before waiting for either result. Reading one redirected pipe to completion
+        // before the other can deadlock when the child fills the unread pipe's buffer.
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
         await process.WaitForExitAsync(cancellationToken);
+        var output = await outputTask;
+        var error = await errorTask;
 
         var hasOutput = !output.IsNullOrEmpty();
         var hasError = !error.IsNullOrEmpty();
@@ -115,9 +119,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
 
         if (!hasOutput || !hasError)
         {
-            return new PromptTextChunk(hasOutput ? output : error)
-                .BreakOnWhitespace()
-                .LimitTokens(40000);
+            return new PromptTextChunk(hasOutput ? output : error).BreakOnWhitespace().LimitTokens(40000);
         }
 
         var result = new PromptElement(
