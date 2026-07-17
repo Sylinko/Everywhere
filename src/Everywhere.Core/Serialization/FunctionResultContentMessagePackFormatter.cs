@@ -23,8 +23,8 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
         {
             case ChatAttachment chatAttachment:
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
                 writer.Write(1);
+                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
                 formatter.Serialize(ref writer, chatAttachment, options);
                 break;
             }
@@ -52,47 +52,44 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
         object? result = null;
         Dictionary<string, object?>? metadata = null;
 
-        if (reader.ReadArrayHeader() != 5)
+        var count = reader.ReadArrayHeader();
+        for (var i = 0; i < count; i++)
         {
-            throw new MessagePackSerializationException("FunctionResultContent array header must be 5.");
-        }
+            switch (i)
+            {
+                case 0:
+                    callId = reader.ReadString();
+                    break;
+                case 1:
+                    pluginName = reader.ReadString();
+                    break;
+                case 2:
+                    functionName = reader.ReadString();
+                    break;
+                case 3:
+                    if (reader.ReadArrayHeader() != 2)
+                    {
+                        throw new MessagePackSerializationException("FunctionResultContent result array header must be 2.");
+                    }
 
-        callId = reader.ReadString();
-        pluginName = reader.ReadString();
-        functionName = reader.ReadString();
-
-        if (reader.ReadArrayHeader() != 2)
-        {
-            throw new MessagePackSerializationException("FunctionResultContent result array header must be 2.");
-        }
-
-        var valueType = reader.ReadInt32();
-        switch (valueType)
-        {
-            case 0:
-            {
-                result = reader.ReadString();
-                break;
-            }
-            case 1:
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
-                result = formatter.Deserialize(ref reader, options);
-                break;
-            }
-            case 2:
-            {
-                var formatter = options.Resolver.GetFormatterWithVerify<PromptNode>();
-                result = formatter.Deserialize(ref reader, options);
-                break;
-            }
-            default:
-            {
-                throw new MessagePackSerializationException($"Unknown FunctionResultContent result type '{valueType}'.");
+                    var valueType = reader.ReadInt32();
+                    result = valueType switch
+                    {
+                        0 => reader.ReadString(),
+                        1 => options.Resolver.GetFormatterWithVerify<ChatAttachment>().Deserialize(ref reader, options),
+                        2 => options.Resolver.GetFormatterWithVerify<PromptNode>().Deserialize(ref reader, options),
+                        _ => throw new MessagePackSerializationException($"Unknown FunctionResultContent result type '{valueType}'.")
+                    };
+                    break;
+                case 4:
+                    metadata = MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options);
+                    break;
+                default:
+                    // Canonical fields are append-only; older clients may have persisted a longer layout.
+                    reader.Skip();
+                    break;
             }
         }
-
-        metadata = MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options);
 
         return new FunctionResultContent(functionName, pluginName, callId, result)
         {
@@ -102,6 +99,36 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
 
     protected override FunctionResultContent LegacyDeserializeCore(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
-        throw new MessagePackSerializationException("FunctionResultContent must use the canonical array representation.");
+        var callId = reader.ReadString();
+        var pluginName = reader.ReadString();
+        var functionName = reader.ReadString();
+
+        if (reader.ReadArrayHeader() != 2)
+        {
+            throw new MessagePackSerializationException("FunctionResultContent array header must be 2.");
+        }
+
+        var valueType = reader.ReadInt32();
+        object? value;
+        switch (valueType)
+        {
+            case 0:
+            {
+                value = reader.ReadString();
+                break;
+            }
+            case 1:
+            {
+                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
+                value = formatter.Deserialize(ref reader, options);
+                break;
+            }
+            default:
+            {
+                throw new MessagePackSerializationException($"Unknown FunctionResultContent value type '{valueType}'.");
+            }
+        }
+
+        return new FunctionResultContent(functionName, pluginName, callId, value);
     }
 }
