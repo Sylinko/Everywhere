@@ -105,7 +105,7 @@
     <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(WatchdogPath)&quot;" Condition="Exists('$(WatchdogPath)')"/>
 
     <Message Text="Signing OfficeCLI apphost..." Condition="Exists('$(OfficeCliPath)')" Importance="high"/>
-    <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --timestamp --options runtime &quot;$(OfficeCliPath)&quot;" Condition="Exists('$(OfficeCliPath)')"/>
+    <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(OfficeCliPath)&quot;" Condition="Exists('$(OfficeCliPath)')"/>
 
     <Message Text="Signing Main Application executable..." Importance="high"/>
     <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(AppBundleDir)&quot;"/>
