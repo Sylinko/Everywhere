@@ -197,6 +197,29 @@ public sealed class PromptDocumentTests
     }
 
     [Test]
+    public void EqualPriorityUsesLowestDirectChildBeforeDeclarationOrder()
+    {
+        var deepOptional = LongText("deep-optional").WithPriority(0);
+        var shallowOptional = LongText("shallow-optional").WithPriority(1);
+        var first = new PromptGroup()
+            .Children(new PromptGroup().Children(deepOptional).WithPriority(2))
+            .WithPriority(100);
+        var second = new PromptGroup()
+            .Children(shallowOptional)
+            .WithPriority(100);
+        PromptDocument document = [first, second];
+
+        var result = document.Render(TokenHelper.EstimateTokenCount(shallowOptional.Text));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Content, Is.EqualTo(deepOptional.Text));
+            Assert.That(result.OmittedNodes, Does.Not.Contain(deepOptional));
+            Assert.That(result.OmittedNodes, Does.Contain(shallowOptional));
+        });
+    }
+
+    [Test]
     public void TextChunkShortensAtCompleteLineBoundaries()
     {
         var chunk = new PromptTextChunk("first line\nsecond line\nthird line")
@@ -211,6 +234,43 @@ public sealed class PromptDocumentTests
             Assert.That(result.Content, Is.EqualTo("first line\nsecond line\n"));
             Assert.That(result.TruncatedNodes, Is.EquivalentTo(new[] { chunk }));
             Assert.That(result.IncludedNodes, Does.Contain(chunk));
+        });
+    }
+
+    [Test]
+    public void MaxTokenPropertiesRejectInvalidAssignmentsWithoutChangingTheirValues()
+    {
+        var chunk = new PromptTextChunk("chunk") { MaxTokens = 4 };
+        var limit = new PromptTokenLimit(4);
+
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => chunk.MaxTokens = 0);
+            Assert.That(chunk.MaxTokens, Is.EqualTo(4));
+            Assert.DoesNotThrow(() => chunk.MaxTokens = null);
+            Assert.That(chunk.MaxTokens, Is.Null);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => limit.MaxTokens = -1);
+            Assert.That(limit.MaxTokens, Is.EqualTo(4));
+            Assert.DoesNotThrow(() => limit.MaxTokens = 0);
+            Assert.That(limit.MaxTokens, Is.Zero);
+        });
+    }
+
+    [Test]
+    public void BreakOnRejectsInvalidSeparatorsWithoutChangingTheChunk()
+    {
+        var chunk = new PromptTextChunk("first\nsecond").BreakOnLines();
+
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<ArgumentNullException>(() => chunk.BreakOn(null!));
+            Assert.That(chunk.BreakMode, Is.EqualTo(PromptTextBreakMode.Line));
+            Assert.That(chunk.Separator, Is.Null);
+
+            Assert.Throws<ArgumentException>(() => chunk.BreakOn(string.Empty));
+            Assert.That(chunk.BreakMode, Is.EqualTo(PromptTextBreakMode.Line));
+            Assert.That(chunk.Separator, Is.Null);
         });
     }
 

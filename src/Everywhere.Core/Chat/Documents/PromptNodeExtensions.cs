@@ -86,6 +86,8 @@ public static class PromptNodeExtensions
         /// </summary>
         public PromptTextChunk BreakOn(string separator)
         {
+            ArgumentException.ThrowIfNullOrEmpty(separator);
+
             chunk.BreakMode = PromptTextBreakMode.Separator;
             chunk.Separator = separator;
             return chunk;

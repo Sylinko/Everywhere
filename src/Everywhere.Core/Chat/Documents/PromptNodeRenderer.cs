@@ -244,10 +244,9 @@ internal static class PromptNodeRenderer
 
             if (candidate.Priority != lowest.Priority) continue;
 
-            // Equal-priority containers are compared by their next removable descendant. This keeps a
-            // high-priority wrapper from hiding cheaper nested content while preserving declaration order
-            // when both subtrees are otherwise equivalent.
-            if (GetLowestNestedPriority(candidate) < GetLowestNestedPriority(lowest)) lowest = candidate;
+            // Equal-priority containers use the lowest priority of their direct children as a
+            // tie-breaker. This keeps priority local to each container, matching prompt-tsx.
+            if (GetLowestDirectChildPriority(candidate) < GetLowestDirectChildPriority(lowest)) lowest = candidate;
         }
 
         if (lowest is not MaterializedContainer nested || nested.IsAtomic || nested.IsEmpty) return lowest;
@@ -269,10 +268,17 @@ internal static class PromptNodeRenderer
         }
     }
 
-    private static int GetLowestNestedPriority(MaterializedNode node)
+    private static int GetLowestDirectChildPriority(MaterializedNode node)
     {
-        if (node is not MaterializedContainer container || container.IsAtomic) return int.MaxValue;
-        return EnumeratePriorityChildren(container).AsValueEnumerable().Where(c => !c.IsEmpty).Select(c => c.Priority).Prepend(int.MaxValue).Min();
+        if (node is not MaterializedContainer container) return -1;
+
+        var lowest = int.MaxValue;
+        foreach (var child in container.Children)
+        {
+            lowest = Math.Min(lowest, child.Priority);
+        }
+
+        return lowest;
     }
 
     private static string EncodeText(string text, bool escapeText) => escapeText ? SecurityElement.Escape(text) : text;

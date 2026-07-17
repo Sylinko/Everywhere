@@ -182,7 +182,7 @@ var secondFile = new PromptGroup().Children(
 PromptDocument document = [firstFile, secondFile];
 ```
 
-A group is not atomic. Its descendants may still be pruned independently. If the complete subtree must be kept or removed as one unit, use `PromptChunk` instead.
+A group is not atomic. Its descendants may still be pruned independently. If the complete subtree must be kept or removed as one unit, use `PromptChunk` instead. When sibling candidates have the same priority, their direct children provide the tie-breaker before the renderer descends into the selected group.
 
 `WithPassedPriority()` can make a logical container transparent to its parent's priority scope. `PromptElement` is transparent by default because its tags are structural rather than independent content.
 
@@ -347,7 +347,7 @@ The renderer performs the following stages:
 
 The declaration tree remains available for a second render with a different budget. The renderer's private materialized nodes are never serialized.
 
-Lower priority numbers are discarded first. Equal-priority nodes use declaration order as the stable tie-breaker. A required atomic node that cannot fit may cause rendering to fail instead of being silently corrupted.
+Lower priority numbers are discarded first. Equal-priority candidates compare the lowest priority among their direct children; declaration order is used when that tie-breaker is also equal. The renderer then descends into the selected non-atomic container and repeats the same local comparison. A required atomic node that cannot fit may cause rendering to fail instead of being silently corrupted.
 
 ## Serialization and chat history
 
@@ -389,13 +389,13 @@ private static PromptNode BuildReadOutput(string path, IReadOnlyList<string> lin
 
     output.Add(
         new PromptText("\n[More content is available. Continue with the next offset.]\n")
-            .WithPriority(int.MinValue));
+            .WithPriority(int.MaxValue));
 
     return output;
 }
 ```
 
-The header is atomic, each logical line can cooperate with the token budget, and the continuation hint is removed before useful content. PDF page information can be represented in the line text or in the surrounding tool result; PDF parsing itself is a file-handler concern, not a `PromptNode` concern.
+The header is atomic, each logical line can cooperate with the token budget, and the continuation hint remains while lower-priority content lines are pruned. PDF page information can be represented in the line text or in the surrounding tool result; PDF parsing itself is a file-handler concern, not a `PromptNode` concern.
 
 The same pattern works for search results:
 

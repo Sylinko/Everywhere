@@ -116,7 +116,15 @@ public sealed partial class PromptTextChunk : PromptNode
     /// Gets or sets an optional local token ceiling for this text.
     /// </summary>
     [Key(4)]
-    public int? MaxTokens { get; set; }
+    public int? MaxTokens
+    {
+        get;
+        set
+        {
+            if (value.HasValue) ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value.Value, nameof(MaxTokens));
+            field = value;
+        }
+    }
 
     [SerializationConstructor]
     private PromptTextChunk() { }
@@ -127,7 +135,6 @@ public sealed partial class PromptTextChunk : PromptNode
     public PromptTextChunk(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-
         Text = text;
     }
 }
@@ -231,15 +238,22 @@ public sealed partial class PromptTokenLimit : PromptContainer
     /// Gets the maximum number of tokens that may be emitted by this subtree.
     /// </summary>
     [Key(3)]
-    public int MaxTokens { get; set; }
+    [field: IgnoreMember]
+    public int MaxTokens
+    {
+        get;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value, nameof(MaxTokens));
+            field = value;
+        }
+    }
 
     /// <summary>
     /// Creates a locally budgeted subtree containing the supplied children.
     /// </summary>
     public PromptTokenLimit(int maxTokens, params ReadOnlySpan<PromptNode?> children)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(maxTokens);
-
         MaxTokens = maxTokens;
         foreach (var child in children)
         {
