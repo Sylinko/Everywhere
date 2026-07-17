@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\3rd\OfficeCLI\src\officecli\officecli.csproj" />
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
@@ -44,6 +45,5 @@
   </ItemGroup>
 
   <Import Project="..\Build.Patches.targets" />
-
   <Import Project="..\Build.Watchdog.targets" />
 </Project>

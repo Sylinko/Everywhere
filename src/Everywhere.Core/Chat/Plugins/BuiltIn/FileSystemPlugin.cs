@@ -255,7 +255,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [Description("1-based line or byte offset. Use `nextOffset` from the previous result to continue.")]
         int offset = 1,
         [Description("Maximum number of logical lines or bytes to return.")] int limit = 2000,
-        [Description("Treat a local file as an attachment. Keep this as false for most use cases.")] bool attachment = false,
+        [Description("Treat a local file as an attachment. Keep this as false for most use cases.")]
+        bool attachment = false,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug(
@@ -580,9 +581,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         return output;
     }
 
-    private static PromptNode BuildSearchOutput(
+    private static PromptTokenLimit BuildSearchOutput(
         IChatPluginDisplaySink displaySink,
-        IReadOnlyList<FileContentMatch> matches,
+        List<FileContentMatch> matches,
         string pattern,
         int maxResults,
         bool limitHit)

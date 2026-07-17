@@ -3675,7 +3675,7 @@
         <value>执行 OfficeCLI 命令</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>执行</value>
+        <value>OfficeCLI</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>这种文件不支持所请求的操作。</value>

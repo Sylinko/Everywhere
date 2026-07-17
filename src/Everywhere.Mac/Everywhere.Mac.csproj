@@ -20,13 +20,13 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
 
-  <Import Project="..\Build.Patches.targets" />
+  <Import Project="..\Build.Patches.targets"/>
 
   <!-- Workaround for TextMateSharp.Grammars libonigwrap.dylib failing in install_name_tool due to lack of header padding -->
   <Target Name="_SkipInstallNameToolForLibOnigWrap" BeforeTargets="_InstallNameTool">
-    <Message Text="Skipping install_name_tool for libonigwrap.dylib to avoid 'larger updated load commands do not fit' error..." Importance="high" />
+    <Message Text="Skipping install_name_tool for libonigwrap.dylib to avoid 'larger updated load commands do not fit' error..." Importance="high"/>
     <ItemGroup>
-      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'"/>
     </ItemGroup>
   </Target>
 
@@ -47,17 +47,17 @@
 
   <!-- Workaround for TextMateSharp libonigwrap.dylib failing in install_name_tool and causing dyld crash on launch -->
   <Target Name="_HideLibOnigWrapFromMacSdk" BeforeTargets="_ComputeDynamicLibrariesToReidentify;_LinkNativeExecutable;_InstallNameTool">
-    <Message Text="Intercepting libonigwrap.dylib to prevent dyld static linking crashes..." Importance="high" />
+    <Message Text="Intercepting libonigwrap.dylib to prevent dyld static linking crashes..." Importance="high"/>
     <ItemGroup>
-      <_ExtractedLibOnigWrap Include="@(_FileNativeReference)" Condition="'%(Filename)' == 'libonigwrap'" />
-      <_FileNativeReference Remove="@(_ExtractedLibOnigWrap)" />
-      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'" />
+      <_ExtractedLibOnigWrap Include="@(_FileNativeReference)" Condition="'%(Filename)' == 'libonigwrap'"/>
+      <_FileNativeReference Remove="@(_ExtractedLibOnigWrap)"/>
+      <_DynamicLibraryToReidentify Remove="@(_DynamicLibraryToReidentify)" Condition="'%(Filename)' == 'libonigwrap'"/>
     </ItemGroup>
   </Target>
 
   <Target Name="_CopyLibOnigWrapToBundle" AfterTargets="_CreateAppBundle">
-    <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')" />
-    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''" />
+    <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')"/>
+    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''"/>
   </Target>
 
   <!-- When not publishing, we sign the build output for local debugging -->
@@ -91,6 +91,7 @@
   <Target Name="_CoreSignAppBundle">
     <PropertyGroup>
       <WatchdogPath>$(AppBundleDir)/Contents/Helpers/Everywhere.Watchdog</WatchdogPath>
+      <OfficeCliPath>$(AppBundleDir)/Contents/MonoBundle/officecli</OfficeCliPath>
     </PropertyGroup>
 
     <Message Text=">>> Signing App Bundle at: $(AppBundleDir)" Importance="high"/>
@@ -101,8 +102,10 @@
     <Exec Command="find &quot;$(AppBundleDir)/Contents/MonoBundle&quot; \( -name &quot;*.dylib&quot; -o -name &quot;*.so&quot; -o -name &quot;createdump&quot; \) -exec codesign --force --sign &quot;$(CodesignKey)&quot; --timestamp --options runtime &quot;{}&quot; \;"/>
 
     <Message Text="Signing Watchdog..." Condition="Exists('$(WatchdogPath)')" Importance="high"/>
-    <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(WatchdogPath)&quot;"
-          Condition="Exists('$(WatchdogPath)')"/>
+    <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(WatchdogPath)&quot;" Condition="Exists('$(WatchdogPath)')"/>
+
+    <Message Text="Signing OfficeCLI apphost..." Condition="Exists('$(OfficeCliPath)')" Importance="high"/>
+    <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --timestamp --options runtime &quot;$(OfficeCliPath)&quot;" Condition="Exists('$(OfficeCliPath)')"/>
 
     <Message Text="Signing Main Application executable..." Importance="high"/>
     <Exec Command="codesign --force --sign &quot;$(CodesignKey)&quot; --entitlements &quot;$(CodesignEntitlements)&quot; --timestamp --options runtime &quot;$(AppBundleDir)&quot;"/>
@@ -147,10 +150,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj" />
+    <ProjectReference Include="..\..\3rd\OfficeCLI\src\officecli\officecli.csproj"/>
+    <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
-    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj" />
-    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -159,6 +163,33 @@
   </ItemGroup>
 
   <Import Project="..\Build.Watchdog.targets"/>
+
+  <!--
+    The Unix OfficeCLI apphost has no extension. The macOS SDK only places
+    .dll/.exe files in MonoBundle, so copy the tiny native launcher after the
+    app bundle has been assembled. The two small runtime sidecars are copied
+    with it; the managed payload remains shared with Everywhere in MonoBundle.
+  -->
+  <Target Name="CopyOfficeCliAppHostToBundle" AfterTargets="_CreateAppBundle" Condition="'$(IsMacEnabled)' == 'true'">
+    <PropertyGroup>
+      <OfficeCliAppHost>$(TargetDir)officecli</OfficeCliAppHost>
+      <OfficeCliDepsFile>$(TargetDir)officecli.deps.json</OfficeCliDepsFile>
+      <OfficeCliRuntimeConfig>$(TargetDir)officecli.runtimeconfig.json</OfficeCliRuntimeConfig>
+      <OfficeCliBundleDir>$(AppBundleDir)/Contents/MonoBundle</OfficeCliBundleDir>
+      <OfficeCliBundledAppHost>$(AppBundleDir)/Contents/MonoBundle/officecli</OfficeCliBundledAppHost>
+    </PropertyGroup>
+
+    <Error Text="OfficeCLI apphost was not generated: $(OfficeCliAppHost)" Condition="!Exists('$(OfficeCliAppHost)')"/>
+    <Error Text="OfficeCLI runtimeconfig was not generated: $(OfficeCliRuntimeConfig)" Condition="!Exists('$(OfficeCliRuntimeConfig)')"/>
+    <Copy SourceFiles="$(OfficeCliAppHost)" DestinationFiles="$(OfficeCliBundledAppHost)"/>
+    <Copy SourceFiles="$(OfficeCliDepsFile)" DestinationFolder="$(OfficeCliBundleDir)" Condition="Exists('$(OfficeCliDepsFile)')"/>
+    <Copy SourceFiles="$(OfficeCliRuntimeConfig)" DestinationFolder="$(OfficeCliBundleDir)"/>
+    <Exec Command="chmod +x &quot;$(OfficeCliBundledAppHost)&quot;"/>
+  </Target>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="officecli"/>
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\img\Everywhere.ico">
@@ -173,9 +204,7 @@
     </None>
   </ItemGroup>
 
-  <Target Name="_SetShellScriptsPublishFolderType"
-          BeforeTargets="_ComputePublishLocation"
-          Condition="'$(IsMacEnabled)' == 'true'">
+  <Target Name="_SetShellScriptsPublishFolderType" BeforeTargets="_ComputePublishLocation" Condition="'$(IsMacEnabled)' == 'true'">
     <ItemGroup>
       <ResolvedFileToPublish
         Condition="'%(Extension)' == '.zsh' Or '%(Extension)' == '.bash' Or '%(Extension)' == '.ps1'">
