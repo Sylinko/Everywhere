@@ -1,6 +1,11 @@
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
+using Everywhere.Chat.Documents;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Permissions;
+using Everywhere.Common;
+using Everywhere.I18N;
 using Everywhere.Core.I18N;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -10,6 +15,37 @@ namespace Everywhere.Core.Tests.Chat;
 
 public class FileSystemPluginTests
 {
+    [Test]
+    public void BuildSearchOutput_GroupsOccurrencesOnTheSameLineAndKeepsLocations()
+    {
+        var sink = new ChatPluginDisplaySink();
+        var path = Path.Combine(Path.GetTempPath(), "same-line.txt");
+        IReadOnlyList<FileContentMatch> matches =
+        [
+            new(path, "needle and needle", 5, 1, 6),
+            new(path, "needle and needle", 5, 12, 6),
+            new(path, "another needle", 9, 9, 6)
+        ];
+        var method = typeof(FileSystemPlugin).GetMethod(
+            "BuildSearchOutput",
+            BindingFlags.Static | BindingFlags.NonPublic);
+
+        Assert.That(method, Is.Not.Null);
+        var node = (PromptNode)method!.Invoke(null, [sink, matches, "needle", 20, false])!;
+        var output = node.ToString();
+        var reference = sink
+            .OfType<ChatPluginFileReferencesDisplayBlock>()
+            .SelectMany(static block => block.References)
+            .Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(output, Does.Contain("Found 3 occurrences on 2 matching lines in 1 file"));
+            Assert.That(output.Split(Environment.NewLine).Count(static line => line.StartsWith("5:")), Is.EqualTo(1));
+            Assert.That(reference.Locations, Has.Count.EqualTo(3));
+        });
+    }
+
     [Test]
     public void ExpandFullPath_ResolvesRelativePathAgainstWorkingDirectory()
     {
@@ -113,7 +149,9 @@ public class FileSystemPluginTests
         {
             var displaySink = new ChatPluginDisplaySink();
             var chatContext = new ChatContext();
-            var plugin = new FileSystemPlugin(Substitute.For<ILogger<FileSystemPlugin>>());
+            var plugin = new FileSystemPlugin(
+                Substitute.For<ILogger<FileSystemPlugin>>(),
+                new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]));
 
             var result = await InvokeReplaceFileContentAsync(
                 plugin,
@@ -137,6 +175,36 @@ public class FileSystemPluginTests
         {
             if (File.Exists(filePath)) File.Delete(filePath);
         }
+    }
+
+    [Test]
+    public async Task WriteToFileAsync_DeniedConsent_DoesNotCreateFile()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
+        var displaySink = new ChatPluginDisplaySink();
+        var userInterface = Substitute.For<IChatPluginUserInterface>();
+        userInterface.DisplaySink.Returns(displaySink);
+        userInterface.RequestConsentAsync(
+                Arg.Any<string?>(),
+                Arg.Any<IDynamicLocaleKey>(),
+                Arg.Any<ChatPluginDisplayBlock?>(),
+                Arg.Any<RequestConsentRememberMasks>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new RequestConsentResult(false, "denied")));
+        var plugin = new FileSystemPlugin(
+            Substitute.For<ILogger<FileSystemPlugin>>(),
+            new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]));
+
+        var method = typeof(FileSystemPlugin).GetMethod(
+            "WriteToFileAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(method, Is.Not.Null);
+        var task = (Task)method!.Invoke(
+            plugin,
+            [userInterface, new ChatContext(), path, "content", false, CancellationToken.None])!;
+
+        Assert.ThrowsAsync<HandledException>(async () => await task);
+        Assert.That(File.Exists(path), Is.False);
     }
 
     private static Task<string> InvokeReplaceFileContentAsync(

@@ -12,7 +12,7 @@ The implementation should be incremental. Do not attempt to replace the existing
 M1. Domain model and versioned definitions
 M2. SharpYaml strategy parser and validation
 M3. Hand-written normalizer and `from` source resolution
-M4. Skills v1 registry and `skill://id` resolution
+M4. Skills v1 registry and complete `skill://{source}.{skill}` resolution
 M5. Condition DSL and three-valued evaluator
 M6. ExtraContext provider pipeline
 M7. Visual query DSL subset
@@ -201,7 +201,7 @@ Implement replace-only override:
 5. Nested `from` produces validation diagnostic.
 6. Included source remains visible in diagnostics.
 
-## 6. M4: Skills v1 Registry and `skill://id` Resolution
+## 6. M4: Skills v1 Registry and Complete Skill URI Resolution
 
 Skills v1 is deliberately small. It is not another Strategy Engine.
 
@@ -211,7 +211,7 @@ Implement:
 2. A user management UI similar to ChatPlugin settings.
 3. Enabled/disabled state persisted by skill ID.
 4. System prompt injection of enabled skill index.
-5. `skill://id` resolver for Strategy `from`.
+5. Complete `skill://{source}.{skill}` resolver for Strategy `from`.
 
 Do not implement:
 
@@ -239,12 +239,12 @@ Prompt injection should include only an index, not full skill contents:
 ```text
 Available skills:
 - writing.polite: Polite writing style.
-  Path: E:\Everywhere\Skills\writing.polite\SKILL.md
+  URI: skill://everywhere.writing-polite/SKILL.md
 - coding.review: Code review guidance.
-  Path: E:\Everywhere\Skills\coding.review\SKILL.md
+  URI: skill://everywhere.coding-review/SKILL.md
 ```
 
-The enabled skill index must include each skill's complete `SKILL.md` file path. The model reads skill content by calling `read_file` with that path. `skill://id` remains an internal/reference URI for Strategy `from`; `read_file` does not need to support `skill://id` for Skills v1.
+The enabled skill index must include each skill's complete `skill://{source}.{skill}/SKILL.md` URI. The model reads skill content by calling `read_file` with that URI. Short IDs and source-slash forms are invalid.
 
 Acceptance criteria:
 
@@ -252,7 +252,7 @@ Acceptance criteria:
 2. User can enable/disable a skill.
 3. Enabled skills appear in system prompt index with full `SKILL.md` paths.
 4. Disabled skills do not appear in system prompt index.
-5. `from: skill://id` resolves enabled or installed skill according to policy.
+5. `from: skill://{source}.{skill}` resolves an enabled or installed skill according to policy.
 
 ## 7. M5: Condition DSL and Three-valued Evaluator
 
@@ -578,7 +578,7 @@ After new pipeline works:
 | Enable skill | Appears in prompt index. |
 | Disable skill | Omitted from prompt index. |
 | Duplicate ID | Diagnostic. |
-| `from: skill://id` | Resolves to skill source. |
+| `from: skill://{source}.{skill}` | Resolves to skill source. |
 
 ### 13.4 Condition tests
 
@@ -663,7 +663,7 @@ v1 is complete when:
 3. Hand-written normalizer produces runtime `Strategy`.
 4. `from` can reference local `SKILL.md`.
 5. Skills are discovered, user-manageable, and injected as an enabled index.
-6. `from: skill://id` resolves through the Skills registry.
+6. `from: skill://{source}.{skill}` resolves through the Skills registry.
 7. Conditions support structured YAML, path operators, `all/any/none`, and `bool?`.
 8. At least one ExtraContext provider works or is stubbed with tests.
 9. `extra.file_manager.*` schema is implemented on Windows or clearly marked unsupported with null diagnostics.

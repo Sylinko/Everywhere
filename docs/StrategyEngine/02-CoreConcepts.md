@@ -258,7 +258,7 @@ Supported source forms:
 | --- | --- | --- |
 | Relative path | `./SKILL.md` | Required. Resolved relative to current strategy file. |
 | Absolute path | `E:\Skills\Writer\SKILL.md` | Required. |
-| Managed skill URI | `skill://my-writing-style` | Required once skill import UI exists. |
+| Managed skill URI | `skill://everywhere.my-writing-style` | Required once skill import UI exists. |
 | URL | `https://example.com/strategy.md` | Interface-ready; implementation may block network until later. |
 
 Supported `kind` values:

@@ -35,8 +35,8 @@ Skill:
 Long-form instruction/resource
 Discoverable by registry
 Can be enabled or disabled by user
-Is exposed to the model with its full SKILL.md file path
-Can be read by the model through read_file using that full path
+Is exposed to the model with a canonical skill:// URI
+Can be read by the model through read_file using that URI
 ```
 
 Strategy:
@@ -46,7 +46,7 @@ Recommended contextual action
 Has when/tools/preprocessors/options
 Appears in the Strategy UI
 One user send executes one Strategy
-May later use skill://id as an explicit source reference
+May later use skill://{source}.{skill} as an explicit source reference
 ```
 
 Strategies may derive from skills, but skills do not automatically become Strategies.
@@ -151,7 +151,7 @@ When a user asks you to perform a task that falls within the domain of a skill, 
 <skill>
 <name>code-review</name>
 <description>Review code when the user asks for feedback.</description>
-<file>C:\Users\me\.everywhere\skills\code-review\SKILL.md</file>
+<file>skill://everywhere.code-review/SKILL.md</file>
 </skill>
 </skills>
 ```
@@ -161,20 +161,28 @@ Rules:
 1. Disabled skills are omitted.
 2. Invalid skills are omitted.
 3. Full `SKILL.md` content is not injected by default.
-4. The prompt includes absolute local paths.
-5. The model-facing prompt does not rely on `skill://id`.
+4. The prompt includes canonical `skill://{source}.{skill}/SKILL.md` URIs.
+5. The model-facing prompt does not rely on short or source-slash IDs.
 
-The model-facing contract is that enabled skills are listed with complete `SKILL.md` file paths. The model can then call `read_file` with that path when the task falls within the skill's domain.
+The model-facing contract is that enabled skills are listed with complete `skill://` resource URIs. The model can then call `read_file` with that URI when the task falls within the skill's domain.
 
-## 9. `skill://id`
+## 9. Canonical `skill://` URIs
 
-`skill://id` remains an internal/reference URI for Strategy `from`, not a file-reading URI required by Skills v1.
+Skill references use complete source-qualified IDs and never use a short skill name:
 
-Recommended future policy for Strategy integration:
+```text
+skill://{source}.{skill}
+skill://{source}.{skill}/{relative-path}
+```
 
-1. `from: skill://id` resolves installed skills regardless of enabled state, because the Strategy reference is explicit.
+The first form identifies a skill and the second form identifies one of its read-only resources.
+
+Recommended policy for Strategy integration:
+
+1. `from: skill://{source}.{skill}` resolves installed skills regardless of enabled state, because the Strategy reference is explicit.
 2. UI should show that the Strategy references a disabled skill when applicable.
-3. `read_file` does not need to support `skill://id` for Skills v1.
+3. `read_file` accepts `skill://{source}.{skill}/{relative-path}` for both physical and virtual Skill resources.
+4. Short forms such as `skill://{skill}` and `skill://{source}/{skill}` are invalid.
 
 ## 10. Security and Trust Boundary
 

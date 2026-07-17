@@ -95,7 +95,7 @@ Rules:
 Examples:
 
 ```yaml
-from: skill://my-writing-style
+from: skill://everywhere.my-writing-style
 ```
 
 ```yaml

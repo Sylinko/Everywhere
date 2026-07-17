@@ -437,7 +437,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
                         .ToDictionary(kv => kv.Key, kv => kv.Value),
                     TransportMode = sse.TransportMode
                 },
-                _httpClientFactory.CreateClient(McpServiceExtension.McpClientName),
+                _httpClientFactory.CreateClient(McpServiceExtensions.McpClientName),
                 _loggerFactory),
             _ => throw new InvalidOperationException("Unsupported MCP transport configuration type.")
         };

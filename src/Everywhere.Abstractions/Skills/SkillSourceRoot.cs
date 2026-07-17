@@ -3,6 +3,11 @@
 public enum SkillSourceRoot
 {
     /// <summary>
+    /// Built-in virtual skills.
+    /// </summary>
+    BuiltIn = -1,
+
+    /// <summary>
     /// ~/.everywhere/skills
     /// </summary>
     Everywhere = 0,

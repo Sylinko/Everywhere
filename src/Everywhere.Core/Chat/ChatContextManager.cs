@@ -655,7 +655,7 @@ public partial class ChatContextManager : ObservableObject, IChatContextManager,
     private static partial Regex WorkingDirectoryRegex();
 }
 
-public static class ChatContextManagerExtension
+public static class ChatContextManagerExtensions
 {
     public static IServiceCollection AddChatContextManager(this IServiceCollection services)
     {

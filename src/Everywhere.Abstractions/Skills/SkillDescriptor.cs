@@ -11,8 +11,6 @@ public sealed partial class SkillDescriptor : ObservableObject
 
     public string? Description { get; init; }
 
-    public required string DirectoryName { get; init; }
-
     public required string FilePath { get; init; }
 
     public required string MarkdownContent { get; init; }

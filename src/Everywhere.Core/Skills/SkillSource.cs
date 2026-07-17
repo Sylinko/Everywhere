@@ -1,5 +1,4 @@
 using Everywhere.Common;
-using Everywhere.Configuration;
 using Everywhere.Utilities;
 using Microsoft.Extensions.Logging;
 using ZLinq;
@@ -30,6 +29,8 @@ public sealed class SkillSource : IDisposable
     private readonly HashSet<SkillSourceChange> _pendingChanges = [];
     private readonly DebounceExecutor<SkillSource, ThreadingTimerImpl> _changedDebounce;
 
+    internal IEnumerable<SkillRoot> Roots => _rootProvider();
+
     public SkillSource(ILogger<SkillSource> logger) : this(logger, GetRoots)
     {
     }
@@ -48,7 +49,9 @@ public sealed class SkillSource : IDisposable
             static source => source.FlushChanges(),
             TimeSpan.FromSeconds(1));
 
-        Task.Run(InitializeWatchers).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        // FileSystemWatcher registration is synchronous and inexpensive. Keeping it in the
+        // constructor avoids racing the first SkillManager refresh with watcher initialization.
+        InitializeWatchers();
     }
 
     public static IEnumerable<SkillRoot> GetRoots()
@@ -71,7 +74,7 @@ public sealed class SkillSource : IDisposable
     /// Determines whether the given skill source kind is enabled by default.
     /// </summary>
     public static bool IsDefaultEnabled(SkillSourceRoot root) =>
-        root is SkillSourceRoot.Everywhere or SkillSourceRoot.Agents;
+        root is SkillSourceRoot.BuiltIn or SkillSourceRoot.Everywhere or SkillSourceRoot.Agents;
 
     /// <summary>
     /// Gets a stable source ID for the given skill source kind.
@@ -256,11 +259,20 @@ public sealed class SkillSource : IDisposable
     }
 }
 
+/// <summary>
+/// Carries a batch of physical skill source changes.
+/// </summary>
 public sealed class SkillSourceChangedEventArgs(IReadOnlyList<SkillSourceChange> changes) : EventArgs
 {
     public IReadOnlyList<SkillSourceChange> Changes { get; } = changes;
 }
 
+/// <summary>
+/// Identifies the directory and optional skill file affected by a source change.
+/// </summary>
 public readonly record struct SkillSourceChange(string? SkillDirectoryPath, string? SkillFilePath);
 
+/// <summary>
+/// Describes one configured physical root from which skills are discovered.
+/// </summary>
 public readonly record struct SkillRoot(SkillSourceRoot Root, string Name, string DirectoryPath);

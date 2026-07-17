@@ -5,72 +5,55 @@ namespace Everywhere.Core.Tests.Skills;
 public class SkillReferenceResolverTests
 {
     [Test]
-    public void Resolve_ShortReferenceUsesSkillSourceRootOrder()
+    public void Resolve_FullIdMatchesExactly()
+    {
+        var result = SkillReferenceResolver.Resolve(
+            "skill://agents.deepwiki",
+            CreateSkills(
+                ("codex.deepwiki", SkillSourceRoot.Codex),
+                ("agents.deepwiki", SkillSourceRoot.Agents)));
+
+        Assert.That(result.Skill?.Id, Is.EqualTo("agents.deepwiki"));
+    }
+
+    [Test]
+    public void Resolve_ShortIdIsRejected()
     {
         var result = SkillReferenceResolver.Resolve(
             "skill://deepwiki",
-            [
-                CreateSkill("codex.deepwiki", SkillSourceRoot.Codex),
-                CreateSkill("agents.deepwiki", SkillSourceRoot.Agents)
-            ]);
+            CreateSkills(
+                ("agents.deepwiki", SkillSourceRoot.Agents),
+                ("codex.deepwiki", SkillSourceRoot.Codex)));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Skill?.Id, Is.EqualTo("agents.deepwiki"));
-            Assert.That(result.IsAmbiguous, Is.True);
-            Assert.That(result.Candidates.Select(skill => skill.Id), Is.EqualTo(new[] { "agents.deepwiki", "codex.deepwiki" }));
-        });
+        Assert.That(result.Skill, Is.Null);
     }
 
     [Test]
-    public void Resolve_SourceSlashReferenceMatchesQualifiedSkill()
+    public void Resolve_SourceSlashReferenceIsRejected()
     {
-        var result = SkillReferenceResolver.Resolve(
-            "skill://codex/deepwiki",
-            [
-                CreateSkill("agents.deepwiki", SkillSourceRoot.Agents),
-                CreateSkill("codex.deepwiki", SkillSourceRoot.Codex)
-            ]);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Skill?.Id, Is.EqualTo("codex.deepwiki"));
-            Assert.That(result.IsAmbiguous, Is.False);
-        });
-    }
-
-    [Test]
-    public void Resolve_DottedReferenceMatchesSameSkillAsSlashReference()
-    {
-        var skills = new[]
-        {
-            CreateSkill("agents.deepwiki", SkillSourceRoot.Agents),
-            CreateSkill("codex.deepwiki", SkillSourceRoot.Codex)
-        };
+        var skills = CreateSkills(
+            ("agents.deepwiki", SkillSourceRoot.Agents),
+            ("codex.deepwiki", SkillSourceRoot.Codex));
 
         var slash = SkillReferenceResolver.Resolve("skill://codex/deepwiki", skills);
-        var dotted = SkillReferenceResolver.Resolve("skill://codex.deepwiki", skills);
 
-        Assert.That(dotted.Skill?.Id, Is.EqualTo(slash.Skill?.Id));
+        Assert.That(slash.Skill, Is.Null);
     }
 
     [Test]
     public void Resolve_MissingReferenceReturnsEmptyResult()
     {
-        var result = SkillReferenceResolver.Resolve("skill://missing", [CreateSkill("codex.deepwiki", SkillSourceRoot.Codex)]);
+        var result = SkillReferenceResolver.Resolve(
+            "skill://unknown.missing",
+            CreateSkills(("codex.deepwiki", SkillSourceRoot.Codex)));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Skill, Is.Null);
-            Assert.That(result.Candidates, Is.Empty);
-        });
+        Assert.That(result.Skill, Is.Null);
     }
 
     private static SkillDescriptor CreateSkill(string id, SkillSourceRoot root) => new()
     {
         Id = id,
         Name = id,
-        DirectoryName = id.Split('.').Last(),
         FilePath = Path.Combine(Path.GetTempPath(), id, "SKILL.md"),
         MarkdownContent = "# Skill",
         MarkdownBody = "Skill body.",
@@ -80,4 +63,11 @@ public class SkillReferenceResolverTests
         IsValid = true,
         IsEnabled = true
     };
+
+    private static IReadOnlyDictionary<string, SkillDescriptor> CreateSkills(
+        params (string Id, SkillSourceRoot Root)[] skills) =>
+        skills.ToDictionary(
+            skill => skill.Id,
+            skill => CreateSkill(skill.Id, skill.Root),
+            StringComparer.OrdinalIgnoreCase);
 }

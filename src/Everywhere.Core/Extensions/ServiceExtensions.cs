@@ -5,6 +5,7 @@ using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
@@ -127,10 +128,16 @@ public static class ServiceExtensions
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SkillSource>()
+                .AddSingleton<IVirtualSkillProvider, EmbeddedSkillProvider>()
                 .AddSingleton<SkillManager>()
                 .AddSingleton<ISkillManager>(x => x.GetRequiredService<SkillManager>())
                 .AddSingleton<ISkillPromptProvider>(x => x.GetRequiredService<SkillManager>())
                 .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<SkillManager>())
+                .AddSingleton<FileHandler, SkillFileHandler>()
+                .AddSingleton<FileHandler, PdfFileHandler>()
+                .AddSingleton<FileHandler, TextFileHandler>()
+                .AddSingleton<FileHandler, BinaryFileHandler>()
+                .AddSingleton<FileHandlerContextFactory>()
                 .AddSingleton<IChatWindowNotificationService, ChatWindowNotificationService>()
                 .AddSingleton<IChatService, ChatService>()
                 .AddSingleton<IGreetings, Greetings>()

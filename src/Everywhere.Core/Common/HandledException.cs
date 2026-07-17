@@ -47,11 +47,19 @@ public class HandledException : Exception
         }
     }
 
+    public HandledException(Exception originalException, string friendlyMessageKey, bool isExpected = true, bool showDetails = false) : this(
+        originalException,
+        new DynamicLocaleKey(friendlyMessageKey),
+        isExpected,
+        showDetails)
+    {
+    }
+
     public HandledException(
         Exception originalException,
         IDynamicLocaleKey friendlyMessageKey,
         bool isExpected = true,
-        bool showDetails = true
+        bool showDetails = false
     ) : base(null, originalException)
     {
         IsExpected = isExpected;

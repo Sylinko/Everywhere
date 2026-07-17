@@ -89,7 +89,7 @@ v1 required resolvers:
 
 1. Relative file resolver.
 2. Absolute file resolver.
-3. Managed skill resolver (`skill://id`) once import UI exists.
+3. Managed skill resolver (`skill://{source}.{skill}`) once import UI exists.
 
 URL resolver is interface-ready but may be disabled in v1.
 

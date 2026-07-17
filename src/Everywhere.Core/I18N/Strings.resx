@@ -3676,4 +3676,43 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
         <value></value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>This type of file does not support the requested operation.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>The file path is invalid. Please check it and try again.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>This resource type cannot be opened.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>This file cannot be read as text.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>The file changed while you were reviewing it, so no changes were saved.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>No readable text was found in this PDF. It may contain scanned pages.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>This PDF is password protected and cannot be opened.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>This PDF could not be opened. It may be damaged or use an unsupported format.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>The requested skill file could not be found or opened.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>This operation is available only for files on this device.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>The replacement request is incomplete or invalid.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>The file operation was not allowed.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>The search or replacement pattern is invalid.</value>
+    </data>
 </root>

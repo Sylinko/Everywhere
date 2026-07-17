@@ -163,4 +163,4 @@ The Strategy author only sees `extra.file_manager.*`. The implementation may sat
 | `04-Preprocessors.md` | Execution pipeline and preprocessor behavior. |
 | `05-ConfigurationFormat.md` | `.strategy.md` file format and DSL reference. |
 | `06-ImplementationPlan.md` | Direct implementation steps, testing plan, and acceptance criteria. |
-| `07-Skills.md` | Lightweight Skills registry, management UI, prompt injection, and `skill://id` resolution. |
+| `07-Skills.md` | Lightweight Skills registry, management UI, prompt injection, and complete `skill://{source}.{skill}` resolution. |

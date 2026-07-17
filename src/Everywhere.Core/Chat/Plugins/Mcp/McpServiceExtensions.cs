@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Chat.Plugins.Mcp;
 
-public static class McpServiceExtension
+public static class McpServiceExtensions
 {
     public const string McpClientName = "McpClient";
 

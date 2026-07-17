@@ -1,0 +1,54 @@
+using Everywhere.Common;
+
+namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem;
+
+/// <summary>
+/// Provides hexadecimal reads and directory fallback handling for local resources.
+/// </summary>
+public sealed class BinaryFileHandler : LocalFileHandler
+{
+    protected override ValueTask<bool> CanHandleLocalAsync(string path, FileSystemInfo fileSystemInfo, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(true);
+    }
+
+    public override async ValueTask<FileReadResult> ReadAsync(
+        FileHandlerContext context,
+        int offset,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var file = EnsureFile(context);
+        if (file.Length > 100L * 1024 * 1024)
+        {
+            throw new HandledException(
+                new NotSupportedException("File size is larger than 100 MB, read operation is not supported."),
+                LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage);
+        }
+
+        var startByte = Math.Max(0, offset - 1);
+        var maxBytes = Math.Clamp(limit == 2000 ? 10240 : limit, 1, 1024 * 1024);
+        await using var stream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);
+        stream.Seek(startByte, SeekOrigin.Begin);
+        var items = new List<FileReadResult.Item>();
+        var buffer = new byte[Math.Min(32, maxBytes)];
+        var remaining = maxBytes;
+        while (remaining > 0)
+        {
+            var read = await stream.ReadAsync(buffer.AsMemory(0, Math.Min(buffer.Length, remaining)), cancellationToken);
+            if (read == 0) break;
+            items.Add(new FileReadResult.Item(BitConverter.ToString(buffer, 0, read), read));
+            remaining -= read;
+        }
+
+        return new FileReadResult
+        {
+            Items = items,
+            Offset = Math.Min(int.MaxValue, startByte + 1),
+            Unit = "byte",
+            Total = file.Length <= int.MaxValue ? (int)file.Length : null,
+            HasMore = stream.Position < stream.Length
+        };
+    }
+}

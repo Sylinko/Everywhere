@@ -309,8 +309,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new UnauthorizedAccessException(consent.FormatReason("User denied consent for visual actions execution.")),
-                new DynamicLocaleKey(LocaleKey.ConsentDecision_Deny),
-                showDetails: false);
+                LocaleKey.ConsentDecision_Deny);
         }
 
         var index = 0;

@@ -1,12 +1,9 @@
-﻿using System.Collections.Concurrent;
 using System.ComponentModel;
-using System.IO.Enumeration;
-using System.Text;
 using System.Text.RegularExpressions;
-using Everywhere.AI;
+using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
-using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -14,6 +11,9 @@ using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
+/// <summary>
+/// Provides model-facing file operations while delegating resource semantics to file handlers.
+/// </summary>
 public sealed class FileSystemPlugin : BuiltInChatPlugin
 {
 #if WINDOWS
@@ -29,69 +29,34 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     public override LucideIconKind? Icon => LucideIconKind.FileBox;
 
     private readonly ILogger<FileSystemPlugin> _logger;
+    private readonly FileHandlerContextFactory _contextFactory;
 
-    public FileSystemPlugin(ILogger<FileSystemPlugin> logger) : base("file_system")
+    public FileSystemPlugin(ILogger<FileSystemPlugin> logger, FileHandlerContextFactory contextFactory) : base("file_system")
     {
         _logger = logger;
+        _contextFactory = contextFactory;
 
         _functionsSource.Edit(list =>
         {
-            list.Add(
-                new BuiltInChatFunction(
-                    SearchFiles,
-                    ChatFunctionPermissions.FileRead));
-            list.Add(
-                new BuiltInChatFunction(
-                    GetFileInformation,
-                    ChatFunctionPermissions.FileRead));
-            list.Add(
-                new BuiltInChatFunction(
-                    SearchFileContentAsync,
-                    ChatFunctionPermissions.FileRead));
-            list.Add(
-                new BuiltInChatFunction(
-                    ReadFileAsync,
-                    ChatFunctionPermissions.FileRead));
-            list.Add(
-                new BuiltInChatFunction(
-                    MoveFileAsync,
-                    ChatFunctionPermissions.FileAccess,
-                    onPermissionConsent: _ => true));
-            list.Add(
-                new BuiltInChatFunction(
-                    DeleteFilesAsync,
-                    ChatFunctionPermissions.FileAccess,
-                    onPermissionConsent: _ => true));
-            list.Add(
-                new BuiltInChatFunction(
-                    CreateDirectory,
-                    ChatFunctionPermissions.FileAccess,
-                    onPermissionConsent: _ => true));
-            list.Add(
-                new BuiltInChatFunction(
-                    WriteToFileAsync,
-                    ChatFunctionPermissions.FileAccess,
-                    onPermissionConsent: _ => true));
-            list.Add(
-                new BuiltInChatFunction(
-                    ReplaceFileContentAsync,
-                    ChatFunctionPermissions.FileAccess,
-                    onPermissionConsent: _ => true));
+            list.Add(new BuiltInChatFunction(SearchFilesAsync, ChatFunctionPermissions.FileRead));
+            list.Add(new BuiltInChatFunction(GetFileInformationAsync, ChatFunctionPermissions.FileRead));
+            list.Add(new BuiltInChatFunction(SearchFileContentAsync, ChatFunctionPermissions.FileRead));
+            list.Add(new BuiltInChatFunction(ReadFileAsync, ChatFunctionPermissions.FileRead));
+            list.Add(new BuiltInChatFunction(MoveFileAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(new BuiltInChatFunction(DeleteFilesAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(new BuiltInChatFunction(CreateDirectoryAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(new BuiltInChatFunction(WriteToFileAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(new BuiltInChatFunction(ReplaceFileContentAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
         });
     }
 
     // parts of algorithms for file searching are inspired by VS Code's implementation:
     // https://github.com/microsoft/vscode/tree/dc1de9b2cf2defca5e4fcfa120a7cf348e57b55b/extensions/copilot/src/extension/tools/node/findFilesTool.tsx
     [KernelFunction("search_files")]
-    [Description(
-        """
-        Search for files and directories in a specified path matching the given regex pattern.
-        - Automatically ignores common build/hidden folders (e.g., bin, obj, .git, node_modules).
-        - Has a 20-second timeout to prevent hanging.
-        """)]
+    [Description("Search for files and directories in a path matching a regex. Common build and hidden folders are ignored.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
-    private string SearchFiles(
+    private async Task<PromptNode> SearchFilesAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
@@ -110,14 +75,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             skip,
             maxCount);
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path, filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
+        var context = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(context.Path, filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(context.Path));
 
-        var regex = new Regex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, RegexTimeout);
-        var directoryInfo = EnsureDirectoryInfo(path);
-
+        var regex = CreateRegex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
         var fileReferences = new List<ChatPluginFileReference>();
         var results = new List<string>();
         var totalResults = 0;
@@ -127,19 +89,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         try
         {
-            foreach (var info in new RegexFileSystemInfoEnumerable(directoryInfo.FullName, regex, true, ignoreCommonBuildFolders: true))
+            await foreach (var item in context.Handler.EnumerateAsync(context, regex, true, true, cts.Token))
             {
-                cts.Token.ThrowIfCancellationRequested();
-                if (info == null) continue;
-
                 totalResults++;
-                if (totalResults <= skip) continue;
+                if (totalResults <= skip || results.Count >= maxCount) continue;
 
-                if (results.Count < maxCount)
-                {
-                    results.Add(info.FullName);
-                    fileReferences.Add(new ChatPluginFileReference(info.FullName));
-                }
+                results.Add(item);
+                fileReferences.Add(new ChatPluginFileReference(item));
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -155,36 +111,25 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             return "No files found.";
         }
 
-        displaySink.AppendFileReferences(fileReferences.ToList());
+        userInterface.DisplaySink.AppendFileReferences(fileReferences);
 
-        var sb = new StringBuilder();
-        sb.Append(totalResults).AppendLine(totalResults == 1 ? " total result" : " total results");
-
-        const int totalBudget = 40000;
-        var remaining = totalBudget - TokenHelper.EstimateTokenCount(sb.ToString());
-        var included = 0;
-
-        foreach (var result in results)
+        var output = new PromptTokenLimit(40000)
         {
-            remaining -= TokenHelper.OmitTo(result, sb, remaining, position: TokenHelper.OmitPosition.End) + 1;
-            sb.AppendLine();
-
-            included++;
-
-            if (remaining <= 0) break;
+            $"{totalResults} total {(totalResults == 1 ? "result" : "results")}{Environment.NewLine}"
+        };
+        for (var i = 0; i < results.Count; i++)
+        {
+            output.Add(new PromptText(results[i] + Environment.NewLine).WithPriority(1000 - i));
         }
 
-        var omittedByBudget = results.Count - included;
-        if (omittedByBudget > 0)
+        if (totalResults > skip + results.Count)
         {
-            sb.Append("... ").Append(omittedByBudget).AppendLine(" more result(s) omitted due to token budget");
-        }
-        else if (totalResults > skip + results.Count)
-        {
-            sb.Append("... ").Append(totalResults - skip - results.Count).AppendLine(" more result(s) omitted due to maxCount");
+            output.Add(
+                new PromptText($"... {totalResults - skip - results.Count} more result(s) omitted due to maxCount{Environment.NewLine}")
+                    .WithPriority(0));
         }
 
-        return sb.ToString();
+        return output;
     }
 
     [KernelFunction("get_file_info")]
@@ -193,54 +138,37 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
-    private string GetFileInformation(
+    private async Task<PromptNode> GetFileInformationAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
-        string path)
+        string path,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting file information for path: {Path}", path);
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path);
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
+        var context = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(context.Path);
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(context.Path));
 
-        var info = EnsureFileSystemInfo(path);
-        var sb = new StringBuilder();
-        return sb.AppendLine(FileRecord.Header).Append(
-            new FileRecord(
-                info.FullName,
-                info is FileInfo file ? file.Length : -1,
-                info.CreationTime,
-                info.LastWriteTime,
-                info.Attributes)).ToString();
+        var record = await context.Handler.GetFileInformationAsync(context, cancellationToken);
+        return $"{FileRecord.Header}{Environment.NewLine}{record}";
     }
 
-    // parts of algorithms for file content searching are inspired by VS Code's implementation:
-    // https://github.com/microsoft/vscode/tree/dc1de9b2cf2defca5e4fcfa120a7cf348e57b55b/extensions/copilot/src/extension/tools/node/findTextInFilesTool.tsx
     [KernelFunction("search_file_content")]
-    [Description(
-        """
-        Searches for a specific text pattern within file(s) and returns matching lines. Maximum returns 1000 lines.
-        - Supports both regex and literal text search (toggle `isRegex`).
-        - Automatically ignores common build/hidden folders (e.g., bin, obj, .git, node_modules).
-        - Has a 20-second timeout to prevent hanging.
-        - Truncates extremely long lines around the match to save tokens.
-        """)]
+    [Description("Search text in one file or all matching files below a directory. Supports regex and literal patterns.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
-    private async Task<string> SearchFileContentAsync(
+    private async Task<PromptNode> SearchFileContentAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         [Description("File or directory path to search")] string path,
         [Description("Text or regex pattern to search for within the file")] string pattern,
-        [Description("Whether the pattern is a regular expression. Set to false for literal text search")]
-        bool isRegex = true,
+        [Description("Whether the pattern is a regular expression")] bool isRegex = true,
         bool ignoreCase = true,
-        [Description("Regex pattern to include files to search. Effective when path is a folder")]
-        string filePattern = ".*",
+        [Description("Regex pattern to include files to search")] string filePattern = ".*",
+        [Description("Maximum number of matching lines to return. Max is 200")] int maxResults = 20,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug(
@@ -251,373 +179,153 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             ignoreCase,
             filePattern);
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path, new DirectLocaleKey(pattern));
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
+        var options = RegexOptions.Compiled | RegexOptions.Multiline;
+        if (ignoreCase) options |= RegexOptions.IgnoreCase;
+        var searchRegex = CreateRegex(isRegex ? pattern : Regex.Escape(pattern), options);
+        var fileRegex = CreateRegex(filePattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        var root = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(root.Path, new DirectLocaleKey(pattern));
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(root.Path));
 
-        var regexOptions = RegexOptions.Compiled | RegexOptions.Multiline;
-        if (ignoreCase)
-        {
-            regexOptions |= RegexOptions.IgnoreCase;
-        }
-
-        var actualPattern = isRegex ? pattern : Regex.Escape(pattern);
-        var searchRegex = new Regex(actualPattern, regexOptions, RegexTimeout);
-        var fileRegex = new Regex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        var fileSystemInfo = EnsureFileSystemInfo(path);
-
-        const int maxCollectedLines = 2000;
-        const int maxCharsBetweenMatches = 500;
-        const long maxSearchFileSize = 10 * 1024 * 1024; // 10 MB
-
-        var filesToSearch = fileSystemInfo switch
-        {
-            FileInfo fileInfo when fileRegex.IsMatch(fileInfo.Name) => [fileInfo],
-            DirectoryInfo directoryInfo => new RegexFileSystemInfoEnumerable(directoryInfo.FullName, fileRegex, true, ignoreCommonBuildFolders: true)
-                .WithCancellation(cancellationToken)
-                .OfType<FileInfo>(),
-            _ => []
-        };
-        var matchCount = 0;
-        var resultLines = new ConcurrentBag<string>();
-        var fileReferences = new ConcurrentBag<ChatPluginFileReference>();
+        maxResults = Math.Clamp(maxResults, 1, 200);
+        var matches = new List<FileContentMatch>();
+        var limitHit = false;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(20));
 
         try
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(20));
-
-            await Parallel.ForEachAsync(
-                filesToSearch,
-                new ParallelOptions
+            await foreach (var item in root.Handler.EnumerateAsync(root, fileRegex, true, true, cts.Token))
+            {
+                if (matches.Count >= maxResults * 5) break;
+                var context = await _contextFactory.CreateAsync(item, root.WorkingDirectory, cts.Token);
+                try
                 {
-                    MaxDegreeOfParallelism = Environment.ProcessorCount,
-                    CancellationToken = cts.Token
-                },
-                async (file, token) =>
+                    var result = await context.Handler.SearchContentAsync(context, searchRegex, cts.Token);
+                    matches.AddRange(result.Matches.Take(maxResults * 5 - matches.Count));
+                    limitHit |= result.LimitHit;
+                }
+                catch (HandledException ex) when (ex.InnerException is NotSupportedException)
                 {
-                    if (Volatile.Read(ref matchCount) >= maxCollectedLines) return;
-                    if (file.Length > maxSearchFileSize) return;
-
-                    await using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    if (await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: token) is not { } encoding)
-                    {
-                        return;
-                    }
-
-                    stream.Seek(0, SeekOrigin.Begin);
-                    using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: true);
-                    var content = await reader.ReadToEndAsync(token);
-
-                    var matches = searchRegex.Matches(content);
-                    if (matches.Count == 0) return;
-
-                    var localResults = new List<string>();
-                    var locations = new HashSet<ChatPluginFileReferenceLocation>();
-
-                    foreach (Match match in matches)
-                    {
-                        if (Interlocked.Increment(ref matchCount) > maxCollectedLines) break;
-
-                        var lineStart = content.LastIndexOf('\n', match.Index) + 1;
-                        var lineNumber = content.AsSpan(0, match.Index).Count('\n') + 1;
-                        var columnNumber = match.Index - lineStart + 1;
-                        locations.Add(new ChatPluginFileReferenceLocation(lineNumber, columnNumber));
-
-                        var start = Math.Max(0, match.Index - maxCharsBetweenMatches);
-                        var end = Math.Min(content.Length, match.Index + match.Length + maxCharsBetweenMatches);
-                        var previewSpan = content.AsSpan(start, end - start);
-                        var lineCount = 0;
-                        foreach (var _ in previewSpan.EnumerateLines())
-                        {
-                            lineCount++;
-                        }
-
-                        var matchBuilder = new StringBuilder();
-                        matchBuilder.Append("<match path=\"").Append(file.FullName).Append("\" line=\"").Append(lineNumber).AppendLine("\">");
-
-                        // TODO: Implement TextChunk and priority-based truncation logic similar to VS Code.
-                        // VS Code calculates priority as: var priority = 1000 - Math.Abs(i - center);
-                        // where center is the middle line of the preview block.
-                        // Each line should be wrapped in <TextChunk priority="{priority}">{line}</TextChunk>
-                        var i = 0;
-                        foreach (var line in previewSpan.EnumerateLines())
-                        {
-                            if (i == 0 && start > 0)
-                            {
-                                matchBuilder.Append("...");
-                            }
-
-                            matchBuilder.Append(line);
-
-                            if (i == lineCount - 1 && end < content.Length)
-                            {
-                                matchBuilder.Append("...");
-                            }
-
-                            matchBuilder.AppendLine();
-                            i++;
-                        }
-
-                        matchBuilder.AppendLine("</match>");
-                        localResults.Add(matchBuilder.ToString());
-                    }
-
-                    if (localResults.Count > 0)
-                    {
-                        fileReferences.Add(new ChatPluginFileReference(file.FullName, locations: locations));
-                        foreach (var match in localResults) resultLines.Add(match);
-                    }
-                });
+                    // Binary files and directories are deliberately skipped during a recursive search.
+                }
+                catch (HandledException ex) when (ex.InnerException is InvalidOperationException && context.FileSystemInfo is DirectoryInfo)
+                {
+                }
+            }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            if (resultLines.IsEmpty)
+            if (matches.Count == 0)
             {
                 return "Search timed out after 20 seconds. Found 0 files with matches so far. Try a more specific search pattern or path.";
             }
 
-            displaySink.AppendFileReferences(fileReferences.ToList());
-            var msg = BuildMatchOutput(
-                resultLines,
-                fileReferences.Count,
-                "Search timed out after 20 seconds. Found {0} files with matches so far. Try a more specific search pattern or path.");
-            return msg;
+            limitHit = true;
         }
 
-        if (resultLines.IsEmpty)
+        if (matches.Count == 0)
         {
-            return
-                $"""
-                 No matching lines found for {(isRegex ? "regex" : "literal text")} '{pattern}'.
-                 Hint: If you expect results, check if the files are ignored (e.g., in bin/obj/.git), or try toggling the 'isRegex' parameter, or use a different pattern.
-                 """;
+            return $"No matching lines found for {(isRegex ? "regex" : "literal text")} '{pattern}'.";
         }
 
-        displaySink.AppendFileReferences(fileReferences.ToList());
-        return BuildMatchOutput(resultLines, fileReferences.Count, "Found matches in {0} file(s).");
+        return BuildSearchOutput(userInterface.DisplaySink, matches, pattern, maxResults, limitHit);
     }
 
     [KernelFunction("read_file")]
     [Description(
         """
-        Read the contents of a file. Line numbers are 1-indexed. 
-        This tool will truncate its output at 2000 lines and may be called repeatedly with offset and limit parameters to read larger files in chunks. 
-        Binary files use offset/limit as byte offsets.
+        Read a local path, file:// URI, or a skill:// resource in bounded chunks.
+        Text files use 1-based logical line offsets; PDFs use text extraction and global logical line offsets with page metadata; binary files use 1-based byte offsets and return hexadecimal data.
+        docx, xlsx, pptx are not supported. Use `officecli` instead.
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<object> ReadFileAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
+        [Description(
+            """
+            Path or URI of the file.
+            A relative local path resolves against the current working directory; absolute paths and file:// URIs are supported. 
+            A Skill resource must use a complete source-qualified ID in the form skill://{source}.{skill}/{relative-path}, for example skill://builtin.officecli/SKILL.md. Short IDs such as skill://officecli are invalid.
+            Other URI schemes are unsupported.
+            """)]
         string path,
-        [Description("Optional: the 1-based line number or bytes to start reading from. If not specified, reads from the beginning.")]
+        [Description("1-based line or byte offset. Use `nextOffset` from the previous result to continue.")]
         int offset = 1,
-        [Description("Optional: the maximum number of lines/bytes to read.")] int limit = 2000,
-        [Description("Optional: whether to treat the file as an attachment. Keep this as false for most use cases.")]
-        bool attachment = false,
+        [Description("Maximum number of logical lines or bytes to return.")] int limit = 2000,
+        [Description("Treat a local file as an attachment. Keep this as false for most use cases.")] bool attachment = false,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug(
-            "Reading text file at path: {Path}, offset: {Offset}, limit: {Limit}, attachment: {Attachment}",
+            "Reading file at path: {Path}, offset: {Offset}, limit: {Limit}, attachment: {Attachment}",
             path,
             offset,
             limit,
             attachment);
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path);
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
-
-        var fileInfo = EnsureFileInfo(path);
+        var context = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(context.Path);
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(context.Path));
         if (attachment)
         {
-            if (fileInfo.Length == 0)
+            if (context.FileSystemInfo is not FileInfo { Exists: true } file)
             {
-                return $"(The file `{path}` exists, but is empty)";
+                throw ToHandledException(
+                    new NotSupportedException("attachment=true is supported only for local files."),
+                    LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
             }
 
-            if (fileInfo.Length > 10 * 1024 * 1024)
+            return file.Length switch
             {
-                throw new HandledException(
-                    new NotSupportedException("Attachment file size is larger than 10 MB, read operation with attachment=true is not supported."),
+                0 => $"(The file `{context.Path}` exists, but is empty)",
+                > 10L * 1024 * 1024 => throw new HandledException(
+                    new NotSupportedException("Attachment file size is larger than 10 MB."),
                     new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
-                    showDetails: false);
-            }
-
-            return await FileAttachment.CreateAsync(path, cancellationToken: cancellationToken);
+                    showDetails: false),
+                _ => await FileAttachment.CreateAsync(context.Path, cancellationToken: cancellationToken)
+            };
         }
 
-        if (fileInfo.Length > 100 * 1024 * 1024)
-        {
-            throw new HandledException(
-                new NotSupportedException("File size is larger than 100 MB, read operation is not supported."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
-                showDetails: false);
-        }
-
-        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (fileInfo.Length == 0)
-        {
-            return $"(The file `{path}` exists, but is empty)";
-        }
-
-        if (await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) is not { } encoding)
-        {
-            // Binary file logic
-            long startByte = Math.Max(0, offset - 1);
-            long maxBytes = limit == 2000 ? 10240 : limit;
-
-            stream.Seek(startByte, SeekOrigin.Begin);
-
-            var buffer = new byte[32];
-            int bytesRead;
-            var stringBuilder = new StringBuilder();
-
-            while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
-            {
-                var hexString = BitConverter.ToString(buffer, 0, bytesRead);
-                stringBuilder.AppendLine(hexString);
-
-                if (stringBuilder.Length >= maxBytes)
-                {
-                    break;
-                }
-            }
-
-            return $"Binary file {path} (Bytes {startByte} to {stream.Position}):\n{stringBuilder}";
-        }
-
-        // Text file logic
-        var startLine = Math.Max(1, offset);
-        var actualLimit = Math.Clamp(limit, 1, 2000);
-
-        stream.Seek(0, SeekOrigin.Begin);
-        using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: true);
-
-        var contentBuilder = new StringBuilder();
-        var currentLine = 0;
-        var linesRead = 0;
-        var isEOF = false;
-
-        var hasLongLine = false;
-        while (await reader.ReadLineAsync(cancellationToken) is { } line)
-        {
-            currentLine++;
-
-            if (currentLine < startLine) continue;
-
-            var tokenCount = TokenHelper.EstimateTokenCount(line);
-            if (tokenCount > 10000)
-            {
-                line = TokenHelper.Omit(line, maxTokenCount: 10000, omitText: "[... LINE TRUNCATED ...]");
-                hasLongLine = true;
-            }
-
-            contentBuilder.AppendLine(line);
-            linesRead++;
-
-            if (linesRead >= actualLimit)
-            {
-                isEOF = await reader.ReadLineAsync(cancellationToken) == null;
-                break;
-            }
-        }
-
-        if (linesRead == 0 && currentLine == 0)
-        {
-            return $"(The file `{path}` exists, but is empty)";
-        }
-
-        if (string.IsNullOrWhiteSpace(contentBuilder.ToString()))
-        {
-            return $"(The file `{path}` exists, but contains only whitespace)";
-        }
-
-        var endLine = startLine + linesRead - 1;
-        var truncated = !isEOF && linesRead == actualLimit;
-
-        // Calculate total lines if the file is not too large
-        int? totalLines = null;
-        if (fileInfo.Length < 1024 * 1024)
-        {
-            totalLines = currentLine;
-            if (!isEOF)
-            {
-                while (await reader.ReadLineAsync(cancellationToken) != null)
-                {
-                    totalLines++;
-                }
-            }
-        }
-
-        var resultBuilder = new StringBuilder();
-        if (truncated || startLine > 1)
-        {
-            resultBuilder.Append("File: `").Append(path).Append("`. Lines ").Append(startLine).Append(" to ").Append(endLine);
-            if (totalLines.HasValue) resultBuilder.Append(" (").Append(totalLines.Value).Append(" lines total)");
-            else resultBuilder.Append(" (total lines unknown because file is too large: ").Append(fileInfo.Length).Append(" bytes)");
-            resultBuilder.AppendLine(":");
-        }
-
-        resultBuilder.Append(contentBuilder);
-
-        if (hasLongLine)
-        {
-            resultBuilder.AppendLine("[One or more lines were truncated to 10,000 tokens each.]");
-        }
-
-        if (truncated)
-        {
-            resultBuilder
-                .AppendLine()
-                .Append("[File content truncated at line ").Append(endLine)
-                .AppendLine(". Use read_file with offset/limit parameters to view more.]");
-        }
-
-        return TokenHelper.Omit(resultBuilder.ToString(), maxTokenCount: 40000);
+        var result = await context.Handler.ReadAsync(context, offset, limit, cancellationToken);
+        return BuildReadOutput(context.Path, result);
     }
 
     [KernelFunction("move_file")]
-    [Description("Moves or renames a file or directory.")]
+    [Description("Moves or renames a local file or directory.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task MoveFileAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
-        [Description("Source file or directory path.")] string source,
-        [Description("Destination file or directory path. Type must match the source.")] string destination,
+        string source,
+        string destination,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Moving file from {Source} to {Destination}", source, destination);
 
-        ExpandFullPath(chatContext, ref source);
-        ExpandFullPath(chatContext, ref destination);
+        source = ExpandLocalPath(chatContext, source);
+        destination = ExpandLocalPath(chatContext, destination);
         userInterface.ActivityPreview = new ChatPluginFileTransferActivityPreview(
             new ChatPluginFileReference(source),
             new ChatPluginFileReference(destination));
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(
+        userInterface.DisplaySink.AppendFileReferences(
             new ChatPluginFileReference(source),
             new ChatPluginFileReference(destination));
 
         var isFile = File.Exists(source);
         if (!isFile && !Directory.Exists(source))
         {
-            throw new HandledSystemException(
-                new FileNotFoundException($"{nameof(source)} does not exist."),
-                HandledSystemExceptionType.FileNotFound);
+            throw ToHandledException(
+                new FileNotFoundException("Source does not exist.", source),
+                LocaleKey.HandledSystemException_FileNotFound);
         }
 
-        var destinationDirectory = Path.GetDirectoryName(destination);
-        if (string.IsNullOrWhiteSpace(destinationDirectory))
-        {
-            throw new HandledSystemException(
-                new DirectoryNotFoundException($"{nameof(destination)} directory is invalid."),
-                HandledSystemExceptionType.DirectoryNotFound);
-        }
+        var destinationDirectory = Path.GetDirectoryName(destination) ??
+            throw ToHandledException(
+                new DirectoryNotFoundException("Destination directory is invalid."),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
 
         await RequestFileOperationConsentAsync(
             userInterface,
@@ -627,168 +335,93 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             [source, destination],
             cancellationToken);
 
-        try
-        {
-            Directory.CreateDirectory(destinationDirectory);
-        }
-        catch (Exception ex)
-        {
-            throw new HandledSystemException(
-                new IOException("Failed to create destination directory.", ex),
-                HandledSystemExceptionType.IOException,
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage));
-        }
-
-        if (isFile)
-        {
-            File.Move(source, destination, overwrite: false);
-        }
-        else
-        {
-            Directory.Move(source, destination);
-        }
+        Directory.CreateDirectory(destinationDirectory);
+        if (isFile) File.Move(source, destination, overwrite: false);
+        else Directory.Move(source, destination);
     }
 
     [KernelFunction("delete_files")]
-    [Description(
-        "Delete files and directories at the specified path matching the given pattern.")]
-    [DynamicLocaleKey(
-        LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Header,
-        LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Description)]
+    [Description("Delete local files and directories matching a regex.")]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<string> DeleteFilesAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
-        [Description("File or directory path to delete.")] string path,
-        [Description(
-            "Regex search pattern to match file and directory names (not full path). " +
-            "Effective when path is a folder. " +
-            "Warn that this will delete all matching files and directories recursively.")]
+        string path,
         string filePattern = ".*",
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Deleting file at {Path}", path);
 
-        ExpandFullPath(chatContext, ref path);
+        path = ExpandLocalPath(chatContext, path);
         userInterface.ActivityPreview = CreateFilePreview(
             path,
             filePattern is ".*" ? null : new DirectLocaleKey(filePattern));
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
-
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(path));
         if (Path.GetDirectoryName(path) is null)
         {
-            throw new HandledException(
-                new UnauthorizedAccessException("Cannot delete root directory."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage),
-                showDetails: false);
+            throw ToHandledException(
+                new UnauthorizedAccessException("Cannot delete a root directory."),
+                LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage);
         }
 
-        var fileSystemInfo = EnsureFileSystemInfo(path);
-        if (fileSystemInfo.Attributes.HasFlag(FileAttributes.System))
+        var root = EnsureFileSystemInfo(path);
+        if (root.Attributes.HasFlag(FileAttributes.System))
         {
-            throw new HandledException(
-                new UnauthorizedAccessException("Cannot delete system files or directories."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage),
-                showDetails: false);
+            throw ToHandledException(
+                new UnauthorizedAccessException("Cannot delete a system file or directory."),
+                LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage);
         }
 
-        IEnumerable<FileSystemInfo> infosToDelete;
-        switch (fileSystemInfo)
-        {
-            case FileInfo fileInfo:
-            {
-                infosToDelete = [fileInfo];
-                break;
-            }
-            case DirectoryInfo directoryInfo:
-            {
-                var regex = new Regex(filePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, RegexTimeout);
-                infosToDelete = new RegexFileSystemInfoEnumerable(directoryInfo.FullName, regex, true)
-                    .WithCancellation(cancellationToken)
-                    .OfType<FileSystemInfo>();
-                break;
-            }
-            default:
-            {
-                return "No files or directories to delete.";
-            }
-        }
+        var regex = CreateRegex(filePattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        var targets = root is FileInfo ? [root] : EnumerateLocalEntries((DirectoryInfo)root, regex, cancellationToken).ToList();
+        if (targets.Count == 0) return "No files or directories to delete.";
 
-        var infosToDeleteList = infosToDelete.ToList();
-        if (infosToDeleteList.Count == 0)
-        {
-            return "No files or directories to delete.";
-        }
-
-        var deleteTargets = infosToDeleteList
-            .AsValueEnumerable()
-            .Select(info => info.FullName)
-            .Order()
-            .ToList();
+        var paths = targets.AsValueEnumerable().Select(info => info.FullName).Order().ToList();
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header,
-                new DirectLocaleKey(infosToDeleteList.Count)),
+                new DirectLocaleKey(targets.Count)),
             null,
-            deleteTargets,
+            paths,
             cancellationToken);
 
-        var successCount = 0;
-        var errorCount = 0;
-        foreach (var info in infosToDeleteList)
+        var success = 0;
+        var errors = 0;
+        foreach (var target in targets.OrderByDescending(info => info.FullName.Length))
         {
-            if (info.Attributes.HasFlag(FileAttributes.System))
-            {
-                var consent = await userInterface.RequestConsentAsync(
-                    "system",
-                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header),
-                    new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(info.FullName)),
-                    cancellationToken: cancellationToken);
-                if (!consent)
-                {
-                    continue;
-                }
-            }
-
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                if (cancellationToken.IsCancellationRequested)
+                if (target.Exists)
                 {
-                    return $"User cancelled the deletion operation. " +
-                        $"{successCount} files/directories were deleted successfully, {errorCount} errors occurred.";
+                    if (target is DirectoryInfo directory) directory.Delete(true);
+                    else target.Delete();
                 }
 
-                if (info.Exists)
-                {
-                    if (info is DirectoryInfo directoryInfo) directoryInfo.Delete(true);
-                    else info.Delete();
-                }
-
-                successCount++;
+                success++;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to delete file or directory at {Path}", info.FullName);
-
-                errorCount++;
+                _logger.LogWarning(ex, "Failed to delete {Path}", target.FullName);
+                errors++;
             }
         }
 
-        return errorCount == 0 ?
-            $"{successCount} files/directories were deleted successfully." :
-            $"{successCount} files/directories were deleted successfully, {errorCount} errors occurred.";
+        return errors == 0 ?
+            $"{success} files/directories were deleted successfully." :
+            $"{success} files/directories were deleted successfully, {errors} errors occurred.";
     }
 
     [KernelFunction("create_directory")]
-    [Description("Creates a new directory at the specified path.")]
+    [Description("Creates a new local directory.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
-    private async Task CreateDirectory(
+    private async Task CreateDirectoryAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
@@ -796,11 +429,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         _logger.LogDebug("Creating directory at {Path}", path);
 
-        ExpandFullPath(chatContext, ref path);
+        path = ExpandLocalPath(chatContext, path);
         userInterface.ActivityPreview = CreateFilePreview(path);
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
-
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(path));
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
@@ -808,15 +439,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             null,
             [path],
             cancellationToken);
-
         Directory.CreateDirectory(path);
     }
 
     [KernelFunction("write_to_file")]
-    [Description("Writes content to a text file at the specified path. Binary files are not supported.")]
-    [DynamicLocaleKey(
-        LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Header,
-        LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Description)]
+    [Description("Writes content to a text file. Unsupported handlers reject the operation.")]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_Description)]
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task WriteToFileAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
@@ -828,41 +456,22 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         _logger.LogDebug("Writing text file at {Path}, append: {Append}", path, append);
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path);
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
-
-        var fileExists = File.Exists(path);
+        var context = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(context.Path);
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(context.Path));
+        var exists = context.FileSystemInfo is FileInfo { Exists: true };
         await RequestFileOperationConsentAsync(
             userInterface,
             chatContext,
             new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header),
-            new DynamicLocaleKey(GetWriteConsentDescriptionKey(append, fileExists)),
-            [path],
+            new DynamicLocaleKey(GetWriteConsentDescriptionKey(append, exists)),
+            [context.Path],
             cancellationToken);
-
-        await using var stream = new FileStream(path, append ? FileMode.Append : FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-        if (await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) is not { } encoding)
-        {
-            throw new HandledException(
-                new UnauthorizedAccessException("Cannot write to a binary file."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage),
-                showDetails: false);
-        }
-
-        await using var writer = new StreamWriter(stream, encoding);
-        await writer.WriteAsync(content);
-        await writer.FlushAsync(cancellationToken);
+        await context.Handler.WriteAsync(context, content, append, cancellationToken);
     }
 
     [KernelFunction("replace_file_content")]
-    [Description(
-        """
-        Replaces content in a single text file at the specified path. Binary files are not supported.
-        - Supports both regex and literal text replacement (toggle `isRegex`).
-        - When using regex, replacements can use substitution patterns (e.g., $1, $2).
-        """)]
+    [Description("Replaces text in one file after presenting a diff for review.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description)]
@@ -871,9 +480,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
         string path,
-        [Description("Text or regex patterns to search for within the file.")] IReadOnlyList<string> patterns,
-        [Description("Replacement strings that match patterns.")] IReadOnlyList<string> replacements,
-        [Description("Whether the patterns are regular expressions. Set to false for literal text replacement.")]
+        IReadOnlyList<string> patterns,
+        IReadOnlyList<string> replacements,
         bool isRegex = true,
         bool ignoreCase = false,
         CancellationToken cancellationToken = default)
@@ -888,141 +496,275 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         if (patterns.Count == 0)
         {
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(patterns),
-                new ArgumentException("At least one pattern must be provided.", nameof(patterns)));
+            throw ToHandledException(
+                new ArgumentException("At least one pattern must be provided.", nameof(patterns)),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage);
         }
 
-        if (replacements.Count != patterns.Count)
+        if (patterns.Count != replacements.Count)
         {
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(replacements),
-                new ArgumentException("Replacements count must match patterns count.", nameof(replacements)));
+            throw ToHandledException(
+                new ArgumentException("Replacements count must match patterns count.", nameof(replacements)),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage);
         }
 
-        ExpandFullPath(chatContext, ref path);
-        userInterface.ActivityPreview = CreateFilePreview(path);
-        var displaySink = userInterface.DisplaySink;
-        displaySink.AppendFileReferences(new ChatPluginFileReference(path));
-
-        var fileInfo = EnsureFileInfo(path);
-        if (fileInfo.Length > 10 * 1024 * 1024)
-        {
-            throw new HandledException(
-                new NotSupportedException("File size is larger than 10 MB, replace operation is not supported."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage),
-                showDetails: false);
-        }
-
-        await using var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-        if (await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) is not { } encoding)
-        {
-            throw new HandledException(
-                new InvalidOperationException("Cannot replace content in a binary file."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage),
-                showDetails: false);
-        }
-
-        stream.Seek(0, SeekOrigin.Begin);
-        using var reader = new StreamReader(stream, encoding);
-        var fileContent = await reader.ReadToEndAsync(cancellationToken);
-
-        var regexOptions = RegexOptions.Compiled | RegexOptions.Multiline;
-        if (ignoreCase)
-        {
-            regexOptions |= RegexOptions.IgnoreCase;
-        }
-
-        var replacedContent = fileContent;
-        for (var i = 0; i < patterns.Count; i++)
-        {
-            var pattern = patterns[i];
-            var replacement = i < replacements.Count ? replacements[i] : string.Empty;
-
-            if (isRegex)
+        var context = await _contextFactory.CreateAsync(path, chatContext.EnsureWorkingDirectory(), cancellationToken);
+        userInterface.ActivityPreview = CreateFilePreview(context.Path);
+        userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(context.Path));
+        return await context.Handler.ReplaceContentAsync(
+            context,
+            patterns,
+            replacements,
+            isRegex,
+            ignoreCase,
+            async (original, proposed, token) =>
             {
-                var regex = new Regex(pattern, regexOptions, RegexTimeout);
-                replacedContent = regex.Replace(replacedContent, replacement);
-            }
-            else
-            {
-                var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-                replacedContent = replacedContent.Replace(pattern, replacement, comparison);
-            }
-        }
-
-        if (replacedContent == fileContent)
-        {
-            return "No content was replaced.";
-        }
-
-        var difference = new TextDifference(path);
-        TextDifferenceBuilder.BuildLineDiff(difference, fileContent, replacedContent);
-
-        displaySink.AppendFileDifference(difference, fileContent);
-        await difference.WaitForAcceptanceAsync(cancellationToken);
-
-        // Apply all accepted changes
-        if (!difference.Changes.Any(t => t.Accepted is true))
-        {
-            return "All changes were rejected by user.";
-        }
-
-        replacedContent = difference.Apply(fileContent);
-        stream.SetLength(0);
-        stream.Seek(0, SeekOrigin.Begin);
-        await using var writer = new StreamWriter(stream, encoding);
-        await writer.WriteAsync(replacedContent);
-        await writer.FlushAsync(cancellationToken);
-
-        return difference.ToModelSummary(fileContent, default);
+                var difference = new TextDifference(context.Path);
+                TextDifferenceBuilder.BuildLineDiff(difference, original, proposed);
+                userInterface.DisplaySink.AppendFileDifference(difference, original);
+                await difference.WaitForAcceptanceAsync(token);
+                return difference.Changes.AsValueEnumerable().Any(change => change.Accepted is true) ?
+                    new FileReviewResult(difference.Apply(original), difference.ToModelSummary(original, default)) :
+                    new FileReviewResult(null, "All changes were rejected by user.");
+            },
+            cancellationToken);
     }
 
-    private static void ExpandFullPath(ChatContext chatContext, ref string path)
+    private static PromptNode BuildReadOutput(string path, FileReadResult result)
     {
-        path = ExpandFullPath(chatContext.EnsureWorkingDirectory(), path);
+        if (result.Items.Count == 0 && result.Total == 0)
+        {
+            return $"(The file `{path}` exists, but is empty)";
+        }
+
+        if (result.Items.Count == 0)
+        {
+            return $"(No content at {result.Unit} offset {result.Offset} in `{path}`)";
+        }
+
+        var unitName = char.ToUpperInvariant(result.Unit[0]) + result.Unit[1..] + "s";
+        var details = result.Total is { } total ? $" ({total} {result.Unit}s total)" : string.Empty;
+        var metadata = string.Join(
+            string.Empty,
+            result.Metadata
+                .Where(static item => item.Value is not null)
+                .Select(static item => $", {item.Key}={item.Value}"));
+        var output = new PromptTokenLimit(40000)
+        {
+            $"File: `{path}`. {unitName} starting at {result.Offset}{details}{metadata}:{Environment.NewLine}"
+        };
+
+        var position = result.Offset;
+        int? currentPage = null;
+        for (var i = 0; i < result.Items.Count; i++)
+        {
+            var item = result.Items[i];
+            var pagePrefix = item.PageNumber != currentPage && item.PageNumber is { } page ? $"[Page {page}]{Environment.NewLine}" : string.Empty;
+            output.Add(
+                new PromptTextChunk($"{pagePrefix}{position}: {item.Content}{Environment.NewLine}")
+                    .BreakOnWhitespace()
+                    .WithPriority(1000 - i));
+            currentPage = item.PageNumber ?? currentPage;
+            position += item.UnitCount;
+        }
+
+        if (result.HasMore)
+        {
+            // This note is pruned before content lines. If pruning occurs, their numeric prefixes
+            // still let the model continue after the last line it actually received.
+            output.Add(
+                new PromptText($"{Environment.NewLine}[More content is available. Continue with offset={result.NextOffset}.]{Environment.NewLine}")
+                    .WithPriority(int.MinValue));
+        }
+
+        return output;
+    }
+
+    private static PromptNode BuildSearchOutput(
+        IChatPluginDisplaySink displaySink,
+        IReadOnlyList<FileContentMatch> matches,
+        string pattern,
+        int maxResults,
+        bool limitHit)
+    {
+        var files = matches
+            .AsValueEnumerable()
+            .GroupBy(static match => match.Path, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new SearchFileGroup(
+                group.Key,
+                group
+                    .AsValueEnumerable()
+                    .GroupBy(static match => (match.PageNumber, match.Line))
+                    .OrderBy(static line => line.Key.PageNumber)
+                    .ThenBy(static line => line.Key.Line)
+                    .Select(static line => new SearchLineGroup([.. line]))
+                    .ToList()))
+            .ToList();
+
+        AllocateSearchLines(files, maxResults);
+        var shownFiles = files.AsValueEnumerable().Where(static file => file.ShownCount > 0).ToList();
+        var totalLines = files.AsValueEnumerable().Sum(static file => file.Lines.Count);
+        var shownLines = shownFiles.AsValueEnumerable().Sum(static file => file.ShownCount);
+        var shownOccurrences = shownFiles.AsValueEnumerable().Sum(static file =>
+            file.Lines.AsValueEnumerable().Take(file.ShownCount).Sum(static line => line.Matches.Count));
+        var qualifier = shownLines < totalLines ?
+            $" (showing {shownOccurrences} {Pluralize(shownOccurrences, "occurrence", "occurrences")} on " +
+            $"{shownLines} {Pluralize(shownLines, "line", "lines")} in " +
+            $"{shownFiles.Count} {Pluralize(shownFiles.Count, "file", "files")})" :
+            string.Empty;
+        if (limitHit) qualifier += " (search limit reached)";
+
+        var output = new PromptTokenLimit(40000)
+        {
+            $"Found {matches.Count} {Pluralize(matches.Count, "occurrence", "occurrences")} on " +
+            $"{totalLines} matching {Pluralize(totalLines, "line", "lines")} in " +
+            $"{files.Count} {Pluralize(files.Count, "file", "files")} for \"{pattern}\"{qualifier}{Environment.NewLine}"
+        };
+
+        for (var fileIndex = 0; fileIndex < shownFiles.Count; fileIndex++)
+        {
+            var file = shownFiles[fileIndex];
+            var lines = new List<string>(file.ShownCount + 2) { string.Empty, file.Path };
+            var locations = new HashSet<ChatPluginFileReferenceLocation>();
+            foreach (var line in file.Lines.AsValueEnumerable().Take(file.ShownCount))
+            {
+                var first = line.Matches[0];
+                var page = first.PageNumber is { } pageNumber ? $" [page {pageNumber}]" : string.Empty;
+                lines.Add($"{first.Line}{page}:{BoundMatchPreview(first)}");
+                foreach (var match in line.Matches.AsValueEnumerable())
+                {
+                    locations.Add(new ChatPluginFileReferenceLocation(match.Line, match.Column));
+                }
+            }
+
+            if (file.ShownCount < file.Lines.Count)
+            {
+                lines.Add($"... ({file.Lines.Count - file.ShownCount} more matching line(s) in this file)");
+            }
+
+            displaySink.AppendFileReferences(new ChatPluginFileReference(file.Path, locations: locations));
+
+            // Matching lines stay together so the renderer removes complete file blocks.
+            output.Add(new PromptText(string.Join(Environment.NewLine, lines)).WithPriority(1000 - fileIndex));
+        }
+
+        return output;
+    }
+
+    private static void AllocateSearchLines(IReadOnlyList<SearchFileGroup> files, int maxResults)
+    {
+        var keptFiles = files.AsValueEnumerable().Take(maxResults).ToList();
+        foreach (var file in keptFiles.AsValueEnumerable()) file.ShownCount = 1;
+
+        var remaining = maxResults - keptFiles.Count;
+        var capacity = keptFiles.AsValueEnumerable().Sum(static file => file.Lines.Count - 1);
+        if (remaining <= 0 || capacity <= 0) return;
+
+        var allocations = keptFiles
+            .AsValueEnumerable()
+            .Select(file =>
+            {
+                // ReSharper disable once AccessToModifiedClosure
+                var exact = (double)(file.Lines.Count - 1) / capacity * remaining;
+                var added = Math.Min(file.Lines.Count - 1, (int)Math.Floor(exact));
+                return new SearchLineAllocation(file, added, exact - Math.Floor(exact));
+            })
+            .ToList();
+        foreach (var allocation in allocations.AsValueEnumerable()) allocation.File.ShownCount += allocation.Added;
+
+        remaining -= allocations.AsValueEnumerable().Sum(static allocation => allocation.Added);
+        foreach (var allocation in allocations.AsValueEnumerable().OrderByDescending(static allocation => allocation.Remainder))
+        {
+            if (remaining == 0) break;
+            if (allocation.File.ShownCount >= allocation.File.Lines.Count) continue;
+            allocation.File.ShownCount++;
+            remaining--;
+        }
+    }
+
+    private static string BoundMatchPreview(FileContentMatch match)
+    {
+        const int maxLineLength = 600;
+        const int contextBeforeLength = 150;
+        const int contextAfterLength = 105;
+        const int maxMatchLength = 300;
+        const int headLength = (maxMatchLength + 1) / 2;
+        const int tailLength = maxMatchLength - headLength;
+
+        var preview = match.Preview.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ').TrimEnd();
+        if (preview.Length <= maxLineLength) return preview;
+
+        var start = Math.Clamp(match.Column - 1, 0, preview.Length);
+        var end = Math.Clamp(start + match.Length, start, preview.Length);
+        var matchText = preview[start..end];
+        if (matchText.Length > maxMatchLength)
+        {
+            matchText = $"{matchText[..headLength]}[... {matchText.Length - maxMatchLength} characters elided ...]{matchText[^tailLength..]}";
+        }
+
+        var before = preview[Math.Max(0, start - contextBeforeLength)..start];
+        var after = preview[end..Math.Min(preview.Length, end + contextAfterLength)];
+        return $"{before}{matchText}{after} [match at col {match.Column} · line truncated, {preview.Length:N0} chars]";
+    }
+
+    private static string Pluralize(int count, string singular, string plural) => count == 1 ? singular : plural;
+
+    private static Regex CreateRegex(string pattern, RegexOptions options)
+    {
+        try
+        {
+            return new Regex(pattern, options, RegexTimeout);
+        }
+        catch (ArgumentException ex)
+        {
+            throw ToHandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage);
+        }
+    }
+
+    private static string ExpandLocalPath(ChatContext chatContext, string path)
+    {
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && !uri.IsFile)
+        {
+            throw ToHandledException(
+                new NotSupportedException("This operation supports local paths only."),
+                LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
+        }
+
+        try
+        {
+            return ExpandFullPath(chatContext.EnsureWorkingDirectory(), uri?.IsFile == true ? uri.LocalPath : path);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            throw ToHandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
+        }
     }
 
     internal static string ExpandFullPath(string workingDirectory, string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(path),
-                new ArgumentException("Path cannot be null or empty.", nameof(path)));
+            throw ToHandledException(
+                new ArgumentException("Path cannot be null or empty.", nameof(path)),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
 
         if (string.IsNullOrWhiteSpace(workingDirectory))
         {
-            throw new ArgumentException("Working directory cannot be null or empty.", nameof(workingDirectory));
+            throw ToHandledException(
+                new ArgumentException("Working directory cannot be null or empty.", nameof(workingDirectory)),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
 
-        path = Environment.ExpandEnvironmentVariables(path);
-        return Path.GetFullPath(path, workingDirectory);
+        return Path.GetFullPath(Environment.ExpandEnvironmentVariables(path), workingDirectory);
     }
 
     internal static bool IsPathInsideDirectory(string path, string directory)
     {
         var fullPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
         var fullDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
-        if (fullPath.Equals(fullDirectory, PathComparer)) return true;
-
-        var directoryWithSeparator = fullDirectory + Path.DirectorySeparatorChar;
-        return fullPath.StartsWith(directoryWithSeparator, PathComparer);
-    }
-
-    private static string BuildConsentId(IReadOnlyList<string> normalizedPaths)
-    {
-        var builder = new StringBuilder();
-        foreach (var path in normalizedPaths.AsValueEnumerable().Order())
-        {
-            builder.Append('|').Append(Path.TrimEndingDirectorySeparator(path));
-        }
-
-        return builder.ToString();
+        return fullPath.Equals(fullDirectory, PathComparer) || fullPath.StartsWith(fullDirectory + Path.DirectorySeparatorChar, PathComparer);
     }
 
     internal static string GetWriteConsentDescriptionKey(bool append, bool fileExists) =>
@@ -1049,11 +791,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken)
     {
         var workingDirectory = chatContext.EnsureWorkingDirectory();
-        if (paths.Count > 0 && paths.AsValueEnumerable().All(path => IsPathInsideDirectory(path, workingDirectory)))
-        {
-            return;
-        }
-
+        if (paths.Count > 0 && paths.All(path => Path.IsPathFullyQualified(path) && IsPathInsideDirectory(path, workingDirectory))) return;
         var container = new ChatPluginContainerDisplayBlock();
         if (descriptionKey is not null)
         {
@@ -1066,7 +804,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             {
                 TotalReferenceCount = paths.Count
             });
-
         var consent = await userInterface.RequestConsentAsync(
             BuildConsentId(paths),
             headerKey,
@@ -1075,185 +812,81 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             cancellationToken: cancellationToken);
         if (!consent)
         {
-            throw new HandledException(
+            throw ToHandledException(
                 new UnauthorizedAccessException(consent.FormatReason("User denied consent for this operation.")),
-                new DirectLocaleKey("File operation denied"),
-                showDetails: false);
+                LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
         }
     }
 
-    /// <summary>
-    /// Ensures the specified path is a valid directory and returns its DirectoryInfo.
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="DirectoryNotFoundException"></exception>
-    private static DirectoryInfo EnsureDirectoryInfo(string path)
-    {
-        var directoryInfo = new DirectoryInfo(path);
-        if (directoryInfo.Exists) return directoryInfo;
-
-        if (File.Exists(path))
-        {
-            throw new HandledException(
-                new InvalidOperationException("The specified path is a file, not a directory."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage),
-                showDetails: false);
-        }
-
-        throw new HandledException(
-            new DirectoryNotFoundException("The specified path is not a directory or a file."),
-            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathNotExist_ErrorMessage),
-            showDetails: false);
-    }
-
-    /// <summary>
-    /// Ensures the specified path is a valid file and returns its FileInfo.
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="FileNotFoundException"></exception>
-    private static FileInfo EnsureFileInfo(string path)
-    {
-        var fileInfo = new FileInfo(path);
-        if (fileInfo.Exists) return fileInfo;
-
-        if (Directory.Exists(path))
-        {
-            throw new HandledException(
-                new InvalidOperationException("The specified path is a directory, not a file."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage),
-                showDetails: false);
-        }
-
-        throw new HandledException(
-            new FileNotFoundException("The specified path is not a file or a directory."),
-            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathNotExist_ErrorMessage),
-            showDetails: false);
-
-    }
+    private static string BuildConsentId(IReadOnlyList<string> paths) =>
+        "|" + string.Join('|', paths.Order().Select(Path.TrimEndingDirectorySeparator));
 
     private static FileSystemInfo EnsureFileSystemInfo(string path)
     {
-        if (File.Exists(path))
-        {
-            return new FileInfo(path);
-        }
+        if (File.Exists(path)) return new FileInfo(path);
+        if (Directory.Exists(path)) return new DirectoryInfo(path);
+        throw ToHandledException(
+            new FileNotFoundException("The specified path does not exist.", path),
+            LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage);
+    }
 
-        if (Directory.Exists(path))
-        {
-            return new DirectoryInfo(path);
-        }
+    private static IEnumerable<FileSystemInfo> EnumerateLocalEntries(DirectoryInfo root, Regex regex, CancellationToken cancellationToken)
+    {
+        var pending = new Stack<(DirectoryInfo Directory, int Depth)>();
+        pending.Push((root, 0));
 
-        throw new HandledException(
-            new FileNotFoundException("The specified path does not exist as a file or directory."),
-            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage),
-            showDetails: false);
+        while (pending.TryPop(out var current))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            FileSystemInfo[] entries;
+            try
+            {
+                entries = current.Directory.GetFileSystemInfos();
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+            {
+                continue;
+            }
+
+            foreach (var entry in entries)
+            {
+                if (regex.IsMatch(entry.Name)) yield return entry;
+                if (entry is DirectoryInfo directory && current.Depth < 32) pending.Push((directory, current.Depth + 1));
+            }
+        }
+    }
+
+    private static HandledException ToHandledException(Exception exception, string friendlyMessageKey) =>
+        new(exception, new DynamicLocaleKey(friendlyMessageKey), showDetails: false);
+
+    /// <summary>
+    /// Holds matching logical lines and their output allocation for one file.
+    /// </summary>
+    private sealed class SearchFileGroup(string path, List<SearchLineGroup> lines)
+    {
+        public string Path { get; } = path;
+        public List<SearchLineGroup> Lines { get; } = lines;
+        public int ShownCount { get; set; }
     }
 
     /// <summary>
-    /// Builds the output for search_file_content with per-match token budget allocation.
+    /// Groups all occurrences that share one model-facing logical line.
     /// </summary>
-    private static string BuildMatchOutput(ConcurrentBag<string> resultLines, int fileCount, string headerFormat)
+    private sealed class SearchLineGroup(List<FileContentMatch> matches)
     {
-        var allMatches = resultLines.ToList();
-        var desiredTokens = allMatches.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToList();
-        var allocations = TokenBudget.Allocate(desiredTokens.AsSpan(), 40000, minTokensPerItem: 100, maxTokensPerItem: 5000);
-
-        var sb = new StringBuilder();
-        sb.AppendFormat(headerFormat, fileCount).AppendLine();
-
-        var omitted = 0;
-        for (var i = 0; i < allMatches.Count; i++)
-        {
-            if (allocations[i] >= desiredTokens[i])
-            {
-                sb.AppendLine(allMatches[i]);
-            }
-            else if (allocations[i] > 0)
-            {
-                TokenHelper.OmitTo(
-                    allMatches[i],
-                    sb,
-                    allocations[i],
-                    position: TokenHelper.OmitPosition.Middle);
-                sb.AppendLine();
-            }
-            else
-            {
-                omitted++;
-            }
-        }
-
-        if (omitted > 0) sb.Append('(').Append(omitted).AppendLine(" match(es) omitted due to token budget)");
-
-        return sb.ToString();
+        public List<FileContentMatch> Matches { get; } = matches;
     }
+
+    private readonly record struct SearchLineAllocation(SearchFileGroup File, int Added, double Remainder);
 
     /// <summary>
-    /// An enumerable that filters FileSystemInfo objects based on a regex pattern.
+    /// Renders the path argument as a friendly file reference in the chat UI.
     /// </summary>
-    private sealed class RegexFileSystemInfoEnumerable : FileSystemEnumerable<FileSystemInfo?>
-    {
-        public RegexFileSystemInfoEnumerable(string directory, Regex regex, bool recurseSubdirectories, bool ignoreCommonBuildFolders = false) : base(
-            directory,
-            (ref entry) =>
-            {
-                try
-                {
-                    return !regex.IsMatch(entry.FileName) ? null : entry.ToFileSystemInfo();
-                }
-                catch
-                {
-                    return null;
-                }
-            },
-            CreateOptions(recurseSubdirectories, ignoreCommonBuildFolders))
-        {
-            if (ignoreCommonBuildFolders)
-            {
-                ShouldRecursePredicate = (ref entry) =>
-                {
-                    var name = entry.FileName;
-                    // TODO: follow ignore pattern
-                    return !name.Equals("node_modules", StringComparison.OrdinalIgnoreCase) &&
-                        !name.Equals("bin", StringComparison.OrdinalIgnoreCase) &&
-                        !name.Equals("obj", StringComparison.OrdinalIgnoreCase) &&
-                        !name.Equals(".vs", StringComparison.OrdinalIgnoreCase);
-                };
-            }
-        }
-
-        private static EnumerationOptions CreateOptions(bool recurseSubdirectories, bool ignoreCommonBuildFolders)
-        {
-            var options = new EnumerationOptions
-            {
-                IgnoreInaccessible = true,
-                MatchType = MatchType.Simple,
-                ReturnSpecialDirectories = false,
-                MaxRecursionDepth = 32,
-                RecurseSubdirectories = recurseSubdirectories
-            };
-
-            if (ignoreCommonBuildFolders)
-            {
-                options.AttributesToSkip = FileAttributes.Hidden | FileAttributes.System;
-            }
-
-            return options;
-        }
-    }
-
     private sealed class FileRenderer : IFriendlyFunctionCallContentRenderer
     {
-        public ChatPluginDisplayBlock? Render(KernelArguments arguments)
-        {
-            if (!arguments.TryGetValue("path", out var pathObj) || pathObj is not string path) return null;
-
-            // arguments.TryGetValue("filePattern", out var filePatternObj);
-            return new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path));
-        }
+        public ChatPluginDisplayBlock? Render(KernelArguments arguments) =>
+            arguments.TryGetValue("path", out var value) && value is string path ?
+                new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
+                null;
     }
 }

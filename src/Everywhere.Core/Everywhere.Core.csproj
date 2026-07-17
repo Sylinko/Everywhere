@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**"/>
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\Skills\**"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +50,7 @@
     <PackageReference Include="OpenTelemetry"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>
     <PackageReference Include="PuppeteerSharp"/>
+    <PackageReference Include="PdfPig" />
     <PackageReference Include="ReverseMarkdown" />
     <PackageReference Include="Sentry"/>
     <PackageReference Include="Sentry.OpenTelemetry"/>
@@ -105,7 +106,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\EmojiBase\" />
+    <!-- Keep skill paths intact so EmbeddedSkillProvider can enumerate them without relying on platform-specific resource names. -->
+    <EmbeddedResource Include="Assets\Skills\**" LogicalName="skills/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

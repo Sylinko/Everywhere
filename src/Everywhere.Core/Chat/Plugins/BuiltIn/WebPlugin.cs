@@ -70,8 +70,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new ArgumentException("Web search engine provider is not selected."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage),
-                showDetails: false);
+                LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage);
         }
 
         return provider switch
@@ -94,8 +93,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 google.SearchEngineId ??
                 throw new HandledException(
                     new UnauthorizedAccessException("Search Engine ID is not set."),
-                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
-                    showDetails: false),
+                    LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
                 _httpClientFactory.CreateClient(),
                 EnsureUri(google.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Jina } jina =>
@@ -110,8 +108,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.ActualEndPoint)),
             _ => throw new HandledException(
                 new NotSupportedException($"Web search engine provider '{provider.Id}' is not supported."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage),
-                showDetails: false)
+                LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage)
         };
 
         Uri EnsureUri(string? url)
@@ -121,8 +118,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 throw new HandledException(
                     new ArgumentException(
                         "Endpoint is not a valid absolute http/https URI. Please instruct the user to correct in Main Window > Web Search."),
-                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage),
-                    showDetails: false);
+                    LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage);
             }
 
             // Extract only the base URI without query parameters
@@ -133,8 +129,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             ApiKey.GetKey(id) ??
             throw new HandledException(
                 new UnauthorizedAccessException("API key is not set. Please instruct the user to configure in Main Window > Web Search."),
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage),
-                showDetails: false);
+                LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage);
     }
 
     /// <summary>
@@ -179,7 +174,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 Snippet: r.Value))
             .ToList();
         displaySink.AppendUrls(
-            indexedResults.Select(r => new ChatPluginUrl(
+            indexedResults.AsValueEnumerable().Select(r => new ChatPluginUrl(
                 r.Url,
                 new DirectLocaleKey((r.Name ?? r.Snippet).SafeSubstring(0, 64)))
             {
@@ -241,6 +236,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         // messages but were unnecessarily serialized as detailed output.
         displaySink.AppendUrls(
             validatedUrls
+                .AsValueEnumerable()
                 .Select(uri => new ChatPluginUrl(uri.AbsoluteUri, new DirectLocaleKey(uri.Host)))
                 .ToList());
 

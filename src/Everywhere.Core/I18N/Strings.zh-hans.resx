@@ -3677,4 +3677,43 @@
     <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
         <value>执行</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>这种文件不支持所请求的操作。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>文件路径无效，请检查后重试。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>无法打开这种类型的资源。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>无法将此文件作为文本读取。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>文件在你审阅期间已发生变化，因此没有保存任何修改。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 中没有可读取的文本，它可能包含扫描页面。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 受密码保护，无法打开。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>无法打开此 PDF，它可能已损坏或使用了不受支持的格式。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>找不到或无法打开所请求的技能文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>此操作仅适用于本设备上的文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>替换请求不完整或无效。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>文件操作未获允许。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>搜索或替换模式无效。</value>
+    </data>
 </root>

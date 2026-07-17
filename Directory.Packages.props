@@ -42,6 +42,7 @@
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="PolySharp" Version="1.16.0" />
+    <PackageVersion Include="PdfPig" Version="0.1.15" />
     <PackageVersion Include="ReverseMarkdown" Version="5.4.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
