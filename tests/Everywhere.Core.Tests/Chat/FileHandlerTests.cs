@@ -296,7 +296,7 @@ public class FileHandlerTests
         using var source = new SkillSource(
             Substitute.For<ILogger<SkillSource>>(),
             () => [new SkillRoot(SkillSourceRoot.Agents, "Agents", root)]);
-        using var manager = new SkillManager(
+        var manager = new SkillManager(
             new PersistentState(new InMemoryKeyValueStorage()),
             source,
             [new StaticVirtualSkillProvider(
@@ -351,6 +351,8 @@ public class FileHandlerTests
                 await factory.CreateAsync("skill://agents.sample/references%2Ftips.md", root));
             Assert.ThrowsAsync<HandledException>(async () =>
                 await factory.CreateAsync("skill://sample/reference.txt", root));
+            Assert.ThrowsAsync<HandledException>(async () =>
+                await factory.CreateAsync("skill://unknown.missing/SKILL.md", root));
         }
         finally
         {
@@ -368,7 +370,7 @@ public class FileHandlerTests
             using var source = new SkillSource(
                 Substitute.For<ILogger<SkillSource>>(),
                 () => []);
-            using var manager = new SkillManager(
+            var manager = new SkillManager(
                 new PersistentState(new InMemoryKeyValueStorage()),
                 source,
                 [new StaticVirtualSkillProvider(

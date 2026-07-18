@@ -17,11 +17,10 @@ namespace Everywhere.Skills;
 /// <summary>
 /// Discovers, tracks, and resolves physical and virtual skills and their resources.
 /// </summary>
-public sealed partial class SkillManager : ObservableObject, ISkillManager, ISkillPromptProvider, IAsyncInitializer, IDisposable
+public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPromptProvider, IAsyncInitializer
 {
     /// <inheritdoc />
-    [ObservableProperty]
-    public partial bool IsRefreshing { get; private set; }
+    public bool IsRefreshing => Volatile.Read(ref _refreshRequestCount) > 0;
 
     public IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
@@ -34,8 +33,7 @@ public sealed partial class SkillManager : ObservableObject, ISkillManager, ISki
     private readonly SourceList<SkillSourceGroup> _sourceGroupsSource = new();
     private readonly CompositeDisposable _disposables = new(1);
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
-    private readonly Lock _refreshStateLock = new();
-    
+
     private SkillCatalogState _state = SkillCatalogState.CreateEmpty();
     private int _refreshRequestCount;
 
@@ -64,26 +62,29 @@ public sealed partial class SkillManager : ObservableObject, ISkillManager, ISki
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        BeginRefresh();
-        var entered = false;
+        cancellationToken.ThrowIfCancellationRequested();
+        var notifyRefreshing = Interlocked.Increment(ref _refreshRequestCount) == 1;
         try
         {
+            if (notifyRefreshing) OnPropertyChanged(nameof(IsRefreshing));
+
             await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-            entered = true;
-            await RefreshCoreAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await RefreshCoreAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _refreshGate.Release();
+            }
         }
         finally
         {
-            if (entered) _refreshGate.Release();
-            EndRefresh();
+            if (Interlocked.Decrement(ref _refreshRequestCount) == 0)
+            {
+                OnPropertyChanged(nameof(IsRefreshing));
+            }
         }
-    }
-
-    /// <inheritdoc />
-    public SkillResolutionResult ResolveSkillReference(string reference)
-    {
-        var state = CurrentState;
-        return SkillReferenceResolver.Resolve(reference, state.SkillsById);
     }
 
     /// <inheritdoc />
@@ -470,23 +471,6 @@ public sealed partial class SkillManager : ObservableObject, ISkillManager, ISki
 
     private SkillCatalogState CurrentState => Volatile.Read(ref _state);
 
-    private void BeginRefresh()
-    {
-        lock (_refreshStateLock)
-        {
-            // Count queued callers as well as the gate holder so the page cannot briefly unlock between refreshes.
-            if (_refreshRequestCount++ == 0) IsRefreshing = true;
-        }
-    }
-
-    private void EndRefresh()
-    {
-        lock (_refreshStateLock)
-        {
-            if (--_refreshRequestCount == 0) IsRefreshing = false;
-        }
-    }
-
     private Dictionary<string, bool> GetSkillEnabledOverrides()
     {
         var overrides = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
@@ -504,6 +488,7 @@ public sealed partial class SkillManager : ObservableObject, ISkillManager, ISki
         overrides.Count == 0 ?
             null :
             overrides
+                .AsValueEnumerable()
                 .OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
 
@@ -516,15 +501,6 @@ public sealed partial class SkillManager : ObservableObject, ISkillManager, ISki
         }
 
         return true;
-    }
-
-    public void Dispose()
-    {
-        _skillSource.Changed -= HandleSkillSourceChanged;
-        _sourceGroupsSource.Dispose();
-        _disposables.Dispose();
-        CurrentState.Dispose();
-        _refreshGate.Dispose();
     }
 
     private void HandleSkillSourceChanged(object? sender, SkillSourceChangedEventArgs args)

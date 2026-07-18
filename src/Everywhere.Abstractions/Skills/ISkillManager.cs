@@ -12,7 +12,5 @@ public interface ISkillManager : INotifyPropertyChanged
 
     IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
-    SkillResolutionResult ResolveSkillReference(string reference);
-
     Task RefreshAsync(CancellationToken cancellationToken = default);
 }
