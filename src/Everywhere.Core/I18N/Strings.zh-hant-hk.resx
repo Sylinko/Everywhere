@@ -3667,4 +3667,52 @@
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>已完成</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLI 是首款專為 AI 代理設計的 Office 套件，旨在幫助其閱讀、編輯和自動化處理 Word、Excel 和 PowerPoint 文件，也是同類產品中的佼佼者。該軟件免費、開源，目前內置於 Everywhere 中，無需安裝 Office。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>執行 OfficeCLI 命令</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>這種文件不支持所請求的操作。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>文件路徑無效，請檢查後重試。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>無法打開這種類型的資源。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>無法將此文件作為文本閱讀。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>文件在你審閱期間已發生變化，因此沒有保存任何修改。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 中沒有可閱讀的文本，它可能包含掃描頁面。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 受密碼保護，無法打開。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>無法打開此 PDF，它可能已損壞或使用了不受支持的格式。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>找不到或無法打開所請求的技能文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>此操作僅適用於本設備上的文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>替換請求不完整或無效。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>文件操作未獲允許。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>搜索或替換模式無效。</value>
+    </data>
 </root>

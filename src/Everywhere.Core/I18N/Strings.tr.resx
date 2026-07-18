@@ -3667,4 +3667,52 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>Tamamlandı</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLI, AI asistanları için tasarlanmış ilk ofis paketidir. Word, Excel ve PowerPoint dosyalarını okuma, düzenleme ve otomatik işleme konusunda yardımcı olur. Ücretsiz ve açık kaynaklıdır, şu anda Everywhere'a entegre edilmiştir ve Office kurulumu gerektirmez.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>OfficeCLI komutunu çalıştır</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>Bu dosya, istenen işlemi desteklemiyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>Dosya yolu geçersiz, lütfen kontrol edip tekrar deneyin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>Bu tür bir kaynağı açamıyorum.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>Bu dosyayı metin olarak okuyamıyorum.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>Dosya, gözden geçirdiğiniz süre içinde değişti, bu nedenle değişiklikler kaydedilmedi.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF'de okunabilir metin yok, taranmış sayfalar içerebilir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF şifre korumalı, açılamıyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF açılamıyor, muhtemelen bozulmuş veya desteklenmeyen bir format kullanıyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>İstenen beceri dosyası bulunamadı veya açılamadı.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>Bu işlem yalnızca bu cihazdaki dosyalar için geçerlidir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>Değiştirme isteği eksik veya geçersiz.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>Dosya işlemi için izin verilmedi.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>Arama veya değiştirme deseni geçersiz.</value>
+    </data>
 </root>

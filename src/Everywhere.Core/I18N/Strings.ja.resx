@@ -3667,4 +3667,52 @@
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>完了</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLIは、AIエージェント専用に設計された初のOfficeスイートで、Word、Excel、PowerPointファイルの読み取り、編集、自動処理を支援します。無料でオープンソースで、Everywhereに組み込まれており、Officeのインストールは不要です。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>OfficeCLIコマンドを実行</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>このファイルでは、要求された操作はサポートされていません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>ファイルパスが無効です。確認して再試行してください。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>このタイプのリソースを開くことができません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>このファイルをテキストとして読み取ることができません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>レビュー中にファイルが変更されたため、変更は保存されませんでした。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>このPDFには読み取れるテキストが含まれていません。スキャンされたページが含まれている可能性があります。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>このPDFはパスワードで保護されており、開くことができません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>このPDFを開くことができません。破損しているか、サポートされていない形式である可能性があります。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>要求されたスキルファイルが見つからないか、開くことができません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>この操作は、デバイス上のファイルにのみ適用されます。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>置換リクエストが不完全または無効です。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>ファイル操作が許可されていません。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>検索または置換パターンが無効です。</value>
+    </data>
 </root>

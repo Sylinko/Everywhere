@@ -3667,4 +3667,52 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>Completato</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLI è la prima suite di Office progettata per agenti AI, pensata per aiutare a leggere, modificare e automatizzare file Word, Excel e PowerPoint, ed è leader nel suo campo. Questo software è gratuito e open source, integrato in Everywhere, senza necessità di installare Office.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>Esegui comandi OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>Questo file non supporta l'operazione richiesta.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>Il percorso del file non è valido, controlla e riprova.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>Impossibile aprire questo tipo di risorsa.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>Impossibile leggere questo file come testo.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>Il file è cambiato durante la tua revisione, quindi nessuna modifica è stata salvata.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>Questo PDF non contiene testo leggibile, potrebbe includere pagine scansionate.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>Questo PDF è protetto da password e non può essere aperto.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>Impossibile aprire questo PDF, potrebbe essere danneggiato o utilizzare un formato non supportato.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>Impossibile trovare o aprire il file di abilità richiesto.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>Questa operazione è disponibile solo per i file su questo dispositivo.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>La richiesta di sostituzione è incompleta o non valida.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>L'operazione sul file non è stata autorizzata.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>Il modello di ricerca o sostituzione non è valido.</value>
+    </data>
 </root>

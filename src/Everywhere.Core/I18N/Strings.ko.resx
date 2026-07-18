@@ -3667,4 +3667,52 @@
     <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
         <value>완료</value>
     </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>OfficeCLI는 AI 에이전트를 위해 설계된 최초의 오피스 제품군으로, Word, Excel 및 PowerPoint 파일을 읽고, 편집하며, 자동화 처리하는 데 도움을 줍니다. 이 소프트웨어는 무료이며 오픈 소스이며, Everywhere에 내장되어 있어 Office를 설치할 필요가 없습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
+        <value>OfficeCLI 명령 실행</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
+        <value>OfficeCLI</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>이 파일은 요청된 작업을 지원하지 않습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>파일 경로가 유효하지 않습니다. 확인 후 다시 시도하세요.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>이 유형의 리소스를 열 수 없습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>이 파일을 텍스트로 읽을 수 없습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage" xml:space="preserve">
+        <value>파일이 검토하는 동안 변경되어 수정 사항이 저장되지 않았습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>이 PDF에는 읽을 수 있는 텍스트가 없습니다. 스캔된 페이지가 포함되어 있을 수 있습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>이 PDF는 암호로 보호되어 열 수 없습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>이 PDF를 열 수 없습니다. 손상되었거나 지원되지 않는 형식을 사용할 수 있습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>요청한 기술 파일을 찾을 수 없거나 열 수 없습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>이 작업은 이 장치의 파일에만 적용됩니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage" xml:space="preserve">
+        <value>대체 요청이 불완전하거나 유효하지 않습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>파일 작업이 허용되지 않았습니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>검색 또는 대체 패턴이 유효하지 않습니다.</value>
+    </data>
 </root>
