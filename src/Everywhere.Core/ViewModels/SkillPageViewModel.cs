@@ -77,7 +77,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     public bool HasVisibleSourceGroups => _filteredSourceGroups.Count > 0;
 
-    private readonly ISkillManager _skillManager;
+    public ISkillManager SkillManager { get; }
+
     private readonly BindableList<SkillSourceFilterItem> _sourceFilterItems = [];
     private readonly BindableList<SkillSourceGroupItem> _filteredSourceGroups = [];
     private readonly SourceCache<SkillDescriptorWrapper, string> _skills = new(static item => item.Skill.Id);
@@ -85,7 +86,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     public SkillPageViewModel(ISkillManager skillManager)
     {
-        _skillManager = skillManager;
+        SkillManager = skillManager;
         SourceFilterItems = _sourceFilterItems;
         FilteredSourceGroups = _filteredSourceGroups;
 
@@ -114,7 +115,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         return ExecuteBusyTaskAsync(
             async token =>
             {
-                await _skillManager.RefreshAsync(token);
+                await SkillManager.RefreshAsync(token);
                 SyncSkillsFromManager();
                 TrySelectSkill(selectedSkillId);
                 ToastManager.Success(LocaleResolver.SkillPage_RescanSuccessToast_Title);
@@ -204,7 +205,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         SyncSourceGroupsFromManager();
 
         var items = new List<SkillDescriptorWrapper>();
-        foreach (var group in _skillManager.SourceGroups)
+        foreach (var group in SkillManager.SourceGroups)
         {
             items.AddRange(group.Skills.Select(skill => new SkillDescriptorWrapper(skill, group)));
         }
@@ -224,7 +225,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     {
         var activeSourceKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var sourceGroup in _skillManager.SourceGroups)
+        foreach (var sourceGroup in SkillManager.SourceGroups)
         {
             var sourceKey = GetSourceKey(sourceGroup);
             activeSourceKeys.Add(sourceKey);
@@ -251,7 +252,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         _sourceFilterItems.Clear();
         _sourceFilterItems.Add(SkillSourceFilterItem.All);
 
-        foreach (var group in _skillManager.SourceGroups)
+        foreach (var group in SkillManager.SourceGroups)
         {
             _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectLocaleKey(group.Name)));
         }
@@ -271,7 +272,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         var skillsBySourceKey = skills
             .GroupBy(static item => item.SourceKey)
             .ToDictionary(static group => group.Key, static group => group.ToList(), StringComparer.OrdinalIgnoreCase);
-        var visibleSourceGroups = _skillManager.SourceGroups
+        var visibleSourceGroups = SkillManager.SourceGroups
             .AsValueEnumerable()
             .Where(IsSourceGroupVisible)
             .ToList();

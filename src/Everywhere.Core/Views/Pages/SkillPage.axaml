@@ -58,6 +58,7 @@
 
   <shadui:NavigationView
     Padding="24,0,24,20" HeaderMaxWidth="1000"
+    IsEnabled="{Binding !SkillManager.IsRefreshing}"
     PageTransition="{x:Null}"
     PaneWidth="400"
     SelectedItem="{Binding SelectedSkillWrapper, Mode=TwoWay}">
