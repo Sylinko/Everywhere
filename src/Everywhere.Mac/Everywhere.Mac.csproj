@@ -180,9 +180,10 @@
     </PropertyGroup>
 
     <Error Text="OfficeCLI apphost was not generated: $(OfficeCliAppHost)" Condition="!Exists('$(OfficeCliAppHost)')"/>
+    <Error Text="OfficeCLI deps file was not generated: $(OfficeCliDepsFile)" Condition="!Exists('$(OfficeCliDepsFile)')"/>
     <Error Text="OfficeCLI runtimeconfig was not generated: $(OfficeCliRuntimeConfig)" Condition="!Exists('$(OfficeCliRuntimeConfig)')"/>
     <Copy SourceFiles="$(OfficeCliAppHost)" DestinationFiles="$(OfficeCliBundledAppHost)"/>
-    <Copy SourceFiles="$(OfficeCliDepsFile)" DestinationFolder="$(OfficeCliBundleDir)" Condition="Exists('$(OfficeCliDepsFile)')"/>
+    <Copy SourceFiles="$(OfficeCliDepsFile)" DestinationFolder="$(OfficeCliBundleDir)"/>
     <Copy SourceFiles="$(OfficeCliRuntimeConfig)" DestinationFolder="$(OfficeCliBundleDir)"/>
     <Exec Command="chmod +x &quot;$(OfficeCliBundledAppHost)&quot;"/>
   </Target>
