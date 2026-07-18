@@ -81,7 +81,9 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         {
             throw new HandledException(
                 new NotSupportedException("Skill resource size is larger than 100 MB, read operation is not supported."),
-                LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage);
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
+                    100));
         }
 
         await using var stream = resource.OpenRead();

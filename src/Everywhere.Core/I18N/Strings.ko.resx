@@ -1345,7 +1345,7 @@
         <value>텍스트 파일의 내용을 교체합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>파일 크기가 100MB를 초과하여 읽기 작업이 지원되지 않습니다.</value>
+        <value>파일 크기가 {0}MB를 초과하여 읽기 작업이 지원되지 않습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>디렉터리 생성에 실패했습니다.</value>

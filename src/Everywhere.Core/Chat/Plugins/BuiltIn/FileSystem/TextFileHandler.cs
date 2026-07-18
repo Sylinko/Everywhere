@@ -26,7 +26,9 @@ public sealed class TextFileHandler : LocalFileHandler
         {
             throw new HandledException(
                 new NotSupportedException("File size is larger than 100 MB, read operation is not supported."),
-                LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage);
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
+                    100));
         }
 
         await using var stream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);

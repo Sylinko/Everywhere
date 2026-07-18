@@ -1345,7 +1345,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Replace content in a text file.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>File size exceeds 100 MB; read operation is not supported.</value>
+        <value>File size exceeds {0} MB; read operation is not supported.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Failed to create the directory.</value>

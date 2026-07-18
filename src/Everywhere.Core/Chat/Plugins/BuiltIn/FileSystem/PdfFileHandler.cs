@@ -42,7 +42,9 @@ public sealed class PdfFileHandler : LocalFileHandler
         {
             throw new HandledException(
                 new NotSupportedException("PDF size is larger than 100 MB, read operation is not supported."),
-                LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage);
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
+                    100));
         }
 
         using var document = OpenDocument(file.FullName);

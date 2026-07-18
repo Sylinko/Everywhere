@@ -1345,7 +1345,7 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
         <value>Ersetzen Sie den Inhalt in einer Textdatei.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Die Dateigröße überschreitet 100 MB; Lesevorgang wird nicht unterstützt.</value>
+        <value>Die Dateigröße überschreitet {0} MB; Lesevorgang wird nicht unterstützt.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Das Erstellen des Verzeichnisses ist fehlgeschlagen.</value>

@@ -284,7 +284,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 0 => $"(The file `{context.Path}` exists, but is empty)",
                 > 10L * 1024 * 1024 => throw new HandledException(
                     new NotSupportedException("Attachment file size is larger than 10 MB."),
-                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage),
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
+                        10),
                     showDetails: false),
                 _ => await FileAttachment.CreateAsync(context.Path, cancellationToken: cancellationToken)
             };

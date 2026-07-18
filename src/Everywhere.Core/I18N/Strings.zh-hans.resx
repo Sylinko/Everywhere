@@ -1346,7 +1346,7 @@
         <value>替换指定文本文件中的内容。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>文件大小超过 100 MB，无法读取。</value>
+        <value>文件大小超过 {0} MB，无法读取。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>无法创建文件夹。</value>
