@@ -5,7 +5,7 @@ This product bundles the following components under the described licenses:
 Anthropic
 
 Id:        Anthropic
-Version:   12.20.0
+Version:   12.31.0
 Project:   https://docs.anthropic.com/claude/reference/
 Copyright: Copyright 2026 Anthropic
 License:   MIT
@@ -15,7 +15,7 @@ License:   MIT
 Avalonia
 
 Id:        Avalonia
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -25,7 +25,7 @@ License:   MIT
 Avalonia.AvaloniaEdit
 
 Id:        Avalonia.AvaloniaEdit
-Version:   11.4.1
+Version:   12.0.0
 Project:   
 Copyright: Copyright 2017-2026 © The AvaloniaUI Project
 License:   MIT
@@ -35,7 +35,7 @@ License:   MIT
 Avalonia.Controls.ColorPicker
 
 Id:        Avalonia.Controls.ColorPicker
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -45,7 +45,7 @@ License:   MIT
 Avalonia.Controls.DataGrid
 
 Id:        Avalonia.Controls.DataGrid
-Version:   11.3.12
+Version:   12.0.1
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -55,17 +55,7 @@ License:   MIT
 Avalonia.Desktop
 
 Id:        Avalonia.Desktop
-Version:   11.3.12
-Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
-Copyright: Copyright 2013-2026 © The AvaloniaUI Project
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Avalonia.Diagnostics
-
-Id:        Avalonia.Diagnostics
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -75,9 +65,19 @@ License:   MIT
 Avalonia.Fonts.Inter
 
 Id:        Avalonia.Fonts.Inter
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+Avalonia.HtmlRenderer
+
+Id:        Avalonia.HtmlRenderer
+Version:   12.0.0
+Project:   https://avaloniaui.net/
+Copyright: Copyright 2019-2026 © AvaloniaUI OÜ
 License:   MIT
 
 --------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ License:   MIT
 Avalonia.Skia
 
 Id:        Avalonia.Skia
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -95,7 +95,7 @@ License:   MIT
 Avalonia.Themes.Simple
 
 Id:        Avalonia.Themes.Simple
-Version:   11.3.12
+Version:   12.1.0
 Project:   https://avaloniaui.net/?utm_source=nuget&utm_medium=referral&utm_content=project_homepage_link
 Copyright: Copyright 2013-2026 © The AvaloniaUI Project
 License:   MIT
@@ -105,9 +105,19 @@ License:   MIT
 AvaloniaEdit.TextMate
 
 Id:        AvaloniaEdit.TextMate
-Version:   11.4.1
+Version:   12.0.0
 Project:   
 Copyright: Copyright 2017-2026 © The AvaloniaUI Project
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+ClassicDiagnostics.Avalonia
+
+Id:        ClassicDiagnostics.Avalonia
+Version:   0.0.2-preview
+Project:   https://github.com/Sylinko/ClassicDiagnostics.Avalonia
+Copyright: Copyright (c) AvaloniaUI OÜ. Migration by Sylinko
 License:   MIT
 
 --------------------------------------------------------------------------------
@@ -122,6 +132,16 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
+DocumentFormat.OpenXml
+
+Id:        DocumentFormat.OpenXml
+Version:   3.4.1
+Project:   https://github.com/dotnet/Open-XML-SDK
+Copyright: © Microsoft Corporation. All rights reserved.
+License:   MIT
+
+--------------------------------------------------------------------------------
+
 Dynamic Data
 
 Id:        DynamicData
@@ -132,12 +152,11 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
-FlaUI.UIA3
+EverythingNet
 
-Id:        FlaUI.UIA3
-Version:   5.0.0
-Project:   https://github.com/FlaUI/FlaUI
-Copyright: Copyright (c) 2016-2024
+Id:        EverythingNet
+Project:   https://github.com/ju2pom/EverythingNet
+Copyright: Copyright (c) 2019 Julien Amsellem
 License:   MIT
 
 --------------------------------------------------------------------------------
@@ -147,7 +166,7 @@ FuzzySharp
 Id:        FuzzySharp
 Version:   2.0.2
 Project:   https://github.com/JakeBayer/FuzzySharp
-Copyright: 
+Copyright:
 License:   MIT
 
 --------------------------------------------------------------------------------
@@ -172,6 +191,16 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
+Interop.UIAutomationClient
+
+Id:        Interop.UIAutomationClient
+Version:   10.19041.0
+Project:   https://github.com/Roemer/UIAutomation-Interop
+Copyright: Copyright (c) 2020
+License:   MIT
+
+--------------------------------------------------------------------------------
+
 JetBrains.Profiler.Api
 
 Id:        JetBrains.Profiler.Api
@@ -185,7 +214,7 @@ License:   Apache-2.0
 LiveMarkdown.Avalonia
 
 Id:        LiveMarkdown.Avalonia
-Version:   1.9.2
+Version:   2.2.0
 Project:   https://github.com/DearVa/LiveMarkdown.Avalonia
 Copyright: Copyright 2025-2026 DearVa
 License:   Apache-2.0
@@ -195,7 +224,7 @@ License:   Apache-2.0
 LiveMarkdown.Avalonia.Math
 
 Id:        LiveMarkdown.Avalonia.Math
-Version:   1.9.2
+Version:   2.2.0
 Project:   https://github.com/DearVa/LiveMarkdown.Avalonia
 Copyright: Copyright 2025-2026 DearVa
 License:   Apache-2.0
@@ -205,7 +234,7 @@ License:   Apache-2.0
 LiveMarkdown.Avalonia.Mermaid
 
 Id:        LiveMarkdown.Avalonia.Mermaid
-Version:   1.9.2-alpha
+Version:   2.2.0
 Project:   https://github.com/DearVa/LiveMarkdown.Avalonia
 Copyright: Copyright 2025-2026 DearVa
 License:   Apache-2.0
@@ -215,7 +244,7 @@ License:   Apache-2.0
 LiveMarkdown.Avalonia.Svg.Skia
 
 Id:        LiveMarkdown.Avalonia.Svg.Skia
-Version:   1.9.2
+Version:   2.2.0
 Project:   https://github.com/DearVa/LiveMarkdown.Avalonia
 Copyright: Copyright 2025-2026 DearVa
 License:   Apache-2.0
@@ -232,10 +261,19 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
+MessagePack-CSharp
+
+Id:        MessagePack-CSharp
+Project:   https://github.com/MessagePack-CSharp/MessagePack-CSharp
+Copyright: (c) 2017 Yoshifumi Kawai and contributors
+License:   MIT
+
+--------------------------------------------------------------------------------
+
 Microsoft.Build.Utilities.Core
 
 Id:        Microsoft.Build.Utilities.Core
-Version:   18.4.0
+Version:   18.7.1
 Project:   http://go.microsoft.com/fwlink/?LinkId=624683
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -265,7 +303,7 @@ License:   MIT
 Microsoft.EntityFrameworkCore
 
 Id:        Microsoft.EntityFrameworkCore
-Version:   10.0.0
+Version:   10.0.9
 Project:   https://docs.microsoft.com/ef/core/
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -275,7 +313,7 @@ License:   MIT
 Microsoft.EntityFrameworkCore.Sqlite
 
 Id:        Microsoft.EntityFrameworkCore.Sqlite
-Version:   10.0.0
+Version:   10.0.9
 Project:   https://docs.microsoft.com/ef/core/
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -305,27 +343,7 @@ License:   MIT
 Microsoft.Extensions.Configuration
 
 Id:        Microsoft.Extensions.Configuration
-Version:   10.0.7
-Project:   https://dot.net/
-Copyright: © Microsoft Corporation. All rights reserved.
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Microsoft.Extensions.Configuration.Binder
-
-Id:        Microsoft.Extensions.Configuration.Binder
-Version:   10.0.7
-Project:   https://dot.net/
-Copyright: © Microsoft Corporation. All rights reserved.
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Microsoft.Extensions.Configuration.Json
-
-Id:        Microsoft.Extensions.Configuration.Json
-Version:   10.0.7
+Version:   10.0.9
 Project:   https://dot.net/
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -335,7 +353,7 @@ License:   MIT
 Microsoft.Extensions.Http
 
 Id:        Microsoft.Extensions.Http
-Version:   10.0.7
+Version:   10.0.9
 Project:   https://dot.net/
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -345,7 +363,7 @@ License:   MIT
 Microsoft.Extensions.Logging
 
 Id:        Microsoft.Extensions.Logging
-Version:   10.0.7
+Version:   10.0.9
 Project:   https://dot.net/
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -355,8 +373,28 @@ License:   MIT
 Microsoft.Extensions.Logging.Abstractions
 
 Id:        Microsoft.Extensions.Logging.Abstractions
-Version:   10.0.7
+Version:   10.0.9
 Project:   https://dot.net/
+Copyright: © Microsoft Corporation. All rights reserved.
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+Microsoft.ML.Tokenizers
+
+Id:        Microsoft.ML.Tokenizers
+Version:   6.0.0
+Project:   https://dot.net/ml
+Copyright: © Microsoft Corporation. All rights reserved.
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+Microsoft.ML.Tokenizers.Data.O200kBase
+
+Id:        Microsoft.ML.Tokenizers.Data.O200kBase
+Version:   6.0.0
+Project:   https://dot.net/ml
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
 
@@ -422,6 +460,26 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
+ObservableCollections
+
+Id:        ObservableCollections
+Version:   3.3.4
+Project:   https://github.com/Cysharp/ObservableCollections
+Copyright: © Cysharp, Inc.
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+OfficeCLI
+
+Id:        OfficeCLI
+Version:   1.0.138
+Project:   https://github.com/iOfficeAI/OfficeCLI
+Copyright: Copyright 2026 OfficeCLI
+License:   Apache-2.0
+
+--------------------------------------------------------------------------------
+
 OllamaSharp
 
 Id:        OllamaSharp
@@ -435,7 +493,7 @@ License:   MIT
 OpenTelemetry
 
 Id:        OpenTelemetry
-Version:   1.15.3
+Version:   1.16.0
 Project:   https://opentelemetry.io/
 Copyright: Copyright The OpenTelemetry Authors
 License:   Apache-2.0
@@ -445,28 +503,36 @@ License:   Apache-2.0
 OpenTelemetry.Extensions.Hosting
 
 Id:        OpenTelemetry.Extensions.Hosting
-Version:   1.15.3
+Version:   1.16.0
 Project:   https://opentelemetry.io/
 Copyright: Copyright The OpenTelemetry Authors
 License:   Apache-2.0
 
 --------------------------------------------------------------------------------
 
-Porta.Pty.Native
+PdfPig
 
-Id:        Porta.Pty.Native
-Version:   1.0.0
-Project:   
+Id:        PdfPig
+Version:   0.1.15
+Project:   https://github.com/UglyToad/PdfPig
 Copyright: 
-License:   UNKNOWN
+License:   Apache-2.0
 
+--------------------------------------------------------------------------------
+
+Porta.Pty
+
+Id:        Porta.Pty
+Project:   https://github.com/tomlm/Porta.Pty
+Copyright: (c) 2025 Tom Laird-McConnell
+License:   MIT
 
 --------------------------------------------------------------------------------
 
 PuppeteerSharp
 
 Id:        PuppeteerSharp
-Version:   24.42.0
+Version:   25.3.1
 Project:   https://github.com/hardkoded/puppeteer-sharp
 Copyright: 
 License:   MIT
@@ -476,7 +542,7 @@ License:   MIT
 ReverseMarkdown
 
 Id:        ReverseMarkdown
-Version:   5.3.0
+Version:   5.4.0
 Project:   https://github.com/mysticmind/reversemarkdown-net
 Copyright: 
 License:   MIT
@@ -486,7 +552,7 @@ License:   MIT
 Sentry
 
 Id:        Sentry
-Version:   6.5.0
+Version:   6.6.0
 Project:   https://sentry.io/
 Copyright: 
 License:   MIT
@@ -496,7 +562,7 @@ License:   MIT
 Sentry.OpenTelemetry
 
 Id:        Sentry.OpenTelemetry
-Version:   6.5.0
+Version:   6.6.0
 Project:   https://sentry.io/
 Copyright: 
 License:   MIT
@@ -506,7 +572,7 @@ License:   MIT
 Sentry.Serilog
 
 Id:        Sentry.Serilog
-Version:   6.5.0
+Version:   6.6.0
 Project:   https://sentry.io/
 Copyright: 
 License:   MIT
@@ -573,10 +639,29 @@ License:   MIT
 
 --------------------------------------------------------------------------------
 
+SharpYaml
+
+Id:        SharpYaml
+Version:   3.11.0
+Project:   https://github.com/xoofx/SharpYaml
+Copyright: Alexandre Mutel
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+ShadUI
+
+Id:        ShadUI
+Project:   https://github.com/accntech/shad-ui
+Copyright: (c) 2025 Accountech Business Management Services
+License:   MIT
+
+--------------------------------------------------------------------------------
+
 SkiaSharp
 
 Id:        SkiaSharp
-Version:   3.119.2
+Version:   3.119.4
 Project:   https://go.microsoft.com/fwlink/?linkid=868515
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -586,7 +671,7 @@ License:   MIT
 SkiaSharp - Native Assets for Linux
 
 Id:        SkiaSharp.NativeAssets.Linux
-Version:   3.119.2
+Version:   3.119.4
 Project:   https://go.microsoft.com/fwlink/?linkid=868515
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -596,7 +681,7 @@ License:   MIT
 SkiaSharp - Native Assets for Win32
 
 Id:        SkiaSharp.NativeAssets.Win32
-Version:   3.119.2
+Version:   3.119.4
 Project:   https://go.microsoft.com/fwlink/?linkid=868515
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -606,7 +691,7 @@ License:   MIT
 Svg.Controls.Skia.Avalonia
 
 Id:        Svg.Controls.Skia.Avalonia
-Version:   11.3.9.4
+Version:   12.0.0.13
 Project:   https://github.com/wieslawsoltes/Svg.Skia
 Copyright: Copyright © Wiesław Šoltés 2026
 License:   MIT
@@ -616,9 +701,19 @@ License:   MIT
 Sylinko.CSharpMath.Avalonia
 
 Id:        Sylinko.CSharpMath.Avalonia
-Version:   11.3.1
+Version:   12.0.0
 Project:   https://github.com/Sylinko/CSharpMath.Avalonia
 Copyright: © CSharpMath Contributors 2020; © Sylinko 2025
+License:   MIT
+
+--------------------------------------------------------------------------------
+
+System.CommandLine
+
+Id:        System.CommandLine
+Version:   3.0.0-preview.2.26159.112
+Project:   https://github.com/dotnet/command-line-api
+Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
 
 --------------------------------------------------------------------------------
@@ -626,7 +721,7 @@ License:   MIT
 System.Drawing.Common
 
 Id:        System.Drawing.Common
-Version:   10.0.7
+Version:   10.0.9
 Project:   https://github.com/dotnet/winforms
 Copyright: © Microsoft Corporation. All rights reserved.
 License:   MIT
@@ -636,7 +731,7 @@ License:   MIT
 TextMateSharp
 
 Id:        TextMateSharp
-Version:   2.0.3
+Version:   2.0.4
 Project:   https://github.com/danipen/TextMateSharp
 Copyright: 
 License:   MIT
@@ -646,38 +741,8 @@ License:   MIT
 TextMateSharp.Grammars
 
 Id:        TextMateSharp.Grammars
-Version:   2.0.3
+Version:   2.0.4
 Project:   https://github.com/danipen/TextMateSharp
-Copyright: 
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Tiktoken.Core
-
-Id:        Tiktoken.Core
-Version:   3.1.5
-Project:   
-Copyright: 
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Tiktoken.Encodings.Abstractions
-
-Id:        Tiktoken.Encodings.Abstractions
-Version:   3.1.5
-Project:   
-Copyright: 
-License:   MIT
-
---------------------------------------------------------------------------------
-
-Tiktoken.Encodings.o200k
-
-Id:        Tiktoken.Encodings.o200k
-Version:   3.1.5
-Project:   
 Copyright: 
 License:   MIT
 
@@ -767,7 +832,7 @@ License:   https://github.com/loyvsc/X11.Net/blob/master/X11/License.txt
 Xaml.Behaviors.Avalonia
 
 Id:        Xaml.Behaviors.Avalonia
-Version:   11.3.9.5
+Version:   12.0.0.1
 Project:   https://github.com/wieslawsoltes/Xaml.Behaviors
 Copyright: Copyright © Wiesław Šoltés 2026
 License:   MIT
