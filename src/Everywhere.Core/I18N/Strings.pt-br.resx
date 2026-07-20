@@ -3722,4 +3722,22 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Padrão de busca ou substituição inválido.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Pesquisar Fonte</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Fonte</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Escolha a família de fontes principal usada na interface do aplicativo.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Esta fonte não está instalada no sistema atual, a pré-visualização usará a fonte padrão.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (não instalado)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Não foi possível carregar a pré-visualização desta fonte, a fonte padrão está sendo exibida.</value>
+    </data>
 </root>

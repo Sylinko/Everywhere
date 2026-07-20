@@ -3721,4 +3721,22 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Il modello di ricerca o sostituzione non è valido.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Cerca Font</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Font</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Seleziona il principale gruppo di font utilizzato nell'interfaccia dell'app.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Questo font non è installato nel sistema, l'anteprima utilizzerà il font predefinito.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (non installato)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Impossibile caricare l'anteprima di questo font, viene visualizzato il font predefinito.</value>
+    </data>
 </root>

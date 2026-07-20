@@ -3721,4 +3721,22 @@
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>検索または置換パターンが無効です。</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>フォントを検索</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>フォント</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>アプリのインターフェースで使用する主要なフォントファミリーを選択します。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>現在のシステムにはこのフォントがインストールされていません。プレビューはデフォルトフォントを使用します。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0}（未インストール）</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>このフォントのプレビューを読み込めません。現在、デフォルトフォントが表示されています。</value>
+    </data>
 </root>

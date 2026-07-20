@@ -3721,4 +3721,22 @@
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>搜索或替換模式無效。</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>搜尋字體</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>字體</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>選擇應用界面使用的主要字體族。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>當前系統未安裝此字體，預覽將使用默認字體。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0}（未安裝）</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>無法加載此字體的預覽，當前顯示默認字體。</value>
+    </data>
 </root>

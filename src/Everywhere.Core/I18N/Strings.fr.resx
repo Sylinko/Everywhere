@@ -3721,4 +3721,22 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Le motif de recherche ou de remplacement est invalide.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Rechercher une police</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Police</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Sélectionnez la famille de polices principale utilisée par l'interface de l'application.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Cette police n'est pas installée sur le système, l'aperçu utilisera la police par défaut.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (non installée)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Impossible de charger l'aperçu de cette police, la police par défaut est affichée.</value>
+    </data>
 </root>

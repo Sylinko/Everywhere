@@ -3721,4 +3721,22 @@
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Недопустимый шаблон поиска или замены.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Поиск шрифтов</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Шрифт</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Выберите основное семейство шрифтов для интерфейса приложения.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>В текущей системе этот шрифт не установлен, предварительный просмотр будет использовать шрифт по умолчанию.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (не установлен)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Не удалось загрузить предварительный просмотр этого шрифта, в данный момент отображается шрифт по умолчанию.</value>
+    </data>
 </root>

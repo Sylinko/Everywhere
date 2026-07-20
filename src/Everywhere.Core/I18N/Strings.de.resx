@@ -3721,4 +3721,22 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Such- oder Ersetzungsmuster ist ungültig.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Schriftart suchen</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Schriftart</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Wählen Sie die Hauptschriftart für die Benutzeroberfläche der Anwendung aus.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Diese Schriftart ist auf dem aktuellen System nicht installiert, die Vorschau verwendet die Standard-Schriftart.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (nicht installiert)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Vorschau dieser Schriftart kann nicht geladen werden, es wird die Standard-Schriftart angezeigt.</value>
+    </data>
 </root>

@@ -3721,4 +3721,22 @@
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>검색 또는 대체 패턴이 유효하지 않습니다.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>글꼴 검색</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>글꼴</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>애플리케이션 인터페이스에서 사용할 기본 글꼴 패밀리를 선택하세요.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>현재 시스템에 이 글꼴이 설치되어 있지 않아 미리보기는 기본 글꼴을 사용합니다.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0}（설치되지 않음）</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>이 글꼴의 미리보기를 로드할 수 없어 현재 기본 글꼴이 표시됩니다.</value>
+    </data>
 </root>

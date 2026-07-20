@@ -3721,4 +3721,22 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Arama veya değiştirme deseni geçersiz.</value>
     </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Yazı Tipi Ara</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Yazı Tipi</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Uygulama arayüzünde kullanılacak ana yazı tipi ailesini seçin.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Bu yazı tipi sistemde yüklü değil, önizleme varsayılan yazı tipini kullanacaktır.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (Yüklenmedi)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Bu yazı tipinin önizlemesi yüklenemiyor, varsayılan yazı tipi gösteriliyor.</value>
+    </data>
 </root>
