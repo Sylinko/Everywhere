@@ -1,5 +1,4 @@
 using Everywhere.Collections;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 

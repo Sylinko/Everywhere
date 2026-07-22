@@ -11,6 +11,7 @@
           <v:ConsentDecisionCard
             Command="{Binding Command, Mode=OneTime}"
             Content="{Binding DisplayBlock, Mode=OneTime}"
+            CustomOptions="{Binding CustomOptions, Mode=OneTime}"
             Header="{Binding HeaderKey^, Mode=OneTime}"
             RememberMasks="{Binding RememberMasks, Mode=OneTime}"/>
         </DataTemplate>

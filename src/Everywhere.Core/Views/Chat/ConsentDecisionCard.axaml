@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:permissions="clr-namespace:Everywhere.Chat.Permissions" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <Design.PreviewWith>
     <v:ConsentDecisionCard/>
   </Design.PreviewWith>
@@ -65,25 +65,46 @@
                     Orientation="Horizontal">
                     <Button
                       Classes="Primary Compact"
-                      Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                      CommandParameter="{x:Static permissions:ConsentDecision.AllowOnce}"
+                      Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"
+                      CommandParameter="{x:Static permissions:ConsentDecisionKind.AllowOnce}"
                       Content="{I18N {x:Static LocaleKey.ConsentDecision_AllowOnce}}"/>
                     <Button
                       Classes="Primary Compact"
-                      IsVisible="{Binding CanRemember, RelativeSource={RelativeSource TemplatedParent}}">
+                      IsVisible="{Binding HasMoreCommands, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}">
                       <Button.Flyout>
                         <MenuFlyout>
-                          <MenuItem
-                            Command="{Binding $parent[v:ConsentDecisionCard].SubmitCommand}"
-                            CommandParameter="{x:Static permissions:ConsentDecision.AllowSession}"
-                            Header="{I18N {x:Static LocaleKey.ConsentDecision_AllowSession}}"
-                            IsVisible="{Binding $parent[v:ConsentDecisionCard].CanAllowSession}"/>
-                          <MenuItem
-                            Classes="Destructive"
-                            Command="{Binding $parent[v:ConsentDecisionCard].SubmitCommand}"
-                            CommandParameter="{x:Static permissions:ConsentDecision.AlwaysAllow}"
-                            Header="{I18N {x:Static LocaleKey.ConsentDecision_AlwaysAllow}}"
-                            IsVisible="{Binding $parent[v:ConsentDecisionCard].CanAlwaysAllow}"/>
+                          <MenuFlyout.ItemsSource>
+                            <shadui:CompositeCollection>
+                              <MenuItem
+                                Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"
+                                CommandParameter="{x:Static permissions:ConsentDecisionKind.AllowSession}"
+                                Header="{I18N {x:Static LocaleKey.ConsentDecision_AllowSession}}"
+                                IsVisible="{Binding CanAllowSession, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"/>
+                              <MenuItem
+                                Classes="Destructive"
+                                Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"
+                                CommandParameter="{x:Static permissions:ConsentDecisionKind.AlwaysAllow}"
+                                Header="{I18N {x:Static LocaleKey.ConsentDecision_AlwaysAllow}}"
+                                IsVisible="{Binding CanAlwaysAllow, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"/>
+                              <shadui:CompositeCollection ItemsSource="{Binding $parent[v:ConsentDecisionCard].CustomOptions}">
+                                <shadui:CompositeCollection.ItemTemplate>
+                                  <DataTemplate x:DataType="plugins:RequestConsentCustomOption">
+                                    <MenuItem
+                                      Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}"
+                                      CommandParameter="{Binding Mode=OneTime}"
+                                      Header="{Binding HeaderKey^}">
+                                      <MenuItem.Icon>
+                                        <LucideIcon
+                                          IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}, Mode=OneTime}"
+                                          Kind="{Binding Icon, Mode=OneTime}"
+                                          Size="{DynamicResource FontSizeL}"/>
+                                      </MenuItem.Icon>
+                                    </MenuItem>
+                                  </DataTemplate>
+                                </shadui:CompositeCollection.ItemTemplate>
+                              </shadui:CompositeCollection>
+                            </shadui:CompositeCollection>
+                          </MenuFlyout.ItemsSource>
                         </MenuFlyout>
                       </Button.Flyout>
 
@@ -99,7 +120,7 @@
                     <Button
                       Classes="Secondary Compact"
                       Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                      CommandParameter="{x:Static permissions:ConsentDecision.Deny}"
+                      CommandParameter="{x:Static permissions:ConsentDecisionKind.Deny}"
                       Content="{I18N {x:Static LocaleKey.ConsentDecision_Deny}}"/>
                     <Button
                       Classes="Secondary Compact"
@@ -132,7 +153,7 @@
                   <Button
                     Classes="Primary Compact" DockPanel.Dock="Right"
                     Command="{Binding SubmitCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                    CommandParameter="{x:Static permissions:ConsentDecision.Deny}"
+                    CommandParameter="{x:Static permissions:ConsentDecisionKind.Deny}"
                     Content="{I18N {x:Static LocaleKey.Common_Submit}}"/>
 
                   <TextBox

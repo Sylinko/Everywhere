@@ -23,6 +23,21 @@ public sealed partial class ConsentDecisionCard : Card
     }
 
     /// <summary>
+    /// Defines the <see cref="CustomOptions"/> property.
+    /// </summary>
+    public static readonly StyledProperty<IReadOnlyList<RequestConsentCustomOption>?> CustomOptionsProperty =
+        AvaloniaProperty.Register<ConsentDecisionCard, IReadOnlyList<RequestConsentCustomOption>?>(nameof(CustomOptions));
+
+    /// <summary>
+    /// Gets or sets the CustomOptions
+    /// </summary>
+    public IReadOnlyList<RequestConsentCustomOption>? CustomOptions
+    {
+        get => GetValue(CustomOptionsProperty);
+        set => SetValue(CustomOptionsProperty, value);
+    }
+
+    /// <summary>
     /// Defines the <see cref="CanDenyWithReason"/> property.
     /// </summary>
     public static readonly StyledProperty<bool> CanDenyWithReasonProperty =
@@ -70,13 +85,13 @@ public sealed partial class ConsentDecisionCard : Card
     /// <summary>
     /// Defines the <see cref="Command"/> property.
     /// </summary>
-    public static readonly StyledProperty<IRelayCommand<ConsentDecisionResult>?> CommandProperty =
-        AvaloniaProperty.Register<ConsentDecisionCard, IRelayCommand<ConsentDecisionResult>?>(nameof(Command));
+    public static readonly StyledProperty<IRelayCommand<ConsentDecision>?> CommandProperty =
+        AvaloniaProperty.Register<ConsentDecisionCard, IRelayCommand<ConsentDecision>?>(nameof(Command));
 
     /// <summary>
-    /// Gets or sets the command to execute when the user submits their consent decision. The command parameter will be a <see cref="ConsentDecisionResult"/> containing the user's decision and optional reason.
+    /// Gets or sets the command to execute when the user submits their consent decision. The command parameter will be a <see cref="ConsentDecision"/> containing the user's decision and optional reason.
     /// </summary>
-    public IRelayCommand<ConsentDecisionResult>? Command
+    public IRelayCommand<ConsentDecision>? Command
     {
         get => GetValue(CommandProperty);
         set => SetValue(CommandProperty, value);
@@ -86,16 +101,20 @@ public sealed partial class ConsentDecisionCard : Card
 
     public bool CanAlwaysAllow => RememberMasks.HasFlag(RequestConsentRememberMasks.AlwaysAllow);
 
-    public bool CanRemember => CanAllowSession | CanAlwaysAllow;
+    public bool HasMoreCommands => CanAllowSession | CanAlwaysAllow | CustomOptions is { Count: > 0 };
 
     [RelayCommand]
-    private void Submit(ConsentDecision decision)
+    private void Submit(object parameter)
     {
-        if (Command is { } command)
+        if (Command is not { } command) return;
+
+        var result = parameter switch
         {
-            var result = new ConsentDecisionResult(decision, decision == ConsentDecision.Deny && CanDenyWithReason ? Reason : null);
-            if (command.CanExecute(result)) command.Execute(result);
-        }
+            ConsentDecisionKind decision => new ConsentDecision(decision, decision == ConsentDecisionKind.Deny && CanDenyWithReason ? Reason : null),
+            RequestConsentCustomOption customOption => new ConsentDecision(ConsentDecisionKind.Custom, null, customOption),
+            _ => throw new ArgumentOutOfRangeException(nameof(parameter), parameter, "Invalid parameter type for Submit command.")
+        };
+        if (command.CanExecute(result)) command.Execute(result);
     }
 
     [RelayCommand]

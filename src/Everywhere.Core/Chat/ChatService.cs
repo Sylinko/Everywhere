@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Reactive.Disposables;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
@@ -22,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using ZLinq;
 using ChatMessageContent = Microsoft.SemanticKernel.ChatMessageContent;
 using FunctionCallContent = Microsoft.SemanticKernel.FunctionCallContent;
 using FunctionResultContent = Microsoft.SemanticKernel.FunctionResultContent;
@@ -1053,22 +1051,26 @@ public sealed partial class ChatService : IChatService
             // Check permissions. If permissions are not granted, request user consent.
             var permissionKey = context.PermissionKey;
             var consentDecision = await ProcessConsentAsync(permissionKey);
-            switch (consentDecision.Decision)
+            switch (consentDecision.Kind)
             {
-                case ConsentDecision.AlwaysAllow:
+                case ConsentDecisionKind.AlwaysAllow:
                 {
                     _settings.Plugin.ToolAutoApproval[permissionKey] = true;
                     break;
                 }
-                case ConsentDecision.AllowSession:
+                case ConsentDecisionKind.AllowSession:
                 {
-                    context.ChatContext.ToolSessionApprovals[permissionKey] = true;
+                    context.ChatContext.ToolAutoApproval[permissionKey] = true;
                     break;
                 }
-                case ConsentDecision.Deny:
+                case ConsentDecisionKind.Deny:
                 {
                     toolStatus = StatisticsToolInvocationStatus.Denied;
                     return new FunctionResultContent(content, consentDecision.FormatReason("Tool execution denied by user."));
+                }
+                case ConsentDecisionKind.Custom:
+                {
+                    throw new InvalidOperationException("Invalid tool execution state");
                 }
             }
 
@@ -1096,7 +1098,7 @@ public sealed partial class ChatService : IChatService
 
         return resultContent;
 
-        Task<ConsentDecisionResult> ProcessConsentAsync(string permissionKey)
+        Task<ConsentDecision> ProcessConsentAsync(string permissionKey)
         {
             // Check if the permission is already granted in the current chat context
             if (!_settings.Plugin.ToolAutoApproval.TryGetValue(permissionKey, out var isPermissionGranted))
@@ -1106,7 +1108,7 @@ public sealed partial class ChatService : IChatService
 
             if (isPermissionGranted)
             {
-                return Task.FromResult(ConsentDecisionResult.AllowOnce);
+                return Task.FromResult(ConsentDecision.AllowOnce);
             }
 
             FormattedDynamicLocaleKey headerKey;
@@ -1122,9 +1124,9 @@ public sealed partial class ChatService : IChatService
                 {
                     return onPermissionConsent(content) switch
                     {
-                        true => Task.FromResult(ConsentDecisionResult.AllowOnce),
-                        false => Task.FromResult(ConsentDecisionResult.Deny()),
-                        null => Task.FromResult(ConsentDecisionResult.AllowOnce) // Default to allow once
+                        true => Task.FromResult(ConsentDecision.AllowOnce),
+                        false => Task.FromResult(ConsentDecision.Deny()),
+                        null => Task.FromResult(ConsentDecision.AllowOnce) // Default to allow once
                     };
                 }
 
@@ -1149,6 +1151,7 @@ public sealed partial class ChatService : IChatService
                     headerKey,
                     displayBlock,
                     RequestConsentRememberMasks.All,
+                    null,
                     cancellationToken));
         }
     }

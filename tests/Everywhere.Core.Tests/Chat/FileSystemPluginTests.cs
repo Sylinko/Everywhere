@@ -218,7 +218,7 @@ public class FileSystemPluginTests
                 Arg.Any<IDynamicLocaleKey>(),
                 Arg.Any<ChatPluginDisplayBlock?>(),
                 Arg.Any<RequestConsentRememberMasks>(),
-                Arg.Any<CancellationToken>())
+                cancellationToken: Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new RequestConsentResult(false, "denied")));
         var plugin = new FileSystemPlugin(
             Substitute.For<ILogger<FileSystemPlugin>>(),

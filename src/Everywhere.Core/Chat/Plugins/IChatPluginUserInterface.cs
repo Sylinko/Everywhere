@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
+using Lucide.Avalonia;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -88,16 +88,28 @@ public enum RequestConsentRememberMasks
     AllowOnce = 0x1,
     AllowSession = 0x2,
     AlwaysAllow = 0x4,
-    Custom = 0x8,
 
-    All = AllowOnce | AllowSession | AlwaysAllow | Custom
+    All = AllowOnce | AllowSession | AlwaysAllow
 }
 
-public readonly record struct RequestConsentResult(bool IsAccepted, string? Reason)
-{
-    public static RequestConsentResult Accepted => new(true, null);
+public sealed record RequestConsentCustomOption(object Key, IDynamicLocaleKey HeaderKey, LucideIconKind? Icon);
 
-    public static RequestConsentResult Denied(string? reason = null) => new(false, reason);
+/// <summary>
+/// Represents the effective result of a consent request returned to a chat plugin.
+/// </summary>
+/// <remarks>
+/// Unlike <see cref="ConsentDecision"/>, this value is produced after the invocation context has
+/// applied remembered approval state and converted the user's raw decision into an accepted or
+/// denied outcome. Chat plugins generally only need <see cref="IsAccepted"/> and an optional
+/// <see cref="CustomOption"/>; they do not need to interpret the original remember policy.
+/// </remarks>
+public readonly record struct RequestConsentResult(bool IsAccepted, string? Reason, RequestConsentCustomOption? CustomOption = null)
+{
+    public static RequestConsentResult Accept => new(true, null);
+
+    public static RequestConsentResult Deny(string? reason = null) => new(false, reason);
+
+    public static RequestConsentResult Custom(RequestConsentCustomOption customOption) => new(true, null, customOption);
 
     public static implicit operator bool(RequestConsentResult result) => result.IsAccepted;
 
@@ -139,6 +151,7 @@ public interface IChatPluginUserInterface
     /// <param name="headerKey"></param>
     /// <param name="content"></param>
     /// <param name="rememberMasks"></param>
+    /// <param name="customOptions"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<RequestConsentResult> RequestConsentAsync(
@@ -146,6 +159,7 @@ public interface IChatPluginUserInterface
         IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
+        IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -180,12 +194,14 @@ public interface IChatPluginUserInterfaceBroker
     /// <param name="headerKey"></param>
     /// <param name="content"></param>
     /// <param name="rememberMasks"></param>
+    /// <param name="customOptions"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<ConsentDecisionResult> HandleConsentRequestAsync(
+    Task<ConsentDecision> HandleConsentRequestAsync(
         IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content,
         RequestConsentRememberMasks rememberMasks,
+        IReadOnlyList<RequestConsentCustomOption>? customOptions,
         CancellationToken cancellationToken);
 
     /// <summary>

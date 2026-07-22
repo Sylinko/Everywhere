@@ -7,7 +7,6 @@ using Everywhere.Common;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 

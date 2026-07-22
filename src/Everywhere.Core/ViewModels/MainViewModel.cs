@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -12,7 +11,6 @@ using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
-using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -33,10 +31,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
 
     private bool _isFirstLoad = true;
 
-    public MainViewModel(
-        IServiceProvider serviceProvider,
-        Settings settings,
-        PersistentState persistentState)
+    public MainViewModel(IServiceProvider serviceProvider, Settings settings, PersistentState persistentState)
     {
         _serviceProvider = serviceProvider;
         _settings = settings;

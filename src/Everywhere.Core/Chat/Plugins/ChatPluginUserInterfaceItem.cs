@@ -29,22 +29,21 @@ public abstract class ChatPluginUserInterfaceItem<TResult> : ChatPluginUserInter
 /// The UI should also display the provided header and display block to inform the user about what they are consenting to.
 /// The operation can be canceled using the provided <see cref="CancellationToken"/>.
 /// </summary>
-/// <param name="headerKey"></param>
-/// <param name="displayBlock"></param>
-/// <param name="rememberMasks"></param>
-/// <param name="cancellationToken"></param>
 public sealed class ChatPluginUserInterfaceConsentRequestItem(
     IDynamicLocaleKey headerKey,
     ChatPluginDisplayBlock? displayBlock,
     RequestConsentRememberMasks rememberMasks,
+    IReadOnlyList<RequestConsentCustomOption>? customOptions,
     CancellationToken cancellationToken
-) : ChatPluginUserInterfaceItem<ConsentDecisionResult>(cancellationToken)
+) : ChatPluginUserInterfaceItem<ConsentDecision>(cancellationToken)
 {
     public IDynamicLocaleKey HeaderKey { get; } = headerKey;
 
     public ChatPluginDisplayBlock? DisplayBlock { get; } = displayBlock;
 
     public RequestConsentRememberMasks RememberMasks { get; } = rememberMasks;
+
+    public IReadOnlyList<RequestConsentCustomOption>? CustomOptions { get; } = customOptions;
 }
 
 /// <summary>

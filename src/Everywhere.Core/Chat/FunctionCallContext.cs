@@ -83,12 +83,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
             var permissionKey = PermissionKey;
 
             if (IsGloballyAutoApproved() &&
-                (!ChatContext.ToolSessionApprovals.ContainsKey(permissionKey) || ChatContext.ToolSessionApprovals[permissionKey]))
+                (!ChatContext.ToolAutoApproval.ContainsKey(permissionKey) || ChatContext.ToolAutoApproval[permissionKey]))
             {
                 return true;
             }
 
-            ChatContext.ToolSessionApprovals.TryGetValue(permissionKey, out var isSessionGranted);
+            ChatContext.ToolAutoApproval.TryGetValue(permissionKey, out var isSessionGranted);
             return isSessionGranted;
         }
     }
@@ -100,44 +100,50 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         IDynamicLocaleKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
+        IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && IsGloballyAutoApproved()) return RequestConsentResult.Accepted;
+        if (id.IsNullOrEmpty() && IsGloballyAutoApproved()) return RequestConsentResult.Accept;
 
         var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
         ToolAutoApproval.TryGetValue(permissionKey, out var isGloballyGranted);
-        ChatContext.ToolSessionApprovals.TryGetValue(permissionKey, out var isSessionGranted);
+        ChatContext.ToolAutoApproval.TryGetValue(permissionKey, out var isSessionGranted);
         if (isGloballyGranted || isSessionGranted)
         {
-            return RequestConsentResult.Accepted;
+            return RequestConsentResult.Accept;
         }
 
         var consentDecision = await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
             headerKey,
             content,
             rememberMasks,
+            customOptions,
             cancellationToken));
 
-        switch (consentDecision.Decision)
+        switch (consentDecision.Kind)
         {
-            case ConsentDecision.AlwaysAllow:
+            case ConsentDecisionKind.AlwaysAllow:
             {
                 ToolAutoApproval[permissionKey] = true;
-                return RequestConsentResult.Accepted;
+                return RequestConsentResult.Accept;
             }
-            case ConsentDecision.AllowSession:
+            case ConsentDecisionKind.AllowSession:
             {
-                ChatContext.ToolSessionApprovals[permissionKey] = true;
-                return RequestConsentResult.Accepted;
+                ChatContext.ToolAutoApproval[permissionKey] = true;
+                return RequestConsentResult.Accept;
             }
-            case ConsentDecision.AllowOnce:
+            case ConsentDecisionKind.AllowOnce:
             {
-                return RequestConsentResult.Accepted;
+                return RequestConsentResult.Accept;
             }
-            case ConsentDecision.Deny:
+            case ConsentDecisionKind.Custom when consentDecision.CustomOption is { } customOption:
+            {
+                return RequestConsentResult.Custom(customOption);
+            }
+            case ConsentDecisionKind.Deny:
             default:
             {
-                return RequestConsentResult.Denied(consentDecision.Reason);
+                return RequestConsentResult.Deny(consentDecision.Reason);
             }
         }
     }

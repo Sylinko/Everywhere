@@ -2,12 +2,10 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
@@ -19,7 +17,6 @@ using Everywhere.Views;
 using Lucide.Avalonia;
 using MessagePack;
 using Serilog;
-using ZLinq;
 
 namespace Everywhere.Chat;
 
@@ -94,7 +91,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// Exact automatic-approval decisions remembered for this chat session.
     /// </summary>
     [IgnoreMember]
-    public ConcurrentDictionary<string, bool> ToolSessionApprovals { get; }
+    public ConcurrentDictionary<string, bool> ToolAutoApproval { get; }
 
     /// <summary>
     /// Tool and plugin rulesets for this chat context. This is used to determine which plugins and functions are enabled or disabled in this context.
@@ -203,7 +200,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             .BindEx(_disposables);
 
         VisualElements = new ResilientCache<int, IVisualElement>();
-        ToolSessionApprovals = new ConcurrentDictionary<string, bool>();
+        ToolAutoApproval = new ConcurrentDictionary<string, bool>();
         UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
 
@@ -220,7 +217,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
         VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
-        ToolSessionApprovals = toolSessionApprovals ?? new ConcurrentDictionary<string, bool>();
+        ToolAutoApproval = toolSessionApprovals ?? new ConcurrentDictionary<string, bool>();
         ToolRulesets = toolRulesets;
 
         _rootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
@@ -300,7 +297,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     {
         return new ChatContext(
             VisualElements,
-            ToolSessionApprovals,
+            ToolAutoApproval,
             ToolRulesets.TryUnion(
                 new ToolRulesets(2)
                 {
@@ -653,13 +650,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
                 }).DisposeWith(_disposables);
         }
 
-        public async Task<ConsentDecisionResult> HandleConsentRequestAsync(
+        public async Task<ConsentDecision> HandleConsentRequestAsync(
             IDynamicLocaleKey headerKey,
             ChatPluginDisplayBlock? content,
             RequestConsentRememberMasks rememberMasks,
+            IReadOnlyList<RequestConsentCustomOption>? customOptions,
             CancellationToken cancellationToken)
         {
-            var item = new ChatPluginUserInterfaceConsentRequestItem(headerKey, content, rememberMasks, cancellationToken);
+            var item = new ChatPluginUserInterfaceConsentRequestItem(headerKey, content, rememberMasks, customOptions, cancellationToken);
             _chatPluginUserInterfaceItemsSourceList.Add(item);
             WeakReferenceMessenger.Default.Send(new FlashChatWindowMessage(item.HeaderKey.ToString()));
 
