@@ -154,7 +154,8 @@ public abstract class FileHandler
     }
 
     private HandledException UnsupportedOperation(FileHandlerContext context, string operation) => new(
-        new NotSupportedException($"The handler '{GetType().Name}' does not support the '{operation}' operation for '{context.Path}'."),
+        new NotSupportedException(
+            $"The file handler '{GetType().Name}' cannot perform the '{operation}' operation for '{context.Path}'. The resource format is not supported for that operation."),
         LocaleKey.BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage);
 
     private IAsyncEnumerable<string> UnsupportedEnumerable(FileHandlerContext context, string operation, CancellationToken cancellationToken)

@@ -26,7 +26,9 @@ public abstract class LocalFileHandler : FileHandler
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            throw new HandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
+            throw new HandledException(
+                new ArgumentException($"The local path '{path}' could not be resolved: {ex.Message}", ex),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
 
         FileSystemInfo info = File.Exists(path) ? new FileInfo(path)
@@ -41,12 +43,13 @@ public abstract class LocalFileHandler : FileHandler
         cancellationToken.ThrowIfCancellationRequested();
         var info = context.FileSystemInfo ??
             throw new HandledException(
-                new InvalidOperationException("Local file metadata has not been initialized."),
+                new InvalidOperationException(
+                    $"The local file context for '{context.Path}' has no file-system metadata, so the operation cannot continue."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         if (!info.Exists)
         {
             throw new HandledException(
-                new FileNotFoundException("The specified path does not exist as a file or directory.", context.Path),
+                new FileNotFoundException($"The requested local path does not exist: '{context.Path}'.", context.Path),
                 LocaleKey.HandledSystemException_FileNotFound);
         }
 
@@ -76,7 +79,8 @@ public abstract class LocalFileHandler : FileHandler
         if (context.FileSystemInfo is not DirectoryInfo { Exists: true } directory)
         {
             throw new HandledException(
-                new DirectoryNotFoundException($"The specified path is not a directory: {context.Path}"),
+                new DirectoryNotFoundException(
+                    $"The requested path is not a directory, so it cannot be enumerated: '{context.Path}'."),
                 LocaleKey.HandledSystemException_DirectoryNotFound);
         }
 
@@ -130,12 +134,13 @@ public abstract class LocalFileHandler : FileHandler
         if (context.FileSystemInfo is DirectoryInfo { Exists: true })
         {
             throw new HandledException(
-                new InvalidOperationException("The specified path is a directory, not a file."),
+                new InvalidOperationException(
+                    $"The requested path is a directory, but this operation requires a file: '{context.Path}'."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage);
         }
 
         throw new HandledException(
-            new FileNotFoundException("The specified path is not a file or directory.", context.Path),
+            new FileNotFoundException($"The requested path is not an existing file: '{context.Path}'.", context.Path),
             LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathNotExist_ErrorMessage);
     }
 

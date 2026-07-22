@@ -137,7 +137,8 @@ public sealed class WebBrowserHost : IWebBrowserHost
             await TestUrlConnectionAsync(httpClient, "https://storage.googleapis.com/chromium-browser-snapshots") ??
             await TestUrlConnectionAsync(httpClient, "https://cdn.npmmirror.com/binaries/chromium-browser-snapshots") ??
             throw new HandledException(
-                new HttpRequestException("Failed to connect to the Puppeteer browser download URL."),
+                new HttpRequestException(
+                    "The embedded browser is not installed, and neither browser download URL was reachable. Check network access or install a supported browser."),
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
                 showDetails: true);
 
@@ -148,7 +149,9 @@ public sealed class WebBrowserHost : IWebBrowserHost
         catch (Exception e)
         {
             throw new HandledException(
-                new InvalidOperationException("Failed to download Puppeteer browser.", e),
+                new InvalidOperationException(
+                    $"The embedded browser download failed: {e.Message}. Check network access and try again.",
+                    e),
                 new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage),
                 showDetails: true);
         }

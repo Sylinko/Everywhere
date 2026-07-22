@@ -30,7 +30,8 @@ public sealed class FileHandlerContextFactory(IEnumerable<FileHandler> handlers)
         }
 
         throw new HandledException(
-            new NotSupportedException($"No file handler supports '{path}'."),
+            new NotSupportedException(
+                $"No available file handler supports the resource '{path}'. The path may use an unsupported URI scheme or file format."),
             LocaleKey.BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage);
     }
 }

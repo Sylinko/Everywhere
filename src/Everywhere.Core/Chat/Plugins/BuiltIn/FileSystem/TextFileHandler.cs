@@ -25,7 +25,8 @@ public sealed class TextFileHandler : LocalFileHandler
         if (file.Length > 100L * 1024 * 1024)
         {
             throw new HandledException(
-                new NotSupportedException("File size is larger than 100 MB, read operation is not supported."),
+                new NotSupportedException(
+                    $"The file '{file.FullName}' is larger than 100 MB, so the read operation is not supported."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                     100));
@@ -34,7 +35,8 @@ public sealed class TextFileHandler : LocalFileHandler
         await using var stream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);
         var encoding = await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) ??
             throw new HandledException(
-                new InvalidDataException("The file is not recognized as text."),
+                new InvalidDataException(
+                    $"The file '{context.Path}' is not recognized as a text file, so it cannot be read as text."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage);
         stream.Seek(0, SeekOrigin.Begin);
 
@@ -105,7 +107,8 @@ public sealed class TextFileHandler : LocalFileHandler
             await using var readStream = Open(context, FileMode.Open, FileAccess.Read, FileShare.Read);
             encoding = await EncodingDetector.DetectEncodingAsync(readStream, cancellationToken: cancellationToken) ??
                 throw new HandledException(
-                    new InvalidDataException("Cannot write to a binary file."),
+                    new InvalidDataException(
+                        $"The existing file '{context.Path}' is binary and cannot be written by the text-file handler."),
                     LocaleKey.BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage);
         }
 
@@ -133,7 +136,8 @@ public sealed class TextFileHandler : LocalFileHandler
         if (file.Length > 10L * 1024 * 1024)
         {
             throw new HandledException(
-                new NotSupportedException("File size is larger than 10 MB, replace operation is not supported."),
+                new NotSupportedException(
+                    $"The file '{file.FullName}' is larger than 10 MB, so the replace_file_content operation is not supported."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage);
         }
 
@@ -143,7 +147,8 @@ public sealed class TextFileHandler : LocalFileHandler
         {
             encoding = await EncodingDetector.DetectEncodingAsync(stream, cancellationToken: cancellationToken) ??
                 throw new HandledException(
-                    new InvalidDataException("Cannot replace content in a binary file."),
+                    new InvalidDataException(
+                        $"The existing file '{context.Path}' is binary and cannot be edited by replace_file_content."),
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage);
             stream.Seek(0, SeekOrigin.Begin);
             using var reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
@@ -166,7 +171,11 @@ public sealed class TextFileHandler : LocalFileHandler
             }
             catch (ArgumentException ex)
             {
-                throw new HandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage);
+                throw new HandledException(
+                    new ArgumentException(
+                        $"The replacement pattern at index {i} is invalid: {ex.Message}",
+                        ex),
+                    LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage);
             }
         }
 
@@ -183,7 +192,8 @@ public sealed class TextFileHandler : LocalFileHandler
             if (!currentContent.Equals(originalContent, StringComparison.Ordinal))
             {
                 throw new HandledException(
-                    new IOException("The file changed while the replacement was awaiting approval. No changes were written."),
+                    new IOException(
+                        $"The file '{context.Path}' changed while the replacement was awaiting user approval. No changes were written."),
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Conflict_ErrorMessage);
             }
         }

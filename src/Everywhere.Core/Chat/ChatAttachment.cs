@@ -363,7 +363,8 @@ public sealed partial class FileAttachment(
             if (stream.Length > maxBytesSize)
             {
                 throw new HandledException(
-                    new NotSupportedException($"File size exceeds the maximum allowed size of {maxBytesSize} bytes."),
+                    new NotSupportedException(
+                        $"The file '{filePath}' is too large to attach. Its size exceeds the maximum allowed size of {Humanizer.HumanizeBytes(maxBytesSize)}."),
                     new FormattedDynamicLocaleKey(
                         LocaleKey.FileAttachment_Create_FileTooLarge,
                         new DirectLocaleKey(Humanizer.HumanizeBytes(stream.Length)),

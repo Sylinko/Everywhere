@@ -50,7 +50,7 @@ public sealed partial class OfficialConnector(
         {
             throw new HandledException(
                 new UserNotLoginException(
-                    "Everywhere cloud search service requires user login. Please instruct the user to login or configure 3rd-party search services"),
+                    "The configured official web-search provider requires the user to sign in. Ask the user to sign in or configure a third-party search provider."),
                 new DynamicLocaleKey(LocaleKey.HandledSystemException_UserNotLogin),
                 showDetails: false);
         }

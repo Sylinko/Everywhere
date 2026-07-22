@@ -4,6 +4,7 @@ using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
+using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -1085,7 +1086,7 @@ public sealed partial class ChatService : IChatService
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Error invoking tool '{FunctionName}'", content.FunctionName);
 
-            resultContent = new FunctionResultContent(content, $"Error: {ex.Message}") { InnerContent = ex };
+            resultContent = new FunctionResultContent(content, new PromptTokenLimit(4096, $"Error: {ex.Message}")) { InnerContent = ex };
         }
         finally
         {

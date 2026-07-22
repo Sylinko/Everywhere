@@ -29,7 +29,9 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or UnauthorizedAccessException or UriFormatException)
         {
-            throw new HandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage);
+            throw new HandledException(
+                new InvalidOperationException($"The skill resource '{path}' is unavailable: {ex.Message}", ex),
+                LocaleKey.BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage);
         }
     }
 
@@ -74,13 +76,15 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         if (resource.IsDirectory)
         {
             throw new HandledException(
-                new InvalidOperationException("The specified skill resource is a directory, not a file."),
+                new InvalidOperationException(
+                    $"The requested skill resource is a directory, but this operation requires a file: '{context.Path}'."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileInfo_PathIsDirectory_ErrorMessage);
         }
         if (resource.Length > 100L * 1024 * 1024)
         {
             throw new HandledException(
-                new NotSupportedException("Skill resource size is larger than 100 MB, read operation is not supported."),
+                new NotSupportedException(
+                    $"The skill resource '{resource.Uri}' is larger than 100 MB, so the read operation is not supported."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                     100));
@@ -152,7 +156,9 @@ public sealed class SkillFileHandler(SkillManager skillManager) : FileHandler
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or UnauthorizedAccessException or UriFormatException)
         {
-            throw new HandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage);
+            throw new HandledException(
+                new InvalidOperationException($"The skill resource '{context.Path}' is unavailable: {ex.Message}", ex),
+                LocaleKey.BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage);
         }
     }
 

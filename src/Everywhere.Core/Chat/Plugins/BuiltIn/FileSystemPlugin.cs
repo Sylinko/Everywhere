@@ -273,8 +273,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             if (context.FileSystemInfo is not FileInfo { Exists: true } file)
             {
-                throw ToHandledException(
-                    new NotSupportedException("attachment=true is supported only for local files."),
+                throw new HandledException(
+                    new NotSupportedException(
+                        "The 'attachment' option was requested, but the path is not an existing local file. Only existing local files can be attached."),
                     LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
             }
 
@@ -282,7 +283,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             {
                 0 => $"(The file `{context.Path}` exists, but is empty)",
                 > 10L * 1024 * 1024 => throw new HandledException(
-                    new NotSupportedException("Attachment file size is larger than 10 MB."),
+                    new NotSupportedException(
+                        "The requested attachment is larger than 10 MB, so it cannot be attached."),
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                         10),
@@ -320,14 +322,15 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var isFile = File.Exists(source);
         if (!isFile && !Directory.Exists(source))
         {
-            throw ToHandledException(
-                new FileNotFoundException("Source does not exist.", source),
+            throw new HandledException(
+                new FileNotFoundException($"The source path does not exist, so it cannot be moved: '{source}'.", source),
                 LocaleKey.HandledSystemException_FileNotFound);
         }
 
         var destinationDirectory = Path.GetDirectoryName(destination) ??
-            throw ToHandledException(
-                new DirectoryNotFoundException("Destination directory is invalid."),
+            throw new HandledException(
+                new DirectoryNotFoundException(
+                    $"The destination path does not contain a valid parent directory: '{destination}'."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
 
         await RequestFileOperationConsentAsync(
@@ -363,16 +366,18 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(path));
         if (Path.GetDirectoryName(path) is null)
         {
-            throw ToHandledException(
-                new UnauthorizedAccessException("Cannot delete a root directory."),
+            throw new HandledException(
+                new UnauthorizedAccessException(
+                    "The requested path is a filesystem root, and root directories cannot be deleted."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage);
         }
 
         var root = EnsureFileSystemInfo(path);
         if (root.Attributes.HasFlag(FileAttributes.System))
         {
-            throw ToHandledException(
-                new UnauthorizedAccessException("Cannot delete a system file or directory."),
+            throw new HandledException(
+                new UnauthorizedAccessException(
+                    "The requested path is marked as a system file or directory and cannot be deleted."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage);
         }
 
@@ -499,15 +504,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         if (patterns.Count == 0)
         {
-            throw ToHandledException(
-                new ArgumentException("At least one pattern must be provided.", nameof(patterns)),
+            throw new HandledException(
+                new ArgumentException(
+                    "The replace_file_content tool requires at least one search pattern.",
+                    nameof(patterns)),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage);
         }
 
         if (patterns.Count != replacements.Count)
         {
-            throw ToHandledException(
-                new ArgumentException("Replacements count must match patterns count.", nameof(replacements)),
+            throw new HandledException(
+                new ArgumentException(
+                    $"The replace_file_content tool received {patterns.Count} patterns but {replacements.Count} replacements. Each pattern must have exactly one replacement.",
+                    nameof(replacements)),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidReplacement_ErrorMessage);
         }
 
@@ -721,7 +730,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
         catch (ArgumentException ex)
         {
-            throw ToHandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage);
+            throw new HandledException(
+                new ArgumentException($"The supplied file-name pattern is invalid: {ex.Message}", ex),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage);
         }
     }
 
@@ -729,8 +740,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && !uri.IsFile)
         {
-            throw ToHandledException(
-                new NotSupportedException("This operation supports local paths only."),
+            throw new HandledException(
+                new NotSupportedException(
+                    "The requested path uses a non-file URI scheme. This file-system tool supports local paths and file:// URIs only."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage);
         }
 
@@ -740,7 +752,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            throw ToHandledException(ex, LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
+            throw new HandledException(
+                new ArgumentException($"The path '{path}' could not be resolved as a valid local path: {ex.Message}", ex),
+                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
     }
 
@@ -748,15 +762,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            throw ToHandledException(
-                new ArgumentException("Path cannot be null or empty.", nameof(path)),
+            throw new HandledException(
+                new ArgumentException(
+                    "The path argument is empty. Provide a local file or directory path.",
+                    nameof(path)),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
 
         if (string.IsNullOrWhiteSpace(workingDirectory))
         {
-            throw ToHandledException(
-                new ArgumentException("Working directory cannot be null or empty.", nameof(workingDirectory)),
+            throw new HandledException(
+                new ArgumentException(
+                    "The chat working directory is empty, so the requested relative path cannot be resolved.",
+                    nameof(workingDirectory)),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
         }
 
@@ -825,8 +843,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         if (File.Exists(path)) return new FileInfo(path);
         if (Directory.Exists(path)) return new DirectoryInfo(path);
-        throw ToHandledException(
-            new FileNotFoundException("The specified path does not exist.", path),
+        throw new HandledException(
+            new FileNotFoundException($"The requested path does not exist: '{path}'.", path),
             LocaleKey.BuiltInChatPlugin_FileSystem_EnsureFileSystemInfo_PathNotExist_ErrorMessage);
     }
 

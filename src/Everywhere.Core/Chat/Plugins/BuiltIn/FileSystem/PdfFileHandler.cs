@@ -41,7 +41,8 @@ public sealed class PdfFileHandler : LocalFileHandler
         if (file.Length > 100L * 1024 * 1024)
         {
             throw new HandledException(
-                new NotSupportedException("PDF size is larger than 100 MB, read operation is not supported."),
+                new NotSupportedException(
+                    $"The PDF '{file.FullName}' is larger than 100 MB, so the read operation is not supported."),
                 new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage,
                     100));
@@ -84,7 +85,8 @@ public sealed class PdfFileHandler : LocalFileHandler
         if (!hasMore && !hasText)
         {
             throw new HandledException(
-                new InvalidDataException("The PDF contains no extractable text. It may be a scanned document; OCR is not supported."),
+                new InvalidDataException(
+                    $"The PDF '{file.FullName}' contains no extractable text. It may be a scanned document, and OCR is not supported."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage);
         }
 
@@ -145,7 +147,8 @@ public sealed class PdfFileHandler : LocalFileHandler
         if (!hasText)
         {
             throw new HandledException(
-                new InvalidDataException("The PDF contains no extractable text. It may be a scanned document; OCR is not supported."),
+                new InvalidDataException(
+                    $"The PDF '{file.FullName}' contains no extractable text. It may be a scanned document, and OCR is not supported."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage);
         }
 
@@ -161,13 +164,17 @@ public sealed class PdfFileHandler : LocalFileHandler
         catch (PdfDocumentEncryptedException ex)
         {
             throw new HandledException(
-                new InvalidDataException("The PDF is encrypted. Password-protected PDF files are not supported.", ex),
+                new InvalidDataException(
+                    $"The PDF '{path}' is encrypted or password-protected. Password-protected PDF files are not supported.",
+                    ex),
                 LocaleKey.BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             throw new HandledException(
-                new InvalidDataException("The PDF is damaged or has an unsupported structure.", ex),
+                new InvalidDataException(
+                    $"The PDF '{path}' could not be opened because it is damaged or has an unsupported structure.",
+                    ex),
                 LocaleKey.BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage);
         }
     }

@@ -69,7 +69,8 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         if (_webSearchEngineSettings.SelectedProvider is not { } provider)
         {
             throw new HandledException(
-                new ArgumentException("Web search engine provider is not selected."),
+                new ArgumentException(
+                    "No web-search provider is configured. Ask the user to select one in Settings > Web Search."),
                 LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage);
         }
 
@@ -92,7 +93,8 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 EnsureApiKey(google.ApiKey),
                 google.SearchEngineId ??
                 throw new HandledException(
-                    new UnauthorizedAccessException("Search Engine ID is not set."),
+                    new UnauthorizedAccessException(
+                        "Google web search requires a Search Engine ID. Ask the user to configure it in Settings > Web Search."),
                     LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
                 _httpClientFactory.CreateClient(),
                 EnsureUri(google.ActualEndPoint)),
@@ -107,7 +109,8 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.UniFuncs } uniFuncs =>
                 new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.ActualEndPoint)),
             _ => throw new HandledException(
-                new NotSupportedException($"Web search engine provider '{provider.Id}' is not supported."),
+                new NotSupportedException(
+                    $"The configured web-search provider '{provider.Id}' is not supported by this build."),
                 LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage)
         };
 
@@ -117,7 +120,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new ArgumentException(
-                        "Endpoint is not a valid absolute http/https URI. Please instruct the user to correct in Main Window > Web Search."),
+                        $"The configured web-search endpoint '{url}' is not a valid absolute HTTP or HTTPS URL. Ask the user to correct it in Settings > Web Search."),
                     LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage);
             }
 
@@ -128,7 +131,8 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         string EnsureApiKey(Guid id) =>
             ApiKey.GetKey(id) ??
             throw new HandledException(
-                new UnauthorizedAccessException("API key is not set. Please instruct the user to configure in Main Window > Web Search."),
+                new UnauthorizedAccessException(
+                    "The API key required by the configured web-search provider is missing. Ask the user to configure it in Settings > Web Search."),
                 LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage);
     }
 

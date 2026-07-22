@@ -309,7 +309,9 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException(consent.FormatReason("User denied consent for visual actions execution.")),
+                new UnauthorizedAccessException(
+                    consent.FormatReason(
+                        "The user denied the visual-action approval request, so no visual actions were executed.")),
                 LocaleKey.ConsentDecision_Deny);
         }
 

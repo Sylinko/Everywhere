@@ -113,7 +113,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"Unsupported shell or not found: {shellPath}. Only PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash are supported."),
+                    $"The configured shell '{shellPath}' is unavailable or unsupported. Supported shells are PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash. Ask the user to check the Terminal plugin's shell-path setting."),
                 LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell);
         }
 
@@ -132,7 +132,9 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for shell script execution.")),
+                    new UnauthorizedAccessException(
+                        consent.FormatReason(
+                            "The user denied the shell-script execution approval request, so the command was not run.")),
                     LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
             }
         }
