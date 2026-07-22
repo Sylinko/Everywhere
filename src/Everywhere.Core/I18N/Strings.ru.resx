@@ -3267,6 +3267,9 @@
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>Невозможно присвоить null непустому значению настроек «{0}».</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>Значение «{0}» может быть null, но его свойство не может быть записано, поэтому его нельзя очистить.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>Не удалось прочитать значение настроек «{0}» как «{1}».</value>
     </data>

@@ -3267,6 +3267,9 @@
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>nullを非nullの設定値「{0}」に割り当てることはできません。</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>設定値「{0}」は null を許可していますが、そのプロパティは書き込み不可で、クリアできません。</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>設定値「{0}」を「{1}」として読み取ることに失敗しました。</value>
     </data>

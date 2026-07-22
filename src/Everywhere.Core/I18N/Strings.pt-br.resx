@@ -3268,6 +3268,9 @@ Data de lançamento: {2}</value>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>Não é possível atribuir null ao valor de configuração não anulável &quot;{0}&quot;.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>O valor da configuração &quot;{0}&quot; pode ser nulo, mas sua propriedade não é gravável e não pode ser limpa.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>Falha ao ler o valor de configuração &quot;{0}&quot; como &quot;{1}&quot;.</value>
     </data>

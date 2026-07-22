@@ -3267,6 +3267,9 @@
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>無法把 null 分配給不可為空的設置值「{0}」。</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>设置值“{0}”允许为 null，但其属性不可写，無法清空。</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>無法將設置值「{0}」讀取為「{1}」。</value>
     </data>

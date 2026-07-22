@@ -3267,6 +3267,9 @@
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>null을 비nullable 설정 값 &quot;{0}&quot;에 할당할 수 없습니다.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>설정 값 &quot;{0}&quot;은 null로 설정할 수 있지만, 해당 속성은 쓰기 불가능하여 비워둘 수 없습니다.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>설정 값 &quot;{0}&quot;을(를) &quot;{1}&quot;로 읽을 수 없습니다.</value>
     </data>

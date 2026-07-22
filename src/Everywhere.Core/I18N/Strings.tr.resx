@@ -3267,6 +3267,9 @@ Yayın tarihi: {2}</value>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>Boş değeri &quot;{0}&quot; için atanamaz, çünkü bu ayar değeri boş olamaz.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>Ayar değeri &quot;{0}&quot; null olabilir, ancak özelliği yazılamaz, bu yüzden boş bırakılamaz.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>Ayar değeri &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
     </data>

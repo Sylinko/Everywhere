@@ -3267,6 +3267,9 @@ Veröffentlichungsdatum: {2}</value>
     <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
         <value>Kann null nicht dem nicht-nullbaren Einstellungswert „{0}“ zuweisen.</value>
     </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>Der Einstellungswert „{0}“ darf null sein, aber seine Eigenschaft ist schreibgeschützt und kann nicht geleert werden.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
         <value>Konnte den Einstellungswert „{0}“ nicht als „{1}“ lesen.</value>
     </data>
