@@ -3680,13 +3680,7 @@
         <value>已完成</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI 是首款專為 AI 代理設計的 Office 套件，旨在幫助其閱讀、編輯和自動化處理 Word、Excel 和 PowerPoint 文件，也是同類產品中的佼佼者。該軟體免費、開源，目前內置於 Everywhere 中，無需安裝 Office。</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>執行 OfficeCLI 命令</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>這種文件不支持所請求的操作。</value>

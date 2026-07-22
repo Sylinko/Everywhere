@@ -3680,13 +3680,7 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Completed</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI is the first Office suite designed specifically for AI agents, aimed at helping them read, edit, and automate Word, Excel, and PowerPoint files. It stands out among similar products. This software is free, open-source, and is built into Everywhere, requiring no Office installation.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>Execute OfficeCLI Command</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>This type of file does not support the requested operation.</value>
@@ -3744,5 +3738,17 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>The font preview could not be loaded. The default font is shown.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value></value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Follow global tool settings</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>This assistant currently follows global tool settings. Turn off the switch above to customize it.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Tool calling is disabled for this assistant. Enable it above to configure available tools.</value>
     </data>
 </root>

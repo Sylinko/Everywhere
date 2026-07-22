@@ -8,10 +8,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Chat;
-using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
@@ -23,7 +20,6 @@ using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.Logging;
-using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -65,8 +61,6 @@ public sealed partial class ChatWindowViewModel :
     public bool IsPickingFiles { get; set; }
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
-
-    public IReadOnlyBindableList<ChatPlugin> ChatPlugins { get; }
 
     public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
 
@@ -124,7 +118,6 @@ public sealed partial class ChatWindowViewModel :
         Settings settings,
         PersistentState persistentState,
         IChatContextManager chatContextManager,
-        IChatPluginManager chatPluginManager,
         IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
@@ -148,16 +141,6 @@ public sealed partial class ChatWindowViewModel :
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
-
-        // Initialize chat plugins from both built-in and MCP
-        ChatPlugins = chatPluginManager.BuiltInPlugins
-            .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
-            .Transform(ChatPlugin (x) => x, transformOnRefresh: true)
-            .Or(
-                chatPluginManager.McpPlugins
-                    .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
-                    .Transform(ChatPlugin (x) => x, transformOnRefresh: true))
-            .BindEx(LifetimeDisposables);
 
         // Initialize chat attachments
         ChatAttachments = _chatAttachmentsSource

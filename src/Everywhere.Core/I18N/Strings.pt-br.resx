@@ -3681,13 +3681,7 @@ Deseja realmente excluir “{1}” permanentemente?</value>
         <value>Concluído</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI é a primeira suíte de Office projetada para assistentes de IA, ajudando a ler, editar e automatizar documentos do Word, Excel e PowerPoint, sendo a melhor em sua categoria. O software é gratuito e de código aberto, já incluído no Everywhere, sem necessidade de instalar o Office.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>Executar comandos do OfficeCLI</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Este tipo de arquivo não suporta a operação solicitada.</value>

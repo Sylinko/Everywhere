@@ -3680,13 +3680,7 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
         <value>Tamamlandı</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI, AI asistanları için tasarlanmış ilk ofis paketidir. Word, Excel ve PowerPoint dosyalarını okuma, düzenleme ve otomatik işleme konusunda yardımcı olur. Ücretsiz ve açık kaynaklıdır, şu anda Everywhere'a entegre edilmiştir ve Office kurulumu gerektirmez.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>OfficeCLI komutunu çalıştır</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Bu dosya, istenen işlemi desteklemiyor.</value>

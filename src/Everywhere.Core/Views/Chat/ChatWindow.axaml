@@ -897,7 +897,7 @@
                 Command="{Binding SendMessageCommand}"
                 CustomAssistantItemsSource="{Binding Settings.Model.CustomAssistants}"
                 IsSendButtonEnabled="{Binding !IsBusy}"
-                IsToolCallEnabled="{Binding PersistentState.IsToolCallEnabled, Mode=TwoWay}"
+                IsToolCallEnabled="{Binding Settings.Model.SelectedCustomAssistant.IsToolCallEnabled, Mode=TwoWay, FallbackValue=False, TargetNullValue=False}"
                 IsToolCallSupported="{Binding Settings.Model.SelectedCustomAssistant.SupportsToolCall, FallbackValue={x:False}}"
                 IsWebSearchEnabled="{Binding PersistentState.IsWebSearchEnabled, Mode=TwoWay}"
                 LeadingContent="{Binding SelectedStrategy, Mode=TwoWay}"
@@ -968,173 +968,16 @@
                         </Transitions>
                       </LayoutTransformControl.Transitions>
 
-                      <Grid
-                        ColumnDefinitions="*,Auto" RowDefinitions="*,Auto,Auto"
-                        RowSpacing="4">
-                        <Grid.Styles>
-                          <Style Selector="TreeView">
-                            <Setter Property="ClipToBounds" Value="True"/>
-                            <Setter Property="Template">
-                              <ControlTemplate>
-                                <Border
-                                  BorderBrush="{DynamicResource BorderColor}"
-                                  BorderThickness="0,0,0,1">
-                                  <ScrollViewer
-                                    Margin="0,0,-8,0" Background="Transparent"
-                                    BringIntoViewOnFocusChange="False" HorizontalScrollBarVisibility="Disabled"
-                                    VerticalScrollBarVisibility="Auto">
-                                    <ItemsPresenter
-                                      Name="PART_ItemsPresenter" Margin="0,0,8,0"
-                                      ItemsPanel="{TemplateBinding ItemsPanel}"/>
-                                  </ScrollViewer>
-                                </Border>
-                              </ControlTemplate>
-                            </Setter>
-                          </Style>
-
-                          <Style Selector="TreeViewItem">
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="Template">
-                              <ControlTemplate>
-                                <StackPanel>
-                                  <Border
-                                    x:Name="PART_LayoutRoot" Focusable="True"
-                                    TemplatedControl.IsTemplateFocusTarget="True">
-                                    <Grid x:Name="PART_Header">
-                                      <Grid.ColumnDefinitions>
-                                        <ColumnDefinition
-                                          Width="Auto" SharedSizeGroup="Chevron"/>
-                                        <ColumnDefinition/>
-                                      </Grid.ColumnDefinitions>
-
-                                      <Panel x:Name="PART_ExpandCollapseChevronContainer">
-                                        <ToggleButton
-                                          x:Name="PART_ExpandCollapseChevron" Focusable="False"
-                                          IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}">
-                                          <ToggleButton.Template>
-                                            <ControlTemplate TargetType="ToggleButton">
-                                              <Border
-                                                Width="{TemplateBinding Width}"
-                                                Height="{TemplateBinding Height}"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Background="Transparent">
-                                                <LucideIcon
-                                                  x:Name="ChevronPath" HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center" Kind="ChevronRight"
-                                                  Size="{DynamicResource FontSizeM}"/>
-                                              </Border>
-                                            </ControlTemplate>
-                                          </ToggleButton.Template>
-
-                                          <ToggleButton.Transitions>
-                                            <Transitions>
-                                              <TransformOperationsTransition
-                                                Easing="CubicEaseInOut" Property="RenderTransform"
-                                                Duration="0:0:0.10"/>
-                                            </Transitions>
-                                          </ToggleButton.Transitions>
-                                        </ToggleButton>
-                                      </Panel>
-                                      <ContentPresenter
-                                        x:Name="PART_HeaderPresenter" Grid.Column="1"
-                                        Margin="{TemplateBinding Padding}"
-                                        HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
-                                        VerticalAlignment="{TemplateBinding VerticalAlignment}"
-                                        Background="Transparent"
-                                        Content="{TemplateBinding Header}"
-                                        ContentTemplate="{TemplateBinding HeaderTemplate}"
-                                        Focusable="False"/>
-                                    </Grid>
-                                  </Border>
-                                  <ItemsPresenter
-                                    x:Name="PART_ItemsPresenter"
-                                    IsVisible="{TemplateBinding IsExpanded}"
-                                    ItemsPanel="{TemplateBinding ItemsPanel}"/>
-                                </StackPanel>
-                              </ControlTemplate>
-                            </Setter>
-                          </Style>
-
-                          <Style Selector="ToggleButton#PART_ExpandCollapseChevron:checked">
-                            <Setter Property="RenderTransform">
-                              <Setter.Value>
-                                <RotateTransform Angle="90"/>
-                              </Setter.Value>
-                            </Setter>
-                          </Style>
-                        </Grid.Styles>
-
-                        <ToggleSwitch
-                          Grid.Row="1" Grid.Column="1"
-                          VerticalAlignment="Center"
-                          IsChecked="{Binding #Self.ViewModel.PersistentState.IsToolCallEnabled, Mode=TwoWay}"/>
-
-                        <TextBlock
-                          Grid.Row="1" Grid.Column="0"
-                          VerticalAlignment="Center"
-                          Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>
-
+                      <StackPanel Spacing="8">
+                        <v:AssistantToolSettingsView
+                          Assistant="{Binding #Self.ViewModel.Settings.Model.SelectedCustomAssistant}"
+                          Theme="{StaticResource AssistantToolSettingsCompactTheme}"/>
                         <Button
-                          Classes="Secondary Compact Uniform" Grid.Row="2"
-                          Grid.Column="0" Grid.ColumnSpan="2"
+                          Classes="Secondary Compact Uniform"
                           shadui:ButtonAssist.Icon="{LucideIconContent Settings2}"
                           Command="{Binding OpenPluginSettingsCommand}"
                           Content="{I18N {x:Static LocaleKey.ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings}}"/>
-
-                        <TreeView
-                          Grid.Row="0" Grid.Column="0"
-                          Grid.ColumnSpan="2" Grid.IsSharedSizeScope="True"
-                          IsVisible="{Binding #Self.ViewModel.PersistentState.IsToolCallEnabled}"
-                          ItemsSource="{Binding #Self.ViewModel.ChatPlugins}">
-                          <TreeView.DataTemplates>
-                            <TreeDataTemplate
-                              DataType="p:ChatPlugin"
-                              ItemsSource="{Binding Functions}">
-                              <Border>
-                                <Grid ColumnSpacing="4">
-                                  <Grid.ColumnDefinitions>
-                                    <ColumnDefinition
-                                      Width="Auto" SharedSizeGroup="Icon"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                  </Grid.ColumnDefinitions>
-
-                                  <LucideIcon
-                                    Grid.Column="0" VerticalAlignment="Center"
-                                    Kind="{Binding Icon}"
-                                    Size="{DynamicResource FontSizeL}"/>
-
-                                  <TextBlock
-                                    Grid.Column="1" VerticalAlignment="Center"
-                                    Text="{Binding HeaderKey^}"
-                                    ToolTip.Placement="Top"
-                                    ToolTip.Tip="{Binding DescriptionKey^, Converter={x:Static shadui:StringConverters.EmptyOrWhiteSpaceToNull}}"/>
-
-                                  <ToggleSwitch
-                                    Grid.Column="2" VerticalAlignment="Center"
-                                    IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
-                                </Grid>
-                              </Border>
-                            </TreeDataTemplate>
-
-                            <DataTemplate DataType="p:ChatFunction">
-                              <DockPanel
-                                Margin="16,0,0,0" HorizontalSpacing="4">
-                                <ToggleSwitch
-                                  DockPanel.Dock="Right" VerticalAlignment="Center"
-                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
-
-                                <TextBlock
-                                  VerticalAlignment="Center"
-                                  Text="{Binding HeaderKey^}"
-                                  ToolTip.Placement="Top"
-                                  ToolTip.Tip="{Binding DescriptionKey^}"/>
-                              </DockPanel>
-                            </DataTemplate>
-                          </TreeView.DataTemplates>
-                        </TreeView>
-                      </Grid>
+                      </StackPanel>
                     </LayoutTransformControl>
                   </Flyout>
                 </v:ChatInputArea.ToolCallButtonFlyout>

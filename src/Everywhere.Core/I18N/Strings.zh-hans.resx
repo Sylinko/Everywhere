@@ -3681,13 +3681,7 @@
         <value>已完成</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI 是首款专为 AI 代理设计的 Office 套件，旨在帮助其读取、编辑和自动化处理 Word、Excel 和 PowerPoint 文件，也是同类产品中的佼佼者。该软件免费、开源，目前内置于 Everywhere 中，无需安装 Office。</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>执行 OfficeCLI 命令</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value>允许读取、编辑和自动化处理 Word、Excel 和 PowerPoint 文件，而无需安装 Office。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>这种文件不支持所请求的操作。</value>
@@ -3745,5 +3739,17 @@
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>无法加载此字体的预览，当前显示默认字体。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office 办公套件</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>跟随全局工具设置</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>当前助手跟随全局工具设置。关闭上方开关后可单独配置。</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>此助手已关闭工具调用。请在上方启用后配置可用工具。</value>
     </data>
 </root>

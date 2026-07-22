@@ -1,0 +1,250 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="AssistantToolSettingsFullTheme" TargetType="v:AssistantToolSettingsView">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer
+          Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+          VerticalScrollBarVisibility="Auto">
+          <DockPanel
+            Margin="0,0,12,0" VerticalSpacing="12">
+            <Border
+              DockPanel.Dock="Top" Padding="18,14"
+              Background="{DynamicResource LightCardBackgroundColor}"
+              BorderBrush="{DynamicResource BorderColor}"
+              BorderThickness="1"
+              CornerRadius="{DynamicResource XlCornerRadius}">
+              <Grid
+                ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto"
+                RowSpacing="12">
+                <StackPanel
+                  Grid.Row="0" Grid.Column="0"
+                  Spacing="2">
+                  <TextBlock
+                    Classes="p"
+                    Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>
+                  <TextBlock
+                    Classes="Muted Caption"
+                    Text="{I18N {x:Static LocaleKey.ChatPluginPage_Description}}"
+                    TextWrapping="Wrap"/>
+                </StackPanel>
+                <ToggleSwitch
+                  Grid.Row="0" Grid.Column="1"
+                  Margin="16,0,0,0" VerticalAlignment="Center"
+                  IsChecked="{Binding Assistant?.IsToolCallEnabled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"/>
+
+                <TextBlock
+                  Classes="p" Grid.Row="1"
+                  Grid.Column="0" VerticalAlignment="Center"
+                  Text="{I18N {x:Static LocaleKey.AssistantToolSettings_FollowGlobal_Header}}"/>
+                <ToggleSwitch
+                  Grid.Row="1" Grid.Column="1"
+                  Margin="16,0,0,0"
+                  IsChecked="{Binding IsFollowingGlobal, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </Grid>
+            </Border>
+
+            <Panel>
+              <StackPanel
+                IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:Null}}"
+                Spacing="10">
+                <shadui:Toast
+                  Padding="12,8" HorizontalAlignment="Stretch"
+                  CanDismiss="False" CanDismissByClicking="False"
+                  Content="{I18N {x:Static LocaleKey.AssistantToolSettings_FollowingGlobal_Content}}"
+                  IsVisible="{Binding IsFollowingGlobal, RelativeSource={RelativeSource TemplatedParent}}"
+                  Notification="Info"/>
+                <ItemsControl ItemsSource="{Binding ToolSettings?.Plugins, RelativeSource={RelativeSource TemplatedParent}}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <shadui:ControlGroup/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="v:ToolPluginPresentation">
+                      <Expander
+                        Padding="16,6"
+                        Background="{DynamicResource LightCardBackgroundColor}">
+                        <Expander.Header>
+                          <Grid
+                            MinHeight="54" ColumnDefinitions="Auto,*,Auto,Auto"
+                            ColumnSpacing="12">
+                            <LucideIcon
+                              Grid.Column="0" VerticalAlignment="Center"
+                              Kind="{Binding Plugin?.Icon, TargetNullValue=Hammer}"
+                              Size="{DynamicResource FontSize2Xl}"/>
+                            <StackPanel
+                              Grid.Column="1" VerticalAlignment="Center"
+                              Spacing="2">
+                              <TextBlock
+                                Classes="p"
+                                Text="{Binding Plugin.HeaderKey^}"
+                                TextTrimming="CharacterEllipsis"/>
+                              <TextBlock
+                                Classes="Muted Caption" MaxLines="1"
+                                Text="{Binding Plugin.DescriptionKey^}"
+                                TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <TextBlock
+                              Classes="Muted Caption" Grid.Column="2"
+                              VerticalAlignment="Center">
+                              <TextBlock.Inlines>
+                                <Run Text="{Binding EnabledFunctionCount}"/>
+                                <Run Text=" / "/>
+                                <Run Text="{Binding Functions.Count}"/>
+                              </TextBlock.Inlines>
+                            </TextBlock>
+                            <ToggleSwitch
+                              Grid.Column="3" VerticalAlignment="Center"
+                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                              IsEnabled="{Binding CanEdit}"/>
+                          </Grid>
+                        </Expander.Header>
+
+                        <ItemsControl
+                          Margin="0,0,0,8"
+                          ItemsSource="{Binding Functions}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="v:ToolFunctionPresentation">
+                              <Grid
+                                MinHeight="48" Margin="36,0,8,0"
+                                ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel
+                                  Grid.Column="0" VerticalAlignment="Center"
+                                  Spacing="2">
+                                  <TextBlock
+                                    Text="{Binding Function.HeaderKey^}"
+                                    TextWrapping="Wrap"/>
+                                  <TextBlock
+                                    Classes="Muted Caption" MaxLines="2"
+                                    Text="{Binding Function.DescriptionKey^}"
+                                    TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleSwitch
+                                  Grid.Column="1" VerticalAlignment="Center"
+                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                  IsEnabled="{Binding CanEdit}"/>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Expander>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <shadui:Toast
+                Padding="12" HorizontalAlignment="Stretch"
+                CanDismiss="False" CanDismissByClicking="False"
+                Content="{I18N {x:Static LocaleKey.AssistantToolSettings_ToolCallDisabled_Content}}"
+                IsVisible="{Binding !Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:True}}"
+                Notification="Info"/>
+            </Panel>
+          </DockPanel>
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme
+    x:Key="{x:Type v:AssistantToolSettingsView}"
+    BasedOn="{StaticResource AssistantToolSettingsFullTheme}"
+    TargetType="v:AssistantToolSettingsView"/>
+
+  <ControlTheme
+    x:Key="AssistantToolSettingsCompactTheme" TargetType="v:AssistantToolSettingsView">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid
+          MinWidth="240" RowDefinitions="Auto,*"
+          RowSpacing="4">
+          <Grid
+            Margin="8,0" ColumnDefinitions="*,Auto"
+            ColumnSpacing="12" RowDefinitions="Auto,Auto">
+            <TextBlock
+              Grid.Row="0" Grid.Column="0"
+              VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>
+            <ToggleSwitch
+              Grid.Row="0" Grid.Column="1"
+              IsChecked="{Binding Assistant?.IsToolCallEnabled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"/>
+            <TextBlock
+              Grid.Row="1" Grid.Column="0"
+              VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.AssistantToolSettings_FollowGlobal_Header}}"/>
+            <ToggleSwitch
+              Grid.Row="1" Grid.Column="1"
+              IsChecked="{Binding IsFollowingGlobal, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+          </Grid>
+
+          <ScrollViewer
+            Grid.Row="1" MaxHeight="430"
+            Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+            IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
+            <ItemsControl
+              Margin="0,0,12,0"
+              ItemsSource="{Binding ToolSettings?.Plugins, RelativeSource={RelativeSource TemplatedParent}}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <shadui:ControlGroup/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="v:ToolPluginPresentation">
+                  <Expander
+                    Padding="6,4"
+                    Background="{DynamicResource LightCardBackgroundColor}">
+                    <Expander.Header>
+                      <DockPanel HorizontalSpacing="4">
+                        <LucideIcon
+                          DockPanel.Dock="Left" VerticalAlignment="Center"
+                          Kind="{Binding Plugin?.Icon, TargetNullValue=Hammer}"
+                          Size="{DynamicResource FontSizeL}"/>
+                        <ToggleSwitch
+                          DockPanel.Dock="Right" VerticalAlignment="Center"
+                          IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                          IsEnabled="{Binding CanEdit}"/>
+                        <TextBlock
+                          MaxWidth="270" VerticalAlignment="Center"
+                          Text="{Binding Plugin.HeaderKey^}"
+                          TextTrimming="CharacterEllipsis" ToolTip.Placement="Left"
+                          ToolTip.Tip="{Binding Plugin.DescriptionKey^}"/>
+                      </DockPanel>
+                    </Expander.Header>
+                    <ItemsControl
+                      Margin="0,0,0,4"
+                      ItemsSource="{Binding Functions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="v:ToolFunctionPresentation">
+                          <Grid
+                            MinHeight="32" Margin="26,2,2,2"
+                            ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBlock
+                              Grid.Column="0" MaxWidth="300"
+                              VerticalAlignment="Center"
+                              Text="{Binding Function.HeaderKey^}"
+                              TextTrimming="CharacterEllipsis"
+                              ToolTip.Tip="{Binding Function.DescriptionKey^}"/>
+                            <ToggleSwitch
+                              Grid.Column="1" VerticalAlignment="Center"
+                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                              IsEnabled="{Binding CanEdit}"/>
+                          </Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </Expander>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

@@ -7,6 +7,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
 using Lucide.Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.AI;
 
@@ -75,5 +76,19 @@ public sealed partial class CustomAssistant : Assistant
                 (CustomAssistant xx) => xx.SystemPromptId,
                 source: this,
                 mode: BindingMode.TwoWay)
+        });
+
+    /// <summary>
+    /// Settings UI for this assistant's tool availability.
+    /// </summary>
+    [JsonIgnore]
+    [DynamicLocaleKey(LocaleKey.ChatPluginPage_Title)]
+    [SettingsItem(Index = 2)]
+    public SettingsControl<AssistantToolSettingsView> ToolSettings => new(x =>
+        new AssistantToolSettingsView(
+            x.GetRequiredService<IChatPluginManager>(),
+            x.GetRequiredService<Settings>())
+        {
+            Assistant = this
         });
 }

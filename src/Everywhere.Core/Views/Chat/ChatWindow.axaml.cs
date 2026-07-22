@@ -138,8 +138,11 @@ public partial class ChatWindow :
             }
             case { Key: Key.T, KeyModifiers: KeyModifiers.Control }:
             {
-                _persistentState.IsToolCallEnabled = !_persistentState.IsToolCallEnabled;
-                e.Handled = true;
+                if (ViewModel.Settings.Model.SelectedCustomAssistant is { } assistant)
+                {
+                    assistant.IsToolCallEnabled = !assistant.IsToolCallEnabled;
+                    e.Handled = true;
+                }
                 break;
             }
         }

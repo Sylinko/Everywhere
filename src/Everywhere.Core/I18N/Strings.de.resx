@@ -3680,13 +3680,7 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
         <value>Abgeschlossen</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI ist die erste Office-Suite, die speziell für AI-Agenten entwickelt wurde, um das Lesen, Bearbeiten und Automatisieren von Word-, Excel- und PowerPoint-Dateien zu unterstützen. Es ist das führende Produkt seiner Art. Die Software ist kostenlos, Open Source und ist bereits in Everywhere integriert, ohne dass Office installiert werden muss.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>OfficeCLI-Befehle ausführen</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Diese Datei unterstützt die angeforderte Operation nicht.</value>

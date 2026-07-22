@@ -3680,13 +3680,7 @@
         <value>Завершено</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI — это первый офисный пакет, специально разработанный для AI-агентов, который помогает читать, редактировать и автоматизировать работу с файлами Word, Excel и PowerPoint. Это лучшее решение среди аналогичных продуктов. Программное обеспечение бесплатное и с открытым исходным кодом, встроено в Everywhere, установка Office не требуется.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>Выполнить команду OfficeCLI</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Этот файл не поддерживает запрашиваемую операцию.</value>

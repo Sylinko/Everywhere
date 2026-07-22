@@ -40,6 +40,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Cloud/UserProfilePresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/AccentColorSelector.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/AssistantPromptSelector.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/AssistantToolSettingsView.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/ApiKeyComboBox.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/CompositeKeyboardShortcutInputBox.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/CreateApiKeyForm.axaml"/>

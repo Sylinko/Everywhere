@@ -3680,13 +3680,7 @@
         <value>완료</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI는 AI 에이전트를 위해 설계된 최초의 오피스 제품군으로, Word, Excel 및 PowerPoint 파일을 읽고, 편집하며, 자동화 처리하는 데 도움을 줍니다. 이 소프트웨어는 무료이며 오픈 소스이며, Everywhere에 내장되어 있어 Office를 설치할 필요가 없습니다.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>OfficeCLI 명령 실행</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>이 파일은 요청된 작업을 지원하지 않습니다.</value>

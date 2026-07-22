@@ -1,9 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Reactive.Disposables;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DynamicData;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -11,7 +9,6 @@ using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using ZLinq;
 
 namespace Everywhere.Chat;
 

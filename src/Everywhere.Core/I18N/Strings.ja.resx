@@ -3680,13 +3680,7 @@
         <value>完了</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLIは、AIエージェント専用に設計された初のOfficeスイートで、Word、Excel、PowerPointファイルの読み取り、編集、自動処理を支援します。無料でオープンソースで、Everywhereに組み込まれており、Officeのインストールは不要です。</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>OfficeCLIコマンドを実行</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>このファイルでは、要求された操作はサポートされていません。</value>

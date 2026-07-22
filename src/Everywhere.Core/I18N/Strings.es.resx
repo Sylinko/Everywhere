@@ -3680,13 +3680,7 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
         <value>Completado</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value>OfficeCLI es la primera suite de Office diseñada específicamente para asistentes de IA, destinada a ayudar a leer, editar y automatizar documentos de Word, Excel y PowerPoint, siendo líder en su categoría. Este software es gratuito y de código abierto, y está integrado en Everywhere, sin necesidad de instalar Office.</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Description" xml:space="preserve">
-        <value>Ejecutar comandos de OfficeCLI</value>
-    </data>
-    <data name="BuiltInChatPlugin_OfficeCLI_Execute_Header" xml:space="preserve">
-        <value>OfficeCLI</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Este tipo de archivo no soporta la operación solicitada.</value>
