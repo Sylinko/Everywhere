@@ -16,7 +16,7 @@ public sealed class _20260712010000_0_8_1_canary_20260712_12 : SettingsMigration
         ModelSpecializations.ContextCompression |
         ModelSpecializations.ImageUnderstanding;
 
-    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260712.01");
+    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260712.12");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
         [CleanupSystemAssistantSpecializations, MigrateMcpTransports, CleanupOfficialSearchDepth];

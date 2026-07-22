@@ -152,11 +152,14 @@ public sealed class SettingsEngine : IAsyncInitializer, IDisposable
         services.AddTransient<SettingsMigration, _20260614154350_0_8_0>();
         services.AddTransient<SettingsMigration, _20260629120000_0_8_1_canary_20260629_12>();
         services.AddTransient<SettingsMigration, _20260712010000_0_8_1_canary_20260712_12>();
+
         if (_serviceProvider.GetService<IDbContextFactory<PromptDbContext>>() is { } promptDbFactory)
         {
             services.AddSingleton(promptDbFactory);
             services.AddTransient<SettingsMigration, _20260702120000_0_8_1_canary_20260702_12>();
         }
+
+        services.AddTransient<SettingsMigration, _20260721120000_0_8_1_canary_20260721_14>();
 
         return services.BuildServiceProvider();
     }
