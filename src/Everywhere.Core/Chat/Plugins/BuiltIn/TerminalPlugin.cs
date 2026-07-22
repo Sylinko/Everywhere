@@ -44,13 +44,12 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         _functionsSource.Add(
             new BuiltInChatFunction(
                 ExecuteInTerminalAsync,
-                ChatFunctionPermissions.ShellExecute,
-                isExperimental: true,
+                permissions: ChatFunctionPermissions.ShellExecute,
                 isAutoApproveAllowed: false,
                 onPermissionConsent: _ => true));
     }
 
-    public override ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(ChatPluginFunctionContext context)
+    public override ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken)
     {
         var configuredFunction = _functionsSource.Items[0];
         var (shellPath, shellType) = DetectShell();
@@ -73,18 +72,16 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             ExecuteInTerminalAsync,
             configuredFunction.Permissions,
             icon: configuredFunction.Icon,
+            isDefaultEnabled: configuredFunction.IsDefaultEnabled,
+            isDefaultAutoApprove: configuredFunction.IsDefaultAutoApprove,
             isAutoApproveAllowed: configuredFunction.IsAutoApproveAllowed,
             isExperimental: configuredFunction.IsExperimental,
-            isEnabled: configuredFunction.IsEnabled,
             isVisible: configuredFunction.IsVisible,
             onPermissionConsent: configuredFunction.OnPermissionConsent,
             functionName: "execute_in_terminal",
             description: description,
             headerKey: configuredFunction.HeaderKey,
-            descriptionKey: configuredFunction.DescriptionKey)
-        {
-            AutoApprove = configuredFunction.AutoApprove
-        };
+            descriptionKey: configuredFunction.DescriptionKey);
 
         return ValueTask.FromResult<IReadOnlyList<ChatFunction>>([runtimeFunction]);
     }

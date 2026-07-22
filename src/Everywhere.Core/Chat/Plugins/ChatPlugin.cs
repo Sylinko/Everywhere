@@ -36,8 +36,7 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     [JsonIgnore]
     public virtual string? BeautifulIcon => null;
 
-    [ObservableProperty]
-    public partial bool IsEnabled { get; set; }
+    public virtual bool IsDefaultEnabled => false;
 
     /// <summary>
     /// Gets the list of warnings for this plugin to be displayed in the UI.
@@ -71,7 +70,7 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     /// <returns></returns>
     public abstract IReadOnlyList<ChatFunction> GetChatFunctions();
 
-    public virtual ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(ChatPluginFunctionContext context) =>
+    public virtual ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken) =>
         ValueTask.FromResult(GetChatFunctions());
 
     public virtual void Dispose()
@@ -111,10 +110,7 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
         get
         {
             var count = 0;
-            _functionsSource.Edit(list =>
-            {
-                count = list.AsValueEnumerable().Count(f => f.IsEnabled); // Use edit to avoid copy
-            });
+            _functionsSource.Edit(list => count = list.Count);
             return count;
         }
     }
@@ -135,13 +131,12 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
     public override IReadOnlyList<ChatFunction> GetChatFunctions() => _functionsSource.Items;
 
     public override IEnumerator<KernelFunction> GetEnumerator() =>
-        _functionsSource.Items.Where(f => f.IsEnabled).Select(f => f.KernelFunction).GetEnumerator();
+        _functionsSource.Items.Select(f => f.KernelFunction).GetEnumerator();
 
     public override bool TryGetFunction(string name, [NotNullWhen(true)] out KernelFunction? function)
     {
         function = _functionsSource.Items
             .AsValueEnumerable()
-            .Where(f => f.IsEnabled)
             .Select(f => f.KernelFunction)
             .FirstOrDefault(f => f.Name == name);
         return function is not null;
@@ -165,8 +160,6 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
 {
     public override sealed string Key => $"builtin.{Name}";
 
-    public virtual bool IsDefaultEnabled => false;
-
     /// <summary>
     /// Indicates whether this plugin should be visible to users in the UI.
     /// Some plugins may be hidden but still enabled for internal use or by other plugins.
@@ -178,10 +171,7 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
         get
         {
             var result = false;
-            _functionsSource.Edit(list =>
-            {
-                result = list.AsValueEnumerable().Any(f => f.IsVisible);
-            });
+            _functionsSource.Edit(list => result = list.AsValueEnumerable().Any(f => f.IsVisible));
             return result;
         }
     }

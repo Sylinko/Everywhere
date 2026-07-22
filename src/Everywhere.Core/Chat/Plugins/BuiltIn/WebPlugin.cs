@@ -55,7 +55,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
                     isVisible: false,
-                    isEnabled: false,
+                    isDefaultEnabled: false,
                     onPermissionConsent: _ => true)); // always allow
             list.Add(
                 new BuiltInChatFunction(

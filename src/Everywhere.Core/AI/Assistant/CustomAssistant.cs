@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
@@ -46,6 +47,17 @@ public sealed partial class CustomAssistant : Assistant
     [ObservableProperty]
     [SettingsItemIgnore]
     public partial Guid SystemPromptId { get; set; } = Guid.Empty;
+
+    [ObservableProperty]
+    [SettingsItemIgnore]
+    public partial bool IsToolCallEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Exact tool enablement overrides for this assistant. A null value means that the assistant follows global settings.
+    /// </summary>
+    [ObservableProperty]
+    [SettingsItemIgnore]
+    public partial ToolEnablementSettings? ToolEnablement { get; set; }
 
     /// <summary>
     /// Settings UI for selecting and previewing this assistant's Prompt Manager prompt.

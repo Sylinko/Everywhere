@@ -115,7 +115,7 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
             Condition = BaseCondition,
             ToolRulesets = new ToolRulesets(1)
             {
-                { "builtin.web.*", true }
+                { "builtin.web", new ToolFunctionRulesets { { "*", true } } }
             },
             Body =
                 """

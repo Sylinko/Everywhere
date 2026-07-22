@@ -30,7 +30,6 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
     private readonly IKeyValueStorage _keyValueStorage;
     private readonly IRuntimeManager _runtimeManager;
     private readonly ILoggerFactory _loggerFactory;
-    private readonly PluginSettings _pluginSettings;
     private readonly ILogger _logger;
     private readonly McpTransportConfiguration _transportConfiguration;
 
@@ -47,12 +46,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
     /// Manages the lifecycle of an <see cref="McpClient"/>, including creation, reconnection on session expiry, and disposal.
     /// Encapsulates transport creation logic (Stdio / HTTP) and watchdog registration.
     /// </summary>
-    public ManagedMcpClient(
-        McpChatPlugin mcpChatPlugin,
-        ChatPluginManager manager,
-        IServiceProvider serviceProvider,
-        ILoggerFactory loggerFactory,
-        PluginSettings pluginSettings)
+    public ManagedMcpClient(McpChatPlugin mcpChatPlugin, ChatPluginManager manager, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
     {
         McpChatPlugin = mcpChatPlugin;
         _manager = manager;
@@ -61,12 +55,11 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
         _keyValueStorage = serviceProvider.GetRequiredService<IKeyValueStorage>();
         _runtimeManager = serviceProvider.GetRequiredService<IRuntimeManager>();
         _loggerFactory = loggerFactory;
-        _pluginSettings = pluginSettings;
         _logger = loggerFactory.CreateLogger<ManagedMcpClient>();
         _transportConfiguration = mcpChatPlugin.TransportConfiguration ??
             throw new InvalidOperationException("MCP plugin must have a transport configuration.");
 
-        McpChatPlugin.EditFunctions(list => list.Reset(LoadCachedTools().OrderBy(x => x.ProtocolTool.Name).Select(CreateFunction)));
+        McpChatPlugin.EditFunctions(list => list.Reset(LoadCachedTools().OrderBy(x => x.ProtocolTool.Name).Select(x => new McpChatFunction(x))));
     }
 
     /// <summary>
@@ -100,7 +93,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
             if (_mcpProcess is not null)
             {
-                _mcpProcess.Exited -= OnMcpClientExited;
+                _mcpProcess.Exited -= HandleMcpProcessExited;
                 _mcpProcess = null;
             }
 
@@ -149,7 +142,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
                             list.RemoveAt(i);
                             break;
                         default:
-                            list.Insert(i, CreateFunction(tools[j]));
+                            list.Insert(i, new McpChatFunction(tools[j]));
                             i++;
                             j++;
                             break;
@@ -163,7 +156,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
                 while (j < tools.Length)
                 {
-                    list.Add(CreateFunction(tools[j]));
+                    list.Add(new McpChatFunction(tools[j]));
                     j++;
                 }
             });
@@ -176,23 +169,17 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
         return mcpClient;
     }
 
-    private void OnMcpClientExited(object? sender, EventArgs e)
+    private void HandleMcpProcessExited(object? sender, EventArgs e)
     {
         if (sender is Process process)
         {
-            process.Exited -= OnMcpClientExited;
+            process.Exited -= HandleMcpProcessExited;
         }
 
         McpChatPlugin.IsRunning = false;
         _mcpProcess = null;
         _isSessionExpired = true;
     }
-
-    private McpChatFunction CreateFunction(ManagedMcpClientTool tool) => new(tool)
-    {
-        IsEnabled = !_pluginSettings.IsEnabledRecords.TryGetValue(tool.Name, out var isEnabled) || isEnabled, // true if not set
-        AutoApprove = _pluginSettings.IsPermissionGrantedRecords.TryGetValue(tool.Name, out var isGranted) && isGranted, // false if not set
-    };
 
     /// <summary>
     /// Lists tools from the MCP client, wrapping them in <see cref="ManagedMcpClientTool"/> with escaped names.
@@ -337,7 +324,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
         {
             if (_mcpProcess is not null)
             {
-                _mcpProcess.Exited -= OnMcpClientExited;
+                _mcpProcess.Exited -= HandleMcpProcessExited;
                 _mcpProcess = null;
             }
 
@@ -454,7 +441,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
             if (GetStdioClientSessionTransportProcess(transport) is { HasExited: false, Id: > 0 } process)
             {
                 _mcpProcess = process;
-                process.Exited += OnMcpClientExited;
+                process.Exited += HandleMcpProcessExited;
 
                 await _watchdogManager.RegisterProcessAsync(process.Id);
                 processId = process.Id;

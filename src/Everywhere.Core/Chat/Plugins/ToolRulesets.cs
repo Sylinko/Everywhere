@@ -1,129 +1,165 @@
-﻿using System.Text.RegularExpressions;
+using System.IO.Enumeration;
 using Everywhere.Serialization;
 using MessagePack;
-using ZLinq;
+using ZLinq.Linq;
 
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Allowed tool/plugin names or function names with enable/disable flag. The key is in format of "pluginKey" or "pluginKey.functionName", value is whether it's enabled or not.
+/// Provides effective enablement decisions for plugins and functions.
+/// A missing decision means the caller should inherit from the preceding settings layer.
 /// </summary>
-/// <remarks>
-/// Wildcard is allowed. e.g.
-/// { "builtin.visual_tree.*": true, "builtin.web.web_*": true, "builtin.web.web_search": false }
-///
-/// Note that `builtin.visual_tree.*` and `builtin.visual_tree` are different.
-/// Thr former means all functions in `builtin.visual_tree` should be applied (enable or disable) no matter whether then are enabled.
-/// But the latter only means the `builtin.visual_tree` should be applied, functions will keep their original state.
-///
-/// When applying, keys first ordered then apply one by one, latter overrides former.
-/// </remarks>
+public interface IToolRulesets
+{
+    bool? IsPluginAllowed(ChatPlugin plugin);
+
+    bool? IsFunctionAllowed(ChatPlugin plugin, ChatFunction function);
+}
+
+/// <summary>
+/// Pattern-based function rules grouped by plugin pattern.
+/// The outer key only matches <see cref="ChatPlugin.Key"/> and each inner key only matches a function name.
+/// </summary>
+/// <example>
+/// <code>
+/// {
+///   "builtin.*": {
+///     "*": true,
+///     "web*": false
+///   }
+/// }
+/// </code>
+/// </example>
 [MessagePackFormatter(typeof(ToolRulesetsMessagePackFormatter))]
-public sealed class ToolRulesets : Dictionary<string, bool>
+public class ToolRulesets : Dictionary<string, ToolFunctionRulesets>, IToolRulesets
 {
     public ToolRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
 
     public ToolRulesets(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
 
-    public ToolRulesets(IDictionary<string, bool> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase) { }
+    public ToolRulesets(IDictionary<string, ToolFunctionRulesets> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase)
+    {
+    }
 
     public ToolRulesets Union(ToolRulesets? overrides)
     {
-        if (overrides is null) return this;
+        if (overrides is null) return CopyCore();
 
-        var union = new ToolRulesets(this);
-        foreach (var kvp in overrides)
+        var result = CopyCore();
+        foreach (var (pluginPattern, functionOverrides) in overrides)
         {
-            union[kvp.Key] = kvp.Value;
+            if (!result.TryGetValue(pluginPattern, out var functions))
+            {
+                result[pluginPattern] = new ToolFunctionRulesets(functionOverrides);
+                continue;
+            }
+
+            foreach (var (functionPattern, value) in functionOverrides)
+            {
+                functions[functionPattern] = value;
+            }
         }
 
-        return union;
+        return result;
     }
 
     public bool? IsPluginAllowed(ChatPlugin plugin)
     {
-        bool? isAllowed = null;
-        foreach (var kvp in this.AsValueEnumerable().OrderBy(kvp => kvp.Key))
+        bool? result = null;
+        foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))
         {
-            var dotIndex = kvp.Key.LastIndexOf('.');
-            var pluginPattern = dotIndex < 0 ? kvp.Key : kvp.Key[..dotIndex];
-
-            // Use simple Glob to Regex conversion
-            var regexPattern = "^" + Regex.Escape(pluginPattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-            var pluginRegex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            if (pluginRegex.IsMatch(plugin.Key))
+            if (functions.Values.Any(static value => value))
             {
-                if (dotIndex < 0)
-                {
-                    isAllowed = kvp.Value;
-                }
-                else if (kvp.Value)
-                {
-                    // Any rule enabling functions in this plugin forces the plugin to be enabled
-                    isAllowed = true;
-                }
+                result = true;
+            }
+            else if (functions.TryGetValue("*", out var enabled) && !enabled)
+            {
+                result = false;
             }
         }
 
-        return isAllowed;
+        return result;
     }
 
     public bool? IsFunctionAllowed(ChatPlugin plugin, ChatFunction function)
     {
-        bool? isAllowed = null;
-        var fullFunctionName = $"{plugin.Key}.{function.KernelFunction.Metadata.Name}";
-        foreach (var kvp in this.AsValueEnumerable().OrderBy(kvp => kvp.Key))
+        bool? result = null;
+        foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))
         {
-            var dotIndex = kvp.Key.LastIndexOf('.');
-            if (dotIndex < 0)
+            foreach (var (functionPattern, enabled) in OrderBySpecificity(functions))
             {
-                // Rule targets plugin layer
-                var pluginRegexPattern = "^" + Regex.Escape(kvp.Key).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-                var pluginRegex = new Regex(pluginRegexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-                // If plugin is explicitly disabled, the function is as well.
-                // Otherwise, we keep its state as is.
-                if (pluginRegex.IsMatch(plugin.Name) && !kvp.Value)
+                if (IsMatch(functionPattern, function.KernelFunction.Name))
                 {
-                    isAllowed = false;
-                }
-            }
-            else
-            {
-                // Rule targets function layer
-                var functionRegexPattern = "^" + Regex.Escape(kvp.Key).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-                var functionRegex = new Regex(functionRegexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-                if (functionRegex.IsMatch(fullFunctionName))
-                {
-                    isAllowed = kvp.Value;
+                    result = enabled;
                 }
             }
         }
 
-        return isAllowed;
+        return result;
+    }
+
+    private ValueEnumerable<OrderBy<Where<FromDictionary<string, ToolFunctionRulesets>,
+                    KeyValuePair<string, ToolFunctionRulesets>>,
+                KeyValuePair<string, ToolFunctionRulesets>, string>,
+            KeyValuePair<string, ToolFunctionRulesets>>
+        GetMatchingPluginRules(string pluginKey) =>
+        this.AsValueEnumerable()
+            .Where(pair => IsMatch(pair.Key, pluginKey))
+            .OrderBy(static pair => GetSpecificity(pair.Key))
+            .ThenBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase);
+
+    private static ValueEnumerable<OrderBy<FromDictionary<string, bool>,
+                KeyValuePair<string, bool>, string>,
+            KeyValuePair<string, bool>>
+        OrderBySpecificity(ToolFunctionRulesets rulesets) => rulesets
+        .AsValueEnumerable()
+        .OrderBy(static pair => GetSpecificity(pair.Key))
+        .ThenBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase);
+
+    private ToolRulesets CopyCore()
+    {
+        var result = new ToolRulesets(Count);
+        foreach (var (pluginPattern, functions) in this)
+        {
+            result.Add(pluginPattern, new ToolFunctionRulesets(functions));
+        }
+
+        return result;
+    }
+
+    private static int GetSpecificity(string pattern) =>
+        pattern.Sum(static character => character switch { '*' => 0, '?' => 1, _ => 2 });
+
+    private static bool IsMatch(string pattern, string value) =>
+        FileSystemName.MatchesSimpleExpression(pattern, value, ignoreCase: true);
+}
+
+public class ToolFunctionRulesets : Dictionary<string, bool>
+{
+    public ToolFunctionRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
+
+    public ToolFunctionRulesets(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
+
+    public ToolFunctionRulesets(IDictionary<string, bool> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase)
+    {
     }
 }
 
 public static class ToolRulesetsExtensions
 {
-    /// <summary>
-    /// Creates a copy of the source ToolRulesets and applies overrides on top. If source is null, returns overrides. If overrides is null, returns a copy of source.
-    /// </summary>
-    /// <param name="source"></param>
-    /// <param name="overrides"></param>
-    /// <returns></returns>
-    public static ToolRulesets? Copy(this ToolRulesets? source, ToolRulesets? overrides = null)
+    public static ToolRulesets? TryUnion(this ToolRulesets? source, ToolRulesets? overrides = null)
     {
-        if (source is null) return overrides;
-
-        var copy = new ToolRulesets(source);
-        if (overrides is null) return copy;
-
-        foreach (var kvp in overrides)
+        if (source is null)
         {
-            copy[kvp.Key] = kvp.Value;
+            return overrides is null ?
+                null :
+                new ToolRulesets(
+                    overrides.ToDictionary(
+                        static pair => pair.Key,
+                        static pair => new ToolFunctionRulesets(pair.Value),
+                        StringComparer.OrdinalIgnoreCase));
         }
 
-        return copy;
+        return source.Union(overrides);
     }
 }

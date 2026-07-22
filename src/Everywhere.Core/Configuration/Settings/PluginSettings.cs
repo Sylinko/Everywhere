@@ -3,23 +3,20 @@ using Everywhere.Collections;
 
 namespace Everywhere.Configuration;
 
-public sealed partial class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
+public sealed class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
     /// <summary>
-    /// Gets or sets whether each plugin is enabled.
+    /// Gets or sets exact plugin and function enablement overrides.
     /// </summary>
     /// <remarks>
-    /// The key is in the format of "PluginKey.FunctionName".
-    /// Plugins are disabled if the key is not present.
-    /// But Functions are enabled by default if the plugin is enabled.
+    /// Missing entries inherit the default declared by the tool definition.
     /// </remarks>
-    public ObservableDictionary<string, bool> IsEnabledRecords { get; set; } = new();
+    public ToolEnablementSettings ToolEnablement { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the granted permissions for each plugin function.
-    /// The key is in the format of "PluginKey.FunctionName".
+    /// Gets or sets exact automatic-approval overrides for plugin functions.
     /// </summary>
-    public ObservableDictionary<string, bool> IsPermissionGrantedRecords { get; set; } = new();
+    public ToolAutoApprovalSettings ToolAutoApproval { get; set; } = new();
 
     /// <summary>
     /// Gets the MCP transport configurations keyed by plugin id.

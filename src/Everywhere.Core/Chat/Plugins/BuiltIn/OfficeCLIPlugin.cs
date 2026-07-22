@@ -12,9 +12,9 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 
 public sealed class OfficeCLIPlugin : BuiltInChatPlugin
 {
-    public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("OfficeCLI");
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Description);
-    public override LucideIconKind? Icon => LucideIconKind.BookType;
+    public override LucideIconKind? Icon => LucideIconKind.Coffee;
 
     private readonly ILogger<OfficeCLIPlugin> _logger;
     private readonly string _executablePath;
@@ -33,11 +33,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
 #error Unsupported platform
 #endif
 
-        _functionsSource.Add(
-            new BuiltInChatFunction(
-                ExecuteAsync,
-                ChatFunctionPermissions.FileAccess,
-                onPermissionConsent: _ => true)); // no need to consent
+        _functionsSource.Add(new BuiltInChatFunction(ExecuteAsync, ChatFunctionPermissions.FileAccess, isDefaultAutoApprove: true));
     }
 
     [KernelFunction("officecli")]
@@ -47,7 +43,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
         This tool allows you to call `officecli` directly without having to install or locate the executable.
         Please use the `read_file` tool to read `skill://builtin.officecli/SKILL.md` to get detailed calling instructions.
         """)]
-    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Execute_Header, LocaleKey.BuiltInChatPlugin_OfficeCLI_Execute_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_OfficeCLI_Header, LocaleKey.Empty)]
     private async Task<PromptNode> ExecuteAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         string commandLine,

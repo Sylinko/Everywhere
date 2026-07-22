@@ -28,7 +28,7 @@ file static class PropertyChangedEventCache
     public static readonly PropertyChangedEventArgs IndexerPropertyChanged = new("Item[]");
 }
 
-public sealed class ObservableDictionary<TKey, TValue> :
+public class ObservableDictionary<TKey, TValue> :
     IObservableDictionary,
     IDictionary<TKey, TValue>,
     IReadOnlyDictionary<TKey, TValue>,

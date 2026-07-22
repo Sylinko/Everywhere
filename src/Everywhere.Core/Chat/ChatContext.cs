@@ -91,12 +91,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public ResilientCache<int, IVisualElement> VisualElements { get; }
 
     /// <summary>
-    /// A map of granted permissions for plugin functions in this chat context (session).
-    /// Key: PluginName.FunctionName
-    /// Value: is granted or not.
+    /// Exact automatic-approval decisions remembered for this chat session.
     /// </summary>
     [IgnoreMember]
-    public ConcurrentDictionary<string, bool> IsPermissionGrantedRecords { get; }
+    public ConcurrentDictionary<string, bool> ToolSessionApprovals { get; }
 
     /// <summary>
     /// Tool and plugin rulesets for this chat context. This is used to determine which plugins and functions are enabled or disabled in this context.
@@ -205,7 +203,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             .BindEx(_disposables);
 
         VisualElements = new ResilientCache<int, IVisualElement>();
-        IsPermissionGrantedRecords = new ConcurrentDictionary<string, bool>();
+        ToolSessionApprovals = new ConcurrentDictionary<string, bool>();
         UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
 
@@ -216,13 +214,13 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     private ChatContext(
         ResilientCache<int, IVisualElement>? visualElements = null,
-        ConcurrentDictionary<string, bool>? isPermissionGrantedRecords = null,
+        ConcurrentDictionary<string, bool>? toolSessionApprovals = null,
         ToolRulesets? toolRulesets = null,
         IChatPluginUserInterfaceBroker? userInterfaceBroker = null)
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
         VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
-        IsPermissionGrantedRecords = isPermissionGrantedRecords ?? new ConcurrentDictionary<string, bool>();
+        ToolSessionApprovals = toolSessionApprovals ?? new ConcurrentDictionary<string, bool>();
         ToolRulesets = toolRulesets;
 
         _rootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
@@ -302,14 +300,18 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     {
         return new ChatContext(
             VisualElements,
-            IsPermissionGrantedRecords,
-            ToolRulesets.Copy(
+            ToolSessionApprovals,
+            ToolRulesets.TryUnion(
                 new ToolRulesets(2)
                 {
-                    { "builtin.essential.run_subagent", false }, // Disallow run_subagent in sub-agents to prevent infinite recursion
                     {
-                        "builtin.essential.ask_user_question", false
-                    } // Disallow ask_user_question in sub-agents to prevent user interaction in sub-agents
+                        "builtin.essential",
+                        new ToolFunctionRulesets
+                        {
+                            { "run_subagent", false }, // Prevent infinite recursion.
+                            { "ask_user_question", false } // Prevent sub-agents from interacting with the user.
+                        }
+                    }
                 }),
             UserInterfaceBroker)
         {

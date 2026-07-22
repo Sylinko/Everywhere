@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Everywhere.AI;
-using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
 
@@ -75,7 +74,7 @@ public interface IChatPluginManager
     Task<IChatPluginScope> CreateScopeAsync(
         Assistant assistant,
         ChatContext chatContext,
-        ToolRulesets? toolRulesets,
+        IToolRulesets? toolRulesets,
         CancellationToken cancellationToken);
 }
 

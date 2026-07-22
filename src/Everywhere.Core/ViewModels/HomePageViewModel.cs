@@ -1,12 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Globalization;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Collections;
@@ -313,6 +311,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                     CreateAssistantChanges(),
                     CreateMcpChanges(),
                     CreateBuiltInToolChanges(),
+                    CreateToolSettingsChanges(),
                     CreateSkillChanges())
                 .StartWith(0)
                 .ObserveOnAvaloniaDispatcher()
@@ -329,7 +328,6 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         private IObservable<int> CreateMcpChanges() =>
             _chatPluginManager.McpPlugins
                 .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
-                .AutoRefresh(static x => x.IsEnabled)
                 .ToCollection()
                 .Select(static _ => 0);
 
@@ -344,12 +342,18 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                 .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
                 .MergeMany(static plugin => plugin.Functions
                     .ToObservableChangeSet<IReadOnlyBindableList<ChatFunction>, ChatFunction>()
-                    .AutoRefresh(static function => function.IsEnabled)
                     .ToCollection()
                     .Select(static _ => 0));
 
             return pluginChanges.Merge(functionChanges);
         }
+
+        private IObservable<int> CreateToolSettingsChanges() =>
+            Observable
+                .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+                    handler => _settings.Plugin.ToolEnablement.CollectionChanged += handler,
+                    handler => _settings.Plugin.ToolEnablement.CollectionChanged -= handler)
+                .Select(static _ => 0);
 
         private IObservable<int> CreateSkillChanges()
         {
@@ -373,7 +377,8 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         {
             var assistantsCount = _settings.Model.CustomAssistants.Count;
             var mcpTotal = _chatPluginManager.McpPlugins.Count;
-            var mcpEnabled = _chatPluginManager.McpPlugins.Count(static x => x.IsEnabled);
+            var mcpEnabled = _chatPluginManager.McpPlugins.Count(plugin =>
+                _settings.Plugin.ToolEnablement.IsPluginAllowed(plugin) ?? plugin.IsDefaultEnabled);
 
             var builtInFunctions = _chatPluginManager.BuiltInPlugins
                 .SelectMany(static plugin => plugin.GetChatFunctions())
@@ -386,7 +391,11 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                 .ToArray();
 
             Cards[0].CountText = assistantsCount.ToString("N0", CultureInfo.CurrentCulture);
-            Cards[1].CountText = FormatCapabilityCount(builtInFunctions.Length, builtInFunctions.Count(static x => x.IsEnabled));
+            Cards[1].CountText = FormatCapabilityCount(
+                builtInFunctions.Length,
+                _chatPluginManager.BuiltInPlugins.Sum(plugin => plugin.GetChatFunctions().Count(function =>
+                    function.IsVisible &&
+                    (_settings.Plugin.ToolEnablement.IsFunctionAllowed(plugin, function) ?? function.IsDefaultEnabled))));
             Cards[2].CountText = FormatCapabilityCount(mcpTotal, mcpEnabled);
             Cards[3].CountText = FormatCapabilityCount(skills.Length, skills.Count(static x => x.IsEnabled));
         }

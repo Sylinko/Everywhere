@@ -399,13 +399,25 @@ public sealed partial class ChatService : IChatService
             x.GetRequiredService<ChatContext>().FunctionCallContext.Value ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
 
-        if (kernelMixin.SupportsToolCall && _persistentState.IsToolCallEnabled)
+        var customAssistant = assistant as CustomAssistant;
+        if (kernelMixin.SupportsToolCall && (customAssistant?.IsToolCallEnabled ?? true))
         {
             var userMessage = chatContext.Read(list => list.AsValueEnumerable().Select(n => n.Message).OfType<UserChatMessage>().LastOrDefault());
             var strategyToolRulesets = userMessage?.As<UserStrategyChatMessage>()?.Strategy.ToolRulesets;
-            var toolRulesets = new ToolRulesets(1) { { "builtin.web.web_search", _persistentState.IsWebSearchEnabled } }
-                .Union(strategyToolRulesets)
-                .Union(chatContext.ToolRulesets);
+            var webSearchRulesets = new ToolRulesets(1)
+            {
+                {
+                    "builtin.web",
+                    new ToolFunctionRulesets { { "web_search", _persistentState.IsWebSearchEnabled } }
+                }
+            };
+            var toolRulesets = new ToolRulesetsPipeline(
+            [
+                customAssistant?.ToolEnablement,
+                webSearchRulesets,
+                strategyToolRulesets,
+                chatContext.ToolRulesets
+            ]);
 
             var chatPluginScope = await _chatPluginManager.CreateScopeAsync(
                 assistant,
@@ -595,7 +607,9 @@ public sealed partial class ChatService : IChatService
         DateTimeOffset? firstTokenAt = null;
         var isFirstToken = true;
         var promptExecutionSettings = kernelMixin.GetPromptExecutionSettings(
-            kernelMixin.SupportsToolCall && _persistentState.IsToolCallEnabled ? FunctionChoiceBehavior.Auto(autoInvoke: false) : null);
+            kernelMixin.SupportsToolCall && kernel.Plugins.Count > 0 ?
+                FunctionChoiceBehavior.Auto(autoInvoke: false) :
+                null);
 
         var invocationId = Guid.CreateVersion7();
         await _statisticsRecorder.StartModelInvocationAsync(
@@ -950,7 +964,7 @@ public sealed partial class ChatService : IChatService
                             chatFunction,
                             functionCallChatMessage,
                             functionCallContent,
-                            _settings.Plugin.IsPermissionGrantedRecords);
+                            _settings.Plugin.ToolAutoApproval);
                         using var functionCallContextScope = chatContext.EnterFunctionCallContext(functionCallContext);
 
                         // Add the function call content to the function call chat message.
@@ -1043,12 +1057,12 @@ public sealed partial class ChatService : IChatService
             {
                 case ConsentDecision.AlwaysAllow:
                 {
-                    context.ChatFunction.AutoApprove = true;
+                    _settings.Plugin.ToolAutoApproval[permissionKey] = true;
                     break;
                 }
                 case ConsentDecision.AllowSession:
                 {
-                    context.ChatContext.IsPermissionGrantedRecords[permissionKey] = true;
+                    context.ChatContext.ToolSessionApprovals[permissionKey] = true;
                     break;
                 }
                 case ConsentDecision.Deny:
@@ -1085,7 +1099,7 @@ public sealed partial class ChatService : IChatService
         Task<ConsentDecisionResult> ProcessConsentAsync(string permissionKey)
         {
             // Check if the permission is already granted in the current chat context
-            if (!_settings.Plugin.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isPermissionGranted))
+            if (!_settings.Plugin.ToolAutoApproval.TryGetValue(permissionKey, out var isPermissionGranted))
             {
                 isPermissionGranted = context.IsPermissionGranted;
             }

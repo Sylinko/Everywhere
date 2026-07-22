@@ -6,7 +6,6 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using Everywhere.AI;
-using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -23,7 +22,7 @@ using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
-public class ChatPluginManager : IChatPluginManager, IDisposable
+public class ChatPluginManager : IChatPluginManager
 {
     private const string McpRuntimeWarningKey = "mcp.runtime";
 
@@ -40,8 +39,6 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
     private readonly CompositeDisposable _disposables = new(3);
     private readonly SourceList<BuiltInChatPlugin> _builtInPluginsSource = new();
     private readonly SourceList<McpChatPlugin> _mcpPluginsSource = new();
-    private readonly DeepObserver _builtInPluginsObserver;
-    private readonly DeepObserver _mcpPluginsObserver;
 
     public ChatPluginManager(
         IServiceProvider serviceProvider,
@@ -59,37 +56,11 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
 
         // Load MCP plugins from settings.
         var mcpPlugins = ((IEnumerable<KeyValuePair<Guid, McpTransportConfiguration>>)settings.Plugin.McpChatPlugins)
-            .Select(static pair => new McpChatPlugin(pair.Key, pair.Value)).ToArray();
+            .AsValueEnumerable()
+            .Select(static pair => new McpChatPlugin(pair.Key, pair.Value))
+            .ToArray();
         Task.Run(InitializeMcpPlugins).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         _mcpPluginsSource.AddRange(mcpPlugins);
-
-        // Apply the enabled state from settings.
-        var isEnabledRecords = settings.Plugin.IsEnabledRecords;
-        var isPermissionGrantedRecords = settings.Plugin.IsPermissionGrantedRecords;
-        var pluginKeys = new HashSet<string>();
-        foreach (var plugin in _builtInPluginsSource.Items.AsValueEnumerable().OfType<ChatPlugin>().Concat(_mcpPluginsSource.Items))
-        {
-            pluginKeys.Add(plugin.Key);
-            plugin.IsEnabled = GetIsEnabled(plugin.Key, plugin is BuiltInChatPlugin { IsDefaultEnabled: true });
-            foreach (var function in plugin.GetChatFunctions().AsValueEnumerable())
-            {
-                var key = $"{plugin.Key}.{function.KernelFunction.Name}";
-                function.IsEnabled = GetIsEnabled(key, true);
-                function.AutoApprove = function.IsAutoApproveAllowed && GetIsPermissionGranted(key, function.Permissions);
-            }
-        }
-
-        // Remove any records in settings that do not correspond to any existing plugin.
-        foreach (var key in isEnabledRecords.Keys.AsValueEnumerable()
-                     .Where(key => pluginKeys.All(k => k != key && !key.StartsWith($"{k}.", StringComparison.Ordinal))).ToArray())
-        {
-            isEnabledRecords.Remove(key);
-        }
-        foreach (var key in isPermissionGrantedRecords.Keys.AsValueEnumerable()
-                     .Where(key => pluginKeys.All(k => k != key && !key.StartsWith($"{k}.", StringComparison.Ordinal))).ToArray())
-        {
-            isPermissionGrantedRecords.Remove(key);
-        }
 
         BuiltInPlugins = _builtInPluginsSource
             .Connect()
@@ -104,8 +75,6 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
             .BindEx(_disposables);
         _disposables.Add(_mcpPluginsSource);
 
-        _builtInPluginsObserver = new DeepObserver((in e) => HandleChatPluginChanged(BuiltInPlugins, e)).Observe(BuiltInPlugins);
-        _mcpPluginsObserver = new DeepObserver((in e) => HandleChatPluginChanged(McpPlugins, e)).Observe(McpPlugins);
         RefreshMcpRuntimeWarnings();
 
         void InitializeMcpPlugins()
@@ -121,80 +90,6 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
                     logger.LogError(e, "An error occured while initializing the MCP plugin");
                 }
             }
-        }
-
-        // Helper method to get the enabled state from settings.
-        bool GetIsEnabled(string path, bool defaultValue)
-        {
-            return isEnabledRecords.TryGetValue(path, out var isEnabled) ? isEnabled : defaultValue;
-        }
-
-        bool GetIsPermissionGranted(string path, ChatFunctionPermissions permissions)
-        {
-            if (isPermissionGrantedRecords.TryGetValue(path, out var isGranted) && !isGranted) return false;
-            if (isGranted) return true;
-            return permissions <= ChatFunctionPermissions.AutoGranted;
-        }
-
-        // Handle changes to plugins and update settings accordingly.
-        void HandleChatPluginChanged<TPlugin>(IReadOnlyList<TPlugin> plugins, in DeepObserverChangedEventArgs e) where TPlugin : ChatPlugin
-        {
-            var path = e.Path.AsSpan();
-            if (path.Length < 2 ||
-                path[0].Kind != DeepObserverPathSegmentKind.CollectionIndex ||
-                path[0].Index >= plugins.Count)
-            {
-                return;
-            }
-
-            var plugin = plugins[path[0].Index];
-            var value = e.Value is true;
-
-            ObservableDictionary<string, bool> records;
-            bool? defaultValue;
-            if (path[^1] is { Kind: DeepObserverPathSegmentKind.Property, Name: nameof(ChatFunction.IsEnabled) })
-            {
-                records = isEnabledRecords;
-                defaultValue = path.Length != 2 || plugin is BuiltInChatPlugin { IsDefaultEnabled: true };
-            }
-            else if (path[^1] is { Kind: DeepObserverPathSegmentKind.Property, Name: nameof(ChatFunction.AutoApprove) })
-            {
-                records = isPermissionGrantedRecords;
-                defaultValue = null;
-            }
-            else
-            {
-                return;
-            }
-
-            string key;
-            switch (path.Length)
-            {
-                case 2:
-                {
-                    key = plugin.Key;
-                    break;
-                }
-                case 4 when
-                    path[1] is { Kind: DeepObserverPathSegmentKind.Property, Name: nameof(ChatPlugin.Functions) } &&
-                    path[2].Kind == DeepObserverPathSegmentKind.CollectionIndex &&
-                    path[2].Index < plugin.Functions.Count:
-                {
-                    var observedFunction = plugin.Functions[path[2].Index];
-                    var function = plugin.GetChatFunctions()
-                        .AsValueEnumerable()
-                        .FirstOrDefault(f => ReferenceEquals(f, observedFunction)) ?? observedFunction;
-                    key = $"{plugin.Key}.{function.KernelFunction.Name}";
-                    break;
-                }
-                default:
-                {
-                    throw new InvalidOperationException($"Unexpected change path: {e.Path}");
-                }
-            }
-
-            if (value == defaultValue) records.Remove(key);
-            else records[key] = value;
         }
     }
 
@@ -251,8 +146,7 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
             mcpChatPlugin,
             this,
             _serviceProvider,
-            new McpLoggerFactory(mcpChatPlugin, _serviceProvider.GetRequiredService<ILoggerFactory>()),
-            _settings.Plugin);
+            new McpLoggerFactory(mcpChatPlugin, _serviceProvider.GetRequiredService<ILoggerFactory>()));
 
         _managedClients[mcpChatPlugin.Id] = client;
         return client;
@@ -300,6 +194,27 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
         await StopMcpClientAsync(mcpChatPlugin);
         _mcpPluginsSource.Remove(mcpChatPlugin);
         _settings.Plugin.McpChatPlugins.Remove(mcpChatPlugin.Id);
+        RemoveToolSettings(mcpChatPlugin.Key);
+    }
+
+    private void RemoveToolSettings(string pluginKey)
+    {
+        var prefix = ToolSettingsKey.ForFunctionPrefix(pluginKey);
+        RemoveRecords(_settings.Plugin.ToolEnablement);
+        RemoveRecords(_settings.Plugin.ToolAutoApproval);
+        foreach (var assistant in _settings.Model.CustomAssistants)
+        {
+            if (assistant.ToolEnablement is { } overrides) RemoveRecords(overrides);
+        }
+
+        void RemoveRecords(IDictionary<string, bool> records)
+        {
+            records.Remove(ToolSettingsKey.ForPlugin(pluginKey));
+            foreach (var key in records.Keys.AsValueEnumerable().Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray())
+            {
+                records.Remove(key);
+            }
+        }
     }
 
     public RuntimeDependency? GetMissingRuntimeDependency(McpChatPlugin mcpChatPlugin)
@@ -468,7 +383,7 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
     public async Task<IChatPluginScope> CreateScopeAsync(
         Assistant assistant,
         ChatContext chatContext,
-        ToolRulesets? toolRulesets,
+        IToolRulesets? toolRulesets,
         CancellationToken cancellationToken)
     {
         var pluginNameDeduplicator = new NumberedDeduplicator();
@@ -480,11 +395,10 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
         {
             foreach (var plugin in _builtInPluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
             {
-                // If toolRulesets?.IsPluginAllowed(plugin) returns null, follow plugin.IsEnabled
-                // otherwise, follow toolRulesets?.IsPluginAllowed(plugin)
-                // false || (null && false)
-                var isPluginAllowed = toolRulesets?.IsPluginAllowed(plugin);
-                if (isPluginAllowed is false || (isPluginAllowed is null && !plugin.IsEnabled)) continue;
+                var isPluginAllowed = toolRulesets?.IsPluginAllowed(plugin) ??
+                    _settings.Plugin.ToolEnablement.IsPluginAllowed(plugin) ??
+                    plugin.IsDefaultEnabled;
+                if (!isPluginAllowed) continue;
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
@@ -510,19 +424,11 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
                     }
                 }
 
-                var functionContext = new ChatPluginFunctionContext(
-                    assistant,
-                    chatContext,
-                    toolRulesets,
-                    _serviceProvider,
-                    cancellationToken);
-                var actualFunctions = (await plugin.GetAvailableFunctionsAsync(functionContext))
+                var actualFunctions = (await plugin.GetAvailableFunctionsAsync(cancellationToken))
                     .AsValueEnumerable()
-                    .Where(function =>
-                    {
-                        var isFunctionAllowed = toolRulesets?.IsFunctionAllowed(plugin, function);
-                        return isFunctionAllowed is true || (isFunctionAllowed is null && plugin.IsEnabled && function.IsEnabled);
-                    })
+                    .Where(function => toolRulesets?.IsFunctionAllowed(plugin, function) ??
+                        _settings.Plugin.ToolEnablement.IsFunctionAllowed(plugin, function) ??
+                        function.IsDefaultEnabled)
                     .ToArray();
                 if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
                 {
@@ -564,7 +470,7 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
             [
                 .. Process.ExtractTop(
                         functionName,
-                        pluginSnapshots.SelectMany(p => p.GetChatFunctions()).Select(f => f.KernelFunction.Name),
+                        pluginSnapshots.SelectMany(static plugin => plugin.GetScopedFunctionNames()),
                         limit: 5)
                     .Where(r => r.Score >= 60)
                     .Select(r => r.Value),
@@ -581,9 +487,6 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
     public void Dispose()
     {
         _runtimeManager.StatusChanged -= HandleRuntimeManagerStatusChanged;
-        _builtInPluginsObserver.Dispose();
-        _mcpPluginsObserver.Dispose();
-
         foreach (var mcpClient in _managedClients.Values)
         {
             mcpClient.DisposeAsync().Detach(IExceptionHandler.DangerouslyIgnoreAllException);
@@ -700,6 +603,7 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
 
         private readonly ChatPlugin _originalChatPlugin;
         private readonly ChatFunction[] _actualFunctions;
+        private readonly KernelFunction[] _kernelFunctions;
 
         public ChatPluginSnapshot(
             ChatPlugin originalChatPlugin,
@@ -709,33 +613,41 @@ public class ChatPluginManager : IChatPluginManager, IDisposable
         ) : base(pluginNameDeduplicator.Deduplicate(originalChatPlugin.Name))
         {
             _originalChatPlugin = originalChatPlugin;
-            _actualFunctions = actualFunctions
-                .AsValueEnumerable()
-                .Select(EnsureUniqueFunctionName)
+            _actualFunctions = [.. actualFunctions];
+            _kernelFunctions = _actualFunctions
+                .Select(CloneWithUniqueName)
                 .ToArray();
 
-            ChatFunction EnsureUniqueFunctionName(ChatFunction function)
+            KernelFunction CloneWithUniqueName(ChatFunction function)
             {
-                var metadata = function.KernelFunction.Metadata;
-                metadata.Name = functionNameDeduplicator.Deduplicate(metadata.Name);
-                return function;
+                var name = functionNameDeduplicator.Deduplicate(function.KernelFunction.Name);
+                return function.KernelFunction.Clone(name);
             }
         }
 
         public bool TryGetChatFunction(string name, [NotNullWhen(true)] out ChatFunction? function)
         {
-            function = _actualFunctions.AsValueEnumerable().FirstOrDefault(f => f.KernelFunction.Metadata.Name == name);
-            return function is not null;
+            for (var i = 0; i < _kernelFunctions.Length; i++)
+            {
+                if (_kernelFunctions[i].Name != name) continue;
+                function = _actualFunctions[i];
+                return true;
+            }
+
+            function = null;
+            return false;
         }
 
         public override bool TryGetFunction(string name, [NotNullWhen(true)] out KernelFunction? function)
         {
-            function = _actualFunctions.AsValueEnumerable().Select(f => f.KernelFunction).FirstOrDefault(f => f.Metadata.Name == name);
+            function = _kernelFunctions.AsValueEnumerable().FirstOrDefault(f => f.Name == name);
             return function is not null;
         }
 
-        public override IEnumerator<KernelFunction> GetEnumerator() => _actualFunctions.Select(f => f.KernelFunction).GetEnumerator();
+        public override IEnumerator<KernelFunction> GetEnumerator() => _kernelFunctions.AsEnumerable().GetEnumerator();
 
         public override IReadOnlyList<ChatFunction> GetChatFunctions() => _actualFunctions;
+
+        public IEnumerable<string> GetScopedFunctionNames() => _kernelFunctions.Select(static function => function.Name);
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Reflection;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.Mcp;
 using Lucide.Avalonia;
@@ -8,37 +6,34 @@ using Microsoft.SemanticKernel;
 
 namespace Everywhere.Chat.Plugins;
 
-[DynamicallyAccessedMembers(
-    DynamicallyAccessedMemberTypes.PublicConstructors |
-    DynamicallyAccessedMemberTypes.PublicFields |
-    DynamicallyAccessedMemberTypes.PublicProperties)]
-public abstract partial class ChatFunction : ObservableObject
+public abstract class ChatFunction
 {
     public virtual IDynamicLocaleKey HeaderKey => new DirectLocaleKey(KernelFunction.Name);
 
     public virtual IDynamicLocaleKey DescriptionKey => new DirectLocaleKey(KernelFunction.Description);
 
-    public LucideIconKind? Icon { get; set; }
+    public LucideIconKind? Icon { get; init; }
 
     /// <summary>
     /// The permissions required by this function.
     /// </summary>
     public virtual ChatFunctionPermissions Permissions => ChatFunctionPermissions.AllAccess;
 
-    [ObservableProperty]
-    public partial bool IsEnabled { get; set; } = true;
+    public bool IsDefaultEnabled { get; protected init; } = true;
 
-    [ObservableProperty]
-    public partial bool AutoApprove { get; set; }
+    /// <summary>
+    /// Gets whether calls to this function are automatically approved when no user override exists.
+    /// </summary>
+    public bool IsDefaultAutoApprove { get; protected init; }
 
     /// <summary>
     /// Gets or sets whether this function is allowed to be auto-approved by the user interface without prompting for consent.
     /// </summary>
-    public bool IsAutoApproveAllowed { get; set; }
+    public bool IsAutoApproveAllowed { get; protected init; } = true;
 
-    public bool IsExperimental { get; set; }
+    public bool IsExperimental { get; protected init; }
 
-    public bool IsVisible { get; set; } = true;
+    public bool IsVisible { get; protected init; } = true;
 
     public abstract KernelFunction KernelFunction { get; }
 
@@ -67,7 +62,7 @@ public sealed class BuiltInChatFunction : ChatFunction
     /// If the predicate returns true, the function call will be **approved** without prompting the user.
     /// If the predicate is null or returns null, the user will be prompted for consent without additional checks (default behavior).
     /// </summary>
-    public Func<FunctionCallContent, bool?>? OnPermissionConsent { get; }
+    public Func<FunctionCallContent, bool?>? OnPermissionConsent { get; init; }
 
     private readonly IFriendlyFunctionCallContentRenderer? _renderer;
 
@@ -75,9 +70,10 @@ public sealed class BuiltInChatFunction : ChatFunction
         Delegate method,
         ChatFunctionPermissions permissions,
         LucideIconKind? icon = null,
+        bool isDefaultEnabled = true,
+        bool? isDefaultAutoApprove = null,
         bool isAutoApproveAllowed = true,
         bool isExperimental = false,
-        bool isEnabled = true,
         bool isVisible = true,
         Func<FunctionCallContent, bool?>? onPermissionConsent = null,
         string? functionName = null,
@@ -115,22 +111,24 @@ public sealed class BuiltInChatFunction : ChatFunction
             DescriptionKey = descriptionKey;
         }
 
-        KernelFunction = functionName.IsNullOrWhiteSpace() && description is null
-            ? KernelFunctionFactory.CreateFromMethod(method)
-            : KernelFunctionFactory.CreateFromMethod(
+        Permissions = permissions;
+        Icon = icon;
+        IsDefaultEnabled = isDefaultEnabled;
+        IsDefaultAutoApprove = isDefaultAutoApprove ?? permissions <= ChatFunctionPermissions.AutoGranted;
+        IsAutoApproveAllowed = isAutoApproveAllowed;
+        IsExperimental = isExperimental;
+        IsVisible = isVisible;
+        OnPermissionConsent = onPermissionConsent;
+
+        KernelFunction = functionName.IsNullOrWhiteSpace() && description is null ?
+            KernelFunctionFactory.CreateFromMethod(method) :
+            KernelFunctionFactory.CreateFromMethod(
                 method,
                 new KernelFunctionFromMethodOptions
                 {
                     FunctionName = functionName,
                     Description = description
                 });
-        Permissions = permissions;
-        Icon = icon;
-        IsAutoApproveAllowed = isAutoApproveAllowed;
-        IsExperimental = isExperimental;
-        IsEnabled = isEnabled;
-        IsVisible = isVisible;
-        OnPermissionConsent = onPermissionConsent;
 
         if (method.Method.GetCustomAttributes<FriendlyFunctionCallContentRendererAttribute>(false).FirstOrDefault() is
             { RendererType: { } rendererType })
@@ -158,18 +156,18 @@ public class McpChatFunction : ChatFunction
 
     public override KernelFunction KernelFunction => _kernelFunction;
 
-    internal string OriginalName { get; private set; }
+    public string OriginalName { get; private set; }
 
     private KernelFunction _kernelFunction;
 
-    internal McpChatFunction(ManagedMcpClientTool tool)
+    public McpChatFunction(ManagedMcpClientTool tool)
     {
         OriginalName = tool.ProtocolTool.Name;
         _kernelFunction = tool.AsKernelFunction();
         IsAutoApproveAllowed = true;
     }
 
-    internal void Update(ManagedMcpClientTool tool)
+    public void Update(ManagedMcpClientTool tool)
     {
         OriginalName = tool.ProtocolTool.Name;
         _kernelFunction = tool.AsKernelFunction();

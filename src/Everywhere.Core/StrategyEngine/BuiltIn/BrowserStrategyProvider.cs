@@ -1,3 +1,4 @@
+using Everywhere.Chat.Plugins;
 using Everywhere.StrategyEngine.Conditions;
 using Lucide.Avalonia;
 
@@ -118,7 +119,7 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
             Condition = Condition,
             ToolRulesets = new(1)
             {
-                { "builtin.web_browser.*", true }
+                { "builtin.web_browser", new ToolFunctionRulesets { { "*", true } } }
             },
             Body =
                 """

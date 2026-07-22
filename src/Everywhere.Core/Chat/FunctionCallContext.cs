@@ -30,7 +30,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
     public string InvocationId { get; }
 
-    public IDictionary<string, bool> IsPermissionGrantedRecords { get; }
+    public ToolAutoApprovalSettings ToolAutoApproval { get; }
 
     public IChatPluginDisplaySink DisplaySink { get; }
 
@@ -57,7 +57,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         ChatFunction chatFunction,
         FunctionCallChatMessage functionCallChatMessage,
         FunctionCallContent functionCallContent,
-        IDictionary<string, bool> isPermissionGrantedRecords)
+        ToolAutoApprovalSettings toolAutoApproval)
     {
         if (functionCallContent.Id.IsNullOrEmpty())
             throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
@@ -69,12 +69,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         FunctionCallChatMessage = functionCallChatMessage;
         FunctionCallContent = functionCallContent;
         InvocationId = functionCallContent.Id;
-        IsPermissionGrantedRecords = isPermissionGrantedRecords;
+        ToolAutoApproval = toolAutoApproval;
         DisplaySink = functionCallChatMessage.DisplaySink;
         _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
     }
 
-    public string PermissionKey => $"{ChatPlugin.Key}.{ChatFunction.KernelFunction.Name}";
+    public string PermissionKey => ToolSettingsKey.ForFunction(ChatPlugin, ChatFunction);
 
     public bool IsPermissionGranted
     {
@@ -82,14 +82,13 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             var permissionKey = PermissionKey;
 
-            // If the function requires permissions that are less than FileAccess, we consider it as low-risk and grant permission by default.
-            if (ChatFunction.Permissions <= ChatFunctionPermissions.AutoGranted &&
-                (!ChatContext.IsPermissionGrantedRecords.ContainsKey(permissionKey) || ChatContext.IsPermissionGrantedRecords[permissionKey]))
+            if (IsGloballyAutoApproved() &&
+                (!ChatContext.ToolSessionApprovals.ContainsKey(permissionKey) || ChatContext.ToolSessionApprovals[permissionKey]))
             {
                 return true;
             }
 
-            ChatContext.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isSessionGranted);
+            ChatContext.ToolSessionApprovals.TryGetValue(permissionKey, out var isSessionGranted);
             return isSessionGranted;
         }
     }
@@ -103,11 +102,11 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && ChatFunction.AutoApprove) return RequestConsentResult.Accepted;
+        if (id.IsNullOrEmpty() && IsGloballyAutoApproved()) return RequestConsentResult.Accepted;
 
-        var permissionKey = id.IsNullOrEmpty() ? PermissionKey : $"{PermissionKey}.{id}";
-        IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isGloballyGranted);
-        ChatContext.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isSessionGranted);
+        var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
+        ToolAutoApproval.TryGetValue(permissionKey, out var isGloballyGranted);
+        ChatContext.ToolSessionApprovals.TryGetValue(permissionKey, out var isSessionGranted);
         if (isGloballyGranted || isSessionGranted)
         {
             return RequestConsentResult.Accepted;
@@ -123,12 +122,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             case ConsentDecision.AlwaysAllow:
             {
-                IsPermissionGrantedRecords[permissionKey] = true;
+                ToolAutoApproval[permissionKey] = true;
                 return RequestConsentResult.Accepted;
             }
             case ConsentDecision.AllowSession:
             {
-                ChatContext.IsPermissionGrantedRecords[permissionKey] = true;
+                ChatContext.ToolSessionApprovals[permissionKey] = true;
                 return RequestConsentResult.Accepted;
             }
             case ConsentDecision.AllowOnce:
@@ -151,6 +150,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     }
 
     #endregion
+
+    private bool IsGloballyAutoApproved()
+    {
+        if (!ChatFunction.IsAutoApproveAllowed) return false;
+        return ToolAutoApproval.TryGetValue(PermissionKey, out var value) ? value : ChatFunction.IsDefaultAutoApprove;
+    }
 
     /// <summary>
     /// Runs an interaction inside this invocation's transient user-input wait state.
