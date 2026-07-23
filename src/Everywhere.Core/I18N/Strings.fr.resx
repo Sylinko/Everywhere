@@ -3658,6 +3658,9 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>En cours</value>
     </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Votre action est requise</value>
+    </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
         <value>{0:0.0} secondes</value>
     </data>

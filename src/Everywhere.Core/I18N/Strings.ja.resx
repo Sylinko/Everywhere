@@ -3658,6 +3658,9 @@
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>作業中</value>
     </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>あなたの操作が必要です</value>
+    </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
         <value>{0:0.0} 秒</value>
     </data>

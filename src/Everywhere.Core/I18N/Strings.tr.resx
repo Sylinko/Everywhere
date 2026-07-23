@@ -3658,6 +3658,9 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>Devam Ediyor</value>
     </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Eyleminiz Gerekli</value>
+    </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
         <value>{0:0.0} Saniye</value>
     </data>

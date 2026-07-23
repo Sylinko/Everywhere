@@ -3659,6 +3659,9 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>Em Andamento</value>
     </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Sua ação é necessária</value>
+    </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
         <value>{0:0.0} Segundos</value>
     </data>

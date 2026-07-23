@@ -3658,6 +3658,9 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
         <value>En Progreso</value>
     </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Se requiere tu acción</value>
+    </data>
     <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
         <value>{0:0.0} Segundos</value>
     </data>
