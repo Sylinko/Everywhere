@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>提供访问系统文件的能力, 如枚举、创建、删除、重命名、读取或写入文件等。</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>已批准的路径</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>匹配这些绝对路径 glob 的文件系统操作无需再次请求路径批准。使用 ** 表示任意深度的目录，例如 C:\** 或 D:\**\3rd。</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>绝对 glob 路径，例如 C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>无效的操作。</value>
     </data>
@@ -1188,6 +1197,18 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>覆盖此文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>允许替换文件内容？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>总是允许上述路径</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>总是允许 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>总是允许选择的文件夹…</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>即将删除系统文件或文件夹</value>
@@ -3718,6 +3739,9 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>文件操作未获允许。</value>
+    </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>请输入带有有效 glob 模式的完整路径。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>搜索或替换模式无效。</value>

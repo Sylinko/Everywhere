@@ -1,5 +1,3 @@
-using ZLinq;
-
 namespace Everywhere.Common;
 
 /// <summary>
@@ -84,6 +82,40 @@ public static class PathContainment
         }
     }
 
+    /// <summary>
+    /// Ge
+    /// </summary>
+    /// <param name="paths"></param>
+    /// <returns></returns>
+    public static string? GetCommonParentDirectory(IReadOnlyList<string> paths)
+    {
+        if (paths.Count == 0 || GetParentDirectory(paths[0]) is not { } firstParent) return null;
+
+        for (var i = 1; i < paths.Count; i++)
+        {
+            if (GetParentDirectory(paths[i]) is not { } parent || !string.Equals(parent, firstParent, GetPathComparison()))
+            {
+                return null;
+            }
+        }
+
+        return firstParent;
+    }
+
+    private static string? GetParentDirectory(string path)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            var pathWithoutTrailingSeparator = Path.TrimEndingDirectorySeparator(fullPath);
+            return Path.GetDirectoryName(pathWithoutTrailingSeparator) ?? Path.GetPathRoot(fullPath);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
     private static bool IsLexicallyInsideDirectory(string path, string directory)
     {
         var fullPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
@@ -92,7 +124,7 @@ public static class PathContainment
             fullPath.StartsWith(fullDirectory + Path.DirectorySeparatorChar, GetPathComparison());
     }
 
-    private static StringComparison GetPathComparison()
+    public static StringComparison GetPathComparison()
     {
 #if WINDOWS
         return StringComparison.OrdinalIgnoreCase;

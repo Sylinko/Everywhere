@@ -5,6 +5,7 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Core.I18N;
 using Everywhere.I18N;
 using Microsoft.Extensions.Logging;
@@ -141,6 +142,46 @@ public class FileSystemPluginTests
     }
 
     [Test]
+    public void FileConsentOptions_UseParentFolderOnlyWhenAllPathsShareIt()
+    {
+        var getCommonParent = typeof(FileSystemPlugin).GetMethod(
+            "GetCommonParentDirectory",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var buildOptions = typeof(FileSystemPlugin).GetMethod(
+            "BuildConsentCustomOptions",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.Multiple(() =>
+        {
+            Assert.That(getCommonParent, Is.Not.Null);
+            Assert.That(buildOptions, Is.Not.Null);
+        });
+
+        var parent = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var commonPaths = new[] { Path.Combine(parent, "one.txt"), Path.Combine(parent, "two.txt") };
+        var differentPaths = new[] { Path.Combine(parent, "one.txt"), Path.Combine(parent, "nested", "two.txt") };
+        var commonParent = (string?)getCommonParent!.Invoke(
+            null,
+            new object?[] { commonPaths });
+        var differentParent = (string?)getCommonParent.Invoke(
+            null,
+            new object?[] { differentPaths });
+        var commonOptions = (IReadOnlyList<RequestConsentCustomOption>)buildOptions!.Invoke(
+            null,
+            new object?[] { commonParent, false })!;
+        var differentOptions = (IReadOnlyList<RequestConsentCustomOption>)buildOptions.Invoke(
+            null,
+            new object?[] { differentParent, false })!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(commonParent, Is.EqualTo(parent));
+            Assert.That(differentParent, Is.Null);
+            Assert.That(commonOptions, Has.Count.EqualTo(2));
+            Assert.That(differentOptions, Has.Count.EqualTo(1));
+        });
+    }
+
+    [Test]
     public void GetWriteConsentDescriptionKey_UsesCreateDescriptionWhenFileDoesNotExist()
     {
         Assert.Multiple(() =>
@@ -179,8 +220,9 @@ public class FileSystemPluginTests
             var displaySink = new ChatPluginDisplaySink();
             var chatContext = new ChatContext();
             var plugin = new FileSystemPlugin(
-                Substitute.For<ILogger<FileSystemPlugin>>(),
-                new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]));
+                new Settings(Substitute.For<IServiceProvider>()),
+                new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]),
+                Substitute.For<ILogger<FileSystemPlugin>>());
 
             var result = await InvokeReplaceFileContentAsync(
                 plugin,
@@ -218,11 +260,13 @@ public class FileSystemPluginTests
                 Arg.Any<IDynamicLocaleKey>(),
                 Arg.Any<ChatPluginDisplayBlock?>(),
                 Arg.Any<RequestConsentRememberMasks>(),
+                Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new RequestConsentResult(false, "denied")));
         var plugin = new FileSystemPlugin(
-            Substitute.For<ILogger<FileSystemPlugin>>(),
-            new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]));
+            new Settings(Substitute.For<IServiceProvider>()),
+            new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]),
+            Substitute.For<ILogger<FileSystemPlugin>>());
 
         var method = typeof(FileSystemPlugin).GetMethod(
             "WriteToFileAsync",

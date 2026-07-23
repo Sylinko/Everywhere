@@ -26,9 +26,26 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
         var modified = TryMoveProperty(root, "Plugin.IsEnabledRecords", "Plugin.ToolEnablement");
         modified |= TryMoveProperty(root, "Plugin.IsPermissionGrantedRecords", "Plugin.ToolAutoApproval");
         modified |= ConvertKeys(GetPathNode(root, "Plugin.ToolEnablement") as JsonObject, supportsPermissionIds: false);
-        modified |= ConvertKeys(GetPathNode(root, "Plugin.ToolAutoApproval") as JsonObject, supportsPermissionIds: true);
+        var autoApproval = GetPathNode(root, "Plugin.ToolAutoApproval") as JsonObject;
+        modified |= ConvertKeys(autoApproval, supportsPermissionIds: true);
+        modified |= RemoveFileSystemPathApprovals(autoApproval);
         Console.WriteLine(root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         return modified;
+    }
+
+    private static bool RemoveFileSystemPathApprovals(JsonObject? records)
+    {
+        if (records is null) return false;
+
+        var functionPrefix = ToolSettingsKey.ForFunctionPrefix("builtin.file_system");
+        var keys = records
+            .AsValueEnumerable()
+            .Select(static pair => pair.Key)
+            .Where(key => key.StartsWith(functionPrefix, StringComparison.OrdinalIgnoreCase) &&
+                key.Contains("/permission/|", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        foreach (var key in keys) records.Remove(key);
+        return keys.Length > 0;
     }
 
     private static bool ConvertKeys(JsonObject? records, bool supportsPermissionIds)
@@ -36,7 +53,7 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
         if (records is null) return false;
 
         var replacements = new List<(string OldKey, string NewKey, JsonNode? Value)>();
-        foreach (var (key, value) in records)
+        foreach (var (key, value) in records.AsValueEnumerable())
         {
             if (key.StartsWith("plugin/", StringComparison.Ordinal) ||
                 key.StartsWith("function/", StringComparison.Ordinal))
@@ -52,7 +69,7 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
             replacements.Add((key, newKey, value?.DeepClone()));
         }
 
-        foreach (var (oldKey, newKey, value) in replacements)
+        foreach (var (oldKey, newKey, value) in replacements.AsValueEnumerable())
         {
             records.Remove(oldKey);
             records[newKey] = value;
@@ -74,7 +91,7 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
 
     private static bool TrySplitLegacyKey(string key, out string pluginKey, out string? functionAndPermission)
     {
-        foreach (var candidate in BuiltInPluginKeys.OrderByDescending(static candidate => candidate.Length))
+        foreach (var candidate in BuiltInPluginKeys.AsValueEnumerable().OrderByDescending(static candidate => candidate.Length))
         {
             if (key.Equals(candidate, StringComparison.OrdinalIgnoreCase))
             {
@@ -91,8 +108,7 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
             }
         }
 
-        if (key.StartsWith("mcp.", StringComparison.OrdinalIgnoreCase) && key.Length >= 40 &&
-            Guid.TryParse(key.AsSpan(4, 36), out _))
+        if (key.StartsWith("mcp.", StringComparison.OrdinalIgnoreCase) && key.Length >= 40 && Guid.TryParse(key.AsSpan(4, 36), out _))
         {
             pluginKey = key[..40];
             functionAndPermission = key.Length == 40 ? null : key[41..];

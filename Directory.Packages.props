@@ -32,6 +32,7 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.FileSystemGlobbing" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftPackageVersion)" />

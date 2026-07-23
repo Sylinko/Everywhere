@@ -1,9 +1,12 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -20,14 +23,17 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Description);
     public override LucideIconKind? Icon => LucideIconKind.FileBox;
+    public override IReadOnlyList<SettingsItem> SettingsItems => _fileSystemSettings.SettingsItems;
 
-    private readonly ILogger<FileSystemPlugin> _logger;
+    private readonly FileSystemSettings _fileSystemSettings;
     private readonly FileHandlerContextFactory _contextFactory;
+    private readonly ILogger<FileSystemPlugin> _logger;
 
-    public FileSystemPlugin(ILogger<FileSystemPlugin> logger, FileHandlerContextFactory contextFactory) : base("file_system")
+    public FileSystemPlugin(Settings settings, FileHandlerContextFactory contextFactory, ILogger<FileSystemPlugin> logger) : base("file_system")
     {
-        _logger = logger;
+        _fileSystemSettings = settings.Plugin.FileSystem;
         _contextFactory = contextFactory;
+        _logger = logger;
 
         _functionsSource.Edit(list =>
         {
@@ -535,9 +541,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 TextDifferenceBuilder.BuildLineDiff(difference, original, proposed);
                 userInterface.DisplaySink.AppendFileDifference(difference, original);
                 await difference.WaitForAcceptanceAsync(token);
-                return difference.Changes.AsValueEnumerable().Any(change => change.Accepted is true) ?
-                    new FileReviewResult(difference.Apply(original), difference.ToModelSummary(original, default)) :
-                    new FileReviewResult(null, "All changes were rejected by user.");
+                if (!difference.Changes.AsValueEnumerable().Any(change => change.Accepted is true))
+                {
+                    return new FileReviewResult(null, "All changes were rejected by user.");
+                }
+
+                await RequestFileOperationConsentAsync(
+                    userInterface,
+                    chatContext,
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header),
+                    null,
+                    [context.Path],
+                    token);
+                return new FileReviewResult(difference.Apply(original), difference.ToModelSummary(original, default));
             },
             cancellationToken);
     }
@@ -796,7 +812,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     private static ChatPluginFileReferencesActivityPreview CreateFilePreview(string path, IDynamicLocaleKey? prefixKey = null) =>
         new([new ChatPluginFileReference(path)], prefixKey);
 
-    private static async Task RequestFileOperationConsentAsync(
+    private async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
         ChatContext chatContext,
         IDynamicLocaleKey headerKey,
@@ -804,6 +820,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         string[] paths,
         CancellationToken cancellationToken)
     {
+        if (chatContext.FunctionCallContext.Value?.IsAutoApproval is true) return;
+
         var workingDirectory = chatContext.EnsureWorkingDirectory();
         if (paths.Length > 0 &&
             paths.AsValueEnumerable().All(path => Path.IsPathFullyQualified(path) && PathContainment.IsInsideDirectory(path, workingDirectory)))
@@ -811,33 +829,155 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             return;
         }
 
-        var container = new ChatPluginContainerDisplayBlock();
-        if (descriptionKey is not null)
-        {
-            container.Add(new ChatPluginDynamicLocaleKeyDisplayBlock(descriptionKey));
-        }
+        if (_fileSystemSettings.ArePathsApproved(paths)) return;
 
+        // Build container. TODO: concise description, e.g. Move file
+        var container = new ChatPluginContainerDisplayBlock();
+        if (descriptionKey is not null) container.Add(new ChatPluginDynamicLocaleKeyDisplayBlock(descriptionKey));
         container.Add(
             new ChatPluginFileReferencesDisplayBlock(paths.AsValueEnumerable().Select(path => new ChatPluginFileReference(path)).ToArray())
             {
                 TotalReferenceCount = paths.Length
             });
+
+        // Build custom options
+        var commonParentDirectory = PathContainment.GetCommonParentDirectory(paths);
+        var customOptions = new List<RequestConsentCustomOption>
+        {
+            new(
+                FileSystemConsentOption.ExactPaths,
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths),
+                LucideIconKind.FileCheck)
+        };
+        if (commonParentDirectory is not null)
+        {
+            customOptions.Add(
+                new RequestConsentCustomOption(
+                    FileSystemConsentOption.ParentDirectories,
+                    new FormattedDynamicLocaleKey(
+                        LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories,
+                        new DirectLocaleKey(commonParentDirectory)),
+                    LucideIconKind.FolderCheck));
+        }
+        if (CanPickCustomDirectory())
+        {
+            customOptions.Add(
+                new RequestConsentCustomOption(
+                    FileSystemConsentOption.CustomDirectory,
+                    new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory),
+                    LucideIconKind.FolderCog));
+        }
+
         var consent = await userInterface.RequestConsentAsync(
-            BuildConsentId(paths),
+            Guid.CreateVersion7().ToString(), // Random, not remembered
             headerKey,
             container,
-            RequestConsentRememberMasks.AllowOnce | RequestConsentRememberMasks.AllowSession,
+            RequestConsentRememberMasks.AllowOnce,
+            customOptions,
             cancellationToken: cancellationToken);
+
         if (!consent)
         {
-            throw ToHandledException(
-                new UnauthorizedAccessException(consent.FormatReason("User denied consent for this operation.")),
+            throw new HandledException(
+                new UnauthorizedAccessException(
+                    consent.FormatReason(
+                        "The user denied the file-operation approval request, so the operation was not performed.")),
                 LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
+        }
+
+        if (consent.CustomOption?.Key is not FileSystemConsentOption option) return;
+
+        switch (option)
+        {
+            case FileSystemConsentOption.ExactPaths:
+            {
+                foreach (var path in paths) _fileSystemSettings.AddApprovalPath(path);
+                break;
+            }
+            case FileSystemConsentOption.ParentDirectories when commonParentDirectory is not null:
+            {
+                _fileSystemSettings.AddApprovalPath(CreateDirectoryApprovalPattern(commonParentDirectory));
+                break;
+            }
+            case FileSystemConsentOption.CustomDirectory:
+            {
+                string? selectedDirectory;
+                try
+                {
+                    var folders = await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        var options = new FolderPickerOpenOptions { AllowMultiple = false };
+                        if (!commonParentDirectory.IsNullOrWhiteSpace())
+                        {
+                            options.SuggestedStartLocation = await App.StorageProvider.TryGetFolderFromPathAsync(commonParentDirectory);
+                        }
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                        return await App.StorageProvider.OpenFolderPickerAsync(options);
+                    });
+                    selectedDirectory = folders.FirstOrDefault()?.Path.LocalPath;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new HandledException(
+                        new InvalidOperationException(
+                            $"The user selected custom-folder approval, but the folder picker failed to open: {ex.Message} No approval was saved and the operation was not performed.",
+                            ex),
+                        LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                if (selectedDirectory.IsNullOrWhiteSpace())
+                {
+                    throw new HandledException(
+                        new UnauthorizedAccessException(
+                            "The user selected custom-folder approval and then canceled folder selection. No approval was saved and the operation was not performed."),
+                        LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
+                }
+
+                if (!paths.AsValueEnumerable().All(path => PathContainment.IsInsideDirectory(path, selectedDirectory)))
+                {
+                    throw new HandledException(
+                        new UnauthorizedAccessException(
+                            "The user chose a folder for always-allow approval, but that folder does not contain every path required by this operation. No approval was saved and the operation was not performed."),
+                        LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
+                }
+
+                _fileSystemSettings.AddApprovalPath(CreateDirectoryApprovalPattern(selectedDirectory));
+                break;
+            }
+        }
+
+        bool CanPickCustomDirectory()
+        {
+            try
+            {
+                return App.StorageProvider.CanPickFolder;
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Failed to check if folder picking is supported.");
+                return false;
+            }
+        }
+
+        static string CreateDirectoryApprovalPattern(string path)
+        {
+            var normalized = FileSystemApprovalPath.Normalize(Path.GetFullPath(path));
+            return normalized.TrimEnd('/') + "/**";
         }
     }
 
-    private static string BuildConsentId(IReadOnlyList<string> paths) =>
-        "|" + string.Join('|', paths.Order().Select(Path.TrimEndingDirectorySeparator));
+    private enum FileSystemConsentOption
+    {
+        ExactPaths,
+        ParentDirectories,
+        CustomDirectory
+    }
 
     private static FileSystemInfo EnsureFileSystemInfo(string path)
     {
@@ -873,9 +1013,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             }
         }
     }
-
-    private static HandledException ToHandledException(Exception exception, string friendlyMessageKey) =>
-        new(exception, new DynamicLocaleKey(friendlyMessageKey), showDetails: false);
 
     /// <summary>
     /// Holds matching logical lines and their output allocation for one file.

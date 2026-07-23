@@ -1,0 +1,51 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:configuration="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:FileSystemSettingsControl}"
+    TargetType="v:FileSystemSettingsControl">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="v:FileSystemSettingsControl">
+          <shadui:DataList
+            Classes="Draggable"
+            AddCommand="{Binding Settings.AddEmptyApprovalPathCommand, RelativeSource={RelativeSource TemplatedParent}}"
+            ItemsSource="{Binding Settings.ApprovalPaths, RelativeSource={RelativeSource TemplatedParent}}"
+            RemoveCommand="{Binding Settings.RemoveApprovalPathCommand, RelativeSource={RelativeSource TemplatedParent}}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <shadui:DataList.ItemTemplate>
+              <DataTemplate x:DataType="configuration:FileSystemApprovalPath">
+                <Grid
+                  ColumnDefinitions="Auto,*" ColumnSpacing="4">
+                  <Interaction.Behaviors>
+                    <KeyGestureTrigger
+                      Gesture="Enter" MarkAsHandled="True">
+                      <InvokeCommandAction
+                        Command="{Binding $parent[v:FileSystemSettingsControl].Settings.AddEmptyApprovalPathCommand}"
+                        CommandParameter="{Binding $parent[shadui:DataListItem], Converter={x:Static vc:CommonConverters.IndexFromContainer}}"/>
+                    </KeyGestureTrigger>
+                  </Interaction.Behaviors>
+
+                  <LucideIcon
+                    Grid.Column="0" VerticalAlignment="Center"
+                    Kind="GripVertical"
+                    Size="{DynamicResource FontSizeXl}"/>
+                  <shadui:EditableTextBlock
+                    Grid.Column="1" VerticalAlignment="Center"
+                    PlaceholderText="{I18N {x:Static LocaleKey.FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText}}"
+                    Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap">
+                    <Interaction.Behaviors>
+                      <AutoFocusBehavior/>
+                    </Interaction.Behaviors>
+                  </shadui:EditableTextBlock>
+                </Grid>
+              </DataTemplate>
+            </shadui:DataList.ItemTemplate>
+          </shadui:DataList>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

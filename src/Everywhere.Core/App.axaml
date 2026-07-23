@@ -47,6 +47,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/CustomAssistantInformationForm.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/DebugFeaturesControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/FontFamilyPicker.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/FileSystemSettingsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/KeyboardShortcutInputBox.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/ManageApiKeyForm.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/McpImportForm.axaml"/>

@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Provides the ability to access files, such as enumerating, creating, deleting, renaming, reading, or writing.</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Approved paths</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>File-system operations matching these absolute glob patterns are approved without another path prompt. Use ** for arbitrary directory depth, for example C:\** or D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Absolute glob path, for example C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Invalid operation.</value>
     </data>
@@ -1187,6 +1196,18 @@ My intelligence is powered by large language models, and I need your help to con
     </data>
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>Allow file content replacement?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Always allow the listed paths</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Always allow {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Always allow a selected folder…</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>System file or directory will be deleted</value>
@@ -3717,6 +3738,9 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>The file operation was not allowed.</value>
+    </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Enter a fully qualified path with a valid glob pattern.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>The search or replacement pattern is invalid.</value>

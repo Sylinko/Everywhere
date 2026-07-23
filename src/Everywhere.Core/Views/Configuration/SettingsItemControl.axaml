@@ -59,28 +59,19 @@
                   <DockPanel
                     x:Name="PART_ContentDockPanel" HorizontalSpacing="32"
                     VerticalSpacing="8">
-                    <DockPanel.Styles>
-                      <Style Selector="ContentControl">
-                        <Setter Property="DockPanel.Dock" Value="Bottom"/>
-                        <Style Selector="^.right:not(.FullSize)">
-                          <Setter Property="DockPanel.Dock" Value="Right"/>
-                        </Style>
-                      </Style>
-                    </DockPanel.Styles>
-
                     <ContentControl
                       x:Name="PART_SettingsItemContentControl" VerticalAlignment="Center"
                       ClipToBounds="False"
                       Content="{TemplateBinding Item}"
                       IsVisible="{Binding !Item?.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
-                      <Classes.FullSize>
+                      <Classes.FullWidth>
                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                           <Binding
                             ElementName="HeaderTextBlock" Path="!IsVisible"/>
                           <Binding
                             ElementName="DescriptionTextBlock" Path="!IsVisible"/>
                         </MultiBinding>
-                      </Classes.FullSize>
+                      </Classes.FullWidth>
 
                       <Interaction.Behaviors>
                         <shadui:AdaptiveRatioBehavior
@@ -330,6 +321,13 @@
       </Style>
     </Style>
 
+    <Style Selector="^ /template/ ContentControl#PART_SettingsItemContentControl">
+      <Setter Property="DockPanel.Dock" Value="Bottom"/>
+      <Style Selector="^.right:not(.FullSize)">
+        <Setter Property="DockPanel.Dock" Value="Right"/>
+      </Style>
+    </Style>
+
     <!--  Ghost  -->
     <Style Selector="^.Ghost">
       <Setter Property="BorderThickness" Value="0"/>
@@ -356,6 +354,10 @@
       <Style Selector="^ PathIcon#PART_Icon">
         <Setter Property="IsVisible" Value="False"/>
       </Style>
+    </Style>
+
+    <Style Selector="^.FullWidth /template/ ContentControl#PART_SettingsItemContentControl">
+      <Setter Property="DockPanel.Dock" Value="Bottom"/>
     </Style>
   </ControlTheme>
 </ResourceDictionary>

@@ -20,6 +20,7 @@ public class ToolSettingsMigrationTests
             },
             "IsPermissionGrantedRecords": {
               "builtin.file_system.write_to_file": true,
+              "builtin.file_system.write_to_file.|C:\\Source\\Everywhere\\**": true,
               "builtin.file_system.write_to_file.overwrite": true
             }
           }
@@ -40,7 +41,14 @@ public class ToolSettingsMigrationTests
             Assert.That(enablement[ToolSettingsKey.ForFunction("builtin.file_system", "read_file")]!.GetValue<bool>(), Is.False);
             Assert.That(enablement[ToolSettingsKey.ForFunction($"mcp.{mcpId}", "search")]!.GetValue<bool>(), Is.True);
             Assert.That(autoApproval[ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")]!.GetValue<bool>(), Is.True);
-            Assert.That(autoApproval[$"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/overwrite"]!.GetValue<bool>(), Is.True);
+            Assert.That(
+                autoApproval.Any(pair => pair.Key.StartsWith(
+                    $"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/|",
+                    StringComparison.OrdinalIgnoreCase)),
+                Is.False);
+            Assert.That(
+                autoApproval[$"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/overwrite"]!.GetValue<bool>(),
+                Is.True);
         });
     }
 }

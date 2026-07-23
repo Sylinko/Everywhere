@@ -29,6 +29,11 @@ public sealed class PluginSettings(IServiceProvider serviceProvider) : SettingsB
     public WebSearchEngineSettings WebSearchEngine { get; set; } = new();
 
     /// <summary>
+    /// Gets the file-system path approval settings.
+    /// </summary>
+    public FileSystemSettings FileSystem { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the web browser settings.
     /// </summary>
     public WebBrowserSettings WebBrowser { get; set; } = new();

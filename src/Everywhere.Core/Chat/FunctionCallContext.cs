@@ -48,6 +48,21 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         set => _activityPresentationSlot.Preview = value;
     }
 
+    /// <summary>
+    /// Gets whether the current function call is covered by the function-level automatic approval setting.
+    /// </summary>
+    /// <remarks>
+    /// Path-scoped approvals are evaluated separately by file-system operations and do not alter this value.
+    /// </remarks>
+    public bool IsAutoApproval
+    {
+        get
+        {
+            if (!ChatFunction.IsAutoApproveAllowed) return false;
+            return ToolAutoApproval.TryGetValue(PermissionKey, out var value) ? value : ChatFunction.IsDefaultAutoApprove;
+        }
+    }
+
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
 
     public FunctionCallContext(
@@ -82,8 +97,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             var permissionKey = PermissionKey;
 
-            if (IsGloballyAutoApproved() &&
-                (!ChatContext.ToolAutoApproval.ContainsKey(permissionKey) || ChatContext.ToolAutoApproval[permissionKey]))
+            if (IsAutoApproval && (!ChatContext.ToolAutoApproval.ContainsKey(permissionKey) || ChatContext.ToolAutoApproval[permissionKey]))
             {
                 return true;
             }
@@ -103,7 +117,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && IsGloballyAutoApproved()) return RequestConsentResult.Accept;
+        if (id.IsNullOrEmpty() && IsAutoApproval) return RequestConsentResult.Accept;
 
         var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
         ToolAutoApproval.TryGetValue(permissionKey, out var isGloballyGranted);
@@ -156,12 +170,6 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     }
 
     #endregion
-
-    private bool IsGloballyAutoApproved()
-    {
-        if (!ChatFunction.IsAutoApproveAllowed) return false;
-        return ToolAutoApproval.TryGetValue(PermissionKey, out var value) ? value : ChatFunction.IsDefaultAutoApprove;
-    }
 
     /// <summary>
     /// Runs an interaction inside this invocation's transient user-input wait state.
