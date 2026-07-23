@@ -1,10 +1,8 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Reactive.Disposables;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
 using Everywhere.AI;
 using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Collections;
@@ -18,7 +16,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using ShadUI;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -614,14 +611,15 @@ public class ChatPluginManager : IChatPluginManager
         {
             _originalChatPlugin = originalChatPlugin;
             _actualFunctions = [.. actualFunctions];
-            _kernelFunctions = _actualFunctions
-                .Select(CloneWithUniqueName)
-                .ToArray();
+            _kernelFunctions = _actualFunctions.AsValueEnumerable().Select(CloneWithUniqueName).ToArray();
 
             KernelFunction CloneWithUniqueName(ChatFunction function)
             {
                 var name = functionNameDeduplicator.Deduplicate(function.KernelFunction.Name);
-                return function.KernelFunction.Clone(name);
+                // Keep tool names flat to avoid sending redundant plugin names to the model.
+                var kernelFunction = function.KernelFunction.Clone();
+                kernelFunction.Metadata.Name = name;
+                return kernelFunction;
             }
         }
 
