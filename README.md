@@ -18,6 +18,7 @@
   [![.NET 10][.NET 10]][.NET-url][![Avalonia][Avalonia]][Avalonia-url]
   [![Join Discord](https://dcbadge.limes.pink/api/server/5fyg6nE3yn)](https://discord.gg/5fyg6nE3yn)
   [![Join QQ Group][QQ-Group]](https://qm.qq.com/cgi-bin/qm/qr?k=wp9aDBBnLc7pYATqT99tB-N2ZP2ETmJC&jump_from=webapi&authKey=97qUJfsQoI70dUNcgBZ0C3HCZeiEn8inLT7pzg8x+KinbQwfIrHFu3dB2+aHMbRD)
+  ![tokens](https://img.shields.io/endpoint?url=https://gittokens.rsamf.com/badge/Sylinko/Everywhere)
 
   <p align="center">
     <strong><a href="https://everywhere.sylinko.com">📖 Explore Official Docs</a></strong>
