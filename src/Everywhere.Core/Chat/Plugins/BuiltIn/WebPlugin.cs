@@ -13,7 +13,6 @@ using Everywhere.Web;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -22,6 +21,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Description);
     public override LucideIconKind? Icon => LucideIconKind.Globe;
+    public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _webBrowserSettings.SettingsItems;
 
     private readonly WebSearchEngineSettings _webSearchEngineSettings;

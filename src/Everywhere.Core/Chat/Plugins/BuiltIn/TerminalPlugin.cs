@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
-using DynamicData;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
@@ -12,7 +11,6 @@ using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Porta.Pty;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -24,11 +22,10 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 public sealed partial class TerminalPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
-
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
-
     public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
-
+    // TODO: uncomment this after Agentic Approval is done
+    // public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _pluginSettings.SettingsItems;
 
     private readonly TerminalPluginSettings _pluginSettings;

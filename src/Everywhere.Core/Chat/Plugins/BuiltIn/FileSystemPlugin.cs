@@ -23,6 +23,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_Description);
     public override LucideIconKind? Icon => LucideIconKind.FileBox;
+    public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _fileSystemSettings.SettingsItems;
 
     private readonly FileSystemSettings _fileSystemSettings;

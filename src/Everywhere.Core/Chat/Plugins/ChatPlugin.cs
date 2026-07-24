@@ -3,7 +3,6 @@ using System.Reactive.Linq;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -12,7 +11,6 @@ using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
