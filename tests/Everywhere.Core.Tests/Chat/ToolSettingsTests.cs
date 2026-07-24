@@ -237,6 +237,27 @@ public class ToolSettingsTests
         });
     }
 
+    [Test]
+    public void SetPluginBypassApproval_WhenDisabled_PersistsDenyAndPreservesFunctionAllow()
+    {
+        using var plugin = new TestPlugin("test", isDefaultEnabled: true, "function");
+        var function = plugin.GetChatFunctions()[0];
+        var rulesets = new ObservableToolRulesets
+        {
+            [ToolSettingsKey.ForPlugin(plugin)] = true,
+            [ToolSettingsKey.ForFunction(plugin, function)] = true
+        };
+
+        ToolBypassApprovalPolicy.SetPluginRule(rulesets, plugin, false);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rulesets.GetPluginRule(plugin), Is.False);
+            Assert.That(rulesets.GetFunctionRule(plugin, function), Is.True);
+            Assert.That(ToolBypassApprovalPolicy.BypassesApproval(rulesets, plugin, function), Is.True);
+        });
+    }
+
     private sealed class TestPlugin : BuiltInChatPlugin
     {
         public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("Test");

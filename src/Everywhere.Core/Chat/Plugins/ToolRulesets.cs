@@ -55,7 +55,7 @@ public static class ToolBypassApprovalPolicy
         var pluginKey = ToolSettingsKey.ForPlugin(plugin);
         if (!value)
         {
-            rulesets.Remove(pluginKey);
+            rulesets[pluginKey] = false;
             return;
         }
 

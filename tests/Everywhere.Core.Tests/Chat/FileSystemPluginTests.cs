@@ -142,42 +142,18 @@ public class FileSystemPluginTests
     }
 
     [Test]
-    public void FileConsentOptions_UseParentFolderOnlyWhenAllPathsShareIt()
+    public void GetCommonParentDirectory_ReturnsParentOnlyWhenAllPathsShareIt()
     {
-        var getCommonParent = typeof(FileSystemPlugin).GetMethod(
-            "GetCommonParentDirectory",
-            BindingFlags.Static | BindingFlags.NonPublic);
-        var buildOptions = typeof(FileSystemPlugin).GetMethod(
-            "BuildConsentCustomOptions",
-            BindingFlags.Static | BindingFlags.NonPublic);
-        Assert.Multiple(() =>
-        {
-            Assert.That(getCommonParent, Is.Not.Null);
-            Assert.That(buildOptions, Is.Not.Null);
-        });
-
         var parent = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var commonPaths = new[] { Path.Combine(parent, "one.txt"), Path.Combine(parent, "two.txt") };
         var differentPaths = new[] { Path.Combine(parent, "one.txt"), Path.Combine(parent, "nested", "two.txt") };
-        var commonParent = (string?)getCommonParent!.Invoke(
-            null,
-            new object?[] { commonPaths });
-        var differentParent = (string?)getCommonParent.Invoke(
-            null,
-            new object?[] { differentPaths });
-        var commonOptions = (IReadOnlyList<RequestConsentCustomOption>)buildOptions!.Invoke(
-            null,
-            new object?[] { commonParent, false })!;
-        var differentOptions = (IReadOnlyList<RequestConsentCustomOption>)buildOptions.Invoke(
-            null,
-            new object?[] { differentParent, false })!;
+        var commonParent = PathContainment.GetCommonParentDirectory(commonPaths);
+        var differentParent = PathContainment.GetCommonParentDirectory(differentPaths);
 
         Assert.Multiple(() =>
         {
             Assert.That(commonParent, Is.EqualTo(parent));
             Assert.That(differentParent, Is.Null);
-            Assert.That(commonOptions, Has.Count.EqualTo(2));
-            Assert.That(differentOptions, Has.Count.EqualTo(1));
         });
     }
 

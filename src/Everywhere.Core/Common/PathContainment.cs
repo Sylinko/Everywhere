@@ -83,10 +83,10 @@ public static class PathContainment
     }
 
     /// <summary>
-    /// Ge
+    /// Returns the shared parent directory when every path has the same immediate parent.
     /// </summary>
-    /// <param name="paths"></param>
-    /// <returns></returns>
+    /// <param name="paths">The file or directory paths whose immediate parent directories are compared.</param>
+    /// <returns>The normalized common parent directory, or <see langword="null"/> when the list is empty, a path is invalid, or the parents differ.</returns>
     public static string? GetCommonParentDirectory(IReadOnlyList<string> paths)
     {
         if (paths.Count == 0 || GetParentDirectory(paths[0]) is not { } firstParent) return null;
