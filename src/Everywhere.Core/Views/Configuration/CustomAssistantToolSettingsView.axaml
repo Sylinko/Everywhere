@@ -48,7 +48,7 @@
 
             <Panel>
               <StackPanel
-                IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:Null}}"
+                IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
                 Spacing="10">
                 <shadui:Toast
                   Padding="12,8" HorizontalAlignment="Stretch"

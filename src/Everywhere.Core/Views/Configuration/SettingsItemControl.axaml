@@ -323,7 +323,7 @@
 
     <Style Selector="^ /template/ ContentControl#PART_SettingsItemContentControl">
       <Setter Property="DockPanel.Dock" Value="Bottom"/>
-      <Style Selector="^.right:not(.FullSize)">
+      <Style Selector="^.right:not(.FullWidth)">
         <Setter Property="DockPanel.Dock" Value="Right"/>
       </Style>
     </Style>
