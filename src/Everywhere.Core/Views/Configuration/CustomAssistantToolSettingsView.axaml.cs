@@ -10,18 +10,18 @@ namespace Everywhere.Views;
 /// <summary>
 /// Presents the tool settings owned by one custom assistant.
 /// </summary>
-public class AssistantToolSettingsView(IChatPluginManager manager, Settings settings) : TemplatedControl
+public class CustomAssistantToolSettingsView(IChatPluginManager manager, Settings settings) : TemplatedControl
 {
     public static readonly StyledProperty<CustomAssistant?> AssistantProperty =
-        AvaloniaProperty.Register<AssistantToolSettingsView, CustomAssistant?>(nameof(Assistant));
+        AvaloniaProperty.Register<CustomAssistantToolSettingsView, CustomAssistant?>(nameof(Assistant));
 
-    public static readonly DirectProperty<AssistantToolSettingsView, ToolSettingsPresentation?> ToolSettingsProperty =
-        AvaloniaProperty.RegisterDirect<AssistantToolSettingsView, ToolSettingsPresentation?>(
+    public static readonly DirectProperty<CustomAssistantToolSettingsView, ToolSettingsPresentation?> ToolSettingsProperty =
+        AvaloniaProperty.RegisterDirect<CustomAssistantToolSettingsView, ToolSettingsPresentation?>(
             nameof(ToolSettings),
             control => control.ToolSettings);
 
-    public static readonly DirectProperty<AssistantToolSettingsView, bool> IsFollowingGlobalProperty =
-        AvaloniaProperty.RegisterDirect<AssistantToolSettingsView, bool>(
+    public static readonly DirectProperty<CustomAssistantToolSettingsView, bool> IsFollowingGlobalProperty =
+        AvaloniaProperty.RegisterDirect<CustomAssistantToolSettingsView, bool>(
             nameof(IsFollowingGlobal),
             control => control.IsFollowingGlobal,
             (control, value) => control.IsFollowingGlobal = value);
@@ -50,7 +50,7 @@ public class AssistantToolSettingsView(IChatPluginManager manager, Settings sett
         }
     }
 
-    public AssistantToolSettingsView() : this(
+    public CustomAssistantToolSettingsView() : this(
         ServiceLocator.Resolve<IChatPluginManager>(),
         ServiceLocator.Resolve<Settings>()) { }
 

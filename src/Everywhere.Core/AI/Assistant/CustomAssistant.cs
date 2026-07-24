@@ -53,6 +53,15 @@ public sealed partial class CustomAssistant : Assistant
     [SettingsItemIgnore]
     public partial bool IsToolCallEnabled { get; set; } = true;
 
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public ToolCallStatus ToolCallStatus => SupportsToolCall switch
+    {
+        true when IsToolCallEnabled => ToolCallStatus.Enabled,
+        true => ToolCallStatus.Disabled,
+        _ => ToolCallStatus.NotSupported
+    };
+
     /// <summary>
     /// Exact tool enablement overrides for this assistant. A null value means that the assistant follows global settings.
     /// </summary>
@@ -69,10 +78,10 @@ public sealed partial class CustomAssistant : Assistant
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.CustomAssistant_PromptSelector_Header)]
     [SettingsItem(Index = 1)]
-    public SettingsControl<AssistantPromptSelector> PromptSelector => new(x =>
-        new AssistantPromptSelector(x)
+    public SettingsControl<CustomAssistantPromptSelector> PromptSelector => new(x =>
+        new CustomAssistantPromptSelector(this, x)
         {
-            [!AssistantPromptSelector.SelectedIdProperty] = CompiledBinding.Create(
+            [!CustomAssistantPromptSelector.SelectedIdProperty] = CompiledBinding.Create(
                 (CustomAssistant xx) => xx.SystemPromptId,
                 source: this,
                 mode: BindingMode.TwoWay)
@@ -84,8 +93,8 @@ public sealed partial class CustomAssistant : Assistant
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.ChatPluginPage_Title)]
     [SettingsItem(Index = 2)]
-    public SettingsControl<AssistantToolSettingsView> ToolSettings => new(x =>
-        new AssistantToolSettingsView(
+    public SettingsControl<CustomAssistantToolSettingsView> ToolSettings => new(x =>
+        new CustomAssistantToolSettingsView(
             x.GetRequiredService<IChatPluginManager>(),
             x.GetRequiredService<Settings>())
         {

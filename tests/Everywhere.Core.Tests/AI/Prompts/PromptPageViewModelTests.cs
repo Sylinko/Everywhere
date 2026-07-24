@@ -1,3 +1,4 @@
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.I18N;
 using Everywhere.Skills;
@@ -135,6 +136,6 @@ public sealed class PromptPageViewModelTests
 
     private sealed class TestSkillPromptProvider(string prompt) : ISkillPromptProvider
     {
-        public string GetPrompt() => prompt;
+        public string GetPrompt(ToolCallStatus toolCallStatus) => prompt;
     }
 }

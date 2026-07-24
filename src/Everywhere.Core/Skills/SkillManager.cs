@@ -1,16 +1,13 @@
-using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Security;
 using System.Text;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DynamicData;
-using DynamicData.Binding;
+using Everywhere.AI;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Microsoft.Extensions.Logging;
-using ZLinq;
 
 namespace Everywhere.Skills;
 
@@ -88,7 +85,7 @@ public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPrompt
     }
 
     /// <inheritdoc />
-    public string GetPrompt()
+    public string GetPrompt(ToolCallStatus toolCallStatus)
     {
         var enabledSkills = CurrentState.SkillsById.Values
             .AsValueEnumerable()
@@ -103,8 +100,27 @@ public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPrompt
         builder.AppendLine("<skills>");
         builder.AppendLine("Here is a list of skills that contain domain specific knowledge on a variety of topics.");
         builder.AppendLine("Each skill comes with a description of the topic and a file path that contains the detailed instructions.");
-        builder.AppendLine(
-            "When a user asks you to perform a task that falls within the domain of a skill, use the 'read_file' tool to acquire the full instructions from the file URI.");
+
+        switch (toolCallStatus)
+        {
+            case ToolCallStatus.Enabled:
+                builder.AppendLine(
+                    "When a user asks you to perform a task that falls within the domain of a skill, " +
+                    "use the 'read_file' tool to acquire the full instructions from the file URI. Ask the user to enable it if unavailable.");
+                break;
+            case ToolCallStatus.Disabled:
+                builder.AppendLine(
+                    "Note that the tool calling is disabled by the user. " +
+                    "You should not attempt to read the skill files, but you can still use the descriptions to inform your responses.");
+                break;
+            case ToolCallStatus.NotSupported:
+                builder.AppendLine(
+                    "Note that you do not support tool calls; this may also be due to user's configuration error. " +
+                    "You should not attempt to read the skill files, but you can still use the descriptions to inform your responses. " +
+                    "Ask the user to check configuration if you can call tools.");
+                break;
+        }
+
         foreach (var skill in enabledSkills)
         {
             builder.AppendLine("<skill>");

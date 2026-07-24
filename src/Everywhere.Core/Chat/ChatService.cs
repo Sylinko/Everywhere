@@ -469,16 +469,19 @@ public sealed partial class ChatService : IChatService
             // Because the custom assistant maybe changed, we need to re-render the system prompt.
             // But we only do this once per generation, even if the system time may change during function calls.
             // This can save prompt tokens because they may be cached by LLM providers.
+            var customAssistant = assistant as CustomAssistant;
+            var toolCallStatus = customAssistant?.ToolCallStatus ??
+                (kernelMixin.SupportsToolCall ? ToolCallStatus.Enabled : ToolCallStatus.NotSupported);
             var promptRenderer = new ScopedPromptRenderer(
                 SystemPromptPlaceholderSource.Instance,
                 new PromptPlaceholderContext(
-                    SkillsPromptResolver: _skillPromptProvider.GetPrompt,
+                    SkillsPromptResolver: () => _skillPromptProvider.GetPrompt(toolCallStatus),
                     WorkingDirectoryResolver: chatContext.EnsureWorkingDirectory));
 
             string? systemPromptTemplate;
             if (systemPromptOverride is null)
             {
-                var promptId = assistant is CustomAssistant customAssistant ? customAssistant.SystemPromptId : Guid.Empty;
+                var promptId = customAssistant?.SystemPromptId ?? Guid.Empty;
                 var resolvedPrompt = await _promptService.GetPromptAsync(promptId, cancellationToken) ?? _promptService.DefaultPrompt;
                 systemPromptTemplate = resolvedPrompt.Template;
             }
@@ -1147,13 +1150,12 @@ public sealed partial class ChatService : IChatService
             }
 
             // The function requires permissions that are not granted.
-            return context.WaitForUserInputAsync(
-                () => context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
-                    headerKey,
-                    displayBlock,
-                    RequestConsentRememberMasks.All,
-                    null,
-                    cancellationToken));
+            return context.WaitForUserInputAsync(() => context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
+                headerKey,
+                displayBlock,
+                RequestConsentRememberMasks.All,
+                null,
+                cancellationToken));
         }
     }
 

@@ -1,6 +1,8 @@
-﻿namespace Everywhere.Skills;
+﻿using Everywhere.AI;
+
+namespace Everywhere.Skills;
 
 public interface ISkillPromptProvider
 {
-    string GetPrompt();
+    string GetPrompt(ToolCallStatus toolCallStatus);
 }

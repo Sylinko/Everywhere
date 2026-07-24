@@ -969,7 +969,7 @@
                       </LayoutTransformControl.Transitions>
 
                       <StackPanel Spacing="8">
-                        <v:AssistantToolSettingsView
+                        <v:CustomAssistantToolSettingsView
                           Assistant="{Binding #Self.ViewModel.Settings.Model.SelectedCustomAssistant}"
                           Theme="{StaticResource AssistantToolSettingsCompactTheme}"/>
                         <Button

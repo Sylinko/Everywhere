@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using Everywhere.AI;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -335,7 +336,7 @@ public class FileHandlerTests
                 Assert.That(physical.Path, Is.EqualTo("skill://agents.sample/reference.txt"));
                 Assert.That(physicalRead.Items.Single().Content, Is.EqualTo("physical resource"));
                 Assert.That(virtualRead.Items.Single().Content, Is.EqualTo("virtual resource"));
-                Assert.That(manager.GetPrompt(), Does.Contain("skill://builtin.demo/SKILL.md"));
+                Assert.That(manager.GetPrompt(ToolCallStatus.Enabled), Does.Contain("skill://builtin.demo/SKILL.md"));
                 Assert.That(topLevelResources, Does.Contain("skill://builtin.demo/references"));
                 Assert.ThrowsAsync<HandledException>(async () =>
                     await virtualContext.Handler.WriteAsync(

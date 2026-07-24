@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Messages;
 using Everywhere.Skills;
@@ -313,7 +314,7 @@ public sealed class PromptEditorViewModelTests
 
     private sealed class TestSkillPromptProvider : ISkillPromptProvider
     {
-        public string GetPrompt() => "Skill prompt";
+        public string GetPrompt(ToolCallStatus toolCallStatus) => "Skill prompt";
     }
 
     private sealed class NavigationCapture : IDisposable

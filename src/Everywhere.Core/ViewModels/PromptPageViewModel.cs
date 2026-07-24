@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -12,7 +13,6 @@ using Everywhere.Skills;
 using Everywhere.Views.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
-using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -463,7 +463,7 @@ public sealed partial class PromptPageViewModel(
     /// application-level preview value until a future picker/editor context owns richer state.
     /// </remarks>
     private PromptPlaceholderContext CreatePromptContext() =>
-        new(SkillsPromptResolver: skillPromptProvider.GetPrompt);
+        new(SkillsPromptResolver: () => skillPromptProvider.GetPrompt(ToolCallStatus.Enabled));
 
     public sealed class PromptItem(PromptDefinition prompt)
     {

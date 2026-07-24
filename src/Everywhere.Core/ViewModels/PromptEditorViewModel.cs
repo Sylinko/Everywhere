@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -13,7 +14,6 @@ using MessagePack;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using ShadUI;
-using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -577,7 +577,7 @@ public sealed partial class PromptEditorViewModel(
     }
 
     private PromptPlaceholderContext CreatePromptContext() =>
-        new(SkillsPromptResolver: skillPromptProvider.GetPrompt);
+        new(SkillsPromptResolver: () => skillPromptProvider.GetPrompt(ToolCallStatus.Enabled));
 
     protected override void OnIsBusyChanged()
     {

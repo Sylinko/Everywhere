@@ -5,6 +5,7 @@ using Avalonia.Data;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -25,20 +26,20 @@ namespace Everywhere.Views;
 /// template lookup only runs when the selected prompt changes.
 /// </remarks>
 [TemplatePart(Name = ComboBoxPartName, Type = typeof(ComboBox), IsRequired = true)]
-public sealed partial class AssistantPromptSelector(IServiceProvider serviceProvider) : TemplatedControl
+public sealed partial class CustomAssistantPromptSelector(CustomAssistant customAssistant, IServiceProvider serviceProvider) : TemplatedControl
 {
     private const string ComboBoxPartName = "PART_ComboBox";
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
     private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Instance;
 
     public static readonly StyledProperty<Guid> SelectedIdProperty =
-        AvaloniaProperty.Register<AssistantPromptSelector, Guid>(nameof(SelectedId), enableDataValidation: true);
+        AvaloniaProperty.Register<CustomAssistantPromptSelector, Guid>(nameof(SelectedId), enableDataValidation: true);
 
     public static readonly StyledProperty<string> RawTemplateProperty =
-        AvaloniaProperty.Register<AssistantPromptSelector, string>(nameof(RawTemplate), string.Empty);
+        AvaloniaProperty.Register<CustomAssistantPromptSelector, string>(nameof(RawTemplate), string.Empty);
 
     public static readonly StyledProperty<IReadOnlyList<PromptTemplateRenderSegment>> RenderedPreviewSegmentsProperty =
-        AvaloniaProperty.Register<AssistantPromptSelector, IReadOnlyList<PromptTemplateRenderSegment>>(nameof(RenderedPreviewSegments), []);
+        AvaloniaProperty.Register<CustomAssistantPromptSelector, IReadOnlyList<PromptTemplateRenderSegment>>(nameof(RenderedPreviewSegments), []);
 
     /// <summary>
     /// Selected prompt ID. <see cref="Guid.Empty"/> selects the built-in default prompt.
@@ -156,7 +157,7 @@ public sealed partial class AssistantPromptSelector(IServiceProvider serviceProv
         }
         catch (Exception ex)
         {
-            Log.Logger.ForContext<AssistantPromptSelector>().Warning(
+            Log.Logger.ForContext<CustomAssistantPromptSelector>().Warning(
                 HandledSystemException.Handle(ex),
                 "Failed to load prompts for assistant prompt selector.");
         }
@@ -188,7 +189,7 @@ public sealed partial class AssistantPromptSelector(IServiceProvider serviceProv
         catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            Log.Logger.ForContext<AssistantPromptSelector>().Warning(
+            Log.Logger.ForContext<CustomAssistantPromptSelector>().Warning(
                 HandledSystemException.Handle(ex),
                 "Failed to render assistant prompt preview for prompt {PromptId}.",
                 promptId);
@@ -233,7 +234,7 @@ public sealed partial class AssistantPromptSelector(IServiceProvider serviceProv
     }
 
     private PromptPlaceholderContext CreatePromptContext() =>
-        new(SkillsPromptResolver: _skillPromptProvider.GetPrompt);
+        new(SkillsPromptResolver: () => _skillPromptProvider.GetPrompt(customAssistant.ToolCallStatus));
 
     /// <summary>
     /// Display model for a prompt option.
