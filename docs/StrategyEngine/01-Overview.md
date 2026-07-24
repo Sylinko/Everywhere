@@ -115,8 +115,10 @@ when:
             in: [".pdf", ".docx", ".txt", ".md"]
 
 tools:
-  builtin.filesystem.read_file: true
-  builtin.web.*: false
+  builtin.web:
+    web_search: false
+  builtin.file_system:
+    read_file: true
 
 preprocessors:
   - file-manager-selection
