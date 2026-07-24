@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>提供存取檔案的能力，例如列舉、創建、刪除、重命名、讀取或寫入。</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>已批准的路徑</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>匹配這些絕對路徑 glob 的文件系統操作無需再次請求路徑批准。使用 ** 表示任意深度的目錄，例如 C:\** 或 D:\**\3rd。</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>絕對 glob 路徑，例如 C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>無效操作。</value>
     </data>
@@ -675,7 +684,7 @@
         <value>設定</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>工具</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>視覺上下文</value>
@@ -1188,6 +1197,18 @@
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>覆寫此檔案。</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>允許替換文件內容？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>總是允許上述路徑</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>總是允許 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>總是允許選擇的文件夾…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>系統檔案或目錄將被刪除</value>
     </data>
@@ -1523,7 +1544,10 @@
         <value>不能重複現有條目。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>“{0}”是一個 MCP 工具，請確保它來自受信來源，Everywhere 無法確認其所需權限，也不對其後果負責。</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>總是允許來自“{0}”的所有工具</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>不允許重複條目。</value>
@@ -2019,7 +2043,13 @@
         <value>啟用</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>繞過批准</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>所有工具均繞過批准</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>如果你信任此 MCP 伺服器，開啟選項後，下列所有工具在執行時不再請求批准。</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>預覽: {0}</value>
@@ -2701,13 +2731,13 @@
         <value>💡 歡迎在關於頁面加入官方社群與我們交流互動~</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>所有終端調用都會繞過批准，助手的不當調用可能會造成嚴重的系統崩潰或者不可恢復的文件丟失，請自行承擔風險。</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>繞過批准</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>開啟後，所有終端操作將自動放行，無需手動批准。助手的不當調用可能會造成嚴重的系統崩潰或者不可恢復的文件丟失。開啟此選項意味著你已評估並願意自行承擔風險。</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在終端中執行</value>
@@ -3680,7 +3710,7 @@
         <value>已完成</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>允許讀取、編輯和自動化處理 Word、Excel 和 PowerPoint 文件，而無需安裝 Office。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>這種文件不支持所請求的操作。</value>
@@ -3718,6 +3748,9 @@
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>文件操作未獲允許。</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>請輸入帶有有效 glob 模式的完整路徑。</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>搜索或替換模式無效。</value>
     </data>
@@ -3738,5 +3771,17 @@
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>無法加載此字體的預覽，當前顯示默認字體。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office 辦公套件</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>跟隨全局工具設置</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>目前助手跟隨全局工具設置。關閉上方開關後可單獨配置。</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>此助手已關閉工具調用。請在上方啟用後配置可用工具。</value>
     </data>
 </root>

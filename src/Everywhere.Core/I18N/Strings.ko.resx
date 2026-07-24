@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>파일 열람, 생성, 삭제, 이름 변경, 읽기 또는 쓰기 등의 파일 접근 기능을 제공합니다.</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>승인된 경로</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>이 절대 경로 glob와 일치하는 파일 시스템 작업은 경로 승인을 다시 요청할 필요가 없습니다. **는 임의 깊이의 디렉토리를 나타냅니다. 예: C:\** 또는 D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>절대 glob 경로, 예: C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>잘못된 작업입니다.</value>
     </data>
@@ -675,7 +684,7 @@
         <value>설정</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>도구</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>시각적 컨텍스트</value>
@@ -1188,6 +1197,18 @@
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>파일 내용 교체를 허용하시겠습니까?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>위 경로를 항상 허용</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>항상 {0} 허용</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>선택한 폴더를 항상 허용…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>시스템 파일 또는 디렉토리가 삭제됩니다</value>
     </data>
@@ -1523,7 +1544,10 @@
         <value>기존 항목을 중복할 수 없습니다.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>“{0}”는 MCP 도구입니다. 신뢰할 수 있는 출처에서 온 것인지 확인하세요. Everywhere는 필요한 권한을 확인할 수 없으며 그 결과에 대해 책임지지 않습니다.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>“{0}”에서 오는 모든 도구를 항상 허용</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>중복 항목은 허용되지 않습니다.</value>
@@ -2019,7 +2043,13 @@
         <value>활성화</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>승인 우회</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>모든 도구 승인 우회</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>이 MCP 서버를 신뢰한다면, 이 옵션을 활성화하면 다음 모든 도구가 실행 시 더 이상 승인을 요청하지 않습니다.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>미리보기: {0}</value>
@@ -2701,13 +2731,13 @@
         <value>💡정보 페이지에서 공식 커뮤니티에 참여하여 소통해 주세요~</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>모든 터미널 호출이 승인을 우회합니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구 불가능한 파일 손실을 초래할 수 있으니, 스스로 위험을 감수해야 합니다.</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>승인 우회</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>활성화하면 모든 터미널 작업이 자동으로 허용되며, 수동 승인이 필요하지 않습니다. 도우미의 부적절한 호출은 심각한 시스템 충돌이나 복구 불가능한 파일 손실을 초래할 수 있습니다. 이 옵션을 활성화하면 위험을 평가하고 감수할 의사가 있음을 의미합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>터미널에서 실행</value>
@@ -3680,7 +3710,7 @@
         <value>완료</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>Office를 설치하지 않고도 Word, Excel 및 PowerPoint 파일을 읽고, 편집하고, 자동화할 수 있습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>이 파일은 요청된 작업을 지원하지 않습니다.</value>
@@ -3718,6 +3748,9 @@
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>파일 작업이 허용되지 않았습니다.</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>유효한 glob 패턴이 포함된 전체 경로를 입력하세요.</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>검색 또는 대체 패턴이 유효하지 않습니다.</value>
     </data>
@@ -3738,5 +3771,17 @@
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>이 글꼴의 미리보기를 로드할 수 없어 현재 기본 글꼴이 표시됩니다.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office 오피스 제품군</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>전역 도구 설정 따르기</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>현재 도우미는 전역 도구 설정을 따릅니다. 위 스위치를 끄면 개별 설정이 가능합니다.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>이 도우미는 도구 호출이 비활성화되어 있습니다. 위에서 활성화한 후 사용 가능한 도구를 설정하세요.</value>
     </data>
 </root>

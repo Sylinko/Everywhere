@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Proporciona la capacidad de acceder a archivos, como enumerar, crear, eliminar, renombrar, leer o escribir.</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Rutas Aprobadas</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>Las operaciones del sistema de archivos que coincidan con estas rutas absolutas glob no necesitarán aprobación nuevamente. Usa ** para indicar directorios de cualquier profundidad, como C:\** o D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Ruta glob absoluta, como C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Operación inválida.</value>
     </data>
@@ -675,7 +684,7 @@
         <value>Configuración</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>Herramientas</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Contexto Visual</value>
@@ -1188,6 +1197,18 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>¿Permitir reemplazar el contenido del archivo?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Siempre permitir las rutas anteriores</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Siempre permitir {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Siempre permitir la carpeta seleccionada…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>Se eliminará un archivo o directorio del sistema</value>
     </data>
@@ -1523,7 +1544,10 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>No se pueden duplicar entradas existentes.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>“{0}” es una herramienta MCP, asegúrate de que provenga de una fuente confiable, Everywhere no puede confirmar los permisos requeridos ni se hace responsable de sus consecuencias.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>Siempre permitir todas las herramientas de “{0}”</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>No se permiten entradas duplicadas.</value>
@@ -2019,7 +2043,13 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
         <value>Habilitado</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>Omitir Aprobación</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Todas las herramientas omiten aprobación</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>Si confías en este servidor MCP, al activar esta opción, todas las herramientas siguientes no solicitarán aprobación al ejecutarse.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Vista previa: {0}</value>
@@ -2701,13 +2731,13 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
         <value>💡¡Únete a nuestra comunidad oficial en la página de información y comunícate con nosotros!</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>Todas las llamadas de terminal omitirán la aprobación, las llamadas inapropiadas del asistente pueden causar fallos graves en el sistema o pérdida de archivos irrecuperables, asume el riesgo.</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>Omitir Aprobación</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>Al activarlo, todas las operaciones de terminal se permitirán automáticamente, sin necesidad de aprobación manual. Las llamadas inapropiadas del asistente pueden causar fallos graves en el sistema o pérdida de archivos irrecuperables. Activar esta opción significa que has evaluado y estás dispuesto a asumir el riesgo.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Ejecutar En Terminal</value>
@@ -3680,7 +3710,7 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
         <value>Completado</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>Permite leer, editar y automatizar archivos de Word, Excel y PowerPoint sin necesidad de instalar Office.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Este tipo de archivo no soporta la operación solicitada.</value>
@@ -3718,6 +3748,9 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>La operación de archivo no fue permitida.</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Introduce una ruta completa con un patrón glob válido.</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>El patrón de búsqueda o reemplazo es inválido.</value>
     </data>
@@ -3738,5 +3771,17 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>No se puede cargar la vista previa de esta fuente, se muestra la fuente predeterminada.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Suite de Oficina</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Seguir Configuración Global de Herramientas</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>El asistente sigue la configuración global de herramientas. Puedes configurarlo individualmente al desactivar el interruptor arriba.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Esta asistente tiene deshabilitada la llamada a herramientas. Por favor, habilítala arriba para configurar las herramientas disponibles.</value>
     </data>
 </root>

@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Dosyalara erişim yeteneği sağlar; sayım, oluşturma, silme, yeniden adlandırma, okuma veya yazma gibi işlemleri içerir.</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Onaylı Yollar</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>Bu mutlak yolların glob'u ile eşleşen dosya sistemi işlemleri, yol onayı istemeden gerçekleştirilebilir. ** ile herhangi bir derinlikteki dizinleri belirtmek için kullanın, örneğin C:\** veya D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Mutlak glob yolu, örneğin C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Geçersiz işlem.</value>
     </data>
@@ -675,7 +684,7 @@
         <value>Ayarlar</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>Araçlar</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Görsel Bağlam</value>
@@ -1188,6 +1197,18 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>Dosya içeriğini değiştirmeye izin verilsin mi?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Yukarıdaki yolları her zaman izin ver</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Her zaman {0}'ı izin ver</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Her zaman seçilen klasöre izin ver…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>Sistem dosyası veya dizin silinecek</value>
     </data>
@@ -1523,7 +1544,10 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Mevcut girişlerin kopyası olamaz.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>“{0}” bir MCP aracıdır, lütfen güvenilir bir kaynaktan geldiğinden emin olun, Everywhere gerekli izinleri doğrulayamaz ve sonuçlarından sorumlu değildir.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>“{0}”dan gelen tüm araçlara her zaman izin ver</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Kopya girişlere izin verilmez.</value>
@@ -2019,7 +2043,13 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Etkin</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>Onayı Atla</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Tüm araçlar onayı atlar</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>Bu MCP sunucusuna güveniyorsanız, seçenek açıldığında aşağıdaki tüm araçlar çalıştırıldığında onay istemeyecek.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Önizleme: {0}</value>
@@ -2701,13 +2731,13 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>💡Hakkında sayfasında resmi topluluğumuza katılın ve bizimle etkileşimde bulunun~</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>Tüm terminal çağrıları onayı atlayacak, asistanın hatalı çağrıları ciddi sistem çökmesine veya geri alınamaz dosya kaybına neden olabilir, lütfen riski kendiniz üstlenin.</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>Onayı Atla</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın hatalı çağrıları ciddi sistem çökmesine veya geri alınamaz dosya kaybına neden olabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğiniz anlamına gelir.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Terminalde Çalıştır</value>
@@ -3680,7 +3710,7 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
         <value>Tamamlandı</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>Office'i yüklemeden Word, Excel ve PowerPoint dosyalarını okumaya, düzenlemeye ve otomatikleştirmeye izin verir.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Bu dosya, istenen işlemi desteklemiyor.</value>
@@ -3718,6 +3748,9 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>Dosya işlemi için izin verilmedi.</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Geçerli bir glob deseni ile tam bir yol girin.</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Arama veya değiştirme deseni geçersiz.</value>
     </data>
@@ -3738,5 +3771,17 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>Bu yazı tipinin önizlemesi yüklenemiyor, varsayılan yazı tipi gösteriliyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office Ofis Paketi</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Küresel Araç Ayarlarını Takip Et</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>Bu asistan, genel araç ayarlarını takip ediyor. Yukarıdaki anahtarı kapattığınızda ayrı ayrı yapılandırabilirsiniz.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Bu asistanın araç çağrısı kapatıldı. Yukarıda etkinleştirdikten sonra kullanılabilir araçları yapılandırın.</value>
     </data>
 </root>

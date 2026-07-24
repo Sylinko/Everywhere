@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Предоставляет возможность доступа к файлам, таким как перечисление, создание, удаление, переименование, чтение или запись.</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Одобренные пути</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>Файловые операции с этими абсолютными путями glob не требуют повторного запроса на одобрение пути. Используйте ** для обозначения директорий любой глубины, например C:\** или D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Абсолютный glob путь, например C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Недопустимая операция.</value>
     </data>
@@ -675,7 +684,7 @@
         <value>Настройки</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>Инструменты</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Визуальный Контекст</value>
@@ -1188,6 +1197,18 @@
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>Разрешить замену содержимого файла?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Всегда разрешать указанные пути</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Всегда разрешать {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Всегда разрешать выбранную папку…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>Системный файл или директория будет удалена</value>
     </data>
@@ -1523,7 +1544,10 @@
         <value>Нельзя дублировать существующие записи.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>“{0}” является инструментом MCP, убедитесь, что он из надежного источника, Everywhere не может подтвердить необходимые разрешения и не несет ответственности за последствия.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>Всегда разрешать все инструменты от “{0}”</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Дублирование записей не допускается.</value>
@@ -2019,7 +2043,13 @@
         <value>Включено</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>Обойти одобрение</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Все инструменты обходят одобрение</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>Если вы доверяете этому MCP серверу, включив опцию, все следующие инструменты больше не будут запрашивать одобрение при выполнении.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Предпросмотр: {0}</value>
@@ -2701,13 +2731,13 @@
         <value>💡 Присоединяйтесь к официальному сообществу на странице 'О нас' для общения и взаимодействия~</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>Все вызовы терминала будут обходить одобрение, неправильные вызовы помощника могут привести к серьезным сбоям системы или необратимой потере файлов, пожалуйста, принимайте на себя риски.</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>Обойти одобрение</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>После включения все операции терминала будут автоматически разрешены без ручного одобрения. Неправильные вызовы помощника могут привести к серьезным сбоям системы или необратимой потере файлов. Включение этой опции означает, что вы оценили и готовы взять на себя риски.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Выполнить в терминале</value>
@@ -3680,7 +3710,7 @@
         <value>Завершено</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>Позволяет читать, редактировать и автоматизировать обработку файлов Word, Excel и PowerPoint без установки Office.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>Этот файл не поддерживает запрашиваемую операцию.</value>
@@ -3718,6 +3748,9 @@
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>Операция с файлом не разрешена.</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Пожалуйста, введите полный путь с действительным glob шаблоном.</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>Недопустимый шаблон поиска или замены.</value>
     </data>
@@ -3738,5 +3771,17 @@
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>Не удалось загрузить предварительный просмотр этого шрифта, в данный момент отображается шрифт по умолчанию.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Офисный пакет</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Следовать глобальным настройкам инструментов</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>Текущий помощник использует глобальные настройки инструментов. Вы можете настроить их отдельно, отключив переключатель выше.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Этот помощник отключил вызов инструментов. Пожалуйста, включите его выше, чтобы настроить доступные инструменты.</value>
     </data>
 </root>

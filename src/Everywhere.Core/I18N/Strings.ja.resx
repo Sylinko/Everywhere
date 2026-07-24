@@ -662,6 +662,15 @@
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>ファイルへのアクセス機能を提供し、列挙、作成、削除、名前変更、読み取り、書き込みなどが可能です。</value>
     </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>承認されたパス</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>これらの絶対パス glob に一致するファイルシステム操作は、再度パスの承認を要求する必要がありません。** を使用して任意の深さのディレクトリを示します。例：C:\** または D:\**\3rd。</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>絶対 glob パス、例：C:\Source\Everywhere\**</value>
+    </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>無効な操作です。</value>
     </data>
@@ -675,7 +684,7 @@
         <value>設定</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value></value>
+        <value>ツール</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>視覚コンテキスト</value>
@@ -1188,6 +1197,18 @@
     <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
         <value>Overwrite this file.</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Consent_Header" xml:space="preserve">
+        <value>ファイル内容の置き換えを許可しますか？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>上記のパスを常に許可</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>常に {0} を許可</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>常に選択したフォルダーを許可…</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>システムファイルまたはディレクトリが削除されます</value>
     </data>
@@ -1523,7 +1544,10 @@
         <value>既存のエントリを重複させることはできません。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value></value>
+        <value>「{0}」は MCP ツールです。信頼できるソースからのものであることを確認してください。Everywhere は必要な権限を確認できず、その結果について責任を負いません。</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>「{0}」からのすべてのツールを常に許可</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>重複するエントリは許可されていません。</value>
@@ -2019,7 +2043,13 @@
         <value>有効</value>
     </data>
     <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
-        <value></value>
+        <value>承認をバイパス</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>すべてのツールが承認をバイパス</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>この MCP サーバーを信頼している場合、このオプションを有効にすると、次のすべてのツールは実行時に承認を要求しなくなります。</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>プレビュー: {0}</value>
@@ -2701,13 +2731,13 @@
         <value>💡「About」ページで公式コミュニティに参加して、私たちと交流しましょう~</value>
     </data>
     <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value></value>
+        <value>すべてのターミナル呼び出しは承認をバイパスします。アシスタントの不適切な呼び出しは、深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性がありますので、自己責任で行ってください。</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value></value>
+        <value>承認をバイパス</value>
     </data>
     <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>有効にすると、すべてのターミナル操作が自動的に許可され、手動での承認は不要になります。アシスタントの不適切な呼び出しは、深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性があります。このオプションを有効にすることは、リスクを評価し、自己責任で行うことを意味します。</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>ターミナルで実行</value>
@@ -3680,7 +3710,7 @@
         <value>完了</value>
     </data>
     <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
-        <value></value>
+        <value>Office をインストールせずに、Word、Excel、PowerPoint ファイルの読み取り、編集、自動化処理を許可します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
         <value>このファイルでは、要求された操作はサポートされていません。</value>
@@ -3718,6 +3748,9 @@
     <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
         <value>ファイル操作が許可されていません。</value>
     </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>有効な glob パターンを持つ完全なパスを入力してください。</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
         <value>検索または置換パターンが無効です。</value>
     </data>
@@ -3738,5 +3771,17 @@
     </data>
     <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
         <value>このフォントのプレビューを読み込めません。現在、デフォルトフォントが表示されています。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office スイート</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>グローバルツール設定に従う</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>現在、アシスタントはグローバルツール設定に従っています。上のスイッチをオフにすると、個別に設定できます。</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>このアシスタントはツール呼び出しが無効になっています。上で有効にしてから、使用可能なツールを設定してください。</value>
     </data>
 </root>
