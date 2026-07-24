@@ -7,7 +7,7 @@ public enum ChatFunctionPermissions : uint
     /// The minimal permissions that can be auto-granted to a function without prompting the user.
     /// </summary>
     [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_FileRead)]
-    AutoGranted = FileRead,
+    BypassApproval = FileRead,
 
     /// <summary>
     /// No permissions granted. This is the default state.

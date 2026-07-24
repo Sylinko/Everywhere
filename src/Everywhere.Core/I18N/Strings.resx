@@ -684,7 +684,7 @@
         <value>Settings</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>Functions</value>
+        <value>Tools</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Visual Context</value>
@@ -1544,7 +1544,10 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Cannot duplicate existing entries.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}” is an MCP tool. Everywhere cannot verify its required permissions. Please ensure it comes from a trusted source, and Everywhere assumes no responsibility for its consequences.</value>
+        <value></value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>Always allow all tools from “{0}”</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Duplicate entries are not permitted.</value>
@@ -2039,8 +2042,14 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>Enabled</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>Auto Approve</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>Bypass Approval</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Bypass approval for all tools</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Preview: {0}</value>
@@ -2721,14 +2730,14 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡 Feel free to join our official community on the About page to interact with us~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>Auto approval for terminal tools is enabled. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Please proceed at your own risk.</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>Auto Approval</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value>Bypass Approval</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>When enabled, all terminal operations will be automatically approved without manual confirmation. Improper use by the assistant may lead to serious system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Execute In Terminal</value>

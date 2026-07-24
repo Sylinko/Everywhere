@@ -22,7 +22,7 @@ v1 preprocessors can:
 v1 preprocessors cannot:
 
 1. Execute arbitrary user-authored scripts.
-2. Modify `ToolRulesets`.
+2. Modify `ToolPatternRulesets`.
 3. Modify model selection.
 4. Add or remove chat attachments.
 5. Perform postprocessing on assistant output.
@@ -41,7 +41,7 @@ The result shape should leave room for future patches, but v1 should only implem
 6. Engine runs preprocessors in declared order
 7. Engine merges variables
 8. Engine renders Strategy body/system prompt
-9. Engine applies Strategy ToolRulesets
+9. Engine applies Strategy ToolPatternRulesets
 10. Engine creates UserStrategyChatMessage
 11. ChatService generates response
 ```
@@ -53,7 +53,7 @@ This keeps the existing Everywhere interaction model: the Strategy can be select
 Existing objects:
 
 1. `UserStrategyChatMessage` already stores `Strategy` and optional `PreprocessorResult`.
-2. `ChatService` already reads `Strategy.ToolRulesets`.
+2. `ChatService` already reads `Strategy.ToolPatternRulesets`.
 3. `ChatHistoryBuilder` already calls `RenderStrategyUserPrompt`.
 4. `ScopedPromptRenderer` already supports `{Argument}` and preprocessor variables.
 
@@ -230,7 +230,7 @@ Rules:
 4. Preprocessor variables must be available before rendering system prompt.
 5. Rendering errors stop execution.
 
-## 12. ToolRulesets Application
+## 12. ToolPatternRulesets Application
 
 Strategy tool rules are applied for the request executing that Strategy.
 
@@ -238,8 +238,8 @@ Current layering in `ChatService` is close to:
 
 ```text
 default persistent tool settings
--> Strategy.ToolRulesets
--> ChatContext.ToolRulesets
+-> Strategy.ToolPatternRulesets
+-> ChatContext.ToolPatternRulesets
 ```
 
 v1 should preserve this behavior unless a separate plugin policy spec changes it.
@@ -263,7 +263,7 @@ Strategy details UI should aggregate permissions from:
 1. `when` context paths.
 2. `extra` providers inferred by matching.
 3. Preprocessors.
-4. ToolRulesets.
+4. ToolPatternRulesets.
 
 Examples:
 
@@ -359,7 +359,7 @@ The result type can later grow optional patches:
 public sealed record PreprocessorResult
 {
     public IReadOnlyDictionary<string, object?> Variables { get; init; }
-    public ToolRulesets? ToolRulesetPatch { get; init; }
+    public ToolPatternRulesets? ToolPatternRulesetsPatch { get; init; }
     public IReadOnlyList<ChatAttachment>? AdditionalAttachments { get; init; }
     public StrategyModelOptions? ModelOptionsPatch { get; init; }
 }

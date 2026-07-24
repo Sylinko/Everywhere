@@ -684,7 +684,7 @@
         <value>设置</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>功能</value>
+        <value>工具</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>视觉上下文</value>
@@ -1545,7 +1545,10 @@
         <value>不能和已存在的重复。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}”是一个 MCP 工具，Everywhere 无法确认其所需权限，请确保它来自受信来源，且 Everywhere 不对其后果负责。</value>
+        <value>“{0}”是一个 MCP 工具，请确保它来自受信来源，Everywhere 无法确认其所需权限，也不对其后果负责。</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>总是允许来自“{0}”的所有工具</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>不得包含重复项。</value>
@@ -1890,7 +1893,7 @@
         <value>(空)</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Header" xml:space="preserve">
-        <value>始终开启新对话</value>
+        <value>总是开启新对话</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
         <value>使用快捷键唤起应用时，将自动忽略上次对话并开启全新会话。</value>
@@ -2040,8 +2043,14 @@
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>启用</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>自动批准</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>绕过审批</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>所有工具均绕过审批</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>如果你信任此 MCP 服务器，开启选项后，下列所有工具在执行时不再请求审批。</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>预览: {0}</value>
@@ -2722,14 +2731,14 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡欢迎在关于页面加入官方社群与我们交流互动~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>终端工具的自动批准已开启，助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失，请自行承担风险。</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value>所有终端调用都会绕过审批，助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失，请自行承担风险。</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>自动批准</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value>绕过审批</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>开启后，所有终端操作将自动放行，无需手动批准。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value>开启后，所有终端操作将自动放行，无需手动审批。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在终端中执行</value>

@@ -40,13 +40,13 @@ public class CustomAssistantToolSettingsView(IChatPluginManager manager, Setting
 
     public bool IsFollowingGlobal
     {
-        get => Assistant?.ToolEnablement is null;
+        get => Assistant?.ToolEnablementRulesets is null;
         set
         {
             var assistant = Assistant;
             if (assistant is null || value == IsFollowingGlobal) return;
 
-            assistant.ToolEnablement = value ? null : new ToolEnablementSettings();
+            assistant.ToolEnablementRulesets = value ? null : new ObservableToolRulesets();
         }
     }
 
@@ -84,11 +84,11 @@ public class CustomAssistantToolSettingsView(IChatPluginManager manager, Setting
         newAssistant.PropertyChanged += HandleAssistantPropertyChanged;
         ToolSettings = new ToolSettingsPresentation(
             manager,
-            new ToolSettingsContext(settings.Plugin.ToolEnablement, newAssistant.ToolEnablement));
+            ToolSettingsContext.CreateAssistant(settings.Plugin.ToolEnablementRulesets, newAssistant.ToolEnablementRulesets));
         RaisePropertyChanged(
             IsFollowingGlobalProperty,
-            oldAssistant?.ToolEnablement is null,
-            newAssistant.ToolEnablement is null);
+            oldAssistant?.ToolEnablementRulesets is null,
+            newAssistant.ToolEnablementRulesets is null);
     }
 
     private void ReleasePresentation(CustomAssistant? assistant)
@@ -100,9 +100,9 @@ public class CustomAssistantToolSettingsView(IChatPluginManager manager, Setting
 
     private void HandleAssistantPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(CustomAssistant.ToolEnablement)) return;
+        if (e.PropertyName != nameof(CustomAssistant.ToolEnablementRulesets)) return;
 
-        ToolSettings?.Context.SetAssistantOverrides(Assistant?.ToolEnablement);
+        ToolSettings?.Context.SetAssistantOverrides(Assistant?.ToolEnablementRulesets);
         RaisePropertyChanged(IsFollowingGlobalProperty, !IsFollowingGlobal, IsFollowingGlobal);
     }
 }

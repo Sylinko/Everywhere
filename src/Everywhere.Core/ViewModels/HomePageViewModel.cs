@@ -351,8 +351,8 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         private IObservable<int> CreateToolSettingsChanges() =>
             Observable
                 .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                    handler => _settings.Plugin.ToolEnablement.CollectionChanged += handler,
-                    handler => _settings.Plugin.ToolEnablement.CollectionChanged -= handler)
+                    handler => _settings.Plugin.ToolEnablementRulesets.CollectionChanged += handler,
+                    handler => _settings.Plugin.ToolEnablementRulesets.CollectionChanged -= handler)
                 .Select(static _ => 0);
 
         private IObservable<int> CreateSkillChanges()
@@ -378,7 +378,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
             var assistantsCount = _settings.Model.CustomAssistants.Count;
             var mcpTotal = _chatPluginManager.McpPlugins.Count;
             var mcpEnabled = _chatPluginManager.McpPlugins.Count(plugin =>
-                _settings.Plugin.ToolEnablement.IsPluginAllowed(plugin) ?? plugin.IsDefaultEnabled);
+                _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ?? plugin.IsDefaultEnabled);
 
             var builtInFunctions = _chatPluginManager.BuiltInPlugins
                 .SelectMany(static plugin => plugin.GetChatFunctions())
@@ -395,7 +395,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                 builtInFunctions.Length,
                 _chatPluginManager.BuiltInPlugins.Sum(plugin => plugin.GetChatFunctions().Count(function =>
                     function.IsVisible &&
-                    (_settings.Plugin.ToolEnablement.IsFunctionAllowed(plugin, function) ?? function.IsDefaultEnabled))));
+                    (_settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ?? function.IsDefaultEnabled))));
             Cards[2].CountText = FormatCapabilityCount(mcpTotal, mcpEnabled);
             Cards[3].CountText = FormatCapabilityCount(skills.Length, skills.Count(static x => x.IsEnabled));
         }

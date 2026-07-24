@@ -22,6 +22,9 @@ public class ToolSettingsMigrationTests
               "builtin.file_system.write_to_file": true,
               "builtin.file_system.write_to_file.|C:\\Source\\Everywhere\\**": true,
               "builtin.file_system.write_to_file.overwrite": true
+            },
+            "Terminal": {
+              "AutoApprove": true
             }
           }
         }
@@ -29,25 +32,27 @@ public class ToolSettingsMigrationTests
 
         var modified = new _20260721120000_0_8_1_canary_20260721_14().Migrate(root);
         var plugin = root["Plugin"]!.AsObject();
-        var enablement = plugin["ToolEnablement"]!.AsObject();
-        var autoApproval = plugin["ToolAutoApproval"]!.AsObject();
+        var enablement = plugin["ToolEnablementRulesets"]!.AsObject();
+        var bypassApprovalRulesets = plugin["ToolBypassApprovalRulesets"]!.AsObject();
 
         Assert.Multiple(() =>
         {
             Assert.That(modified, Is.True);
             Assert.That(plugin.ContainsKey("IsEnabledRecords"), Is.False);
             Assert.That(plugin.ContainsKey("IsPermissionGrantedRecords"), Is.False);
+            Assert.That(plugin["Terminal"]!["BypassesApproval"]!.GetValue<bool>(), Is.True);
+            Assert.That(plugin["Terminal"]!.AsObject().ContainsKey("AutoApprove"), Is.False);
             Assert.That(enablement[ToolSettingsKey.ForPlugin("builtin.visual_context")]!.GetValue<bool>(), Is.False);
             Assert.That(enablement[ToolSettingsKey.ForFunction("builtin.file_system", "read_file")]!.GetValue<bool>(), Is.False);
             Assert.That(enablement[ToolSettingsKey.ForFunction($"mcp.{mcpId}", "search")]!.GetValue<bool>(), Is.True);
-            Assert.That(autoApproval[ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")]!.GetValue<bool>(), Is.True);
+            Assert.That(bypassApprovalRulesets[ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")]!.GetValue<bool>(), Is.True);
             Assert.That(
-                autoApproval.Any(pair => pair.Key.StartsWith(
+                bypassApprovalRulesets.Any(pair => pair.Key.StartsWith(
                     $"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/|",
                     StringComparison.OrdinalIgnoreCase)),
                 Is.False);
             Assert.That(
-                autoApproval[$"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/overwrite"]!.GetValue<bool>(),
+                bypassApprovalRulesets[$"{ToolSettingsKey.ForFunction("builtin.file_system", "write_to_file")}/permission/overwrite"]!.GetValue<bool>(),
                 Is.True);
         });
     }

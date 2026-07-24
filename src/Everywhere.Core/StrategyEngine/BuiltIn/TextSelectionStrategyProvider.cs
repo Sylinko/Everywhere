@@ -113,9 +113,9 @@ public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
             Icon = LucideIconKind.Search,
             Priority = 80,
             Condition = BaseCondition,
-            ToolRulesets = new ToolRulesets(1)
+            ToolPatternRulesets = new ToolPatternRulesets(1)
             {
-                { "builtin.web", new ToolFunctionRulesets { { "*", true } } }
+                { "builtin.web", new ToolFunctionPatternRulesets { { "*", true } } }
             },
             Body =
                 """

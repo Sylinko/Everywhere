@@ -675,7 +675,7 @@
         <value>Paramètres</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>Fonctions</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Contexte Visuel</value>
@@ -1523,7 +1523,7 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
         <value>Impossible de dupliquer les entrées existantes.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>« {0} » est un outil MCP. Everywhere ne peut pas vérifier ses autorisations requises. Veuillez vous assurer qu'il provient d'une source de confiance, et Everywhere n'assume aucune responsabilité pour ses conséquences.</value>
+        <value></value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Les entrées en double ne sont pas autorisées.</value>
@@ -2018,8 +2018,8 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>Activé</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>Approbation Automatique</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value></value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Aperçu : {0}</value>
@@ -2700,14 +2700,14 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Rejoignez notre communauté officielle sur la page À propos pour échanger avec nous~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>L'approbation automatique des outils de terminal est activée. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Veuillez assumer les risques.</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>Approbation Automatique</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>Une fois activé, toutes les opérations terminales seront automatiquement autorisées, sans approbation manuelle. Une utilisation inappropriée par l'assistant peut entraîner de graves pannes système ou la perte de fichiers irrécupérables. Activer cette option signifie que vous avez évalué et êtes prêt à assumer les risques.</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Exécuter Dans Le Terminal</value>

@@ -86,7 +86,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         _manager = manager;
         ToolSettings = new ToolSettingsPresentation(
             manager,
-            new ToolSettingsContext(settings.Plugin.ToolEnablement, settings.Plugin.ToolAutoApproval));
+            ToolSettingsContext.CreateGlobal(settings.Plugin.ToolEnablementRulesets, settings.Plugin.ToolBypassApprovalRulesets));
         LifetimeDisposables.Add(ToolSettings);
     }
 

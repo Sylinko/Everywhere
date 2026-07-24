@@ -4,7 +4,7 @@ using Everywhere.Configuration;
 namespace Everywhere.Views;
 
 /// <summary>
-/// Edits the file-system plugin's path-scoped automatic approval globs.
+/// Edits the file-system plugin's path-scoped approval-bypass globs.
 /// </summary>
 public sealed class FileSystemSettingsControl(FileSystemSettings settings) : TemplatedControl
 {

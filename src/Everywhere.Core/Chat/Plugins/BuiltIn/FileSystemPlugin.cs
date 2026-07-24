@@ -821,7 +821,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         string[] paths,
         CancellationToken cancellationToken)
     {
-        if (chatContext.FunctionCallContext.Value?.IsAutoApproval is true) return;
+        if (chatContext.FunctionCallContext.Value?.BypassesApproval is true) return;
 
         var workingDirectory = chatContext.EnsureWorkingDirectory();
         if (paths.Length > 0 &&

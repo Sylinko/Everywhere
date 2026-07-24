@@ -675,7 +675,7 @@
         <value>設定</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>機能</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>視覚コンテキスト</value>
@@ -1523,7 +1523,7 @@
         <value>既存のエントリを重複させることはできません。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>「{0}」は MCP ツールです。Everywhere はその必要な権限を確認できません。信頼できるソースからのものであることを確認してください。Everywhere はその結果に対して責任を負いません。</value>
+        <value></value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>重複するエントリは許可されていません。</value>
@@ -2018,8 +2018,8 @@
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>有効</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>自動承認</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value></value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>プレビュー: {0}</value>
@@ -2700,14 +2700,14 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡「About」ページで公式コミュニティに参加して、私たちと交流しましょう~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>ターミナルツールの自動承認が有効になっています。不適切な呼び出しは深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性がありますので、自己責任で行ってください。</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>自動承認</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>有効にすると、すべてのターミナル操作が自動的に承認され、手動での承認は不要になります。不適切な呼び出しは深刻なシステムクラッシュや回復不可能なファイルの損失を引き起こす可能性があります。このオプションを有効にすることは、リスクを評価し、自己責任で行うことを意味します。</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>ターミナルで実行</value>

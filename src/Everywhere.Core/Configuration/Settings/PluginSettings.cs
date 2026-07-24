@@ -11,12 +11,15 @@ public sealed class PluginSettings(IServiceProvider serviceProvider) : SettingsB
     /// <remarks>
     /// Missing entries inherit the default declared by the tool definition.
     /// </remarks>
-    public ToolEnablementSettings ToolEnablement { get; set; } = new();
+    public ObservableToolRulesets ToolEnablementRulesets { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets exact automatic-approval overrides for plugin functions.
+    /// Gets or sets exact rules that allow plugin functions to bypass approval.
     /// </summary>
-    public ToolAutoApprovalSettings ToolAutoApproval { get; set; } = new();
+    /// <remarks>
+    /// A false value requires approval and does not deny execution.
+    /// </remarks>
+    public ObservableToolRulesets ToolBypassApprovalRulesets { get; set; } = new();
 
     /// <summary>
     /// Gets the MCP transport configurations keyed by plugin id.

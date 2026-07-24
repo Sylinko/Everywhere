@@ -45,7 +45,7 @@ YAML implementation choice:
 | `icon` | string | No | null | Icon identifier, preferably Lucide icon name. |
 | `priority` | int | No | 0 | Higher appears earlier. |
 | `when` | condition object | No | true | Recommendation condition. |
-| `tools` | map string -> bool | No | null | ToolRulesets override for this Strategy. |
+| `tools` | map string -> map string -> bool | No | null | ToolPatternRulesets override for this Strategy. |
 | `preprocessors` | string[] | No | [] | Predefined preprocessors to run at execution. |
 | `systemPrompt` | string | No | null | System prompt override for this request. |
 | `options` | object | No | defaults | Matching/runtime options. |
@@ -560,16 +560,18 @@ Not supported in v1:
 
 ## 19. Tools
 
-`tools` uses the existing `ToolRulesets` format.
+`tools` uses the nested `ToolPatternRulesets` format.
 
 ```yaml
 tools:
-  builtin.web.*: true
-  builtin.web.web_search: false
-  builtin.filesystem.read_file: true
+  builtin.web:
+    "*": true
+    web_search: false
+  builtin.file_system:
+    read_file: true
 ```
 
-Keys are plugin or plugin-function glob patterns. Values are booleans.
+Outer keys are plugin-key glob patterns. Inner keys are function-name glob patterns, and inner values are booleans.
 
 ## 20. Preprocessors
 

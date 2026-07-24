@@ -76,7 +76,7 @@ Existing integration points:
 2. `StrategyContext.FromAttachments(...)` derives context from chat attachments.
 3. `ChatWindowViewModel` calls `IStrategyEngine.GetStrategies(...)` when attachments change.
 4. `UserStrategyChatMessage` persists the selected `Strategy`.
-5. `ChatService` already reads `Strategy.ToolRulesets`.
+5. `ChatService` already reads `Strategy.ToolPatternRulesets`.
 6. `ChatHistoryBuilder` already renders `Strategy.Body`.
 
 Known gaps to address:
@@ -150,7 +150,7 @@ The Strategy author only sees `extra.file_manager.*`. The implementation may sat
 | Condition DSL | YAML structure under `when` that controls recommendation visibility. |
 | Visual Query DSL | XPath-like subset used by `visual.exists`, `visual.count`, and `visual.match`. |
 | Preprocessor | A predefined execution-time component that returns variables for prompt interpolation. |
-| ToolRulesets | Existing glob allow/deny dictionary controlling available chat tools. |
+| ToolPatternRulesets | Nested plugin/function glob rules controlling available chat tools. |
 | `from` | A single source reference used to derive a Strategy from a skill, strategy, markdown file, absolute path, or URL. |
 
 ## 8. Document Map

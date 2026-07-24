@@ -33,7 +33,7 @@ public sealed class OfficeCLIPlugin : BuiltInChatPlugin
 #error Unsupported platform
 #endif
 
-        _functionsSource.Add(new BuiltInChatFunction(ExecuteAsync, ChatFunctionPermissions.FileAccess, isDefaultAutoApprove: true));
+        _functionsSource.Add(new BuiltInChatFunction(ExecuteAsync, ChatFunctionPermissions.FileAccess, isDefaultBypassApproval: true));
     }
 
     [KernelFunction("officecli")]

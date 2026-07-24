@@ -1,165 +1,137 @@
-using System.IO.Enumeration;
-using Everywhere.Serialization;
-using MessagePack;
-using ZLinq.Linq;
+using Everywhere.Collections;
 
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Provides effective enablement decisions for plugins and functions.
-/// A missing decision means the caller should inherit from the preceding settings layer.
+/// Evaluates rule sources in order, allowing each later source to override decisions made earlier.
 /// </summary>
-public interface IToolRulesets
+public sealed class ToolRulesetsPipeline : IToolRulesets
 {
-    bool? IsPluginAllowed(ChatPlugin plugin);
+    private readonly IReadOnlyList<IToolRulesets> _sources;
 
-    bool? IsFunctionAllowed(ChatPlugin plugin, ChatFunction function);
+    public ToolRulesetsPipeline(IEnumerable<IToolRulesets?> sources)
+    {
+        _sources = [.. sources.Where(static source => source is not null).Cast<IToolRulesets>()];
+    }
+
+    public bool? GetPluginRule(ChatPlugin plugin) =>
+        _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetPluginRule(plugin) ?? current);
+
+    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+        _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetFunctionRule(plugin, function) ?? current);
 }
 
 /// <summary>
-/// Pattern-based function rules grouped by plugin pattern.
-/// The outer key only matches <see cref="ChatPlugin.Key"/> and each inner key only matches a function name.
+/// Stores exact plugin and function rules in a JSON-friendly observable dictionary.
 /// </summary>
-/// <example>
-/// <code>
-/// {
-///   "builtin.*": {
-///     "*": true,
-///     "web*": false
-///   }
-/// }
-/// </code>
-/// </example>
-[MessagePackFormatter(typeof(ToolRulesetsMessagePackFormatter))]
-public class ToolRulesets : Dictionary<string, ToolFunctionRulesets>, IToolRulesets
+public class ObservableToolRulesets : ObservableDictionary<string, bool>, IToolRulesets
 {
-    public ToolRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
+    public ObservableToolRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
 
-    public ToolRulesets(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
-
-    public ToolRulesets(IDictionary<string, ToolFunctionRulesets> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase)
+    public ObservableToolRulesets(IEnumerable<KeyValuePair<string, bool>> records) : base(records, StringComparer.OrdinalIgnoreCase)
     {
     }
 
-    public ToolRulesets Union(ToolRulesets? overrides)
-    {
-        if (overrides is null) return CopyCore();
+    public bool? GetPluginRule(ChatPlugin plugin) =>
+        TryGetValue(ToolSettingsKey.ForPlugin(plugin), out var value) ? value : null;
 
-        var result = CopyCore();
-        foreach (var (pluginPattern, functionOverrides) in overrides)
-        {
-            if (!result.TryGetValue(pluginPattern, out var functions))
-            {
-                result[pluginPattern] = new ToolFunctionRulesets(functionOverrides);
-                continue;
-            }
-
-            foreach (var (functionPattern, value) in functionOverrides)
-            {
-                functions[functionPattern] = value;
-            }
-        }
-
-        return result;
-    }
-
-    public bool? IsPluginAllowed(ChatPlugin plugin)
-    {
-        bool? result = null;
-        foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))
-        {
-            if (functions.Values.Any(static value => value))
-            {
-                result = true;
-            }
-            else if (functions.TryGetValue("*", out var enabled) && !enabled)
-            {
-                result = false;
-            }
-        }
-
-        return result;
-    }
-
-    public bool? IsFunctionAllowed(ChatPlugin plugin, ChatFunction function)
-    {
-        bool? result = null;
-        foreach (var (_, functions) in GetMatchingPluginRules(plugin.Key))
-        {
-            foreach (var (functionPattern, enabled) in OrderBySpecificity(functions))
-            {
-                if (IsMatch(functionPattern, function.KernelFunction.Name))
-                {
-                    result = enabled;
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private ValueEnumerable<OrderBy<Where<FromDictionary<string, ToolFunctionRulesets>,
-                    KeyValuePair<string, ToolFunctionRulesets>>,
-                KeyValuePair<string, ToolFunctionRulesets>, string>,
-            KeyValuePair<string, ToolFunctionRulesets>>
-        GetMatchingPluginRules(string pluginKey) =>
-        this.AsValueEnumerable()
-            .Where(pair => IsMatch(pair.Key, pluginKey))
-            .OrderBy(static pair => GetSpecificity(pair.Key))
-            .ThenBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase);
-
-    private static ValueEnumerable<OrderBy<FromDictionary<string, bool>,
-                KeyValuePair<string, bool>, string>,
-            KeyValuePair<string, bool>>
-        OrderBySpecificity(ToolFunctionRulesets rulesets) => rulesets
-        .AsValueEnumerable()
-        .OrderBy(static pair => GetSpecificity(pair.Key))
-        .ThenBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase);
-
-    private ToolRulesets CopyCore()
-    {
-        var result = new ToolRulesets(Count);
-        foreach (var (pluginPattern, functions) in this)
-        {
-            result.Add(pluginPattern, new ToolFunctionRulesets(functions));
-        }
-
-        return result;
-    }
-
-    private static int GetSpecificity(string pattern) =>
-        pattern.Sum(static character => character switch { '*' => 0, '?' => 1, _ => 2 });
-
-    private static bool IsMatch(string pattern, string value) =>
-        FileSystemName.MatchesSimpleExpression(pattern, value, ignoreCase: true);
+    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+        TryGetValue(ToolSettingsKey.ForFunction(plugin, function), out var value) ? value : null;
 }
 
-public class ToolFunctionRulesets : Dictionary<string, bool>
+/// <summary>
+/// Applies the inheritance and editing semantics of persistent approval-bypass rules.
+/// </summary>
+public static class ToolBypassApprovalPolicy
 {
-    public ToolFunctionRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
-
-    public ToolFunctionRulesets(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
-
-    public ToolFunctionRulesets(IDictionary<string, bool> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase)
+    public static bool BypassesApproval(IToolRulesets rulesets, ChatPlugin plugin, ChatFunction function)
     {
+        if (!function.CanBypassApproval) return false;
+        return rulesets.GetFunctionRule(plugin, function) ?? rulesets.GetPluginRule(plugin) ?? function.IsDefaultBypassApproval;
+    }
+
+    public static void SetPluginRule(ObservableToolRulesets rulesets, ChatPlugin plugin, bool value)
+    {
+        var pluginKey = ToolSettingsKey.ForPlugin(plugin);
+        if (!value)
+        {
+            rulesets.Remove(pluginKey);
+            return;
+        }
+
+        var functionPrefix = ToolSettingsKey.ForFunctionPrefix(plugin.Key);
+        var keysToRemove = new List<string>();
+        foreach (var (key, enabled) in rulesets)
+        {
+            // Granting the whole plugin must make "all tools" literal. New function-level
+            // exceptions may still be recorded after the plugin rule has been granted.
+            if (!enabled && key.StartsWith(functionPrefix, StringComparison.OrdinalIgnoreCase))
+                keysToRemove.Add(key);
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            rulesets.Remove(key);
+        }
+
+        rulesets[pluginKey] = true;
+    }
+
+    public static void SetFunctionRule(ObservableToolRulesets rulesets, ChatPlugin plugin, ChatFunction function, bool value)
+    {
+        if (!function.CanBypassApproval) return;
+
+        var key = ToolSettingsKey.ForFunction(plugin, function);
+        var baseline = rulesets.GetPluginRule(plugin) ?? function.IsDefaultBypassApproval;
+        if (value == baseline)
+        {
+            rulesets.Remove(key);
+        }
+        else
+        {
+            rulesets[key] = value;
+        }
+    }
+
+    public static void RemovePluginRules(ObservableToolRulesets rulesets, string pluginKey)
+    {
+        var functionPrefix = ToolSettingsKey.ForFunctionPrefix(pluginKey);
+        rulesets.Remove(ToolSettingsKey.ForPlugin(pluginKey));
+        var keysToRemove = rulesets.Keys.AsValueEnumerable().Where(k => k.StartsWith(functionPrefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+        foreach (var key in keysToRemove)
+        {
+            rulesets.Remove(key);
+        }
     }
 }
 
-public static class ToolRulesetsExtensions
+/// <summary>
+/// Creates stable exact keys for persisted plugin and function settings.
+/// Each typed segment is JSON Pointer escaped, so plugin and function names can never collide.
+/// </summary>
+public static class ToolSettingsKey
 {
-    public static ToolRulesets? TryUnion(this ToolRulesets? source, ToolRulesets? overrides = null)
-    {
-        if (source is null)
-        {
-            return overrides is null ?
-                null :
-                new ToolRulesets(
-                    overrides.ToDictionary(
-                        static pair => pair.Key,
-                        static pair => new ToolFunctionRulesets(pair.Value),
-                        StringComparer.OrdinalIgnoreCase));
-        }
+    public static string ForPlugin(ChatPlugin plugin) => ForPlugin(plugin.Key);
 
-        return source.Union(overrides);
+    public static string ForPlugin(string pluginKey) => $"p:{Escape(pluginKey)}";
+
+    public static string ForFunction(ChatPlugin plugin, ChatFunction function) =>
+        ForFunction(plugin.Key, function.KernelFunction.Name);
+
+    public static string ForFunction(string pluginKey, string functionName) =>
+        $"f:{Escape(pluginKey)}/{Escape(functionName)}";
+
+    public static string ForFunctionPrefix(string pluginKey) => $"f:{Escape(pluginKey)}/";
+
+    public static string ForPermission(ChatPlugin plugin, ChatFunction function, string? id = null)
+    {
+        var functionKey = ForFunction(plugin, function);
+        return string.IsNullOrEmpty(id) ? functionKey : $"{functionKey}/permission/{Escape(id)}";
     }
+
+    public static string Escape(string value) =>
+        value
+            .Replace("~", "~0", StringComparison.Ordinal)
+            .Replace("/", "~1", StringComparison.Ordinal)
+            .Replace(":", "~2", StringComparison.Ordinal);
 }

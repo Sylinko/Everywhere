@@ -11,7 +11,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 namespace Everywhere.Configuration;
 
 /// <summary>
-/// Stores path-scoped automatic approval rules for the file-system plugin.
+/// Stores path-scoped approval-bypass rules for the file-system plugin.
 /// </summary>
 [GeneratedSettingsItems]
 public sealed partial class FileSystemSettings : ObservableObject

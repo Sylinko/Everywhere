@@ -67,7 +67,7 @@ public sealed partial class CustomAssistant : Assistant
     /// </summary>
     [ObservableProperty]
     [SettingsItemIgnore]
-    public partial ToolEnablementSettings? ToolEnablement { get; set; }
+    public partial ObservableToolRulesets? ToolEnablementRulesets { get; set; }
 
     /// <summary>
     /// Settings UI for selecting and previewing this assistant's Prompt Manager prompt.

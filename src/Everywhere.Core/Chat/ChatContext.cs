@@ -88,16 +88,16 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public ResilientCache<int, IVisualElement> VisualElements { get; }
 
     /// <summary>
-    /// Exact automatic-approval decisions remembered for this chat session.
+    /// Exact approval-bypass decisions remembered for this chat session.
     /// </summary>
     [IgnoreMember]
-    public ConcurrentDictionary<string, bool> ToolAutoApproval { get; }
+    public ConcurrentDictionary<string, bool> ToolBypassApprovalRulesets { get; }
 
     /// <summary>
     /// Tool and plugin rulesets for this chat context. This is used to determine which plugins and functions are enabled or disabled in this context.
     /// </summary>
     [IgnoreMember]
-    public ToolRulesets? ToolRulesets { get; }
+    public ToolPatternRulesets? ToolPatternRulesets { get; }
 
     [IgnoreMember]
     public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
@@ -200,7 +200,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             .BindEx(_disposables);
 
         VisualElements = new ResilientCache<int, IVisualElement>();
-        ToolAutoApproval = new ConcurrentDictionary<string, bool>();
+        ToolBypassApprovalRulesets = new ConcurrentDictionary<string, bool>();
         UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
 
@@ -211,14 +211,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     private ChatContext(
         ResilientCache<int, IVisualElement>? visualElements = null,
-        ConcurrentDictionary<string, bool>? toolSessionApprovals = null,
-        ToolRulesets? toolRulesets = null,
+        ConcurrentDictionary<string, bool>? toolSessionBypassApproval = null,
+        ToolPatternRulesets? toolPatternRulesets = null,
         IChatPluginUserInterfaceBroker? userInterfaceBroker = null)
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
         VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
-        ToolAutoApproval = toolSessionApprovals ?? new ConcurrentDictionary<string, bool>();
-        ToolRulesets = toolRulesets;
+        ToolBypassApprovalRulesets = toolSessionBypassApproval ?? new ConcurrentDictionary<string, bool>();
+        ToolPatternRulesets = toolPatternRulesets;
 
         _rootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
         {
@@ -297,13 +297,13 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     {
         return new ChatContext(
             VisualElements,
-            ToolAutoApproval,
-            ToolRulesets.TryUnion(
-                new ToolRulesets(2)
+            ToolBypassApprovalRulesets,
+            ToolPatternRulesets.TryUnion(
+                new ToolPatternRulesets(2)
                 {
                     {
                         "builtin.essential",
-                        new ToolFunctionRulesets
+                        new ToolFunctionPatternRulesets
                         {
                             { "run_subagent", false }, // Prevent infinite recursion.
                             { "ask_user_question", false } // Prevent sub-agents from interacting with the user.

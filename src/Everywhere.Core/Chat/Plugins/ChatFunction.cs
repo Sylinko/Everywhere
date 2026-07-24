@@ -22,14 +22,14 @@ public abstract class ChatFunction
     public bool IsDefaultEnabled { get; protected init; } = true;
 
     /// <summary>
-    /// Gets whether calls to this function are automatically approved when no user override exists.
+    /// Gets whether calls to this function bypass approval when no user override exists.
     /// </summary>
-    public bool IsDefaultAutoApprove { get; protected init; }
+    public bool IsDefaultBypassApproval { get; protected init; }
 
     /// <summary>
-    /// Gets or sets whether this function is allowed to be auto-approved by the user interface without prompting for consent.
+    /// Gets whether persistent rules may bypass approval for this function.
     /// </summary>
-    public bool IsAutoApproveAllowed { get; protected init; } = true;
+    public bool CanBypassApproval { get; protected init; } = true;
 
     public bool IsExperimental { get; protected init; }
 
@@ -57,7 +57,7 @@ public sealed class BuiltInChatFunction : ChatFunction
 
     /// <summary>
     /// An optional predicate that can be used to inspect the function call content before prompting the user for permission consent.
-    /// This will be called only if the function call requires user consent and is not auto-approved.
+    /// This will be called only if the function call requires user consent and does not bypass approval.
     /// If the predicate returns false, the function call will be **rejected** without prompting the user.
     /// If the predicate returns true, the function call will be **approved** without prompting the user.
     /// If the predicate is null or returns null, the user will be prompted for consent without additional checks (default behavior).
@@ -71,8 +71,8 @@ public sealed class BuiltInChatFunction : ChatFunction
         ChatFunctionPermissions permissions,
         LucideIconKind? icon = null,
         bool isDefaultEnabled = true,
-        bool? isDefaultAutoApprove = null,
-        bool isAutoApproveAllowed = true,
+        bool? isDefaultBypassApproval = null,
+        bool canBypassApproval = true,
         bool isExperimental = false,
         bool isVisible = true,
         Func<FunctionCallContent, bool?>? onPermissionConsent = null,
@@ -114,8 +114,8 @@ public sealed class BuiltInChatFunction : ChatFunction
         Permissions = permissions;
         Icon = icon;
         IsDefaultEnabled = isDefaultEnabled;
-        IsDefaultAutoApprove = isDefaultAutoApprove ?? permissions <= ChatFunctionPermissions.AutoGranted;
-        IsAutoApproveAllowed = isAutoApproveAllowed;
+        IsDefaultBypassApproval = isDefaultBypassApproval ?? permissions <= ChatFunctionPermissions.BypassApproval;
+        CanBypassApproval = canBypassApproval;
         IsExperimental = isExperimental;
         IsVisible = isVisible;
         OnPermissionConsent = onPermissionConsent;
@@ -164,7 +164,7 @@ public class McpChatFunction : ChatFunction
     {
         OriginalName = tool.ProtocolTool.Name;
         _kernelFunction = tool.AsKernelFunction();
-        IsAutoApproveAllowed = true;
+        CanBypassApproval = true;
     }
 
     public void Update(ManagedMcpClientTool tool)

@@ -675,7 +675,7 @@
         <value>Ayarlar</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>Fonksiyonlar</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Görsel Bağlam</value>
@@ -1523,7 +1523,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Mevcut girişlerin kopyası olamaz.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}” bir MCP aracıdır. Everywhere gerekli izinlerini doğrulayamaz. Lütfen güvenilir bir kaynaktan geldiğinden emin olun ve Everywhere sonuçlarından sorumluluk almaz.</value>
+        <value></value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Kopya girişlere izin verilmez.</value>
@@ -2018,8 +2018,8 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>Etkin</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>Otomatik Onay</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value></value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Önizleme: {0}</value>
@@ -2700,14 +2700,14 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Hakkında sayfasında resmi topluluğumuza katılın ve bizimle etkileşimde bulunun~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>Terminal araçlarının otomatik onayı açıldı, asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir, lütfen riski kendiniz üstlenin.</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>Otomatik Onay</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğinizi gösterir.</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Terminalde Çalıştır</value>

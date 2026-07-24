@@ -52,6 +52,8 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     /// </summary>
     public virtual IReadOnlyList<SettingsItem>? SettingsItems => null;
 
+    public abstract bool IsMcp { get; }
+
     private readonly SourceCache<ChatPluginWarning, string> _warningsSource = new(x => x.Key);
     private readonly IDisposable _warningsConnection;
 
@@ -163,6 +165,8 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
     /// Some plugins may be hidden but still enabled for internal use or by other plugins.
     /// </summary>
     public virtual bool IsVisible => true;
+
+    public override bool IsMcp => false;
 
     public bool HasVisibleFunctions
     {
@@ -298,6 +302,8 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
     bool ILogger.IsEnabled(LogLevel logLevel) => true;
 
     IDisposable? ILogger.BeginScope<TState>(TState state) => null;
+
+    public override bool IsMcp => true;
 
     public override void Dispose()
     {

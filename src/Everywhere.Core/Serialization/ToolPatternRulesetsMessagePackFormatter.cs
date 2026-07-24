@@ -7,9 +7,9 @@ namespace Everywhere.Serialization;
 /// <summary>
 /// Serializes the nested tool ruleset representation and reads the legacy flat representation.
 /// </summary>
-public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<ToolRulesets?>
+public sealed class ToolPatternRulesetsMessagePackFormatter : IMessagePackFormatter<ToolPatternRulesets?>
 {
-    public void Serialize(ref MessagePackWriter writer, ToolRulesets? value, MessagePackSerializerOptions options)
+    public void Serialize(ref MessagePackWriter writer, ToolPatternRulesets? value, MessagePackSerializerOptions options)
     {
         if (value is null)
         {
@@ -18,7 +18,7 @@ public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<Too
         }
 
         writer.WriteMapHeader(value.Count);
-        var formatter = options.Resolver.GetFormatterWithVerify<ToolFunctionRulesets>();
+        var formatter = options.Resolver.GetFormatterWithVerify<ToolFunctionPatternRulesets>();
         foreach (var (key, functionRulesets) in value)
         {
             writer.Write(key);
@@ -26,7 +26,7 @@ public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<Too
         }
     }
 
-    public ToolRulesets? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    public ToolPatternRulesets? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
         if (reader.TryReadNil())
         {
@@ -34,8 +34,8 @@ public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<Too
         }
 
         var count = reader.ReadMapHeader();
-        var result = new ToolRulesets(count);
-        var formatter = options.Resolver.GetFormatterWithVerify<ToolFunctionRulesets>();
+        var result = new ToolPatternRulesets(count);
+        var formatter = options.Resolver.GetFormatterWithVerify<ToolFunctionPatternRulesets>();
         for (var i = 0; i < count; i++)
         {
             var key = reader.ReadString() ?? throw new MessagePackSerializationException("Tool ruleset key cannot be null.");
@@ -57,7 +57,7 @@ public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<Too
         return result;
     }
 
-    private static void AddLegacyRule(ToolRulesets rulesets, string legacyKey, bool enabled)
+    private static void AddLegacyRule(ToolPatternRulesets rulesets, string legacyKey, bool enabled)
     {
         var firstDot = legacyKey.IndexOf('.');
         var secondDot = firstDot < 0 ? -1 : legacyKey.IndexOf('.', firstDot + 1);
@@ -71,7 +71,7 @@ public sealed class ToolRulesetsMessagePackFormatter : IMessagePackFormatter<Too
         var functionPattern = legacyKey[(secondDot + 1)..];
         if (!rulesets.TryGetValue(pluginKey, out var functionRulesets))
         {
-            functionRulesets = new ToolFunctionRulesets();
+            functionRulesets = new ToolFunctionPatternRulesets();
             rulesets.Add(pluginKey, functionRulesets);
         }
 

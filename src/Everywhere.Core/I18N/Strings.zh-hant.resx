@@ -675,7 +675,7 @@
         <value>設定</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>功能</value>
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>視覺上下文</value>
@@ -1523,7 +1523,7 @@
         <value>無法重複現有條目。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}” 是一個 MCP 工具。Everywhere 無法驗證其所需的權限。請確保它來自可信來源，Everywhere 對其後果不承擔任何責任。</value>
+        <value></value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>不允許重複條目。</value>
@@ -2018,8 +2018,8 @@
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>啟用</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>自動批准</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value></value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>預覽: {0}</value>
@@ -2700,14 +2700,14 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡歡迎在關於頁面加入官方社群與我們交流互動~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>終端工具的自動批准已開啟，助手的不當調用可能會造成嚴重的系統崩潰或不可恢復的文件遺失，請自行承擔風險。</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>自動批准</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value></value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>開啟後，所有終端操作將自動放行，無需手動批准。助手的不當調用可能會造成嚴重的系統崩潰或不可恢復的文件遺失。開啟此選項意味著你已評估並願意自行承擔風險。</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value></value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在終端中執行</value>

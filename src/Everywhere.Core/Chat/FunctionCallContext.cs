@@ -30,7 +30,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
     public string InvocationId { get; }
 
-    public ToolAutoApprovalSettings ToolAutoApproval { get; }
+    public ObservableToolRulesets ToolBypassApprovalRulesets { get; }
 
     public IChatPluginDisplaySink DisplaySink { get; }
 
@@ -49,19 +49,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     }
 
     /// <summary>
-    /// Gets whether the current function call is covered by the function-level automatic approval setting.
+    /// Gets whether the current function call may bypass approval.
     /// </summary>
     /// <remarks>
     /// Path-scoped approvals are evaluated separately by file-system operations and do not alter this value.
     /// </remarks>
-    public bool IsAutoApproval
-    {
-        get
-        {
-            if (!ChatFunction.IsAutoApproveAllowed) return false;
-            return ToolAutoApproval.TryGetValue(PermissionKey, out var value) ? value : ChatFunction.IsDefaultAutoApprove;
-        }
-    }
+    public bool BypassesApproval => ToolBypassApprovalPolicy.BypassesApproval(ToolBypassApprovalRulesets, ChatPlugin, ChatFunction);
 
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
 
@@ -72,10 +65,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         ChatFunction chatFunction,
         FunctionCallChatMessage functionCallChatMessage,
         FunctionCallContent functionCallContent,
-        ToolAutoApprovalSettings toolAutoApproval)
+        ObservableToolRulesets toolBypassApprovalRulesets)
     {
         if (functionCallContent.Id.IsNullOrEmpty())
+        {
             throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
+        }
 
         Kernel = kernel;
         ChatContext = chatContext;
@@ -84,7 +79,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         FunctionCallChatMessage = functionCallChatMessage;
         FunctionCallContent = functionCallContent;
         InvocationId = functionCallContent.Id;
-        ToolAutoApproval = toolAutoApproval;
+        ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
         DisplaySink = functionCallChatMessage.DisplaySink;
         _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
     }
@@ -97,12 +92,13 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             var permissionKey = PermissionKey;
 
-            if (IsAutoApproval && (!ChatContext.ToolAutoApproval.ContainsKey(permissionKey) || ChatContext.ToolAutoApproval[permissionKey]))
+            if (BypassesApproval &&
+                (!ChatContext.ToolBypassApprovalRulesets.ContainsKey(permissionKey) || ChatContext.ToolBypassApprovalRulesets[permissionKey]))
             {
                 return true;
             }
 
-            ChatContext.ToolAutoApproval.TryGetValue(permissionKey, out var isSessionGranted);
+            ChatContext.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isSessionGranted);
             return isSessionGranted;
         }
     }
@@ -117,11 +113,11 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && IsAutoApproval) return RequestConsentResult.Accept;
+        if (id.IsNullOrEmpty() && BypassesApproval) return RequestConsentResult.Accept;
 
         var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
-        ToolAutoApproval.TryGetValue(permissionKey, out var isGloballyGranted);
-        ChatContext.ToolAutoApproval.TryGetValue(permissionKey, out var isSessionGranted);
+        ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isGloballyGranted);
+        ChatContext.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isSessionGranted);
         if (isGloballyGranted || isSessionGranted)
         {
             return RequestConsentResult.Accept;
@@ -138,12 +134,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             case ConsentDecisionKind.AlwaysAllow:
             {
-                ToolAutoApproval[permissionKey] = true;
+                ToolBypassApprovalRulesets[permissionKey] = true;
                 return RequestConsentResult.Accept;
             }
             case ConsentDecisionKind.AllowSession:
             {
-                ChatContext.ToolAutoApproval[permissionKey] = true;
+                ChatContext.ToolBypassApprovalRulesets[permissionKey] = true;
                 return RequestConsentResult.Accept;
             }
             case ConsentDecisionKind.AllowOnce:

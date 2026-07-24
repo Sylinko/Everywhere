@@ -122,6 +122,9 @@ public class ChatPluginManager : IChatPluginManager
             await StopMcpClientAsync(mcpChatPlugin);
         }
 
+        // The stable plugin ID survives configuration edits, so revoke remembered bypasses before
+        // a different command or endpoint can inherit trust granted to the previous configuration.
+        RemoveToolBypassApproval(mcpChatPlugin.Key);
         mcpChatPlugin.TransportConfiguration = configuration;
         _settings.Plugin.McpChatPlugins[mcpChatPlugin.Id] = configuration;
         UpdateMcpRuntimeWarning(mcpChatPlugin);
@@ -197,11 +200,11 @@ public class ChatPluginManager : IChatPluginManager
     private void RemoveToolSettings(string pluginKey)
     {
         var prefix = ToolSettingsKey.ForFunctionPrefix(pluginKey);
-        RemoveRecords(_settings.Plugin.ToolEnablement);
-        RemoveRecords(_settings.Plugin.ToolAutoApproval);
+        RemoveRecords(_settings.Plugin.ToolEnablementRulesets);
+        RemoveRecords(_settings.Plugin.ToolBypassApprovalRulesets);
         foreach (var assistant in _settings.Model.CustomAssistants)
         {
-            if (assistant.ToolEnablement is { } overrides) RemoveRecords(overrides);
+            if (assistant.ToolEnablementRulesets is { } overrides) RemoveRecords(overrides);
         }
 
         void RemoveRecords(IDictionary<string, bool> records)
@@ -212,6 +215,11 @@ public class ChatPluginManager : IChatPluginManager
                 records.Remove(key);
             }
         }
+    }
+
+    private void RemoveToolBypassApproval(string pluginKey)
+    {
+        ToolBypassApprovalPolicy.RemovePluginRules(_settings.Plugin.ToolBypassApprovalRulesets, pluginKey);
     }
 
     public RuntimeDependency? GetMissingRuntimeDependency(McpChatPlugin mcpChatPlugin)
@@ -392,8 +400,8 @@ public class ChatPluginManager : IChatPluginManager
         {
             foreach (var plugin in _builtInPluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
             {
-                var isPluginAllowed = toolRulesets?.IsPluginAllowed(plugin) ??
-                    _settings.Plugin.ToolEnablement.IsPluginAllowed(plugin) ??
+                var isPluginAllowed = toolRulesets?.GetPluginRule(plugin) ??
+                    _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ??
                     plugin.IsDefaultEnabled;
                 if (!isPluginAllowed) continue;
 
@@ -423,8 +431,8 @@ public class ChatPluginManager : IChatPluginManager
 
                 var actualFunctions = (await plugin.GetAvailableFunctionsAsync(cancellationToken))
                     .AsValueEnumerable()
-                    .Where(function => toolRulesets?.IsFunctionAllowed(plugin, function) ??
-                        _settings.Plugin.ToolEnablement.IsFunctionAllowed(plugin, function) ??
+                    .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
+                        _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
                         function.IsDefaultEnabled)
                     .ToArray();
                 if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
@@ -588,7 +596,7 @@ public class ChatPluginManager : IChatPluginManager
         }
     }
 
-    private class ChatPluginSnapshot : ChatPlugin
+    private sealed class ChatPluginSnapshot : ChatPlugin
     {
         public override string Key => _originalChatPlugin.Key;
         public override IDynamicLocaleKey HeaderKey => _originalChatPlugin.HeaderKey;
@@ -597,6 +605,7 @@ public class ChatPluginManager : IChatPluginManager
         public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
         public override int FunctionCount => _actualFunctions.Length;
         public override IReadOnlyBindableList<ChatFunction> Functions => throw new NotSupportedException();
+        public override bool IsMcp => _originalChatPlugin.IsMcp;
 
         private readonly ChatPlugin _originalChatPlugin;
         private readonly ChatFunction[] _actualFunctions;

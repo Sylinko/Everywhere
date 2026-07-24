@@ -42,7 +42,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             new BuiltInChatFunction(
                 ExecuteInTerminalAsync,
                 permissions: ChatFunctionPermissions.ShellExecute,
-                isAutoApproveAllowed: false,
+                canBypassApproval: false,
                 onPermissionConsent: _ => true));
     }
 
@@ -70,8 +70,8 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             configuredFunction.Permissions,
             icon: configuredFunction.Icon,
             isDefaultEnabled: configuredFunction.IsDefaultEnabled,
-            isDefaultAutoApprove: configuredFunction.IsDefaultAutoApprove,
-            isAutoApproveAllowed: configuredFunction.IsAutoApproveAllowed,
+            isDefaultBypassApproval: configuredFunction.IsDefaultBypassApproval,
+            canBypassApproval: configuredFunction.CanBypassApproval,
             isExperimental: configuredFunction.IsExperimental,
             isVisible: configuredFunction.IsVisible,
             onPermissionConsent: configuredFunction.OnPermissionConsent,
@@ -114,7 +114,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell);
         }
 
-        if (!_pluginSettings.AutoApprove)
+        if (!_pluginSettings.BypassesApproval)
         {
             var consent = await userInterface.RequestConsentAsync(
                 null,

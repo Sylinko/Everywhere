@@ -360,8 +360,34 @@
               </DataTemplate>
 
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+FunctionsTabItem">
-                <Panel>
+                <Grid RowDefinitions="Auto,*">
+                  <Border
+                    Grid.Row="0" Margin="0,0,0,8"
+                    Padding="16,12"
+                    Background="{DynamicResource LightCardBackgroundColor}"
+                    BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="1" CornerRadius="8"
+                    IsVisible="{Binding Plugin.Plugin, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type p:McpChatPlugin}}">
+                    <Grid
+                      ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                      <StackPanel>
+                        <TextBlock
+                          Classes="p"
+                          Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpBypassApproval_Header}}"/>
+                        <TextBlock
+                          Classes="Muted Caption"
+                          Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpBypassApproval_Description}}"
+                          TextWrapping="Wrap"/>
+                      </StackPanel>
+                      <ToggleSwitch
+                        Grid.Column="1" VerticalAlignment="Center"
+                        IsChecked="{Binding Plugin.BypassesApproval, Mode=TwoWay}"
+                        IsEnabled="{Binding Plugin.CanEditBypassesApproval}"/>
+                    </Grid>
+                  </Border>
+
                   <DataGrid
+                    Grid.Row="1"
                     Background="{DynamicResource LightCardBackgroundColor}"
                     BorderBrush="{DynamicResource BorderColor}"
                     BorderThickness="1" CanUserReorderColumns="False"
@@ -417,27 +443,28 @@
                         <DataTemplate x:DataType="v:ToolFunctionPresentation">
                           <ToggleSwitch
                             HorizontalAlignment="Center"
-                            IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEdit}"/>
+                            IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                            IsEnabled="{Binding CanEdit}"/>
                         </DataTemplate>
                       </DataGridTemplateColumn>
 
                       <DataGridTemplateColumn
                         CanUserResize="False" CanUserSort="False"
-                        Header="{I18N {x:Static LocaleKey.ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header}}"
+                        Header="{I18N {x:Static LocaleKey.ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header}}"
                         IsReadOnly="False">
                         <DataTemplate x:DataType="v:ToolFunctionPresentation">
                           <ToggleSwitch
                             HorizontalAlignment="Center"
-                            IsChecked="{Binding AutoApproval, Mode=TwoWay}"
-                            IsEnabled="{Binding CanEditAutoApproval}"/>
+                            IsChecked="{Binding BypassesApproval, Mode=TwoWay}"
+                            IsEnabled="{Binding CanEditBypassesApproval}"/>
                         </DataTemplate>
                       </DataGridTemplateColumn>
                     </DataGrid.Columns>
                   </DataGrid>
 
                   <StackPanel
-                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Spacing="16">
+                    Grid.Row="1" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Spacing="16">
                     <StackPanel.IsVisible>
                       <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding
@@ -456,7 +483,7 @@
                       Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction}}"
                       TextAlignment="Center" TextWrapping="Wrap"/>
                   </StackPanel>
-                </Panel>
+                </Grid>
               </DataTemplate>
 
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+LogsTabItem">

@@ -154,7 +154,7 @@ The normalizer owns:
 7. Duration parsing.
 8. Condition AST compilation.
 9. Visual query parsing.
-10. ToolRulesets construction.
+10. ToolPatternRulesets construction.
 11. Preprocessor ID validation.
 12. Diagnostics.
 
@@ -628,13 +628,13 @@ After new pipeline works:
 | Builtin Strategies still show | No regression. |
 | User `.strategy.md` shows when condition true | Recommendation appears. |
 | User `.strategy.md` hidden when root null | No recommendation. |
-| Strategy ToolRulesets applied | Chat plugins filtered. |
+| Strategy ToolPatternRulesets applied | Chat plugins filtered. |
 | Invalid user Strategy | App does not crash. |
 
 ## 14. Backward Compatibility Rules
 
 1. Existing builtin Strategy IDs should remain stable unless intentionally migrated.
-2. Existing `ToolRulesets` behavior must remain.
+2. Legacy flat tool rules must still deserialize into `ToolPatternRulesets`.
 3. Existing `{Argument}` must remain.
 4. Existing stored chat messages must still deserialize.
 5. Existing UI should still function even before Strategy details UI is complete.
@@ -670,7 +670,7 @@ v1 is complete when:
 10. Visual query subset is implemented and tested.
 11. Preprocessors execute before Strategy prompt rendering.
 12. Path-style variables render in Strategy body.
-13. Existing `ToolRulesets` remains applied.
+13. `ToolPatternRulesets` remains applied.
 14. Slow matching produces a Toast and diagnostics.
 15. Invalid user Strategies do not crash Everywhere.
 16. Existing builtin Strategies and existing chat send flow still work.

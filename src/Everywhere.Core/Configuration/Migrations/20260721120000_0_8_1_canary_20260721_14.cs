@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -23,13 +22,13 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
 
     private static bool MigrateToolSettings(JsonObject root)
     {
-        var modified = TryMoveProperty(root, "Plugin.IsEnabledRecords", "Plugin.ToolEnablement");
-        modified |= TryMoveProperty(root, "Plugin.IsPermissionGrantedRecords", "Plugin.ToolAutoApproval");
-        modified |= ConvertKeys(GetPathNode(root, "Plugin.ToolEnablement") as JsonObject, supportsPermissionIds: false);
-        var autoApproval = GetPathNode(root, "Plugin.ToolAutoApproval") as JsonObject;
-        modified |= ConvertKeys(autoApproval, supportsPermissionIds: true);
-        modified |= RemoveFileSystemPathApprovals(autoApproval);
-        Console.WriteLine(root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        var modified = TryMoveProperty(root, "Plugin.IsEnabledRecords", "Plugin.ToolEnablementRulesets");
+        modified |= TryMoveProperty(root, "Plugin.IsPermissionGrantedRecords", "Plugin.ToolBypassApprovalRulesets");
+        modified |= TryMoveProperty(root, "Plugin.Terminal.AutoApprove", "Plugin.Terminal.BypassesApproval");
+        modified |= ConvertKeys(GetPathNode(root, "Plugin.ToolEnablementRulesets") as JsonObject, supportsPermissionIds: false);
+        var bypassApprovalRulesets = GetPathNode(root, "Plugin.ToolBypassApprovalRulesets") as JsonObject;
+        modified |= ConvertKeys(bypassApprovalRulesets, supportsPermissionIds: true);
+        modified |= RemoveFileSystemPathApprovals(bypassApprovalRulesets);
         return modified;
     }
 
@@ -55,8 +54,7 @@ public sealed class _20260721120000_0_8_1_canary_20260721_14 : SettingsMigration
         var replacements = new List<(string OldKey, string NewKey, JsonNode? Value)>();
         foreach (var (key, value) in records.AsValueEnumerable())
         {
-            if (key.StartsWith("plugin/", StringComparison.Ordinal) ||
-                key.StartsWith("function/", StringComparison.Ordinal))
+            if (key.StartsWith("p:", StringComparison.Ordinal) || key.StartsWith("f:", StringComparison.Ordinal))
             {
                 continue;
             }

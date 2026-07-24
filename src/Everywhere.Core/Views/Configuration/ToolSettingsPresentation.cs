@@ -15,34 +15,41 @@ public sealed class ToolSettingsContext : IDisposable
 
     public bool CanEdit => _isGlobal || _overrides is not null;
 
-    public bool CanEditAutoApproval => _autoApproval is not null;
+    public bool CanEditBypassesApproval => _bypassApprovalRulesets is not null;
 
     public event EventHandler? Changed;
 
-    private readonly ToolEnablementSettings _global;
-    private readonly ToolAutoApprovalSettings? _autoApproval;
+    private readonly ObservableToolRulesets _global;
+    private readonly ObservableToolRulesets? _bypassApprovalRulesets;
     private readonly bool _isGlobal;
-    private ToolEnablementSettings? _overrides;
+    private ObservableToolRulesets? _overrides;
 
-    public ToolSettingsContext(ToolEnablementSettings global, ToolAutoApprovalSettings autoApproval)
+    private ToolSettingsContext(
+        ObservableToolRulesets global,
+        ObservableToolRulesets? overrides,
+        ObservableToolRulesets? bypassApprovalRulesets,
+        bool isGlobal)
     {
         _global = global;
-        _overrides = global;
-        _autoApproval = autoApproval;
-        _isGlobal = true;
+        _overrides = overrides;
+        _bypassApprovalRulesets = bypassApprovalRulesets;
+        _isGlobal = isGlobal;
         Subscribe(global);
-        _autoApproval.CollectionChanged += HandleCollectionChanged;
+        if (!ReferenceEquals(global, overrides)) Subscribe(overrides);
+        Subscribe(bypassApprovalRulesets);
     }
 
-    public ToolSettingsContext(ToolEnablementSettings global, ToolEnablementSettings? assistantOverrides)
-    {
-        _global = global;
-        _overrides = assistantOverrides;
-        Subscribe(global);
-        Subscribe(assistantOverrides);
-    }
+    public static ToolSettingsContext CreateGlobal(
+        ObservableToolRulesets enablement,
+        ObservableToolRulesets bypassApprovalRulesets) =>
+        new(enablement, enablement, bypassApprovalRulesets, isGlobal: true);
 
-    public void SetAssistantOverrides(ToolEnablementSettings? value)
+    public static ToolSettingsContext CreateAssistant(
+        ObservableToolRulesets global,
+        ObservableToolRulesets? assistantOverrides) =>
+        new(global, assistantOverrides, bypassApprovalRulesets: null, isGlobal: false);
+
+    public void SetAssistantOverrides(ObservableToolRulesets? value)
     {
         if (_isGlobal || ReferenceEquals(_overrides, value)) return;
 
@@ -54,22 +61,22 @@ public sealed class ToolSettingsContext : IDisposable
 
     public bool GetPluginEnabled(ChatPlugin plugin)
     {
-        if (!_isGlobal && _overrides?.IsPluginAllowed(plugin) is { } assistantValue) return assistantValue;
-        return _global.IsPluginAllowed(plugin) ?? plugin.IsDefaultEnabled;
+        if (!_isGlobal && _overrides?.GetPluginRule(plugin) is { } assistantValue) return assistantValue;
+        return _global.GetPluginRule(plugin) ?? plugin.IsDefaultEnabled;
     }
 
     public bool GetFunctionEnabled(ChatPlugin plugin, ChatFunction function)
     {
-        if (!_isGlobal && _overrides?.IsFunctionAllowed(plugin, function) is { } assistantValue) return assistantValue;
-        return _global.IsFunctionAllowed(plugin, function) ?? function.IsDefaultEnabled;
+        if (!_isGlobal && _overrides?.GetFunctionRule(plugin, function) is { } assistantValue) return assistantValue;
+        return _global.GetFunctionRule(plugin, function) ?? function.IsDefaultEnabled;
     }
 
-    public bool GetAutoApproval(ChatPlugin plugin, ChatFunction function)
-    {
-        if (_autoApproval is null || !function.IsAutoApproveAllowed) return false;
-        var key = ToolSettingsKey.ForFunction(plugin, function);
-        return _autoApproval.TryGetValue(key, out var value) ? value : function.IsDefaultAutoApprove;
-    }
+    public bool GetPluginBypassesApproval(ChatPlugin plugin) =>
+        _bypassApprovalRulesets?.GetPluginRule(plugin) ?? false;
+
+    public bool GetFunctionBypassesApproval(ChatPlugin plugin, ChatFunction function) =>
+        _bypassApprovalRulesets is not null &&
+        ToolBypassApprovalPolicy.BypassesApproval(_bypassApprovalRulesets, plugin, function);
 
     /// <summary>
     /// Sets only the plugin-level override. Function overrides remain unchanged.
@@ -91,26 +98,23 @@ public sealed class ToolSettingsContext : IDisposable
         SetFunctionOverride(plugin, function, value);
     }
 
-    public void SetAutoApproval(ChatPlugin plugin, ChatFunction function, bool value)
+    public void SetPluginBypassApproval(ChatPlugin plugin, bool value)
     {
-        if (_autoApproval is null || !function.IsAutoApproveAllowed) return;
+        if (_bypassApprovalRulesets is not null)
+            ToolBypassApprovalPolicy.SetPluginRule(_bypassApprovalRulesets, plugin, value);
+    }
 
-        var key = ToolSettingsKey.ForFunction(plugin, function);
-        if (value == function.IsDefaultAutoApprove)
-        {
-            _autoApproval.Remove(key);
-        }
-        else
-        {
-            _autoApproval[key] = value;
-        }
+    public void SetFunctionBypassesApproval(ChatPlugin plugin, ChatFunction function, bool value)
+    {
+        if (_bypassApprovalRulesets is not null)
+            ToolBypassApprovalPolicy.SetFunctionRule(_bypassApprovalRulesets, plugin, function, value);
     }
 
     public void Dispose()
     {
         Unsubscribe(_global);
         if (!_isGlobal) Unsubscribe(_overrides);
-        if (_autoApproval is not null) _autoApproval.CollectionChanged -= HandleCollectionChanged;
+        Unsubscribe(_bypassApprovalRulesets);
     }
 
     private void SetPluginOverride(ChatPlugin plugin, bool value)
@@ -118,7 +122,7 @@ public sealed class ToolSettingsContext : IDisposable
         var records = _overrides;
         if (records is null) return;
 
-        var baseline = _isGlobal ? plugin.IsDefaultEnabled : _global.IsPluginAllowed(plugin) ?? plugin.IsDefaultEnabled;
+        var baseline = _isGlobal ? plugin.IsDefaultEnabled : _global.GetPluginRule(plugin) ?? plugin.IsDefaultEnabled;
         SetOverride(records, ToolSettingsKey.ForPlugin(plugin), value, baseline);
     }
 
@@ -127,11 +131,11 @@ public sealed class ToolSettingsContext : IDisposable
         var records = _overrides;
         if (records is null) return;
 
-        var baseline = _isGlobal ? function.IsDefaultEnabled : _global.IsFunctionAllowed(plugin, function) ?? function.IsDefaultEnabled;
+        var baseline = _isGlobal ? function.IsDefaultEnabled : _global.GetFunctionRule(plugin, function) ?? function.IsDefaultEnabled;
         SetOverride(records, ToolSettingsKey.ForFunction(plugin, function), value, baseline);
     }
 
-    private static void SetOverride(ToolEnablementSettings records, string key, bool value, bool baseline)
+    private static void SetOverride(ObservableToolRulesets records, string key, bool value, bool baseline)
     {
         if (value == baseline)
         {
@@ -143,12 +147,12 @@ public sealed class ToolSettingsContext : IDisposable
         }
     }
 
-    private void Subscribe(ToolEnablementSettings? settings)
+    private void Subscribe(ObservableToolRulesets? settings)
     {
         if (settings is not null) settings.CollectionChanged += HandleCollectionChanged;
     }
 
-    private void Unsubscribe(ToolEnablementSettings? settings)
+    private void Unsubscribe(ObservableToolRulesets? settings)
     {
         if (settings is not null) settings.CollectionChanged -= HandleCollectionChanged;
     }
@@ -216,6 +220,14 @@ public sealed class ToolPluginPresentation : ObservableObject, IDisposable
 
     public bool CanEdit => _context.CanEdit;
 
+    public bool BypassesApproval
+    {
+        get => _context.GetPluginBypassesApproval(Plugin);
+        set => _context.SetPluginBypassApproval(Plugin, value);
+    }
+
+    public bool CanEditBypassesApproval => _context.CanEditBypassesApproval && Plugin is McpChatPlugin;
+
     public int EnabledFunctionCount => Functions.Count(static function => function.IsEnabled);
 
     public bool IsRunning => Plugin is McpChatPlugin { IsRunning: true };
@@ -246,6 +258,8 @@ public sealed class ToolPluginPresentation : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(IsEnabled));
         OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(BypassesApproval));
+        OnPropertyChanged(nameof(CanEditBypassesApproval));
         OnPropertyChanged(nameof(EnabledFunctionCount));
         foreach (var function in Functions) function.Refresh();
     }
@@ -268,19 +282,19 @@ public sealed class ToolFunctionPresentation(ToolPluginPresentation plugin, Chat
 
     public bool CanEdit => context.CanEdit;
 
-    public bool AutoApproval
+    public bool BypassesApproval
     {
-        get => context.GetAutoApproval(plugin.Plugin, Function);
-        set => context.SetAutoApproval(plugin.Plugin, Function, value);
+        get => context.GetFunctionBypassesApproval(plugin.Plugin, Function);
+        set => context.SetFunctionBypassesApproval(plugin.Plugin, Function, value);
     }
 
-    public bool CanEditAutoApproval => context.CanEditAutoApproval && Function.IsAutoApproveAllowed;
+    public bool CanEditBypassesApproval => context.CanEditBypassesApproval && Function.CanBypassApproval;
 
     public void Refresh()
     {
         OnPropertyChanged(nameof(IsEnabled));
         OnPropertyChanged(nameof(CanEdit));
-        OnPropertyChanged(nameof(AutoApproval));
-        OnPropertyChanged(nameof(CanEditAutoApproval));
+        OnPropertyChanged(nameof(BypassesApproval));
+        OnPropertyChanged(nameof(CanEditBypassesApproval));
     }
 }
