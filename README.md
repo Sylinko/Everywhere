@@ -1,3 +1,5 @@
+[![Listed on TakoAPI](https://takoapi.com/api/badge/sylinko-everywhere)](https://takoapi.com/agents/sylinko-everywhere)
+
 <a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">前往中文版本 »</a>
