@@ -8,8 +8,8 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Extensions;
-using Everywhere.I18N;
 using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Prompting;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
@@ -21,7 +21,7 @@ namespace Everywhere.Windows.Chat.Plugins;
 /// <summary>
 /// A plugin that integrates with the `Everything` search engine to provide file search capabilities within the chat application.
 /// </summary>
-public sealed class EverythingPlugin : BuiltInChatPlugin
+public sealed partial class EverythingPlugin : BuiltInChatPlugin
 {
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_Header);
 
@@ -33,10 +33,11 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
     public override string BeautifulIcon => "avares://Everywhere/Assets/Icons/Everything.svg";
 
     private readonly SemaphoreSlim _asyncLock = new(1, 1);
-
     private readonly INativeHelper _nativeHelper;
     private readonly IWatchdogManager _watchdogManager;
     private readonly ILogger<EverythingPlugin> _logger;
+
+    private WatchdogRegistration? _watchdogRegistration;
 
     /// <summary>
     /// Kill the "Everything" process if no search request is made within the debounce period.
@@ -58,12 +59,13 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
 
                 try
                 {
-                    if (EverythingState.Process is not { HasExited: false, Id: var pid }) return;
+                    if (EverythingState.Process is not { HasExited: false, Id: var processId }) return;
 
-                    that._logger.LogInformation("Shutting down Everything process (PID: {Pid}) due to inactivity.", pid);
+                    LogShuttingDownEverythingPidDueToInactivity(processId);
 
                     EverythingState.Exit();
-                    that._watchdogManager.UnregisterProcessAsync(pid).Detach();
+                    var registration = Interlocked.Exchange(ref that._watchdogRegistration, null);
+                    registration?.DisposeAsync(killOnDispose: true).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
                 }
                 catch
                 {
@@ -101,7 +103,7 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
         EverythingState.StartService(_nativeHelper.IsAdministrator, EverythingState.StartMode.Service);
         if (EverythingState.Process is { } process)
         {
-            await _watchdogManager.RegisterProcessAsync(process.Id);
+            _watchdogRegistration = await _watchdogManager.RegisterProcessAsync(process);
         }
 
         var maxAttempts = 5;
@@ -114,7 +116,9 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
 
     [KernelFunction("search_files")]
     [Description("Search files using Everything search engine.")]
-    [DynamicLocaleKey(LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header, LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
+    [DynamicLocaleKey(
+        LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Header,
+        LocaleKey.Windows_BuiltInChatPlugin_Everything_SearchFiles_Description)]
     private async Task<string> SearchFilesAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Standard search pattern in Everything search engine.")] string searchPattern,
@@ -122,7 +126,7 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
         int maxResults = 50,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Executing Everything search with pattern: {SearchPattern}, maxResults: {MaxResults}", searchPattern, maxResults);
+        LogExecutingEverythingSearchWithPattern(searchPattern, maxResults);
 
         if (maxResults <= 0)
         {
@@ -169,8 +173,7 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
                     }
 
                     var omitted = records.Length - included;
-                    if (omitted > 0)
-                        sb.Append("... ").Append(omitted).AppendLine(" more result(s) (omitted due to token budget)");
+                    if (omitted > 0) sb.Append("... ").Append(omitted).AppendLine(" more result(s) (omitted due to token budget)");
 
                     return sb.ToString();
                 },
@@ -196,4 +199,10 @@ public sealed class EverythingPlugin : BuiltInChatPlugin
             }
         }
     }
+
+    [LoggerMessage(LogLevel.Information, "Shutting down Everything process (PID: {ProcessId}) due to inactivity.")]
+    partial void LogShuttingDownEverythingPidDueToInactivity(int processId);
+
+    [LoggerMessage(LogLevel.Debug, "Executing Everything search with pattern: {SearchPattern}, maxResults: {MaxResults}")]
+    partial void LogExecutingEverythingSearchWithPattern(string searchPattern, int maxResults);
 }

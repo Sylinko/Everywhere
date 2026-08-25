@@ -14,7 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
+    <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsWindows)' == 'true'">

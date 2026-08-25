@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsDeploymentTarget>true</IsDeploymentTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack\MessagePack.csproj"/>
+    <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

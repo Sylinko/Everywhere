@@ -1,7 +1,6 @@
 #if WINDOWS
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Windows.Win32;
@@ -42,11 +41,11 @@ internal sealed class WindowsJobObject : IDisposable
         }
     }
 
-    public void AssignProcess(Process process)
+    public void AssignProcess(SafeHandle processHandle)
     {
         ObjectDisposedException.ThrowIf(_disposed, typeof(WindowsJobObject));
 
-        if (!PInvoke.AssignProcessToJobObject((HANDLE)(_handle?.DangerousGetHandle() ?? 0), (HANDLE)process.Handle))
+        if (!PInvoke.AssignProcessToJobObject((HANDLE)(_handle?.DangerousGetHandle() ?? 0), (HANDLE)processHandle.DangerousGetHandle()))
         {
             throw new Win32Exception(Marshal.GetLastPInvokeError());
         }

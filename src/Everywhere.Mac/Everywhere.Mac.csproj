@@ -155,6 +155,7 @@
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

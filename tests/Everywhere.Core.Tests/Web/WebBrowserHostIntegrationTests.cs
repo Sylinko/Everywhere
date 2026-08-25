@@ -1,9 +1,10 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Everywhere.Configuration;
 using Everywhere.I18N;
-using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -108,8 +109,8 @@ public sealed class WebBrowserHostIntegrationTests
         settings.Plugin.WebBrowser.ShowBrowser = false;
 
         var watchdogManager = Substitute.For<IWatchdogManager>();
-        watchdogManager.RegisterProcessAsync(Arg.Any<int>()).Returns(Task.CompletedTask);
-        watchdogManager.UnregisterProcessAsync(Arg.Any<int>(), Arg.Any<bool>()).Returns(Task.CompletedTask);
+        watchdogManager.RegisterProcessAsync(Arg.Any<int>()).Returns(Task.FromResult<WatchdogRegistration?>(null));
+        watchdogManager.RegisterProcessAsync(Arg.Any<Process>()).Returns(Task.FromResult<WatchdogRegistration?>(null));
 
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         httpClientFactory.CreateClient(Arg.Any<string>()).Returns(new HttpClient());
