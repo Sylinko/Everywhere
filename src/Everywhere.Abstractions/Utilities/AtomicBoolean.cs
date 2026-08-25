@@ -47,14 +47,14 @@ public readonly ref struct AtomicBoolean
     /// <summary>
     /// Atomically flips the value if the current value is false.
     /// </summary>
-    /// <returns>The original value before the flip.</returns>
+    /// <returns><see langword="true"/> when the value changed from false to true; otherwise, <see langword="false"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool FlipIfFalse() => Interlocked.CompareExchange(ref _value, 1, 0) == 0;
 
     /// <summary>
     /// Atomically flips the value if the current value is true.
     /// </summary>
-    /// <returns>The original value before the flip.</returns>
+    /// <returns><see langword="true"/> when the value changed from true to false; otherwise, <see langword="false"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool FlipIfTrue() => Interlocked.CompareExchange(ref _value, 0, 1) == 1;
 

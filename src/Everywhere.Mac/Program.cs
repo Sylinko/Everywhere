@@ -11,6 +11,9 @@ using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
 using Everywhere.Mac.Automation;
 using Everywhere.Mac.Interop;
+using Everywhere.ProcessIsolation.Hosting;
+using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,13 +22,46 @@ namespace Everywhere.Mac;
 public static class Program
 {
     [STAThread]
-    public static async Task Main(string[] args)
+    public static Task Main(string[] args)
+    {
+        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlOperation)
+        {
+            return RunHostsControlAsync(hostsControlOperation);
+        }
+
+        var role = ProcessRoleCommandLine.Parse(args);
+        if (role is not ProcessRole.Main)
+        {
+            return RunProcessRoleAsync(role, args);
+        }
+
+        return MainAsync(args);
+    }
+
+    private static async Task RunHostsControlAsync(HostsControlOperation operation)
+    {
+        Environment.ExitCode = await HostsControlRunner.RunAsync(operation);
+    }
+
+    private static async Task RunProcessRoleAsync(ProcessRole role, string[] args)
+    {
+        Environment.ExitCode = await ProcessRoleHostRunner.RunAsync(role, args);
+    }
+
+    /// <summary>
+    /// Keeps the full Avalonia/Core startup state machine out of early Host and
+    /// controller dispatch so those paths do not resolve the production graph.
+    /// </summary>
+    private static async Task MainAsync(string[] args)
     {
 #if IsMacOS
         NativeMessageBox.MacOSMessageBoxHandler = MessageBoxHandler;
 #endif
 
         await Entrance.InitializeAsync(args);
+        await using var hostProcessCoordinator = HostProcessCoordinator.Create();
+        await using var mainHostControlServer = MainHostControlServer.Start(hostProcessCoordinator);
+        await hostProcessCoordinator.StartHostsAsync();
 
         ServiceLocator.Build(x => x
 
@@ -43,6 +79,7 @@ public static class Program
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
+                .AddSingleton(hostProcessCoordinator)
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()

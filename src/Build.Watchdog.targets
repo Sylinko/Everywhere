@@ -15,6 +15,18 @@
     <WatchdogOutDir>$(WatchdogDir)bin\$(Configuration)\$(TargetFrameworkPrefix)\$(RuntimeIdentifier)\publish\</WatchdogOutDir>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The published executable contains both projects, so source changes in
+         either project must invalidate the copied NativeAOT artifact. -->
+    <WatchdogBuildInput Include="$(WatchdogDir)**\*.cs;$(WatchdogDir)Everywhere.Watchdog.csproj;$(WatchdogDir)NativeMethods.txt"
+                        Exclude="$(WatchdogDir)bin\**;$(WatchdogDir)obj\**" />
+    <WatchdogBuildInput Include="$(MSBuildThisFileDirectory)Everywhere.ProcessIsolation\**\*.cs;$(MSBuildThisFileDirectory)Everywhere.ProcessIsolation\Everywhere.ProcessIsolation.csproj"
+                        Exclude="$(MSBuildThisFileDirectory)Everywhere.ProcessIsolation\bin\**;$(MSBuildThisFileDirectory)Everywhere.ProcessIsolation\obj\**" />
+    <WatchdogBuildInput Include="$(MSBuildThisFileDirectory)Everywhere.Abstractions\**\*.cs;$(MSBuildThisFileDirectory)Everywhere.Abstractions\Everywhere.Abstractions.csproj"
+                        Exclude="$(MSBuildThisFileDirectory)Everywhere.Abstractions\bin\**;$(MSBuildThisFileDirectory)Everywhere.Abstractions\obj\**" />
+    <WatchdogBuildInput Include="$(MSBuildThisFileDirectory)..\Directory.Build.props;$(MSBuildThisFileDirectory)..\Directory.Packages.props" />
+  </ItemGroup>
+
   <PropertyGroup Condition="$([System.String]::Copy($(RuntimeIdentifier)).StartsWith('win')) OR $([MSBuild]::IsOSPlatform('Windows'))">
     <!-- Define the Watchdog executable path for Windows. -->
     <WatchdogExecutable>$(WatchdogOutDir)Everywhere.Watchdog.exe</WatchdogExecutable>
@@ -32,12 +44,12 @@
   -->
   <Target Name="BuildWatchdog"
           BeforeTargets="BeforeResolveReferences"
-          Inputs="$(WatchdogProject)"
+          Inputs="@(WatchdogBuildInput)"
           Outputs="$(WatchdogExecutable)">
     <Message Text="Watchdog executable is out-of-date. Building..." Importance="high"/>
 
     <MSBuild Projects="$(WatchdogProject)"
              Targets="Publish"
-             Properties="PublishDir=$(WatchdogOutDir);TargetFramework=$(TargetFrameworkPrefix)" />
+             Properties="PublishDir=$(WatchdogOutDir);TargetFramework=$(TargetFrameworkPrefix);RuntimeIdentifier=$(RuntimeIdentifier);Configuration=$(Configuration)" />
   </Target>
 </Project>

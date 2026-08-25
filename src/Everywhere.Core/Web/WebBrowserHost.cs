@@ -1,17 +1,18 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Utilities;
 using Microsoft.Extensions.Logging;
 using PuppeteerSharp;
 
 namespace Everywhere.Web;
 
-public sealed class WebBrowserHost : IWebBrowserHost
+public sealed partial class WebBrowserHost : IWebBrowserHost
 {
     private readonly SemaphoreSlim _browserLock = new(1, 1);
     private readonly WebBrowserSettings _webBrowserSettings;
@@ -25,6 +26,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
     private string? _previousLaunchedBrowserPath;
     private IBrowser? _browser;
     private Process? _browserProcess;
+    private WatchdogRegistration? _browserRegistration;
     private bool _isBrowserHeadless;
     private bool _isManualBrowser;
     private int _activeExtractions;
@@ -66,16 +68,17 @@ public sealed class WebBrowserHost : IWebBrowserHost
                         that._logger.LogDebug("Disposing browser after inactivity.");
 
                         if (that._browser is null) return;
-                        var process = that._browserProcess;
+                        var registration = that._browserRegistration;
                         await that._browser.CloseAsync();
                         DisposeHelper.DisposeToDefault(ref that._browser);
 
-                        if (process is not null)
+                        if (registration is not null)
                         {
-                            await that._watchdogManager.UnregisterProcessAsync(process.Id); // Kill if running
+                            await registration.DisposeAsync(killOnDispose: true);
                         }
 
                         that._browserProcess = null;
+                        that._browserRegistration = null;
                         that._isManualBrowser = false;
                         that._isBrowserHeadless = false;
                     }
@@ -135,7 +138,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
         }
 
         // We use two different URLs to download the browser for better reliability
-        _logger.LogDebug("Downloading Puppeteer browser to cache directory: {CachePath}", _builtInBrowserCache.CachePath);
+        LogDownloadingPuppeteerBrowserToCacheDirectory(_builtInBrowserCache.CachePath);
         var browserFetcher = _builtInBrowserCache.CreateFetcher(
             new BrowserFetcherOptions
             {
@@ -201,11 +204,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
 
             try
             {
-                _logger.LogDebug(
-                    "Try launch Puppeteer browser executable at: {Path}. UserDataDir: {UserDataDir}, Headless: {Headless}",
-                    path,
-                    userDataDir,
-                    headless);
+                LogTryLaunchPuppeteerBrowserExecutableAt(path, userDataDir, headless);
                 var launcher = new Launcher(_loggerFactory);
                 var launchedBrowser = await launcher.LaunchAsync(
                     new LaunchOptions
@@ -232,7 +231,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, "Failed to launch Puppeteer browser at: {Path}", path);
+                LogFailedToLaunchPuppeteerBrowserAt(path, e);
                 launchFailures.Add($"{label}: {path}: {e.GetType().Name}: {e.Message} UserDataDir: {userDataDir}");
                 return null;
             }
@@ -263,7 +262,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
                     return testUrl;
                 }
 
-                _logger.LogWarning("Failed to connect to URL: {Url}, Status Code: {StatusCode}", testUrl, response.StatusCode);
+                LogFailedToConnectToUrl(testUrl, response.StatusCode);
                 return null;
             }
             catch (OperationCanceledException)
@@ -272,7 +271,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to connect to URL: {Url}", testUrl);
+                LogFailedToConnectToUrlUrl(testUrl, ex);
                 return null;
             }
         }
@@ -349,9 +348,11 @@ public sealed class WebBrowserHost : IWebBrowserHost
         _isBrowserHeadless = false;
         _isManualBrowser = true;
         await ResetHeadfulBrowserPagesAsync(_browser, cancellationToken);
-        TrackBrowserDisconnect(_browser, _browser.Process);
-        await RegisterTrackedProcessAsync(_browser.Process);
-        _browserProcess = _browser.Process;
+        var process = _browser.Process;
+        var registration = await RegisterTrackedProcessAsync(process);
+        _browserProcess = process;
+        _browserRegistration = registration;
+        TrackBrowserDisconnect(_browser, process);
         return _browser;
     }
 
@@ -413,9 +414,11 @@ public sealed class WebBrowserHost : IWebBrowserHost
             await ResetHeadfulBrowserPagesAsync(_browser, cancellationToken);
         }
 
-        TrackBrowserDisconnect(_browser, _browser.Process);
-        await RegisterTrackedProcessAsync(_browser.Process);
-        _browserProcess = _browser.Process;
+        var process = _browser.Process;
+        var registration = await RegisterTrackedProcessAsync(process);
+        _browserProcess = process;
+        _browserRegistration = registration;
+        TrackBrowserDisconnect(_browser, process);
         return _browser;
     }
 
@@ -445,21 +448,18 @@ public sealed class WebBrowserHost : IWebBrowserHost
         cancellationToken.ThrowIfCancellationRequested();
     }
 
-    private async Task RegisterTrackedProcessAsync(Process? process)
-    {
-        if (process is not null)
-        {
-            await _watchdogManager.RegisterProcessAsync(process.Id);
-        }
-    }
+    private Task<WatchdogRegistration?> RegisterTrackedProcessAsync(Process? process) => process is null ?
+        Task.FromResult<WatchdogRegistration?>(null) :
+        _watchdogManager.RegisterProcessAsync(process);
 
     private async Task CloseBrowserAsync(bool killIfRunning)
     {
         var browser = _browser;
-        var process = _browserProcess;
+        var registration = _browserRegistration;
 
         _browser = null;
         _browserProcess = null;
+        _browserRegistration = null;
         _isManualBrowser = false;
         _isBrowserHeadless = false;
 
@@ -477,9 +477,9 @@ public sealed class WebBrowserHost : IWebBrowserHost
             DisposeHelper.DisposeToDefault(ref browser);
         }
 
-        if (process is not null)
+        if (registration is not null)
         {
-            await _watchdogManager.UnregisterProcessAsync(process.Id, killIfRunning);
+            await registration.DisposeAsync(killIfRunning);
         }
     }
 
@@ -502,7 +502,12 @@ public sealed class WebBrowserHost : IWebBrowserHost
 
                         if (_browserProcess == process && process is not null)
                         {
-                            await _watchdogManager.UnregisterProcessAsync(process.Id, killIfRunning: false);
+                            var registration = _browserRegistration;
+                            _browserRegistration = null;
+                            if (registration is not null)
+                            {
+                                await registration.DisposeAsync(killOnDispose: false);
+                            }
                             if (_browserProcess == process)
                             {
                                 _browserProcess = null;
@@ -1030,4 +1035,19 @@ public sealed class WebBrowserHost : IWebBrowserHost
     {
         public string? MainDocumentContentType { get; set; }
     }
+
+    [LoggerMessage(LogLevel.Debug, "Downloading Puppeteer browser to cache directory: {CachePath}")]
+    partial void LogDownloadingPuppeteerBrowserToCacheDirectory(string cachePath);
+
+    [LoggerMessage(LogLevel.Debug, "Try launch Puppeteer browser executable at: {Path}. UserDataDir: {UserDataDir}, Headless: {Headless}")]
+    partial void LogTryLaunchPuppeteerBrowserExecutableAt(string path, string userDataDir, bool headless);
+
+    [LoggerMessage(LogLevel.Warning, "Failed to launch Puppeteer browser at: {Path}")]
+    partial void LogFailedToLaunchPuppeteerBrowserAt(string path, Exception exception);
+
+    [LoggerMessage(LogLevel.Warning, "Failed to connect to URL: {Url}, Status Code: {StatusCode}")]
+    partial void LogFailedToConnectToUrl(string url, HttpStatusCode statusCode);
+
+    [LoggerMessage(LogLevel.Error, "Failed to connect to URL: {Url}")]
+    partial void LogFailedToConnectToUrlUrl(string url, Exception exception);
 }
