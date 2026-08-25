@@ -12,6 +12,9 @@ using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Hosting;
+using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.Windows.Automation;
 using Everywhere.Windows.Chat.Plugins;
@@ -28,6 +31,19 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlOperation)
+        {
+            Environment.ExitCode = HostsControlRunner.RunAsync(hostsControlOperation).GetAwaiter().GetResult();
+            return;
+        }
+
+        var role = ProcessRoleCommandLine.Parse(args);
+        if (role is not ProcessRole.Main)
+        {
+            Environment.ExitCode = ProcessRoleHostRunner.RunAsync(role, args).GetAwaiter().GetResult();
+            return;
+        }
+
         MainAsync(args).GetAwaiter().GetResult();
     }
 
@@ -43,6 +59,9 @@ public static class Program
         }
 
         await Entrance.InitializeAsync(args);
+        await using var hostProcessCoordinator = HostProcessCoordinator.Create();
+        await using var mainHostControlServer = MainHostControlServer.Start(hostProcessCoordinator);
+        await hostProcessCoordinator.StartHostsAsync();
 
         RegisterUrlProtocol();
 
@@ -61,6 +80,7 @@ public static class Program
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
+                .AddSingleton(hostProcessCoordinator)
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()

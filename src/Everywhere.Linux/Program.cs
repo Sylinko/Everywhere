@@ -11,6 +11,7 @@ using Everywhere.Interop;
 using Everywhere.Linux.Chat.Plugins;
 using Everywhere.Linux.Common;
 using Everywhere.Linux.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

@@ -43,6 +43,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## Architecture and Production APIs
 
 - Optimize for the application's real ownership, call paths, and lifetime. Do not design internal APIs as generic libraries for hypothetical consumers.
+- Match runtime argument validation to a real boundary. Within trusted, nullable-enabled solution code, rely on the type system and nullable analysis instead of repeating null or argument checks by default. Validate data that crosses external, serialization, reflection, plugin, native, or other boundaries where compile-time contracts do not apply.
 - Prefer fewer states, objects, synchronization mechanisms, and intermediate abstractions, but never at the cost of stable identity, incremental updates, correct lifetime, or readability.
 - Constructors must express a clear production purpose. Avoid ambiguous default parameters, forwarding-only constructor chains, and constructors added solely for tests.
 - Do not add production methods, constructors, properties, or other hooks solely to make tests easier. Tests should use normal production entry points, mocks, reflection, or `UnsafeAccessor` where appropriate. Reconsider tests that would materially distort the production design.

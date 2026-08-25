@@ -2,5 +2,10 @@
 SetInformationJobObject
 AssignProcessToJobObject
 TerminateJobObject
+TerminateProcess
+DuplicateHandle
+GetCurrentProcess
+GetNamedPipeServerProcessId
+OpenProcess
 
 JOBOBJECT_EXTENDED_LIMIT_INFORMATION

@@ -6,13 +6,13 @@ using System.Text.Json.Serialization;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.Mcp;
 
@@ -40,6 +40,7 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
     private McpClient? _mcpClient;
     private IClientTransport? _clientTransport;
     private Process? _mcpProcess;
+    private WatchdogRegistration? _watchdogRegistration;
     private bool _isSessionExpired;
 
     /// <summary>
@@ -97,10 +98,17 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
                 _mcpProcess = null;
             }
 
+            var watchdogRegistration = Interlocked.Exchange(ref _watchdogRegistration, null);
+
             if (_mcpClient is not null)
             {
                 await _mcpClient.DisposeAsync();
                 _mcpClient = null;
+            }
+
+            if (watchdogRegistration is not null)
+            {
+                await watchdogRegistration.DisposeAsync(killOnDispose: true);
             }
 
             _connectionCts.Cancel();
@@ -178,6 +186,8 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
 
         McpChatPlugin.IsRunning = false;
         _mcpProcess = null;
+        var registration = Interlocked.Exchange(ref _watchdogRegistration, null);
+        registration?.DisposeAsync(killOnDispose: false).AsTask().Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         _isSessionExpired = true;
     }
 
@@ -328,10 +338,17 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
                 _mcpProcess = null;
             }
 
+            var watchdogRegistration = Interlocked.Exchange(ref _watchdogRegistration, null);
+
             if (_mcpClient is not null)
             {
                 await _mcpClient.DisposeAsync();
                 _mcpClient = null;
+            }
+
+            if (watchdogRegistration is not null)
+            {
+                await watchdogRegistration.DisposeAsync(killOnDispose: true);
             }
         }
         finally
@@ -441,10 +458,14 @@ public sealed partial class ManagedMcpClient : IAsyncDisposable
             if (GetStdioClientSessionTransportProcess(transport) is { HasExited: false, Id: > 0 } process)
             {
                 _mcpProcess = process;
+                _watchdogRegistration = await _watchdogManager.RegisterProcessAsync(process);
                 process.Exited += HandleMcpProcessExited;
-
-                await _watchdogManager.RegisterProcessAsync(process.Id);
                 processId = process.Id;
+
+                if (process.HasExited)
+                {
+                    HandleMcpProcessExited(process, EventArgs.Empty);
+                }
             }
         }
         finally

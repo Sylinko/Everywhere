@@ -1,5 +1,6 @@
+using System.Diagnostics;
 using Everywhere.Configuration;
-using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -167,9 +168,11 @@ public sealed class WebExtractionDiagnosticsTests
 
     private sealed class NoopWatchdogManager : IWatchdogManager
     {
-        public Task RegisterProcessAsync(int processId) => Task.CompletedTask;
+        public Task<WatchdogRegistration?> RegisterProcessAsync(int processId) =>
+            Task.FromResult<WatchdogRegistration?>(null);
 
-        public Task UnregisterProcessAsync(int processId, bool killIfRunning = true) => Task.CompletedTask;
+        public Task<WatchdogRegistration?> RegisterProcessAsync(Process process) =>
+            Task.FromResult<WatchdogRegistration?>(null);
     }
 
     private sealed class DefaultHttpClientFactory : IHttpClientFactory

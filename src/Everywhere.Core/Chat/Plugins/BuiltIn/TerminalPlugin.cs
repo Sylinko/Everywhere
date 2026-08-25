@@ -6,6 +6,7 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.Prompting;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
@@ -131,8 +132,7 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             {
                 throw new HandledException(
                     new UnauthorizedAccessException(
-                        consent.FormatReason(
-                            "The user denied the shell-script execution approval request, so the command was not run.")),
+                        consent.FormatReason("The user denied the shell-script execution approval request, so the command was not run.")),
                     LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
             }
         }
@@ -163,55 +163,44 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         {
             var session = TerminalSession.FromPtyOptions(pty, options);
 
-            var pid = pty.Pid;
-            await _watchdogManager.RegisterProcessAsync(pid);
+            await using var watchdogRegistration = await _watchdogManager.RegisterProcessAsync(pty.Pid);
 
-            try
+            // Detect shell integration and choose strategy
+            // If scripts are not available (shellArgs is null), skip detection and use None directly
+            ExecuteStrategy strategy;
+            if (shellArgs is null)
             {
-                // Detect shell integration and choose strategy
-                // If scripts are not available (shellArgs is null), skip detection and use None directly
-                ExecuteStrategy strategy;
-                if (shellArgs is null)
-                {
-                    _logger.LogDebug("Shell integration scripts not available for {ShellType}, using None strategy", shellType);
-                    strategy = new NoneExecuteStrategy(_logger);
-                }
-                else
-                {
-                    strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken);
-                }
-
-                var execution = strategy.ExecuteAsync(session, command, shellType, TimeSpan.FromSeconds(30), cancellationToken);
-                await foreach (var run in execution)
-                {
-                    terminalRuns.Add(run);
-
-                    var displayBlock = new ChatPluginTerminalDisplayBlock(shellType, run, session);
-                    userInterface.DisplaySink.AppendBlock(displayBlock);
-
-                    try
-                    {
-                        await run.WaitAsync(cancellationToken);
-                    }
-                    finally
-                    {
-                        displayBlock.Complete(run.ExitCode);
-                    }
-                }
-
-                _logger.LogInformation("[PTY] After execute, IsBracketedPasteModeEnabled={IsEnabled}", session.Parser.IsBracketedPasteModeEnabled);
+                _logger.LogDebug("Shell integration scripts not available for {ShellType}, using None strategy", shellType);
+                strategy = new NoneExecuteStrategy(_logger);
             }
-            finally
+            else
             {
-                // Unregister from Watchdog and kill the shell process
-                await _watchdogManager.UnregisterProcessAsync(pid, killIfRunning: true);
+                strategy = await ExecuteStrategy.DetectStrategyAsync(session, shellType, _logger, cancellationToken);
             }
+
+            var execution = strategy.ExecuteAsync(session, command, shellType, TimeSpan.FromSeconds(30), cancellationToken);
+            await foreach (var run in execution)
+            {
+                terminalRuns.Add(run);
+
+                var displayBlock = new ChatPluginTerminalDisplayBlock(shellType, run, session);
+                userInterface.DisplaySink.AppendBlock(displayBlock);
+
+                try
+                {
+                    await run.WaitAsync(cancellationToken);
+                }
+                finally
+                {
+                    displayBlock.Complete(run.ExitCode);
+                }
+            }
+
+            _logger.LogInformation("[PTY] After execute, IsBracketedPasteModeEnabled={IsEnabled}", session.Parser.IsBracketedPasteModeEnabled);
         }
 
         var outputs = terminalRuns.AsValueEnumerable().Select(run => run.OutputText.Trim()).ToArray();
-        var budgets = TokenBudget.Allocate(
-            outputs.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToArray().AsSpan(),
-            40000);
+        var budgets = TokenBudget.Allocate(outputs.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToArray().AsSpan(), 40000);
 
         var resultBuilder = new StringBuilder();
         for (var i = 0; i < terminalRuns.Count; i++)
