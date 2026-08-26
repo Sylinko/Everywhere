@@ -24,7 +24,7 @@
       <CloudCode Include="}"/>
     </ItemGroup>
 
-    <WriteLinesToFile File="$(GenerateCloudConstants)" Lines="@(CloudCode)" Overwrite="true"/>
+    <WriteLinesToFile File="$(GenerateCloudConstants)" Lines="@(CloudCode)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
 
     <ItemGroup>
       <Compile Include="$(GenerateCloudConstants)"/>

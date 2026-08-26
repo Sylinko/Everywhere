@@ -36,9 +36,10 @@
 
   <!-- $(IsPublish) is set to 'true' when running 'dotnet publish /p:IsPublish=true' -->
   <PropertyGroup Condition="'$(IsPublish)' != 'true'">
-    <!-- Please run $repo_root/tools/create_dev_cert.sh to create a local dev certificate named 'EverywhereDev' -->
-    <CodesignKey>EverywhereDev</CodesignKey>
     <UseHardenedRuntime>false</UseHardenedRuntime>
+    <EverywhereRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../..'))</EverywhereRepositoryRoot>
+    <DevSigningScript>$(EverywhereRepositoryRoot)/tools/macos_dev_signing.sh</DevSigningScript>
+    <DevSigningIdentityFile>$(EverywhereRepositoryRoot)/.macos-signing/identity.sha1</DevSigningIdentityFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsPublish)' == 'true'">
@@ -55,15 +56,43 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="_CopyLibOnigWrapToBundle" AfterTargets="_CreateAppBundle">
+  <Target Name="_CopyLibOnigWrapToBundle"
+          AfterTargets="_CreateAppBundle"
+          Inputs="@(_ExtractedLibOnigWrap)"
+          Outputs="$(IntermediateOutputPath)libonigwrap-bundle-copy.stamp;$(AppBundleDir)/Contents/MonoBundle/libonigwrap.dylib"
+          Condition="'@(_ExtractedLibOnigWrap)' != ''">
     <MakeDir Directories="$(AppBundleDir)/Contents/MonoBundle" Condition="!Exists('$(AppBundleDir)/Contents/MonoBundle')"/>
-    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle" Condition="'@(_ExtractedLibOnigWrap)' != ''"/>
+    <Copy SourceFiles="@(_ExtractedLibOnigWrap)" DestinationFolder="$(AppBundleDir)/Contents/MonoBundle"/>
+    <Touch Files="$(IntermediateOutputPath)libonigwrap-bundle-copy.stamp" AlwaysCreate="true"/>
   </Target>
 
-  <!-- When not publishing, we sign the build output for local debugging -->
-  <Target Name="SignOnBuild" AfterTargets="Build" Condition="'$(IsPublish)' != 'true'">
+  <Target Name="_EnsureDevSigningIdentity" Condition="'$(IsPublish)' != 'true'">
+    <Error Text="macOS development signing script not found: $(DevSigningScript)" Condition="!Exists('$(DevSigningScript)')"/>
+    <Exec Command="&quot;$(DevSigningScript)&quot; ensure" StandardOutputImportance="Low"/>
+    <Error Text="macOS development signing identity was not created: $(DevSigningIdentityFile)" Condition="!Exists('$(DevSigningIdentityFile)')"/>
+  </Target>
+
+  <Target Name="_CollectDevSigningInputs"
+          DependsOnTargets="_EnsureDevSigningIdentity"
+          Condition="'$(IsPublish)' != 'true'">
+    <ItemGroup>
+      <_DevSigningInput Remove="@(_DevSigningInput)"/>
+      <_DevSigningInput Include="$(MSBuildProjectFullPath);$(ProjectAssetsFile);$(DevSigningScript);$(DevSigningIdentityFile)"/>
+      <_DevSigningInput Include="$(IntermediateOutputPath)libonigwrap-bundle-copy.stamp;$(IntermediateOutputPath)officecli-bundle-copy.stamp"/>
+      <_DevSigningInput Include="$(AppBundleDir)/Contents/**/*"/>
+    </ItemGroup>
+  </Target>
+
+  <!-- Sign only when an input in the assembled app bundle has changed. -->
+  <Target Name="SignOnBuild"
+          AfterTargets="Build"
+          DependsOnTargets="_CollectDevSigningInputs"
+          Inputs="@(_DevSigningInput)"
+          Outputs="$(IntermediateOutputPath)dev-signing.stamp"
+          Condition="'$(IsPublish)' != 'true'">
     <Message Text="[Dev Workflow] Processing build output for local debugging..." Importance="high"/>
-    <CallTarget Targets="_CoreSignAppBundle"/>
+    <Exec Command="&quot;$(DevSigningScript)&quot; sign-app &quot;$(AppBundleDir)&quot;"/>
+    <Touch Files="$(IntermediateOutputPath)dev-signing.stamp" AlwaysCreate="true"/>
   </Target>
 
   <Target Name="SignAndPackageOnPublish" AfterTargets="Publish" Condition="'$(IsPublish)' == 'true'">
@@ -171,7 +200,11 @@
     app bundle has been assembled. The two small runtime sidecars are copied
     with it; the managed payload remains shared with Everywhere in MonoBundle.
   -->
-  <Target Name="CopyOfficeCliAppHostToBundle" AfterTargets="_CreateAppBundle" Condition="'$(IsMacEnabled)' == 'true'">
+  <Target Name="CopyOfficeCliAppHostToBundle"
+          AfterTargets="_CreateAppBundle"
+          Inputs="$(TargetDir)officecli;$(TargetDir)officecli.deps.json;$(TargetDir)officecli.runtimeconfig.json"
+          Outputs="$(IntermediateOutputPath)officecli-bundle-copy.stamp;$(AppBundleDir)/Contents/MonoBundle/officecli;$(AppBundleDir)/Contents/MonoBundle/officecli.deps.json;$(AppBundleDir)/Contents/MonoBundle/officecli.runtimeconfig.json"
+          Condition="'$(IsMacEnabled)' == 'true'">
     <PropertyGroup>
       <OfficeCliAppHost>$(TargetDir)officecli</OfficeCliAppHost>
       <OfficeCliDepsFile>$(TargetDir)officecli.deps.json</OfficeCliDepsFile>
@@ -187,6 +220,8 @@
     <Copy SourceFiles="$(OfficeCliDepsFile)" DestinationFolder="$(OfficeCliBundleDir)"/>
     <Copy SourceFiles="$(OfficeCliRuntimeConfig)" DestinationFolder="$(OfficeCliBundleDir)"/>
     <Exec Command="chmod +x &quot;$(OfficeCliBundledAppHost)&quot;"/>
+    <Touch Files="$(OfficeCliBundledAppHost);$(OfficeCliBundleDir)/officecli.deps.json;$(OfficeCliBundleDir)/officecli.runtimeconfig.json"/>
+    <Touch Files="$(IntermediateOutputPath)officecli-bundle-copy.stamp" AlwaysCreate="true"/>
   </Target>
 
   <ItemGroup>
