@@ -11,18 +11,13 @@ public sealed class RpcContractAttribute(ushort contractId) : Attribute
     public ushort ContractId { get; } = contractId;
 }
 
-/// <summary>Assigns a request/response method number within an RPC contract.</summary>
+/// <summary>
+/// Assigns a stable method number within an RPC contract. The method return type
+/// determines whether the operation is a request, notification, or response stream.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public sealed class RpcMethodAttribute(ushort methodId) : Attribute
 {
     /// <summary>Gets the stable method number.</summary>
-    public ushort MethodId { get; } = methodId;
-}
-
-/// <summary>Assigns a one-way notification number within an RPC contract.</summary>
-[AttributeUsage(AttributeTargets.Method, Inherited = false)]
-public sealed class RpcNotificationAttribute(ushort methodId) : Attribute
-{
-    /// <summary>Gets the stable notification number.</summary>
     public ushort MethodId { get; } = methodId;
 }

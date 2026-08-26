@@ -9,7 +9,7 @@ namespace Everywhere.ProcessIsolation.Hosts.Control;
 /// lifecycle shutdown requests to both roles and both role supervisors have
 /// released their authenticated connection leases.
 /// </summary>
-[RpcContract(MainHostControlRpcOperations.ContractId)]
+[RpcContract(2)]
 public interface IMainHostControlRpc
 {
     /// <summary>
@@ -19,7 +19,7 @@ public interface IMainHostControlRpc
     /// <param name="request">The closed stop request; no process or path is supplied by the caller.</param>
     /// <param name="cancellationToken">Cancels the local operation before the response is sent.</param>
     /// <returns>Per-role confirmation and a bounded diagnostic category.</returns>
-    [RpcMethod(MainHostControlRpcOperations.StopHostsMethodId)]
+    [RpcMethod(1)]
     ValueTask<StopHostsResponse> StopHostsAsync(
         StopHostsRequest request,
         CancellationToken cancellationToken = default);

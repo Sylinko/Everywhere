@@ -8,10 +8,10 @@ namespace Everywhere.ProcessIsolation.Hosts.Lifecycle;
 /// Contract ID 1 and method IDs 1-3 are wire ABI values. Requests travel from
 /// Main to the Host over an already authenticated <see cref="RpcConnection"/>;
 /// the Host returns a typed response. The connection nonce is transport state,
-/// so it is deliberately not repeated in these DTOs. Phase 1 binds this interface
-/// manually; a later generator may emit equivalent code without changing the IDs.
+/// so it is deliberately not repeated in these DTOs. The RPC source generator
+/// emits the client and binder directly from this interface.
 /// </summary>
-[RpcContract(HostLifecycleRpcOperations.ContractId)]
+[RpcContract(1)]
 public interface IHostLifecycleRpc
 {
     /// <summary>
@@ -21,7 +21,7 @@ public interface IHostLifecycleRpc
     /// <param name="request">Empty request reserved for future query fields.</param>
     /// <param name="cancellationToken">Cancels the local dispatch before a response is sent.</param>
     /// <returns>The Host role, state, process ID, and monotonic observation timestamp.</returns>
-    [RpcMethod(HostLifecycleRpcOperations.GetStatusMethodId)]
+    [RpcMethod(1)]
     ValueTask<HostStatusResponse> GetStatusAsync(
         HostStatusRequest request,
         CancellationToken cancellationToken = default);
@@ -33,7 +33,7 @@ public interface IHostLifecycleRpc
     /// <param name="request">Optional diagnostic reason for the update operation.</param>
     /// <param name="cancellationToken">Cancels the local dispatch before a response is sent.</param>
     /// <returns>Whether this request performed the transition and, if not, why.</returns>
-    [RpcMethod(HostLifecycleRpcOperations.PrepareForUpdateMethodId)]
+    [RpcMethod(2)]
     ValueTask<HostOperationResponse> PrepareForUpdateAsync(
         PrepareForUpdateRequest request,
         CancellationToken cancellationToken = default);
@@ -46,7 +46,7 @@ public interface IHostLifecycleRpc
     /// <param name="request">Shutdown intent and optional replacement indication.</param>
     /// <param name="cancellationToken">Cancels the local dispatch before a response is sent.</param>
     /// <returns>Whether this request performed the transition and, if not, why.</returns>
-    [RpcMethod(HostLifecycleRpcOperations.ShutdownMethodId)]
+    [RpcMethod(3)]
     ValueTask<HostOperationResponse> ShutdownAsync(
         ShutdownRequest request,
         CancellationToken cancellationToken = default);

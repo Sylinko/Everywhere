@@ -7,11 +7,11 @@ namespace Everywhere.ProcessIsolation.Watchdog;
 /// connection-scoped lease over one captured operating-system process identity;
 /// callers subsequently refer to that lease only through its returned handle.
 /// </summary>
-[RpcContract(WatchdogRpcOperations.ContractId)]
+[RpcContract(3)]
 public interface IWatchdogRpc
 {
     /// <summary>Captures a process identity and starts monitoring it for Main's lifetime.</summary>
-    [RpcMethod(WatchdogRpcOperations.RegisterProcessMethodId)]
+    [RpcMethod(1)]
     ValueTask<RegisterWatchdogProcessResponse> RegisterProcessAsync(
         RegisterWatchdogProcessRequest request,
         CancellationToken cancellationToken = default);
@@ -20,7 +20,7 @@ public interface IWatchdogRpc
     /// Releases one exact registration. The optional termination applies to the
     /// captured process object, never to a process found later by the same PID.
     /// </summary>
-    [RpcMethod(WatchdogRpcOperations.UnregisterProcessMethodId)]
+    [RpcMethod(2)]
     ValueTask<UnregisterWatchdogProcessResponse> UnregisterProcessAsync(
         UnregisterWatchdogProcessRequest request,
         CancellationToken cancellationToken = default);
