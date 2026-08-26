@@ -28,6 +28,18 @@ public sealed record HostStopResult(
 }
 
 /// <summary>
+/// Describes a Host role whose automatic recovery circuit has opened after
+/// repeated failures.
+/// </summary>
+public sealed record HostRecoveryStoppedEventArgs(
+    ProcessRole Role,
+    int FailureCount,
+    TimeSpan FailureWindow
+);
+
+public delegate void AutomaticRecoveryStoppedHandler(HostRecoveryStoppedEventArgs e);
+
+/// <summary>
 /// Owns Main's connection leases to the Input and Automation Hosts. Each start
 /// creates a fresh Host generation. A generation can be stopped explicitly and
 /// later replaced, while an unexpected disconnect is still recovered immediately
@@ -43,6 +55,8 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(5);
 
     public AsyncInitializerIndex Index => AsyncInitializerIndex.HostProcesses;
+
+    public event AutomaticRecoveryStoppedHandler? AutomaticRecoveryStopped;
 
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
 
@@ -395,6 +409,9 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             throw new ObjectDisposedException(nameof(HostProcessCoordinator));
         }
     }
+
+    private void OnAutomaticRecoveryStopped(ProcessRole role, int failureCount, TimeSpan failureWindow) =>
+        AutomaticRecoveryStopped?.Invoke(new HostRecoveryStoppedEventArgs(role, failureCount, failureWindow));
 
     /// <summary>Reason sent to the role lifecycle contract.</summary>
     private enum HostStopReason
@@ -787,10 +804,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
                             if (RecordFailureAndIsCircuitOpen())
                             {
-                                _logger.Error(
-                                    "Automatic Host recovery stopped after {CrashLimit} failures within {CrashWindow}.",
-                                    CrashLimit,
-                                    CrashTimeWindow);
+                                ReportAutomaticRecoveryStopped();
                                 break;
                             }
 
@@ -831,10 +845,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
                         if (RecordFailureAndIsCircuitOpen())
                         {
-                            _logger.Error(
-                                "Automatic Host recovery stopped after {CrashLimit} failures within {CrashWindow}.",
-                                CrashLimit,
-                                CrashTimeWindow);
+                            ReportAutomaticRecoveryStopped();
                             break;
                         }
                     }
@@ -852,6 +863,15 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                     _initialConnection.TrySetResult(false);
                     _nextConnection.TrySetCanceled(_stopping.Token);
                 }
+            }
+
+            private void ReportAutomaticRecoveryStopped()
+            {
+                _logger.Error(
+                    "Automatic Host recovery stopped after {CrashLimit} failures within {CrashWindow}.",
+                    CrashLimit,
+                    CrashTimeWindow);
+                generation._owner.OnAutomaticRecoveryStopped(role, CrashLimit, CrashTimeWindow);
             }
 
             private async Task<RpcConnection?> ConnectWithinStartupWindowAsync(CancellationToken cancellationToken)

@@ -13,6 +13,8 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Hosting;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,6 +56,7 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     private Task? _initializationTask;
 
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
+    private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
@@ -106,7 +109,7 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         }
     }
 
-    private static void InitializeErrorHandler()
+    private void InitializeErrorHandler()
     {
         Dispatcher.UIThread.UnhandledException += (_, e) =>
         {
@@ -154,6 +157,32 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
             {
                 Volatile.Write(ref _isShowingDispatcherException, 0);
             }
+        };
+
+        serviceProvider.GetService<HostProcessCoordinator>()?.AutomaticRecoveryStopped += e =>
+        {
+            Dispatcher.UIThread.PostOnDemand(() =>
+            {
+                var messageTemplate = e.Role switch
+                {
+                    ProcessRole.Input => LocaleResolver.ProcessIsolation_InputHostRecoveryStopped_NotificationMessage,
+                    ProcessRole.Automation => LocaleResolver.ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage,
+                    _ => null
+                };
+
+                if (messageTemplate is null)
+                {
+                    Log.Logger.Warning(
+                        "Automatic recovery stopped notification ignored for unsupported process role {ProcessRole}.",
+                        e.Role);
+                    return;
+                }
+
+                var message = messageTemplate.Format(e.FailureCount, (int)e.FailureWindow.TotalMinutes);
+                _nativeHelper
+                    .ShowDesktopNotificationAsync(message, LocaleResolver.Common_Warning)
+                    .Detach(Log.Logger.ToExceptionHandler());
+            });
         };
     }
 
