@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
+using System.Collections.Immutable;
 
 namespace Everywhere.Windows.Interop;
 
@@ -23,7 +24,9 @@ internal sealed class MessageWindow
 
     private readonly ManualResetEventSlim _windowCreatedEvent = new(false);
     private readonly Lock _lock = new();
-    private readonly Dictionary<uint, List<MessageHandler>> _handlers = new();
+    // Message delivery vastly outnumbers subscriptions. Mutations publish a new
+    // contiguous snapshot so dispatch only copies the ImmutableArray wrapper.
+    private readonly Dictionary<uint, ImmutableArray<MessageHandler>> _handlers = new();
     private readonly WNDPROC _windowProcedure;
     private readonly string _windowClassName = $"Everywhere.MessageWindow.{Guid.NewGuid():N}";
     private Exception? _windowCreationException;
@@ -50,13 +53,10 @@ internal sealed class MessageWindow
     {
         lock (_lock)
         {
-            if (!_handlers.TryGetValue(message, out var list))
-            {
-                list = [];
-                _handlers[message] = list;
-            }
-            list.Add(handler);
+            var handlers = _handlers.GetValueOrDefault(message, []);
+            _handlers[message] = handlers.Add(handler);
         }
+
         return Disposable.Create(() => RemoveHandler(message, handler));
     }
 
@@ -64,9 +64,20 @@ internal sealed class MessageWindow
     {
         lock (_lock)
         {
-            if (!_handlers.TryGetValue(message, out var list)) return;
-            list.Remove(handler);
-            if (list.Count == 0) _handlers.Remove(message);
+            if (!_handlers.TryGetValue(message, out var handlers))
+            {
+                return;
+            }
+
+            handlers = handlers.Remove(handler);
+            if (handlers.IsEmpty)
+            {
+                _handlers.Remove(message);
+            }
+            else
+            {
+                _handlers[message] = handlers;
+            }
         }
     }
 
@@ -121,10 +132,10 @@ internal sealed class MessageWindow
 
     private LRESULT WindowProcedure(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
     {
-        MessageHandler[] handlers;
+        ImmutableArray<MessageHandler> handlers;
         lock (_lock)
         {
-            handlers = _handlers.TryGetValue(message, out var registeredHandlers) ? [.. registeredHandlers] : [];
+            handlers = _handlers.GetValueOrDefault(msg.message, []);
         }
 
         if (handlers.Length > 0)

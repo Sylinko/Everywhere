@@ -41,7 +41,17 @@ internal class patch_TextArea
         [MonoModReplace]
         public override void SetPreeditText(string? text)
         {
-            _textArea?.RaiseEvent(new PreeditChangedEventArgs(PreeditChangedEventRegistry.PreeditChangedEvent, text, CursorRectangle));
+            if (_textArea is not { } textArea) return;
+
+            // Avalonia calls SetPreeditText(null) when an IME composition starts.
+            // At this point the HWND has real keyboard focus and its HIMC is available,
+            // so retry the cursor rectangle that may have been dropped during activation.
+            if (text is null)
+            {
+                RaiseCursorRectangleChanged();
+            }
+
+            textArea.RaiseEvent(new PreeditChangedEventArgs(PreeditChangedEventRegistry.PreeditChangedEvent, text, CursorRectangle));
         }
     }
 }

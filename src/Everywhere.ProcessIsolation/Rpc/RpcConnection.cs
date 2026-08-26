@@ -1012,10 +1012,13 @@ public sealed class RpcConnection : IAsyncDisposable
     private sealed class Router
     {
         private readonly Lock _dispatchGate = new();
+        private readonly Lock _notificationGate = new();
         private readonly HashSet<Task> _dispatches = [];
         private readonly Dictionary<uint, RpcNotificationHandler> _notifications = [];
-        // Contracts are bound before Start and then remain read-only. Only active
-        // dispatch tracking crosses reader, handler, and disposal threads.
+        // Request and stream contracts are bound before Start. Main-side product
+        // proxies bind their notification contracts after the coordinator has
+        // authenticated and published a connection, so notification registration
+        // has one small synchronization boundary with reader dispatch.
         private readonly Dictionary<uint, RpcRequestHandler> _requests = [];
         private readonly Dictionary<uint, RpcStreamHandler> _streams = [];
 
@@ -1026,7 +1029,10 @@ public sealed class RpcConnection : IAsyncDisposable
 
         public void RegisterNotification(uint operationId, RpcNotificationHandler handler)
         {
-            _notifications.Add(operationId, handler);
+            lock (_notificationGate)
+            {
+                _notifications.Add(operationId, handler);
+            }
         }
 
         public void RegisterStream(uint operationId, RpcStreamHandler handler)
@@ -1041,7 +1047,10 @@ public sealed class RpcConnection : IAsyncDisposable
 
         public bool TryGetNotification(uint operationId, [NotNullWhen(true)] out RpcNotificationHandler? handler)
         {
-            return _notifications.TryGetValue(operationId, out handler);
+            lock (_notificationGate)
+            {
+                return _notifications.TryGetValue(operationId, out handler);
+            }
         }
 
         public bool TryGetStream(uint operationId, [NotNullWhen(true)] out RpcStreamHandler? handler)
