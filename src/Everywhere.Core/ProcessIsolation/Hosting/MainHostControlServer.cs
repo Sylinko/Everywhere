@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using Everywhere.Common;
 using Everywhere.ProcessIsolation.Hosts.Control;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Roles;
@@ -11,24 +12,40 @@ namespace Everywhere.ProcessIsolation.Hosting;
 /// controller connections while the UI is alive; it never becomes a Host role
 /// endpoint and never launches a process on behalf of a caller.
 /// </summary>
-public sealed class MainHostControlServer : IAsyncDisposable
+public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
 {
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.MainHostControl;
+
     private readonly ILogger _logger = Log.ForContext<MainHostControlServer>();
     private readonly HostProcessCoordinator _coordinator;
     private readonly RpcHandshakeIdentity _mainIdentity = RpcRuntimeIdentity.CreateCurrent(ProcessRole.Main);
     private readonly CancellationTokenSource _lifetime = new();
     private readonly Lock _disposeGate = new();
-    private readonly Task _runTask;
+    private readonly TaskCompletionSource _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private Task? _runTask;
     private Task? _disposeTask;
 
     private MainHostControlServer(HostProcessCoordinator coordinator)
     {
         _coordinator = coordinator;
-        _runTask = RunAsync();
     }
 
-    /// <summary>Starts the Main-control listener for the current desktop session.</summary>
-    public static MainHostControlServer Start(HostProcessCoordinator coordinator) => new(coordinator);
+    /// <summary>Creates an unstarted Main-control listener for the current desktop session.</summary>
+    public static MainHostControlServer Create(HostProcessCoordinator coordinator) => new(coordinator);
+
+    /// <summary>
+    /// Starts accepting controller connections. Completion means the control pipe
+    /// has been created and can accept requests before the first Host generation starts.
+    /// </summary>
+    public Task InitializeAsync()
+    {
+        lock (_disposeGate)
+        {
+            ObjectDisposedException.ThrowIf(_disposeTask is not null, this);
+            _runTask ??= RunAsync();
+            return _started.Task;
+        }
+    }
 
     /// <summary>
     /// Stops accepting controllers and waits for the listener to release its pipe.
@@ -47,9 +64,13 @@ public sealed class MainHostControlServer : IAsyncDisposable
     private async Task DisposeCoreAsync()
     {
         await _lifetime.CancelAsync().ConfigureAwait(false);
+        _started.TrySetCanceled(_lifetime.Token);
         try
         {
-            await _runTask.ConfigureAwait(false);
+            if (_runTask is not null)
+            {
+                await _runTask.ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -69,16 +90,24 @@ public sealed class MainHostControlServer : IAsyncDisposable
             try
             {
                 server = CreateServer(endpoint);
+                _started.TrySetResult();
                 await server.WaitForConnectionAsync(_lifetime.Token).ConfigureAwait(false);
                 await HandleConnectionAsync(server).ConfigureAwait(false);
                 server = null;
             }
             catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
             {
+                _started.TrySetCanceled(_lifetime.Token);
                 break;
             }
             catch (IOException exception)
             {
+                if (_started.TrySetException(exception))
+                {
+                    _logger.Error(exception, "The Main Hosts-control endpoint could not be created.");
+                    break;
+                }
+
                 _logger.Warning(exception, "The Main Hosts-control endpoint could not accept a connection.");
                 if (!_lifetime.IsCancellationRequested)
                 {
@@ -93,6 +122,12 @@ public sealed class MainHostControlServer : IAsyncDisposable
             }
             catch (Exception exception)
             {
+                if (_started.TrySetException(exception))
+                {
+                    _logger.Error(exception, "The Main Hosts-control endpoint could not be created.");
+                    break;
+                }
+
                 _logger.Warning(exception, "The Main Hosts-control connection failed.");
             }
             finally

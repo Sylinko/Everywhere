@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using Everywhere.Common;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Lifecycle;
 using Everywhere.ProcessIsolation.Roles;
@@ -32,7 +33,7 @@ public sealed record HostStopResult(
 /// later replaced, while an unexpected disconnect is still recovered immediately
 /// inside that generation and subject to the three-failures-in-five-minutes rule.
 /// </summary>
-public sealed class HostProcessCoordinator : IAsyncDisposable, IHostConnectionSource
+public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitializer, IAsyncDisposable
 {
     private static readonly TimeSpan ConnectAttemptTimeout = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan ConnectRetryDelay = TimeSpan.FromMilliseconds(200);
@@ -40,6 +41,8 @@ public sealed class HostProcessCoordinator : IAsyncDisposable, IHostConnectionSo
     private static readonly TimeSpan ControllerTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ControllerCoalescingWindow = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(5);
+
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.HostProcesses;
 
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
 
@@ -64,6 +67,9 @@ public sealed class HostProcessCoordinator : IAsyncDisposable, IHostConnectionSo
     /// startup window in which an external stop could otherwise arrive too early.
     /// </summary>
     public static HostProcessCoordinator Create() => new();
+
+    /// <summary>Starts the first Host generation through the application initialization pipeline.</summary>
+    public Task InitializeAsync() => StartHostsAsync();
 
     /// <summary>
     /// Returns the currently authenticated connection for a Host role, waiting

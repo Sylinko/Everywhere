@@ -44,11 +44,21 @@ public static class Program
     }
     
     [STAThread]
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
-        await Entrance.InitializeAsync(args);
+        NativeMessageBox.Register(LinuxNativeMessageBox.Show);
+        Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
+    }
 
-        ServiceLocator.Build(x => x
+    private static async Task<int> RunAsync(string[] args)
+    {
+        await using var entrance = Entrance.Initialize(args);
+        if (!entrance.IsPrimary)
+        {
+            return await entrance.ForwardAsync().ConfigureAwait(false);
+        }
+
+        await using var serviceProvider = ServiceLocator.Build(x => x
 
                 #region Basic
 
@@ -98,7 +108,13 @@ public static class Program
 
         );
 
-        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        if (Application.Current is App app)
+        {
+            await app.InitializationTask.ConfigureAwait(false);
+        }
+
+        return exitCode;
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>

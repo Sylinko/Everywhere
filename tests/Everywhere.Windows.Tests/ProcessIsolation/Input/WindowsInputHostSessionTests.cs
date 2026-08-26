@@ -81,8 +81,8 @@ public sealed class WindowsInputHostSessionTests
     public async Task NativeEventQueue_WhenCapacityIsExhausted_FailsOpen()
     {
         await using var session = new WindowsInputHostSession();
-        var inputEvent = new WindowsInputHook.InputEvent(
-            WindowsInputHook.InputEventKind.ShortcutTriggered,
+        var inputEvent = new Win32InputHook.InputEvent(
+            Win32InputHook.InputEventKind.ShortcutTriggered,
             1);
 
         for (var index = 0; index < 64; index++)
@@ -96,8 +96,8 @@ public sealed class WindowsInputHostSessionTests
     [Test]
     public void MouseButtonDown_WhenRegistrationExists_PublishesItsRegistrationId()
     {
-        var published = new List<WindowsInputHook.InputEvent>();
-        using var input = new WindowsInputHook(
+        var published = new List<Win32InputHook.InputEvent>();
+        using var input = new Win32InputHook(
             inputEvent =>
             {
                 published.Add(inputEvent);
@@ -125,7 +125,7 @@ public sealed class WindowsInputHostSessionTests
         InvokeMouseHook(input, WINDOW_MESSAGE.WM_LBUTTONDOWN, ref hookStruct, ref blockNext);
 
         Assert.That(published, Has.Count.EqualTo(1));
-        Assert.That(published[0].Kind, Is.EqualTo(WindowsInputHook.InputEventKind.ShortcutTriggered));
+        Assert.That(published[0].Kind, Is.EqualTo(Win32InputHook.InputEventKind.ShortcutTriggered));
         Assert.That(published[0].Id, Is.EqualTo(42));
         Assert.That(blockNext, Is.False);
     }
@@ -166,11 +166,11 @@ public sealed class WindowsInputHostSessionTests
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "TryQueue")]
     private static extern bool TryQueue(
         WindowsInputHostSession session,
-        WindowsInputHook.InputEvent inputEvent);
+        Win32InputHook.InputEvent inputEvent);
 
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "MouseHookProc")]
     private static extern void InvokeMouseHook(
-        WindowsInputHook input,
+        Win32InputHook input,
         WINDOW_MESSAGE message,
         ref MSLLHOOKSTRUCT hookStruct,
         ref bool blockNext);

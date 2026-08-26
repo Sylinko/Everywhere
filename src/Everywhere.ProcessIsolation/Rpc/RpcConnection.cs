@@ -25,7 +25,7 @@ public sealed class RpcConnection : IAsyncDisposable
     public bool IsServer { get; }
 
     /// <summary>Whether the reader and writer have been started.</summary>
-    public bool IsStarted => Started;
+    public bool IsStarted => IsStartedCore;
 
     /// <summary>Terminal connection signal used by Host lifetime supervision.</summary>
     public Task Completion => _completion.Task;
@@ -42,11 +42,11 @@ public sealed class RpcConnection : IAsyncDisposable
         }
     }
 
-    private AtomicBoolean Disposed => new(ref _disposed);
-    private AtomicBoolean FailureSignaled => new(ref _failureSignaled);
-    private AtomicBoolean GracefulShutdownRequested => new(ref _gracefulShutdownRequested);
-    private AtomicBoolean HandshakeCompleted => new(ref _handshakeCompleted);
-    private AtomicBoolean Started => new(ref _started);
+    private AtomicBoolean IsDisposed => new(ref _isDisposed);
+    private AtomicBoolean IsFailureSignaled => new(ref _isFailureSignaled);
+    private AtomicBoolean IsGracefulShutdownRequested => new(ref _isGracefulShutdownRequested);
+    private AtomicBoolean IsHandshakeCompleted => new(ref _isHandshakeCompleted);
+    private AtomicBoolean IsStartedCore => new(ref _isStarted);
 
     private readonly MessagePackRpcPayloadCodec _codec;
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -60,13 +60,13 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private string? _connectionNonce;
     private Task? _disposeTask;
-    private int _disposed;
+    private int _isDisposed;
     private CancellationTokenRegistration _externalCancellationRegistration;
-    private int _failureSignaled;
-    private int _gracefulShutdownRequested;
-    private int _handshakeCompleted;
+    private int _isFailureSignaled;
+    private int _isGracefulShutdownRequested;
+    private int _isHandshakeCompleted;
     private Task? _handshakeTimeoutTask;
-    private int _started;
+    private int _isStarted;
 
     /// <summary>Creates an unstarted connection over an owned full-duplex stream.</summary>
     public RpcConnection(Stream stream, bool isServer, RpcConnectionOptions? options = null, MessagePackRpcPayloadCodec? codec = null)
@@ -89,12 +89,9 @@ public sealed class RpcConnection : IAsyncDisposable
     /// <summary>Starts one reader and one writer for this connection.</summary>
     public void Start(CancellationToken cancellationToken = default)
     {
-        if (Disposed)
-        {
-            throw new ObjectDisposedException(nameof(RpcConnection));
-        }
+        ObjectDisposedException.ThrowIf(IsDisposed, nameof(RpcConnection));
 
-        if (!Started.FlipIfFalse())
+        if (!IsStartedCore.FlipIfFalse())
         {
             throw new InvalidOperationException("The RPC connection has already been started.");
         }
@@ -254,7 +251,7 @@ public sealed class RpcConnection : IAsyncDisposable
     /// </summary>
     public void RequestGracefulShutdown()
     {
-        GracefulShutdownRequested.FlipIfFalse();
+        IsGracefulShutdownRequested.FlipIfFalse();
     }
 
     private async ValueTask<TResponse> InvokeCoreAsync<TRequest, TResponse>(uint operationId, TRequest request, CancellationToken cancellationToken)
@@ -288,7 +285,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private async ValueTask DispatchAsync(RpcFrame frame, CancellationToken cancellationToken)
     {
         if (_options.RequireHandshake &&
-            !HandshakeCompleted &&
+            !IsHandshakeCompleted &&
             frame.Header.Kind is not RpcFrameKind.Request &&
             frame.Header.Kind is not RpcFrameKind.Response &&
             frame.Header.Kind is not RpcFrameKind.Error)
@@ -325,7 +322,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private async ValueTask DispatchRequestAsync(RpcFrame frame, CancellationToken cancellationToken)
     {
         if (_options.RequireHandshake
-            && !HandshakeCompleted
+            && !IsHandshakeCompleted
             && frame.Header.OperationId != RpcProtocolConstants.HandshakeOperationId)
         {
             await SendErrorAsync(
@@ -622,7 +619,7 @@ public sealed class RpcConnection : IAsyncDisposable
         try
         {
             await Task.Delay(_options.HandshakeTimeout, _lifetime.Token).ConfigureAwait(false);
-            if (!HandshakeCompleted)
+            if (!IsHandshakeCompleted)
             {
                 Fail(new TimeoutException("The RPC handshake did not complete within the configured timeout."));
             }
@@ -647,7 +644,7 @@ public sealed class RpcConnection : IAsyncDisposable
             }
 
             _connectionNonce = connectionNonce;
-            HandshakeCompleted.FlipIfFalse();
+            IsHandshakeCompleted.FlipIfFalse();
         }
     }
 
@@ -662,7 +659,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private void CompleteGracefulShutdownIfRequested()
     {
-        if (GracefulShutdownRequested)
+        if (IsGracefulShutdownRequested)
         {
             _transport.Complete();
         }
@@ -677,7 +674,7 @@ public sealed class RpcConnection : IAsyncDisposable
         }
 
         if (_options.RequireHandshake
-            && !HandshakeCompleted
+            && !IsHandshakeCompleted
             && operationId != RpcProtocolConstants.HandshakeOperationId)
         {
             throw new InvalidOperationException("The RPC handshake must complete before sending requests.");
@@ -692,7 +689,7 @@ public sealed class RpcConnection : IAsyncDisposable
             throw new InvalidOperationException("Only the server endpoint sends RPC notifications.");
         }
 
-        if (_options.RequireHandshake && !HandshakeCompleted)
+        if (_options.RequireHandshake && !IsHandshakeCompleted)
         {
             throw new InvalidOperationException("The RPC handshake must complete before sending notifications.");
         }
@@ -716,7 +713,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private void Fail(Exception? exception)
     {
-        if (Disposed || !FailureSignaled.FlipIfFalse())
+        if (IsDisposed || !IsFailureSignaled.FlipIfFalse())
         {
             return;
         }
@@ -737,7 +734,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private async Task DisposeCoreAsync()
     {
-        if (Started.FlipIfTrue())
+        if (IsStartedCore.FlipIfTrue())
         {
             await _lifetime.CancelAsync().ConfigureAwait(false);
             _transport.Complete();
@@ -758,7 +755,7 @@ public sealed class RpcConnection : IAsyncDisposable
         }
 
         _completion.TrySetResult();
-        Disposed.FlipIfFalse();
+        IsDisposed.FlipIfFalse();
         await _externalCancellationRegistration.DisposeAsync().ConfigureAwait(false);
         _lifetime.Dispose();
         await _transport.DisposeAsync().ConfigureAwait(false);

@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace Everywhere.ProcessIsolation.Roles;
 
 /// <summary>
@@ -40,9 +43,13 @@ public static class ProcessRoleNames
 
     private static string GetEndpoint(string wireName, string desktopSessionId)
     {
-        var user = Environment.UserName;
-        var safeUser = string.Concat(user.Select(static character => char.IsLetterOrDigit(character) ? character : '_'));
-        var safeSession = string.Concat(desktopSessionId.Select(static character => char.IsLetterOrDigit(character) ? character : '_'));
-        return $"Everywhere.ProcessIsolation.{safeUser}.{safeSession}.{wireName}";
+        // macOS implements .NET named pipes with a Unix-domain socket below
+        // the temporary directory. Keep the complete socket path below
+        // sockaddr_un's 104-byte limit on every platform while retaining the
+        // user/session scope in the stable identity hash.
+        var identity = $"{Environment.UserName}\0{desktopSessionId}";
+        var identityHash = SHA256.HashData(Encoding.UTF8.GetBytes(identity));
+        var compactIdentity = Convert.ToHexString(identityHash.AsSpan(0, 8));
+        return $"Everywhere.{compactIdentity}.{wireName}";
     }
 }

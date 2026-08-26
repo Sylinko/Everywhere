@@ -29,7 +29,7 @@ public sealed partial class HostLogNotification
     [Key(0)]
     public required HostLogLevel Level { get; init; }
 
-    /// <summary>Small stable component name such as <c>WindowsInputHook</c>.</summary>
+    /// <summary>Small stable component name such as <c>Win32InputHook</c>.</summary>
     [Key(1)]
     public required string Source { get; init; }
 
