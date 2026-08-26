@@ -7,6 +7,8 @@ using Microsoft.Win32.SafeHandles;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Threading;
+#else
+using System.Diagnostics;
 #endif
 
 namespace Everywhere.Watchdog;
@@ -143,9 +145,9 @@ internal sealed class WatchdogRpcService : IWatchdogRpc, IDisposable
 #endif
     }
 
+#if WINDOWS
     private MonitoredProcess? TryCaptureProcess(RegisterWatchdogProcessRequest request)
     {
-#if WINDOWS
         if (request.SourceProcessHandle == 0)
         {
             return null;
@@ -173,6 +175,8 @@ internal sealed class WatchdogRpcService : IWatchdogRpc, IDisposable
 
         return new WindowsMonitoredProcess(request.ProcessId, duplicatedHandle);
 #else
+    private static UnixMonitoredProcess? TryCaptureProcess(RegisterWatchdogProcessRequest request)
+    {
         return UnixMonitoredProcess.TryCapture(request);
 #endif
     }

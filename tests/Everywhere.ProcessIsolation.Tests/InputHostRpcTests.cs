@@ -121,7 +121,7 @@ public sealed class InputHostRpcTests
     [Test]
     public async Task RoleHostRunner_WithRoleSession_BindsDrainsAndDisposesSession()
     {
-        var endpoint = $"Everywhere.Test.InputRole.{Guid.NewGuid():N}";
+        var endpoint = TestPipeNames.Create();
         var session = new TestRoleSession();
         using var runnerCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var runner = ProcessRoleHostRunner.RunAsync(
@@ -300,7 +300,7 @@ public sealed class InputHostRpcTests
 
         public static async Task<ConnectionPair> CreateAsync()
         {
-            var pipeName = $"Everywhere.Test.Input.{Guid.NewGuid():N}";
+            var pipeName = TestPipeNames.Create();
             var serverStream = new NamedPipeServerStream(
                 pipeName,
                 PipeDirection.InOut,

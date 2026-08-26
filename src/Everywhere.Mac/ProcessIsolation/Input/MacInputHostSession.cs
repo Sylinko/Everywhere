@@ -1,24 +1,27 @@
 using System.Threading.Channels;
-using Windows.Win32;
+using Everywhere.Common;
+using Everywhere.Extensions;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Input;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Utilities;
 
-namespace Everywhere.Windows.ProcessIsolation.Input;
+namespace Everywhere.Mac.ProcessIsolation.Input;
 
 /// <summary>
-/// Owns one authenticated Windows Input connection. Native registrations never
-/// escape this session, and draining removes them before Host shutdown is acknowledged.
+/// Owns one authenticated macOS Input connection. Native registrations and
+/// capture state are released before the role acknowledges shutdown.
 /// </summary>
-public sealed class WindowsInputHostSession : IProcessRoleSession
+public sealed class MacInputHostSession : IProcessRoleSession
 {
+    private const int EventQueueCapacity = 64;
+
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
     private AtomicBoolean IsDraining => new(ref _isDraining);
 
     private readonly Channel<QueuedInputEvent> _events = Channel.CreateBounded<QueuedInputEvent>(
-        new BoundedChannelOptions(64)
+        new BoundedChannelOptions(EventQueueCapacity)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
@@ -26,13 +29,13 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
             AllowSynchronousContinuations = false
         });
     private readonly Lock _drainGate = new();
+    private readonly Lock _queueGate = new();
     private readonly Lock _stateGate = new();
 
     private Task? _drainTask;
     private int _isDisposed;
     private int _isDraining;
-    private Win32InputHook? _input;
-    private int _mainProcessId;
+    private CGInputHook? _input;
     private Task _sendTask = Task.CompletedTask;
 
     /// <inheritdoc />
@@ -44,11 +47,15 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
     }
 
     /// <inheritdoc />
-    public void OnAuthenticated(RpcHandshake peer) =>
-        Volatile.Write(ref _mainProcessId, (int)peer.ProcessId);
+    public void OnAuthenticated(RpcHandshake peer)
+    {
+        // macOS does not need the Windows foreground-permission transfer.
+    }
 
     private ApplyInputStateResponse ApplyState(ApplyInputStateRequest request, IHostDiagnosticsRpc diagnostics)
     {
+        Exception? failure = null;
+        CGInputHook? failedInput = null;
         lock (_stateGate)
         {
             if (IsDraining)
@@ -56,11 +63,48 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
                 return new ApplyInputStateResponse { IsApplied = false };
             }
 
-            _input ??= new Win32InputHook(TryQueue, diagnostics);
-            _input.ApplyState(request);
+            try
+            {
+                _input ??= new CGInputHook(TryQueue);
+                _input.ApplyState(request);
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+                failedInput = _input;
+                _input = null;
+            }
         }
 
-        return new ApplyInputStateResponse { IsApplied = true };
+        if (failedInput is not null)
+        {
+            try
+            {
+                failedInput.Dispose();
+            }
+            catch (Exception exception)
+            {
+                failure = new AggregateException(
+                    failure ?? new InvalidOperationException("The macOS Input Host state failed before cleanup."),
+                    exception);
+            }
+        }
+
+        if (failure is null)
+        {
+            return new ApplyInputStateResponse { IsApplied = true };
+        }
+
+        diagnostics.LogAsync(
+                new HostLogNotification
+                {
+                    Level = HostLogLevel.Error,
+                    Source = nameof(MacInputHostSession),
+                    Message = "Failed to apply the macOS Input Host state.",
+                    ExceptionText = failure.ToString()
+                })
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        return new ApplyInputStateResponse { IsApplied = false };
     }
 
     /// <inheritdoc />
@@ -86,23 +130,17 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
         await BeginDrainingAsync().ConfigureAwait(false);
     }
 
-    private bool TryQueue(Win32InputHook.InputEvent inputEvent)
+    private bool TryQueue(CGInputHook.InputEvent inputEvent)
     {
-        if (IsDraining)
+        lock (_queueGate)
         {
-            return false;
-        }
+            if (IsDraining)
+            {
+                return false;
+            }
 
-        var mainProcessId = Volatile.Read(ref _mainProcessId);
-        if (inputEvent.Kind == Win32InputHook.InputEventKind.ShortcutTriggered && mainProcessId > 0)
-        {
-            // The Host received the user's input, so Windows may grant it the
-            // foreground privilege. Transfer that short-lived privilege to Main
-            // before publishing the shortcut notification.
-            PInvoke.AllowSetForegroundWindow((uint)mainProcessId);
+            return _events.Writer.TryWrite(new QueuedInputEvent(inputEvent, DateTimeOffset.UtcNow.UtcTicks));
         }
-
-        return _events.Writer.TryWrite(new QueuedInputEvent(inputEvent, DateTimeOffset.UtcNow.UtcTicks));
     }
 
     private async Task SendNotificationsAsync(InputHostNotificationRpcClient client)
@@ -112,7 +150,7 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
         {
             switch (queuedEvent.Event.Kind)
             {
-                case Win32InputHook.InputEventKind.ShortcutTriggered:
+                case CGInputHook.InputEventKind.ShortcutTriggered:
                     await client.ShortcutTriggeredAsync(
                             new ShortcutTriggeredNotification
                             {
@@ -123,13 +161,13 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
                         .ConfigureAwait(false);
                     break;
 
-                case Win32InputHook.InputEventKind.CaptureChanged:
+                case CGInputHook.InputEventKind.CaptureChanged:
                     await SendCaptureChangedAsync(client, queuedEvent, ++sequence).ConfigureAwait(false);
                     break;
 
-                case Win32InputHook.InputEventKind.CaptureFinished:
-                    // Windows reports the final changed value and completion from
-                    // one native callback. One local queue item keeps that pair atomic.
+                case CGInputHook.InputEventKind.CaptureFinished:
+                    // One local queue item keeps the final changed value and
+                    // completion adjacent in the connection's FIFO stream.
                     await SendCaptureChangedAsync(client, queuedEvent, ++sequence).ConfigureAwait(false);
                     await client.CaptureFinishedAsync(
                             new ShortcutCaptureFinishedNotification
@@ -144,7 +182,7 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Unknown Windows Input event kind: {queuedEvent.Event.Kind}.");
+                    throw new InvalidOperationException($"Unknown macOS Input event kind: {queuedEvent.Event.Kind}.");
             }
         }
     }
@@ -162,9 +200,12 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
 
     private async Task DrainAsync()
     {
-        IsDraining.FlipIfFalse();
+        lock (_queueGate)
+        {
+            IsDraining.FlipIfFalse();
+        }
 
-        Win32InputHook? input;
+        CGInputHook? input;
         lock (_stateGate)
         {
             input = _input;
@@ -177,19 +218,22 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
         }
         finally
         {
-            // The sender must always observe completion. Otherwise a native cleanup
-            // failure would leave the role runner waiting on this session forever.
-            _events.Writer.TryComplete();
+            // The sender must always observe completion, even when native cleanup
+            // reports an exception, so role shutdown cannot wait forever on it.
+            lock (_queueGate)
+            {
+                _events.Writer.TryComplete();
+            }
         }
 
         await _sendTask.ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Binds connection-owned collaborators once, so the session and native hook
-    /// do not carry nullable RPC clients through their normal operation paths.
+    /// Binds connection-owned collaborators once, keeping the native session free
+    /// from nullable RPC clients during normal event processing.
     /// </summary>
-    private sealed class InputHostRpcHandler(WindowsInputHostSession owner, IHostDiagnosticsRpc diagnostics) : IInputHostRpc
+    private sealed class InputHostRpcHandler(MacInputHostSession owner, IHostDiagnosticsRpc diagnostics) : IInputHostRpc
     {
         /// <inheritdoc />
         public ValueTask<ApplyInputStateResponse> ApplyStateAsync(
@@ -198,5 +242,5 @@ public sealed class WindowsInputHostSession : IProcessRoleSession
             ValueTask.FromResult(owner.ApplyState(request, diagnostics));
     }
 
-    private readonly record struct QueuedInputEvent(Win32InputHook.InputEvent Event, long UtcTicks);
+    private readonly record struct QueuedInputEvent(CGInputHook.InputEvent Event, long UtcTicks);
 }

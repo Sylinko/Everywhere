@@ -18,7 +18,6 @@ using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
-
 #if DEBUG
 using ClassicDiagnostics.Avalonia;
 #endif
@@ -43,8 +42,16 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     public static ThemeManager ThemeManager => _themeManager ?? throw new InvalidOperationException("Application is not initialized.");
 
+    /// <summary>
+    /// Gets the task for the asynchronous application startup sequence. The
+    /// process entry point awaits it after the Avalonia lifetime exits so DI
+    /// resources are not disposed while startup is still using them.
+    /// </summary>
+    public Task InitializationTask => _initializationTask ?? Task.CompletedTask;
+
     private static TopLevel? _topLevel;
     private static ThemeManager? _themeManager;
+    private Task? _initializationTask;
 
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
@@ -86,11 +93,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         WeakReferenceMessenger.Default.Register(this);
 
         InitializeMarkdown();
-        InitializeApp();
-
-        TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
-
-        RecordAppLaunchMetric();
     }
 
     private void HandleTransientWindowClosed(TransientWindow sender, RoutedEventArgs args)
@@ -173,11 +175,21 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         MarkdownNode.Register<MermaidBlockNode>();
     }
 
-    private void InitializeApp()
+    private async Task InitializeAppAsync()
     {
         try
         {
-            InitializeAsync().WaitOnDispatcherFrame();
+            foreach (var group in serviceProvider
+                         .GetRequiredService<IEnumerable<IAsyncInitializer>>()
+                         .GroupBy(i => i.Index)
+                         .OrderBy(g => g.Key))
+            {
+                await Task.WhenAll(group.Select(i => i.InitializeAsync()));
+            }
+
+            TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
+            RecordAppLaunchMetric();
+            ShowMainWindowOnNeeded();
         }
         catch (Exception ex)
         {
@@ -187,16 +199,9 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                 $"An error occurred during application initialization:\n{ex.Message}\n\nPlease check the logs for more details.",
                 NativeMessageBoxButtons.Ok,
                 NativeMessageBoxIcon.Error);
-        }
-
-        async Task InitializeAsync()
-        {
-            foreach (var group in serviceProvider
-                         .GetRequiredService<IEnumerable<IAsyncInitializer>>()
-                         .GroupBy(i => i.Index)
-                         .OrderBy(g => g.Key))
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                await Task.WhenAll(group.Select(i => i.InitializeAsync()));
+                desktop.Shutdown(1);
             }
         }
     }
@@ -227,14 +232,31 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     public override void OnFrameworkInitializationCompleted()
     {
+        base.OnFrameworkInitializationCompleted();
+
         switch (ApplicationLifetime)
         {
             case IClassicDesktopStyleApplicationLifetime:
             {
-                ShowMainWindowOnNeeded();
+                if (!Design.IsDesignMode)
+                {
+                    // SetupWithLifetime invokes this callback before ClassicDesktopLifetime starts
+                    // its main loop. Queue startup so all continuations run under Avalonia's UI
+                    // synchronization context without requiring a nested dispatcher frame.
+                    Dispatcher.UIThread.Post(
+                        StartApplicationInitialization,
+                        DispatcherPriority.Normal);
+                }
+
                 break;
             }
         }
+    }
+
+    private void StartApplicationInitialization()
+    {
+        _initializationTask = InitializeAppAsync();
+        _initializationTask.Detach(NativeMessageBox.ExceptionHandler);
     }
 
     /// <summary>

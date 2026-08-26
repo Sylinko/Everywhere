@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Security.Cryptography;
 using System.Text;
 using Everywhere.Common;
 using Everywhere.ProcessIsolation.Roles;
@@ -299,7 +300,7 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
         RpcConnection? connection = null;
         try
         {
-            var pipeName = $"Everywhere.Watchdog-{Guid.CreateVersion7():N}";
+            var pipeName = $"Everywhere.Watchdog-{RandomNumberGenerator.GetHexString(8)}";
             server = new NamedPipeServerStream(
                 pipeName,
                 PipeDirection.InOut,

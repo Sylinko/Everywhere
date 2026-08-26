@@ -4,7 +4,6 @@ using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Mac.Interop;
 using Everywhere.Messages;
-using Everywhere.ViewModels;
 using ObjCRuntime;
 
 namespace Everywhere.Mac;

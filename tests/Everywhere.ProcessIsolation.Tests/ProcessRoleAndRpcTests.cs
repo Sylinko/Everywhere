@@ -110,21 +110,31 @@ public class ProcessRoleAndRpcTests
     }
 
     [Test]
-    public void GetDefaultEndpoint_ContainsDesktopSessionAndRole()
+    public void GetDefaultEndpoint_WithSameIdentity_IsStableAndRoleSpecific()
     {
         var endpoint = ProcessRoleNames.GetDefaultEndpoint(ProcessRole.Automation, "desktop-42");
+        var sameEndpoint = ProcessRoleNames.GetDefaultEndpoint(ProcessRole.Automation, "desktop-42");
+        var otherSessionEndpoint = ProcessRoleNames.GetDefaultEndpoint(ProcessRole.Automation, "desktop-43");
 
-        Assert.That(endpoint, Does.Contain("desktop_42"));
-        Assert.That(endpoint, Does.EndWith(".automation"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(endpoint, Is.EqualTo(sameEndpoint));
+            Assert.That(endpoint, Is.Not.EqualTo(otherSessionEndpoint));
+            Assert.That(endpoint, Does.EndWith(".automation"));
+        });
     }
 
     [Test]
     public void GetMainControlEndpoint_UsesControlIdentityInsteadOfProcessRole()
     {
         var endpoint = ProcessRoleNames.GetMainControlEndpoint("desktop-42");
+        var roleEndpoint = ProcessRoleNames.GetDefaultEndpoint(ProcessRole.Main, "desktop-42");
 
-        Assert.That(endpoint, Does.Contain("desktop_42"));
-        Assert.That(endpoint, Does.EndWith(".main-control"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(endpoint, Is.Not.EqualTo(roleEndpoint));
+            Assert.That(endpoint, Does.EndWith(".main-control"));
+        });
     }
 
     [Test]
@@ -150,7 +160,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task Connection_RemainsAliveWhileCompletelyIdle()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -185,7 +195,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task UnknownNotification_ClosesOnlyThatConnection()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -216,7 +226,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task HandshakeTimeout_ClosesConnectionWithoutFirstFrame()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -242,7 +252,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeAsync_UsesExplicitHandlerAndMessagePackPayload()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -273,7 +283,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task SendNotificationAsync_ServerToClient_InvokesRegisteredHandler()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -311,7 +321,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeAsync_HandlerError_EchoesOperationAndKeepsConnectionUsable()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -347,7 +357,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeAsync_UnknownOperation_ClosesConnectionAsProtocolViolation()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -380,7 +390,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task PerformHandshakeAsync_RoundTripsGeneratedMessagePackContract()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -513,7 +523,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task HostLifecycleRpcBinding_RoutesEveryLifecycleMethod()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -551,7 +561,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task MainHostControlRpcBinding_RoutesStopRequest()
     {
-        var pipeName = $"Everywhere.Test.MainControl.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -589,7 +599,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task WatchdogRpcBinding_RegistrationHandleOwnsUnregistration()
     {
-        var pipeName = $"Everywhere.Test.Watchdog.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -637,7 +647,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task RoleHostRunner_ExitsAfterAuthenticatedConnectionDisconnects()
     {
-        var endpoint = $"Everywhere.Test.RoleHost.{Guid.NewGuid():N}";
+        var endpoint = TestPipeNames.Create();
         using var runnerCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
@@ -677,7 +687,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task RoleHostRunner_RejectedInitialHandshake_ReturnsFailureExitCode()
     {
-        var endpoint = $"Everywhere.Test.RoleHost.{Guid.NewGuid():N}";
+        var endpoint = TestPipeNames.Create();
         using var runnerCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
@@ -714,7 +724,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task RoleHostRunner_DuplicateEndpointExitsWithoutTakingOwnership()
     {
-        var endpoint = $"Everywhere.Test.RoleHost.{Guid.NewGuid():N}";
+        var endpoint = TestPipeNames.Create();
         using var firstCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var firstRunner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
@@ -743,7 +753,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task RoleHostRunner_ShutdownFlushesAcknowledgmentBeforeExit()
     {
-        var endpoint = $"Everywhere.Test.RoleHost.{Guid.NewGuid():N}";
+        var endpoint = TestPipeNames.Create();
         using var runnerCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
@@ -784,7 +794,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeStreamAsync_ValidatesSequenceAndYieldsAllChunks()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -819,7 +829,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeStreamAsync_DisposingEnumeratorSendsCancellation()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -885,7 +895,7 @@ public class ProcessRoleAndRpcTests
     [Test]
     public async Task InvokeAsync_CancellationIsDeliveredWhileHandlerIsRunning()
     {
-        var pipeName = $"Everywhere.Test.{Guid.NewGuid():N}";
+        var pipeName = TestPipeNames.Create();
         await using var serverStream = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
