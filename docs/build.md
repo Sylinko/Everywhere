@@ -101,6 +101,43 @@ We recommend using the IDE to run the project, as it will automatically set the 
 dotnet run --project src/Everywhere.Windows/Everywhere.Windows.csproj -c Debug
 ```
 
+### macOS Debug signing
+
+The first Debug build of `Everywhere.Mac` creates a self-signed development identity in the repository-local `.macos-signing` directory. The directory contains a dedicated keychain and its random password, is ignored by Git, and is not added permanently to the user's keychain search list. Subsequent builds reuse the same identity without importing it into the login keychain or repeatedly asking for keychain access.
+
+This identity is only for running the Debug app locally. Publish builds retain the existing distribution boundary: hardened runtime, entitlements, timestamps, and externally supplied Apple signing identities are handled by the Publish workflow. The repository-local identity is not available to that workflow.
+
+To replace a broken or expired local identity, move `.macos-signing` out of the repository and build again. The next Debug build creates a new identity.
+
+### Adding files to the macOS app bundle
+
+Files copied into `Everywhere.app` after `_CreateAppBundle` must participate in both incremental copying and Debug signing. Use this target shape as a template:
+
+```xml
+<Target Name="CopyMyHelperToMacAppBundle"
+        AfterTargets="_CreateAppBundle"
+        Inputs="$(MyHelperSource)"
+        Outputs="$(IntermediateOutputPath)my-helper-bundle-copy.stamp;$(MyHelperBundlePath)"
+        Condition="'$(IsMacEnabled)' == 'true'">
+  <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(MyHelperBundlePath)'))"/>
+  <Copy SourceFiles="$(MyHelperSource)" DestinationFiles="$(MyHelperBundlePath)"/>
+  <Exec Command="chmod +x &quot;$(MyHelperBundlePath)&quot;"/>
+  <Touch Files="$(MyHelperBundlePath)"/>
+  <Touch Files="$(IntermediateOutputPath)my-helper-bundle-copy.stamp" AlwaysCreate="true"/>
+</Target>
+```
+
+Also add the copy stamp to `_DevSigningInput` in `Everywhere.Mac.csproj`. The stamp ensures that signing runs even when `Copy` preserves an old source timestamp. `Touch` keeps every declared output newer than every input, which is especially important when one target copies several files with different source timestamps.
+
+Keep these invariants when adapting the template:
+
+- Declare every source in `Inputs` and the stamp plus every bundled destination in `Outputs`.
+- Do not use `SkipUnchangedFiles` against a signed destination. A signature changes the destination bytes, so it no longer matches the unsigned source.
+- Touch copied destinations before touching the copy stamp.
+- Make the copy stamp a Debug-signing input. The Debug signer automatically signs Mach-O libraries and executable files before the outer app bundle; keep executable permissions on native helpers so they are discovered.
+- Add distributable helpers to the nested-code section of `_CoreSignAppBundle` as well. Publish keeps its externally supplied identity, hardened-runtime, entitlement, and timestamp boundary.
+- Use `WriteOnlyWhenDifferent="true"` for generated source files so unchanged generated content does not invalidate downstream compilation and app-bundle creation.
+
 ## Frequently Asked Questions
 
 ### Why my Rider shows many errors in `axaml` files?
