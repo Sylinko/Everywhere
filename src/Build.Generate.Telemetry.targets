@@ -14,7 +14,7 @@
       <TelemetryCode Include="}"/>
     </ItemGroup>
 
-    <WriteLinesToFile File="$(GeneratedTelemetryFile)" Lines="@(TelemetryCode)" Overwrite="true"/>
+    <WriteLinesToFile File="$(GeneratedTelemetryFile)" Lines="@(TelemetryCode)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
 
     <ItemGroup>
       <Compile Include="$(GeneratedTelemetryFile)"/>

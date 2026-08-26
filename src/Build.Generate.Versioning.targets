@@ -15,7 +15,7 @@
       <VersioningCode Include="}"/>
     </ItemGroup>
 
-    <WriteLinesToFile File="$(GeneratedVersioningFile)" Lines="@(VersioningCode)" Overwrite="true"/>
+    <WriteLinesToFile File="$(GeneratedVersioningFile)" Lines="@(VersioningCode)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
 
     <ItemGroup>
       <Compile Include="$(GeneratedVersioningFile)"/>

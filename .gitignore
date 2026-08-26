@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 
+# Repository-local macOS development signing identity
+/.macos-signing/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
