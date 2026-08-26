@@ -49,7 +49,7 @@ public static class Program
 
             connection = new RpcConnection(stream, isServer: true);
             stream = null;
-            var localIdentity = RpcRuntimeIdentity.CreateCurrent(WatchdogRpcOperations.WireName);
+            var localIdentity = RpcRuntimeIdentity.CreateCurrent(RpcPeerNames.Watchdog);
             connection.RegisterRequestHandler<RpcHandshake, RpcHandshakeAck>(
                 RpcProtocolConstants.HandshakeOperationId,
                 (handshake, _) =>

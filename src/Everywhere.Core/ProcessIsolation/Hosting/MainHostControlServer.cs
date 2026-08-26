@@ -151,7 +151,7 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
             {
                 var response = RpcHandshakeValidator.Validate(
                     handshake,
-                    MainHostControlRpcOperations.ControllerWireName,
+                    RpcPeerNames.HostsControl,
                     _mainIdentity);
                 if (!response.Accepted)
                 {
