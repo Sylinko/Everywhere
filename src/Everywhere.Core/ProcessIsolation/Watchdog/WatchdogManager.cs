@@ -347,7 +347,7 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
                     DesktopSessionId = localIdentity.DesktopSessionId
                 },
                 deadline.Token).ConfigureAwait(false);
-            RpcHandshakeValidator.ValidateAcceptedPeer(response, WatchdogRpcOperations.WireName, localIdentity);
+            RpcHandshakeValidator.ValidateAcceptedPeer(response, RpcPeerNames.Watchdog, localIdentity);
 
             LogWatchdogProcessConnected(process.Id);
             return new WatchdogSession(connection, process);

@@ -484,11 +484,11 @@ public class ProcessRoleAndRpcTests
             new RpcHandshake
             {
                 AssemblyInformationalVersion = "test-version",
-                Role = MainHostControlRpcOperations.ControllerWireName,
+                Role = RpcPeerNames.HostsControl,
                 ProcessId = Environment.ProcessId,
                 DesktopSessionId = "desktop-1"
             },
-            MainHostControlRpcOperations.ControllerWireName,
+            RpcPeerNames.HostsControl,
             identity);
 
         Assert.That(response.Accepted, Is.True);

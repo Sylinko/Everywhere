@@ -103,7 +103,7 @@ public static class HostsControlRunner
                     new RpcHandshake
                     {
                         AssemblyInformationalVersion = localIdentity.AssemblyInformationalVersion,
-                        Role = MainHostControlRpcOperations.ControllerWireName,
+                        Role = RpcPeerNames.HostsControl,
                         ProcessId = localIdentity.ProcessId,
                         DesktopSessionId = localIdentity.DesktopSessionId
                     },
@@ -174,10 +174,7 @@ public static class HostsControlRunner
         }
     }
 
-    private static async Task<int> ReportMainUnavailableAsync(
-        string desktopSessionId,
-        CancellationToken cancellationToken,
-        string? detail = null)
+    private static async Task<int> ReportMainUnavailableAsync(string desktopSessionId, CancellationToken cancellationToken, string? detail = null)
     {
         var endpointsGone = await EndpointPresenceProbe
             .WaitForRolesToDisappearAsync(desktopSessionId, StopTimeout, cancellationToken)

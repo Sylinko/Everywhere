@@ -7,11 +7,11 @@ namespace Everywhere.ProcessIsolation.Hosts.Diagnostics;
 /// logging packages; Main receives these notifications and writes them through
 /// the application logger.
 /// </summary>
-[RpcContract(HostDiagnosticsRpcOperations.ContractId)]
+[RpcContract(4)]
 public interface IHostDiagnosticsRpc
 {
     /// <summary>Forwards one structured Host log entry to Main.</summary>
-    [RpcNotification(HostDiagnosticsRpcOperations.LogMethodId)]
+    [RpcMethod(1)]
     ValueTask LogAsync(
         HostLogNotification notification,
         CancellationToken cancellationToken = default);
