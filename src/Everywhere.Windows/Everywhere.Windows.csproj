@@ -14,6 +14,10 @@
     <NoWarn>$(NoWarn),IL2057</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Everywhere.Windows.Tests"/>
+  </ItemGroup>
+
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>

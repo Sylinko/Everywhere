@@ -172,6 +172,10 @@ public sealed class WindowHelper : IWindowHelper
             window.Show();
 
             window.Activate();
+            if (PInvoke.GetForegroundWindow() != hWnd)
+            {
+                ActivateFromUiThread(hWnd);
+            }
         }
     }
 
@@ -227,6 +231,36 @@ public sealed class WindowHelper : IWindowHelper
     {
         BOOL value = false;
         PInvoke.DwmSetWindowAttribute(hWnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAK, &value, (uint)sizeof(BOOL));
+    }
+
+    /// <summary>
+    /// Uses the short-lived PowerToys foreground fallback. The UI thread shares
+    /// input state with the current foreground thread only around one activation
+    /// attempt and always detaches before returning.
+    /// </summary>
+    private static void ActivateFromUiThread(HWND hWnd)
+    {
+        var currentThreadId = PInvoke.GetCurrentThreadId();
+        var foregroundWindow = PInvoke.GetForegroundWindow();
+        var foregroundThreadId = foregroundWindow.IsNull ? 0 : PInvoke.GetWindowThreadProcessId(foregroundWindow, out _);
+        var isAttached = foregroundThreadId != 0 &&
+            foregroundThreadId != currentThreadId &&
+            PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, true);
+
+        try
+        {
+            PInvoke.BringWindowToTop(hWnd);
+            PInvoke.SetForegroundWindow(hWnd);
+            PInvoke.SetFocus(hWnd);
+            PInvoke.SetActiveWindow(hWnd);
+        }
+        finally
+        {
+            if (isAttached)
+            {
+                PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, false);
+            }
+        }
     }
 
     public unsafe void RequestUserAttention(Window window)
