@@ -13,6 +13,9 @@ using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Initialization;
+using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Hosting;
+using Everywhere.ProcessIsolation.Input;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -40,6 +43,10 @@ public static class ServiceExtensions
                 .AddSerilog(dispose: true)
                 .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning));
 
+        /// <summary>Registers Main's connection-restoring Input Host proxy.</summary>
+        public IServiceCollection AddInputHostShortcutListener(HostProcessCoordinator coordinator) =>
+            services.AddSingleton<IShortcutListener>(serviceProvider =>
+                new InputHostShortcutListener(coordinator, serviceProvider.GetRequiredService<ILogger<InputHostShortcutListener>>()));
 
 #if WINDOWS
         [SupportedOSPlatform("windows")]

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Lifecycle;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
@@ -31,7 +32,7 @@ public sealed record HostStopResult(
 /// later replaced, while an unexpected disconnect is still recovered immediately
 /// inside that generation and subject to the three-failures-in-five-minutes rule.
 /// </summary>
-public sealed class HostProcessCoordinator : IAsyncDisposable
+public sealed class HostProcessCoordinator : IAsyncDisposable, IHostConnectionSource
 {
     private static readonly TimeSpan ConnectAttemptTimeout = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan ConnectRetryDelay = TimeSpan.FromMilliseconds(200);
@@ -48,6 +49,7 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
     private readonly SemaphoreSlim _generationGate = new(1, 1);
     private readonly Lock _generationStateGate = new();
     private readonly Lock _disposeGate = new();
+    private TaskCompletionSource _generationChanged = CreateStateChangeSource();
     private HostGeneration? _generation;
     private Task? _disposeTask;
     private int _isDisposed;
@@ -76,6 +78,47 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
         }
 
         return generation.GetConnectionAsync(role, cancellationToken);
+    }
+
+    async IAsyncEnumerable<RpcConnection> IHostConnectionSource.WatchConnectionsAsync(
+        ProcessRole role,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetime.Token);
+        HostGeneration? previousGeneration = null;
+
+        while (!lifetime.IsCancellationRequested)
+        {
+            HostGeneration generation;
+            try
+            {
+                generation = await WaitForGenerationAfterAsync(previousGeneration, lifetime.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+            {
+                yield break;
+            }
+
+            previousGeneration = generation;
+            RpcConnection? previousConnection = null;
+            while (!lifetime.IsCancellationRequested)
+            {
+                RpcConnection connection;
+                try
+                {
+                    connection = await generation
+                        .GetNextConnectionAsync(role, previousConnection, lifetime.Token)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!lifetime.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                previousConnection = connection;
+                yield return connection;
+            }
+        }
     }
 
     /// <summary>
@@ -281,21 +324,63 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
 
     private HostGeneration? TakeGeneration()
     {
+        TaskCompletionSource? changed = null;
+        HostGeneration? generation;
         lock (_generationStateGate)
         {
-            var generation = _generation;
+            generation = _generation;
             _generation = null;
-            return generation;
+            if (generation is not null)
+            {
+                changed = PulseGenerationChangedLocked();
+            }
         }
+
+        changed?.TrySetResult();
+        return generation;
     }
 
-    private void SetGeneration(HostGeneration? generation)
+    private void SetGeneration(HostGeneration generation)
     {
+        TaskCompletionSource changed;
         lock (_generationStateGate)
         {
             _generation = generation;
+            changed = PulseGenerationChangedLocked();
+        }
+
+        changed.TrySetResult();
+    }
+
+    private async ValueTask<HostGeneration> WaitForGenerationAfterAsync(HostGeneration? previousGeneration, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            Task changed;
+            lock (_generationStateGate)
+            {
+                if (_generation is not null && !ReferenceEquals(_generation, previousGeneration))
+                {
+                    return _generation;
+                }
+
+                changed = _generationChanged.Task;
+            }
+
+            await changed.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
     }
+
+    /// <summary>Replaces the generation-change signal while holding <see cref="_generationStateGate"/>.</summary>
+    private TaskCompletionSource PulseGenerationChangedLocked()
+    {
+        var changed = _generationChanged;
+        _generationChanged = CreateStateChangeSource();
+        return changed;
+    }
+
+    private static TaskCompletionSource CreateStateChangeSource() =>
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private void ThrowIfDisposed()
     {
@@ -371,6 +456,12 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
 
         public ValueTask<RpcConnection> GetConnectionAsync(ProcessRole role, CancellationToken cancellationToken) =>
             GetSupervisor(role).GetConnectionAsync(cancellationToken);
+
+        public ValueTask<RpcConnection> GetNextConnectionAsync(
+            ProcessRole role,
+            RpcConnection? previousConnection,
+            CancellationToken cancellationToken) =>
+            GetSupervisor(role).GetNextConnectionAsync(previousConnection, cancellationToken);
 
         public Task<HostStopResult> StopAsync(HostStopReason reason, CancellationToken cancellationToken) =>
             StopCoreAsync(reason, cancellationToken);
@@ -499,6 +590,7 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
             {
                 await stream.ConnectAsync((int)ConnectAttemptTimeout.TotalMilliseconds, cancellationToken).ConfigureAwait(false);
                 connection = new RpcConnection(stream, isServer: false);
+                HostDiagnosticsRpcBinding.Bind(connection, new HostDiagnosticsLogSink(role));
                 connection.Start(cancellationToken);
 
                 var response = await connection.PerformHandshakeAsync(
@@ -544,14 +636,16 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
         /// </summary>
         private sealed class RoleConnectionSupervisor(HostGeneration generation, ProcessRole role, CancellationToken lifetime) : IDisposable
         {
-            private static readonly TimeSpan CrashWindow = TimeSpan.FromMinutes(5);
+            private static TimeSpan CrashTimeWindow => TimeSpan.FromMinutes(5);
             private const int CrashLimit = 3;
 
             public Task Completion => _runTask ?? Task.CompletedTask;
 
             private AtomicBoolean StopRequested => new(ref _stopRequested);
 
-            private readonly ILogger _logger = Log.ForContext<RoleConnectionSupervisor>().ForContext("ProcessRole", ProcessRoleNames.ToWireName(role));
+            private readonly ILogger _logger = Log.ForContext<RoleConnectionSupervisor>().ForContext(
+                "ProcessRole",
+                ProcessRoleNames.ToWireName(role));
             private readonly CancellationTokenSource _stopping = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
             private readonly Lock _connectionGate = new();
             private readonly Queue<long> _failures = new();
@@ -570,6 +664,21 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
                 lock (_connectionGate)
                 {
                     if (_connection is not null)
+                    {
+                        return ValueTask.FromResult(_connection);
+                    }
+
+                    return new ValueTask<RpcConnection>(_nextConnection.Task.WaitAsync(cancellationToken));
+                }
+            }
+
+            public ValueTask<RpcConnection> GetNextConnectionAsync(
+                RpcConnection? previousConnection,
+                CancellationToken cancellationToken)
+            {
+                lock (_connectionGate)
+                {
+                    if (_connection is not null && !ReferenceEquals(_connection, previousConnection))
                     {
                         return ValueTask.FromResult(_connection);
                     }
@@ -675,7 +784,7 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
                                 _logger.Error(
                                     "Automatic Host recovery stopped after {CrashLimit} failures within {CrashWindow}.",
                                     CrashLimit,
-                                    CrashWindow);
+                                    CrashTimeWindow);
                                 break;
                             }
 
@@ -719,7 +828,7 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
                             _logger.Error(
                                 "Automatic Host recovery stopped after {CrashLimit} failures within {CrashWindow}.",
                                 CrashLimit,
-                                CrashWindow);
+                                CrashTimeWindow);
                             break;
                         }
                     }
@@ -776,11 +885,15 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
 
             private void SetConnection(RpcConnection connection)
             {
+                TaskCompletionSource<RpcConnection> nextConnection;
                 lock (_connectionGate)
                 {
                     _connection = connection;
-                    _nextConnection.TrySetResult(connection);
+                    nextConnection = _nextConnection;
+                    _nextConnection = CreateConnectionSource();
                 }
+
+                nextConnection.TrySetResult(connection);
 
                 _logger.Information("Authenticated the Host RPC connection.");
             }
@@ -795,14 +908,13 @@ public sealed class HostProcessCoordinator : IAsyncDisposable
                     }
 
                     _connection = null;
-                    _nextConnection = CreateConnectionSource();
                 }
             }
 
             private bool RecordFailureAndIsCircuitOpen()
             {
                 var now = Environment.TickCount64;
-                while (_failures.TryPeek(out var timestamp) && now - timestamp > CrashWindow.TotalMilliseconds)
+                while (_failures.TryPeek(out var timestamp) && now - timestamp > CrashTimeWindow.TotalMilliseconds)
                 {
                     _failures.Dequeue();
                 }

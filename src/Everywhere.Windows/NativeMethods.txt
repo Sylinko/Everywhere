@@ -17,6 +17,7 @@ SetLayeredWindowAttributes
 UpdateLayeredWindow
 GetForegroundWindow
 SetForegroundWindow
+BringWindowToTop
 SetWindowPos
 SetActiveWindow
 IsWindowEnabled
@@ -45,6 +46,7 @@ WM_COPY
 GetWindowThreadProcessId
 GetCurrentThreadId
 AttachThreadInput
+AllowSetForegroundWindow
 GetFocus
 
 GetCursorPos

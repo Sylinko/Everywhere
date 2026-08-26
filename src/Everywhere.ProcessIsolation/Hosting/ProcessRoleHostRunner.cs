@@ -6,15 +6,15 @@ using Everywhere.ProcessIsolation.Rpc;
 namespace Everywhere.ProcessIsolation.Hosting;
 
 /// <summary>
-/// Minimal headless host shell used during Phase 1. It intentionally does not
+/// Minimal headless host shell shared by the isolated process roles. It does not
 /// initialize Entrance, dependency injection, Avalonia, or the Core assembly.
 /// The endpoint is a single-lease resource: one accepted Main connection owns the
 /// Host lifetime, and this runner never re-listens after that connection ends.
 /// </summary>
 public static class ProcessRoleHostRunner
 {
-    private static readonly TimeSpan InitialConnectionTimeout = TimeSpan.FromSeconds(15);
-    private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
+    private static TimeSpan InitialConnectionTimeout => TimeSpan.FromSeconds(15);
+    private static TimeSpan CleanupTimeout => TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Starts the minimal role shell, owns its endpoint, authenticates one Main
@@ -24,7 +24,29 @@ public static class ProcessRoleHostRunner
     /// <param name="role">The non-Main role hosted by this process.</param>
     /// <param name="args">Role command-line arguments, including an optional endpoint override.</param>
     /// <param name="cancellationToken">Stops startup or the active connection.</param>
-    public static async Task<int> RunAsync(ProcessRole role, IReadOnlyList<string> args, CancellationToken cancellationToken = default)
+    public static Task<int> RunAsync(ProcessRole role, IReadOnlyList<string> args, CancellationToken cancellationToken = default) =>
+        RunCoreAsync(role, args, null, cancellationToken);
+
+    /// <summary>
+    /// Starts the role shell and composes one connection-owned platform session.
+    /// The factory runs only after a client has connected and before RPC starts.
+    /// </summary>
+    /// <param name="role">The non-Main role hosted by this process.</param>
+    /// <param name="args">Role command-line arguments, including an optional endpoint override.</param>
+    /// <param name="sessionFactory">Creates the role-specific session without resolving Main's service graph.</param>
+    /// <param name="cancellationToken">Stops startup or the active connection.</param>
+    public static Task<int> RunAsync(
+        ProcessRole role,
+        IReadOnlyList<string> args,
+        Func<IProcessRoleSession> sessionFactory,
+        CancellationToken cancellationToken = default) =>
+        RunCoreAsync(role, args, sessionFactory, cancellationToken);
+
+    private static async Task<int> RunCoreAsync(
+        ProcessRole role,
+        IReadOnlyList<string> args,
+        Func<IProcessRoleSession>? sessionFactory,
+        CancellationToken cancellationToken)
     {
         if (role is ProcessRole.Main)
         {
@@ -40,6 +62,7 @@ public static class ProcessRoleHostRunner
         EndpointOwnershipLease? ownership = null;
         NamedPipeServerStream? server = null;
         RpcConnection? connection = null;
+        IProcessRoleSession? session = null;
         RoleHostLifecycle? lifecycle = null;
         var exitCode = 0;
 
@@ -91,7 +114,9 @@ public static class ProcessRoleHostRunner
 
                 connection = new RpcConnection(server, isServer: true);
                 server = null;
-                lifecycle = new RoleHostLifecycle(role, connection);
+                session = sessionFactory?.Invoke();
+                session?.Bind(connection);
+                lifecycle = new RoleHostLifecycle(role, connection, session);
                 lifecycle.SetListening();
                 connection.RegisterRequestHandler<RpcHandshake, RpcHandshakeAck>(
                     RpcProtocolConstants.HandshakeOperationId,
@@ -100,6 +125,7 @@ public static class ProcessRoleHostRunner
                         var response = RpcHandshakeValidator.Validate(handshake, ProcessRole.Main, localIdentity);
                         if (response.Accepted)
                         {
+                            session?.OnAuthenticated(handshake);
                             lifecycle.SetConnected();
                         }
                         else
@@ -160,7 +186,16 @@ public static class ProcessRoleHostRunner
         finally
         {
             lifecycle?.BeginDraining();
+            if (session is not null && !await DrainWithinDeadlineAsync(session).ConfigureAwait(false))
+            {
+                exitCode = 3;
+            }
             lifecycle?.SetExiting();
+
+            if (session is not null && !await DisposeWithinDeadlineAsync(session, "role session").ConfigureAwait(false))
+            {
+                exitCode = 3;
+            }
 
             if (connection is not null && !await DisposeWithinDeadlineAsync(connection, "RPC connection").ConfigureAwait(false))
             {
@@ -176,6 +211,28 @@ public static class ProcessRoleHostRunner
         }
 
         return exitCode;
+    }
+
+    /// <summary>Bounds role-specific fail-open cleanup independently of transport disposal.</summary>
+    private static async Task<bool> DrainWithinDeadlineAsync(IProcessRoleSession session)
+    {
+        using var deadline = new CancellationTokenSource(CleanupTimeout);
+        try
+        {
+            await session.BeginDrainingAsync(deadline.Token).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            await Console.Error.WriteLineAsync(
+                $"Everywhere host cleanup exceeded {CleanupTimeout.TotalSeconds:0} seconds while draining the role session.");
+            return false;
+        }
+        catch (Exception exception)
+        {
+            await Console.Error.WriteLineAsync($"Everywhere host cleanup failed while draining the role session: {exception.Message}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -225,7 +282,7 @@ public static class ProcessRoleHostRunner
     /// State changes are monotonic; the authenticated connection is the lease that
     /// allows the shell to report Connected and request graceful draining.
     /// </summary>
-    private sealed class RoleHostLifecycle(ProcessRole role, RpcConnection connection) : IHostLifecycleRpc
+    private sealed class RoleHostLifecycle(ProcessRole role, RpcConnection connection, IProcessRoleSession? session) : IHostLifecycleRpc
     {
         /// <summary>Current lifecycle state read atomically by status requests.</summary>
         private HostProcessState State => (HostProcessState)Volatile.Read(ref _state);
@@ -273,19 +330,29 @@ public static class ProcessRoleHostRunner
         public ValueTask<HostOperationResponse> PrepareForUpdateAsync(
             PrepareForUpdateRequest request,
             CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(Transition("prepare_for_update"));
+            TransitionAsync("prepare_for_update", cancellationToken);
 
         public ValueTask<HostOperationResponse> ShutdownAsync(ShutdownRequest request, CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(Transition("shutdown"));
+            TransitionAsync("shutdown", cancellationToken);
 
         // Both PrepareForUpdate and Shutdown share the same idempotent transition:
         // only the first caller receives Accepted=true and arms graceful draining.
-        private HostOperationResponse Transition(string reason)
+        private async ValueTask<HostOperationResponse> TransitionAsync(string reason, CancellationToken cancellationToken)
         {
             var accepted = TryBeginDraining();
             if (accepted)
             {
-                connection.RequestGracefulShutdown();
+                try
+                {
+                    if (session is not null)
+                    {
+                        await session.BeginDrainingAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                finally
+                {
+                    connection.RequestGracefulShutdown();
+                }
             }
 
             return new HostOperationResponse

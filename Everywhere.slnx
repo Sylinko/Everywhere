@@ -87,6 +87,7 @@
     <Project Path="tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.Tests.csproj" />
     <Project Path="tests/Everywhere.Terminal.TestApp/Everywhere.Terminal.TestApp.csproj" />
     <Project Path="tests/Everywhere.Terminal.Tests/Everywhere.Terminal.Tests.csproj" />
+    <Project Path="tests/Everywhere.Windows.Tests/Everywhere.Windows.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Automation/">
     <Project Path="tests/Everywhere.Automation.Avalonia.TestApp/Everywhere.Automation.Avalonia.TestApp.csproj" />
