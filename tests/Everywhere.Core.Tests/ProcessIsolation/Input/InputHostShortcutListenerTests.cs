@@ -242,7 +242,7 @@ public sealed class InputHostShortcutListenerTests
 
         public static async Task<InputConnectionPair> CreateAsync()
         {
-            var pipeName = $"Everywhere.Test.InputProxy.{Guid.NewGuid():N}";
+            var pipeName = $"evtest-{Guid.NewGuid():N}"[..23];
             var serverStream = new NamedPipeServerStream(
                 pipeName,
                 PipeDirection.InOut,

@@ -1,26 +1,20 @@
 ﻿using System.Runtime.InteropServices;
-using Everywhere.I18N;
 using Everywhere.Interop;
 
 namespace Everywhere.Mac.Interop;
 
 /// <summary>
-/// Helper class for managing macOS Accessibility permissions required for global event listening.
+/// Main-only helper for managing macOS permissions that require user-facing UI.
 /// </summary>
-public static partial class PermissionHelper
+public static class PermissionHelper
 {
-    // Key for the options dictionary.
-    private static readonly NSString AxTrustedCheckOptionPrompt = new("AXTrustedCheckOptionPrompt");
-
     /// <summary>
-    /// Checks if the application has been granted Accessibility access.
+    /// Checks Accessibility permission, shows the existing localized prompt when
+    /// it is absent, and exits after the user has been told to restart.
     /// </summary>
     public static void EnsureAccessibilityTrusted()
     {
-        // For sandboxed apps, this will always be false.
-        // For non-sandboxed apps, it checks the system settings.
-        var isTrusted = AXIsProcessTrustedWithOptions(new NSDictionary(AxTrustedCheckOptionPrompt, NSNumber.FromBoolean(true)));
-        if (isTrusted) return;
+        if (AccessibilityPermission.IsTrusted(prompt: true)) return;
 
         NativeMessageBox.Show(
             CoreLocaleResolver.Common_Info,
@@ -37,6 +31,23 @@ public static partial class PermissionHelper
 #pragma warning disable CA1422
         using var _ = CGImage.ScreenImage(0, new CGRect(0, 0, 1, 1), CGWindowListOption.OnScreenOnly, CGWindowImageOption.Default);
 #pragma warning restore CA1422
+    }
+}
+
+/// <summary>
+/// Lightweight macOS Accessibility API wrapper usable by a headless Host.
+/// It never prompts, localizes, displays UI, or terminates the process.
+/// </summary>
+public static partial class AccessibilityPermission
+{
+    private static readonly NSString AxTrustedCheckOptionPrompt = new("AXTrustedCheckOptionPrompt");
+
+    /// <summary>Returns whether the current process is trusted by macOS Accessibility.</summary>
+    /// <param name="prompt">Whether macOS may display its system permission prompt.</param>
+    public static bool IsTrusted(bool prompt)
+    {
+        using var options = new NSDictionary(AxTrustedCheckOptionPrompt, NSNumber.FromBoolean(prompt));
+        return AXIsProcessTrustedWithOptions(options);
     }
 
     // ReSharper disable once InconsistentNaming

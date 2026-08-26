@@ -43,10 +43,25 @@ public static class ServiceExtensions
                 .AddSerilog(dispose: true)
                 .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning));
 
+        /// <summary>Registers Main's process-isolation lifecycle services.</summary>
+        public IServiceCollection AddProcessIsolation() =>
+            services
+                .AddSingleton<HostProcessCoordinator>(_ => HostProcessCoordinator.Create())
+                .AddSingleton<IHostConnectionSource>(serviceProvider =>
+                    serviceProvider.GetRequiredService<HostProcessCoordinator>())
+                .AddSingleton<MainHostControlServer>(serviceProvider =>
+                    MainHostControlServer.Create(serviceProvider.GetRequiredService<HostProcessCoordinator>()))
+                .AddSingleton<IAsyncInitializer>(serviceProvider =>
+                    serviceProvider.GetRequiredService<HostProcessCoordinator>())
+                .AddSingleton<IAsyncInitializer>(serviceProvider =>
+                    serviceProvider.GetRequiredService<MainHostControlServer>());
+
         /// <summary>Registers Main's connection-restoring Input Host proxy.</summary>
-        public IServiceCollection AddInputHostShortcutListener(HostProcessCoordinator coordinator) =>
+        public IServiceCollection AddInputHostShortcutListener() =>
             services.AddSingleton<IShortcutListener>(serviceProvider =>
-                new InputHostShortcutListener(coordinator, serviceProvider.GetRequiredService<ILogger<InputHostShortcutListener>>()));
+                new InputHostShortcutListener(
+                    serviceProvider.GetRequiredService<IHostConnectionSource>(),
+                    serviceProvider.GetRequiredService<ILogger<InputHostShortcutListener>>()));
 
 #if WINDOWS
         [SupportedOSPlatform("windows")]

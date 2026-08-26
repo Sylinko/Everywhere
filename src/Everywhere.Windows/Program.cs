@@ -32,58 +32,62 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        NativeMessageBox.Register(WindowsNativeMessageBox.Show);
+        Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
+    }
+
+    private static async Task<int> RunAsync(string[] args)
+    {
         if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlOperation)
         {
-            Environment.ExitCode = HostsControlRunner.RunAsync(hostsControlOperation).GetAwaiter().GetResult();
-            return;
+            return await HostsControlRunner.RunAsync(hostsControlOperation).ConfigureAwait(false);
         }
 
         var role = ProcessRoleCommandLine.Parse(args);
         if (role is not ProcessRole.Main)
         {
-            Environment.ExitCode = role is ProcessRole.Input ?
-                ProcessRoleHostRunner.RunAsync(role, args, static () => new WindowsInputHostSession()).GetAwaiter().GetResult() :
-                ProcessRoleHostRunner.RunAsync(role, args).GetAwaiter().GetResult();
-            return;
+            return await (role is ProcessRole.Input ?
+                ProcessRoleHostRunner.RunAsync(role, args, static () => new WindowsInputHostSession()) :
+                ProcessRoleHostRunner.RunAsync(role, args)).ConfigureAwait(false);
         }
 
-        MainAsync(args).GetAwaiter().GetResult();
+        await using var entrance = Entrance.Initialize(args);
+        if (!entrance.IsPrimary)
+        {
+            return await entrance.ForwardAsync().ConfigureAwait(false);
+        }
+
+        return await RunMainAsync(args).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// We must implement our own async Main method. otherwise [STAThread] won't work properly.
-    /// </summary>
-    /// <param name="args"></param>
-    private static async Task MainAsync(string[] args)
+    private static async Task<int> RunMainAsync(string[] args)
     {
         if (args.Contains("--load-user-profile"))
         {
             LoadUserProfile();
         }
 
-        await Entrance.InitializeAsync(args);
-        await using var hostProcessCoordinator = HostProcessCoordinator.Create();
-        await using var mainHostControlServer = MainHostControlServer.Start(hostProcessCoordinator);
-        await hostProcessCoordinator.StartHostsAsync();
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
+        {
+            throw new InvalidOperationException("Avalonia must be initialized on an STA thread.");
+        }
 
-        RegisterUrlProtocol();
+        await using var serviceProvider = ServiceLocator.Build(x => x
 
-        ServiceLocator.Build(x => x
-
-                #region Basic
+            #region Basic
 
                 .AddApplicationLogging()
+                .AddProcessIsolation()
+                .AddInputHostShortcutListener()
                 .AddSingleton<WindowsScreenSelectionService>()
                 .AddSingleton<IScreenSelectionService>(provider => provider.GetRequiredService<WindowsScreenSelectionService>())
                 .AddSingleton<WindowsTextSelectionWatcher>()
                 .AddSingleton<ITextSelectionWatcher>(provider => provider.GetRequiredService<WindowsTextSelectionWatcher>())
                 .AddSingleton<IVisualElementBackend, WindowsVisualElementBackend>()
-                .AddInputHostShortcutListener(hostProcessCoordinator)
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
-                .AddSingleton(hostProcessCoordinator)
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()
@@ -92,30 +96,38 @@ public static class Program
                 .AddCloudClient()
                 .AddChatEssentials()
 
-                #endregion
+            #endregion
 
-                #region Chat Plugins
+            #region Chat Plugins
 
-                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
+            .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
-                #endregion
+            #endregion
 
-                #region Strategy Engine
+            #region Strategy Engine
 
-                .AddStrategyEngine()
+            .AddStrategyEngine()
 
-                #endregion
+            #endregion
 
-                #region Initialize
+            #region Initialize
 
-                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+            .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+            .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
             #endregion
 
         );
 
-        BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        RegisterUrlProtocol();
+
+        var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+        if (Application.Current is App app)
+        {
+            await app.InitializationTask.ConfigureAwait(false);
+        }
+
+        return exitCode;
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>

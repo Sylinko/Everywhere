@@ -7,6 +7,10 @@ public enum AsyncInitializerIndex
 {
     Highest = int.MinValue,
 
+    MainHostControl = Highest,
+
+    HostProcesses = Highest + 1,
+
     Database = 10,
 
     Settings = 100,

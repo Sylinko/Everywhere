@@ -1,4 +1,5 @@
 using CoreFoundation;
+using Everywhere.Utilities;
 
 namespace Everywhere.Mac.Interop;
 
@@ -29,12 +30,10 @@ public class CGEventListener
 
     private CFMachPort? _eventTap;
     private CFRunLoopSource? _runLoopSource;
+    private Exception? _startupException;
 
     private CGEventListener(CGEventTapOptions options)
     {
-        // It's crucial to check for permissions before attempting to create the tap.
-        PermissionHelper.EnsureAccessibilityTrusted();
-
         _options = options;
         var workerThread = new Thread(RunLoopThread)
         {
@@ -44,18 +43,41 @@ public class CGEventListener
         };
         workerThread.Start();
         _readySignal.WaitOne();
+
+        if (_startupException is not null)
+        {
+            throw new InvalidOperationException("The macOS CoreGraphics event tap failed to start.", _startupException);
+        }
     }
 
     private void RunLoopThread()
     {
-        using var eventTap = CreateTap();
-        _eventTap = eventTap;
+        try
+        {
+            _eventTap = CreateTap();
+            _runLoopSource = _eventTap.CreateRunLoopSource() ??
+                throw new InvalidOperationException("The macOS CoreGraphics event tap run-loop source could not be created.");
+            CFRunLoop.Current.AddSource(_runLoopSource, CFRunLoop.ModeDefault);
+        }
+        catch (Exception exception)
+        {
+            _startupException = exception;
+        }
+        finally
+        {
+            // Always release the constructor wait, including permission and
+            // native startup failures.
+            _readySignal.Set();
+        }
 
-        _runLoopSource = eventTap.CreateRunLoopSource();
-        CFRunLoop.Current.AddSource(_runLoopSource, CFRunLoop.ModeDefault);
-
-        _readySignal.Set();
-        CFRunLoop.Current.Run();
+        try
+        {
+            if (_startupException is null) CFRunLoop.Current.Run();
+        }
+        finally
+        {
+            DisposeHelper.DisposeToDefault(ref _eventTap);
+        }
     }
 
     private CFMachPort CreateTap()
@@ -79,17 +101,29 @@ public class CGEventListener
 
     private nint HandleEvent(nint proxy, CGEventType type, nint cgEventRef, nint userData)
     {
+        var originalEventRef = cgEventRef;
+
         // Early exit if the event tap is not initialized
         if (_eventTap is null) return cgEventRef;
 
-        if (type is CGEventType.TapDisabledByTimeout or CGEventType.TapDisabledByUserInput)
+        try
         {
-            CGEvent.TapEnable(_eventTap);
-            return cgEventRef;
+            if (type is CGEventType.TapDisabledByTimeout or CGEventType.TapDisabledByUserInput)
+            {
+                CGEvent.TapEnable(_eventTap);
+                return cgEventRef;
+            }
+
+            using var cgEvent = CGInterop.CGEventFromHandle(cgEventRef);
+            EventReceived?.Invoke(type, cgEvent, ref cgEventRef);
+        }
+        catch
+        {
+            // Native callbacks must fail open even if a subscriber or wrapper
+            // throws after changing the event reference.
+            return originalEventRef;
         }
 
-        using var cgEvent = CGInterop.CGEventFromHandle(cgEventRef);
-        EventReceived?.Invoke(type, cgEvent, ref cgEventRef);
         return cgEventRef;
     }
 }

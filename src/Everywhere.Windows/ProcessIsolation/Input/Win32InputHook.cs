@@ -19,7 +19,7 @@ namespace Everywhere.Windows.ProcessIsolation.Input;
 /// Its callback returns whether a low-level keyboard event was accepted for delivery,
 /// which lets the hook fail open when the bounded session queue is full.
 /// </summary>
-public sealed unsafe class WindowsInputHook : IDisposable
+public sealed unsafe class Win32InputHook : IDisposable
 {
     public enum InputEventKind
     {
@@ -68,7 +68,7 @@ public sealed unsafe class WindowsInputHook : IDisposable
     private IDisposable? _mouseHook;
     private int _nextHotKeyId;
 
-    public WindowsInputHook(Func<InputEvent, bool> publish, IHostDiagnosticsRpc diagnostics)
+    public Win32InputHook(Func<InputEvent, bool> publish, IHostDiagnosticsRpc diagnostics)
     {
         _publish = publish;
         _diagnostics = diagnostics;
@@ -207,7 +207,7 @@ public sealed unsafe class WindowsInputHook : IDisposable
                     new HostLogNotification
                     {
                         Level = HostLogLevel.Warning,
-                        Source = nameof(WindowsInputHook),
+                        Source = nameof(Win32InputHook),
                         Message = $"RegisterHotKey failed; using the low-level keyboard hook. Error: {Marshal.GetLastWin32Error()}."
                     })
                 .Detach(IExceptionHandler.DangerouslyIgnoreAllException);

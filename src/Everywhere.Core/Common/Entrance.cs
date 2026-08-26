@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Pipes;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using MessagePack;
@@ -10,7 +9,6 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Json;
-using ZLinq;
 #if DEBUG
 using Avalonia.Controls;
 #endif
@@ -21,70 +19,77 @@ public static class Entrance
 {
     public static event EventHandler<UnobservedTaskExceptionEventArgs>? UnobservedTaskExceptionFilter;
 
-    private static Mutex? _appMutex;
-
     private const string BundleName = "com.sylinko.everywhere";
+    private static EntranceStartup? _startup;
+
+    public static EntranceStartup Initialize(string[] args)
+    {
+        var startup = InitializeSingleInstance(args);
+        _startup = startup;
+        if (!startup.IsPrimary)
+        {
+            return startup;
+        }
+
+        try
+        {
+            InitializeRuntimeConstants();
+            Telemetry.Initialize();
+            InitializeLogger();
+            InitializeErrorHandling();
+            return startup;
+        }
+        catch
+        {
+            startup.Abort();
+            throw;
+        }
+    }
 
     /// <summary>
-    /// Releases the application mutex. Only call this method when the application is exiting.
+    /// Releases the single-instance mutex before an intentional process replacement.
+    /// The activation pipe remains owned by the startup session until normal cleanup.
     /// </summary>
-    public static void ReleaseMutex()
-    {
-        if (_appMutex == null) return;
-
-        _appMutex.ReleaseMutex();
-        _appMutex.Dispose();
-        _appMutex = null;
-    }
-
-    public static async ValueTask InitializeAsync(string[] args)
-    {
-        await InitializeSingleInstanceAsync(args);
-        InitializeRuntimeConstants();
-        Telemetry.Initialize();
-        InitializeLogger();
-        InitializeErrorHandling();
-    }
+    public static void ReleaseMutex() => _startup?.ReleaseMutex();
 
     /// <summary>
     /// Initializes the application mutex to ensure a single instance of the application.
     /// </summary>
-    private static async ValueTask InitializeSingleInstanceAsync(string[] args)
+    private static EntranceStartup InitializeSingleInstance(string[] args)
     {
 #if DEBUG
-        if (Design.IsDesignMode) return;
+        if (Design.IsDesignMode) return EntranceStartup.CreatePrimary();
 #endif
 
-        _appMutex = new Mutex(true, BundleName, out var createdNew);
+        var appMutex = new Mutex(true, BundleName, out var createdNew);
         if (createdNew)
         {
-            Task.Run(StartHostPipeServer).Detach(Log.ForContext(typeof(Entrance)).ToExceptionHandler());
-            return;
+            var lifetime = new CancellationTokenSource();
+            var pipeServerTask = StartHostPipeServer(lifetime.Token);
+            return EntranceStartup.CreatePrimary(appMutex, lifetime, pipeServerTask);
         }
+
+        appMutex.Dispose();
 
         if (args.Contains("--autorun"))
         {
-            // Autorun, if there is already an instance, exit immediately
-            Environment.Exit(0);
-            return;
+            // Autorun, if there is already an instance, exits without contacting the primary instance.
+            return EntranceStartup.CreateExit();
         }
 
 #if IsWindows
         if (args.FirstOrDefault(x => x.StartsWith($"{UrlProtocolCallbackMessage.Scheme}:")) is { } url)
         {
             // Bring the existing instance to the foreground.
-            await SendToHost(new UrlProtocolCallbackMessage(url)).ConfigureAwait(false);
-            Environment.Exit(0);
-            return;
+            return EntranceStartup.CreateForward(SendToHostAsync(new UrlProtocolCallbackMessage(url)));
         }
 #endif
 
         // Bring the existing instance to the foreground.
-        await SendToHost(new ShowWindowMessage(ShowWindowMessage.ChatWindow)).ConfigureAwait(false);
-        Environment.Exit(0);
+        return EntranceStartup.CreateForward(SendToHostAsync(new ShowWindowMessage(ShowWindowMessage.ChatWindow)));
     }
 
-    private static async Task StartHostPipeServer()
+    private static async Task StartHostPipeServer(CancellationToken cancellationToken)
     {
         const int maxRetries = 5;
         var consecutiveErrors = 0;
@@ -101,10 +106,10 @@ public static class Entrance
                     PipeTransmissionMode.Byte,
                     PipeOptions.Asynchronous);
 
-                await server.WaitForConnectionAsync();
+                await server.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
 
                 var lengthBuffer = new byte[4];
-                await server.ReadExactlyAsync(lengthBuffer.AsMemory(0, 4));
+                await server.ReadExactlyAsync(lengthBuffer.AsMemory(0, 4), cancellationToken).ConfigureAwait(false);
 
                 var length = BitConverter.ToInt32(lengthBuffer, 0);
                 if (length is <= 0 or > 1024 * 1024) // sanity check: max 1 MB
@@ -114,7 +119,7 @@ public static class Entrance
                 }
 
                 var buffer = new byte[length];
-                await server.ReadExactlyAsync(buffer.AsMemory(0, length));
+                await server.ReadExactlyAsync(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
 
                 try
                 {
@@ -134,27 +139,34 @@ public static class Entrance
                 // Client disconnected before sending complete data; not a server error, just retry
                 Log.ForContext(typeof(Entrance)).Warning("Pipe client disconnected prematurely.");
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
             catch (Exception ex)
             {
                 Log.ForContext(typeof(Entrance)).Error(ex, "Host pipe server error.");
 
                 consecutiveErrors++;
-                await Task.Delay(1000);
+                await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
                 if (server != null)
                 {
-                    await server.DisposeAsync();
+                    await server.DisposeAsync().ConfigureAwait(false);
                 }
             }
         }
 
-        Log.ForContext(typeof(Entrance)).Error(
-            "Host pipe server stopped after {MaxRetries} consecutive errors.", maxRetries);
+        if (!cancellationToken.IsCancellationRequested)
+        {
+            Log.ForContext(typeof(Entrance)).Error(
+                "Host pipe server stopped after {MaxRetries} consecutive errors.", maxRetries);
+        }
     }
 
-    private static async Task SendToHost(ApplicationMessage message)
+    private static async Task<int> SendToHostAsync(ApplicationMessage message)
     {
         const int maxAttempts = 3;
         const int connectTimeoutMs = 5000;
@@ -164,26 +176,26 @@ public static class Entrance
             try
             {
                 await using var client = new NamedPipeClientStream(".", BundleName, PipeDirection.Out, PipeOptions.Asynchronous);
-                await client.ConnectAsync(connectTimeoutMs);
+                await client.ConnectAsync(connectTimeoutMs).ConfigureAwait(false);
 
                 var bytes = MessagePackSerializer.Serialize(message);
                 var lengthBytes = BitConverter.GetBytes(bytes.Length);
 
-                await client.WriteAsync(lengthBytes);
-                await client.WriteAsync(bytes);
-                await client.FlushAsync();
-                return; // success
+                await client.WriteAsync(lengthBytes).ConfigureAwait(false);
+                await client.WriteAsync(bytes).ConfigureAwait(false);
+                await client.FlushAsync().ConfigureAwait(false);
+                return 0;
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
                 Log.Error(ex, "Failed to send command to host instance (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
-                await Task.Delay(500 * attempt);
+                await Task.Delay(500 * attempt).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to send command to host instance after {MaxAttempts} attempts.", maxAttempts);
 
-                // Show message box if the command is ShowMainWindowCommand as a fallback
+                // Show message box if the command is ShowMainWindowCommand as a fallback.
                 if (message is ShowWindowMessage)
                 {
                     NativeMessageBox.Show(
@@ -194,6 +206,8 @@ public static class Entrance
                 }
             }
         }
+
+        return 0;
     }
 
     private static void InitializeRuntimeConstants()
@@ -210,7 +224,7 @@ public static class Entrance
                 string.Format(LocaleResolver.Entrance_FailedToInitializeRuntimeConstants, ex),
                 NativeMessageBoxButtons.Ok,
                 NativeMessageBoxIcon.Error);
-            Environment.Exit(1);
+            throw new InvalidOperationException("Failed to initialize runtime constants.", ex);
         }
     }
 
@@ -281,6 +295,111 @@ public static class Entrance
                     "ActivityId",
                     activity.Id)
             );
+        }
+    }
+}
+
+/// <summary>
+/// Owns the single-instance resources created during process bootstrap. A primary
+/// instance owns the mutex and activation pipe; a secondary instance owns only the
+/// asynchronous operation that forwards its activation request.
+/// </summary>
+public sealed class EntranceStartup : IAsyncDisposable
+{
+    public bool IsPrimary { get; }
+
+    private readonly Mutex? _appMutex;
+    private readonly CancellationTokenSource? _lifetime;
+    private readonly Task? _pipeServerTask;
+    private readonly Task<int>? _forwardTask;
+
+    private int _isDisposed;
+    private int _isMutexReleased;
+
+    private EntranceStartup(
+        bool isPrimary,
+        Mutex? appMutex = null,
+        CancellationTokenSource? lifetime = null,
+        Task? pipeServerTask = null,
+        Task<int>? forwardTask = null)
+    {
+        IsPrimary = isPrimary;
+        _appMutex = appMutex;
+        _lifetime = lifetime;
+        _pipeServerTask = pipeServerTask;
+        _forwardTask = forwardTask;
+    }
+
+    public Task<int> ForwardAsync() =>
+        _forwardTask ?? throw new InvalidOperationException("The primary instance has no forwarding operation.");
+
+    internal static EntranceStartup CreatePrimary() => new(true);
+
+    internal static EntranceStartup CreatePrimary(Mutex appMutex, CancellationTokenSource lifetime, Task pipeServerTask) =>
+        new(true, appMutex, lifetime, pipeServerTask);
+
+    internal static EntranceStartup CreateExit() => new(false, forwardTask: Task.FromResult(0));
+
+    internal static EntranceStartup CreateForward(Task<int> forwardTask) => new(false, forwardTask: forwardTask);
+
+    /// <summary>
+    /// Releases resources without waiting. This is used only when the synchronous
+    /// bootstrap sequence fails before the outer async lifetime can take ownership.
+    /// </summary>
+    internal void Abort()
+    {
+        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
+        {
+            return;
+        }
+
+        _lifetime?.Cancel();
+        ReleaseMutex();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
+        {
+            return;
+        }
+
+        if (_lifetime is not null)
+        {
+            await _lifetime.CancelAsync().ConfigureAwait(false);
+            try
+            {
+                if (_pipeServerTask is { } pipeServerTask)
+                {
+                    await pipeServerTask.ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                _lifetime.Dispose();
+            }
+        }
+
+        ReleaseMutex();
+    }
+
+    internal void ReleaseMutex()
+    {
+        if (Interlocked.Exchange(ref _isMutexReleased, 1) != 0 || _appMutex is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _appMutex.ReleaseMutex();
+        }
+        finally
+        {
+            _appMutex.Dispose();
         }
     }
 }
