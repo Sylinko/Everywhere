@@ -3949,4 +3949,10 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
         <value>Read a bounded continuation page from a visual element</value>
     </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>The input service crashed {0} times within {1} minutes, so automatic recovery has stopped. Restart Everywhere to restore shortcuts.</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>The accessibility service crashed {0} times within {1} minutes, so automatic recovery has stopped. Restart Everywhere to restore visual element access.</value>
+    </data>
 </root>

@@ -1517,7 +1517,7 @@
         <value>指定的路径不存在。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>捕获界面元素的截图。</value>
+        <value>捕获视觉元素的截图。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>执行一组自动化操作，如点击、输入或发送快捷键。</value>
@@ -3949,5 +3949,11 @@
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
         <value>从视觉元素中续读一页有界文本</value>
+    </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>输入服务在 {1} 分钟内崩溃了 {0} 次，已停止自动恢复。请重启 Everywhere 以恢复快捷键。</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>辅助功能服务在 {1} 分钟内崩溃了 {0} 次，已停止自动恢复。请重启 Everywhere 以恢复视觉元素访问。</value>
     </data>
 </root>
