@@ -1,7 +1,8 @@
 ﻿using System.Security;
 using Everywhere.AI;
-using Everywhere.Chat.Documents;
 using Everywhere.Common;
+using Everywhere.Prompting;
+using Everywhere.Prompting.Documents;
 using Everywhere.Utilities;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;

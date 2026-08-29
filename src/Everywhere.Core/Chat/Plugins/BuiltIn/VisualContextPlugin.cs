@@ -13,6 +13,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
+using Everywhere.Prompting;
 using Everywhere.Storage;
 using Everywhere.Statistics;
 using Everywhere.Views;

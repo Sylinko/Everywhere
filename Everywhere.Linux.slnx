@@ -35,6 +35,7 @@
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />
   <Project Path="src/Everywhere.Core/Everywhere.Core.csproj" />
   <Project Path="src/Everywhere.Linux/Everywhere.Linux.csproj" />
+  <Project Path="src/Everywhere.Prompting/Everywhere.Prompting.csproj" />
   <Project Path="src/Everywhere.Terminal/Everywhere.Terminal.csproj" />
   <Project Path="src/Everywhere.Watchdog/Everywhere.Watchdog.csproj" />
 </Solution>

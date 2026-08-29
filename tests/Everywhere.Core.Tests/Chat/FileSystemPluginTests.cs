@@ -1,14 +1,15 @@
 using System.Reflection;
 using Everywhere.Chat;
-using Everywhere.Chat.Documents;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
+using Everywhere.Prompting.Documents;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -576,11 +577,11 @@ public class FileSystemPluginTests
         var method = typeof(FileSystemPlugin).GetMethod("ApplyPatchAsync", BindingFlags.Instance | BindingFlags.NonPublic);
         var applyMethod = method ?? throw new AssertionException("ApplyPatchAsync was not found.");
 
-        var methodDescription = applyMethod.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>()?.Description;
+        var methodDescription = applyMethod.GetCustomAttribute<DescriptionAttribute>()?.Description;
         var patchDescription = applyMethod
             .GetParameters()
             .Single(static parameter => parameter.Name is "patch")
-            .GetCustomAttribute<System.ComponentModel.DescriptionAttribute>()?
+            .GetCustomAttribute<DescriptionAttribute>()?
             .Description;
 
         Assert.Multiple(() =>

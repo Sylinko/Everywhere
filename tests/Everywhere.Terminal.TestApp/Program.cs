@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Interop;
+using Everywhere.Prompting;
 using Everywhere.Terminal;
 using Microsoft.Extensions.Logging;
 using Porta.Pty;

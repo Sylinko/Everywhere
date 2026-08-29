@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Documents;
+namespace Everywhere.Prompting.Documents;
 
 /// <summary>
 /// Describes the rendered model content and which declarative nodes survived its token budget.
