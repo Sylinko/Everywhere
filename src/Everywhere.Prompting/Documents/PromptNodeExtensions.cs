@@ -1,4 +1,4 @@
-namespace Everywhere.Chat.Documents;
+namespace Everywhere.Prompting.Documents;
 
 /// <summary>
 /// Provides concise, strongly typed modifiers for declarative prompt construction.

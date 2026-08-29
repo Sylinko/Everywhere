@@ -1,9 +1,8 @@
 using System.Security;
 using System.Text;
-using Everywhere.AI;
 using ZLinq;
 
-namespace Everywhere.Chat.Documents;
+namespace Everywhere.Prompting.Documents;
 
 /// <summary>
 /// Materializes and renders declarative prompt node trees without modifying their source tree.
@@ -259,7 +258,14 @@ internal static class PromptNodeRenderer
         {
             if (child is MaterializedContainer { PassPriority: true } transparent)
             {
-                foreach (var descendant in EnumeratePriorityChildren(transparent)) yield return descendant;
+                if (transparent.HasVisibleChildren)
+                {
+                    foreach (var descendant in EnumeratePriorityChildren(transparent)) yield return descendant;
+                }
+                else if (transparent.HasOwnContent)
+                {
+                    yield return transparent;
+                }
             }
             else
             {
@@ -351,7 +357,11 @@ internal static class PromptNodeRenderer
 
         public bool IsAtomic => Source is PromptChunk;
 
-        public override bool IsEmpty => Children.All(static child => child.IsEmpty);
+        public bool HasOwnContent => Source is PromptElement;
+
+        public bool HasVisibleChildren => Children.AsValueEnumerable().Any(static child => !child.IsEmpty);
+
+        public override bool IsEmpty => !HasOwnContent && !HasVisibleChildren;
 
         public override int UpperBoundTokenCount => _upperBound ??= CalculateUpperBound();
 
@@ -366,10 +376,11 @@ internal static class PromptNodeRenderer
             var builder = new StringBuilder();
             if (Source is PromptElement element)
             {
-                builder.Append('<').Append(element.Name);
-                foreach (var (name, value) in element.Attributes.AsValueEnumerable())
+                AppendElementStart(builder, element);
+                if (!HasVisibleChildren)
                 {
-                    builder.Append(' ').Append(name).Append("=\"").Append(SecurityElement.Escape(value)).Append('\"');
+                    builder.Append("/>");
+                    return _rendered = builder.ToString();
                 }
 
                 builder.Append('>');
@@ -401,16 +412,27 @@ internal static class PromptNodeRenderer
             var total = Children.Sum(static child => child.UpperBoundTokenCount);
             if (Source is not PromptElement element) return total;
 
-            var opening = new StringBuilder().Append('<').Append(element.Name);
-            foreach (var (name, value) in element.Attributes.AsValueEnumerable())
+            var opening = new StringBuilder();
+            AppendElementStart(opening, element);
+            if (!HasVisibleChildren)
             {
-                opening.Append(' ').Append(name).Append("=\"").Append(SecurityElement.Escape(value)).Append('\"');
+                opening.Append("/>");
+                return TokenHelper.EstimateTokenCount(opening.ToString());
             }
 
             opening.Append('>');
             total += TokenHelper.EstimateTokenCount(opening.ToString());
             total += TokenHelper.EstimateTokenCount($"</{element.Name}>");
             return total;
+        }
+
+        private static void AppendElementStart(StringBuilder builder, PromptElement element)
+        {
+            builder.Append('<').Append(element.Name);
+            foreach (var (name, value) in element.Attributes.AsValueEnumerable())
+            {
+                builder.Append(' ').Append(name).Append("=\"").Append(SecurityElement.Escape(value)).Append('\"');
+            }
         }
     }
 }

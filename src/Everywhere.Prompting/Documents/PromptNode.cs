@@ -1,6 +1,7 @@
+using System.Collections;
 using MessagePack;
 
-namespace Everywhere.Chat.Documents;
+namespace Everywhere.Prompting.Documents;
 
 /// <summary>
 /// Represents one declarative node in a model-facing prompt document.
@@ -307,10 +308,12 @@ public sealed partial class PromptTokenLimit : PromptContainer
 }
 
 /// <summary>
-/// Represents an XML-style element whose tags survive whenever any descendant content survives.
+/// Represents a model-visible XML-style element.
 /// </summary>
 /// <remarks>
-/// Elements pass priority by default because their tags are structural wrappers rather than independent content.
+/// Elements pass priority by default so their children participate directly in the parent's priority scope.
+/// An element with no surviving children is emitted as a self-closing element because its name and attributes
+/// are content in their own right.
 /// Wrap an element in a <see cref="PromptChunk"/> when the entire element must be kept or removed atomically.
 /// </remarks>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
