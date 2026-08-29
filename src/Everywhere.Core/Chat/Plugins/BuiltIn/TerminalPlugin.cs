@@ -6,6 +6,7 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
+using Everywhere.Prompting;
 using Everywhere.Terminal;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;

@@ -45,6 +45,16 @@ The declaration tree is mutable because C# collection expressions, object initia
 - an automatic summarizer. The renderer can shorten or remove declared content, but it does not invent a semantic summary;
 - a universal metadata envelope. Domain metadata belongs in the surrounding tool result or in explicit element attributes. The node tree only models prompt content and the rules needed to render it.
 
+## Assembly and ownership
+
+The complete reusable prompt foundation lives in `src/Everywhere.Prompting`. Prompt document types use the `Everywhere.Prompting.Documents` namespace; shared token-budget and estimation utilities use `Everywhere.Prompting`.
+
+The assembly owns the serializable node hierarchy, `PromptElement`, prompt collections, `PromptRenderResult`, and the rendering and estimation behavior required by `PromptNode.ToString()` and `PromptDocument.Render(...)`. It references neither `Everywhere.Core` nor a feature assembly such as `Everywhere.VisualContext`.
+
+Core owns chat history and provider integration, while feature assemblies own the domain content they place in a prompt tree. Both depend on `Everywhere.Prompting`. In particular, Visual Context builds its final model-facing result as `PromptNode` and may use native `PromptElement` structure for XML instead of constructing an XML string inside Core.
+
+Keep the foundation usable as one coherent lower-level subsystem. Do not move only the serializable DTO declarations while leaving their required renderer, token estimation, or document result behavior behind a higher-level assembly.
+
 ## The node hierarchy
 
 ```text
@@ -206,7 +216,7 @@ This is useful at tool boundaries. A file search can limit its own output to 40,
 
 ### `PromptElement`
 
-`PromptElement` emits an XML-style element around its surviving descendants:
+`PromptElement` represents a model-visible XML-style element. Its name and attributes are content in their own right, in addition to its surviving descendants:
 
 ```csharp
 var file = new PromptElement(
@@ -230,7 +240,7 @@ Element and attribute names are validated as XML names. Attribute values are con
 
 Top-level `PromptText` is deliberately not escaped. This permits a root prompt to contain literal model instructions. Put untrusted or structurally significant text inside a `PromptElement` when XML-style escaping is required.
 
-Elements pass priority by default. Their opening and closing tags are structural wrappers; when all descendants are pruned, the empty element is omitted rather than emitted as an empty tag pair. Wrap an element in `PromptChunk` when the complete element must remain intact.
+Elements pass priority by default, so their children participate directly in the parent's priority scope. When an element has no surviving children, it is emitted in self-closing form, such as `<target id="42" status="timeout"/>`. It may subsequently be removed according to its own priority if the budget remains insufficient. Use `PromptGroup` for a transparent logical container that emits nothing when empty, and wrap an element in `PromptChunk` when the complete element must be kept or removed atomically. Do not preserve an attribute-only element by inserting zero-width characters, whitespace, comments, or other placeholder content.
 
 `PromptAttributeCollection` is a supporting type, not a `PromptNode`. It stores validated attribute names and invariant-culture string values for a `PromptElement`.
 

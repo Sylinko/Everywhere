@@ -2,7 +2,7 @@
 using System.Text;
 using Microsoft.ML.Tokenizers;
 
-namespace Everywhere.AI;
+namespace Everywhere.Prompting;
 
 public static class TokenHelper
 {

@@ -1,4 +1,3 @@
-using ZLinq;
 using Lucide.Avalonia;
 
 namespace Everywhere.AI.Prompts;

@@ -1,8 +1,8 @@
-using Everywhere.AI;
-using Everywhere.Chat.Documents;
+using Everywhere.Prompting;
+using Everywhere.Prompting.Documents;
 using MessagePack;
 
-namespace Everywhere.Core.Tests.Chat.Documents;
+namespace Everywhere.Core.Tests.Prompting.Documents;
 
 public sealed class PromptDocumentTests
 {
@@ -98,6 +98,38 @@ public sealed class PromptDocumentTests
     }
 
     [Test]
+    public void EmptyElement_WhenRendered_UsesSelfClosingMarkup()
+    {
+        var element = new PromptElement("target")
+            .Attribute("id", 42)
+            .Attribute("status", "a&\"b");
+
+        Assert.That(element.ToString(), Is.EqualTo("<target id=\"42\" status=\"a&amp;&quot;b\"/>"));
+    }
+
+    [Test]
+    public void ElementChildren_WhenPruned_PreservesThenRemovesSelfClosingElementAccordingToBudget()
+    {
+        var child = LongText("target-content").WithPriority(0);
+        var element = new PromptElement("target", child).Attribute("id", 42).WithPriority(1);
+        PromptDocument document = [element];
+        const string selfClosingElement = "<target id=\"42\"/>";
+
+        var retained = document.Render(TokenHelper.EstimateTokenCount(selfClosingElement));
+        var removed = document.Render(0);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(retained.Content, Is.EqualTo(selfClosingElement));
+            Assert.That(retained.IncludedNodes, Does.Contain(element));
+            Assert.That(retained.OmittedNodes, Does.Contain(child));
+            Assert.That(removed.Content, Is.Empty);
+            Assert.That(removed.OmittedNodes, Does.Contain(element));
+            Assert.That(removed.OmittedNodes, Does.Contain(child));
+        });
+    }
+
+    [Test]
     public void PriorityIsLocalToItsNearestContainer()
     {
         var nestedLow = LongText("nested-low").WithPriority(0);
@@ -146,15 +178,17 @@ public sealed class PromptDocumentTests
         var element = new PromptElement("context", elementText).WithPriority(100);
         var sibling = LongText("sibling").WithPriority(1);
         PromptDocument document = [element, sibling];
+        const string selfClosingElement = "<context/>";
 
         var result = document.Render(TokenHelper.EstimateTokenCount(sibling.Text));
 
         Assert.Multiple(() =>
         {
             Assert.That(element.PassPriority, Is.True);
-            Assert.That(result.Content, Is.EqualTo(sibling.Text));
+            Assert.That(result.Content, Is.EqualTo(selfClosingElement));
             Assert.That(result.OmittedNodes, Does.Contain(elementText));
-            Assert.That(result.OmittedNodes, Does.Contain(element));
+            Assert.That(result.OmittedNodes, Does.Contain(sibling));
+            Assert.That(result.IncludedNodes, Does.Contain(element));
         });
     }
 
@@ -279,8 +313,8 @@ public sealed class PromptDocumentTests
     {
         var lowText = LongText("xml-low").WithPriority(0);
         var highText = LongText("xml-high").WithPriority(100);
-        var lowEntry = new PromptElement("entry", lowText).Attribute("rank", "low");
-        var highEntry = new PromptElement("entry", highText).Attribute("rank", "high");
+        var lowEntry = new PromptElement("entry", lowText).Attribute("rank", "low").WithPriority(0);
+        var highEntry = new PromptElement("entry", highText).Attribute("rank", "high").WithPriority(100);
         var toolResult = new PromptElement("tool_result", lowEntry, highEntry)
             .Attribute("source", "demo");
         var expectedXml = $"<tool_result source=\"demo\"><entry rank=\"high\">{highText.Text}</entry></tool_result>";

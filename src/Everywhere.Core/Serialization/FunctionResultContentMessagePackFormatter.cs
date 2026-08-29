@@ -1,5 +1,5 @@
 ﻿using Everywhere.Chat;
-using Everywhere.Chat.Documents;
+using Everywhere.Prompting.Documents;
 using MessagePack;
 using Microsoft.SemanticKernel;
 

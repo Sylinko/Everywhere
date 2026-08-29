@@ -1,8 +1,8 @@
-using Everywhere.Chat.Documents;
+using Everywhere.Prompting.Documents;
 using MessagePack;
 using Microsoft.SemanticKernel;
 
-namespace Everywhere.Core.Tests.Chat.Documents;
+namespace Everywhere.Core.Tests.Chat;
 
 public sealed class FunctionResultContentSerializationTests
 {
@@ -15,8 +15,10 @@ public sealed class FunctionResultContentSerializationTests
                 new PromptText("required "),
                 new PromptText("optional content").WithPriority(0))
         ];
-        var source = new FunctionResultContent("read_file", "file_system", "call-1", document);
-        source.Metadata = new Dictionary<string, object?> { ["kind"] = "file" };
+        var source = new FunctionResultContent("read_file", "file_system", "call-1", document)
+        {
+            Metadata = new Dictionary<string, object?> { ["kind"] = "file" },
+        };
 
         var bytes = MessagePackSerializer.Serialize(source);
         var restored = MessagePackSerializer.Deserialize<FunctionResultContent>(bytes);

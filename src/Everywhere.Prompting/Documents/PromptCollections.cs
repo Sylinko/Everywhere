@@ -1,8 +1,10 @@
+using System.Collections;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Xml;
 using MessagePack;
 
-namespace Everywhere.Chat.Documents;
+namespace Everywhere.Prompting.Documents;
 
 /// <summary>
 /// Stores validated XML attributes in insertion order using invariant string values.
