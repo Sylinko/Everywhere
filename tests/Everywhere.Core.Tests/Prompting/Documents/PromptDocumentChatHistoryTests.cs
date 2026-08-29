@@ -1,13 +1,14 @@
 using Everywhere.AI;
 using Everywhere.Chat;
-using Everywhere.Chat.Documents;
+using Everywhere.Prompting;
+using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using MessagePack;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using NSubstitute;
 
-namespace Everywhere.Core.Tests.Chat.Documents;
+namespace Everywhere.Core.Tests.Prompting.Documents;
 
 public sealed class PromptDocumentChatHistoryTests
 {

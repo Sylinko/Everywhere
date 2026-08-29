@@ -10,6 +10,7 @@ using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.I18N;
 using Everywhere.Interop;
+using Everywhere.Prompting;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;

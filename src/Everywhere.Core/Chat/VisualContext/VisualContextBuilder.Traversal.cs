@@ -1,5 +1,6 @@
 ﻿using Everywhere.AI;
 using Everywhere.Interop;
+using Everywhere.Prompting;
 using ZLinq;
 
 namespace Everywhere.Chat;

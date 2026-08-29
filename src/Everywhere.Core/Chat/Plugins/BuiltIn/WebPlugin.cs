@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
 using System.Text;
-using Everywhere.AI;
-using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Prompting;
+using Everywhere.Prompting.Documents;
 using Everywhere.Web;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;

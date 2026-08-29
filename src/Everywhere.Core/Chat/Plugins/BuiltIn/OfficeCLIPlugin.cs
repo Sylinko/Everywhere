@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
-using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
+using Everywhere.Prompting.Documents;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;

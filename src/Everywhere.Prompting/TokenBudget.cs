@@ -1,4 +1,4 @@
-namespace Everywhere.AI;
+namespace Everywhere.Prompting;
 
 /// <summary>
 /// QoS-like proportional fair-share token budget allocator.
