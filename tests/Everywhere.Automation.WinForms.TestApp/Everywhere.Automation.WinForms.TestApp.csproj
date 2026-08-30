@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>$(TargetFrameworkPrefix)-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.Testing\Everywhere.Automation.Testing.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\Everywhere.Automation.TestApp.Shared\AutomationTestApp.targets" />
+</Project>

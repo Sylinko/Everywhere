@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    The SDK's TargetPath identifies the managed DLL even when UseAppHost emits a Windows
+    executable. Keep knowledge of that launch artifact in the target project instead of making
+    tests reconstruct Configuration, target-framework, and runtime-identifier directories.
+  -->
+  <Target Name="GetAutomationTestAppExecutablePath" Returns="@(_AutomationTestAppExecutablePath)">
+    <Error Condition="'$(UseAppHost)' != 'true'" Text="Visual Context TestApps must enable UseAppHost so controlled tests can launch them directly." />
+
+    <PropertyGroup>
+      <_AutomationTestAppExecutablePathValue>$([System.IO.Path]::ChangeExtension('$(TargetPath)', '.exe'))</_AutomationTestAppExecutablePathValue>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_AutomationTestAppExecutablePath Include="$(_AutomationTestAppExecutablePathValue)" />
+    </ItemGroup>
+  </Target>
+</Project>

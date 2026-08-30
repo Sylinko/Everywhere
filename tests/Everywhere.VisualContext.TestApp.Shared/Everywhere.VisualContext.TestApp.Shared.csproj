@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Everywhere.VisualContext.TestApp</RootNamespace>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Everywhere.VisualContext.Testing\Everywhere.VisualContext.Testing.csproj" />
-  </ItemGroup>
-</Project>
