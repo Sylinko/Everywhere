@@ -1,5 +1,5 @@
 using Avalonia;
-using Everywhere.Interop;
+using Everywhere.Automation;
 using X11;
 using X11Window = X11.Window;
 
@@ -10,7 +10,7 @@ namespace Everywhere.Linux.Interop.X11Backend;
 /// </summary>
 public sealed class X11Screenshot(X11Context context)
 {
-    public IVisualElement.ICapturedBitmapData Capture(X11Window drawable, PixelRect rect)
+    public IVisualElementCapture Capture(X11Window drawable, PixelRect rect)
     {
         var xImage = Xlib.XGetImage(
             context.Display,

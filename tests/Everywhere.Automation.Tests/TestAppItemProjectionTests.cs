@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Everywhere.Automation.TestApp;
 using Everywhere.Automation.Testing;
 
-namespace Everywhere.Core.Tests.Chat.VisualContext;
+namespace Everywhere.Automation.Tests;
 
 public sealed class TestAppItemProjectionTests
 {

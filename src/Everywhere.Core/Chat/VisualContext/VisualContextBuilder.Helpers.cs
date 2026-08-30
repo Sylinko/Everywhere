@@ -1,5 +1,4 @@
-﻿using Everywhere.AI;
-using Everywhere.Interop;
+﻿using Everywhere.Automation;
 using Everywhere.Prompting;
 
 namespace Everywhere.Chat;
@@ -98,9 +97,9 @@ partial class VisualContextBuilder
             _ => null
         };
 
-    private static bool IsInteractiveElement(IVisualElement element)
+    private static bool IsInteractiveElement(VisualElementType type, VisualElementStates states)
     {
-        if (element.Type is VisualElementType.Button or
+        if (type is VisualElementType.Button or
             VisualElementType.Hyperlink or
             VisualElementType.CheckBox or
             VisualElementType.RadioButton or
@@ -122,6 +121,6 @@ partial class VisualContextBuilder
             VisualElementType.Table or
             VisualElementType.TableRow) return true;
 
-        return (element.States & InteractiveStates) != 0;
+        return (states & InteractiveStates) != 0;
     }
 }

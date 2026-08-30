@@ -2,9 +2,11 @@
 
 ## 1. Purpose
 
-Visual Context reads live accessibility trees that may be large, fragmented, virtualized, mutable, slow, or broken. A few hand-written `IVisualElement` mocks are not sufficient to validate the replacement architecture.
+Visual Context reads live accessibility trees that may be large, fragmented, virtualized, mutable, slow, or broken. A few hand-written element mocks are not sufficient to validate the replacement architecture.
 
 This specification defines a small declarative UI model for building repeatable test scenarios. A scenario describes a UI in the same style as a declarative application: it composes windows, containers, text, controls, collections, and a small number of test behaviors. Random content is part of that control tree.
+
+The target architecture and acceptance checklist are summarized in [Visual Context Architecture](02-Architecture.md) and [Visual Context Verification](08-Verification.md). This document remains the detailed source of truth for the test infrastructure itself.
 
 The same scenario is consumed by four backends:
 
@@ -31,12 +33,15 @@ The initial implementation is split by ownership:
 
 | Project or location | Responsibility |
 | --- | --- |
-| `tests/Everywhere.VisualContext.Testing` | Declarative controls, path-addressed generation, Bogus-backed text, and the common/extreme scenario catalogs |
-| `tests/Everywhere.Core.Tests/Chat/VisualContext/Testing` | Mock read session, operation counters, mutation, failure injection, and the temporary legacy `IVisualElement` adapter |
-| `tests/Everywhere.VisualContext.TestApp.Shared` | JSON-lines revision protocol and exact-process controller |
-| `tests/Everywhere.VisualContext.WinForms.TestApp` | Native Windows Forms projection and virtual-mode grids |
-| `tests/Everywhere.VisualContext.Avalonia.TestApp` | Cross-platform Avalonia projection and indexed list source |
-| `tests/Everywhere.VisualContext.CefSharp.TestApp` | Local HTML/ARIA projection and C#-backed virtual DOM paging |
+| `src/Everywhere.Prompting` | Shared `PromptNode` model, native `PromptElement` structure, prompt pruning, and approximate token estimation used by Visual Context output |
+| `src/Everywhere.Automation` | Context-owned `VisualElement`, sealed platform-neutral `VisualContext`, `IVisualElementBackend`, `VisualElementRetention`, bounded query results, failure semantics, and Enumerator contracts consumed by production platforms and the Mock |
+| `tests/Everywhere.Automation.Testing` | Declarative controls, path-addressed generation, Bogus-backed text, and the common/extreme scenario catalogs |
+| `tests/Everywhere.Automation.Tests/Testing` | Production-contract Mock Backend, operation counters, mutation, failure injection, and retention/lifetime validation |
+| `tests/Everywhere.Automation.TestApp.Shared` | JSON-lines revision protocol and exact-process controller |
+| `tests/Everywhere.Automation.WinForms.TestApp` | Native Windows Forms projection and virtual-mode grids |
+| `tests/Everywhere.Automation.Avalonia.TestApp` | Cross-platform Avalonia projection and indexed list source |
+| `tests/Everywhere.Automation.CefSharp.TestApp` | Local HTML/ARIA projection and C#-backed virtual DOM paging |
+| `tests/Everywhere.Automation.Windows.Tests` | Windows-only controlled-process and production UIA integration tests, with direct production references and MSBuild-generated TestApp launch paths |
 
 `CefSharp.WinForms.NETCore` is referenced only by its isolated Windows TestApp. It is not a transitive dependency of production Visual Context, the shared scenario model, or the other TestApps.
 
@@ -51,6 +56,7 @@ The initial implementation is split by ownership:
 7. **The tested algorithm remains independent.** Shared scenario code must not reuse Visual Context traversal, planning, compression, or rendering logic.
 8. **Platform projections may differ.** Equivalent logical controls may produce different UIA, AX, or AT-SPI wrapper nodes. Real-process assertions therefore use semantic anchors and safety invariants rather than exact full-tree snapshots.
 9. **Keep the model small.** Add a control or behavior only when a concrete scenario cannot be expressed clearly with existing composition.
+10. **Faults belong to provider behavior, not fake UI structure.** Mock failure schedules and TestApp responsiveness controls are test-harness behavior addressed to real logical paths or roots. They do not introduce fictional timeout controls into the declarative application.
 
 ## 3. Reproducibility Contract
 
@@ -97,7 +103,7 @@ Scenario.Define("chat", context =>
 
 The names and constructors are not frozen by this document. The required property is that a scenario reads as a declarative UI definition rather than an accessibility-provider implementation.
 
-`VisualScenarioGenerator` supplies the seeded context and returns the root control or roots. It is not a compiler pipeline and does not create production `CapturedVisualContext`, `RenderPlan`, or `VisualTarget` objects.
+`VisualScenarioGenerator` supplies the seeded context and returns the root control or roots. It is not a compiler pipeline and does not create production `VisualContextSnapshot`, `VisualContextPlan`, or `VisualTarget` objects.
 
 ### 4.2 Common Control Set
 
@@ -114,7 +120,7 @@ The first implementation should provide only the controls needed by the initial 
 
 This is a starting set, not a requirement to implement every control before the first test. Backends may initially support a smaller declared subset and must report unsupported controls explicitly.
 
-Common scenarios are application prototypes rather than minimal control demonstrations. Their hand-written skeletons should contain the recognizable shell of the application category: primary navigation, commands or tools, the main work area, relevant auxiliary panes, and status or completion actions. UI behavior may be omitted when it is irrelevant to visual-context capture, but removing the surrounding application structure is not an acceptable simplification.
+Common scenarios are application prototypes rather than minimal control demonstrations. Their hand-written skeletons should contain the recognizable shell of the application category: primary navigation, commands or tools, the main work area, relevant auxiliary panes, and status or completion actions. UI behavior may be omitted when it is irrelevant to visual-context snapshots, but removing the surrounding application structure is not an acceptable simplification.
 
 Structural controls retain their platform semantics. For example, `MenuBar` and nested `MenuItem` declarations project to native menu controls or equivalent HTML menu roles, while `TabControl` contains named `TabItem` pages. A renderer must not flatten these declarations into generic unnamed stacks merely because that is easier to display.
 
@@ -157,16 +163,16 @@ Bogus is the primary source for names, sentences, paragraphs, and locale-specifi
 
 An extreme text scenario deliberately models a target that already owns a very large string. `ExtremeScenarios.SingleLongText`, for example, materializes approximately one million characters in the target process. That is not a test-infrastructure failure and must not be replaced with a platform-independent lazy string merely to satisfy the observing client's budget.
 
-The boundedness requirement begins at the accessibility API call made by the client. A successful bounded read must prevent the complete value from crossing the process boundary; receiving a complete value and slicing it locally is not bounded provider access. The concrete capability depends on the target provider and platform:
+Text observation has two independent boundaries. Provider liveness is protected by the native UIA or AX timeout, while Snapshot Traverser bounds aggregate elapsed time and operation count between calls. `MaxTextCharacters` bounds the preview returned to Snapshot and the Agent, but it does not require every provider to support ranged transfer. The concrete capability depends on the target provider and platform:
 
-| Platform capability | Safe bounded use | Unbounded or separate concern |
+| Platform capability | Preferred or common use | Boundary |
 | --- | --- | --- |
-| Windows UIA TextPattern | Obtain the document or another text range and call `IUIAutomationTextRange.GetText(maxLength)`. The provider returns at most the requested number of characters. | `IUIAutomationValuePattern.CurrentValue`, legacy accessible values, and ordinary string properties have no maximum-length parameter. UIA cache requests select fields and patterns but do not cap string payload size. |
-| Windows UIA timeouts | `IUIAutomation2.ConnectionTimeout` bounds the wait while obtaining an element; `TransactionTimeout` bounds a provider information request. | Timeouts limit waiting, not returned text length, traversal count, or memory usage. |
-| macOS AX ranged text | Read `AXNumberOfCharacters` when needed and call `AXUIElementCopyParameterizedAttributeValue` with `AXStringForRange` and an `AXValue`-wrapped `CFRange`. | Reading the complete `AXValue` and then slicing it is not bounded. `AXUIElementSetMessagingTimeout` limits messaging time, not payload size. |
+| Windows UIA ValuePattern | Read cached `CurrentValue` and truncate the managed preview locally. This is the common scalar text capability. | `TransactionTimeout` protects the provider call; the RPC payload may be larger than the returned preview. Traverser separately bounds the call series. |
+| Windows UIA TextPattern | For documents and other providers that expose ranged content, obtain a range and call `IUIAutomationTextRange.GetText(maxLength)`. | TextPattern is less commonly available than ValuePattern and supplements rather than defines safe text access. |
+| macOS AX text | Prefer `AXStringForRange` when supported; otherwise read the ordinary Value attribute and truncate the returned preview locally. | `AXUIElementSetMessagingTimeout` protects one native message; Traverser separately bounds the call series. |
 | macOS AX array attributes | Use `AXUIElementCopyAttributeValues(index, maxValues)` for large array-valued attributes such as children. | Array paging is not a substitute for ranged text and applies only when the attribute value is an array. |
 
-Providers do not all expose ranged text. The platform adapter must discover the supported capability, prefer the provider-bounded operation, and otherwise report text as unavailable or explicitly unbounded according to the read policy. It must not silently fall back to a whole-value read when a bounded request was required.
+Providers do not all expose ranged text. The platform adapter uses the ordinary Value capability for scalar text and may use ranged access when the element exposes document-style content. Tests distinguish provider-side ranging from local preview truncation for performance characterization, but both are valid query paths under the same native timeout and Snapshot aggregate bounds.
 
 ### 4.5 Lazy Collections
 
@@ -211,7 +217,7 @@ The generator may also use the scenario seed and step to insert, remove, reorder
 
 The Mock backend advances the step directly.
 
-Real-process tests use a test-only session decorator and a small TestApp control channel:
+Real-process tests use a test-only Enumerator/operation coordinator and a small TestApp control channel:
 
 ```text
 test Enumerator.MoveNext
@@ -227,7 +233,7 @@ This coordination must be bounded. It must not add production-only test hooks to
 
 ### 6.1 Mock Backend
 
-The Mock backend is implemented first. It directly projects declarative controls through a test-only read-session model that describes the required observable behavior without adding or freezing a production platform interface. During migration it may also expose a legacy `IVisualElement` adapter so the current and replacement traversal algorithms can consume the same stable scenario.
+The current Mock fixture uses Context-owned `Everywhere.Automation.VisualElement` subclasses with the same bounded element and Enumerator contracts as production platforms. It deliberately remains a fixture-scoped Context/Backend aggregate for simple scenario tests rather than pretending to be the process-singleton production `IVisualElementBackend`; Backend root-acquisition conformance can be split out when those tests are designed. Its former temporary `Everywhere.Interop.IVisualElement` surface has been removed; tests and the mechanically migrated production Builder now consume the canonical element model directly.
 
 The Mock backend must support:
 
@@ -237,11 +243,16 @@ The Mock backend must support:
 - operation counters;
 - bounded text reads;
 - unavailable and unsupported fields;
-- timeout and provider-failure injection;
+- deterministic scalar-query, Enumerator, timeout, and provider-failure injection addressed by logical path and operation;
+- repeated same-provider failures and exact operation counters for circuit-breaker and no-retry assertions;
 - `MoveNext`-driven mutation;
-- disposal tracking for Enumerators and sessions.
+- disposal tracking for Enumerators, retention batches, Contexts, and Runtimes.
 
-It must not call the real Capturer, Planner, Renderer, or target registry to calculate expected results.
+Mock failure injection does not sleep to imitate a timeout. It returns or throws the configured semantic failure at the configured operation, allowing tests to assert exact attempts, partial results, status propagation, and later-query recovery deterministically.
+
+It must not call the real Capturer, Planner, PromptNode builder, or `VisualContext` publication logic to calculate expected results.
+
+The shared Backend fixture verifies root acquisition into independent caller Contexts, fixed native timeout policy, and shared-resource disposal without retaining Contexts or Elements. Mock provider failures deliberately do not claim thread or process containment. Real UIA or AX processes remain required to characterize native timeout behavior, while only a future isolated query-host process can prove kill-and-restart containment for a call that ignores the platform boundary.
 
 ### 6.2 Windows Forms TestApp
 
@@ -254,6 +265,8 @@ Windows Forms is not treated as a raw Win32 UIA provider. If future failures req
 The Avalonia backend renders the same declarative scenarios through the UI framework used by Everywhere. It provides cross-platform coverage through the Windows, macOS, and Linux accessibility bridges.
 
 The backend may add toolkit-required wrapper controls, but semantic anchors and logical order must remain discoverable. Tests must not assume that the resulting platform tree is structurally identical across operating systems.
+
+Real backends expose only responsiveness behavior they can implement through their actual toolkit and accessibility provider. A blocked UI dispatcher is a truthful whole-root or whole-process unresponsive fixture when provider work is dispatched there. Element-scoped or operation-scoped native failures require a real custom provider boundary; they must not be claimed merely because the Mock can inject them.
 
 ### 6.4 CefSharp TestApp
 
@@ -291,7 +304,57 @@ The target reports:
 - unsupported scenario features;
 - fatal target-side errors.
 
-The controller owns only the process it launched and must terminate that exact process during cleanup. It resolves core elements through production platform entry points and reads them through `VisualContextService.EnterScopeAsync` once that API exists.
+The controller owns only the process it launched and must terminate that exact process during cleanup. The declarative Mock exercises direct Backend root acquisition and receiver-centered element operations. The explicit Windows tier directly references the production Windows project, resolves a WinForms root HWND through `WindowsVisualElementBackend.Query`, verifies Direct, TopLevel, and Screen resolution, reads bounded scalar properties through the production UIA CacheRequest path, and lazily advances one child through the production Enumerator. Its build-only TestApp project references report their launch artifacts through MSBuild, which generates strongly named paths in the test project's intermediate output. Test code must not reconstruct `bin`, Configuration, target-framework, or runtime-identifier paths. Avalonia and CefSharp continue to exercise the target protocol until their production-reader assertions are added; macOS and Linux still require platform Backend implementations.
+
+### 7.1 Programmatic Unresponsive State
+
+The shared TestApp protocol provides a test-only API that can deliberately make a supported real target unresponsive and later restore it. The API controls provider behavior; it does not change the declarative scenario tree or add a production Visual Context hook. Its illustrative command shape is:
+
+```csharp
+public enum TestAppCommandKind
+{
+    MoveNext,
+    SetResponsiveness,
+    Stop,
+}
+
+public enum TestAppResponsivenessMode
+{
+    UiThread,
+    AccessibilityProvider,
+}
+
+public sealed record TestAppCommand(
+    TestAppCommandKind Kind,
+    string? TargetPath = null,
+    bool? IsResponsive = null,
+    TestAppResponsivenessMode? ResponsivenessMode = null);
+```
+
+The exact DTO may evolve with implementation, but the synchronization contract is mandatory:
+
+```text
+controller: SetResponsiveness(IsResponsive: false)
+    -> target control thread installs the requested gate
+    -> target UI/provider thread enters the blocked region
+    -> target acknowledges the unresponsive state
+controller: invoke the production UIA or AX query and observe its native timeout
+controller: SetResponsiveness(IsResponsive: true)
+    -> target control thread releases the gate
+    -> target acknowledges recovery
+```
+
+The JSON-lines control reader remains on a dedicated background thread so it can release the gate while the UI or provider thread is blocked. A target must acknowledge entry only after the blocked thread has actually reached the gate, and acknowledge recovery only after that thread can make progress again. Tests use these acknowledgements rather than sleeps.
+
+The acknowledgement uses a distinct responsiveness-changed status and echoes the resolved target, mode, and current `IsResponsive` value. An unsupported target or mode returns an error before any thread is blocked, so the controller never mistakes lack of capability for the timeout behavior under test.
+
+The controller restores responsiveness in `finally`. If the target cannot acknowledge recovery within a bounded interval, cleanup terminates only the exact process tree owned by that controller. One failed responsiveness test must not leave a blocked TestApp or cause cleanup code to search for unrelated processes by name.
+
+Backends advertise supported responsiveness modes and target granularity. A toolkit that can only block its UI dispatcher accepts a root or process target and reports element-scoped requests as unsupported. A custom Win32, AX, or other provider fixture may later expose a narrower accessibility-provider gate. CefSharp must not claim a releasable renderer-thread failure mode until its separate process and JavaScript lifecycle can implement the same bounded handshake.
+
+The command sequence is part of the test configuration, not part of scenario generation. Scenario and seed still reproduce the logical UI; the reported command sequence and target path reproduce the induced runtime state within the same commit.
+
+The first retained Windows implementation exposes coarse `SuspendUiThread` and `ResumeUiThread` commands with acknowledged `UiThreadSuspended` and `UiThreadResumed` statuses. The WinForms `input` anchor uses a test-only custom accessibility object whose Name and Value providers wait on the same controller-released gate. This is necessary because blocking the WinForms dispatcher alone does not make standard HWND/MSAA proxy property reads block; the initial native probe returned cached property snapshots in a few milliseconds while the UI thread was suspended. The custom object remains a real out-of-process UIA provider boundary and does not modify the declarative scenario. Avalonia and CefSharp currently implement the coarse UI-thread gate only; they must not claim provider-timeout coverage until their accessibility bridge is shown to enter that gate or receives an equivalent honest provider fixture.
 
 ## 8. Scenario Catalog
 
@@ -323,6 +386,7 @@ Each template uses seeded controls for text, counts, optional branches, and smal
 - genuinely disconnected roots;
 - mutation on every `MoveNext`;
 - unavailable elements and provider failures;
+- a real provider or UI thread held in a controller-releasable unresponsive state where the backend supports it;
 - repeated equal-priority structures.
 
 ## 9. Assertions
@@ -330,14 +394,25 @@ Each template uses seeded controls for text, counts, optional branches, and smal
 Mock tests may assert exact logical traversal and operation counts. Real-process tests primarily assert semantic anchors and invariants:
 
 - the operation terminates inside configured bounds;
-- platform calls, enumerated children, captured nodes, and captured text remain bounded;
-- the expected core anchors remain represented or explicitly omitted;
+- platform calls, enumerated children, snapshot nodes, and snapshot text remain bounded;
+- the expected core anchors remain represented or carry explicit status explaining why they are incomplete;
 - no target ID silently changes meaning;
+- every replacement element returned to test code is already owned by exactly one `VisualContext`;
 - Element and Composite capabilities remain honest;
-- partial results retain correct omission reasons;
-- unrelated branches remain eligible after a branch failure;
-- all Enumerators, sessions, and scopes are released;
-- Plan and Render do not perform platform reads;
+- partial results retain bounded status for limits, timeouts, unavailable fields, and incomplete enumeration;
+- a relation timeout does not become an empty successful relation or `HasMore = false`;
+- a timed-out operation is attempted once and is not automatically retried;
+- repeated same-provider failures may suppress additional calls to that provider for the current Snapshot and add root status;
+- unrelated providers and roots remain eligible after one provider fails;
+- a later explicit query can query the provider again after the controlled target recovers;
+- all Enumerators, retention batches, Contexts, captures, and Backend fixtures are released by their owners;
+- disposing one ownership batch does not release an element retained by another batch;
+- final retention release, Context turn eviction, and Context teardown release platform resources exactly once;
+- republishing the same retained target reuses its committed Agent ID;
+- committed Agent IDs are monotonic within one Context and are never silently reused or retargeted;
+- Plan and PromptNode construction do not perform platform reads;
+- final model-facing output is a `PromptNode`, native XML uses `PromptElement`, and required status survives optional-content pruning;
+- Composite output preserves or summarizes status from failed source members;
 - equivalent stable observations produce deterministic logical output.
 
 Full UIA, AX, or AT-SPI tree snapshots are diagnostic artifacts, not the primary cross-version correctness oracle.
@@ -349,6 +424,7 @@ Full UIA, AX, or AT-SPI tree snapshots are diagnostic artifacts, not the primary
 | Mock deterministic | Hand-written scenarios and fixed seeds | Every relevant test run |
 | Mock generated | A bounded set of reported seeds | Pull requests and larger CI runs |
 | Controlled TestApps | WinForms, Avalonia, and CefSharp target processes | Platform integration or nightly runs |
+| Provider-timeout integration | Controller-gated real UI or accessibility providers observed through production UIA or AX clients | Isolated desktop or VM only |
 | Input-guard integration | Real low-level hooks and injected-input tags | Isolated desktop or VM only |
 | Real third-party applications | Diagnostic profiles for installed software | Explicit/manual only |
 
@@ -365,9 +441,9 @@ A randomized failure must print its scenario and seed. CI artifacts may addition
 
 ### Phase 2: Mock Backend
 
-1. Project the declarative tree through the test-only bounded read-session model.
-2. Add operation counters, failures, Enumerator metadata, and disposal tracking.
-3. Add the legacy `IVisualElement` adapter needed to characterize the current builder.
+1. Project the declarative tree through Context-owned mock `VisualElement` subclasses backed by the Mock Backend.
+2. Add operation counters, path-addressed failure schedules, repeated-provider failures, Enumerator metadata, retention/turn state, Backend state, and disposal tracking.
+3. Run the current mechanically migrated Builder against the same canonical Mock elements used by replacement-contract tests.
 4. Implement a small set of end-to-end scenarios before expanding the catalog.
 
 ### Phase 3: Scenario Coverage
@@ -384,15 +460,18 @@ A randomized failure must print its scenario and seed. CI artifacts may addition
 3. Implement the Avalonia renderer.
 4. Implement the CefSharp skeleton, JavaScript runtime, and renderer.
 5. Run the same scenario names and seeds through Mock and supported real backends.
+6. Extend the shared control protocol with acknowledged responsiveness gates and add production-reader timeout/recovery tests for each honestly supported backend mode.
 
 A minimal smoke scenario may be brought up on each real backend earlier if needed to keep the declarative model honest. Bulk backend coverage remains Phase 4.
 
-The controlled process smoke tier is explicit because it opens real windows. It can be run on an interactive Windows desktop after building the three TestApps:
+The controlled process smoke tier is explicit because it opens real windows. Building its Windows test project also builds the three referenced TestApps. It can be run on an interactive Windows desktop with:
 
 ```powershell
-dotnet test tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj `
+dotnet test tests/Everywhere.Automation.Windows.Tests/Everywhere.Automation.Windows.Tests.csproj `
   --filter TestCategory=ControlledTestApp -- NUnit.ExplicitMode=Relaxed
 ```
+
+This tier also retains an explicit two-MTA-thread Windows UIA compatibility probe. The threads are probe infrastructure, not the production Backend architecture. It obtains a retained root Element on one client/thread, then verifies scalar refresh and TreeWalker child navigation through the other for WinForms, Avalonia, and CefSharp. The probe waits for both native UIA clients to initialize before forcing the cross-client call so activation failure and retained-reference compatibility remain separate observations. It exercises the explicit unmanaged COM owners rather than relying on RCW lifetime.
 
 Temporary gaps that must be closed by later stages are tracked in the repository-root `temp.md` rather than hidden behind test-only fallbacks.
 
@@ -404,7 +483,7 @@ Temporary gaps that must be closed by later stages are tracked in the repository
 - Identical accessibility-tree shapes across platforms or toolkit versions.
 - Materializing the complete logical tree before a test starts.
 - Testing arbitrary third-party applications in required CI.
-- Replacing focused unit tests for isolated Planner, Renderer, registry, and scope behavior.
+- Replacing focused unit tests for isolated Planner, PromptNode builder, `VisualContext`, retention/turn, and Backend behavior.
 
 ## 13. Initial Acceptance Criteria
 
@@ -412,7 +491,7 @@ The first useful milestone is complete when:
 
 1. one declarative scenario containing ordinary controls, random text, and a lazy collection can be generated repeatedly from a reported seed;
 2. the Mock backend exposes it through bounded parent, child, and sibling enumeration;
-3. the current Weighted BFS can consume it through the legacy adapter;
+3. the current Weighted BFS can consume it through the canonical Mock element model;
 4. a mutable scenario changes deterministically once per `MoveNext` attempt;
 5. a large logical child count does not cause proportional setup allocation;
 6. a failure reports enough information to rerun the same scenario and seed from the same commit.

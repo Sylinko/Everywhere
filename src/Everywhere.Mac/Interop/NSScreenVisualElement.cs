@@ -1,4 +1,5 @@
 using Avalonia;
+using Everywhere.Automation;
 using Everywhere.Interop;
 
 namespace Everywhere.Mac.Interop;
@@ -76,7 +77,7 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
 
     public string? GetSelectionText() => null;
 
-    public Task<IVisualElement.ICapturedBitmapData> CaptureAsync(CancellationToken cancellationToken)
+    public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken)
     {
         var bounds = BoundingRectangle;
         var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
@@ -87,10 +88,10 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
 
         if (cgImage is null)
         {
-            return Task.FromException<IVisualElement.ICapturedBitmapData>(new InvalidOperationException("Failed to create CGImage wrapper."));
+            return Task.FromException<IVisualElementCapture>(new InvalidOperationException("Failed to create CGImage wrapper."));
         }
 
-        return Task.FromResult<IVisualElement.ICapturedBitmapData>(new CapturedBitmapData(cgImage, 1d));
+        return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(cgImage));
     }
 
     private static int GetScreenNumber(NSScreen screen)

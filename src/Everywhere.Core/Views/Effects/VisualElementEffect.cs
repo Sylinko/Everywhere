@@ -1,9 +1,9 @@
 ﻿using System.Threading.Channels;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Common;
-using Everywhere.Interop;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 
@@ -36,7 +36,7 @@ public sealed class VisualElementEffect(
     private readonly IVisualElementAnimationTarget _animationTarget = animationTarget;
     private readonly List<VisualElementEffectWindow> _effectWindows = [];
 
-    public async Task CreatePickEffect(IVisualElement visualElement, ChatAttachment chatAttachment)
+    public async Task CreatePickEffect(VisualElement visualElement, ChatAttachment chatAttachment)
     {
         try
         {
@@ -55,7 +55,7 @@ public sealed class VisualElementEffect(
 
             var (sourceBounds, startBitmap) = await Task.Run(async () =>
             {
-                var bounds = visualElement.BoundingRectangle;
+                var bounds = visualElement.Query(new VisualElementQueryRequest(VisualElementFields.Bounds, 0)).Snapshot.Bounds.GetValueOrDefault();
                 if (bounds.Width <= 0 || bounds.Height <= 0)
                 {
                     return (bounds, null);
@@ -97,7 +97,7 @@ public sealed class VisualElementEffect(
         }
     }
 
-    private static async Task<Bitmap?> CreateStartBitmapAsync(IVisualElement visualElement)
+    private static async Task<Bitmap?> CreateStartBitmapAsync(VisualElement visualElement)
     {
         try
         {
@@ -110,7 +110,7 @@ public sealed class VisualElementEffect(
         }
     }
 
-    public ScanEffectScope CreateScanEffect(CancellationToken cancellationToken) => new(this, logger, cancellationToken);
+    public ScanEffectScope CreateScanEffect(VisualContext context, CancellationToken cancellationToken) => new(this, logger, context.CreateRetention(), cancellationToken);
 
     public void ArrangeEffectWindows()
     {
@@ -148,55 +148,84 @@ public sealed class VisualElementEffect(
         }
     }
 
-    public sealed class ScanEffectScope
+    /// <summary>
+    /// Owns the asynchronous visual-effect queue and every element retained while that queue is active.
+    /// </summary>
+    public sealed class ScanEffectScope(
+        VisualElementEffect owner,
+        ILogger logger,
+        VisualElementRetention retention,
+        CancellationToken cancellationToken
+    ) : IDisposable
     {
-        private readonly VisualElementEffect _owner;
-        private readonly ILogger _logger;
 
         private readonly HashSet<nint> _emittedWindowHandles = [];
-        private readonly Channel<IVisualElement> _emissionQueue = Channel.CreateBounded<IVisualElement>(
+        private readonly Channel<VisualElementQueryResult> _emissionQueue = Channel.CreateBounded<VisualElementQueryResult>(
             new BoundedChannelOptions(1000)
             {
                 SingleReader = true,
                 SingleWriter = false
             });
 
-        public ScanEffectScope(VisualElementEffect owner, ILogger logger, CancellationToken cancellationToken)
-        {
-            _owner = owner;
-            _logger = logger;
+        private readonly CancellationTokenSource _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        private int _completionState;
 
-            Task.Run(() => EmissionLoopAsync(cancellationToken), cancellationToken).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        public void Add(VisualElementQueryResult queryResult)
+        {
+            if (Volatile.Read(ref _completionState) != 0) return;
+            if (!_emissionQueue.Writer.TryWrite(queryResult)) return;
+            retention.Retain(queryResult.Element);
         }
 
-        public void Add(IVisualElement element)
+        /// <summary>
+        /// Completes successful production and starts draining the queued visual effects.
+        /// </summary>
+        /// <remarks>
+        /// Consumption starts only after production so the effect does not mutate the same VisualContext concurrently with Snapshot traversal.
+        /// </remarks>
+        public void Complete()
         {
-            _emissionQueue.Writer.TryWrite(element);
+            if (Interlocked.CompareExchange(ref _completionState, 1, 0) != 0) return;
+            _emissionQueue.Writer.TryComplete();
+            Task.Run(() => EmissionLoopAsync(_cancellationTokenSource.Token), CancellationToken.None).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        }
+
+        /// <summary>
+        /// Cancels an incomplete effect scope so its operation-level element retention can be released promptly.
+        /// </summary>
+        public void Dispose()
+        {
+            if (Interlocked.CompareExchange(ref _completionState, 2, 0) != 0) return;
+            _emissionQueue.Writer.TryComplete();
+            retention.Dispose();
+            _cancellationTokenSource.Dispose();
         }
 
         private async Task EmissionLoopAsync(CancellationToken cancellationToken)
         {
             try
             {
-                await Dispatcher.UIThread.InvokeAsync(_owner.ArrangeEffectWindows, DispatcherPriority.Render, cancellationToken);
+                await Dispatcher.UIThread.InvokeAsync(owner.ArrangeEffectWindows, DispatcherPriority.Render, cancellationToken);
 
                 while (await _emissionQueue.Reader.WaitToReadAsync(cancellationToken))
                 {
-                    while (_emissionQueue.Reader.TryRead(out var element))
+                    while (_emissionQueue.Reader.TryRead(out var queryResult))
                     {
-                        if (_owner._effectWindows.Count == 0) return;
+                        if (owner._effectWindows.Count == 0) return;
 
                         try
                         {
-                            if (GetTopLevel(element) is not { } topLevel) continue;
-                            if (topLevel.States.HasFlag(VisualElementStates.Offscreen)) continue;
+                            if (GetTopLevel(queryResult) is not { } topLevelResult) continue;
+                            var topLevel = topLevelResult.Element;
+                            var topLevelSnapshot = topLevelResult.Snapshot;
+                            if (topLevelSnapshot.States.GetValueOrDefault().HasFlag(VisualElementStates.Offscreen)) continue;
 
-                            var windowHandle = topLevel.NativeWindowHandle;
+                            var windowHandle = topLevelSnapshot.NativeWindowHandle.GetValueOrDefault();
                             if (windowHandle == 0) continue; // Allow screen (-1)
 
                             if (!_emittedWindowHandles.Add(windowHandle)) continue; // Already emitted
 
-                            var boundingRectangle = topLevel.BoundingRectangle;
+                            var boundingRectangle = topLevelSnapshot.Bounds.GetValueOrDefault();
                             if (boundingRectangle.Width <= 16 || boundingRectangle.Height <= 16) continue;
 
                             SKImage? topLevelImage;
@@ -207,7 +236,7 @@ public sealed class VisualElementEffect(
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to capture TopLevel for visual effect. {NativeWindowHandle}", windowHandle);
+                                logger.LogWarning(ex, "Failed to capture TopLevel for visual effect. {NativeWindowHandle}", windowHandle);
                                 continue;
                             }
 
@@ -220,7 +249,7 @@ public sealed class VisualElementEffect(
                         }
                         catch (Exception)
                         {
-                            _logger.LogWarning("Failed to emit visual element particle for element {ElementId}", element.Id);
+                            logger.LogWarning("Failed to emit visual element particle for element {ElementId}", queryResult.Element.Id);
                         }
                     }
                 }
@@ -230,25 +259,33 @@ public sealed class VisualElementEffect(
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error in visual element effect emission loop");
+                logger.LogError(ex, "Unexpected error in visual element effect emission loop");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _completionState, 2);
+                _emissionQueue.Writer.TryComplete();
+                retention.Dispose();
+                _cancellationTokenSource.Dispose();
             }
         }
 
-        private static IVisualElement? GetTopLevel(IVisualElement current)
+        private VisualElementQueryResult? GetTopLevel(VisualElementQueryResult current)
         {
             var node = current;
-            while (node != null)
+            while (true)
             {
-                if (node.Type == VisualElementType.TopLevel) return node;
-                node = node.Parent;
+                if (node.Snapshot.Type == VisualElementType.TopLevel) return node;
+                using var parentEnumerator = node.Element.CreateEnumerator(VisualElementRelation.Parent, new VisualElementEnumerationOptions(VisualElementQueryRequest.Default));
+                if (!parentEnumerator.MoveNext()) return null;
+                node = parentEnumerator.Current;
+                retention.Retain(node.Element);
             }
-
-            return null;
         }
 
         private void EmitParticle(PixelRect bounds, SKImage image)
         {
-            foreach (var effectWindow in _owner._effectWindows)
+            foreach (var effectWindow in owner._effectWindows)
             {
                 effectWindow.Topmost = false;
                 effectWindow.Topmost = true; // Ensure the effect window is above all others to properly display the animation

@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using DynamicData;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using Everywhere.Views;
 using ObjCRuntime;
