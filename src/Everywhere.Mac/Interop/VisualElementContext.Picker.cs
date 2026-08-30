@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Everywhere.Automation;
 using Everywhere.Interop;
 
 namespace Everywhere.Mac.Interop;

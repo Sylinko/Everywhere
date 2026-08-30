@@ -21,6 +21,7 @@ SetWindowPos
 SetActiveWindow
 IsWindowEnabled
 GetWindow
+GetTopWindow
 IsWindow
 IsIconic
 IsZoomed
@@ -72,6 +73,7 @@ ReleaseDC
 CreateCompatibleDC
 DeleteDC
 CreateDIBSection
+BitBlt
 SelectObject
 DeleteObject
 GetSystemMetrics

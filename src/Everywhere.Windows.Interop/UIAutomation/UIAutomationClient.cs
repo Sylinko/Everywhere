@@ -28,12 +28,26 @@ public sealed unsafe class UIAutomationClient : ComReference
     /// <summary>
     /// Applies the connection and transaction timeout policy to this client endpoint.
     /// </summary>
-    /// <param name="connectionTimeoutMilliseconds">The provider connection timeout in milliseconds.</param>
-    /// <param name="transactionTimeoutMilliseconds">The provider transaction timeout in milliseconds.</param>
-    public void ConfigureTimeouts(uint connectionTimeoutMilliseconds, uint transactionTimeoutMilliseconds)
+    /// <param name="connectionTimeout">The provider connection timeout.</param>
+    /// <param name="transactionTimeout">The provider transaction timeout.</param>
+    public void ConfigureTimeouts(TimeSpan connectionTimeout, TimeSpan transactionTimeout)
     {
-        Pointer->ConnectionTimeout = connectionTimeoutMilliseconds;
-        Pointer->TransactionTimeout = transactionTimeoutMilliseconds;
+        Pointer->ConnectionTimeout = ToTimeoutMilliseconds(connectionTimeout);
+        Pointer->TransactionTimeout = ToTimeoutMilliseconds(transactionTimeout);
+
+        static uint ToTimeoutMilliseconds(TimeSpan timeout)
+        {
+            var milliseconds = Math.Ceiling(timeout.TotalMilliseconds);
+            if (milliseconds is < 1 or > uint.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(timeout),
+                    timeout,
+                    $"Windows UI Automation timeouts must be between 1 and {uint.MaxValue} milliseconds.");
+            }
+
+            return (uint)milliseconds;
+        }
     }
 
     /// <summary>
@@ -87,6 +101,14 @@ public sealed unsafe class UIAutomationClient : ComReference
         new(Pointer->GetFocusedElementBuildCache(cacheRequest.Pointer));
 
     /// <summary>
+    /// Acquires the UI Automation desktop root with the requested cache.
+    /// </summary>
+    /// <param name="cacheRequest">The operation-local cache request.</param>
+    /// <returns>A temporary lease for the desktop root.</returns>
+    public UIAutomationElement GetRootElementBuildCache(UIAutomationCacheRequest cacheRequest) =>
+        new(Pointer->GetRootElementBuildCache(cacheRequest.Pointer));
+
+    /// <summary>
     /// Acquires the element at one physical screen point with the requested cache.
     /// </summary>
     /// <param name="x">The physical screen x-coordinate.</param>
@@ -119,10 +141,17 @@ public sealed unsafe class UIAutomationClient : ComReference
         AddProperty(pRequest, options, UIAutomationCacheOptions.IsReadOnly, UIA_PROPERTY_ID.UIA_ValueIsReadOnlyPropertyId);
         AddProperty(pRequest, options, UIAutomationCacheOptions.IsPassword, UIA_PROPERTY_ID.UIA_IsPasswordPropertyId);
         AddProperty(pRequest, options, UIAutomationCacheOptions.Name, UIA_PROPERTY_ID.UIA_NamePropertyId);
-        if (options.HasFlag(UIAutomationCacheOptions.Text))
-        {
-            pRequest->AddPattern(UIA_PATTERN_ID.UIA_TextPatternId);
-        }
+        // Caching a pattern does not implicitly cache any of its properties.
+        AddProperty(pRequest, options, UIAutomationCacheOptions.Value, UIA_PROPERTY_ID.UIA_ValueValuePropertyId);
+        AddProperty(pRequest, options, UIAutomationCacheOptions.ExpandCollapseState, UIA_PROPERTY_ID.UIA_ExpandCollapseExpandCollapseStatePropertyId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.ValuePattern, UIA_PATTERN_ID.UIA_ValuePatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.TextPattern, UIA_PATTERN_ID.UIA_TextPatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.InvokePattern, UIA_PATTERN_ID.UIA_InvokePatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.TogglePattern, UIA_PATTERN_ID.UIA_TogglePatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.SelectionPattern, UIA_PATTERN_ID.UIA_SelectionPatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.SelectionItemPattern, UIA_PATTERN_ID.UIA_SelectionItemPatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.ExpandCollapsePattern, UIA_PATTERN_ID.UIA_ExpandCollapsePatternId);
+        AddPattern(pRequest, options, UIAutomationCacheOptions.LegacyIAccessiblePattern, UIA_PATTERN_ID.UIA_LegacyIAccessiblePatternId);
     }
 
     private static void AddProperty(
@@ -134,6 +163,18 @@ public sealed unsafe class UIAutomationClient : ComReference
         if (options.HasFlag(option))
         {
             request->AddProperty(propertyId);
+        }
+    }
+
+    private static void AddPattern(
+        IUIAutomationCacheRequest* request,
+        UIAutomationCacheOptions options,
+        UIAutomationCacheOptions option,
+        UIA_PATTERN_ID patternId)
+    {
+        if (options.HasFlag(option))
+        {
+            request->AddPattern(patternId);
         }
     }
 }

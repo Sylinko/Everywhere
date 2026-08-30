@@ -1,5 +1,6 @@
 ﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Automation;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -16,13 +17,14 @@ namespace Everywhere.Initialization;
 /// </summary>
 /// <param name="settings"></param>
 /// <param name="shortcutListener"></param>
-/// <param name="visualElementContext"></param>
+/// <param name="textSelectionWatcher"></param>
 /// <param name="logger"></param>
 public sealed class ChatWindowInitializer(
     IServiceProvider serviceProvider,
     Settings settings,
     IShortcutListener shortcutListener,
-    IVisualElementContext visualElementContext,
+    ITextSelectionWatcher textSelectionWatcher,
+    IVisualElementBackend visualElementBackend,
     ILogger<ChatWindowInitializer> logger
 ) : IAsyncInitializer
 {
@@ -116,20 +118,31 @@ public sealed class ChatWindowInitializer(
             shortcut,
             () =>
             {
-                IVisualElement? element;
+                VisualElementLocator? targetLocator;
                 nint? hWnd;
                 try
                 {
-                    element = visualElementContext.FocusedElement ??
-                        visualElementContext.ElementFromPointer()?
-                            .GetAncestors(true)
-                            .LastOrDefault();
-                    hWnd = element?.NativeWindowHandle;
-                    if (chatWindowHandle == hWnd) element = null; // Don't allow to select itself
+                    using var visualContext = new VisualContext();
+                    using var retention = visualContext.CreateRetention();
+                    var queryRequest = VisualElementQueryRequest.Default;
+                    var result = visualElementBackend.Query(retention, VisualElementLocator.Focused, request: queryRequest);
+                    targetLocator = result is null ? null : VisualElementLocator.Focused;
+                    if (result is null)
+                    {
+                        result = visualElementBackend.Query(retention, VisualElementLocator.Pointer, VisualElementResolution.TopLevel, queryRequest);
+                        hWnd = result?.Snapshot.NativeWindowHandle;
+                        targetLocator = hWnd is > 0 and var nativeWindowHandle ? VisualElementLocator.FromNativeWindow(nativeWindowHandle) : null;
+                    }
+                    else
+                    {
+                        hWnd = result.Snapshot.NativeWindowHandle;
+                    }
+
+                    if (chatWindowHandle == hWnd) targetLocator = null; // Don't allow the chat window to select itself.
                 }
                 catch
                 {
-                    element = null;
+                    targetLocator = null;
                     hWnd = null;
                 }
 
@@ -141,7 +154,7 @@ public sealed class ChatWindowInitializer(
                     }
                     else
                     {
-                        WeakReferenceMessenger.Default.Send(new ActivateChatSessionMessage(element));
+                        WeakReferenceMessenger.Default.Send(new ActivateChatSessionMessage(targetLocator));
                     }
                 });
             },
@@ -186,6 +199,6 @@ public sealed class ChatWindowInitializer(
         using var _ = _syncLock.EnterScope();
 
         _textSelectionSubscription?.Dispose();
-        if (isEnabled) _textSelectionSubscription = visualElementContext.Subscribe(chatWindowViewModel);
+        if (isEnabled) _textSelectionSubscription = textSelectionWatcher.Subscribe(chatWindowViewModel);
     }
 }

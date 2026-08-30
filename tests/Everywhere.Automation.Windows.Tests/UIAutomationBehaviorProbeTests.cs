@@ -11,7 +11,7 @@ namespace Everywhere.Automation.Windows.Tests;
 /// Preserves empirical probes for UI Automation behavior that is not fully specified by the public API contract.
 /// </summary>
 /// <remarks>
-/// These probes intentionally report pointer identity, RCW reuse, managed allocation, timeout ownership, and concurrent progress instead of asserting implementation-specific values. Run them on every supported Windows baseline before changing UIA client ownership.
+/// These probes intentionally report pointer identity, RCW reuse, managed allocation, worker timeout behavior, and concurrent progress instead of asserting implementation-specific values. Run them on every supported Windows baseline before changing UIA worker or client ownership.
 /// </remarks>
 [NonParallelizable]
 public sealed class UIAutomationBehaviorProbeTests
@@ -72,10 +72,10 @@ public sealed class UIAutomationBehaviorProbeTests
     }
 
     [Test]
-    [Explicit("Launches a visible WinForms target, blocks its UI thread, and reports which UIA client owns BuildUpdatedCache timeout policy.")]
+    [Explicit("Launches a visible WinForms target, blocks its UI thread, and reports whether BuildUpdatedCache follows the executing worker rather than the Element origin worker.")]
     [Platform("Win")]
     [Category("UIAutomationProbe")]
-    public async Task BuildUpdatedCache_WhenElementAndCacheRequestUseDifferentClients_ReportsTimeoutOwnership()
+    public async Task BuildUpdatedCache_WhenElementOriginDiffers_ReportsExecutingWorkerTimeout()
     {
         var (controller, ready) = await StartWinFormsTargetAsync();
         await using (controller)
@@ -90,11 +90,11 @@ public sealed class UIAutomationBehaviorProbeTests
 
             await ConfigureTimeoutsAsync(workerA, LongTimeoutMilliseconds, LongTimeoutMilliseconds);
             await ConfigureTimeoutsAsync(workerB, LongTimeoutMilliseconds, ShortTimeoutMilliseconds);
-            var shortCacheOwner = await RunWhileUiThreadSuspendedAsync(controller, () => MeasureCallAsync(workerB, _ => elementA.BuildUpdatedCache(cacheRequestB)));
+            var shortExecutingWorker = await RunWhileUiThreadSuspendedAsync(controller, () => MeasureCallAsync(workerB, _ => elementA.BuildUpdatedCache(cacheRequestB)));
 
             await ConfigureTimeoutsAsync(workerA, LongTimeoutMilliseconds, ShortTimeoutMilliseconds);
             await ConfigureTimeoutsAsync(workerB, LongTimeoutMilliseconds, LongTimeoutMilliseconds);
-            var shortElementOwner = await RunWhileUiThreadSuspendedAsync(controller, () => MeasureCallAsync(workerB, _ => elementA.BuildUpdatedCache(cacheRequestB)));
+            var shortElementOriginWorker = await RunWhileUiThreadSuspendedAsync(controller, () => MeasureCallAsync(workerB, _ => elementA.BuildUpdatedCache(cacheRequestB)));
 
             await ConfigureTimeoutsAsync(workerB, ShortTimeoutMilliseconds, LongTimeoutMilliseconds);
             var shortConnection = await RunWhileUiThreadSuspendedAsync(controller, async () =>
@@ -110,13 +110,13 @@ public sealed class UIAutomationBehaviorProbeTests
                 return await MeasureCallAsync(workerB, automation => automation.ElementFromHandleBuildCache(providerNativeHandle, request));
             });
 
-            var report = new TimeoutOwnershipProbeReport(
+            var report = new WorkerTimeoutProbeReport(
                 CreateEnvironmentReport(),
                 ShortTimeoutMilliseconds,
                 LongTimeoutMilliseconds,
-                shortCacheOwner,
-                shortElementOwner,
-                ClassifyTimeoutOwnership(shortCacheOwner, shortElementOwner),
+                shortExecutingWorker,
+                shortElementOriginWorker,
+                ClassifyWorkerTimeout(shortExecutingWorker, shortElementOriginWorker),
                 shortConnection,
                 shortTransaction,
                 ClassifyAcquisitionTimeout(shortConnection, shortTransaction));
@@ -124,8 +124,8 @@ public sealed class UIAutomationBehaviorProbeTests
 
             Assert.Multiple(() =>
             {
-                Assert.That(shortCacheOwner.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
-                Assert.That(shortElementOwner.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
+                Assert.That(shortExecutingWorker.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
+                Assert.That(shortElementOriginWorker.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
                 Assert.That(shortConnection.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
                 Assert.That(shortTransaction.Elapsed, Is.LessThan(TimeSpan.FromSeconds(8)));
             });
@@ -451,26 +451,26 @@ public sealed class UIAutomationBehaviorProbeTests
         }
     }
 
-    private static string ClassifyTimeoutOwnership(CallObservation shortCacheOwner, CallObservation shortElementOwner)
+    private static string ClassifyWorkerTimeout(CallObservation shortExecutingWorker, CallObservation shortElementOriginWorker)
     {
-        var cacheWasShort = shortCacheOwner.Elapsed < TimeSpan.FromMilliseconds(1500);
-        var elementWasShort = shortElementOwner.Elapsed < TimeSpan.FromMilliseconds(1500);
-        if (shortCacheOwner.IsSuccess && shortElementOwner.IsSuccess && shortCacheOwner.Elapsed < TimeSpan.FromMilliseconds(50) && shortElementOwner.Elapsed < TimeSpan.FromMilliseconds(50))
+        var executingWorkerWasShort = shortExecutingWorker.Elapsed < TimeSpan.FromMilliseconds(1500);
+        var elementOriginWorkerWasShort = shortElementOriginWorker.Elapsed < TimeSpan.FromMilliseconds(1500);
+        if (shortExecutingWorker.IsSuccess && shortElementOriginWorker.IsSuccess && shortExecutingWorker.Elapsed < TimeSpan.FromMilliseconds(50) && shortElementOriginWorker.Elapsed < TimeSpan.FromMilliseconds(50))
         {
             return "provider-call-did-not-block";
         }
 
-        if (cacheWasShort && !elementWasShort)
+        if (executingWorkerWasShort && !elementOriginWorkerWasShort)
         {
-            return "cache-request/executing-client";
+            return "executing-worker";
         }
 
-        if (!cacheWasShort && elementWasShort)
+        if (!executingWorkerWasShort && elementOriginWorkerWasShort)
         {
-            return "element-origin-client";
+            return "element-origin-worker";
         }
 
-        return cacheWasShort && elementWasShort ? "shared-or-short-independent-of-client" : "ambiguous-or-timeout-not-observed";
+        return executingWorkerWasShort && elementOriginWorkerWasShort ? "shared-or-short-independent-of-worker" : "ambiguous-or-timeout-not-observed";
     }
 
     private static string ClassifyAcquisitionTimeout(CallObservation shortConnection, CallObservation shortTransaction)
@@ -517,7 +517,7 @@ public sealed class UIAutomationBehaviorProbeTests
 
     private sealed record CallObservation(TimeSpan Elapsed, bool IsSuccess, string? ResultType, string? ExceptionType, string? HResult);
 
-    private sealed record TimeoutOwnershipProbeReport(ProbeEnvironmentReport Environment, uint ShortTimeoutMilliseconds, uint LongTimeoutMilliseconds, CallObservation ShortTimeoutOnCacheRequestClient, CallObservation ShortTimeoutOnElementOriginClient, string BuildUpdatedCacheOwnership, CallObservation AcquisitionWithShortConnectionTimeout, CallObservation AcquisitionWithShortTransactionTimeout, string AcquisitionBoundary);
+    private sealed record WorkerTimeoutProbeReport(ProbeEnvironmentReport Environment, uint ShortTimeoutMilliseconds, uint LongTimeoutMilliseconds, CallObservation ShortTimeoutOnExecutingWorker, CallObservation ShortTimeoutOnElementOriginWorker, string BuildUpdatedCacheBoundary, CallObservation AcquisitionWithShortConnectionTimeout, CallObservation AcquisitionWithShortTransactionTimeout, string AcquisitionBoundary);
 
     private sealed record ConcurrentProgressObservation(bool UsesSharedClient, bool WasBlockedCallPendingAtResponsiveStart, bool DidResponsiveCallCompleteWhileBlocked, CallObservation BlockedCall, CallObservation ResponsiveCall);
 

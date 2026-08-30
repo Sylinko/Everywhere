@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Security;
 using System.Text;
-using Everywhere.Interop;
-using ZLinq;
+using Everywhere.Automation;
 
 namespace Everywhere.Chat;
 
@@ -11,39 +10,9 @@ partial class VisualContextBuilder
     private string GenerateXmlString(Dictionary<string, VisualElementNode> visualElements)
     {
         var sb = new StringBuilder();
+        // Repeated observations can currently lose topology edges; this known migration limitation is recorded in temp.md.
         foreach (var rootElement in visualElements.Values.AsValueEnumerable().Where(e => e.Parent is null))
         {
-            if (rootElement.Type is not VisualElementType.TopLevel and not VisualElementType.Screen)
-            {
-                // Append a synthetic root for non-top-level elements
-                var topLevelOrScreenElement = rootElement.Element.Parent;
-                while (topLevelOrScreenElement is { Type: not VisualElementType.TopLevel and not VisualElementType.Screen, Parent: { } parent })
-                {
-                    topLevelOrScreenElement = parent;
-                }
-
-                if (topLevelOrScreenElement is not null)
-                {
-                    // Create a synthetic root element and build its XML
-                    var actualRootElement = new VisualElementNode(
-                        topLevelOrScreenElement,
-                        topLevelOrScreenElement.Type,
-                        null,
-                        0,
-                        null,
-                        ["<!-- Child elements omitted for brevity -->"],
-                        8,
-                        0,
-                        true,
-                        false)
-                    {
-                        Children = { rootElement }
-                    };
-                    BuildXml(sb, actualRootElement, 0);
-                    continue;
-                }
-            }
-
             BuildXml(sb, rootElement, 0);
         }
 
@@ -53,6 +22,7 @@ partial class VisualContextBuilder
     private void BuildXml(StringBuilder sb, VisualElementNode elementNode, int indentLevel)
     {
         var element = elementNode.Element;
+        var snapshot = elementNode.Snapshot;
         var elementType = elementNode.Type;
         var indent = new string(' ', indentLevel * 2);
 
@@ -73,8 +43,7 @@ partial class VisualContextBuilder
         sb.Append(indent).Append('<').Append(elementType);
 
         // Add ID
-        var id = BuiltVisualElements.Count + startingId;
-        BuiltVisualElements[id] = element;
+        var id = AddTarget(element, elementType);
         sb.Append(" id=\"").Append(id).Append('"');
 
         // Add coreElement attribute if applicable
@@ -84,10 +53,8 @@ partial class VisualContextBuilder
         }
 
         // Add bounds if needed
-        if (ShouldIncludeBounds(detailLevel, elementType))
+        if (ShouldIncludeBounds(detailLevel, elementType) && snapshot.Bounds is { } bounds)
         {
-            // for containers, include the element's size
-            var bounds = element.BoundingRectangle;
             sb.Append(" box=\"")
                 .Append(bounds.X).Append(',')
                 .Append(bounds.Y).Append(',')
@@ -98,7 +65,7 @@ partial class VisualContextBuilder
         // For top-level elements, add pid, process name and WindowHandle attributes
         if (elementType == VisualElementType.TopLevel)
         {
-            var processId = elementNode.Element.ProcessId;
+            var processId = snapshot.ProcessId.GetValueOrDefault(-1);
             if (processId > 0)
             {
                 sb.Append(" pid=\"").Append(processId).Append('"');
@@ -113,7 +80,7 @@ partial class VisualContextBuilder
                 }
             }
 
-            var windowHandle = elementNode.Element.NativeWindowHandle;
+            var windowHandle = snapshot.NativeWindowHandle.GetValueOrDefault();
             if (windowHandle > 0)
             {
                 sb.Append(" hwnd=\"0x").Append(windowHandle.ToString("X")).Append('"');
@@ -181,6 +148,6 @@ partial class VisualContextBuilder
         }
 
         // End tag
-        sb.Append(indent).Append("</").Append(element.Type).Append('>').AppendLine();
+        sb.Append(indent).Append("</").Append(elementType).Append('>').AppendLine();
     }
 }

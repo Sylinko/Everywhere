@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Everywhere.Chat;
-using Everywhere.Interop;
 using ZLinq;
 
 namespace Everywhere.StrategyEngine;
@@ -15,13 +14,6 @@ public sealed class StrategyContext
     /// Use <see cref="ChatAttachment.IsPrimary"/> to identify focused items (0 or more).
     /// </summary>
     public required IReadOnlyList<ChatAttachment> Attachments { get; init; }
-
-    /// <summary>
-    /// Root visual elements derived from attachments.
-    /// Each element's ancestor chain ends at Screen or TopLevel.
-    /// Strategy matching follows paths from these roots downward.
-    /// </summary>
-    public IReadOnlyList<IVisualElement> RootElements { get; init; } = [];
 
     /// <summary>
     /// Active process information (derived from visual elements).
@@ -42,52 +34,27 @@ public sealed class StrategyContext
         var visualElements = attachments
             .AsValueEnumerable()
             .OfType<VisualElementAttachment>()
-            .Where(a => a.Element?.Target is not null)
-            .Select(a => a.Element!.Target!)
+            .Where(attachment => attachment is { Element: not null, InitialQuery: not null })
             .ToArray();
 
-        var rootElements = DeriveRootElements(visualElements);
         var activeProcess = DeriveActiveProcess(visualElements);
 
         return new StrategyContext
         {
             Attachments = attachments,
-            RootElements = rootElements,
             ActiveProcess = activeProcess
         };
     }
 
     /// <summary>
-    /// Derives root elements (Screen or TopLevel) from visual elements.
-    /// </summary>
-    private static List<IVisualElement> DeriveRootElements(IReadOnlyList<IVisualElement> elements)
-    {
-        var roots = new HashSet<IVisualElement>(ReferenceEqualityComparer.Instance);
-
-        foreach (var element in elements.AsValueEnumerable())
-        {
-            var current = element;
-            while (current.Parent is { } parent)
-            {
-                current = parent;
-            }
-
-            // current is now the root (Screen or TopLevel with null parent)
-            roots.Add(current);
-        }
-
-        return [.. roots];
-    }
-
-    /// <summary>
     /// Derives active process info from visual elements.
     /// </summary>
-    private static ProcessInfo? DeriveActiveProcess(IReadOnlyList<IVisualElement> elements)
+    private static ProcessInfo? DeriveActiveProcess(IReadOnlyList<VisualElementAttachment> attachments)
     {
         // Find the first element with a valid process ID
-        foreach (var element in elements.AsValueEnumerable())
+        foreach (var attachment in attachments.AsValueEnumerable())
         {
-            var processId = element.ProcessId;
+            var processId = attachment.InitialQuery?.Snapshot.ProcessId.GetValueOrDefault(-1) ?? -1;
             if (processId <= 0)
             {
                 continue;

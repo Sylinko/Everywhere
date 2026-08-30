@@ -1,6 +1,6 @@
 using Everywhere.Automation.TestApp;
 
-namespace Everywhere.Core.Tests.Chat.VisualContext;
+namespace Everywhere.Automation.Tests;
 
 public sealed class TestAppProtocolTests
 {

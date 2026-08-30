@@ -16,6 +16,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Everywhere.Automation;
 using ShadUI.Extensions;
 using SharpGen.Runtime;
 using Vortice;
@@ -25,19 +26,16 @@ using Vortice.Direct3D11;
 using Vortice.DirectComposition;
 using Vortice.DXGI;
 using WinRT;
-using IVisualElement = Everywhere.Interop.IVisualElement;
-using Vector = Avalonia.Vector;
 using Visual = Windows.UI.Composition.Visual;
 
 namespace Everywhere.Windows.Interop;
 
-public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBitmapData
+public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 {
     public PixelFormat Format => PixelFormat.Bgra8888;
     public AlphaFormat AlphaFormat => AlphaFormat.Premul;
     public nint Data { get; private set; }
     public PixelSize Size { get; private set; }
-    public Vector Dpi => new(96, 96);
     public int Stride { get; private set; }
 
     private readonly ID3D11Device? _d3D11Device;
@@ -256,7 +254,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElement.ICapturedBi
         });
     }
 
-    public static async Task<IVisualElement.ICapturedBitmapData> CaptureAsync(
+    public static async Task<IVisualElementCapture> CaptureAsync(
         nint sourceHWnd,
         PixelRect relativeRect,
         CancellationToken cancellationToken = default)

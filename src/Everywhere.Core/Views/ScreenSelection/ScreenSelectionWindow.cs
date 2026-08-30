@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Everywhere.Automation;
 using Everywhere.Interop;
 
 namespace Everywhere.Views;

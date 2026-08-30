@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:automation="clr-namespace:Everywhere.Automation" xmlns:interop="clr-namespace:Everywhere.Interop"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ScreenSelectionToolTip}"
     TargetType="v:ScreenSelectionToolTip">

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using Everywhere.Automation.Testing;
 
-namespace Everywhere.Core.Tests.Chat.VisualContext;
+namespace Everywhere.Automation.Tests;
 
 public sealed class ScenarioGeneratorTests
 {

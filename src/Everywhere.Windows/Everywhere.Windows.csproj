@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
-    <PackageReference Include="Interop.UIAutomationClient"/>
     <PackageReference Include="Microsoft.Windows.CsWin32">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,6 +34,7 @@
     <ProjectReference Include="..\..\3rd\OfficeCLI\src\officecli\officecli.csproj"/>
     <ProjectReference Include="..\Everywhere.Cloud\Everywhere.Cloud.csproj"/>
     <ProjectReference Include="..\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\Everywhere.Windows.Interop\Everywhere.Windows.Interop.csproj"/>
     <ProjectReference Include="..\..\patches\Everywhere.Patches.Contracts\Everywhere.Patches.Contracts.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.Abstractions\Everywhere.I18N.Abstractions.csproj"/>
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
@@ -78,7 +78,6 @@
     <TrimmerRootAssembly Include="CSharpMath.Avalonia"/>
     <TrimmerRootAssembly Include="DirectWriteForwarder"/>
     <TrimmerRootAssembly Include="ExCSS"/>
-    <TrimmerRootAssembly Include="Interop.UIAutomationClient"/>
     <TrimmerRootAssembly Include="MessagePack"/>
     <TrimmerRootAssembly Include="MicroCom.Runtime"/>
     <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore"/>

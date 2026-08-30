@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using Serilog;
 

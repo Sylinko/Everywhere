@@ -1,32 +1,35 @@
-using System.Reactive.Disposables;
 using Windows.Win32;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Everywhere.Automation;
+using Everywhere.Extensions;
 using Everywhere.Interop;
 using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
 
-public partial class VisualElementContext
+public sealed partial class WindowsScreenSelectionService
 {
     private sealed class ScreenshotSession : ScreenSelectionSession
     {
         private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
 
-        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<Bitmap?> TakeAsync(
+            IWindowHelper windowHelper,
+            IVisualElementBackend visualElementBackend,
+            VisualContext context,
+            ScreenSelectionMode? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new ScreenshotSession(windowHelper, initialMode ?? _previousMode);
+            var window = new ScreenshotSession(windowHelper, visualElementBackend, context, initialMode ?? _previousMode);
             window.Show();
             return await window._pickingPromise.Task;
         }
 
         private readonly TaskCompletionSource<Bitmap?> _pickingPromise = new();
-        private readonly CompositeDisposable _disposables = new();
-
         private Bitmap? _resultBitmap;
 
         // Free Mode State
@@ -34,9 +37,15 @@ public partial class VisualElementContext
         private PixelPoint _dragStart;
         private PixelRect _dragRect;
 
-        private ScreenshotSession(IWindowHelper windowHelper, ScreenSelectionMode initialMode)
+        private ScreenshotSession(
+            IWindowHelper windowHelper,
+            IVisualElementBackend visualElementBackend,
+            VisualContext context,
+            ScreenSelectionMode initialMode)
             : base(
                 windowHelper,
+                visualElementBackend,
+                context,
                 [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
                 initialMode)
         {
@@ -56,16 +65,14 @@ public partial class VisualElementContext
                 var screen = screens[i];
                 var maskWindow = MaskWindows[i];
 
-                // Capture full screen content
-                // Note: using System.Drawing for capture, then converting to Avalonia Bitmap
-                // This might be heavy if many screens or high res, but it is necessary for "freeze" effect.
+                // Capture full screen content. This can be expensive with many high-resolution displays,
+                // but it is necessary for the frozen-screen selection effect.
                 try
                 {
-                    using var pointer = CaptureScreen(screen.Bounds);
+                    using var pointer = GDIScreenCapture.Capture(screen.Bounds);
                     if (pointer is not null)
                     {
                         maskWindow.SetImage(pointer.ToAvaloniaBitmap());
-                        _disposables.Add(pointer);
                     }
                 }
                 catch
@@ -83,8 +90,6 @@ public partial class VisualElementContext
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-
-            _disposables.Dispose();
 
             _previousMode = CurrentMode;
             _pickingPromise.TrySetResult(_resultBitmap);
@@ -120,12 +125,12 @@ public partial class VisualElementContext
             {
                 // Other modes
                 if (PickingElement == null) return false;
-                captureRect = PickingElement.BoundingRectangle;
+                captureRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
             }
 
             // Hide ToolTip and capture
             WindowHelper.SetCloaked(ToolTipWindow, true);
-            using var resultPointer = CaptureScreen(captureRect);
+            using var resultPointer = GDIScreenCapture.Capture(captureRect);
             _resultBitmap = resultPointer?.ToAvaloniaBitmap();
             return true; // Close
         }
