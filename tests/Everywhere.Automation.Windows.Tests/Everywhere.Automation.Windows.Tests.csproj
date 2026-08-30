@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
+    <WinFormsTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.WinForms.TestApp\Everywhere.Automation.WinForms.TestApp.csproj</WinFormsTestAppProject>
+    <AvaloniaTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.Avalonia.TestApp\Everywhere.Automation.Avalonia.TestApp.csproj</AvaloniaTestAppProject>
+    <CefSharpTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.CefSharp.TestApp\Everywhere.Automation.CefSharp.TestApp.csproj</CefSharpTestAppProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NUnit3TestAdapter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.WinForms.TestApp\Everywhere.Automation.WinForms.TestApp.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\Everywhere.Automation.Avalonia.TestApp\Everywhere.Automation.Avalonia.TestApp.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\Everywhere.Automation.CefSharp.TestApp\Everywhere.Automation.CefSharp.TestApp.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="GenerateControlledTestAppPaths" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="$(WinFormsTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_WinFormsTestAppExecutablePath" />
+    </MSBuild>
+    <MSBuild Projects="$(AvaloniaTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_AvaloniaTestAppExecutablePath" />
+    </MSBuild>
+    <MSBuild Projects="$(CefSharpTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_CefSharpTestAppExecutablePath" />
+    </MSBuild>
+
+    <Error Condition="'@(_WinFormsTestAppExecutablePath)' == ''" Text="The WinForms TestApp did not report an executable path." />
+    <Error Condition="'@(_AvaloniaTestAppExecutablePath)' == ''" Text="The Avalonia TestApp did not report an executable path." />
+    <Error Condition="'@(_CefSharpTestAppExecutablePath)' == ''" Text="The CefSharp TestApp did not report an executable path." />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_WinFormsTestAppExecutablePath)')" Text="The WinForms TestApp executable was not built: @(_WinFormsTestAppExecutablePath)" />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_AvaloniaTestAppExecutablePath)')" Text="The Avalonia TestApp executable was not built: @(_AvaloniaTestAppExecutablePath)" />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_CefSharpTestAppExecutablePath)')" Text="The CefSharp TestApp executable was not built: @(_CefSharpTestAppExecutablePath)" />
+
+    <PropertyGroup>
+      <GeneratedControlledTestAppPaths>$(IntermediateOutputPath)ControlledTestAppPaths.g.cs</GeneratedControlledTestAppPaths>
+      <_WinFormsTestAppExecutablePathValue>@(_WinFormsTestAppExecutablePath)</_WinFormsTestAppExecutablePathValue>
+      <_AvaloniaTestAppExecutablePathValue>@(_AvaloniaTestAppExecutablePath)</_AvaloniaTestAppExecutablePathValue>
+      <_CefSharpTestAppExecutablePathValue>@(_CefSharpTestAppExecutablePath)</_CefSharpTestAppExecutablePathValue>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_ControlledTestAppPathSource Remove="@(_ControlledTestAppPathSource)" />
+      <_ControlledTestAppPathSource Include="// &lt;auto-generated /&gt;" />
+      <_ControlledTestAppPathSource Include="namespace Everywhere.Automation.Windows.Tests%3B" />
+      <_ControlledTestAppPathSource Include="internal static class ControlledTestAppPaths" />
+      <_ControlledTestAppPathSource Include="{" />
+      <_ControlledTestAppPathSource Include="    public const string WinForms = &quot;&quot;&quot;$(_WinFormsTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_ControlledTestAppPathSource Include="    public const string Avalonia = &quot;&quot;&quot;$(_AvaloniaTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_ControlledTestAppPathSource Include="    public const string CefSharp = &quot;&quot;&quot;$(_CefSharpTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_ControlledTestAppPathSource Include="}" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(GeneratedControlledTestAppPaths)" Lines="@(_ControlledTestAppPathSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedControlledTestAppPaths)" Visible="false" />
+    </ItemGroup>
+  </Target>
+</Project>

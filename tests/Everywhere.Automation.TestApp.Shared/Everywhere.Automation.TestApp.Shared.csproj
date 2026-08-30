@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Everywhere.Automation.TestApp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Automation.Testing\Everywhere.Automation.Testing.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.Testing\Everywhere.Automation.Testing.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\Everywhere.Automation.TestApp.Shared\AutomationTestApp.targets" />
+</Project>
