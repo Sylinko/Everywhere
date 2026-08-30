@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using ShadUI.Extensions;
 using ZLinq;

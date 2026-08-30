@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Everywhere.Automation;
 using Everywhere.Chat;
-using Everywhere.Interop;
-using ZLinq;
 
 namespace Everywhere.StrategyEngine.Conditions;
 
@@ -55,20 +54,24 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
 
     protected override bool MatchesAttachment(VisualElementAttachment attachment)
     {
-        var element = attachment.Element?.Target;
+        var element = attachment.Element;
         if (element is null)
         {
             return false;
         }
 
+        var fields = VisualElementFields.Type | VisualElementFields.States | VisualElementFields.Name | VisualElementFields.ProcessId;
+        if (TextPattern is not null) fields |= VisualElementFields.Text;
+        var snapshot = element.Query(new VisualElementQueryRequest(fields, TextMaxLength)).Snapshot;
+
         // Check element type
-        if (ElementTypes is { Count: > 0 } && !ElementTypes.Contains(element.Type))
+        if (ElementTypes is { Count: > 0 } && (snapshot.Type is not { } type || !ElementTypes.Contains(type)))
         {
             return false;
         }
 
         // Check required states
-        if (RequiredStates is { } states && (element.States & states) != states)
+        if (RequiredStates is { } states && (snapshot.States.GetValueOrDefault() & states) != states)
         {
             return false;
         }
@@ -76,7 +79,7 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
         // Check name pattern
         if (NamePattern is not null)
         {
-            var name = element.Name ?? string.Empty;
+            var name = snapshot.Name ?? string.Empty;
             if (!NamePattern.IsMatch(name))
             {
                 return false;
@@ -86,7 +89,7 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
         // Check text pattern
         if (TextPattern is not null)
         {
-            var text = element.GetText(TextMaxLength) ?? string.Empty;
+            var text = snapshot.TextPreview ?? string.Empty;
             if (!TextPattern.IsMatch(text))
             {
                 return false;
@@ -96,7 +99,7 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
         // Check process name
         if (ProcessNames is { Count: > 0 })
         {
-            var processName = GetProcessName(element);
+            var processName = GetProcessName(snapshot.ProcessId.GetValueOrDefault(-1));
             if (processName is null || !ProcessNames.AsValueEnumerable().Any(p => p.Equals(processName, StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
@@ -109,9 +112,8 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
         return true;
     }
 
-    private static string? GetProcessName(IVisualElement element)
+    private static string? GetProcessName(int processId)
     {
-        var processId = element.ProcessId;
         if (processId <= 0)
         {
             return null;

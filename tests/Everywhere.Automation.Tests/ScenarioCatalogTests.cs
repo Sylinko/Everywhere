@@ -1,9 +1,9 @@
 using System.Text;
-using Everywhere.Chat;
-using Everywhere.Core.Tests.Chat.VisualContext.Testing;
 using Everywhere.Automation.Testing;
+using Everywhere.Automation.Tests.Testing;
+using Everywhere.Chat;
 
-namespace Everywhere.Core.Tests.Chat.VisualContext;
+namespace Everywhere.Automation.Tests;
 
 public sealed class ScenarioCatalogTests
 {
@@ -54,11 +54,15 @@ public sealed class ScenarioCatalogTests
     public void Build_WhenRootsAreDisconnected_ConsumesBothWithoutSyntheticParent()
     {
         var generated = new VisualScenarioGenerator().Generate(ExtremeScenarios.DisconnectedRoots, 42);
-        var backend = new ScenarioMockBackend(generated);
+        using var backend = new ScenarioMockBackend(generated);
+        using var turn = backend.Context.BeginTurn();
+        var targetPublication = backend.Context.BeginPublication();
+        using var retention = backend.Context.CreateRetention();
         var builder = new VisualContextBuilder(
             backend.RootElements,
+            retention,
+            targetPublication,
             512,
-            0,
             VisualContextDetailLevel.Compact,
             VisualContextTraverseDirections.Child);
 
@@ -68,21 +72,25 @@ public sealed class ScenarioCatalogTests
         {
             Assert.That(output, Is.Not.Empty);
             Assert.That(backend.RootElements, Has.Count.EqualTo(2));
-            Assert.That(backend.RootElements[0].Parent, Is.Null);
-            Assert.That(backend.RootElements[1].Parent, Is.Null);
+            Assert.That(backend.RootElements[0].ParentElement, Is.Null);
+            Assert.That(backend.RootElements[1].ParentElement, Is.Null);
             Assert.That(backend.Operations.MoveNextAttemptCount, Is.LessThan(100));
         });
     }
 
     [TestCaseSource(nameof(CommonScenarioCases))]
-    public void Build_WhenCommonScenarioUsesLegacyAdapter_RemainsBounded(Scenario scenario)
+    public void Build_WhenCommonScenarioUsesAutomationElements_RemainsBounded(Scenario scenario)
     {
         var generated = new VisualScenarioGenerator().Generate(scenario, 42);
-        var backend = new ScenarioMockBackend(generated);
+        using var backend = new ScenarioMockBackend(generated);
+        using var turn = backend.Context.BeginTurn();
+        var targetPublication = backend.Context.BeginPublication();
+        using var retention = backend.Context.CreateRetention();
         var builder = new VisualContextBuilder(
             [backend.RootElement],
+            retention,
+            targetPublication,
             512,
-            0,
             VisualContextDetailLevel.Compact,
             VisualContextTraverseDirections.Child);
 

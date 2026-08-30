@@ -336,7 +336,7 @@ public sealed partial class ChatInputArea : TemplatedControl
                 {
                     element = element.Parent;
                     if (element is not { DataContext: VisualElementAttachment attachment }) continue;
-                    _visualElementAttachmentOverlayWindow.UpdateForVisualElement(attachment.Element?.Target);
+                    _visualElementAttachmentOverlayWindow.UpdateForVisualElement(attachment.Element);
                     return;
                 }
                 _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null);
