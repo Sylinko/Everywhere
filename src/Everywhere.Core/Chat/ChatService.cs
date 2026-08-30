@@ -355,21 +355,25 @@ public sealed partial class ChatService : IChatService
             var approximateTokenLimit = _persistentState.VisualContextLengthLimit.ToTokenLimit();
             var detailLevel = _persistentState.VisualContextDetailLevel;
 
-            var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
-                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
+            using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
+                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
                 null;
 
-            // Build and populate the XML for visual elements.
+            using var targetTurn = chatContext.VisualContext.BeginTurn();
+            using var traversalRetention = chatContext.VisualContext.CreateRetention();
+            var targetPublication = chatContext.VisualContext.BeginPublication();
             var builtVisualElements = VisualContextBuilder.BuildAndPopulate(
                 visualElementAttachments,
+                traversalRetention,
+                targetPublication,
                 approximateTokenLimit,
-                chatContext.VisualElements.Count + 1,
                 detailLevel,
                 effectScope,
                 cancellationToken);
 
-            // Adds the visual elements to the chat context for future reference.
-            chatContext.VisualElements.AddRange(builtVisualElements);
+            targetPublication.Commit();
+            targetTurn.Complete();
+            effectScope?.Complete();
             _statisticsRecorder.RecordVisualContextAsync(
                     new StatisticsVisualContextDraft(
                         _currentTurnEventId.Value,
@@ -379,18 +383,6 @@ public sealed partial class ChatService : IChatService
                     CancellationToken.None)
                 .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
-            // Then deactivate all the references, making them weak references.
-            foreach (var reference in userChatMessage
-                         .Attachments
-                         .AsValueEnumerable()
-                         .OfType<VisualElementAttachment>()
-                         .Select(a => a.Element)
-                         .OfType<ResilientReference<IVisualElement>>())
-            {
-                reference.IsActive = false;
-            }
-
-            // After this, only the chat context holds strong references to the visual elements.
         }
         catch (Exception ex)
         {
@@ -401,6 +393,7 @@ public sealed partial class ChatService : IChatService
         }
         finally
         {
+            foreach (var attachment in visualElementAttachments) attachment.Dispose();
             analyzingContextMessage.FinishedAt = DateTimeOffset.UtcNow;
             analyzingContextMessage.IsBusy = false;
         }

@@ -10,21 +10,27 @@ using Windows.Win32.System.Threading;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.WindowsAndMessaging;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using Everywhere.Utilities;
-using Interop.UIAutomationClient;
+using Everywhere.Windows.Automation;
+using Everywhere.Windows.Interop.UIAutomation;
 using Microsoft.Win32.SafeHandles;
 using Serilog;
 using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
 
-partial class VisualElementContext
+/// <summary>
+/// Monitors text selection through Windows accessibility, input, and clipboard facilities.
+/// </summary>
+public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElementBackend) : ITextSelectionWatcher
 {
     private readonly Subject<TextSelectionData> _textSelectionSubject = new();
     private IDisposable? _hookSubscription;
     private int _subscriberCount;
 
+    /// <inheritdoc />
     public IDisposable Subscribe(IObserver<TextSelectionData> observer)
     {
         var subscription = _textSelectionSubject.Subscribe(observer);
@@ -50,7 +56,7 @@ partial class VisualElementContext
     {
         if (_hookSubscription != null) return;
 
-        var detector = new TextSelectionDetector();
+        var detector = new TextSelectionDetector(visualElementBackend);
         detector.SelectionDetected += OnSelectionDetected;
         _hookSubscription = detector;
     }
@@ -80,6 +86,7 @@ partial class VisualElementContext
         public event Action<TextSelectionData>? SelectionDetected;
 
         private readonly IDisposable _mouseHookSubscription;
+        private readonly IVisualElementBackend _visualElementBackend;
         private readonly ReusableCancellationTokenSource _reusableCancellationTokenSource = new();
 
         private bool _isMouseDown;
@@ -177,8 +184,9 @@ partial class VisualElementContext
             CtrlC
         }
 
-        public TextSelectionDetector()
+        public TextSelectionDetector(IVisualElementBackend visualElementBackend)
         {
+            _visualElementBackend = visualElementBackend;
             _mouseHookSubscription = LowLevelHook.CreateMouseHook(MouseHookCallback);
         }
 
@@ -392,8 +400,8 @@ partial class VisualElementContext
                 }
 
                 string? text = null;
-                IVisualElement? visualElement = null;
-                var uiaControlType = AutomationExtension.UnknownControlTypeId;
+                VisualElementLocator? locator = null;
+                var controlType = UIAutomationControlType.Unknown;
 
                 // 1. Try to get selection from element
                 // Console.WriteLine("1. TryGetSelectionTextFromElement");
@@ -401,7 +409,7 @@ partial class VisualElementContext
                 if (cancellationToken.IsCancellationRequested) return;
 
                 // 2. Fallback to Clipboard
-                if (string.IsNullOrEmpty(text) && ShouldProcessViaClipboard(uiaControlType, processName))
+                if (string.IsNullOrEmpty(text) && ShouldProcessViaClipboard(controlType, processName))
                 {
                     if (cancellationToken.IsCancellationRequested) return;
 
@@ -413,16 +421,17 @@ partial class VisualElementContext
 
                 // Trigger event whatever we got
                 // A null or empty text indicates selection was canceled or failed
-                SelectionDetected?.Invoke(new TextSelectionData(text, visualElement));
+                SelectionDetected?.Invoke(new TextSelectionData(text, locator));
 
                 void TryGetSelectionTextFromElement()
                 {
-                    IUIAutomationElement? element;
+                    using var visualContext = new VisualContext();
+                    using var retention = visualContext.CreateRetention();
+                    VisualElementQueryResult? result;
                     try
                     {
-                        element = Automation.GetFocusedElement();
-                        if (element is null) return;
-                        if (element.GetCurrentProcessIdOrDefault() != pid) return;
+                        result = _visualElementBackend.Query(retention, VisualElementLocator.Focused);
+                        if (result is null || result.Snapshot.ProcessId is not { } processId || unchecked((uint)processId) != pid) return;
                     }
                     catch
                     {
@@ -431,9 +440,11 @@ partial class VisualElementContext
 
                     if (cancellationToken.IsCancellationRequested) return;
 
-                    uiaControlType = element.GetCurrentControlTypeOrDefault();
-                    visualElement = new AutomationVisualElementImpl(element);
-                    text = visualElement.GetSelectionText();
+                    controlType = result.Element is UIAutomationVisualElement automationElement ?
+                        automationElement.ControlType :
+                        UIAutomationControlType.Unknown;
+                    locator = VisualElementLocator.Focused;
+                    text = result.Element.GetSelectedText(65_536);
                 }
             }
             catch (Exception ex)
@@ -477,7 +488,7 @@ partial class VisualElementContext
         /// Check if we should process GetTextViaClipboard
         /// </summary>
         /// <returns></returns>
-        private bool ShouldProcessViaClipboard(int uiaControlType, string processName)
+        private bool ShouldProcessViaClipboard(UIAutomationControlType controlType, string processName)
         {
             // when mouse down or up, any one of them is beamCursor, we can use clipboard
             // otherwise, we have to check the situation further
@@ -507,10 +518,8 @@ partial class VisualElementContext
             // chrome devtools: UIA_GroupControlTypeId (50026)
             // chrome pages: UIA_DocumentControlTypeId (50030), UIA_TextControlTypeId (50020)
             //
-            return uiaControlType is AutomationExtension.UnknownControlTypeId
-                or UIA_ControlTypeIds.UIA_GroupControlTypeId
-                or UIA_ControlTypeIds.UIA_DocumentControlTypeId
-                or UIA_ControlTypeIds.UIA_TextControlTypeId;
+            return controlType is UIAutomationControlType.Unknown or UIAutomationControlType.Group or UIAutomationControlType.Document or
+                UIAutomationControlType.Text;
         }
 
         private async static Task<string?> GetTextViaClipboardAsync(string processName, CancellationToken cancellationToken)

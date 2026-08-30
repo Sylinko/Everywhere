@@ -8,9 +8,8 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Everywhere.Interop;
+using Everywhere.Automation;
 using Everywhere.Views;
-using ZLinq;
 
 namespace Everywhere.Chat;
 
@@ -21,9 +20,10 @@ namespace Everywhere.Chat;
 /// <param name="approximateTokenLimit"></param>
 /// <param name="detailLevel"></param>
 public sealed partial class VisualContextBuilder(
-    IReadOnlyList<IVisualElement> coreElements,
+    IReadOnlyList<VisualElement> coreElements,
+    VisualElementRetention retention,
+    VisualTargetPublicationBatch targetPublication,
     int approximateTokenLimit,
-    int startingId,
     VisualContextDetailLevel detailLevel,
     VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
     VisualElementEffect.ScanEffectScope? effectScope = null
@@ -36,27 +36,26 @@ public sealed partial class VisualContextBuilder(
     /// </summary>
     /// <param name="attachments"></param>
     /// <param name="approximateTokenLimit"></param>
-    /// <param name="startingId"></param>
     /// <param name="detailLevel"></param>
     /// <param name="effectScope"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static IReadOnlyDictionary<int, IVisualElement> BuildAndPopulate(
+    public static IReadOnlyDictionary<int, VisualElement> BuildAndPopulate(
         IReadOnlyList<VisualElementAttachment> attachments,
+        VisualElementRetention retention,
+        VisualTargetPublicationBatch targetPublication,
         int approximateTokenLimit,
-        int startingId,
         VisualContextDetailLevel detailLevel,
         VisualElementEffect.ScanEffectScope? effectScope,
         CancellationToken cancellationToken)
     {
         using var builderActivity = ActivitySource.StartActivity();
 
-        var result = new Dictionary<int, IVisualElement>();
+        var result = new Dictionary<int, VisualElement>();
         var validAttachments = attachments
             .AsValueEnumerable()
-            .Select(x => (Attachment: x, Element: x.Element?.Target))
-            .Where(t => t.Element is not null)
-            .Select(t => (t.Attachment, Element: t.Element!))
+            .Where(attachment => attachment is { Element: not null, InitialQuery: not null })
+            .Select(attachment => (Attachment: attachment, Element: attachment.Element!, QueryResult: attachment.InitialQuery!))
             .ToArray();
 
         if (validAttachments.Length == 0)
@@ -64,19 +63,10 @@ public sealed partial class VisualContextBuilder(
             return result;
         }
 
-        // 1. Group core elements by their root element. Key is tuple (ProcessId, NativeWindowHandle of the ancestor TopLevel)
+        // 1. Group core elements by their observed process and native window. Elements without a native window remain independent roots.
         var groups = validAttachments
             .AsValueEnumerable()
-            .GroupBy(x =>
-            {
-                var current = x.Element;
-                while (current is { Type: not VisualElementType.Screen and not VisualElementType.TopLevel, Parent: { } parent })
-                {
-                    current = parent;
-                }
-
-                return (x.Element.ProcessId, current.NativeWindowHandle);
-            })
+            .GroupBy(item => (item.QueryResult.Snapshot.ProcessId, Root: item.QueryResult.Snapshot.NativeWindowHandle is > 0 and var handle ? $"hwnd:{handle}" : $"element:{item.Element.Id}"))
             .ToArray();
 
         var totalElements = validAttachments.Length;
@@ -93,8 +83,9 @@ public sealed partial class VisualContextBuilder(
 
             var visualTreeBuilder = new VisualContextBuilder(
                 groupElements,
+                retention,
+                targetPublication,
                 groupTokenLimit,
-                startingId,
                 detailLevel,
                 effectScope: effectScope);
 
@@ -103,7 +94,7 @@ public sealed partial class VisualContextBuilder(
             // 3. for attachments in the same group
             // First attachment gets the full XML, others got null.
             var isFirst = true;
-            foreach (var (attachment, _) in group.AsValueEnumerable())
+            foreach (var (attachment, _, _) in group.AsValueEnumerable())
             {
                 if (isFirst)
                 {
@@ -121,7 +112,6 @@ public sealed partial class VisualContextBuilder(
                 result[kvp.Key] = kvp.Value;
             }
 
-            startingId += visualTreeBuilder.BuiltVisualElements.Count;
             totalBuiltElements += visualTreeBuilder.BuiltVisualElements.Count;
         }
 
@@ -137,9 +127,8 @@ public sealed partial class VisualContextBuilder(
     /// This class is mutable to support dynamic updates of activation state during traversal.
     /// </summary>
     private class VisualElementNode(
-        IVisualElement element,
-        VisualElementType type,
-        string? parentId,
+        VisualElementQueryResult queryResult,
+        string? pendingParentAnchorId,
         int siblingIndex,
         string? description,
         IReadOnlyList<string> contentLines,
@@ -149,11 +138,15 @@ public sealed partial class VisualContextBuilder(
         bool isImportant
     )
     {
-        public IVisualElement Element { get; } = element;
+        public VisualElement Element => QueryResult.Element;
 
-        public VisualElementType Type { get; } = type;
+        public VisualElementQueryResult QueryResult { get; } = queryResult;
 
-        public string? ParentId { get; } = parentId;
+        public VisualElementSnapshot Snapshot => QueryResult.Snapshot;
+
+        public VisualElementType Type => Snapshot.Type ?? VisualElementType.Unknown;
+
+        public string? PendingParentAnchorId { get; set; } = pendingParentAnchorId;
 
         public int SiblingIndex { get; } = siblingIndex;
 
@@ -228,18 +221,24 @@ public sealed partial class VisualContextBuilder(
         [property: JsonPropertyName("box")] string? Box,
         [property: JsonPropertyName("extra")] string? Extra,
         [property: JsonPropertyName("children")] List<VisualElementDto>? Children,
-        [property: JsonPropertyName("omitted")] string? Omitted
+        [property: JsonPropertyName("omitted")] string? Omitted,
+        [property: JsonIgnore] VisualElement? Target
     );
 
     /// <summary>
-    ///     The mapping from original element ID to the built sequential ID starting from <see cref="startingId"/>.
+    ///     The mapping from Agent target ID to the visual element represented by the final output.
     /// </summary>
-    public Dictionary<int, IVisualElement> BuiltVisualElements { get; } = [];
+    public Dictionary<int, VisualElement> BuiltVisualElements { get; } = [];
 
     private readonly HashSet<string> _coreElementIdSet = coreElements
+        .AsValueEnumerable()
         .Select(e => e.Id)
         .Where(id => !string.IsNullOrEmpty(id))
         .ToHashSet(StringComparer.Ordinal);
+
+    private readonly VisualElementQueryRequest _queryRequest = new(
+        VisualElementFields.All,
+        approximateTokenLimit == int.MaxValue ? 65_536 : Math.Clamp(approximateTokenLimit * 4, 4_096, 65_536));
 
     private string? _cachedResult;
 
@@ -278,7 +277,7 @@ public sealed partial class VisualContextBuilder(
         var visitedElements = new Dictionary<string, VisualElementNode>();
 
         // 1. Enqueue core nodes
-        TryEnqueueTraversalNode(priorityQueue, null, 0, VisualContextTraverseDirections.Core, coreElements.GetEnumerator());
+        TryEnqueueTraversalNode(priorityQueue, null, 0, VisualContextTraverseDirections.Core, new CoreElementEnumerator(coreElements, _queryRequest));
 
         // 2. Process the Queue
         ProcessTraversalQueue(priorityQueue, visitedElements, cancellationToken);
@@ -290,7 +289,7 @@ public sealed partial class VisualContextBuilder(
         {
             if (priorityQueue.TryDequeue(out var node, out _))
             {
-                if (node.ParentId is not null && visitedElements.TryGetValue(node.ParentId, out var parentNode))
+                if (node.DirectParentId is not null && visitedElements.TryGetValue(node.DirectParentId, out var parentNode))
                 {
                     parentNode.HasOmittedChildren = true;
                 }
@@ -324,7 +323,7 @@ public sealed partial class VisualContextBuilder(
     /// </summary>
     private string GenerateJsonString(Dictionary<string, VisualElementNode> visitedElements)
     {
-        var tree = BuildElementDtoTree(visitedElements);
+        var tree = AssignDtoTargetIds(BuildElementDtoTree(visitedElements));
         return JsonSerializer.Serialize(tree, CompactJsonOptions);
     }
 
@@ -334,7 +333,7 @@ public sealed partial class VisualContextBuilder(
     /// </summary>
     private string GenerateToonString(Dictionary<string, VisualElementNode> visitedElements)
     {
-        var tree = BuildElementDtoTree(visitedElements);
+        var tree = AssignDtoTargetIds(BuildElementDtoTree(visitedElements));
 
         var sb = new StringBuilder("{id,type,name,text,box,extra,children,omitted}[");
         sb.Append(tree.Count).Append(']').AppendLine();
@@ -393,39 +392,6 @@ public sealed partial class VisualContextBuilder(
         var roots = new List<VisualElementDto>();
         foreach (var rootElement in visitedElements.Values.AsValueEnumerable().Where(e => e.Parent is null))
         {
-            if (rootElement.Type is not VisualElementType.TopLevel and not VisualElementType.Screen)
-            {
-                // Walk up to find the actual TopLevel/Screen ancestor
-                var topLevelOrScreenElement = rootElement.Element.Parent;
-                while (topLevelOrScreenElement is { Type: not VisualElementType.TopLevel and not VisualElementType.Screen, Parent: { } parent })
-                {
-                    topLevelOrScreenElement = parent;
-                }
-
-                if (topLevelOrScreenElement is not null)
-                {
-                    var syntheticId = BuiltVisualElements.Count + startingId;
-                    BuiltVisualElements[syntheticId] = topLevelOrScreenElement;
-
-                    // Collect children from the rootElement subtree
-                    var childDtos = new List<VisualElementDto>();
-                    CollectVisibleDtos(childDtos, rootElement);
-                    childDtos = MergeConsecutiveLabels(childDtos);
-
-                    roots.Add(
-                        CreateElementDto(
-                            topLevelOrScreenElement,
-                            topLevelOrScreenElement.Type,
-                            syntheticId,
-                            description: null,
-                            contentLines: null,
-                            isImportant: false,
-                            children: childDtos.Count > 0 ? childDtos : null,
-                            omitted: "children")); // Synthetic roots always have omitted children
-                    continue;
-                }
-            }
-
             CollectVisibleDtos(roots, rootElement);
         }
 
@@ -454,10 +420,6 @@ public sealed partial class VisualContextBuilder(
             return;
         }
 
-        // Visible node: assign sequential ID and recurse children.
-        var id = BuiltVisualElements.Count + startingId;
-        BuiltVisualElements[id] = element;
-
         var childDtos = new List<VisualElementDto>();
         foreach (var child in elementNode.Children.AsValueEnumerable().OrderBy(x => x.SiblingIndex))
         {
@@ -471,9 +433,8 @@ public sealed partial class VisualContextBuilder(
 
         output.Add(
             CreateElementDto(
-                element,
-                elementType,
-                id,
+                elementNode,
+                0,
                 elementNode.Description,
                 elementNode.ContentLines,
                 elementNode.IsImportant,
@@ -612,7 +573,8 @@ public sealed partial class VisualContextBuilder(
             Box = minX is not null ? $"{minX},{minY},{maxX2!.Value - minX.Value},{maxY2!.Value - minY!.Value}" : null,
             Extra = extraBuilder?.ToString(),
             Children = null,
-            Omitted = omittedBuilder?.ToString()
+            Omitted = omittedBuilder?.ToString(),
+            Target = first.Target
         };
     }
 
@@ -622,8 +584,7 @@ public sealed partial class VisualContextBuilder(
     /// is assembled into the compact <see cref="VisualElementDto.Extra"/> string.
     /// </summary>
     private VisualElementDto CreateElementDto(
-        IVisualElement element,
-        VisualElementType elementType,
+        VisualElementNode elementNode,
         int id,
         string? description,
         IReadOnlyList<string>? contentLines,
@@ -631,11 +592,13 @@ public sealed partial class VisualContextBuilder(
         List<VisualElementDto>? children,
         string? omitted = null)
     {
+        var snapshot = elementNode.Snapshot;
+        var elementType = elementNode.Type;
+
         // Build Box
         string? box = null;
-        if (ShouldIncludeBounds(detailLevel, elementType))
+        if (ShouldIncludeBounds(detailLevel, elementType) && snapshot.Bounds is { } bounds)
         {
-            var bounds = element.BoundingRectangle;
             box = $"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}";
         }
 
@@ -644,7 +607,7 @@ public sealed partial class VisualContextBuilder(
         if (isImportant) extraPartsBuilder.Append("!important");
         if (elementType == VisualElementType.TopLevel)
         {
-            var processId = element.ProcessId;
+            var processId = snapshot.ProcessId.GetValueOrDefault(-1);
             if (processId > 0)
             {
                 AppendExtraPart("pid:").Append(processId);
@@ -659,7 +622,7 @@ public sealed partial class VisualContextBuilder(
                 }
             }
 
-            var windowHandle = element.NativeWindowHandle;
+            var windowHandle = snapshot.NativeWindowHandle.GetValueOrDefault();
             if (windowHandle > 0) AppendExtraPart("hwnd:0x").Append(windowHandle.ToString("X"));
         }
 
@@ -671,12 +634,37 @@ public sealed partial class VisualContextBuilder(
             box,
             extraPartsBuilder.Length > 0 ? extraPartsBuilder.ToString() : null,
             children,
-            omitted);
+            omitted,
+            elementNode.Element);
 
         StringBuilder AppendExtraPart(string part)
         {
             if (extraPartsBuilder.Length > 0) extraPartsBuilder.Append(',');
             return extraPartsBuilder.Append(part);
         }
+    }
+
+    private List<VisualElementDto> AssignDtoTargetIds(List<VisualElementDto> dtos)
+    {
+        for (var i = 0; i < dtos.Count; i++)
+        {
+            var dto = dtos[i];
+            var children = dto.Children is null ? null : AssignDtoTargetIds(dto.Children);
+            var id = dto.Target is null ? 0 : AddTarget(dto.Target, dto.Type);
+            dtos[i] = dto with { Id = id, Children = children };
+        }
+
+        return dtos;
+    }
+
+    private int AddTarget(VisualElement element, VisualElementType type)
+    {
+        var capabilities = VisualTargetCapabilities.Inspect | VisualTargetCapabilities.Navigate | VisualTargetCapabilities.Expand | VisualTargetCapabilities.ReadContent | VisualTargetCapabilities.Find | VisualTargetCapabilities.Capture;
+        if (IsInteractiveElement(type, VisualElementStates.None)) capabilities |= VisualTargetCapabilities.Invoke | VisualTargetCapabilities.Focus;
+        if (type == VisualElementType.TextEdit) capabilities |= VisualTargetCapabilities.SetText | VisualTargetCapabilities.SendKeyGesture;
+
+        var id = targetPublication.Add(new ElementTarget { Element = element, Capabilities = capabilities });
+        BuiltVisualElements[id] = element;
+        return id;
     }
 }

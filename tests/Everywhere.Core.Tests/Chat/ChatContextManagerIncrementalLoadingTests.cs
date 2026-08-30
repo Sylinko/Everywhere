@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
+using Everywhere.Automation;
 using Everywhere.Chat;
-using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Storage;
@@ -403,4 +403,5 @@ public sealed class ChatContextManagerIncrementalLoadingTests
             ChatContextMetadata metadata,
             CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
+
 }

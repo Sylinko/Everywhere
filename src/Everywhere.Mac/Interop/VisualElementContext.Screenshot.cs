@@ -2,6 +2,7 @@ using System.Reactive.Disposables;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using ImageIO;
 

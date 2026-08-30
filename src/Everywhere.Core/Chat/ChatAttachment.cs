@@ -4,8 +4,8 @@ using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
+using Everywhere.Automation;
 using Everywhere.Common;
-using Everywhere.Interop;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
 using MessagePack;
@@ -40,7 +40,7 @@ public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : Obse
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public partial class VisualElementAttachment : ChatAttachment
+public partial class VisualElementAttachment : ChatAttachment, IDisposable
 {
     [Key(1)]
     public override LucideIconKind Icon { get; }
@@ -55,13 +55,21 @@ public partial class VisualElementAttachment : ChatAttachment
     /// Ignore this property during serialization because it should already be converted into prompts and shouldn't appear in history.
     /// </summary>
     [IgnoreMember]
-    public ResilientReference<IVisualElement>? Element { get; }
+    public VisualElement? Element { get; }
+
+    /// <summary>
+    /// Gets the bounded observation captured when this attachment acquired its element.
+    /// </summary>
+    [IgnoreMember]
+    public VisualElementQueryResult? InitialQuery { get; }
 
     /// <summary>
     /// Indicates whether the visual element is valid.
     /// </summary>
     [IgnoreMember]
-    public bool IsElementValid => Element?.Target is not null;
+    public bool IsElementValid => Element is not null && _retention is { IsDisposed: false };
+
+    [IgnoreMember] private VisualElementRetention? _retention;
 
     [SerializationConstructor]
     protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
@@ -69,21 +77,28 @@ public partial class VisualElementAttachment : ChatAttachment
         Icon = icon;
     }
 
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, IVisualElement? element) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, VisualElementQueryResult? queryResult, VisualElementRetention? retention) : base(headerKey)
     {
         Icon = icon;
-        Element = element is null ? null : new ResilientReference<IVisualElement>(element);
+        Element = queryResult?.Element;
+        InitialQuery = queryResult;
+        _retention = retention;
     }
 
-    public static VisualElementAttachment FromVisualElement(IVisualElement element)
+    /// <summary>
+    /// Creates an attachment and assumes ownership of the supplied element retention.
+    /// </summary>
+    public static VisualElementAttachment FromVisualElement(VisualElementQueryResult queryResult, VisualElementRetention retention)
     {
+        var snapshot = queryResult.Snapshot;
+        var elementType = snapshot.Type ?? VisualElementType.Unknown;
         DynamicLocaleKey headerKey;
-        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{element.Type}");
-        if (element.ProcessId > 0)
+        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{elementType}");
+        if (snapshot.ProcessId is > 0 and var processId)
         {
             try
             {
-                using var process = Process.GetProcessById(element.ProcessId);
+                using var process = Process.GetProcessById(processId);
                 headerKey = new FormattedDynamicLocaleKey("{0} - {1}", new DirectLocaleKey(process.ProcessName), elementTypeKey);
             }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or NotSupportedException)
@@ -98,7 +113,7 @@ public partial class VisualElementAttachment : ChatAttachment
 
         return new VisualElementAttachment(
             headerKey,
-            element.Type switch
+            elementType switch
             {
                 VisualElementType.Label => LucideIconKind.Type,
                 VisualElementType.TextEdit => LucideIconKind.TextInitial,
@@ -126,8 +141,14 @@ public partial class VisualElementAttachment : ChatAttachment
                 VisualElementType.Screen => LucideIconKind.Monitor,
                 _ => LucideIconKind.Component
             },
-            element);
+            queryResult,
+            retention);
     }
+
+    /// <summary>
+    /// Releases the attachment's pre-publication ownership of its live element.
+    /// </summary>
+    public void Dispose() => DisposeHelper.DisposeToDefault(ref _retention);
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -152,10 +173,11 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
         IsPrimary = true;
     }
 
-    public TextSelectionAttachment(string text, IVisualElement? element) : base(
+    public TextSelectionAttachment(string text, VisualElementQueryResult? queryResult, VisualElementRetention? retention) : base(
         CreateHeaderKey(text),
         LucideIconKind.TextSelect,
-        element)
+        queryResult,
+        retention)
     {
         Text = text;
         IsPrimary = true;

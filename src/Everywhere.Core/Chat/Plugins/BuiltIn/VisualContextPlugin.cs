@@ -7,19 +7,18 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
-using Everywhere.AI;
+using Everywhere.Automation;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
 using Everywhere.Prompting;
-using Everywhere.Storage;
 using Everywhere.Statistics;
+using Everywhere.Storage;
 using Everywhere.Views;
 using Lucide.Avalonia;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -31,20 +30,20 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     public override bool IsDefaultEnabled => true;
 
     private readonly IBlobStorage _blobStorage;
-    private readonly IVisualElementContext _visualElementContext;
+    private readonly IVisualElementBackend _visualElementBackend;
     private readonly PersistentState _persistentState;
     private readonly Settings _settings;
     private readonly IStatisticsRecorder _statisticsRecorder;
 
     public VisualContextPlugin(
         IBlobStorage blobStorage,
-        IVisualElementContext visualElementContext,
+        IVisualElementBackend visualElementBackend,
         PersistentState persistentState,
         Settings settings,
         IStatisticsRecorder statisticsRecorder) : base("visual_context")
     {
         _blobStorage = blobStorage;
-        _visualElementContext = visualElementContext;
+        _visualElementBackend = visualElementBackend;
         _persistentState = persistentState;
         _settings = settings;
         _statisticsRecorder = statisticsRecorder;
@@ -84,34 +83,49 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     {
         var windowCount = 0;
         var xmlBuilder = new StringBuilder();
-        foreach (var screen in _visualElementContext.Screens.AsValueEnumerable())
+        using var retention = chatContext.VisualContext.CreateRetention();
+        foreach (var screenResult in GetScreens(retention))
         {
-            var bounds = screen.BoundingRectangle;
-            xmlBuilder.Append(" box=\"")
-                .Append(bounds.X).Append(',')
-                .Append(bounds.Y).Append(',')
-                .Append(bounds.Width).Append(',')
-                .Append(bounds.Height).Append('"');
+            var screen = screenResult.Element;
+            var screenSnapshot = screenResult.Snapshot;
+            xmlBuilder.Append("<Screen");
+            if (screenSnapshot.Bounds is { } screenBounds)
+            {
+                xmlBuilder.Append(" box=\"")
+                    .Append(screenBounds.X).Append(',')
+                    .Append(screenBounds.Y).Append(',')
+                    .Append(screenBounds.Width).Append(',')
+                    .Append(screenBounds.Height).Append('"');
+            }
+            xmlBuilder.AppendLine(">");
 
-            foreach (var window in screen.Children.AsValueEnumerable().Where(v => v.Type == VisualElementType.TopLevel))
+            using var windows = screen.CreateEnumerator(
+                VisualElementRelation.Child,
+                new VisualElementEnumerationOptions(VisualElementQueryRequest.Default));
+            while (windows.MoveNext())
             {
                 try
                 {
+                    var windowResult = windows.Current;
+                    var windowSnapshot = windowResult.Snapshot;
+                    if (windowSnapshot.Type != VisualElementType.TopLevel) continue;
                     xmlBuilder.Append("  <TopLevel ");
 
-                    if (window.Name is { Length: > 0 } name)
+                    if (windowSnapshot.Name is { Length: > 0 } name)
                     {
                         xmlBuilder.Append(" name=\"").Append(SecurityElement.Escape(name)).Append('"');
                     }
 
-                    bounds = window.BoundingRectangle;
-                    xmlBuilder.Append(" box=\"")
-                        .Append(bounds.X).Append(',')
-                        .Append(bounds.Y).Append(',')
-                        .Append(bounds.Width).Append(',')
-                        .Append(bounds.Height).Append('"');
+                    if (windowSnapshot.Bounds is { } bounds)
+                    {
+                        xmlBuilder.Append(" box=\"")
+                            .Append(bounds.X).Append(',')
+                            .Append(bounds.Y).Append(',')
+                            .Append(bounds.Width).Append(',')
+                            .Append(bounds.Height).Append('"');
+                    }
 
-                    var processId = window.ProcessId;
+                    var processId = windowSnapshot.ProcessId.GetValueOrDefault(-1);
                     if (processId > 0)
                     {
                         xmlBuilder.Append(" pid=\"").Append(processId).Append('"');
@@ -126,13 +140,13 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                         }
                     }
 
-                    var windowHandle = window.NativeWindowHandle;
+                    var windowHandle = windowSnapshot.NativeWindowHandle.GetValueOrDefault();
                     if (windowHandle > 0)
                     {
                         xmlBuilder.Append(" handle=\"0x").Append(windowHandle.ToString("X")).Append('"');
                     }
 
-                    xmlBuilder.Append(" state=\"").Append(window.States.ToString()).Append('"');
+                    xmlBuilder.Append(" state=\"").Append(windowSnapshot.States.GetValueOrDefault().ToString()).Append('"');
                     xmlBuilder.AppendLine("/>");
 
                     windowCount++;
@@ -172,7 +186,8 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [Description("ElementId, or hwnd startswith 0x")] string target,
         CancellationToken cancellationToken = default)
     {
-        var element = ResolveTargetElement(chatContext, target);
+        using var retention = chatContext.VisualContext.CreateRetention();
+        var element = ResolveTargetElement(chatContext, retention, target);
         using var pointer = await element.CaptureAsync(cancellationToken);
         var bitmap = pointer.ToAvaloniaBitmap();
         if (bitmap is null) return null;
@@ -226,8 +241,9 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [Description("Available values: all, parent, child, previous, next, none")] string directions = "all",
         CancellationToken cancellationToken = default)
     {
-        // --- Resolve the target element ---
-        var element = ResolveTargetElement(chatContext, target);
+        using var targetTurn = chatContext.VisualContext.BeginTurn();
+        using var traversalRetention = chatContext.VisualContext.CreateRetention();
+        var element = ResolveTargetElement(chatContext, traversalRetention, target);
 
         // Parse direction string into flags
         var traverseDirections = ParseTraverseDirections(directions);
@@ -235,23 +251,24 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         // Use a generous token limit so the expanded result is not truncated again
         var tokenLimit = VisualContextLengthLimit.Detailed.ToTokenLimit();
         var detailLevel = _persistentState.VisualContextDetailLevel;
-        var nextId = chatContext.VisualElements.Count + 1;
-
-        var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
-            ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
+        using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
+            ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
             null;
+        var targetPublication = chatContext.VisualContext.BeginPublication();
         var builder = new VisualContextBuilder(
             [element],
+            traversalRetention,
+            targetPublication,
             tokenLimit,
-            nextId,
             detailLevel,
             traverseDirections,
             effectScope: effectScope);
 
         var result = builder.Build(cancellationToken);
 
-        // Merge newly built elements into the chat context so they can be referenced later
-        chatContext.VisualElements.AddRange(builder.BuiltVisualElements);
+        targetPublication.Commit();
+        targetTurn.Complete();
+        effectScope?.Complete();
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
@@ -278,7 +295,8 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private async Task<string> ExecuteVisualActionsAsync(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginUserInterface userInterface,
-        [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")] string description,
+        [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")]
+        string description,
         IReadOnlyList<VisualElementAction> actions,
         CancellationToken cancellationToken = default)
     {
@@ -317,6 +335,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         }
 
         var index = 0;
+        using var retention = chatContext.VisualContext.CreateRetention();
         foreach (var action in actions)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -326,19 +345,19 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             {
                 case VisualActionType.Click:
                 {
-                    var element = ResolveTargetElement(chatContext, action.EnsureTarget());
+                    var element = ResolveTargetElement(chatContext, retention, action.EnsureTarget());
                     element.Invoke();
                     break;
                 }
                 case VisualActionType.SetText:
                 {
-                    var element = ResolveTargetElement(chatContext, action.EnsureTarget());
+                    var element = ResolveTargetElement(chatContext, retention, action.EnsureTarget());
                     element.SetText(action.Text ?? string.Empty);
                     break;
                 }
                 case VisualActionType.SendKey:
                 {
-                    var element = ResolveTargetElement(chatContext, action.EnsureTarget());
+                    var element = ResolveTargetElement(chatContext, retention, action.EnsureTarget());
                     var shortcut = action.ResolveShortcut();
                     if (shortcut.Key == Avalonia.Input.Key.None)
                     {
@@ -348,7 +367,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                             new ArgumentException($"Key is required for SendKey actions (step {index}).", nameof(action.Key)));
                     }
 
-                    element.SendShortcut(shortcut);
+                    element.SendKeyGesture(new KeyGesture(shortcut.Key, shortcut.Modifiers));
                     break;
                 }
                 case VisualActionType.Wait:
@@ -381,15 +400,15 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     }
 
     /// <summary>
-    /// Resolves the target <see cref="IVisualElement"/> from either an elementId or a window handle string.
+    /// Resolves the target <see cref="VisualElement"/> from either an elementId or a window handle string.
     /// Validates that exactly one of the two identifiers is provided and throws descriptive exceptions for invalid input or if the target element cannot be found.
     /// This ensures robust handling of user input and clear error messages for troubleshooting.
     /// </summary>
-    private IVisualElement ResolveTargetElement(ChatContext chatContext, string target)
+    private VisualElement ResolveTargetElement(ChatContext chatContext, VisualElementRetention retention, string target)
     {
         if (target.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
-            return ResolveVisualElementByHwnd(target);
+            return ResolveVisualElementByHwnd(retention, target);
         }
 
         if (!int.TryParse(target, out var elementId))
@@ -401,7 +420,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     $"Invalid target format: '{target}'. Expected either an elementId (integer) or a window handle (hex string like '0x1A2B3C')."));
         }
 
-        if (!chatContext.VisualElements.TryGetValue(elementId, out var visualElement))
+        if (!chatContext.VisualContext.TryGetTarget(elementId, out var visualTarget) || visualTarget is not ElementTarget elementTarget)
         {
             throw new HandledFunctionInvokingException(
                 HandledFunctionInvokingExceptionType.ArgumentError,
@@ -411,13 +430,13 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     nameof(target)));
         }
 
-        return visualElement;
+        return elementTarget.Element;
     }
 
     /// <summary>
     /// Finds a top-level window by its native window handle across all screens.
     /// </summary>
-    private IVisualElement ResolveVisualElementByHwnd(string hwndString)
+    private VisualElement ResolveVisualElementByHwnd(VisualElementRetention retention, string hwndString)
     {
         if (!long.TryParse(hwndString.AsSpan(2), NumberStyles.HexNumber, null, out var hwndValue))
         {
@@ -427,14 +446,43 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 new ArgumentException($"Invalid window handle format: '{hwndString}'. Expected hex format like '0x1A2B3C'."));
         }
 
-        var window = _visualElementContext.ElementFromWindowHandle((nint)hwndValue);
-        return window ??
+        var window = _visualElementBackend.Query(retention, VisualElementLocator.FromNativeWindow((nint)hwndValue));
+        return window?.Element ??
             throw new HandledFunctionInvokingException(
                 HandledFunctionInvokingExceptionType.ArgumentError,
                 nameof(hwndString),
                 new ArgumentException(
                     $"No top-level window with handle '{hwndString}' was found. The window may have been closed. " +
                     "Use list_windows to get the current list of available windows."));
+    }
+
+    private List<VisualElementQueryResult> GetScreens(VisualElementRetention retention)
+    {
+        var primaryScreen = _visualElementBackend.Query(retention, VisualElementLocator.Default, VisualElementResolution.Screen);
+        if (primaryScreen is null) return [];
+
+        var screens = new List<VisualElementQueryResult> { primaryScreen };
+        using (var previous = primaryScreen.Element.CreateEnumerator(VisualElementRelation.PreviousSibling, VisualElementEnumerationOptions.Default))
+        {
+            while (previous.MoveNext())
+            {
+                var result = previous.Current;
+                retention.Retain(result.Element);
+                screens.Insert(0, result);
+            }
+        }
+
+        using (var next = primaryScreen.Element.CreateEnumerator(VisualElementRelation.NextSibling, VisualElementEnumerationOptions.Default))
+        {
+            while (next.MoveNext())
+            {
+                var result = next.Current;
+                retention.Retain(result.Element);
+                screens.Add(result);
+            }
+        }
+
+        return screens;
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 using Avalonia;
 using Avalonia.Controls;
+using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -12,6 +13,7 @@ using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.StrategyEngine;
+using Everywhere.Windows.Automation;
 using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
 using Everywhere.Windows.Interop;
@@ -49,7 +51,11 @@ public static class Program
                 #region Basic
 
                 .AddApplicationLogging()
-                .AddSingleton<IVisualElementContext, VisualElementContext>()
+                .AddSingleton<WindowsScreenSelectionService>()
+                .AddSingleton<IScreenSelectionService>(provider => provider.GetRequiredService<WindowsScreenSelectionService>())
+                .AddSingleton<WindowsTextSelectionWatcher>()
+                .AddSingleton<ITextSelectionWatcher>(provider => provider.GetRequiredService<WindowsTextSelectionWatcher>())
+                .AddSingleton<IVisualElementBackend, WindowsVisualElementBackend>()
                 .AddSingleton<IShortcutListener, ShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()

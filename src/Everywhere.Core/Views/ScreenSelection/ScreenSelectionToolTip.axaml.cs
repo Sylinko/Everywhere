@@ -2,6 +2,8 @@
 using Avalonia.Controls.Primitives;
 using Everywhere.Interop;
 
+using Everywhere.Automation;
+
 namespace Everywhere.Views;
 
 public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedModes) : TemplatedControl
@@ -44,7 +46,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         set => SetValue(SizeInfoProperty, value);
     }
 
-    public IVisualElement? Element
+    public VisualElementQueryResult? Element
     {
         set => Header = GetElementDescription(value);
     }
@@ -61,26 +63,28 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         }
     }
 
-    private string? GetElementDescription(IVisualElement? element)
+    private string? GetElementDescription(VisualElementQueryResult? queryResult)
     {
-        if (element is null) return LocaleResolver.Common_None;
+        if (queryResult is null) return LocaleResolver.Common_None;
 
+        var snapshot = queryResult.Snapshot;
         DynamicLocaleKey key;
-        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{element.Type}");
-        if (element.ProcessId > 0)
+        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{snapshot.Type ?? VisualElementType.Unknown}");
+        var processId = snapshot.ProcessId.GetValueOrDefault(-1);
+        if (processId > 0)
         {
-            if (!_processNameCache.TryGetValue(element.ProcessId, out var processName))
+            if (!_processNameCache.TryGetValue(processId, out var processName))
             {
                 try
                 {
-                    using var process = Process.GetProcessById(element.ProcessId);
+                    using var process = Process.GetProcessById(processId);
                     processName = process.ProcessName;
                 }
                 catch
                 {
                     processName = string.Empty;
                 }
-                _processNameCache[element.ProcessId] = processName;
+                _processNameCache[processId] = processName;
             }
 
             key = processName.IsNullOrWhiteSpace() ?

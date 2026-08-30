@@ -72,7 +72,52 @@ public enum UIAutomationCacheOptions
     Name = 1 << 11,
 
     /// <summary>
-    /// Requests the TextPattern used for bounded text reads.
+    /// Requests the Value property used for common scalar text.
     /// </summary>
-    Text = 1 << 12,
+    Value = 1 << 12,
+
+    /// <summary>
+    /// Requests the TextPattern used for document-style ranged text reads.
+    /// </summary>
+    TextPattern = 1 << 13,
+
+    /// <summary>
+    /// Requests the InvokePattern used for a control's primary action.
+    /// </summary>
+    InvokePattern = 1 << 14,
+
+    /// <summary>
+    /// Requests the TogglePattern used for state-cycling controls.
+    /// </summary>
+    TogglePattern = 1 << 15,
+
+    /// <summary>
+    /// Requests the SelectionItemPattern used for selectable items.
+    /// </summary>
+    SelectionItemPattern = 1 << 16,
+
+    /// <summary>
+    /// Requests the ExpandCollapsePattern used for expandable controls.
+    /// </summary>
+    ExpandCollapsePattern = 1 << 17,
+
+    /// <summary>
+    /// Requests the SelectionPattern used by containers that expose selected child elements.
+    /// </summary>
+    SelectionPattern = 1 << 18,
+
+    /// <summary>
+    /// Requests the LegacyIAccessiblePattern used as a compatibility fallback for MSAA-backed controls.
+    /// </summary>
+    LegacyIAccessiblePattern = 1 << 19,
+
+    /// <summary>
+    /// Requests the ValuePattern used for scalar-value mutation and access.
+    /// </summary>
+    ValuePattern = 1 << 20,
+
+    /// <summary>
+    /// Requests the current expand-or-collapse state.
+    /// </summary>
+    ExpandCollapseState = 1 << 21,
 }

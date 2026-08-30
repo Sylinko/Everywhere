@@ -17,9 +17,23 @@ public sealed unsafe class UIAutomationElementReference : ComReference
     }
 
     /// <summary>
+    /// Creates an operation-scoped element by adding one independent COM reference while retaining this durable reference.
+    /// </summary>
+    /// <returns>An independently owned operation-scoped element.</returns>
+    public UIAutomationElement Acquire()
+    {
+        var pointer = Pointer;
+        pointer->AddRef();
+        return new UIAutomationElement(pointer);
+    }
+
+    /// <summary>
     /// Creates an operation-scoped element with an updated cache while retaining this durable reference.
     /// </summary>
     /// <param name="cacheRequest">The cache request created by the executing UI Automation client.</param>
     /// <returns>An independently owned operation-scoped element.</returns>
-    public UIAutomationElement BuildUpdatedCache(UIAutomationCacheRequest cacheRequest) => new(Pointer->BuildUpdatedCache(cacheRequest.Pointer));
+    public UIAutomationElement BuildUpdatedCache(UIAutomationCacheRequest cacheRequest)
+    {
+        return new UIAutomationElement(Pointer->BuildUpdatedCache(cacheRequest.Pointer));
+    }
 }

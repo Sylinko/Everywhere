@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
-using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
@@ -10,15 +9,15 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using DynamicData;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using Everywhere.Utilities;
 using Everywhere.Views;
-using Interop.UIAutomationClient;
 using Point = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
 
-public partial class VisualElementContext
+public sealed partial class WindowsScreenSelectionService
 {
     /// <summary>
     /// Represents a modal screen selection session (e.g., picking a window or element).
@@ -36,17 +35,27 @@ public partial class VisualElementContext
         protected ScreenSelectionToolTipWindow ToolTipWindow { get; }
 
         protected ScreenSelectionMode CurrentMode { get; private set; }
-        protected IVisualElement? PickingElement { get; private set; }
+        protected VisualElementQueryResult? PickingElement { get; private set; }
 
+        private readonly IVisualElementBackend _visualElementBackend;
+        private readonly VisualContext _context;
         private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
         private readonly HashSet<HWND> _ownWindows = [];
         private IDisposable? _keyboardHookSubscription;
+        private VisualElementRetention? _pickingRetention;
 
-        protected ScreenSelectionSession(IWindowHelper windowHelper, IReadOnlyList<ScreenSelectionMode> allowedModes, ScreenSelectionMode initialMode)
+        protected ScreenSelectionSession(
+            IWindowHelper windowHelper,
+            IVisualElementBackend visualElementBackend,
+            VisualContext context,
+            IReadOnlyList<ScreenSelectionMode> allowedModes,
+            ScreenSelectionMode initialMode)
         {
             Debug.Assert(allowedModes.Count > 0);
 
             _allowedModes = allowedModes;
+            _visualElementBackend = visualElementBackend;
+            _context = context;
             WindowHelper = windowHelper;
             CurrentMode = initialMode;
 
@@ -218,6 +227,7 @@ public partial class VisualElementContext
         {
             foreach (var maskWindow in MaskWindows) maskWindow.Close();
             ToolTipWindow.Close();
+            DisposeHelper.DisposeToDefault(ref _pickingRetention);
 
             base.OnClosed(e);
         }
@@ -275,6 +285,7 @@ public partial class VisualElementContext
         protected virtual void OnCanceled()
         {
             PickingElement = null;
+            DisposeHelper.DisposeToDefault(ref _pickingRetention);
         }
 
         /// <summary>
@@ -285,6 +296,9 @@ public partial class VisualElementContext
         {
             // cursorPos = new Point(cursorPos.X * 2, cursorPos.Y * 2);
 
+            DisposeHelper.DisposeToDefault(ref _pickingRetention);
+            _pickingRetention = _context.CreateRetention();
+            PickingElement = null;
             var maskRect = default(PixelRect);
             switch (CurrentMode)
             {
@@ -294,11 +308,8 @@ public partial class VisualElementContext
                     var screen = Screens.All.FirstOrDefault(s => s.Bounds.Contains(pixelPoint));
                     if (screen == null) break;
 
-                    var hMonitor = PInvoke.MonitorFromPoint(cursorPos, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST);
-                    if (hMonitor == HMONITOR.Null) break;
-
-                    PickingElement = new ScreenVisualElementImpl(hMonitor);
-                    maskRect = screen.Bounds;
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromPoint(pixelPoint), VisualElementResolution.Screen);
+                    if (PickingElement is not null) maskRect = screen.Bounds;
                     break;
                 }
                 case ScreenSelectionMode.Window:
@@ -309,25 +320,31 @@ public partial class VisualElementContext
                     var rootHWnd = PInvoke.GetAncestor(targetHWnd, GET_ANCESTOR_FLAGS.GA_ROOTOWNER);
                     if (rootHWnd.IsNull) break;
 
-                    PickingElement = TryCreateVisualElement(() => Automation.ElementFromHandle(rootHWnd));
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromNativeWindow(rootHWnd));
                     if (PickingElement == null) break;
 
-                    maskRect = PickingElement.BoundingRectangle;
+                    maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
                     break;
                 }
                 case ScreenSelectionMode.Element:
                 {
-                    PickingElement = TryCreateVisualElement(() => Automation.ElementFromPoint(new tagPOINT { x = cursorPos.X, y = cursorPos.Y }));
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromPoint(new PixelPoint(cursorPos.X, cursorPos.Y)));
 
                     if (PickingElement == null) break;
 
-                    maskRect = PickingElement.BoundingRectangle;
+                    maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
                     break;
                 }
             }
 
             foreach (var maskWindow in MaskWindows) maskWindow.SetMask(maskRect);
             ToolTipWindow.ToolTip.Element = PickingElement;
+        }
+
+        protected VisualElementQueryResult? RetainPickingElement(VisualElementRetention retention)
+        {
+            if (PickingElement is { } result) retention.Retain(result.Element);
+            return PickingElement;
         }
 
         /// <summary>

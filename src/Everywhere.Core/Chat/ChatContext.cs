@@ -6,11 +6,11 @@ using System.Reactive.Disposables.Fluent;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Automation;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
 using Everywhere.Views;
@@ -85,13 +85,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public IReadOnlyList<ChatMessageNode> Items => _branchNodesSourceList.Items;
 
     /// <summary>
-    /// Key: VisualElement.Id
-    /// Value: VisualElement.
-    /// VisualElement is dynamically created and not serialized, so we keep a map here to track them.
-    /// This is also not serialized.
+    /// Gets the Automation identity, ownership, and Agent-target domain associated with this chat.
     /// </summary>
     [IgnoreMember]
-    public ResilientCache<int, IVisualElement> VisualElements { get; }
+    public VisualContext VisualContext { get; } = new();
 
     /// <summary>
     /// Exact approval-bypass decisions remembered for this chat session.
@@ -207,7 +204,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
 
-        VisualElements = new ResilientCache<int, IVisualElement>();
         ToolBypassApprovalRulesets = new ConcurrentDictionary<string, bool>();
         UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
@@ -215,16 +211,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// <summary>
     /// Creates a new chat context. A new Guid v7 ID is assigned.
     /// </summary>
-    public ChatContext() : this(null) { }
+    public ChatContext() : this(toolSessionBypassApproval: null, toolPatternRulesets: null, userInterfaceBroker: null) { }
 
     private ChatContext(
-        ResilientCache<int, IVisualElement>? visualElements = null,
         ConcurrentDictionary<string, bool>? toolSessionBypassApproval = null,
         ToolPatternRulesets? toolPatternRulesets = null,
         IChatPluginUserInterfaceBroker? userInterfaceBroker = null)
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
-        VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
         ToolBypassApprovalRulesets = toolSessionBypassApproval ?? new ConcurrentDictionary<string, bool>();
         ToolPatternRulesets = toolPatternRulesets;
 
@@ -300,13 +294,12 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     /// <summary>
     /// Fork a new ChatContext that inherits the current branch and metadata, but has a new Guid v7 ID and is marked as temporary.
-    /// This is useful for running sub-agents in a separate context while maintaining the same VisualElements and permissions.
+    /// This is useful for running sub-agents in a separate context while maintaining the same permissions.
     /// </summary>
     /// <returns></returns>
     public ChatContext ForkSubagent(string topic)
     {
         return new ChatContext(
-            VisualElements,
             ToolBypassApprovalRulesets,
             ToolPatternRulesets.TryUnion(
                 new ToolPatternRulesets(2)
@@ -622,6 +615,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             _presentation = null;
         }
         presentation?.Dispose();
+        VisualContext.Dispose();
 
         using (_graphMutationLock.EnterScope())
         {

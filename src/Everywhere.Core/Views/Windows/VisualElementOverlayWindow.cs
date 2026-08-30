@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Everywhere.Automation;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Serilog;
@@ -8,7 +9,7 @@ namespace Everywhere.Views;
 
 public class VisualElementOverlayWindow : Window
 {
-    private WeakReference<IVisualElement>? _visualElement;
+    private WeakReference<VisualElement>? _visualElement;
 
     public VisualElementOverlayWindow()
     {
@@ -37,7 +38,7 @@ public class VisualElementOverlayWindow : Window
         base.OnClosing(e);
     }
 
-    public async void UpdateForVisualElement(IVisualElement? element)
+    public async void UpdateForVisualElement(VisualElement? element)
     {
         if (element is null)
         {
@@ -48,7 +49,7 @@ public class VisualElementOverlayWindow : Window
         {
             if (_visualElement is null)
             {
-                _visualElement = new WeakReference<IVisualElement>(element);
+                _visualElement = new WeakReference<VisualElement>(element);
             }
             else
             {
@@ -58,7 +59,7 @@ public class VisualElementOverlayWindow : Window
             PixelRect boundingRectangle;
             try
             {
-                boundingRectangle = await Task.Run(() => element.BoundingRectangle).WaitAsync(TimeSpan.FromSeconds(1));
+                boundingRectangle = await Task.Run(() => element.Query(new VisualElementQueryRequest(VisualElementFields.Bounds, 0)).Snapshot.Bounds.GetValueOrDefault()).WaitAsync(TimeSpan.FromSeconds(1));
             }
             catch (TimeoutException)
             {

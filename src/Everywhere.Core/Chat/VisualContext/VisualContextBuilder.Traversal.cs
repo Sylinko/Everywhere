@@ -1,7 +1,5 @@
-﻿using Everywhere.AI;
-using Everywhere.Interop;
+﻿using Everywhere.Automation;
 using Everywhere.Prompting;
-using ZLinq;
 
 namespace Everywhere.Chat;
 
@@ -34,15 +32,21 @@ partial class VisualContextBuilder
     /// Represents a node in the traversal queue with a calculated priority score.
     /// </summary>
     private readonly record struct TraversalNode(
-        IVisualElement Element,
-        IVisualElement? Previous,
+        VisualElementQueryResult QueryResult,
+        VisualElementQueryResult? Previous,
         TraverseDistance Distance,
         VisualContextTraverseDirections Direction,
         int SiblingIndex,
-        IEnumerator<IVisualElement> Enumerator
+        IVisualElementEnumerator Enumerator,
+        string? DirectParentId,
+        string? PendingParentAnchorId
     )
     {
-        public string? ParentId { get; } = Element.Parent?.Id;
+        public VisualElement Element => QueryResult.Element;
+
+        public VisualElementSnapshot Snapshot => QueryResult.Snapshot;
+
+        public VisualElementType Type => Snapshot.Type ?? VisualElementType.Unknown;
 
         /// <summary>
         /// Calculates the final priority score for the Best-First Search algorithm.
@@ -106,14 +110,14 @@ partial class VisualContextBuilder
             // because when enumerating siblings, a small weighted element will "block" subsequent siblings.
             var weightedElement = Direction switch
             {
-                VisualContextTraverseDirections.Parent => Element,
+                VisualContextTraverseDirections.Parent => QueryResult,
                 VisualContextTraverseDirections.Child => Previous,
                 _ => null
             };
             if (weightedElement is not null)
             {
                 // 2. Intrinsic Score (Type Weight)
-                score *= GetTypeWeight(weightedElement.Type);
+                score *= GetTypeWeight(weightedElement.Snapshot.Type ?? VisualElementType.Unknown);
 
                 // Sometimes the visual element's BoundingRectangle is invalid,
                 // but it actually has a valid size that can be obtained from its children.
@@ -176,16 +180,12 @@ partial class VisualContextBuilder
         }
     }
 
-#if DEBUG_VISUAL_TREE_BUILDER
     private void TryEnqueueTraversalNode(
-#else
-    private static void TryEnqueueTraversalNode(
-#endif
         PriorityQueue<TraversalNode, float> priorityQueue,
         in TraversalNode? previous,
         in TraverseDistance distance,
         VisualContextTraverseDirections direction,
-        IEnumerator<IVisualElement> enumerator)
+        IVisualElementEnumerator enumerator)
     {
         if (!enumerator.MoveNext())
         {
@@ -193,28 +193,44 @@ partial class VisualContextBuilder
             return;
         }
 
+        var queryResult = enumerator.Current;
+        retention.Retain(queryResult.Element);
+        var directParentId = direction switch
+        {
+            VisualContextTraverseDirections.Child => previous?.Element.Id,
+            VisualContextTraverseDirections.PreviousSibling or VisualContextTraverseDirections.NextSibling => previous?.DirectParentId,
+            _ => null
+        };
+        var pendingParentAnchorId = direction switch
+        {
+            VisualContextTraverseDirections.Core or VisualContextTraverseDirections.Parent => queryResult.Element.Id,
+            VisualContextTraverseDirections.PreviousSibling or VisualContextTraverseDirections.NextSibling when directParentId is null => previous?.PendingParentAnchorId ?? previous?.Element.Id,
+            _ => null
+        };
         var node = new TraversalNode(
-            enumerator.Current,
-            previous?.Element,
+            queryResult,
+            previous?.QueryResult,
             distance,
             direction,
             direction switch
             {
                 VisualContextTraverseDirections.PreviousSibling => previous?.SiblingIndex - 1 ?? 0,
                 VisualContextTraverseDirections.NextSibling => previous?.SiblingIndex + 1 ?? 0,
-                _ => 0
+                _ => enumerator.Index
             },
-            enumerator);
+            enumerator,
+            directParentId,
+            pendingParentAnchorId);
         var score = node.GetScore();
         priorityQueue.Enqueue(node, score);
 
 #if DEBUG_VISUAL_TREE_BUILDER
-        _debugRecorder?.RegisterNode(node.Element, node.GetScore());
+        _debugRecorder?.RegisterNode(node.QueryResult, node.GetScore());
         _debugRecorder?.RecordStep(
-            node.Element,
+            node.QueryResult,
             "Enqueue",
             score,
-            $"Parent: {node.ParentId}, Previous: {node.Previous?.Id}, Direction: {node.Direction}, Distance: {node.Distance}",
+            $"Parent: {node.DirectParentId}, Previous: {node.Previous?.Element.Id}, Direction: {node.Direction}, Distance: {node.Distance}",
             0,
             priorityQueue.Count);
 #endif
@@ -226,6 +242,7 @@ partial class VisualContextBuilder
         CancellationToken cancellationToken)
     {
         var accumulatedTokenCount = 0;
+        var resolvedParentAnchors = new Dictionary<string, string>(StringComparer.Ordinal);
 
         while (priorityQueue.Count > 0)
         {
@@ -236,7 +253,7 @@ partial class VisualContextBuilder
             {
 #if DEBUG_VISUAL_TREE_BUILDER
                 _debugRecorder?.RecordStep(
-                    priorityQueue.Peek().Element,
+                    priorityQueue.Peek().QueryResult,
                     "Stop",
                     0,
                     "Token limit reached",
@@ -254,25 +271,26 @@ partial class VisualContextBuilder
             var element = node.Element;
             var id = element.Id;
 
-            effectScope?.Add(element);
+            effectScope?.Add(node.QueryResult);
 
             if (visitedElements.ContainsKey(id))
             {
 #if DEBUG_VISUAL_TREE_BUILDER
-                _debugRecorder?.RecordStep(element, "Skip", priority, "Already visited", accumulatedTokenCount, priorityQueue.Count);
+                _debugRecorder?.RecordStep(node.QueryResult, "Skip", priority, "Already visited", accumulatedTokenCount, priorityQueue.Count);
 #endif
+                node.Enumerator.Dispose();
                 continue;
             }
 
             // Process the current node and create the VisualElementNode
-            CreateVisualElementNode(visitedElements, node, remainingTokenCount, ref accumulatedTokenCount);
+            CreateVisualElementNode(visitedElements, resolvedParentAnchors, node, remainingTokenCount, ref accumulatedTokenCount);
 
 #if DEBUG_VISUAL_TREE_BUILDER
             _debugRecorder?.RecordStep(
-                element,
+                node.QueryResult,
                 "Visit",
                 priority,
-                $"Parent: {node.ParentId}, Previous: {node.Previous?.Id}, Direction: {node.Direction}, Distance: {node.Distance}",
+                $"Parent: {node.DirectParentId}, Previous: {node.Previous?.Element.Id}, Direction: {node.Direction}, Distance: {node.Distance}",
                 accumulatedTokenCount,
                 priorityQueue.Count);
 #endif
@@ -287,21 +305,23 @@ partial class VisualContextBuilder
 
     private void CreateVisualElementNode(
         Dictionary<string, VisualElementNode> visitedElements,
+        Dictionary<string, string> resolvedParentAnchors,
         TraversalNode traversalNode,
         int remainingTokenCount,
         ref int accumulatedTokenCount)
     {
         var element = traversalNode.Element;
         var id = element.Id;
-        var type = element.Type;
+        var snapshot = traversalNode.Snapshot;
+        var type = traversalNode.Type;
 
         // --- Determine Content and Self-Informativeness ---
         string? description = null;
         string? content = null;
         var isContentOmitted = false;
         var isTextElement = type is VisualElementType.Label or VisualElementType.TextEdit or VisualElementType.Document;
-        var text = element.GetText();
-        if (element.Name is { Length: > 0 } name)
+        var text = snapshot.TextPreview;
+        if (snapshot.Name is { Length: > 0 } name)
         {
             if (isTextElement && string.IsNullOrEmpty(text))
             {
@@ -325,7 +345,7 @@ partial class VisualContextBuilder
         var contentLines = content?.Split(Environment.NewLine) ?? [];
         var hasTextContent = contentLines.Length > 0;
         var hasDescription = !string.IsNullOrWhiteSpace(description);
-        var interactive = IsInteractiveElement(element);
+        var interactive = IsInteractiveElement(type, snapshot.States ?? VisualElementStates.None);
         var isCoreElement = _coreElementIdSet.Contains(id);
         var isSelfInformative = hasTextContent || hasDescription || interactive || isCoreElement;
 
@@ -374,9 +394,8 @@ partial class VisualContextBuilder
 
         // Create the XML Element node
         var elementNode = visitedElements[id] = new VisualElementNode(
-            element,
-            type,
-            traversalNode.ParentId,
+            traversalNode.QueryResult,
+            traversalNode.PendingParentAnchorId,
             traversalNode.SiblingIndex,
             description,
             contentLines,
@@ -397,35 +416,45 @@ partial class VisualContextBuilder
         }
 
         // Link to parent and propagate updates
-        if (traversalNode.ParentId != null && visitedElements.TryGetValue(traversalNode.ParentId, out var parentXmlElement))
+        var directParentId = traversalNode.DirectParentId;
+        if (directParentId is null && traversalNode.PendingParentAnchorId is { } pendingAnchorId)
         {
-            parentXmlElement.Children.Add(elementNode);
-            elementNode.Parent = parentXmlElement;
+            resolvedParentAnchors.TryGetValue(pendingAnchorId, out directParentId);
+        }
 
-            // If the new child is informative (self-informative or has informative descendants),
-            // we need to notify the parent.
-            // Note: A newly created node has no descendants yet, so HasInformativeDescendants is false.
-            // So we only check IsSelfInformative.
-            if (elementNode.IsSelfInformative)
+        if (directParentId is not null && visitedElements.TryGetValue(directParentId, out var parentXmlElement))
+        {
+            AttachChild(parentXmlElement, elementNode, ref accumulatedTokenCount);
+        }
+        if (traversalNode is { Direction: VisualContextTraverseDirections.Parent, Previous: { } previous })
+        {
+            var anchorId = previous.Element.Id;
+            if (visitedElements.TryGetValue(anchorId, out var anchorNode))
             {
-                PropagateInformativeUpdate(parentXmlElement, ref accumulatedTokenCount);
+                anchorId = anchorNode.PendingParentAnchorId ?? anchorId;
+            }
+
+            resolvedParentAnchors[anchorId] = id;
+            foreach (var childElementNode in visitedElements.Values.AsValueEnumerable().Where(candidate => candidate.Parent is null && string.Equals(candidate.PendingParentAnchorId, anchorId, StringComparison.Ordinal)).ToArray())
+            {
+                childElementNode.PendingParentAnchorId = null;
+                AttachChild(elementNode, childElementNode, ref accumulatedTokenCount);
             }
         }
-        // If we traversed from parent direction, above method cannot link parent-child.
-        else if (traversalNode is { Direction: VisualContextTraverseDirections.Parent })
-        {
-            foreach (var childXmlElement in visitedElements.Values
-                         .AsValueEnumerable()
-                         .Where(e => e.Parent is null)
-                         .Where(e => string.Equals(e.ParentId, id, StringComparison.Ordinal)))
-            {
-                elementNode.Children.Add(childXmlElement);
-                childXmlElement.Parent = elementNode;
 
-                if (elementNode.IsSelfInformative)
-                {
-                    PropagateInformativeUpdate(childXmlElement, ref accumulatedTokenCount);
-                }
+        return;
+
+        void AttachChild(VisualElementNode parentNode, VisualElementNode childNode, ref int tokenCount)
+        {
+            if (!parentNode.Children.Add(childNode))
+            {
+                return;
+            }
+
+            childNode.Parent = parentNode;
+            if (childNode.IsSelfInformative || childNode.HasInformativeDescendants)
+            {
+                PropagateInformativeUpdate(parentNode, ref tokenCount);
             }
         }
     }
@@ -528,7 +557,7 @@ partial class VisualContextBuilder
         Debug.WriteLine($"[PropagateNode] {node}");
 #endif
 
-        var elementType = node.Element.Type;
+        var elementType = node.Type;
         switch (node.Direction)
         {
             case VisualContextTraverseDirections.Core:
@@ -550,10 +579,7 @@ partial class VisualContextBuilder
                             node,
                             1,
                             VisualContextTraverseDirections.Parent,
-                            node.Element.GetAncestors().GetEnumerator());
-
-                    // Get two enumerators together, prohibited to dispose one before the other, causing resource reallocation.
-                    var siblingAccessor = node.Element.SiblingAccessor;
+                            node.Element.CreateEnumerator(VisualElementRelation.Parent, new VisualElementEnumerationOptions(_queryRequest)));
 
                     if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.PreviousSibling))
                         TryEnqueueTraversalNode(
@@ -561,7 +587,7 @@ partial class VisualContextBuilder
                             node,
                             1,
                             VisualContextTraverseDirections.PreviousSibling,
-                            siblingAccessor.BackwardEnumerator);
+                            node.Element.CreateEnumerator(VisualElementRelation.PreviousSibling, new VisualElementEnumerationOptions(_queryRequest)));
 
                     if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.NextSibling))
                         TryEnqueueTraversalNode(
@@ -569,7 +595,7 @@ partial class VisualContextBuilder
                             node,
                             1,
                             VisualContextTraverseDirections.NextSibling,
-                            siblingAccessor.ForwardEnumerator);
+                            node.Element.CreateEnumerator(VisualElementRelation.NextSibling, new VisualElementEnumerationOptions(_queryRequest)));
                 }
 
                 if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.Child))
@@ -578,22 +604,19 @@ partial class VisualContextBuilder
                         node,
                         1,
                         VisualContextTraverseDirections.Child,
-                        node.Element.Children.GetEnumerator());
+                        node.Element.CreateEnumerator(VisualElementRelation.Child, new VisualElementEnumerationOptions(_queryRequest)));
                 break;
             }
             case VisualContextTraverseDirections.Parent when elementType != VisualElementType.TopLevel:
             {
+                node.Enumerator.Dispose();
                 if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.Parent))
-                    // In this case, node.Enumerator is the Ancestors enumerator
                     TryEnqueueTraversalNode(
                         priorityQueue,
                         node,
                         node.Distance.Step(),
                         VisualContextTraverseDirections.Parent,
-                        node.Enumerator);
-
-                // Get two enumerators together, prohibited to dispose one before the other, causing resource reallocation.
-                var siblingAccessor = node.Element.SiblingAccessor;
+                        node.Element.CreateEnumerator(VisualElementRelation.Parent, new VisualElementEnumerationOptions(_queryRequest)));
 
                 if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.PreviousSibling))
                     TryEnqueueTraversalNode(
@@ -601,7 +624,7 @@ partial class VisualContextBuilder
                         node,
                         node.Distance.Reset(),
                         VisualContextTraverseDirections.PreviousSibling,
-                        siblingAccessor.BackwardEnumerator);
+                        node.Element.CreateEnumerator(VisualElementRelation.PreviousSibling, new VisualElementEnumerationOptions(_queryRequest)));
 
                 if (allowedTraverseDirections.HasFlag(VisualContextTraverseDirections.NextSibling))
                     TryEnqueueTraversalNode(
@@ -609,7 +632,12 @@ partial class VisualContextBuilder
                         node,
                         node.Distance.Reset(),
                         VisualContextTraverseDirections.NextSibling,
-                        siblingAccessor.ForwardEnumerator);
+                        node.Element.CreateEnumerator(VisualElementRelation.NextSibling, new VisualElementEnumerationOptions(_queryRequest)));
+                break;
+            }
+            case VisualContextTraverseDirections.Parent:
+            {
+                node.Enumerator.Dispose();
                 break;
             }
             case VisualContextTraverseDirections.PreviousSibling:
@@ -630,7 +658,7 @@ partial class VisualContextBuilder
                         node,
                         node.Distance.Reset(),
                         VisualContextTraverseDirections.Child,
-                        node.Element.Children.GetEnumerator());
+                        node.Element.CreateEnumerator(VisualElementRelation.Child, new VisualElementEnumerationOptions(_queryRequest)));
                 break;
             }
             case VisualContextTraverseDirections.NextSibling:
@@ -651,7 +679,7 @@ partial class VisualContextBuilder
                         node,
                         node.Distance.Reset(),
                         VisualContextTraverseDirections.Child,
-                        node.Element.Children.GetEnumerator());
+                        node.Element.CreateEnumerator(VisualElementRelation.Child, new VisualElementEnumerationOptions(_queryRequest)));
                 break;
             }
             case VisualContextTraverseDirections.Child:
@@ -673,9 +701,49 @@ partial class VisualContextBuilder
                         node,
                         node.Distance.Reset(),
                         VisualContextTraverseDirections.Child,
-                        node.Element.Children.GetEnumerator());
+                        node.Element.CreateEnumerator(VisualElementRelation.Child, new VisualElementEnumerationOptions(_queryRequest)));
                 break;
             }
+        }
+    }
+
+    private sealed class CoreElementEnumerator(IReadOnlyList<VisualElement> elements, VisualElementQueryRequest queryRequest) : IVisualElementEnumerator
+    {
+        public VisualElementQueryResult Current => _current ?? throw new InvalidOperationException("The Enumerator has no current item.");
+
+        object IEnumerator.Current => Current;
+
+        public int Count => elements.Count;
+
+        public int Index { get; private set; } = -1;
+
+        public bool HasMore => Index + 1 < elements.Count;
+
+        private VisualElementQueryResult? _current;
+        private bool _isDisposed;
+
+        public bool MoveNext()
+        {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
+            var nextIndex = Index + 1;
+            if (nextIndex >= elements.Count)
+            {
+                Index = -1;
+                _current = null;
+                return false;
+            }
+
+            Index = nextIndex;
+            _current = elements[nextIndex].Query(queryRequest);
+            return true;
+        }
+
+        public void Reset() => throw new NotSupportedException("The core-element Enumerator cannot be reset.");
+
+        public void Dispose()
+        {
+            _isDisposed = true;
+            _current = null;
         }
     }
 }

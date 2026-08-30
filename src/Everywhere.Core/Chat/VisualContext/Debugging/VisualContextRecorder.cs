@@ -1,12 +1,12 @@
 #if DEBUG
 
-using Everywhere.Interop;
+using Everywhere.Automation;
 using ZLinq;
 
 namespace Everywhere.Chat;
 
 public class VisualContextRecorder(
-    IReadOnlyList<IVisualElement> coreElements,
+    IReadOnlyList<VisualElement> coreElements,
     int tokenLimit,
     string algorithmName)
 {
@@ -16,38 +16,30 @@ public class VisualContextRecorder(
     private int _stepCounter;
     private int _accumulatedTokenCount;
 
-    public void RegisterNode(IVisualElement element, float score)
+    public void RegisterNode(VisualElementQueryResult queryResult, float score)
     {
+        var element = queryResult.Element;
         if (!_knownIds.Add(element.Id)) return;
 
-        IList<string> childrenIds;
-        try 
-        {
-            childrenIds = element.Children.AsValueEnumerable().OfType<IVisualElement>().Take(100).Select(child => child.Id).ToArray();
-        }
-        catch 
-        {
-            childrenIds = [];
-        }
-
-        var rect = element.BoundingRectangle;
+        var snapshot = queryResult.Snapshot;
+        var rect = snapshot.Bounds.GetValueOrDefault();
         _allNodes.Add(new DebugVisualNode(
             score,
             element.Id,
-            element.Type.ToString(),
-            element.Name,
-            element.GetText(),
+            (snapshot.Type ?? VisualElementType.Unknown).ToString(),
+            snapshot.Name,
+            snapshot.TextPreview,
             [rect.X, rect.Y, rect.Width, rect.Height],
-            childrenIds,
+            [],
             coreElements.AsValueEnumerable().Any(c => c.Id == element.Id)
         ));
     }
 
-    public void RecordStep(IVisualElement node, string action, double score, string reason, int accumulatedTokenCount, int queueSize)
+    public void RecordStep(VisualElementQueryResult queryResult, string action, double score, string reason, int accumulatedTokenCount, int queueSize)
     {
         _steps.Add(new DebugTraversalStep(
             _stepCounter++,
-            node.Id,
+            queryResult.Element.Id,
             action,
             score,
             reason,

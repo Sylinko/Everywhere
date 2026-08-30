@@ -14,10 +14,18 @@ public abstract unsafe class ComReference : IDisposable
 
     private protected ComReference(nint pointer) => _pointer = pointer;
 
+    ~ComReference() => Release();
+
     /// <summary>
     /// Releases this instance's owned COM reference exactly once.
     /// </summary>
     public void Dispose()
+    {
+        Release();
+        GC.SuppressFinalize(this);
+    }
+
+    private void Release()
     {
         var pointer = Interlocked.Exchange(ref _pointer, 0);
         if (pointer != 0)

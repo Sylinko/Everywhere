@@ -1,31 +1,23 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
-using Everywhere.I18N;
-using Everywhere.Automation;
+using Avalonia.Input;
 using Everywhere.Automation.Testing;
+using Everywhere.I18N;
 using VisualContextLocaleKey = Everywhere.Automation.I18N.LocaleKey;
-using LegacyCapturedBitmapData = Everywhere.Interop.IVisualElement.ICapturedBitmapData;
-using LegacyKeyboardShortcut = Everywhere.Interop.KeyboardShortcut;
-using LegacyVisualElement = Everywhere.Interop.IVisualElement;
-using LegacyVisualElementSiblingAccessor = Everywhere.Interop.VisualElementSiblingAccessor;
-using LegacyVisualElementStates = Everywhere.Interop.VisualElementStates;
-using LegacyVisualElementType = Everywhere.Interop.VisualElementType;
 using LiveVisualContext = Everywhere.Automation.VisualContext;
 
-namespace Everywhere.Core.Tests.Chat.VisualContext.Testing;
+namespace Everywhere.Automation.Tests.Testing;
 
-internal sealed class ScenarioMockBackend : VisualContextRuntime
+internal sealed class ScenarioMockBackend : IDisposable
 {
     public LiveVisualContext Context { get; }
 
     public ScenarioMockOperations Operations { get; } = new();
 
-    public VisualContextPlatformOptions? LastPlatformOptions { get; private set; }
-
-    public ScenarioVisualElement RootElement => _roots.Count == 1
-        ? _roots[0]
-        : throw new InvalidOperationException($"Scenario '{_scenario.Name}' contains {_roots.Count} roots.");
+    public ScenarioVisualElement RootElement => _roots.Count == 1 ?
+        _roots[0] :
+        throw new InvalidOperationException($"Scenario '{_scenario.Name}' contains {_roots.Count} roots.");
 
     public IReadOnlyList<ScenarioVisualElement> RootElements => _roots;
 
@@ -38,6 +30,8 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
     private readonly GeneratedVisualScenario _scenario;
     private readonly IReadOnlyList<ScenarioVisualElement> _roots;
     private readonly Dictionary<string, ScenarioVisualElement> _elements = [];
+    private readonly VisualElementIdentityMap<string> _identityMap;
+    private readonly VisualElementRetention _retention;
     private readonly Dictionary<string, string> _textOverrides = [];
     private readonly Func<string, VisualElementQueryFailure?>? _failureProvider;
     private long _step;
@@ -46,9 +40,11 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
         GeneratedVisualScenario scenario,
         bool hasCount = true,
         VisualElementFields supportedFields = VisualElementFields.All,
-        Func<string, VisualElementQueryFailure?>? failureProvider = null) : base(VisualContextRuntimeOptions.Default)
+        Func<string, VisualElementQueryFailure?>? failureProvider = null)
     {
-        Context = new LiveVisualContext(this);
+        Context = new LiveVisualContext();
+        _identityMap = Context.GetIdentityMap<string>(StringComparer.Ordinal);
+        _retention = Context.CreateRetention();
         _scenario = scenario;
         HasKnownCount = hasCount;
         SupportedFields = supportedFields;
@@ -62,7 +58,8 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
         for (var i = 0; i < roots.Length; i++)
         {
             var rootIndex = i;
-            var root = new ScenarioVisualElement(this, null, -1, CreateRootId(i), () => _scenario.Roots[rootIndex]);
+            var rootId = CreateRootId(i);
+            var root = _identityMap.GetOrAdd(_retention, rootId, (Backend: this, RootIndex: rootIndex), static (id, state) => new ScenarioVisualElement(state.Backend, null, -1, id, () => state.Backend._scenario.Roots[state.RootIndex]));
             roots[i] = root;
             _elements.Add(root.Id, root);
             Operations.ElementCreated();
@@ -71,21 +68,7 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
         _roots = roots;
     }
 
-    public VisualContextRuntimeLease CreateLease() => new ScenarioMockRuntimeLease(
-        this,
-        new VisualContextScopeDescriptor(0, TimeSpan.MaxValue),
-        new VisualContextPlatformOptions(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
-
-    /// <inheritdoc />
-    protected override ValueTask<VisualContextRuntimeLease> CreateScopeLeaseAsync(
-        LiveVisualContext context,
-        VisualContextScopeDescriptor scopeDescriptor,
-        VisualContextPlatformOptions options)
-    {
-        scopeDescriptor.CancellationToken.ThrowIfCancellationRequested();
-        LastPlatformOptions = options;
-        return ValueTask.FromResult<VisualContextRuntimeLease>(new ScenarioMockRuntimeLease(this, scopeDescriptor, options));
-    }
+    public void Dispose() => Context.Dispose();
 
     public ScenarioVisualElement GetElement(params IReadOnlyList<int> path)
     {
@@ -120,7 +103,7 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
                 return existing;
             }
 
-            var element = new ScenarioVisualElement(this, parent, index, id, () => parent.Control.GetChild(index));
+            var element = _identityMap.GetOrAdd(_retention, id, (Backend: this, Parent: parent, Index: index), static (identity, state) => new ScenarioVisualElement(state.Backend, state.Parent, state.Index, identity, () => state.Parent.Control.GetChild(state.Index)));
             _elements.Add(id, element);
             Operations.ElementCreated();
             return element;
@@ -153,16 +136,16 @@ internal sealed class ScenarioMockBackend : VisualContextRuntime
 
     internal VisualElementQueryFailure? GetFailure(ScenarioVisualElement element) => _failureProvider?.Invoke(element.Id);
 
-    private string CreateRootId(int index) => _scenario.Roots.Count == 1
-        ? $"{_scenario.Name}:{_scenario.Seed}"
-        : $"{_scenario.Name}:{_scenario.Seed}/root/{index}";
+    private string CreateRootId(int index) =>
+        _scenario.Roots.Count == 1 ? $"{_scenario.Name}:{_scenario.Seed}" : $"{_scenario.Name}:{_scenario.Seed}/root/{index}";
+
 }
 
 internal sealed class ScenarioMockOperations
 {
-    public int RuntimeLeaseCreatedCount => Volatile.Read(ref _runtimeLeaseCreatedCount);
+    public int ScopeCreatedCount => Volatile.Read(ref _scopeCreatedCount);
 
-    public int RuntimeLeaseDisposedCount => Volatile.Read(ref _runtimeLeaseDisposedCount);
+    public int ScopeDisposedCount => Volatile.Read(ref _scopeDisposedCount);
 
     public int ScalarQueryCount => Volatile.Read(ref _scalarQueryCount);
 
@@ -178,8 +161,8 @@ internal sealed class ScenarioMockOperations
 
     public int ActionCount => Volatile.Read(ref _actionCount);
 
-    private int _runtimeLeaseCreatedCount;
-    private int _runtimeLeaseDisposedCount;
+    private int _scopeCreatedCount;
+    private int _scopeDisposedCount;
     private int _scalarQueryCount;
     private int _moveNextAttemptCount;
     private int _enumeratorCreatedCount;
@@ -188,9 +171,9 @@ internal sealed class ScenarioMockOperations
     private int _elementReleasedCount;
     private int _actionCount;
 
-    internal void RuntimeLeaseCreated() => Interlocked.Increment(ref _runtimeLeaseCreatedCount);
+    internal void ScopeCreated() => Interlocked.Increment(ref _scopeCreatedCount);
 
-    internal void RuntimeLeaseDisposed() => Interlocked.Increment(ref _runtimeLeaseDisposedCount);
+    internal void ScopeDisposed() => Interlocked.Increment(ref _scopeDisposedCount);
 
     internal void ScalarQuery() => Interlocked.Increment(ref _scalarQueryCount);
 
@@ -207,96 +190,50 @@ internal sealed class ScenarioMockOperations
     internal void ActionInvoked() => Interlocked.Increment(ref _actionCount);
 }
 
-internal sealed class ScenarioMockRuntimeLease : VisualContextRuntimeLease
+internal sealed class ScenarioMockQueryEnumerator(
+    ScenarioVisualElement origin,
+    VisualElementRelation relation,
+    VisualElementEnumerationOptions options
+) : IVisualElementEnumerator
 {
-    private readonly ScenarioMockBackend _backend;
+    /// <inheritdoc />
+    public VisualElementQueryResult Current => _current ?? throw new InvalidOperationException("The enumerator has no current item.");
+
+    object IEnumerator.Current => Current;
+
+    /// <inheritdoc />
+    public int Count => _navigator.Count;
+
+    /// <inheritdoc />
+    public int Index => _navigator.Index;
+
+    /// <inheritdoc />
+    public bool HasMore => _navigator.HasMore;
+
+    private readonly ScenarioRelationNavigator _navigator = new(origin, relation);
+    private readonly VisualElementQueryRequest _queryRequest = options.QueryRequest;
+    private VisualElementQueryResult? _current;
     private bool _isDisposed;
 
-    public ScenarioMockRuntimeLease(ScenarioMockBackend backend, VisualContextScopeDescriptor scopeDescriptor, VisualContextPlatformOptions platformOptions) : base(backend.Context, scopeDescriptor, platformOptions)
-    {
-        _backend = backend;
-        backend.Operations.RuntimeLeaseCreated();
-    }
-
     /// <inheritdoc />
-    public override ValueTask<VisualElementQueryResult?> QueryElementAsync(VisualElementLocator locator, VisualElementQueryRequest request) =>
-        ValueTask.FromResult(QueryElement(locator, request));
-
-    private VisualElementQueryResult? QueryElement(VisualElementLocator locator, VisualElementQueryRequest request)
+    public bool MoveNext()
     {
-        ThrowIfUnavailable();
-        var element = locator.Kind switch
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
+        if (!_navigator.MoveNext())
         {
-            VisualElementLocatorKind.Focused => _backend.RootElements[0],
-            VisualElementLocatorKind.Point => _backend.RootElements.FirstOrDefault(root => root.BoundingRectangle.Contains(locator.Point)),
-            VisualElementLocatorKind.NativeWindow => _backend.RootElements.FirstOrDefault(root => root.NativeWindowHandle == locator.NativeWindowHandle),
-            _ => throw new ArgumentOutOfRangeException(nameof(locator), locator, null),
-        };
-        return element is null ? null : QueryElement(element, request);
-    }
-
-    /// <inheritdoc />
-    public override ValueTask<VisualElementQueryResult> QueryElementAsync(VisualElement element, VisualElementQueryRequest request) =>
-        ValueTask.FromResult(QueryElement(element, request));
-
-    private VisualElementQueryResult QueryElement(VisualElement element, VisualElementQueryRequest request)
-    {
-        ThrowIfUnavailable();
-        var scenarioElement = GetElement(element);
-        _backend.Operations.ScalarQuery();
-
-        var providerFailure = _backend.GetFailure(scenarioElement);
-        if (providerFailure is not null)
-        {
-            return CreateFailure(scenarioElement, request.RequestedFields, providerFailure);
+            _current = null;
+            return false;
         }
 
-        if (!scenarioElement.TryGetControl(out var control))
-        {
-            return CreateFailure(
-                scenarioElement,
-                request.RequestedFields,
-                new VisualElementQueryFailure(
-                    VisualElementQueryFailureKind.ElementUnavailable,
-                    new DynamicLocaleKey(VisualContextLocaleKey.VisualContext_QueryFailure_ElementUnavailable)));
-        }
-
-        var fields = request.RequestedFields & _backend.SupportedFields;
-        var missingFields = request.RequestedFields & ~fields;
-        var text = HasField(fields, VisualElementFields.Text)
-            ? GetBoundedText(_backend.GetText(scenarioElement, control), request.MaxTextCharacters)
-            : null;
-        var snapshot = new VisualElementSnapshot(
-            HasField(fields, VisualElementFields.Id) ? scenarioElement.Id : null,
-            HasField(fields, VisualElementFields.Type) ? ScenarioVisualElement.MapType(control.Kind) : null,
-            HasField(fields, VisualElementFields.States) ? ScenarioVisualElement.MapStates(control.States) : null,
-            HasField(fields, VisualElementFields.Name) ? control.Name : null,
-            text,
-            HasField(fields, VisualElementFields.Bounds) ? scenarioElement.BoundingRectangle : null,
-            HasField(fields, VisualElementFields.ProcessId) ? scenarioElement.ProcessId : null,
-            HasField(fields, VisualElementFields.NativeWindowHandle) ? scenarioElement.NativeWindowHandle : null);
-
-        return new VisualElementQueryResult(
-            scenarioElement,
-            snapshot,
-            fields,
-            missingFields,
-            null);
+        _current = _navigator.Current.Query(_queryRequest);
+        return true;
     }
 
     /// <inheritdoc />
-    public override ValueTask<IVisualEnumerator<VisualElementQueryResult>> CreateEnumeratorAsync(
-        VisualElement origin,
-        VisualElementRelation relation,
-        VisualElementEnumerationOptions options)
-    {
-        ThrowIfUnavailable();
-
-        return ValueTask.FromResult<IVisualEnumerator<VisualElementQueryResult>>(new ScenarioMockQueryEnumerator(this, GetElement(origin), relation, options));
-    }
+    public void Reset() => throw new NotSupportedException("Visual relation enumerators cannot be reset.");
 
     /// <inheritdoc />
-    public override void Dispose()
+    public void Dispose()
     {
         if (_isDisposed)
         {
@@ -304,127 +241,7 @@ internal sealed class ScenarioMockRuntimeLease : VisualContextRuntimeLease
         }
 
         _isDisposed = true;
-        _backend.Operations.RuntimeLeaseDisposed();
-    }
-
-    internal ValueTask<VisualElementQueryResult> QueryCurrentAsync(ScenarioVisualElement element, VisualElementQueryRequest request) =>
-        QueryElementAsync(element, request);
-
-    internal void ThrowIfUnavailable()
-    {
-        ObjectDisposedException.ThrowIf(_isDisposed, this);
-        ScopeDescriptor.CancellationToken.ThrowIfCancellationRequested();
-    }
-
-    private ScenarioVisualElement GetElement(VisualElement element)
-    {
-        if (element is not ScenarioVisualElement scenarioElement || !ReferenceEquals(scenarioElement.Backend, _backend))
-        {
-            throw new ArgumentException("The element does not belong to this Runtime lease.", nameof(element));
-        }
-
-        return scenarioElement;
-    }
-
-    private static VisualElementQueryResult CreateFailure(
-        ScenarioVisualElement element,
-        VisualElementFields missingFields,
-        VisualElementQueryFailure failure) =>
-        new(
-            element,
-            new VisualElementSnapshot(null, null, null, null, null, null, null, null),
-            VisualElementFields.None,
-            missingFields,
-            failure);
-
-    private static string? GetBoundedText(string? text, int maxLength) =>
-        text is { Length: var length } && length > maxLength ? text[..maxLength] : text;
-
-    private static bool HasField(VisualElementFields fields, VisualElementFields field) => (fields & field) != 0;
-}
-
-internal sealed class ScenarioMockQueryEnumerator : IVisualEnumerator<VisualElementQueryResult>
-{
-    /// <inheritdoc />
-    public VisualElementQueryResult Current
-    {
-        get
-        {
-            _runtimeLease.ThrowIfUnavailable();
-            return _current ?? throw new InvalidOperationException("The enumerator has no current item.");
-        }
-    }
-
-    /// <inheritdoc />
-    public int Count
-    {
-        get
-        {
-            _runtimeLease.ThrowIfUnavailable();
-            return _navigator.Count;
-        }
-    }
-
-    /// <inheritdoc />
-    public int Index
-    {
-        get
-        {
-            _runtimeLease.ThrowIfUnavailable();
-            return _navigator.Index;
-        }
-    }
-
-    /// <inheritdoc />
-    public ValueTask<bool> HasMoreAsync()
-    {
-        _runtimeLease.ThrowIfUnavailable();
-        return ValueTask.FromResult(_navigator.HasMore);
-    }
-
-    private readonly ScenarioMockRuntimeLease _runtimeLease;
-    private readonly ScenarioRelationNavigator _navigator;
-    private readonly VisualElementQueryRequest _queryRequest;
-    private VisualElementQueryResult? _current;
-    private bool _isDisposed;
-
-    public ScenarioMockQueryEnumerator(
-        ScenarioMockRuntimeLease runtimeLease,
-        ScenarioVisualElement origin,
-        VisualElementRelation relation,
-        VisualElementEnumerationOptions options)
-    {
-        _runtimeLease = runtimeLease;
-        _navigator = new ScenarioRelationNavigator(origin, relation);
-        _queryRequest = options.QueryRequest;
-    }
-
-    /// <inheritdoc />
-    public async ValueTask<bool> MoveNextAsync()
-    {
-        ObjectDisposedException.ThrowIf(_isDisposed, this);
-        _runtimeLease.ThrowIfUnavailable();
-        if (!_navigator.MoveNext())
-        {
-            _current = null;
-            return false;
-        }
-
-        _current = await _runtimeLease.QueryCurrentAsync(_navigator.Current, _queryRequest);
-        return true;
-    }
-
-    /// <inheritdoc />
-    public ValueTask DisposeAsync()
-    {
-        if (_isDisposed)
-        {
-            return ValueTask.CompletedTask;
-        }
-
-        _isDisposed = true;
         _navigator.Dispose();
-        return ValueTask.CompletedTask;
     }
 }
 
@@ -436,13 +253,10 @@ internal sealed class ScenarioRelationNavigator : IEnumerator<ScenarioVisualElem
 
     object IEnumerator.Current => Current;
 
-    /// <inheritdoc />
     public int Count => _origin.Backend.HasKnownCount ? _initialCount : -1;
 
-    /// <inheritdoc />
     public int Index { get; private set; } = -1;
 
-    /// <inheritdoc />
     public bool HasMore
     {
         get
@@ -551,84 +365,147 @@ internal sealed class ScenarioRelationNavigator : IEnumerator<ScenarioVisualElem
     private int GetNextSiblingCount()
     {
         var parent = _origin.ParentElement;
-        return parent is not null && parent.TryGetControl(out var control)
-            ? Math.Max(0, control.ChildCount - _origin.SiblingIndex - 1)
-            : 0;
+        return parent is not null && parent.TryGetControl(out var control) ? Math.Max(0, control.ChildCount - _origin.SiblingIndex - 1) : 0;
     }
 
     private ScenarioVisualElement GetParent() =>
         _origin.ParentElement ?? throw new InvalidOperationException("The element has no parent.");
 }
 
-internal sealed class ScenarioVisualElement : VisualElement, LegacyVisualElement
+internal sealed class ScenarioVisualElement(
+    ScenarioMockBackend backend,
+    ScenarioVisualElement? parent,
+    int siblingIndex,
+    string id,
+    Func<VisualControl> controlResolver
+) : VisualElement(backend.Context, id)
 {
-    public LegacyVisualElement? Parent => ParentElement;
-
-    public LegacyVisualElementSiblingAccessor SiblingAccessor => new ScenarioSiblingAccessor(this);
-
-    public IEnumerable<LegacyVisualElement> Children => new ScenarioChildrenEnumerable(this);
-
-    public LegacyVisualElementType Type => MapLegacyType(Control.Kind);
-
-    public LegacyVisualElementStates States => MapLegacyStates(Control.States);
-
-    public string? Name => Control.Name;
-
-    public PixelRect BoundingRectangle => ParentElement is null
-        ? new PixelRect(0, 0, 1280, 720)
-        : new PixelRect(SiblingIndex * 8, GetDepth() * 24, 320, 20);
+    public PixelRect BoundingRectangle =>
+        ParentElement is null ? new PixelRect(0, 0, 1280, 720) : new PixelRect(SiblingIndex * 8, GetDepth() * 24, 320, 20);
 
     public int ProcessId => 10_001;
 
     public nint NativeWindowHandle => 1;
 
-    internal ScenarioMockBackend Backend { get; }
+    internal ScenarioMockBackend Backend { get; } = backend;
 
-    internal ScenarioVisualElement? ParentElement { get; }
+    internal ScenarioVisualElement? ParentElement { get; } = parent;
 
-    internal int SiblingIndex { get; }
+    internal int SiblingIndex { get; } = siblingIndex;
 
-    internal VisualControl Control => TryGetControl(out var control)
-        ? control
-        : throw new InvalidOperationException($"Element '{Id}' is no longer available.");
-
-    private readonly Func<VisualControl> _controlResolver;
-
-    public ScenarioVisualElement(
-        ScenarioMockBackend backend,
-        ScenarioVisualElement? parent,
-        int siblingIndex,
-        string id,
-        Func<VisualControl> controlResolver) : base(backend.Context, id)
-    {
-        Backend = backend;
-        ParentElement = parent;
-        SiblingIndex = siblingIndex;
-        _controlResolver = controlResolver;
-    }
-
-    public string? GetText(int maxLength = -1)
-    {
-        var text = Backend.GetText(this, Control);
-        return text is not null && maxLength >= 0 && text.Length > maxLength ? text[..maxLength] : text;
-    }
-
-    public string? GetSelectionText() => null;
-
-    public void Invoke() => Backend.Operations.ActionInvoked();
-
-    public void SetText(string text) => Backend.SetText(this, text);
-
-    public void SendShortcut(LegacyKeyboardShortcut shortcut) => Backend.Operations.ActionInvoked();
-
-    Task<LegacyCapturedBitmapData> LegacyVisualElement.CaptureAsync(CancellationToken cancellationToken) =>
-        Task.FromException<LegacyCapturedBitmapData>(
-            new NotSupportedException("The mock visual backend does not provide bitmap captures."));
+    internal VisualControl Control =>
+        TryGetControl(out var control) ? control : throw new InvalidOperationException($"Element '{Id}' is no longer available.");
 
     /// <inheritdoc />
-    protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) =>
-        Task.FromException<IVisualElementCapture>(
-            new NotSupportedException("The mock visual backend does not provide bitmap captures."));
+    protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => QueryDirect(request);
+
+    private VisualElementQueryResult QueryDirect(VisualElementQueryRequest request)
+    {
+        Backend.Operations.ScalarQuery();
+
+        var providerFailure = Backend.GetFailure(this);
+        if (providerFailure is not null)
+        {
+            return CreateFailure(request.RequestedFields, providerFailure);
+        }
+
+        if (!TryGetControl(out var control))
+        {
+            return CreateFailure(
+                    request.RequestedFields,
+                    new VisualElementQueryFailure(
+                        VisualElementQueryFailureKind.ElementUnavailable,
+                        new DynamicLocaleKey(VisualContextLocaleKey.VisualContext_QueryFailure_ElementUnavailable)));
+        }
+
+        var fields = request.RequestedFields & Backend.SupportedFields;
+        var missingFields = request.RequestedFields & ~fields;
+        var text = HasField(fields, VisualElementFields.Text) ? GetBoundedText(Backend.GetText(this, control), request.MaxTextCharacters) : null;
+        var snapshot = new VisualElementSnapshot(
+            HasField(fields, VisualElementFields.Id) ? Id : null,
+            HasField(fields, VisualElementFields.Type) ? MapType(control.Kind) : null,
+            HasField(fields, VisualElementFields.States) ? MapStates(control.States) : null,
+            HasField(fields, VisualElementFields.Name) ? control.Name : null,
+            text,
+            HasField(fields, VisualElementFields.Bounds) ? BoundingRectangle : null,
+            HasField(fields, VisualElementFields.ProcessId) ? ProcessId : null,
+            HasField(fields, VisualElementFields.NativeWindowHandle) ? NativeWindowHandle : null);
+
+        return new VisualElementQueryResult(this, snapshot, fields, missingFields, null);
+    }
+
+    /// <inheritdoc />
+    protected override IVisualElementEnumerator CreateEnumeratorCore(
+        VisualElementRelation relation,
+        VisualElementEnumerationOptions options)
+        => new ScenarioMockQueryEnumerator(this, relation, options);
+
+    /// <inheritdoc />
+    protected override void InvokeCore()
+    {
+        if (!TryGetControl(out _))
+        {
+            throw new InvalidOperationException($"Element '{Id}' is no longer available.");
+        }
+
+        // TODO: Add deterministic per-element invocation callbacks shared with the controlled TestApps; see 07-Migration section 4.17.
+        Backend.Operations.ActionInvoked();
+    }
+
+    /// <inheritdoc />
+    protected override void SetTextCore(string text)
+    {
+        if (!TryGetControl(out var control))
+        {
+            throw new InvalidOperationException($"Element '{Id}' is no longer available.");
+        }
+
+        if ((control.States & ScenarioControlStates.Disabled) != 0)
+        {
+            throw new InvalidOperationException($"Element '{Id}' is disabled and cannot accept text.");
+        }
+
+        if ((control.States & ScenarioControlStates.ReadOnly) != 0)
+        {
+            throw new InvalidOperationException($"Element '{Id}' is read-only and cannot accept text.");
+        }
+
+        if (control.Kind is not ScenarioControlKind.TextBox and not ScenarioControlKind.Document)
+        {
+            throw new NotSupportedException($"Element '{Id}' does not expose editable scalar text.");
+        }
+
+        Backend.SetText(this, text);
+    }
+
+    /// <inheritdoc />
+    protected override void FocusCore()
+    {
+        if (!TryGetControl(out _))
+        {
+            throw new InvalidOperationException($"Element '{Id}' is no longer available.");
+        }
+
+        Backend.Operations.ActionInvoked();
+    }
+
+    /// <inheritdoc />
+    protected override void SendKeyGestureCore(KeyGesture keyGesture)
+    {
+        if (keyGesture.Key == Key.None)
+        {
+            throw new NotSupportedException("A keyboard gesture must contain a key.");
+        }
+
+        Backend.Operations.ActionInvoked();
+    }
+
+    /// <inheritdoc />
+    protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromException<IVisualElementCapture>(new NotSupportedException("The mock visual backend does not provide bitmap captures."));
+    }
 
     /// <inheritdoc />
     protected override void ReleaseCore() => Backend.Operations.ElementReleased();
@@ -637,7 +514,7 @@ internal sealed class ScenarioVisualElement : VisualElement, LegacyVisualElement
     {
         try
         {
-            control = Backend.Resolve(_controlResolver());
+            control = Backend.Resolve(controlResolver());
             return true;
         }
         catch (ArgumentOutOfRangeException)
@@ -648,9 +525,6 @@ internal sealed class ScenarioVisualElement : VisualElement, LegacyVisualElement
     }
 
     internal static VisualElementStates MapStates(ScenarioControlStates states) => (VisualElementStates)(int)states;
-
-    internal static LegacyVisualElementStates MapLegacyStates(ScenarioControlStates states) =>
-        (LegacyVisualElementStates)(int)states;
 
     internal static VisualElementType MapType(ScenarioControlKind kind) => kind switch
     {
@@ -678,12 +552,16 @@ internal sealed class ScenarioVisualElement : VisualElement, LegacyVisualElement
         ScenarioControlKind.Separator => VisualElementType.Unknown,
         ScenarioControlKind.ToolBar => VisualElementType.ToolBar,
         ScenarioControlKind.StatusBar => VisualElementType.StatusBar,
-        ScenarioControlKind.Mutation => VisualElementType.Unknown,
         _ => VisualElementType.Unknown,
     };
 
-    internal static LegacyVisualElementType MapLegacyType(ScenarioControlKind kind) =>
-        (LegacyVisualElementType)(int)MapType(kind);
+    private VisualElementQueryResult CreateFailure(VisualElementFields missingFields, VisualElementQueryFailure failure) =>
+        new(this, new VisualElementSnapshot(null, null, null, null, null, null, null, null), VisualElementFields.None, missingFields, failure);
+
+    private static string? GetBoundedText(string? text, int maxLength) =>
+        text is { Length: var length } && length > maxLength ? text[..maxLength] : text;
+
+    private static bool HasField(VisualElementFields fields, VisualElementFields field) => (fields & field) != 0;
 
     private int GetDepth()
     {
@@ -697,39 +575,4 @@ internal sealed class ScenarioVisualElement : VisualElement, LegacyVisualElement
 
         return depth;
     }
-}
-
-internal sealed class ScenarioChildrenEnumerable(ScenarioVisualElement origin) : IEnumerable<LegacyVisualElement>
-{
-    public IEnumerator<LegacyVisualElement> GetEnumerator() =>
-        new ScenarioLegacyEnumerator(origin, VisualElementRelation.Child);
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-}
-
-internal sealed class ScenarioLegacyEnumerator : IEnumerator<LegacyVisualElement>
-{
-    public LegacyVisualElement Current => _navigator.Current;
-
-    object IEnumerator.Current => Current;
-
-    private readonly ScenarioRelationNavigator _navigator;
-
-    public ScenarioLegacyEnumerator(ScenarioVisualElement origin, VisualElementRelation relation) =>
-        _navigator = new ScenarioRelationNavigator(origin, relation);
-
-    public bool MoveNext() => _navigator.MoveNext();
-
-    public void Reset() => _navigator.Reset();
-
-    public void Dispose() => _navigator.Dispose();
-}
-
-internal sealed class ScenarioSiblingAccessor(ScenarioVisualElement origin) : LegacyVisualElementSiblingAccessor
-{
-    protected override IEnumerator<LegacyVisualElement> CreateForwardEnumerator() =>
-        new ScenarioLegacyEnumerator(origin, VisualElementRelation.NextSibling);
-
-    protected override IEnumerator<LegacyVisualElement> CreateBackwardEnumerator() =>
-        new ScenarioLegacyEnumerator(origin, VisualElementRelation.PreviousSibling);
 }

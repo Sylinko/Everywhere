@@ -21,10 +21,12 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## C# Style and Type Layout
 
 - Follow standard .NET naming conventions, including .NET capitalization of acronyms.
+- Keep APIs open for future extensibility: prefer `public` when no concrete ownership, lifetime, or safety boundary requires `internal` or `private` visibility.
 - Use `var` for all local variable declarations.
+- Give Boolean properties, fields, parameters, and local variables a clear semantic prefix such as `Is`, `Has`, `Can`, or `Should`; private fields retain the underscore prefix, for example `_isDisposed` and `_hasCount`. Preserve established framework or API contract names whose Boolean semantics are already unambiguous, such as `Dispose(bool disposing)`.
 - Prefer expression-bodied members (`=>`) for simple members.
 - Prefer guard clauses and early returns over unnecessary nesting.
-- Avoid unnecessary continuation wrapping within declarations, invocations, and expressions; wrap them when they exceed a readable line length. This does not apply to structural formatting: keep XML documentation tags and their text on separate lines, and use normal multiline formatting for property accessor blocks, method bodies, and other blocks. Do not mechanically reflow unrelated existing code solely to enforce this preference.
+- Keep declarations, invocations, and expressions on one line when reasonably readable. Break only genuinely long code, and do not mechanically reflow existing code solely to enforce this preference.
 - Within a type, normally order member categories as follows:
   1. properties;
   2. events;
@@ -48,6 +50,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## Comments and Documentation
 
 - Write all code comments and XML documentation comments in English.
+- Add necessary XML documentation to public APIs. Use `<inheritdoc />` for interface implementations and overrides when the inherited contract is sufficient.
 - Preserve useful existing comments during refactoring. Do not remove documentation merely because the surrounding implementation is being rewritten.
 - Document non-obvious lifetime rules, thread boundaries, state transitions, algorithms, and performance tradeoffs in enough detail for a future maintainer to understand why the design exists.
 - Write technical specifications in English under an appropriate subdirectory of `docs`.

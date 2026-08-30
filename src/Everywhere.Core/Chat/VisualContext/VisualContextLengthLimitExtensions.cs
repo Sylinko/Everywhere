@@ -1,6 +1,6 @@
 ﻿namespace Everywhere.Chat;
 
-public static class VisualContextLengthLimitExtension
+public static class VisualContextLengthLimitExtensions
 {
     public static int ToTokenLimit(this VisualContextLengthLimit limit)
     {

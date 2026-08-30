@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Controls.ApplicationLifetimes;
+using Everywhere.Automation;
 using Everywhere.Interop;
 using Microsoft.Extensions.Logging;
 using ZLinq;

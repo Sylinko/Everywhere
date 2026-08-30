@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Automation;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -59,7 +60,6 @@ public sealed partial class ChatContextManager :
             var switchVersion = Interlocked.Increment(ref _currentSwitchVersion);
             OnPropertyChanged();
 
-            previous?.VisualElements.IsActive = false;
             SwitchCurrentAsync(value.Id, previous, switchVersion).Detach(_logger.ToExceptionHandler());
         }
     }
@@ -151,7 +151,10 @@ public sealed partial class ChatContextManager :
     private bool _rawHistoryExhausted;
     private bool _isDisposed;
 
-    public ChatContextManager(Settings settings, IChatContextStorage chatContextStorage, ILogger<ChatContextManager> logger)
+    public ChatContextManager(
+        Settings settings,
+        IChatContextStorage chatContextStorage,
+        ILogger<ChatContextManager> logger)
     {
         _settings = settings;
         _chatContextStorage = chatContextStorage;
@@ -325,7 +328,6 @@ public sealed partial class ChatContextManager :
                 },
             },
         };
-
         _metadataMap[_current.Metadata.Id] = _current.Metadata;
         // After created, the chat context is not added to the storage yet.
         // It will be added when it's property has changed.
@@ -457,7 +459,6 @@ public sealed partial class ChatContextManager :
                 return;
             }
 
-            _current?.VisualElements.IsActive = false;
             if (next is null)
             {
                 _current = null;
@@ -469,7 +470,6 @@ public sealed partial class ChatContextManager :
                 NotifyCurrentChanged();
             }
 
-            _current.VisualElements.IsActive = true;
         });
     }
 
@@ -512,7 +512,6 @@ public sealed partial class ChatContextManager :
                 NotifyCurrentChanged();
             }
 
-            _current.VisualElements.IsActive = true;
 
             // Removing the previous context in the same collection-change pass can make Avalonia
             // observe an intermediate index map. Keep the established background-priority cleanup.

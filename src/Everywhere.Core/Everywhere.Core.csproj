@@ -80,6 +80,7 @@
     <ProjectReference Include="..\Everywhere.I18N.SourceGenerator\Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\Everywhere.Prompting\Everywhere.Prompting.csproj" />
     <ProjectReference Include="..\Everywhere.Terminal\Everywhere.Terminal.csproj"/>
+    <ProjectReference Include="..\Everywhere.Automation\Everywhere.Automation.csproj" />
 
   </ItemGroup>
 
