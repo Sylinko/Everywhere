@@ -1,0 +1,15 @@
+CUIAutomation8
+IUIAutomation2
+IUIAutomationElement
+IUIAutomationTreeWalker
+IUIAutomationCacheRequest
+IUIAutomationCondition
+IUIAutomationTextPattern
+IUIAutomationTextRange
+SafeArrayAccessData
+SafeArrayGetDim
+SafeArrayGetLBound
+SafeArrayGetUBound
+SafeArrayUnaccessData
+SysFreeString
+VariantClear
