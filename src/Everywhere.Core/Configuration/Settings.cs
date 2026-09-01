@@ -37,6 +37,8 @@ public sealed partial class Settings(IServiceProvider serviceProvider) : Setting
 
     public TextSelectionSettings TextSelection { get; } = new(serviceProvider);
 
+    public TextSelectionToolbarSettings TextSelectionToolbar { get; } = new(serviceProvider);
+
     public PluginSettings Plugin { get; } = new(serviceProvider);
 }
 

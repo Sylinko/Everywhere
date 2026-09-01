@@ -116,6 +116,7 @@ public static class Program
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<WindowsScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
+                .AddSingleton<IOverlayDismissWatcher, OverlayDismissWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
@@ -143,6 +144,7 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
                 .AddTransient<IAsyncInitializer, UpdaterInitializer>()
                 .AddTransient<IAsyncInitializer, ElevatedMainNotificationInitializer>()
 
