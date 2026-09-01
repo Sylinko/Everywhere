@@ -7,7 +7,7 @@ namespace Everywhere.StrategyEngine.BuiltIn;
 /// Strategy for file attachment contexts.
 /// Provides commands based on file types.
 /// </summary>
-public sealed class FileStrategyProvider : BuiltInStrategyProvider
+public sealed class FileStrategyProvider() : BuiltInStrategyProvider("file")
 {
     private static readonly string[] DocumentExtensions =
     [

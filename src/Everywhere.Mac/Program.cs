@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
@@ -162,6 +162,8 @@ public static class Program
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<MacScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
+                // TODO: implement over CGEventListener, as the text selection detector already does.
+                .AddSingleton<IOverlayDismissWatcher, UnsupportedOverlayDismissWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
@@ -184,6 +186,7 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
                 .AddTransient<IAsyncInitializer, SoftwareUpdaterInitializer>()
 
             #endregion
