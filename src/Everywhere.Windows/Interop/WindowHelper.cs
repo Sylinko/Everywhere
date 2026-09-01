@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
@@ -198,6 +198,57 @@ public sealed class WindowHelper : IWindowHelper
             if (PInvoke.GetForegroundWindow() != hWnd)
             {
                 ActivateFromUiThread(hWnd);
+            }
+        }
+    }
+
+    public bool BringToForeground(Window window)
+    {
+        if (window.TryGetPlatformHandle() is not { } handle)
+        {
+            window.Activate();
+            return false;
+        }
+
+        var hWnd = (HWND)handle.Handle;
+
+        // Windows only grants a foreground change to a process that already owns the foreground window or
+        // received the last activating input. A click on a WS_EX_NOACTIVATE overlay does not qualify, so
+        // SetForegroundWindow alone is silently ignored and the window would appear but stay unfocused.
+        // Briefly sharing an input queue with the current foreground thread makes the call succeed; this
+        // is the same AttachThreadInput approach already used to focus native elements.
+        var foregroundHwnd = PInvoke.GetForegroundWindow();
+        var foregroundThreadId = foregroundHwnd == HWND.Null
+            ? 0
+            : PInvoke.GetWindowThreadProcessId(foregroundHwnd, out _);
+        var currentThreadId = PInvoke.GetCurrentThreadId();
+        var attached = false;
+
+        try
+        {
+            if (foregroundThreadId != 0 && foregroundThreadId != currentThreadId)
+            {
+                attached = PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, true);
+            }
+
+            window.Activate();
+            PInvoke.SetForegroundWindow(hWnd);
+
+            // Establish the keyboard focus window explicitly. Taking the foreground does not reliably do
+            // this when the previous foreground window was a non-activating overlay of our own process:
+            // the thread ends up with a foreground window but no focus window, which leaves IME with
+            // nothing to attach its composition and candidate windows to, and leaves Avalonia without the
+            // activation it needs to route input to controls.
+            PInvoke.SetFocus(hWnd);
+
+            // SetForegroundWindow's return value is unreliable, so confirm against the actual state.
+            return PInvoke.GetForegroundWindow() == hWnd;
+        }
+        finally
+        {
+            if (attached)
+            {
+                PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, false);
             }
         }
     }
