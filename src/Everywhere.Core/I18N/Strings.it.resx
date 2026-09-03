@@ -2189,11 +2189,11 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>È consentito a “{0}” di eseguire?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Leggi Albero Visivo</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Interroga Contesto Visivo</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Leggi l'albero visivo di finestre o elementi sullo schermo.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Interroga un'area limitata attorno a un obiettivo visivo di tipo elemento o composito.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Registrati per ricevere crediti gratuiti e accedi a modelli di uso comune. Altre funzionalità come la sincronizzazione cloud sono in arrivo...</value>
@@ -2727,8 +2727,8 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>Trovati {0} finestre</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>Letti {0} elementi visivi</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>Restituiti {0} obiettivi visivi</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>Clicca su {0}</value>

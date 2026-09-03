@@ -4,11 +4,11 @@ using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
+using Everywhere.Automation;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
-using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Prompting.Documents;
 using Everywhere.Skills;
@@ -347,31 +347,45 @@ public sealed partial class ChatService : IChatService
         {
             chatContext.Add(analyzingContextMessage);
 
-            // Building the visual tree XML includes the following steps:
-            // 1. Gather required parameters, such as max tokens, detail level, etc.
-            // 2. Group the visual elements and build the XML in separate tasks.
-            // 3. Populate result into VisualElementAttachment.Xml
-
             var approximateTokenLimit = _persistentState.VisualContextLengthLimit.ToTokenLimit();
             var detailLevel = _persistentState.VisualContextDetailLevel;
+            var validAttachments = new List<VisualElementAttachment>(visualElementAttachments.Length);
+            var coreElements = new List<VisualElement>(visualElementAttachments.Length);
+            foreach (var attachment in visualElementAttachments)
+            {
+                if (!attachment.IsElementValid || attachment.Element is not { } element || attachment.InitialQuery is null) continue;
+                validAttachments.Add(attachment);
+                coreElements.Add(element);
+            }
+
+            if (coreElements.Count == 0) return;
 
             using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
                 ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
                 null;
 
             using var targetTurn = chatContext.VisualContext.BeginTurn();
-            using var traversalRetention = chatContext.VisualContext.CreateRetention();
-            var targetPublication = chatContext.VisualContext.BeginPublication();
-            var builtVisualElements = VisualContextBuilder.BuildAndPopulate(
-                visualElementAttachments,
-                traversalRetention,
-                targetPublication,
-                approximateTokenLimit,
-                detailLevel,
-                effectScope,
-                cancellationToken);
+            using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+                chatContext.VisualContext,
+                coreElements,
+                cancellationToken: cancellationToken);
+            var pendingNodes = new Stack<VisualContextSnapshotNode>();
+            for (var index = snapshot.Roots.Count - 1; index >= 0; index--) pendingNodes.Push(snapshot.Roots[index]);
+            while (pendingNodes.TryPop(out var node))
+            {
+                effectScope?.Add(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
+                for (var index = node.Children.Count - 1; index >= 0; index--) pendingNodes.Push(node.Children[index]);
+            }
 
-            targetPublication.Commit();
+            var prompt = VisualContextPromptBuilder.Build(
+                chatContext.VisualContext,
+                snapshot,
+                new VisualContextPromptOptions { TargetTokenBudget = approximateTokenLimit, DetailLevel = detailLevel },
+                cancellationToken);
+            var representedTargetCount = targetTurn.Count;
+            validAttachments[0].Content = prompt;
+            for (var index = 1; index < validAttachments.Count; index++) validAttachments[index].Content = null;
+
             targetTurn.Complete();
             effectScope?.Complete();
             _statisticsRecorder.RecordVisualContextAsync(
@@ -379,7 +393,7 @@ public sealed partial class ChatService : IChatService
                         _currentTurnEventId.Value,
                         chatContext.Metadata.Id,
                         StatisticsVisualContextSource.AutomaticAttachmentProcessing,
-                        ElementCount: builtVisualElements.Count),
+                        ElementCount: representedTargetCount),
                     CancellationToken.None)
                 .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 

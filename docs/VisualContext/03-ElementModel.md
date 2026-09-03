@@ -20,13 +20,14 @@ None of these types claims that the underlying application tree is immutable. Sn
 
 - the canonical element;
 - copied scalar facts;
+- an explicit `HasMoreText` fact when the provider or adapter observed content beyond the bounded preview;
 - `AvailableFields`;
 - `MissingFields`;
 - an optional normalized failure.
 
 `AvailableFields` and `MissingFields` are authoritative. A nullable property alone cannot distinguish an unavailable property, an unrequested property, and an observed `null` value.
 
-`MaxTextCharacters` bounds the preview returned upstream. It does not assert that every provider can bound the native payload. Common UIA providers often expose only Value, so Windows may perform one timeout-bounded complete Value read and truncate locally. Document-capable providers may use ranged text APIs. This is not a reason to reject Value or to fabricate an unsupported ranged operation.
+`MaxTextCharacters` bounds the preview returned upstream. It does not assert that every provider can bound the native payload. Common UIA providers often expose only Value, so Windows may perform one timeout-bounded complete Value read and truncate locally. Document-capable providers may use ranged text APIs. `HasMoreText` prevents Snapshot from guessing whether a preview whose length equals the limit is complete. This is not a reason to reject Value or to fabricate an unsupported ranged operation.
 
 Aggregate elapsed-time, operation, child, provider-failure, and output budgets belong to Snapshot traversal rather than being repeated in every query request. The platform timeout bounds each native RPC; Traverser bounds the series.
 
@@ -136,14 +137,21 @@ A known element with incomplete scalar data remains a skeleton node with status.
 
 ## 8. Agent-Facing Targets
 
-`VisualTarget` has two principal forms:
+`VisualTarget` has two principal forms. The implemented shape is intentionally direct rather than an extensible ownership framework:
 
 ```csharp
-public abstract record VisualTarget;
+public abstract class VisualTarget;
 
-public sealed record ElementTarget(VisualElement Element) : VisualTarget;
+public sealed class ElementTarget : VisualTarget
+{
+    public required VisualElement Element { get; init; }
+}
 
-public sealed record CompositeTarget(/* members and projection metadata */) : VisualTarget;
+public sealed class CompositeTarget : VisualTarget
+{
+    public required IReadOnlyList<CompositePart> Parts { get; init; }
+    public string? Preview { get; init; }
+}
 ```
 
 An `ElementTarget` retains the exact canonical element represented in the output. Its Agent-visible integer ID is a `VisualContext` publication ID, not UIA RuntimeId, HWND, object pointer, array position, traversal order, or native handle.
@@ -186,12 +194,12 @@ Status strings are intentionally not decomposed into many fragile fields. Stable
 
 ## 11. Target Publication
 
-Target IDs are published only after Plan and prompt admission determine which targets are actually visible or queryable. Publication is provisional until commit:
+Target IDs are published only after the merged prompt projection determines which targets are actually visible or queryable. Publication is provisional until commit:
 
 1. `BeginTurn` establishes the current Agent ownership boundary.
 2. `BeginPublication` captures the current monotonic ID and publication version.
 3. `Add` reuses an already retained target ID or assigns a provisional new one.
-4. Prompt construction may abandon the batch without consuming IDs.
+4. Prompt construction renders a bounded validation copy, abandons targets removed by its local budget without consuming IDs, and rebuilds monotonically until target survival is stable.
 5. `Commit` atomically adds every represented target to the active turn and advances the ID counter.
 
 IDs are monotonically allocated and never reused within a Context. A historical target lookup during an active turn promotes that target into the active turn before returning it. Evicting an old turn does not make its integer IDs available again.

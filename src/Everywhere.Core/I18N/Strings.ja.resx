@@ -2189,11 +2189,11 @@
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>「{0}」の実行を許可しますか？</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>視覚ツリーを取得</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>ビジュアルコンテキストを照会</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>画面上のウィンドウや要素の視覚ツリーを取得します。</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>要素または複合ビジュアルターゲットの周囲にある範囲を限定して照会します。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>登録すると無料ポイントがもらえ、すぐに使える主流モデルを手に入れられます。さらに、クラウド同期などの機能も続々登場中……</value>
@@ -2727,8 +2727,8 @@
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} 個のウィンドウを見つけました</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>{0} 個のビジュアル要素を読み込みました</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>{0} 個のビジュアルターゲットを返しました</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>{0} をクリック</value>

@@ -18,6 +18,7 @@ namespace Everywhere.Prompting.Documents;
 [Union(4, typeof(PromptElement))]
 [Union(5, typeof(PromptChunk))]
 [Union(6, typeof(PromptTokenLimit))]
+[Union(7, typeof(PromptCompactElement))]
 public abstract partial class PromptNode
 {
     /// <summary>
@@ -190,6 +191,7 @@ public sealed partial class PromptTextChunk : PromptNode
 [Union(2, typeof(PromptElement))]
 [Union(3, typeof(PromptChunk))]
 [Union(4, typeof(PromptTokenLimit))]
+[Union(5, typeof(PromptCompactElement))]
 public abstract partial class PromptContainer(List<PromptNode> children) : PromptNode, IReadOnlyList<PromptNode>
 {
     /// <summary>
@@ -441,4 +443,102 @@ public sealed partial class PromptChunk : PromptContainer
 
     [SerializationConstructor]
     private PromptChunk(List<PromptNode> children) : base(children) { }
+}
+
+/// <summary>
+/// Represents a model-visible compact XML-like element with compact attributes and valueless Boolean flags.
+/// </summary>
+/// <remarks>
+/// Compact elements deliberately use familiar HTML-style flags such as <c>focused</c> instead of XML
+/// attributes such as <c>focused="true"</c>. The result is model-facing markup rather than valid XML.
+/// Nonempty attribute values without whitespace, control characters, or markup delimiters omit quotes;
+/// all other attribute values remain quoted.
+/// Elements pass priority by default and remain structurally self-closing when no child survives pruning.
+/// </remarks>
+[MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
+public sealed partial class PromptCompactElement : PromptContainer
+{
+    /// <summary>
+    /// Gets the validated element name.
+    /// </summary>
+    [Key(3)]
+    public string Name { get; }
+
+    /// <summary>
+    /// Gets the ordered attributes emitted on this element.
+    /// </summary>
+    [Key(4)]
+    public PromptAttributeCollection Attributes { get; }
+
+    /// <summary>
+    /// Gets the ordered valueless flags emitted on this element.
+    /// </summary>
+    [Key(5)]
+    public PromptFlagCollection Flags { get; }
+
+    /// <summary>
+    /// Creates a compact XML-like prompt element.
+    /// </summary>
+    public PromptCompactElement(string name, params ReadOnlySpan<PromptNode?> children)
+    {
+        PromptXmlName.Validate(name, nameof(name));
+
+        Name = name;
+        PassPriority = true;
+        foreach (var child in children)
+        {
+            if (child is not null) Children.Add(child);
+        }
+
+        Attributes = [];
+        Flags = [];
+    }
+
+    [SerializationConstructor]
+    private PromptCompactElement(List<PromptNode> children, string name, PromptAttributeCollection attributes, PromptFlagCollection flags) : base(
+        children)
+    {
+        Name = name;
+        Attributes = attributes;
+        Flags = flags;
+    }
+
+    /// <summary>
+    /// Adds or replaces an attribute after converting its value with invariant culture.
+    /// </summary>
+    public PromptCompactElement Attribute(string name, object? value)
+    {
+        Attributes[name] = value;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds or replaces an attribute only when its value is not null.
+    /// </summary>
+    public PromptCompactElement AttributeNotNull(string name, object? value)
+    {
+        if (value is not null) Attributes[name] = value;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds or replaces an attribute only when its value is neither null nor an empty string.
+    /// </summary>
+    public PromptCompactElement AttributeNotNullOrEmpty(string name, object? value)
+    {
+        if (value is not null && value is not string { Length: 0 }) Attributes[name] = value;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds or removes a valueless Boolean flag.
+    /// </summary>
+    /// <param name="name">The compact markup flag name.</param>
+    /// <param name="isPresent">Whether the flag should be present.</param>
+    public PromptCompactElement Flag(string name, bool isPresent = true)
+    {
+        if (isPresent) Flags.Add(name);
+        else Flags.Remove(name);
+        return this;
+    }
 }

@@ -2189,11 +2189,11 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>¿Permitir que “{0}” se ejecute?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Leer Árbol Visual</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Consultar Contexto Visual</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Leer el árbol visual de ventanas o elementos en la pantalla.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Consulta una región acotada alrededor de un objetivo visual de tipo elemento o compuesto.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Regístrate para obtener créditos gratuitos y acceder a modelos populares listos para usar. Más funciones como sincronización en la nube estarán disponibles pronto...</value>
@@ -2727,8 +2727,8 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>Se encontraron {0} ventanas</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>Se han leído {0} elementos visuales</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>Se devolvieron {0} objetivos visuales</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>Hacer clic en {0}</value>

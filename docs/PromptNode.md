@@ -38,7 +38,7 @@ The declaration tree is mutable because C# collection expressions, object initia
 `PromptNode` is not:
 
 - a chat message or a role. `System`, `User`, `Assistant`, and `Tool` messages remain part of the chat model. A prompt node can be the result payload of a tool message, but it does not define the message role;
-- a general XML DOM. `PromptElement` emits lightweight XML-style structure for the model and validates element and attribute names, but there is no XML parser, namespace model, schema, or DOM manipulation API;
+- a general XML or markup DOM. `PromptElement` emits valid lightweight XML-style structure, while `PromptCompactElement` deliberately permits valueless flags and therefore is not valid XML. Neither type supplies parsing, namespaces, schemas, or DOM manipulation;
 - a file editor, diff model, or permission system. File operations and user consent remain in the file-system plugin and its handlers;
 - a tokenizer or a guarantee about a provider's exact token count. Rendering uses Everywhere's `TokenHelper` estimate to make pruning decisions;
 - a component runtime. Nodes do not have `render()` callbacks, dependency injection, asynchronous children, or component state;
@@ -49,9 +49,9 @@ The declaration tree is mutable because C# collection expressions, object initia
 
 The complete reusable prompt foundation lives in `src/Everywhere.Prompting`. Prompt document types use the `Everywhere.Prompting.Documents` namespace; shared token-budget and estimation utilities use `Everywhere.Prompting`.
 
-The assembly owns the serializable node hierarchy, `PromptElement`, prompt collections, `PromptRenderResult`, and the rendering and estimation behavior required by `PromptNode.ToString()` and `PromptDocument.Render(...)`. It references neither `Everywhere.Core` nor a feature assembly such as `Everywhere.VisualContext`.
+The assembly owns the serializable node hierarchy, `PromptElement`, `PromptCompactElement`, prompt collections, `PromptRenderResult`, and the rendering and estimation behavior required by `PromptNode.ToString()` and `PromptDocument.Render(...)`. It references neither `Everywhere.Core` nor a feature assembly such as `Everywhere.Automation`.
 
-Core owns chat history and provider integration, while feature assemblies own the domain content they place in a prompt tree. Both depend on `Everywhere.Prompting`. In particular, Visual Context builds its final model-facing result as `PromptNode` and may use native `PromptElement` structure for XML instead of constructing an XML string inside Core.
+Core owns chat history and provider integration, while feature assemblies own the domain content they place in a prompt tree. Both depend on `Everywhere.Prompting`. In particular, the visual-context projection builds its final model-facing result with `PromptCompactElement` nodes instead of constructing a markup string inside Core.
 
 Keep the foundation usable as one coherent lower-level subsystem. Do not move only the serializable DTO declarations while leaving their required renderer, token estimation, or document result behavior behind a higher-level assembly.
 
@@ -66,6 +66,7 @@ PromptNode
     ├── PromptGroup
     ├── PromptTokenLimit
     ├── PromptElement
+    ├── PromptCompactElement
     └── PromptChunk
 ```
 
@@ -244,6 +245,30 @@ Elements pass priority by default, so their children participate directly in the
 
 `PromptAttributeCollection` is a supporting type, not a `PromptNode`. It stores validated attribute names and invariant-culture string values for a `PromptElement`.
 
+### `PromptCompactElement`
+
+`PromptCompactElement` represents compact, model-facing XML-like markup. It retains quotes where value boundaries need them and adds ordered valueless flags for sparse Boolean facts:
+
+```csharp
+var target = new PromptCompactElement("TextEdit")
+    .Attribute("id", 7)
+    .Attribute("name", "with space text")
+    .Flag("focused")
+    .Flag("disabled");
+```
+
+Example output:
+
+```text
+<TextEdit id=7 name="with space text" focused disabled/>
+```
+
+The syntax is intentionally not valid XML because `focused` and `disabled` have no assigned values. A nonempty attribute value without whitespace, control characters, or markup delimiters omits quotes, as in `id=7`. Values containing `&`, `<`, `>`, `=`, quotes, apostrophes, backticks, or whitespace remain quoted and are escaped where necessary. Names and flags use the same validated name grammar as XML, insertion order is preserved, and an empty element is self-closing.
+
+Compact elements participate in the same priority pruning, local token limits, inclusion/omission tracking, and MessagePack polymorphic serialization as `PromptElement`. Use them only when a domain benefits from a deliberately compact model protocol. Do not use bare flags for arbitrary scalar values or status messages; those remain attributes or child content.
+
+`PromptFlagCollection` stores the ordered, deduplicated flags of a `PromptCompactElement`. `PromptAttributeCollection` supplies its compact attributes as well as the always-quoted attributes of `PromptElement`.
+
 ### `PromptChunk`
 
 `PromptChunk` is an atomic subtree. The renderer keeps or removes the complete subtree as one unit, without emitting any wrapper of its own.
@@ -349,7 +374,7 @@ IReadOnlyList<PromptTextChunk> shortened = rendered.TruncatedNodes;
 The renderer performs the following stages:
 
 1. Materialize the declaration tree into a disposable render tree.
-2. Escape text that is inside `PromptElement` nodes.
+2. Escape text that is inside `PromptElement` or `PromptCompactElement` nodes.
 3. Shorten `PromptTextChunk` values at their declared safe boundaries.
 4. Apply nested `PromptTokenLimit` scopes from the innermost scope outward.
 5. Apply the document-wide budget by removing lower-priority content first.
@@ -435,12 +460,13 @@ Here each file block is atomic, so the renderer never leaves a partial file sect
 2. Use ordinary strings or implicit `PromptText` for small, indivisible values.
 3. Use `PromptTextChunk` only when a safe truncation boundary is known.
 4. Put a `PromptTokenLimit` at a tool or subsystem boundary that must control its own output size.
-5. Use `PromptElement` for model-visible structure and attributes, not as a general-purpose XML document API.
-6. Use `PromptChunk` only when partial output would be invalid or misleading.
-7. Use `PromptGroup` for a priority scope, not for all-or-nothing behavior.
-8. Keep nodes structured until the provider boundary. Avoid interpolating a complete node into a string during construction.
-9. Render a `PromptDocument` explicitly when the caller needs a global budget or `PromptRenderResult` metadata.
-10. Do not add a new node type until it introduces a distinct rendering, pruning, or serialization rule.
+5. Use `PromptElement` for valid model-visible XML-style structure and attributes, not as a general-purpose XML document API.
+6. Use `PromptCompactElement` only for a documented compact protocol that benefits from sparse valueless flags.
+7. Use `PromptChunk` only when partial output would be invalid or misleading.
+8. Use `PromptGroup` for a priority scope, not for all-or-nothing behavior.
+9. Keep nodes structured until the provider boundary. Avoid interpolating a complete node into a string during construction.
+10. Render a `PromptDocument` explicitly when the caller needs a global budget or `PromptRenderResult` metadata.
+11. Do not add a new node type until it introduces a distinct rendering, pruning, or serialization rule.
 
 ## Relationship to VS Code `prompt-tsx`
 
@@ -451,7 +477,7 @@ The resemblance to VS Code's prompt system is deliberate but limited:
 | Construction | C# nodes, collection expressions, object initializers, fluent extensions | TypeScript/TSX prompt components |
 | Structure | Serializable data tree | Component tree that is resolved during rendering |
 | Text sizing | `PromptTextChunk`, `PromptTokenLimit`, and `Priority` | Renderer sizing primitives such as `PromptSizing` and component-level sizing behavior |
-| Model structure | `PromptElement` emits XML-style tags | Components such as message and prompt elements compose provider input |
+| Model structure | `PromptElement` emits XML-style tags; `PromptCompactElement` emits compact XML-like tags and bare flags | Components such as message and prompt elements compose provider input |
 | Persistence | Prompt nodes can be stored in chat history through MessagePack | Prompt components are generally assembled for a request |
 | Message roles | Owned by the surrounding chat model | Often represented by dedicated prompt/message components |
 | Runtime | No component lifecycle or async render callbacks | Components can implement render logic and receive render state |
@@ -466,7 +492,8 @@ The important lesson is the separation of a prompt declaration from its final re
 - `PromptTextChunk` defines safe shortening;
 - containers express scope and structure;
 - `PromptTokenLimit` controls local budgets;
-- `PromptElement` adds model-visible markup;
+- `PromptElement` adds valid XML-style markup;
+- `PromptCompactElement` adds compact XML-like markup with sparse flags;
 - `PromptChunk` preserves all-or-nothing subtrees;
 - `PromptDocument.Render(...)` applies a global budget and returns structured render information;
 - `ToString()` provides a convenient provider-facing representation without destroying the source tree.

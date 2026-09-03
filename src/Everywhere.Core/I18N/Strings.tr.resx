@@ -2189,11 +2189,11 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>“{0}”ın çalışmasına izin verilsin mi?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Görsel Ağaç Oku</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Görsel Bağlamı Sorgula</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Ekrandaki pencere veya öğenin görsel ağacını oku.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Bir öğe veya bileşik görsel hedefin çevresindeki sınırlı bir bölgeyi sorgular.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Kaydolduğunuzda ücretsiz puanlar kazanın, kullanıma hazır popüler modellere erişin. Bulut senkronizasyonu gibi özellikler de sürekli olarak ekleniyor...</value>
@@ -2727,8 +2727,8 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} pencere bulundu</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>{0} görsel öğe okundu</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>{0} görsel hedef döndürüldü</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>{0} üzerine tıkla</value>

@@ -2189,11 +2189,11 @@
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Разрешить «{0}» выполнять?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Получить Визуальное Дерево</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Запрос визуального контекста</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Считывает визуальное дерево окна или элемента на экране.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Запрашивает ограниченную область вокруг визуальной цели типа элемента или композиции.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Зарегистрируйтесь и получите бесплатные кредиты, чтобы использовать популярные модели. Функции, такие как облачная синхронизация, будут добавлены в дальнейшем...</value>
@@ -2727,8 +2727,8 @@
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>Найдено {0} окон</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>Прочитано {0} визуальных элементов</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>Возвращено визуальных целей: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>Нажать {0}</value>

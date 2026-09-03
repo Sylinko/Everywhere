@@ -7,7 +7,7 @@ using MessagePack;
 namespace Everywhere.Prompting.Documents;
 
 /// <summary>
-/// Stores validated XML attributes in insertion order using invariant string values.
+/// Stores validated prompt attributes in insertion order using invariant string values.
 /// </summary>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class PromptAttributeCollection : IEnumerable<KeyValuePair<string, string>>
@@ -35,6 +35,51 @@ public sealed partial class PromptAttributeCollection : IEnumerable<KeyValuePair
 
     /// <inheritdoc />
     public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => Items.GetEnumerator();
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+/// <summary>
+/// Contains ordered valueless flags emitted by a <see cref="PromptCompactElement" />.
+/// </summary>
+[MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
+public sealed partial class PromptFlagCollection : IEnumerable<string>
+{
+    [Key(0)]
+    private List<string> Items { get; set; } = [];
+
+    /// <summary>
+    /// Gets the number of flags.
+    /// </summary>
+    public int Count => Items.Count;
+
+    /// <summary>
+    /// Adds a flag when it is not already present.
+    /// </summary>
+    /// <param name="flag">The compact markup flag name.</param>
+    public void Add(string flag)
+    {
+        PromptXmlName.Validate(flag, nameof(flag));
+        if (!Items.Contains(flag, StringComparer.Ordinal)) Items.Add(flag);
+    }
+
+    /// <summary>
+    /// Removes a flag when it is present.
+    /// </summary>
+    /// <param name="flag">The compact markup flag name.</param>
+    /// <returns><see langword="true" /> when the flag was removed.</returns>
+    public bool Remove(string flag) => Items.Remove(flag);
+
+    /// <summary>
+    /// Determines whether the collection contains a flag.
+    /// </summary>
+    /// <param name="flag">The compact markup flag name.</param>
+    /// <returns><see langword="true" /> when the flag is present.</returns>
+    public bool Contains(string flag) => Items.Contains(flag, StringComparer.Ordinal);
+
+    /// <inheritdoc />
+    public IEnumerator<string> GetEnumerator() => Items.GetEnumerator();
 
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

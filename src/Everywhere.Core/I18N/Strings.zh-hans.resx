@@ -2190,11 +2190,11 @@
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>是否允许“{0}”执行？</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>读取视觉树</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>查询视觉上下文</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>读取屏幕上窗口或元素的视觉树。</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>查询元素或组合视觉目标周围的有界区域。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>注册即享免费积分，获得开箱即用的主流模型。更有云同步等功能持续上线中……</value>
@@ -2728,8 +2728,8 @@
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>找到 {0} 个窗口</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>读取了 {0} 个视觉元素</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>返回了 {0} 个视觉目标</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>点击 {0}</value>

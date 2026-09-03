@@ -207,7 +207,7 @@ public sealed class ToolInvocationEventEntity
     [MaxLength(255)]
     public string? PluginKey { get; init; }
 
-    /// <example>get_visual_tree</example>
+    /// <example>query_visual</example>
     [MaxLength(255)]
     public string? FunctionName { get; init; }
 

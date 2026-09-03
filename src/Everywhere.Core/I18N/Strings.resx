@@ -2189,11 +2189,11 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Do you allow '{0}' to execute?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Read Visual Tree</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Query Visual Context</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Read the visual tree of a window or element on screen.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Query a bounded region around an Element or Composite visual target.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Sign up for free credits and get access to popular models right out of the box. More features like cloud sync are coming soon...</value>
@@ -2727,8 +2727,8 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>Found {0} windows</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>Read {0} visual elements</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>Returned {0} visual targets</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>Click {0}</value>

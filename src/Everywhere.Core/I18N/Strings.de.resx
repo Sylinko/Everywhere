@@ -2189,11 +2189,11 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Darf „{0}“ ausgeführt werden?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Visuellen Baum Abrufen</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Visuellen Kontext abfragen</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Liest den visuellen Baum von Fenstern oder Elementen auf dem Bildschirm.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Fragt einen begrenzten Bereich um ein visuelles Element- oder Verbundziel ab.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Registrieren Sie sich für kostenlose Credits und erhalten Sie sofort einsatzbereite gängige Modelle. Weitere Funktionen wie Cloud-Synchronisierung werden kontinuierlich hinzugefügt...</value>
@@ -2727,8 +2727,8 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} Fenster gefunden</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>{0} visuelle Elemente gelesen</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>{0} visuelle Ziele zurückgegeben</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>{0} klicken</value>

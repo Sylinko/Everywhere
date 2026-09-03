@@ -2189,11 +2189,11 @@
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>是否允許「{0}」執行？</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>讀取視覺樹</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>查詢視覺上下文</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>讀取螢幕上窗口或元素的視覺樹。</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>查詢元素或複合視覺目標周圍的有限區域。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>註冊即享免費積分，獲得開箱即用的主流模型。更有雲同步等功能持續上線中……</value>
@@ -2727,8 +2727,8 @@
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>找到 {0} 個窗口</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>讀取了 {0} 個視覺元素</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>傳回了 {0} 個視覺目標</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>點擊 {0}</value>

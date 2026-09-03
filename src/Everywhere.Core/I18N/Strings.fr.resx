@@ -2189,11 +2189,11 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="ChatPluginConsentRequest_CommonNone_Header" xml:space="preserve">
         <value>Autoriser « {0} » à s'exécuter ?</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Header" xml:space="preserve">
-        <value>Lire l'Arbre Visuel</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Header" xml:space="preserve">
+        <value>Interroger le contexte visuel</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Description" xml:space="preserve">
-        <value>Lire l'arbre visuel des fenêtres ou éléments à l'écran.</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
+        <value>Interroge une région limitée autour d’une cible visuelle de type élément ou composite.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Inscrivez-vous pour des crédits gratuits et accédez à des modèles populaires prêts à l'emploi. D'autres fonctionnalités comme la synchronisation cloud sont en cours de déploiement...</value>
@@ -2727,8 +2727,8 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} fenêtres trouvées</value>
     </data>
-    <data name="BuiltInChatPlugin_VisualContext_GetVisualTree_Result" xml:space="preserve">
-        <value>{0} éléments visuels lus</value>
+    <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Result" xml:space="preserve">
+        <value>{0} cibles visuelles renvoyées</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click" xml:space="preserve">
         <value>Cliquer sur {0}</value>

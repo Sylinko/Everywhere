@@ -61,6 +61,7 @@ internal static class UIAutomationQueryExtensions
         var states = default(VisualElementStates?);
         var name = default(string);
         var text = default(string);
+        var hasMoreText = false;
         var bounds = default(PixelRect?);
         var processId = default(int?);
         var nativeWindowHandle = default(nint?);
@@ -147,11 +148,18 @@ internal static class UIAutomationQueryExtensions
                 text = cachedElement.GetCachedValue();
                 if (text is not null && text.Length > request.MaxTextCharacters)
                 {
+                    hasMoreText = true;
                     text = text[..request.MaxTextCharacters];
                 }
                 else if (text is null)
                 {
-                    text = cachedElement.GetCachedText(request.MaxTextCharacters);
+                    var probeLength = request.MaxTextCharacters == int.MaxValue ? int.MaxValue : request.MaxTextCharacters + 1;
+                    text = cachedElement.GetCachedText(probeLength);
+                    if (text is not null && text.Length > request.MaxTextCharacters)
+                    {
+                        hasMoreText = true;
+                        text = text[..request.MaxTextCharacters];
+                    }
                 }
 
                 if (text is not null)
@@ -176,7 +184,7 @@ internal static class UIAutomationQueryExtensions
             availableFields |= VisualElementFields.Id;
         }
 
-        var snapshot = new VisualElementSnapshot(elementId, type, states, name, text, bounds, processId, nativeWindowHandle);
+        var snapshot = new VisualElementSnapshot(elementId, type, states, name, text, hasMoreText, bounds, processId, nativeWindowHandle);
         return new VisualElementQueryResult(element, snapshot, availableFields, requestedFields & ~availableFields, failure);
     }
 

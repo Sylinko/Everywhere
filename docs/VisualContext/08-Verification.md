@@ -4,7 +4,7 @@
 
 Verification has four distinct evidence layers:
 
-1. **pure contract tests** for Context identity, ownership, turns, publication, planning, and PromptNode;
+1. **pure contract tests** for Context identity, ownership, turns, publication, prompt projection, and PromptNode;
 2. **deterministic Mock scenarios** for traversal, limits, mutation, failures, and exact attempts;
 3. **controlled real TestApps** for provider trees and native actions across WinForms, Avalonia, and CefSharp;
 4. **explicit native probes** for platform behavior that public documentation does not fully specify.
@@ -27,6 +27,8 @@ Verify:
 - no test preserves a deleted execution layer through a forwarding compatibility type.
 
 Platform timeout and traversal budget are tested separately. A single provider timeout must not be described as a complete Snapshot deadline. Snapshot must stop between calls when its aggregate budget is exhausted.
+
+The platform-neutral Snapshotter is verified from `Everywhere.Automation.Tests` against deterministic Mock providers. Core-level tests begin at input selection, merged PromptNode projection, target publication, and Agent integration rather than re-owning the traversal implementation.
 
 ## 3. Context, Retention, and Identity
 
@@ -271,6 +273,8 @@ Do not accept cross-backend Parent/Child/sibling tests until the topology checkp
 
 Verify:
 
+Current deterministic mock coverage verifies repeated Parent observations for two core siblings, bounded preview continuation facts, per-node child limits over a 100,000-item virtual collection, operation-limit partial results, and Enumerator disposal. The remaining bullets continue to define acceptance for production cutover.
+
 - Weighted BFS order, distances, weights, core priority, and deduplication remain characterized;
 - every loop iteration commits a node, advances an Enumerator, or closes a branch;
 - aggregate elapsed, operation, node, child, text, and provider-failure measures are monotonic;
@@ -287,23 +291,25 @@ Verify:
 - Snapshot disposal releases observed-but-unpublished elements;
 - published elements survive through current-turn ownership.
 
-## 13. Planning, Composite, and PromptNode
+## 13. Prompt Projection, Composite, and PromptNode
 
 Verify:
 
-- Plan performs no platform calls;
+- the merged builder performs no platform calls;
 - shared roots coalesce deterministically;
 - transparent containers preserve child order;
 - fragmented text can compress into Composite without losing independently interactive descendants;
-- Composite exposes multi-member semantics, bounded preview, member count, continuation, and status;
+- Composite exposes multi-member semantics, bounded preview, observed member count, continuation, and exceptional status;
 - Composite never aliases a source element ID or becomes actionable;
-- approximate estimator includes structure, escaping, attributes, and status;
+- the same Prompt renderer owns structural cost, escaping, attributes, status, and pruning evidence;
 - allocation is progressive and cannot be consumed entirely by one huge region before root fairness policy applies;
-- final result is native PromptNode/PromptElement structure rather than prebuilt XML text;
-- required attribute-only elements remain present as self-closing nodes without placeholder content;
-- rendering owns escaping and JSON/XML/TOON choice;
+- final result is native `PromptNode`/`PromptCompactElement` structure rather than prebuilt markup text;
+- required attribute-only compact elements remain present as self-closing nodes without placeholder content;
+- compact attributes and child text are escaped, only delimiter-free nonempty values omit quotes, and ordered sparse state flags remain valueless;
+- normal results omit `complete`, capabilities, implementation priority, and empty status;
+- `observedMembers` describes retained Composite parts rather than every live descendant;
 - omitted known visual information is status, while renderer omission remains Prompting metadata;
-- provisional publication commits only exact admitted targets;
+- validation rendering converges monotonically and publication commits only targets present in the final prompt;
 - construction failure consumes no ID.
 
 ## 14. VisualQuery
@@ -311,16 +317,19 @@ Verify:
 Verify:
 
 - tool description states bounded, incomplete, mutable-tree semantics;
-- Inspect, Expand, ReadContent, and Find enforce request/result limits;
+- one structural query handles Element and Composite targets without requiring the Agent to choose Inspect versus Expand;
+- every query enforces request/result limits;
 - Agent offsets are 1-based and `nextOffset` follows items actually returned;
 - relation/provider failure preserves partial items and does not report definitive exhaustion;
 - unavailable IDs fail without heuristic re-anchoring;
 - historical IDs promote into the active turn on successful lookup;
 - a new call is the only retry boundary;
 - Composite actions reject before platform code;
-- ReadContent distinguishes provider ranging from local slicing of a complete Value;
-- Find never claims exhaustive absence from an unbounded live tree;
+- continuation distinguishes provider ranging from local slicing of a complete Value;
+- any later search contract never claims exhaustive absence from an unbounded live tree;
 - output remains PromptNode before rendering.
+
+Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows CEF probe loads a real HTTP/HTTPS page, requires Chromium's UIA `Document` to appear, and saves the exact compact Agent projection for manual inspection.
 
 ## 15. Scenario Coverage and Acceptance
 

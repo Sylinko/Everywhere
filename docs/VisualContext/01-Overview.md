@@ -12,7 +12,7 @@ The original monolithic [Visual Context Refactoring Specification](Refactor.md) 
 2. **[Architecture](02-Architecture.md)** — platform Backend, conversation Context, ownership batches, Agent turns, and their lifetimes.
 3. **[Element and Target Model](03-ElementModel.md)** — `VisualElement`, bounded query results, Enumerators, Agent targets, Composites, status, identity, and publication.
 4. **[Platform Backend and Native Services](04-PlatformRuntime.md)** — root acquisition, native clients, platform timeouts, failure conversion, platform-internal graph composition, and input guards.
-5. **[Snapshot Pipeline](05-SnapshotPipeline.md)** — Snapshot, Plan, Build PromptNode, convergence, compression, budget allocation, and determinism.
+5. **[Snapshot Pipeline](05-SnapshotPipeline.md)** — Snapshot, merged PromptNode projection, convergence, compression, budget allocation, and determinism.
 6. **[VisualQuery](06-VisualQuery.md)** — the Agent-facing query contract, continuation, mutation semantics, and action routing.
 7. **[Migration](07-Migration.md)** — current-to-target mapping, staged cutover, and deletion criteria.
 8. **[Verification](08-Verification.md)** — acceptance requirements and links to the declarative test infrastructure.
@@ -49,7 +49,7 @@ VisualElement
 |- asynchronous pixel Snapshot only where the capture API requires it
 `- concrete platform behavior and native resource release
 
-Snapshot -> Plan -> Build PromptNode -> atomic target publication
+Snapshot -> Project PromptNode -> atomic target publication
 ```
 
 The decisive separation is:
@@ -94,7 +94,7 @@ The implementation pipeline has three phases:
 - A read is best effort. An overlay may reduce user-driven mutation, but it is not a tree lock, immutable snapshot, native transaction, or lifetime owner.
 - Continuation is Agent-directed. The implementation does not use fingerprints, similarity matching, hidden retry, or automatic re-anchoring to pretend a live tree is stable.
 - Token counts are approximate because model tokenizers differ. A projection-specific estimator guides Plan; exact character or serialized-byte fences remain valid transport protections.
-- The durable model-facing result is a `PromptNode`. XML uses native `PromptElement`; JSON, TOON, or another projection may use bounded text and grouping nodes. Syntax belongs to the Renderer rather than platform traversal.
+- The durable model-facing result is a `PromptNode`. The current visual projection uses `PromptCompactElement`, an intentionally XML-like but non-XML node with compact scalar attributes and sparse valueless flags. Safe delimiter-free values may omit quotes. Syntax belongs to the prompt builder and Renderer rather than platform traversal.
 - Future query-host process isolation is a separate containment boundary. Current process-local APIs do not introduce speculative handles or RPC-shaped abstractions.
 
 ## 7. Non-Goals
