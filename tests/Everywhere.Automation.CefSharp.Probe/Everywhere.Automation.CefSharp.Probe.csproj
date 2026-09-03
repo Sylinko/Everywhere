@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <CefSharpTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.CefSharp.TestApp\Everywhere.Automation.CefSharp.TestApp.csproj</CefSharpTestAppProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
+  </ItemGroup>
+
+  <Target Name="GenerateCefSharpTestAppPath" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="$(CefSharpTestAppProject)" Targets="Build" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained" />
+    <MSBuild Projects="$(CefSharpTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_CefSharpTestAppExecutablePath" />
+    </MSBuild>
+
+    <Error Condition="'@(_CefSharpTestAppExecutablePath)' == ''" Text="The CefSharp TestApp did not report an executable path." />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_CefSharpTestAppExecutablePath)')" Text="The CefSharp TestApp executable was not built: @(_CefSharpTestAppExecutablePath)" />
+
+    <PropertyGroup>
+      <GeneratedCefSharpTestAppPath>$(IntermediateOutputPath)CefSharpTestAppPath.g.cs</GeneratedCefSharpTestAppPath>
+      <_CefSharpTestAppExecutablePathValue>@(_CefSharpTestAppExecutablePath)</_CefSharpTestAppExecutablePathValue>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_CefSharpTestAppPathSource Remove="@(_CefSharpTestAppPathSource)" />
+      <_CefSharpTestAppPathSource Include="// &lt;auto-generated /&gt;" />
+      <_CefSharpTestAppPathSource Include="namespace Everywhere.Automation.CefSharp.Probe%3B" />
+      <_CefSharpTestAppPathSource Include="internal static class CefSharpTestAppPath" />
+      <_CefSharpTestAppPathSource Include="{" />
+      <_CefSharpTestAppPathSource Include="    public const string Executable = &quot;&quot;&quot;$(_CefSharpTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_CefSharpTestAppPathSource Include="}" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(GeneratedCefSharpTestAppPath)" Lines="@(_CefSharpTestAppPathSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedCefSharpTestAppPath)" Visible="false" />
+    </ItemGroup>
+  </Target>
+</Project>

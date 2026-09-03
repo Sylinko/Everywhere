@@ -21,6 +21,11 @@ public enum TestAppStatusKind
     Advanced,
 
     /// <summary>
+    /// A requested browser navigation completed and its accessibility surface can be inspected.
+    /// </summary>
+    Navigated,
+
+    /// <summary>
     /// The target UI thread entered the controlled unresponsive state.
     /// </summary>
     UiThreadSuspended,
@@ -57,6 +62,11 @@ public enum TestAppCommandKind
     ResumeUiThread,
 
     /// <summary>
+    /// Navigates a browser TestApp to the HTTP or HTTPS address carried by <see cref="TestAppCommand.Address" />.
+    /// </summary>
+    Navigate,
+
+    /// <summary>
     /// Requests an orderly target-process shutdown.
     /// </summary>
     Stop,
@@ -84,12 +94,13 @@ public sealed record TestAppStatus(
     int ProcessId,
     IReadOnlyList<TestAppRootStatus> Roots,
     IReadOnlyList<TestAppAnchorStatus> Anchors,
-    string? Error = null);
+    string? Error = null,
+    string? Address = null);
 
 /// <summary>
 /// Carries one controller request as a JSON line on standard input.
 /// </summary>
-public sealed record TestAppCommand(TestAppCommandKind Kind);
+public sealed record TestAppCommand(TestAppCommandKind Kind, string? Address = null);
 
 /// <summary>
 /// Serializes the revision protocol shared by all controlled TestApps and their process controller.
@@ -135,12 +146,20 @@ public sealed class TestAppProcessController : IAsyncDisposable
     /// <summary>
     /// Starts a TestApp and waits for its first ready status within the supplied timeout.
     /// </summary>
+    /// <param name="executablePath">The TestApp executable reported by its MSBuild project.</param>
+    /// <param name="scenario">The deterministic scenario name.</param>
+    /// <param name="seed">The deterministic scenario seed.</param>
+    /// <param name="startupTimeout">The maximum interval allowed for the initial ready status.</param>
+    /// <param name="cancellationToken">The caller cancellation token.</param>
+    /// <param name="additionalArguments">Optional provider-specific arguments appended after the common scenario arguments.</param>
+    /// <returns>The owned process controller and its initial ready status.</returns>
     public static async Task<(TestAppProcessController Controller, TestAppStatus ReadyStatus)> StartAsync(
         string executablePath,
         string scenario,
         long seed,
         TimeSpan startupTimeout,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        params IReadOnlyList<string> additionalArguments)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(startupTimeout, TimeSpan.Zero);
 
@@ -156,6 +175,10 @@ public sealed class TestAppProcessController : IAsyncDisposable
         startInfo.ArgumentList.Add(scenario);
         startInfo.ArgumentList.Add("--seed");
         startInfo.ArgumentList.Add(seed.ToString(CultureInfo.InvariantCulture));
+        foreach (var argument in additionalArguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
 
         var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException($"Failed to start TestApp '{executablePath}'.");
@@ -217,6 +240,24 @@ public sealed class TestAppProcessController : IAsyncDisposable
         if (status.Kind != TestAppStatusKind.UiThreadResumed)
         {
             throw new InvalidOperationException($"TestApp returned {status.Kind} while leaving the controlled unresponsive state: {status.Error}");
+        }
+
+        return status;
+    }
+
+    /// <summary>
+    /// Requests one browser navigation and waits until the target reports its new accessibility surface.
+    /// </summary>
+    /// <param name="address">The absolute HTTP or HTTPS address.</param>
+    /// <param name="cancellationToken">The caller cancellation token.</param>
+    /// <returns>The completed navigation status, including the final address after redirects.</returns>
+    public async Task<TestAppStatus> NavigateAsync(string address, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(new TestAppCommand(TestAppCommandKind.Navigate, address), cancellationToken).ConfigureAwait(false);
+        var status = await ReadStatusAsync(cancellationToken).ConfigureAwait(false);
+        if (status.Kind != TestAppStatusKind.Navigated)
+        {
+            throw new InvalidOperationException($"TestApp returned {status.Kind} while navigating to '{address}': {status.Error}");
         }
 
         return status;

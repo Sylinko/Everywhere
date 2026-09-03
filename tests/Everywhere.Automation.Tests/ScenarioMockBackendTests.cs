@@ -21,6 +21,7 @@ public sealed class ScenarioMockBackendTests
             Assert.That(result.Snapshot.Id, Is.EqualTo("test:42"));
             Assert.That(result.Snapshot.Type, Is.EqualTo(VisualElementType.Label));
             Assert.That(result.Snapshot.TextPreview, Is.EqualTo("01234"));
+            Assert.That(result.Snapshot.HasMoreText, Is.True);
             Assert.That(backend.Operations.ScalarQueryCount, Is.EqualTo(1));
         });
     }

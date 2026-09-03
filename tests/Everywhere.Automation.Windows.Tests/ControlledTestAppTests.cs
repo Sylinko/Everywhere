@@ -1,5 +1,6 @@
 using Avalonia;
 using Everywhere.Automation.TestApp;
+using Everywhere.Chat;
 using Everywhere.Windows.Automation;
 
 namespace Everywhere.Automation.Windows.Tests;
@@ -116,6 +117,52 @@ public sealed class ControlledTestAppTests
                 Assert.That(capture.Data, Is.Not.Zero);
                 Assert.That(capture.Size.Width, Is.GreaterThan(0));
                 Assert.That(capture.Size.Height, Is.GreaterThan(0));
+            });
+        }
+    }
+
+    [Test]
+    [Explicit("Launches CefSharp, accesses a real webpage, and saves the production VisualQuery projection for manual inspection.")]
+    [Platform("Win")]
+    [Category("ControlledTestApp")]
+    [Category("RealWebsiteProbe")]
+    public async Task QueryVisual_WhenCefSharpLoadsRealWebsite_SavesAgentProjection()
+    {
+        var executablePath = GetExecutablePath("cefsharp");
+        Assert.That(File.Exists(executablePath), Is.True, "Build the CefSharp TestApp before running this probe.");
+        var address = Environment.GetEnvironmentVariable("EVERYWHERE_CEF_PROBE_URL") ?? "https://example.com/";
+        Assert.That(Uri.TryCreate(address, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps), Is.True, "EVERYWHERE_CEF_PROBE_URL must be an absolute HTTP or HTTPS address.");
+        var (controller, ready) = await TestAppProcessController.StartAsync(executablePath, "chat", 42, TimeSpan.FromSeconds(45), default, "--url", address);
+        await using (controller)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(750));
+            using var visualElementBackend = new WindowsVisualElementBackend();
+            using var visualContext = new VisualContext();
+            using var acquisitionRetention = visualContext.CreateRetention();
+            var rootHandle = (nint)ready.Roots.Single().NativeHandle;
+            var root = visualElementBackend.Query(acquisitionRetention, VisualElementLocator.FromNativeWindow(rootHandle), VisualElementResolution.TopLevel) ?? throw new InvalidOperationException("The Windows reader did not resolve the CefSharp probe window.");
+            using var turn = visualContext.BeginTurn();
+            var prompt = new VisualQuery().Execute(
+                visualContext,
+                new ElementTarget { Element = root.Element },
+                new VisualQueryRequest { Directions = VisualContextTraverseDirections.Child, Limit = VisualQueryRequest.MaximumLimit },
+                VisualContextPromptOptions.Default with { TargetTokenBudget = 16_384 });
+            var rendered = prompt.ToString();
+            turn.Complete();
+
+            var configuredOutputPath = Environment.GetEnvironmentVariable("EVERYWHERE_CEF_PROBE_OUTPUT");
+            var outputPath = Path.GetFullPath(configuredOutputPath ?? Path.Combine(TestContext.CurrentContext.WorkDirectory, "artifacts", "cefsharp-real-web.visual-context.txt"));
+            var outputDirectory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(outputDirectory)) Directory.CreateDirectory(outputDirectory);
+            await File.WriteAllTextAsync(outputPath, rendered);
+            TestContext.Progress.WriteLine($"Saved CefSharp real-web VisualQuery projection to: {outputPath}");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(ready.Kind, Is.EqualTo(TestAppStatusKind.Ready));
+                Assert.That(rendered, Does.StartWith("<visual-context"));
+                Assert.That(rendered, Does.Contain("<Document"), "The real webpage did not expose Chromium's semantic document through UIA.");
+                Assert.That(new FileInfo(outputPath).Length, Is.GreaterThan(0));
             });
         }
     }

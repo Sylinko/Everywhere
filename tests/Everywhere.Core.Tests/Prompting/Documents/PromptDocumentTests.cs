@@ -98,6 +98,47 @@ public sealed class PromptDocumentTests
     }
 
     [Test]
+    public void CompactElement_WhenRendered_UsesCompactAttributesAndValuelessFlags()
+    {
+        var element = new PromptCompactElement("TextEdit", "x < y & z")
+            .Attribute("id", 7)
+            .Attribute("name", "with space & \"quoted\" text")
+            .Attribute("token", "alpha-beta")
+            .Attribute("code", "a&b")
+            .Attribute("equals", "a=b")
+            .Attribute("empty", string.Empty)
+            .Flag("focused")
+            .Flag("disabled")
+            .Flag("removed", false);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(element.ToString(), Is.EqualTo("<TextEdit id=7 name=\"with space &amp; &quot;quoted&quot; text\" token=alpha-beta code=\"a&amp;b\" equals=\"a=b\" empty=\"\" focused disabled>x &lt; y &amp; z</TextEdit>"));
+            Assert.That(element.Flags, Is.EqualTo(new[] { "focused", "disabled" }));
+            Assert.Throws<ArgumentException>(() => element.Flag("not valid"));
+        });
+    }
+
+    [Test]
+    public void CompactElement_WhenSerialized_RetainsFlagsAndSelfClosingStructure()
+    {
+        PromptNode source = new PromptCompactElement("Button")
+            .Attribute("id", 18)
+            .Flag("disabled")
+            .WithPriority(7);
+
+        var bytes = MessagePackSerializer.Serialize(source);
+        var restored = MessagePackSerializer.Deserialize<PromptNode>(bytes);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(restored, Is.TypeOf<PromptCompactElement>());
+            Assert.That(restored.Priority, Is.EqualTo(7));
+            Assert.That(restored.ToString(), Is.EqualTo("<Button id=18 disabled/>"));
+        });
+    }
+
+    [Test]
     public void EmptyElement_WhenRendered_UsesSelfClosingMarkup()
     {
         var element = new PromptElement("target")

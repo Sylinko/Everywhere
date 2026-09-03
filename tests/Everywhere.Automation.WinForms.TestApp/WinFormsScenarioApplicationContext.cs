@@ -433,6 +433,9 @@ internal sealed class WinFormsScenarioApplicationContext : ApplicationContext
                 _resumeUiThread.Wait();
                 Publish(TestAppStatusKind.UiThreadResumed);
                 break;
+            case TestAppCommandKind.Navigate:
+                Publish(TestAppStatusKind.Error, "Navigate is supported only by the CefSharp TestApp.");
+                break;
             case TestAppCommandKind.Stop:
                 foreach (var form in _forms)
                 {

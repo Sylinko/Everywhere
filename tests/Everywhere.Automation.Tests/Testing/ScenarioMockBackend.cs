@@ -420,13 +420,16 @@ internal sealed class ScenarioVisualElement(
 
         var fields = request.RequestedFields & Backend.SupportedFields;
         var missingFields = request.RequestedFields & ~fields;
-        var text = HasField(fields, VisualElementFields.Text) ? GetBoundedText(Backend.GetText(this, control), request.MaxTextCharacters) : null;
+        var completeText = HasField(fields, VisualElementFields.Text) ? Backend.GetText(this, control) : null;
+        var hasMoreText = completeText is { Length: var textLength } && textLength > request.MaxTextCharacters;
+        var text = GetBoundedText(completeText, request.MaxTextCharacters);
         var snapshot = new VisualElementSnapshot(
             HasField(fields, VisualElementFields.Id) ? Id : null,
             HasField(fields, VisualElementFields.Type) ? MapType(control.Kind) : null,
             HasField(fields, VisualElementFields.States) ? MapStates(control.States) : null,
             HasField(fields, VisualElementFields.Name) ? control.Name : null,
             text,
+            hasMoreText,
             HasField(fields, VisualElementFields.Bounds) ? BoundingRectangle : null,
             HasField(fields, VisualElementFields.ProcessId) ? ProcessId : null,
             HasField(fields, VisualElementFields.NativeWindowHandle) ? NativeWindowHandle : null);
@@ -556,7 +559,7 @@ internal sealed class ScenarioVisualElement(
     };
 
     private VisualElementQueryResult CreateFailure(VisualElementFields missingFields, VisualElementQueryFailure failure) =>
-        new(this, new VisualElementSnapshot(null, null, null, null, null, null, null, null), VisualElementFields.None, missingFields, failure);
+        new(this, new VisualElementSnapshot(null, null, null, null, null, false, null, null, null), VisualElementFields.None, missingFields, failure);
 
     private static string? GetBoundedText(string? text, int maxLength) =>
         text is { Length: var length } && length > maxLength ? text[..maxLength] : text;
