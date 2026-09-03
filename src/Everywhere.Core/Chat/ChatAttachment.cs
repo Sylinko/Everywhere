@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Common;
+using Everywhere.Prompting.Documents;
+using Everywhere.Serialization;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
 using MessagePack;
@@ -46,10 +48,11 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
     public override LucideIconKind Icon { get; }
 
     /// <summary>
-    /// The text representation of the visual element.
+    /// The structured model-facing representation of the visual element.
     /// </summary>
     [Key(2)]
-    public string? Content { get; set; }
+    [MessagePackFormatter(typeof(VisualContextPromptMessagePackFormatter))]
+    public PromptNode? Content { get; set; }
 
     /// <summary>
     /// Ignore this property during serialization because it should already be converted into prompts and shouldn't appear in history.

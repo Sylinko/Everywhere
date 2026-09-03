@@ -438,7 +438,7 @@ public static class ChatHistoryBuilder
                          {textSelection.Text}
                          </Text>
                          <AssociatedElement>
-                         {textSelection.Content ?? "omitted due to duplicate"}
+                         {textSelection.Content?.ToString() ?? "omitted due to duplicate"}
                          </AssociatedElement>
                          </Attachment>
                          """));
@@ -450,7 +450,7 @@ public static class ChatHistoryBuilder
                     new TextContent(
                         $"""
                          <Attachment type="visual-element">
-                         {visualElement.Content ?? "omitted due to duplicate"}
+                         {visualElement.Content?.ToString() ?? "omitted due to duplicate"}
                          </Attachment>
                          """));
                 break;

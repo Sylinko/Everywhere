@@ -1,34 +1,10 @@
 namespace Everywhere.Automation;
 
 /// <summary>
-/// Identifies operations that may be requested for an Agent-visible visual target.
-/// </summary>
-[Flags]
-public enum VisualTargetCapabilities
-{
-    None = 0,
-    Inspect = 1 << 0,
-    Navigate = 1 << 1,
-    Expand = 1 << 2,
-    ReadContent = 1 << 3,
-    Find = 1 << 4,
-    Invoke = 1 << 5,
-    SetText = 1 << 6,
-    SendKeyGesture = 1 << 7,
-    Capture = 1 << 8,
-    Focus = 1 << 9,
-}
-
-/// <summary>
 /// Represents one target that was exposed to the Agent by a visual-context projection.
 /// </summary>
 public abstract class VisualTarget
 {
-    /// <summary>
-    /// Gets the operations supported by this target.
-    /// </summary>
-    public required VisualTargetCapabilities Capabilities { get; init; }
-
     /// <summary>
     /// Gets bounded explanations for incomplete or degraded target state.
     /// </summary>
@@ -44,4 +20,49 @@ public sealed class ElementTarget : VisualTarget
     /// Gets the Context-owned platform element used by later queries and validated actions.
     /// </summary>
     public required VisualElement Element { get; init; }
+}
+
+/// <summary>
+/// Contains one ordered source member retained by a logical <see cref="CompositeTarget" />.
+/// </summary>
+public sealed record CompositePart
+{
+    /// <summary>
+    /// Gets the live source element used for later bounded inspection and target publication.
+    /// </summary>
+    public required VisualElement Element { get; init; }
+
+    /// <summary>
+    /// Gets the bounded scalar facts copied while the source Composite was projected.
+    /// </summary>
+    public required VisualElementSnapshot Snapshot { get; init; }
+
+    /// <summary>
+    /// Gets whether this source member originated from a caller-supplied core element.
+    /// </summary>
+    public bool IsCore { get; init; }
+
+    /// <summary>
+    /// Gets bounded explanations for incomplete or degraded source observation.
+    /// </summary>
+    public IReadOnlyList<string> Status { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one Agent-addressable logical projection over several ordered visual elements.
+/// </summary>
+/// <remarks>
+/// A Composite preserves queryability after structural compression but is not a platform element and cannot receive platform actions.
+/// </remarks>
+public sealed class CompositeTarget : VisualTarget
+{
+    /// <summary>
+    /// Gets the ordered bounded source members represented by this Composite.
+    /// </summary>
+    public required IReadOnlyList<CompositePart> Parts { get; init; }
+
+    /// <summary>
+    /// Gets the bounded preview exposed when the Composite was published.
+    /// </summary>
+    public string? Preview { get; init; }
 }

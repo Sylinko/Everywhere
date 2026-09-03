@@ -14,6 +14,7 @@ using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
 using Everywhere.Prompting;
+using Everywhere.Prompting.Documents;
 using Everywhere.Statistics;
 using Everywhere.Storage;
 using Everywhere.Views;
@@ -60,7 +61,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     ChatFunctionPermissions.ScreenRead));
             list.Add(
                 new BuiltInChatFunction(
-                    GetVisualTree,
+                    QueryVisual,
                     ChatFunctionPermissions.ScreenRead,
                     isExperimental: true));
             list.Add(
@@ -214,72 +215,67 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             blob.MimeType);
     }
 
-    [KernelFunction("get_visual_tree")]
+    [KernelFunction("query_visual")]
     [Description(
         """
-        Read the visual tree of a target element and its surroundings. This is the primary tool for perceiving on-screen UI content — use it like a 'read_file' but for visual elements.
-        Starting from the specified element, the algorithm expands outward in all allowed directions using a priority queue.
-        The traversal consumes a token budget; when exhausted, remaining branches are marked as omitted. 
-        Containers are collapsed, their children are promoted to the parent level. 
+        Read a bounded, best-effort region of the live visual tree. Use this like read_file for on-screen UI, then follow returned integer IDs with narrower queries.
+        The tree may be extremely large and can change between calls. A result can be incomplete; status reports known timeouts, provider failures, traversal limits, or prompt-budget omissions. Absence of status does not promise an exhaustive or immutable result, and this tool never retries automatically.
 
-        Target selection:
-        - id: An existing element id from the current visual tree. Use to expand 'omitted' regions, refresh stale content, or drill into a known element.
-        - hwnd: A window handle (hex string like "0x1A2B3C") obtained from list_windows or former visual tree.
+        A decimal target ID may identify either one platform Element or one logical Composite of fragmented elements. Query both with this same operation. A hexadecimal target such as 0x1A2B3C resolves a current native window. Unavailable IDs fail instead of being reconstructed.
 
-        Navigation direction: Defines the approximate area to read around the target element.
-        'parent' and 'child' are for hierarchical navigation, while 'previous' and 'next' are for siblings in the visual tree.
-        'all' will read everything available from the target element. 'none' will only read the target element itself.
-        Combine multiple directions with commas, e.g. "parent,child" or "siblings".
+        Directions may contain parent, child, previous, next, siblings, all, or none. The result uses compact XML-like markup but is not strict XML: target IDs and delimiter-free attributes can be unquoted, and states such as focused or disabled are bare flags.
+
+        Offset is 1-based and pages only the retained observed members of a Composite. Element targets support offset 1; query a returned child ID to continue into an Element tree. Limit bounds admitted nodes and is clamped to the tool maximum.
         """)]
     [DynamicLocaleKey(
-        LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Header,
-        LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Description)]
-    private string GetVisualTree(
+        LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Header,
+        LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Description)]
+    private PromptNode QueryVisual(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [Description("ElementId, or hwnd startswith 0x")] string target,
-        [Description("Available values: all, parent, child, previous, next, none")] string directions = "all",
+        [Description("A decimal Element or Composite ID returned by visual context, or a native window handle beginning with 0x")]
+        string target,
+        [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, or none")]
+        string directions = "all",
+        [Description("1-based retained-member offset for Composite targets; Element targets require 1")]
+        int offset = 1,
+        [Description("Maximum admitted nodes; values above 256 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
         CancellationToken cancellationToken = default)
     {
         using var targetTurn = chatContext.VisualContext.BeginTurn();
         using var traversalRetention = chatContext.VisualContext.CreateRetention();
-        var element = ResolveTargetElement(chatContext, traversalRetention, target);
-
-        // Parse direction string into flags
-        var traverseDirections = ParseTraverseDirections(directions);
-
-        // Use a generous token limit so the expanded result is not truncated again
-        var tokenLimit = VisualContextLengthLimit.Detailed.ToTokenLimit();
-        var detailLevel = _persistentState.VisualContextDetailLevel;
+        var visualTarget = ResolveVisualTarget(chatContext, traversalRetention, target);
+        var resolvedTargetCount = targetTurn.Count;
+        var request = new VisualQueryRequest { Directions = ParseTraverseDirections(directions), Offset = offset, Limit = limit };
+        var promptOptions = new VisualContextPromptOptions
+        {
+            TargetTokenBudget = VisualContextLengthLimit.Detailed.ToTokenLimit(),
+            DetailLevel = _persistentState.VisualContextDetailLevel,
+        };
         using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
             ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
             null;
-        var targetPublication = chatContext.VisualContext.BeginPublication();
-        var builder = new VisualContextBuilder(
-            [element],
-            traversalRetention,
-            targetPublication,
-            tokenLimit,
-            detailLevel,
-            traverseDirections,
-            effectScope: effectScope);
+        Action<VisualContextSnapshotNode>? onNodeObserved = effectScope is null ?
+            null :
+            node =>
+                effectScope.Add(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
+        var result = VisualQuery.Execute(chatContext.VisualContext, visualTarget, request, promptOptions, onNodeObserved, cancellationToken);
+        var isResolvedTargetRepresented = visualTarget is ElementTarget && request.Offset == 1;
+        var representedTargetCount = targetTurn.Count - (isResolvedTargetRepresented ? 0 : resolvedTargetCount);
 
-        var result = builder.Build(cancellationToken);
-
-        targetPublication.Commit();
         targetTurn.Complete();
         effectScope?.Complete();
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
-                LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Result,
-                new DirectLocaleKey(builder.BuiltVisualElements.Count)));
+                LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Result,
+                new DirectLocaleKey(representedTargetCount)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: builder.BuiltVisualElements.Count),
+                    ElementCount: representedTargetCount),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
@@ -406,9 +402,26 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     /// </summary>
     private VisualElement ResolveTargetElement(ChatContext chatContext, VisualElementRetention retention, string target)
     {
+        var visualTarget = ResolveVisualTarget(chatContext, retention, target);
+        if (visualTarget is ElementTarget elementTarget)
+        {
+            retention.Retain(elementTarget.Element);
+            return elementTarget.Element;
+        }
+
+        throw new HandledFunctionInvokingException(
+            HandledFunctionInvokingExceptionType.ArgumentError,
+            nameof(target),
+            new ArgumentException(
+                $"Visual target '{target}' is a Composite and cannot receive platform actions or capture. Use query_visual to inspect its members.",
+                nameof(target)));
+    }
+
+    private VisualTarget ResolveVisualTarget(ChatContext chatContext, VisualElementRetention retention, string target)
+    {
         if (target.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
-            return ResolveVisualElementByHwnd(retention, target);
+            return new ElementTarget { Element = ResolveVisualElementByHwnd(retention, target) };
         }
 
         if (!int.TryParse(target, out var elementId))
@@ -420,17 +433,17 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     $"Invalid target format: '{target}'. Expected either an elementId (integer) or a window handle (hex string like '0x1A2B3C')."));
         }
 
-        if (!chatContext.VisualContext.TryGetTarget(elementId, out var visualTarget) || visualTarget is not ElementTarget elementTarget)
+        if (!chatContext.VisualContext.TryGetTarget(elementId, out var visualTarget))
         {
             throw new HandledFunctionInvokingException(
                 HandledFunctionInvokingExceptionType.ArgumentError,
                 nameof(target),
                 new ArgumentException(
-                    $"Visual element with id '{elementId}' is not found or has been destroyed.",
+                    $"Visual target with id '{elementId}' is not found or has been released.",
                     nameof(target)));
         }
 
-        return elementTarget.Element;
+        return visualTarget;
     }
 
     /// <summary>
@@ -487,16 +500,16 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
     /// <summary>
     /// Parses a comma-separated direction string into <see cref="VisualContextTraverseDirections"/> flags.
-    /// Supports individual values (parent, child, previous, next) and combinations (parent,child).
     /// </summary>
     private static VisualContextTraverseDirections ParseTraverseDirections(string direction)
     {
         var parts = direction.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length == 0) return VisualContextTraverseDirections.All;
 
-        return parts.AsValueEnumerable().Aggregate(
-            VisualContextTraverseDirections.Core,
-            (current, part) => current | part.ToLowerInvariant() switch
+        var result = VisualContextTraverseDirections.Core;
+        foreach (var part in parts)
+        {
+            result |= part.ToLowerInvariant() switch
             {
                 "parent" => VisualContextTraverseDirections.Parent,
                 "child" or "children" => VisualContextTraverseDirections.Child,
@@ -504,8 +517,15 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 "next" => VisualContextTraverseDirections.NextSibling,
                 "sibling" or "siblings" => VisualContextTraverseDirections.PreviousSibling | VisualContextTraverseDirections.NextSibling,
                 "all" => VisualContextTraverseDirections.All,
-                _ => VisualContextTraverseDirections.Core // unknown tokens are ignored
-            });
+                "none" => VisualContextTraverseDirections.Core,
+                _ => throw new HandledFunctionInvokingException(
+                    HandledFunctionInvokingExceptionType.ArgumentError,
+                    nameof(direction),
+                    new ArgumentException($"Unknown visual traversal direction '{part}'.", nameof(direction)))
+            };
+        }
+
+        return result;
     }
 
     /// <summary>
