@@ -350,6 +350,9 @@ internal sealed class AvaloniaScenarioController
                 _resumeUiThread.Wait();
                 Publish(TestAppStatusKind.UiThreadResumed);
                 break;
+            case TestAppCommandKind.Navigate:
+                Publish(TestAppStatusKind.Error, "Navigate is supported only by the CefSharp TestApp.");
+                break;
             case TestAppCommandKind.Stop:
                 foreach (var window in _windows)
                 {

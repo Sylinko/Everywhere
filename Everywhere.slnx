@@ -89,6 +89,7 @@
   </Folder>
   <Folder Name="/tests/Automation/">
     <Project Path="tests/Everywhere.Automation.Avalonia.TestApp/Everywhere.Automation.Avalonia.TestApp.csproj" />
+    <Project Path="tests/Everywhere.Automation.CefSharp.Probe/Everywhere.Automation.CefSharp.Probe.csproj" />
     <Project Path="tests/Everywhere.Automation.CefSharp.TestApp/Everywhere.Automation.CefSharp.TestApp.csproj" />
     <Project Path="tests/Everywhere.Automation.TestApp.Shared/Everywhere.Automation.TestApp.Shared.csproj" />
     <Project Path="tests/Everywhere.Automation.Testing/Everywhere.Automation.Testing.csproj" />

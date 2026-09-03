@@ -41,6 +41,7 @@ The initial implementation is split by ownership:
 | `tests/Everywhere.Automation.WinForms.TestApp` | Native Windows Forms projection and virtual-mode grids |
 | `tests/Everywhere.Automation.Avalonia.TestApp` | Cross-platform Avalonia projection and indexed list source |
 | `tests/Everywhere.Automation.CefSharp.TestApp` | Local HTML/ARIA projection and C#-backed virtual DOM paging |
+| `tests/Everywhere.Automation.CefSharp.Probe` | Batch and Streamable HTTP MCP host for interactive, non-deterministic real-web retrieval journeys |
 | `tests/Everywhere.Automation.Windows.Tests` | Windows-only controlled-process and production UIA integration tests, with direct production references and MSBuild-generated TestApp launch paths |
 
 `CefSharp.WinForms.NETCore` is referenced only by its isolated Windows TestApp. It is not a transitive dependency of production Visual Context, the shared scenario model, or the other TestApps.
@@ -103,7 +104,7 @@ Scenario.Define("chat", context =>
 
 The names and constructors are not frozen by this document. The required property is that a scenario reads as a declarative UI definition rather than an accessibility-provider implementation.
 
-`VisualScenarioGenerator` supplies the seeded context and returns the root control or roots. It is not a compiler pipeline and does not create production `VisualContextSnapshot`, `VisualContextPlan`, or `VisualTarget` objects.
+`VisualScenarioGenerator` supplies the seeded context and returns the root control or roots. It is not a compiler pipeline and does not create production `VisualContextSnapshot`, `PromptNode`, or `VisualTarget` objects.
 
 ### 4.2 Common Control Set
 
@@ -172,7 +173,7 @@ Text observation has two independent boundaries. Provider liveness is protected 
 | macOS AX text | Prefer `AXStringForRange` when supported; otherwise read the ordinary Value attribute and truncate the returned preview locally. | `AXUIElementSetMessagingTimeout` protects one native message; Traverser separately bounds the call series. |
 | macOS AX array attributes | Use `AXUIElementCopyAttributeValues(index, maxValues)` for large array-valued attributes such as children. | Array paging is not a substitute for ranged text and applies only when the attribute value is an array. |
 
-Providers do not all expose ranged text. The platform adapter uses the ordinary Value capability for scalar text and may use ranged access when the element exposes document-style content. Tests distinguish provider-side ranging from local preview truncation for performance characterization, but both are valid query paths under the same native timeout and Snapshot aggregate bounds.
+Providers do not all expose ranged text. The platform adapter uses the ordinary Value capability for scalar text and may use ranged access when the element exposes document-style content. `VisualElementSnapshot.HasMoreText` records that the provider or adapter observed content beyond the bounded preview; Snapshot converts that fact into status without guessing from the returned string length. Tests distinguish provider-side ranging from local preview truncation for performance characterization, but both are valid query paths under the same native timeout and Snapshot aggregate bounds.
 
 ### 4.5 Lazy Collections
 
@@ -233,7 +234,7 @@ This coordination must be bounded. It must not add production-only test hooks to
 
 ### 6.1 Mock Backend
 
-The current Mock fixture uses Context-owned `Everywhere.Automation.VisualElement` subclasses with the same bounded element and Enumerator contracts as production platforms. It deliberately remains a fixture-scoped Context/Backend aggregate for simple scenario tests rather than pretending to be the process-singleton production `IVisualElementBackend`; Backend root-acquisition conformance can be split out when those tests are designed. Its former temporary `Everywhere.Interop.IVisualElement` surface has been removed; tests and the mechanically migrated production Builder now consume the canonical element model directly.
+The current Mock fixture uses Context-owned `Everywhere.Automation.VisualElement` subclasses with the same bounded element and Enumerator contracts as production platforms. It deliberately remains a fixture-scoped Context/Backend aggregate for simple scenario tests rather than pretending to be the process-singleton production `IVisualElementBackend`; Backend root-acquisition conformance can be split out when those tests are designed. Its former temporary `Everywhere.Interop.IVisualElement` surface has been removed; Snapshotter tests, prompt-projection tests, and the remaining legacy Builder tests consume the canonical element model directly.
 
 The Mock backend must support:
 
@@ -250,7 +251,7 @@ The Mock backend must support:
 
 Mock failure injection does not sleep to imitate a timeout. It returns or throws the configured semantic failure at the configured operation, allowing tests to assert exact attempts, partial results, status propagation, and later-query recovery deterministically.
 
-It must not call the real Capturer, Planner, PromptNode builder, or `VisualContext` publication logic to calculate expected results.
+It must not call the real Capturer, merged PromptNode builder, or `VisualContext` publication logic to calculate expected results.
 
 The shared Backend fixture verifies root acquisition into independent caller Contexts, fixed native timeout policy, and shared-resource disposal without retaining Contexts or Elements. Mock provider failures deliberately do not claim thread or process containment. Real UIA or AX processes remain required to characterize native timeout behavior, while only a future isolated query-host process can prove kill-and-restart containment for a call that ignores the platform boundary.
 
@@ -283,7 +284,7 @@ globalThis.everywhere = {
 
 The runtime maps declarative controls to HTML and ARIA and applies deterministic mutation steps. A virtual list sends a bounded `virtualPage` request through `CefSharp.PostMessage`; C# generates only that indexed page from the declarative scenario and calls `updateVirtualPage` to replace the realized DOM window. The TestApp reports ready only after the skeleton, JavaScript context, initial scenario, and accessibility prerequisites are established.
 
-All content is local and deterministic. The backend must not require internet access. CefSharp and its native assets remain test-only dependencies and do not flow into production projects.
+Normal scenario content is local and deterministic. The backend must not require internet access for required tests. CefSharp additionally supports an explicit `--url <http-or-https-address>` real-web probe; it is intentionally outside the `scenario + seed` reproducibility contract and never runs as a required offline test. CefSharp and its native assets remain test-only dependencies and do not flow into production projects.
 
 ## 7. TestApp Process Contract
 
@@ -304,9 +305,47 @@ The target reports:
 - unsupported scenario features;
 - fatal target-side errors.
 
-The controller owns only the process it launched and must terminate that exact process during cleanup. The declarative Mock exercises direct Backend root acquisition and receiver-centered element operations. The explicit Windows tier directly references the production Windows project, resolves a WinForms root HWND through `WindowsVisualElementBackend.Query`, verifies Direct, TopLevel, and Screen resolution, reads bounded scalar properties through the production UIA CacheRequest path, and lazily advances one child through the production Enumerator. Its build-only TestApp project references report their launch artifacts through MSBuild, which generates strongly named paths in the test project's intermediate output. Test code must not reconstruct `bin`, Configuration, target-framework, or runtime-identifier paths. Avalonia and CefSharp continue to exercise the target protocol until their production-reader assertions are added; macOS and Linux still require platform Backend implementations.
+The controller owns only the process it launched and must terminate that exact process during cleanup. The declarative Mock exercises direct Backend root acquisition and receiver-centered element operations. The explicit Windows tier directly references the production Windows project, resolves a WinForms root HWND through `WindowsVisualElementBackend.Query`, verifies Direct, TopLevel, and Screen resolution, reads bounded scalar properties through the production UIA CacheRequest path, and lazily advances one child through the production Enumerator. Its build-only TestApp project references report their launch artifacts through MSBuild, which generates strongly named paths in the test project's intermediate output. Test code must not reconstruct `bin`, Configuration, target-framework, or runtime-identifier paths. The explicit CEF real-web probe forces renderer accessibility, resolves the browser HWND through the production Backend, runs the canonical VisualQuery pipeline, requires a UIA Document, and writes the exact model-facing projection to `artifacts/cefsharp-real-web.visual-context.txt`; `EVERYWHERE_CEF_PROBE_URL` and `EVERYWHERE_CEF_PROBE_OUTPUT` override its default URL and output path. Avalonia continues to exercise the target protocol until its production-reader assertions are added; macOS and Linux still require platform Backend implementations.
 
-### 7.1 Programmatic Unresponsive State
+`Everywhere.Automation.CefSharp.Probe` is the exploratory host for non-deterministic web journeys. Batch mode keeps one CefSharp process, one production Windows Backend, and one `VisualContext` alive while navigating each supplied URL in order. Every completed navigation produces the exact compact Agent projection plus a JSON summary containing the requested/final address, separate navigation and observation durations, published target count, retained target count, and retained turn count. With no URL arguments it visits Example Domain, Wikipedia, and GitHub. Network results are evidence for manual review and regression discovery; they are not required deterministic assertions.
+
+```text
+dotnet run --project tests/Everywhere.Automation.CefSharp.Probe -- https://example.com https://www.wikipedia.org
+```
+
+### 7.1 Interactive Streamable HTTP MCP Probe
+
+The same executable can host a long-lived Streamable HTTP MCP endpoint for interactive Agent evaluation:
+
+```text
+dotnet run --project tests/Everywhere.Automation.CefSharp.Probe -- --mcp --listen http://127.0.0.1:5187
+```
+
+The MCP endpoint is `http://127.0.0.1:5187/mcp`. Registering this HTTP address in an MCP client such as Codex does not launch the executable. Start the Probe first and keep its terminal alive. A client may cache its tool registry for the lifetime of a task or connection, so adding the endpoint or starting it after a task has already begun may require reconnecting the MCP server, reloading the client, or opening a new task before the tools appear. Stopping the Probe invalidates the HTTP session and every retained visual target.
+
+The controlled browser, production Windows Backend, and `VisualContext` are created lazily by the first `navigate` or `query_visual` call. They then remain in one server-owned state until shutdown. The host is intentionally a single-Agent diagnostic fixture: all MCP clients connected to the same process share the browser, current address, target IDs, retained turns, artifact directory, and serialized operation queue. It does not provide per-client browser or `VisualContext` isolation.
+
+| Tool | Purpose and important parameters |
+| --- | --- |
+| `get_probe_status` | Reports whether the browser has started, its current address and native roots, retained target/turn counts, next ID, and artifact directory. It does not start the browser. |
+| `navigate` | Loads one absolute HTTP or HTTPS address in the existing controlled CefSharp process. `settleMilliseconds` may override the default accessibility propagation delay for a dynamic page. |
+| `query_visual` | Runs the production Snapshot and PromptNode pipeline. Start with target `root`; later calls may use a returned decimal Element or Composite ID. `directions` accepts `all`, `parent`, `child`, `previous`, `next`, `siblings`, or `none`; `offset` pages retained Composite members only; `limit` is clamped to 256; `targetTokenBudget` is an approximate renderer budget rather than a model-tokenizer guarantee. |
+
+A representative Agent journey is:
+
+1. Call `get_probe_status` to identify accidental state left by another client.
+2. Call `navigate` with the page under investigation.
+3. Call `query_visual(target: "root", directions: "child")` for a bounded first view.
+4. Follow returned IDs with narrower `query_visual` calls. Query a Composite with successive offsets; query an Element by its returned child IDs rather than increasing the Composite offset.
+5. Navigate again to compare another page in the same process and repeat from `root`.
+
+The live accessibility tree is mutable. A retained ID preserves its logical target identity while retained, but it does not freeze the native provider object or guarantee that the target remains available after page navigation or DOM replacement. After navigation, begin again from `root`; treat an old ID that reports unavailable or changed state the same way an Agent treats a stale file-search result. The current Probe intentionally exposes only retrieval tools. Invoke, text input, keyboard, pointer, and other Computer Use actions require their own Agent-facing semantics and are not smuggled into this diagnostic surface.
+
+Each successful query writes its exact model-facing projection to a numbered `*.visual-context.txt` file. Every operation appends bounded request/result metadata to `transcript.jsonl`; batch mode additionally writes `summary.json`. The default artifact directory is `artifacts/<timestamp>` beneath the built Probe executable, and `--output <directory>` selects an explicit location. Use `--limit`, `--budget`, `--settle-ms`, and `--timeout-ms` to change server defaults. Press Ctrl+C to stop the host; graceful shutdown disposes the shared `VisualContext`, Backend, controller, and exact CefSharp process tree.
+
+The default loopback binding has no authentication and must not be changed to a network-visible address without adding an explicit access-control boundary. Real-web output may contain page data and must not be published as a CI artifact without reviewing its content.
+
+### 7.2 Programmatic Unresponsive State
 
 The shared TestApp protocol provides a test-only API that can deliberately make a supported real target unresponsive and later restore it. The API controls provider behavior; it does not change the declarative scenario tree or add a production Visual Context hook. Its illustrative command shape is:
 
@@ -410,7 +449,7 @@ Mock tests may assert exact logical traversal and operation counts. Real-process
 - final retention release, Context turn eviction, and Context teardown release platform resources exactly once;
 - republishing the same retained target reuses its committed Agent ID;
 - committed Agent IDs are monotonic within one Context and are never silently reused or retargeted;
-- Plan and PromptNode construction do not perform platform reads;
+- merged PromptNode projection does not perform platform reads;
 - final model-facing output is a `PromptNode`, native XML uses `PromptElement`, and required status survives optional-content pruning;
 - Composite output preserves or summarizes status from failed source members;
 - equivalent stable observations produce deterministic logical output.
@@ -483,7 +522,7 @@ Temporary gaps that must be closed by later stages are tracked in the repository
 - Identical accessibility-tree shapes across platforms or toolkit versions.
 - Materializing the complete logical tree before a test starts.
 - Testing arbitrary third-party applications in required CI.
-- Replacing focused unit tests for isolated Planner, PromptNode builder, `VisualContext`, retention/turn, and Backend behavior.
+- Replacing focused unit tests for the merged PromptNode builder, `VisualContext`, retention/turn, and Backend behavior.
 
 ## 13. Initial Acceptance Criteria
 
