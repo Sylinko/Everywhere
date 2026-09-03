@@ -3929,6 +3929,29 @@
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>点击展开</value>
     </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
+        <value>划词工具栏</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
+        <value>在任意应用中选中文本时，显示悬浮操作工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+        <value>启用划词工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
+        <value>全局监听划词操作，并在选中的文本旁显示小工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
+        <value>最多显示操作数</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
+        <value>工具栏一次最多显示多少个操作按钮</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
+        <value>显示操作名称</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
+        <value>在每个图标旁显示名称。关闭后工具栏仅显示图标</value>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>
     </data>

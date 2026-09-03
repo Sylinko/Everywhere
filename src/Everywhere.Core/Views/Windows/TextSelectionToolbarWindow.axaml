@@ -1,0 +1,65 @@
+﻿<Window
+  x:Class="Everywhere.Views.TextSelectionToolbarWindow" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:se="clr-namespace:Everywhere.StrategyEngine"
+  xmlns:v="clr-namespace:Everywhere.Views" Title="Everywhere"
+  CanResize="False" ShowActivated="False"
+  ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+  Background="Transparent" Focusable="False"
+  Topmost="True" TransparencyLevelHint="Transparent"
+  WindowDecorations="None">
+  <!--
+    The toolbar deliberately does NOT set IsHitTestVisible="False", unlike VisualElementOverlayWindow:
+    its buttons must receive clicks. Non-activation is achieved through IWindowHelper.SetFocusable
+    in the code-behind instead, so clicking a button never deactivates the user's application.
+  -->
+  <Border
+    Name="ToolbarRoot" Padding="4"
+    Background="{DynamicResource PopupBackgroundColor}"
+    BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
+    BoxShadow="{DynamicResource Shadow}"
+    CornerRadius="{DynamicResource LgCornerRadius}">
+    <ItemsControl Name="ActionsItemsControl">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel
+            Orientation="Horizontal" Spacing="2"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="se:Strategy">
+          <Button
+            Classes="Ghost Compact Uniform" Padding="6,4"
+            Click="OnActionClick" Focusable="False">
+            <ToolTip.Tip>
+              <StackPanel MaxWidth="240">
+                <TextBlock
+                  FontWeight="SemiBold"
+                  Text="{Binding NameKey^, Mode=OneTime}"/>
+                <TextBlock
+                  Text="{Binding DescriptionKey^, Mode=OneTime, FallbackValue={x:Null}}"
+                  TextWrapping="Wrap"/>
+              </StackPanel>
+            </ToolTip.Tip>
+
+            <StackPanel
+              Orientation="Horizontal" Spacing="4">
+              <v:IconPresenter
+                Width="{DynamicResource FontSizeM}"
+                Height="{DynamicResource FontSizeM}"
+                VerticalAlignment="Center" Background="{x:Null}"
+                Icon="{Binding Icon, Mode=OneTime}"
+                IconSize="{DynamicResource FontSizeM}"/>
+
+              <TextBlock
+                MaxWidth="120"
+                IsVisible="{Binding $parent[v:TextSelectionToolbarWindow].ShowActionLabels}"
+                Text="{Binding NameKey^, Mode=OneTime}"
+                TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </Button>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </Border>
+</Window>

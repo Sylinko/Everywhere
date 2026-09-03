@@ -72,10 +72,11 @@ public partial class VisualElementContext(
         }
     }
 
+    public PixelPoint? PointerPosition => backend.GetPointer();
+
     public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
     {
-        var point = backend.GetPointer();
-        return ElementFromPoint(point, mode);
+        return ElementFromPoint(backend.GetPointer(), mode);
     }
 
     public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)

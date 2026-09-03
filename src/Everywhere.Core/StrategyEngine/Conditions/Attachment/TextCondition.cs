@@ -115,6 +115,15 @@ public sealed class TextCondition : IAttachmentCondition
         }
 
         // Check contains
-        return TextContains?.AsValueEnumerable().Any(s => text.Contains(s, StringComparison.OrdinalIgnoreCase)) is true;
+        if (TextContains is { Count: > 0 })
+        {
+            var hasMatch = TextContains.AsValueEnumerable().Any(s => text.Contains(s, StringComparison.OrdinalIgnoreCase));
+            if (!hasMatch)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

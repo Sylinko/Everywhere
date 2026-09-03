@@ -45,25 +45,25 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         }
     }
 
+    public PixelPoint? PointerPosition => Dispatcher.UIThread.Invoke<PixelPoint?>(() =>
+    {
+        // NSEvent.CurrentMouseLocation gives coordinates with the origin at the bottom-left of the primary screen.
+        var mouseLocation = NSEvent.CurrentMouseLocation;
+
+        // We need to find which screen the mouse is on to correctly convert coordinates.
+        var screen = NSScreen.Screens.AsValueEnumerable().FirstOrDefault(s => s.Frame.Contains(mouseLocation)) ?? NSScreen.MainScreen;
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (screen is null) return null;
+
+        // Convert to a top-left origin coordinate system.
+        var y = screen.Frame.Height - (mouseLocation.Y - screen.Frame.Y);
+        var x = mouseLocation.X - screen.Frame.X;
+        return new PixelPoint((int)x, (int)y);
+    });
+
     public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
     {
-        var point = Dispatcher.UIThread.Invoke<PixelPoint?>(() =>
-        {
-            // NSEvent.CurrentMouseLocation gives coordinates with the origin at the bottom-left of the primary screen.
-            var mouseLocation = NSEvent.CurrentMouseLocation;
-
-            // We need to find which screen the mouse is on to correctly convert coordinates.
-            var screen = NSScreen.Screens.AsValueEnumerable().FirstOrDefault(s => s.Frame.Contains(mouseLocation)) ?? NSScreen.MainScreen;
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (screen is null) return null;
-
-            // Convert to a top-left origin coordinate system.
-            var y = screen.Frame.Height - (mouseLocation.Y - screen.Frame.Y);
-            var x = mouseLocation.X - screen.Frame.X;
-            return new PixelPoint((int)x, (int)y);
-        });
-
-        return point is null ? null : ElementFromPoint(point.Value, mode);
+        return PointerPosition is { } point ? ElementFromPoint(point, mode) : null;
     }
 
     public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)

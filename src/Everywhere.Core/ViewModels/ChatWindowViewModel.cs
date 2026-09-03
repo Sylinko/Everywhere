@@ -844,6 +844,53 @@ public sealed partial class ChatWindowViewModel :
 
     #region Strategy Engine
 
+    /// <summary>
+    /// Opens the chat window on a text selection and immediately runs <paramref name="strategy"/> against it.
+    /// </summary>
+    /// <remarks>
+    /// This is the entry point for the text selection toolbar, which resolves the strategy itself and
+    /// then hands both over. It intentionally does not go through <see cref="ActivateChatSessionMessage"/>:
+    /// that path removes a primary <see cref="VisualElementAttachment"/> at index 0 when no target
+    /// element is supplied, which would discard the very <see cref="TextSelectionAttachment"/> being added.
+    /// </remarks>
+    public void RunStrategyOnTextSelection(TextSelectionData data, Strategy strategy)
+    {
+        if (data.Text.IsNullOrEmpty()) return;
+
+        // Before touching attachments: CancelEditing restores the attachment snapshot taken when editing
+        // started, which would discard the selection if it were inserted first. Without this, SendMessage
+        // would take its edit branch and replace the message being edited instead of sending a new one.
+        CancelEditing();
+
+        if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
+        {
+            ChatContextManager.CreateNewCommand.Execute(null);
+        }
+
+        _chatAttachmentsSource.Edit(list =>
+        {
+            list.RemoveWhere(a => a is TextSelectionAttachment);
+
+            // The passive observer simply gives up when the list is full, but this is an explicit user
+            // action, so make room instead of silently doing nothing. The selection is what the action
+            // operates on, so it outranks the oldest attachments.
+            var maxCount = PersistentState.MaxChatAttachmentCount;
+            while (list.Count >= maxCount && list.Count > 0)
+            {
+                list.RemoveAt(list.Count - 1);
+            }
+
+            list.Insert(0, new TextSelectionAttachment(data.Text, data.Element));
+        });
+
+        SelectedStrategy = strategy;
+
+        WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+
+        // SendMessage accepts an empty message when a strategy is selected; the strategy carries the prompt.
+        SendMessageCommand.Execute(string.Empty);
+    }
+
     private void HandleChatAttachmentsChanged(IReadOnlyCollection<ChatAttachment> attachments)
     {
         try

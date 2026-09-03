@@ -178,6 +178,14 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
             WindowManager.RequestUserAttention((X11Window)x11Handle);
     }
 
+    public bool BringToForeground(AvaloniaWindow window)
+    {
+        // X11 has no foreground lock; whether the request is honoured is up to the window manager, and
+        // there is no reliable way to confirm it synchronously.
+        window.Activate();
+        return true;
+    }
+
     public double SetCornerRadius(AvaloniaWindow window, double radius)
     {
         // TODO: X11 window shaping is intentionally not used here because it does not provide antialiasing.

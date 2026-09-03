@@ -206,6 +206,15 @@ public sealed class WindowHelper : IWindowHelper
         NSApplication.SharedApplication.RequestUserAttention(NSRequestUserAttentionType.InformationalRequest);
     }
 
+    public bool BringToForeground(Window window)
+    {
+        // macOS has no equivalent of the Windows foreground lock: activating the application and ordering
+        // the window front is enough.
+        NSApplication.SharedApplication.ActivateIgnoringOtherApps(true);
+        window.Activate();
+        return true;
+    }
+
     public double SetCornerRadius(Window window, double radius)
     {
         return WindowFrameModifier.Attach(window, radius);

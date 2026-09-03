@@ -3928,6 +3928,29 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>Click to expand</value>
     </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
+        <value>Selection Toolbar</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
+        <value>Show a floating action toolbar when you select text in any application</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+        <value>Enable Selection Toolbar</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
+        <value>Watch for text selections system-wide and show a small toolbar next to the selected text</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
+        <value>Maximum Actions</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
+        <value>How many action buttons the toolbar may show at once</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
+        <value>Show Action Labels</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
+        <value>Show the name next to each icon. When disabled, the toolbar shows icons only</value>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>
     </data>
