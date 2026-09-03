@@ -90,6 +90,45 @@ public sealed class VisualContextTests
     }
 
     [Test]
+    public void CompleteTurn_WhenCompositeIsPublished_RetainsEveryDistinctSourceMemberUntilTurnEviction()
+    {
+        using var context = new VisualContext();
+        using var acquisition = context.CreateRetention();
+        var identityMap = context.GetIdentityMap<TestIdentity>();
+        var first = identityMap.GetOrAdd(acquisition, new TestIdentity(1), context, static (_, owner) => new TestVisualElement(owner, "test:1"));
+        var second = identityMap.GetOrAdd(acquisition, new TestIdentity(2), context, static (_, owner) => new TestVisualElement(owner, "test:2"));
+        using (var turn = context.BeginTurn())
+        {
+            var batch = context.BeginPublication();
+            batch.Add(new CompositeTarget
+            {
+                Parts =
+                [
+                    new CompositePart { Element = first, Snapshot = default },
+                    new CompositePart { Element = second, Snapshot = default },
+                    new CompositePart { Element = first, Snapshot = default },
+                ],
+            });
+            batch.Commit();
+            turn.Complete();
+        }
+
+        acquisition.Dispose();
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.ReleaseCount, Is.Zero);
+            Assert.That(second.ReleaseCount, Is.Zero);
+        });
+
+        context.TrimRetainedTurns(0);
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.ReleaseCount, Is.EqualTo(1));
+            Assert.That(second.ReleaseCount, Is.EqualTo(1));
+        });
+    }
+
+    [Test]
     public void TrimRetainedTurns_WhenTurnsShareElements_ReleasesOnlyAfterLastOwningTurn()
     {
         using var backend = CreateBackend();
@@ -202,7 +241,6 @@ public sealed class VisualContextTests
     private static ElementTarget CreateTarget(VisualElement element, string status) => new()
     {
         Element = element,
-        Capabilities = VisualTargetCapabilities.Inspect,
         Status = [status],
     };
 

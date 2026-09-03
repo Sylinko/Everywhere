@@ -49,8 +49,23 @@ public sealed class TestAppProtocolTests
             Assert.That(roundTrip.Revision, Is.EqualTo(status.Revision));
             Assert.That(roundTrip.ProcessId, Is.EqualTo(status.ProcessId));
             Assert.That(roundTrip.Error, Is.EqualTo(status.Error));
+            Assert.That(roundTrip.Address, Is.EqualTo(status.Address));
             Assert.That(roundTrip.Roots, Is.EqualTo(status.Roots));
             Assert.That(roundTrip.Anchors, Is.EqualTo(status.Anchors));
+        });
+    }
+
+    [Test]
+    public void Serialize_WhenNavigateCommandRoundTrips_PreservesAddress()
+    {
+        var command = new TestAppCommand(TestAppCommandKind.Navigate, "https://example.com/next");
+
+        var roundTrip = TestAppProtocol.Deserialize<TestAppCommand>(TestAppProtocol.Serialize(command));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(roundTrip.Kind, Is.EqualTo(TestAppCommandKind.Navigate));
+            Assert.That(roundTrip.Address, Is.EqualTo(command.Address));
         });
     }
 
