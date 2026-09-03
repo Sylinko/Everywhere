@@ -270,6 +270,7 @@ public readonly record struct VisualElementEnumerationOptions(VisualElementQuery
 /// <param name="States">The observable element states when available.</param>
 /// <param name="Name">The accessibility name when available.</param>
 /// <param name="TextPreview">The bounded text preview when available.</param>
+/// <param name="HasMoreText">Whether the provider or adapter observed text beyond <paramref name="TextPreview" />.</param>
 /// <param name="Bounds">The screen-space bounds when available.</param>
 /// <param name="ProcessId">The owning process identifier when available.</param>
 /// <param name="NativeWindowHandle">The native top-level or control handle when available.</param>
@@ -279,6 +280,7 @@ public readonly record struct VisualElementSnapshot(
     VisualElementStates? States,
     string? Name,
     string? TextPreview,
+    bool HasMoreText,
     PixelRect? Bounds,
     int? ProcessId,
     nint? NativeWindowHandle

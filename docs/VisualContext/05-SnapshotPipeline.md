@@ -2,7 +2,7 @@
 
 ## 1. Pipeline Boundary
 
-The replacement pipeline contains three phases with two hard boundaries:
+The replacement pipeline contains two implementation phases with two hard boundaries:
 
 ```text
 live platform tree
@@ -11,30 +11,31 @@ live platform tree
     Snapshot ------- platform-access boundary
        |
        v
-     Plan ---------- pure in-memory observation projection
-       |
-       v
-Build PromptNode --- prompt structure and publication boundary
+Project PromptNode -- pure in-memory normalization, compression, prompt construction,
+       |              and publication validation
        |
        v
 PromptNode + atomic VisualContext target publication
 ```
 
-Snapshot safety is one boundary; PromptNode syntax and publication are the other. Visibility normalization, structural compression, Composite creation, and approximate admission remain one Plan phase between them.
+Snapshot safety is one boundary; PromptNode syntax and publication are the other. Projection still performs conceptual normalization, structural compression, Composite creation, and admission passes, but they are private implementation details of one `VisualContextPromptBuilder`. There is no public intermediate Plan tree whose schema can drift from the final PromptNode.
 
 ## 2. Phase 1: Snapshot
 
 ### 2.1 Responsibility
 
-An illustrative Snapshot contract is:
+Snapshot contracts, limits, traversal directions, and the implementation entry point are owned by `Everywhere.Automation`. This keeps the complete live-observation boundary beside `VisualContext`, `VisualElement`, query/enumerator contracts, retention, and the returned Snapshot model. Core selects inputs and policies but does not implement platform-neutral traversal.
+
+The implemented Snapshot entry point is:
 
 ```csharp
-public interface IVisualContextSnapshotter
+public sealed class VisualContextSnapshotter
 {
     VisualContextSnapshot CreateSnapshot(
         VisualContext context,
         IReadOnlyList<VisualElement> coreElements,
-        VisualContextSnapshotLimits limits,
+        VisualContextSnapshotLimits? limits = null,
+        VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
         CancellationToken cancellationToken = default);
 }
 ```
@@ -44,15 +45,17 @@ Snapshot:
 - is the only phase that reads live platform visual state, including accessibility providers and composed native topology;
 - traverses the platform's composed Element graph and does not assume that one root or relation chain uses one concrete backend;
 - creates one Snapshot `VisualElementRetention`, uses synchronous `VisualElement.Query` and `VisualElement.CreateEnumerator`, and transfers that ownership into the returned `VisualContextSnapshot`;
-- uses the explicit platform `VisualContext` root methods for acquisitions that have no Element receiver;
+- accepts already acquired core Elements; acquisitions without an Element receiver occur through `IVisualElementBackend.Query` before Snapshot traversal begins;
 - preserves the existing traversal order and records its metadata;
 - returns a bounded, partial observation forest;
 - records facts and status without choosing serialization syntax;
 - checks cancellation and aggregate risk between direct platform operations, retaining every admitted Element before any transient Enumerator owner is released.
 
-A backend transition is not a new Snapshot root or a new risk domain by itself. A Screen-to-UIA edge participates in the same traversal priority, deadline, operation accounting, identity deduplication, and status flow as any other relation. The identity map uses the Context-wide, backend-qualified Element identity. Element snapshot type and capabilities describe the logical Element; they are not inferred from a concrete CLR class name.
+A backend transition is not a new Snapshot root or a new risk domain by itself. A Screen-to-UIA edge participates in the same traversal priority, deadline, operation accounting, identity deduplication, and status flow as any other relation. The identity map uses the Context-wide, backend-qualified Element identity. Element snapshot type and observed fields describe the logical Element; they are not inferred from a concrete CLR class name.
 
 Snapshot does not collapse transparent containers, create Composites, allocate prompt budget, render text, or assign Agent integer IDs.
+
+`VisualContextSnapshotLimits` contains monotonic native-observation safety limits, including elapsed time, platform operations, node and child counts, text characters, and provider failures. Model-specific token estimation, output admission, Composite formation, and serialization limits belong to prompt projection rather than this Automation-layer contract.
 
 ### 2.2 Preserved Weighted Traversal
 
@@ -62,8 +65,8 @@ The implementation lifts the tuned algorithm rather than redesigning relevance:
 - existing direction weights remain unchanged;
 - `TraverseDistance.Reset()` and `TraverseDistance.Step()` remain unchanged;
 - current type weights remain unchanged unless separately reviewed;
-- visited Elements remain deduplicated within one Snapshot;
-- every currently supported direction remains available to `Inspect`;
+- visited Elements remain deduplicated within one Snapshot, while repeated relation observations may still establish a missing edge or advance their owning Enumerator;
+- every currently supported direction remains available to the structural query;
 - effective queue priority and a monotonic dequeue ordinal are stored on snapshot nodes.
 
 Plan reuses this order. It does not calculate a second global importance score that competes with Weighted BFS.
@@ -98,7 +101,7 @@ Snapshot handles an enormous text element as follows:
 1. query lightweight identity, type, state, and bounds before text;
 2. read the provider's ordinary scalar Value under the native timeout, or use a ranged API for document-style content when available;
 3. retain only a bounded preview;
-4. attach status and a bounded continuation capability when more content may exist;
+4. preserve `VisualElementSnapshot.HasMoreText`, attach status, and later expose a bounded continuation capability when more content may exist;
 5. avoid tokenizing or structurally expanding a complete Value when local slicing is sufficient;
 6. retain a skeleton when the provider call times out or otherwise fails.
 
@@ -130,23 +133,26 @@ Unknown Enumerator `Count = -1` is normal and does not force eager counting.
 - retain only bounded, content-free health diagnostics outside the snapshot result;
 - perform no automatic retry.
 
-## 3. Phase 2: Plan
+## 3. Phase 2: Project and Build PromptNode
 
-Plan is pure in-memory transformation:
+Prompt projection is a pure in-memory transformation. The implemented public boundary is deliberately one component:
 
 ```csharp
-public interface IContextPlanner
+public sealed class VisualContextPromptBuilder
 {
-    VisualContextPlan CreatePlan(
-        VisualContextSnapshot context,
-        VisualContextPlanningOptions options,
-        IContextCostEstimator estimator);
+    public PromptNode Build(
+        VisualContext context,
+        VisualContextSnapshot snapshot,
+        VisualContextPromptOptions? options = null,
+        CancellationToken cancellationToken = default);
 }
 ```
 
+The builder may use private projection nodes and bounded Composite candidates while normalizing the Snapshot. Those types are not a second public forest, not a persistence format, and not a contract that another builder must reinterpret.
+
 ### 3.1 Normalization Order
 
-Planner performs these operations in fixed order:
+The builder's planning pass performs these operations in fixed order:
 
 1. establish stable root and sibling ordering;
 2. coalesce snapshot entries resolving to the same native top-level root;
@@ -195,7 +201,7 @@ Measurable policy may use member count, estimated structural overhead, or conten
 - normalized logical order is preserved;
 - core Elements are never silently absorbed without an exposed anchor;
 - selected interactive descendants receive independent Element targets;
-- Composite itself has no action capabilities;
+- Composite is never an actionable platform Element;
 - previews are bounded and deterministic;
 - one oversized member splits into bounded units rather than blocking the Composite;
 - nesting is bounded;
@@ -206,12 +212,12 @@ Compression is therefore a queryable projection of a complex visual range, not m
 
 ### 3.5 Reusing Existing Weights
 
-Weighted BFS determines which observed node is more relevant. Planner adds cost, projection, and admission only:
+Weighted BFS determines which observed node is more relevant. The builder's planning pass adds projection and admission only:
 
 - traversal priority and ordinal order skeletons and exposed descendants;
-- the selected PromptNode builder supplies projection-specific approximate cost;
-- Planner admits bounded fragments;
-- Planner does not replace the tuned order with a global `priority / cost` formula.
+- the actual PromptNode schema and Prompt renderer supply projection-specific cost and pruning behavior;
+- the builder admits bounded fragments and validates their rendered survival;
+- the builder does not replace the tuned order with a global `priority / cost` formula.
 
 Progressive allocation is:
 
@@ -223,10 +229,10 @@ Progressive allocation is:
 
 ### 3.6 Approximate Budget
 
-`targetTokenBudget` is a planning target, not an exact cross-model guarantee:
+`targetTokenBudget` is a local projection target, not an exact cross-model guarantee:
 
-- the estimator is stable for one selected PromptNode projection;
-- estimates preserve useful relative costs;
+- the same Prompt renderer used by the final PromptNode validates structural cost and survival;
+- relevance order and bounded fragment sizes preserve useful relative admission behavior;
 - a safety margin may absorb common tokenizer differences;
 - final estimates may be recorded for telemetry;
 - no API claims exact compliance with every model tokenizer.
@@ -250,32 +256,13 @@ This design avoids catastrophic starvation in extreme cases while introducing no
 
 ### 3.8 Status and Expansion
 
-Planner preserves Snapshot status and may add bounded status for projection or prompt-budget limits. A non-platform omission remains visible even when no exception occurred.
+Prompt projection preserves Snapshot status and may add bounded status for projection or prompt-budget limits. A non-platform omission remains visible even when no exception occurred.
 
-Expandable missing content resolves through an Element or Composite target. Raw platform IDs never appear as pretend Agent IDs. Status tells the Agent that information may exist; target capability and continuation tell it how to request more.
+Expandable missing content resolves through an Element or Composite target. Raw platform IDs never appear as pretend Agent IDs. Status tells the Agent that information may exist; target kind and continuation tell it how to request more.
 
-## 4. Phase 3: Build PromptNode
+## 4. Projection Output and Publication
 
-The prompt builder owns syntax and the estimator used by Plan. It returns structured content from `Everywhere.Prompting.Documents` and never calls `ToString()` inside the Visual Context pipeline.
-
-An illustrative shape is:
-
-```csharp
-public interface IVisualContextPromptBuilder
-{
-    IContextCostEstimator Estimator { get; }
-
-    VisualContextPromptResult Build(
-        VisualContextPlan plan,
-        VisualContext context);
-}
-
-public sealed record VisualContextPromptResult(
-    PromptNode Content,
-    IReadOnlyList<int> PublishedTargetIds);
-```
-
-The exact result shape may change. These boundaries are mandatory:
+The same builder that normalizes and admits the Snapshot owns final syntax and publication. It returns structured content from `Everywhere.Prompting.Documents`; serialization into model text remains the Prompting layer's responsibility. These boundaries are mandatory:
 
 - the model-facing result remains a `PromptNode`;
 - the exact targets represented by that result are committed atomically into the existing `VisualContext`;
@@ -285,28 +272,31 @@ The exact result shape may change. These boundaries are mandatory:
 
 1. reuse committed IDs for retained targets;
 2. request monotonic new IDs only after normalization, Composite creation, and coarse admission;
-3. assign IDs only to target-bearing nodes guaranteed to survive rendering;
+3. build a bounded draft with provisional IDs and validate it through the actual Prompt renderer;
 4. use one stable semantic schema for Element and Composite targets;
-5. expose member count, independently exposed children, bounded preview, status, and continuation;
+5. expose observed member count, independently exposed children, bounded preview, exceptional status, and continuation;
 6. use Prompting primitives for invariant formatting and escaping;
-7. commit the PromptNode's exact publication batch before exposing the result;
-8. abandon the provisional batch without consuming IDs if required content cannot be built safely.
+7. remove renderer-omitted targets monotonically, add bounded budget status, and rebuild until the target set is stable;
+8. commit the PromptNode's exact final publication batch before exposing the result;
+9. abandon every superseded provisional batch without consuming IDs, and fail explicitly if required anchors cannot fit.
 
 ### 4.2 Native PromptNode Result
 
-XML is the native structured projection. Each visual target is a `PromptElement`. Stable scalar data such as ID, type, bounds, capabilities, and compact status may be attributes; nested targets and bounded content are child nodes. Untrusted content stays inside Prompting nodes so the renderer owns XML escaping.
+The native result is a tree of `PromptCompactElement` nodes. It renders familiar XML-like tags, compact scalar attributes, and valueless Boolean flags, but is deliberately not valid XML. A typical target is `<TextEdit id=7 name="Draft message" focused disabled/>`.
 
-The builder does not concatenate XML with `StringBuilder` and wrap it as one `PromptText`.
+Element type is the tag name. `id`, bounded `name`, optional bounds, exceptional `status`, and Composite `observedMembers` are attributes. Safe nonempty values without whitespace, control characters, or markup delimiters omit quotes; all other values remain quoted and escaped. Sparse non-default facts such as `focused`, `disabled`, `selected`, `readOnly`, `password`, `offscreen`, and `moreText` are bare flags. The builder does not emit speculative action capabilities, implementation priority, or a normal `complete` field. Absence of `status` means that no relevant problem was observed; it does not claim an exhaustive or immutable read. `observedMembers` is the number retained in the Composite projection, not a count of every live descendant.
 
-`PromptElement` treats its validated name and attributes as structural content. An element with no surviving child renders as a valid self-closing element. Attribute-only targets therefore require no zero-width character, whitespace child, comment, or placeholder.
+The builder does not concatenate markup with `StringBuilder` and wrap it as one `PromptText`. Untrusted attribute values and child text stay inside Prompting nodes so the renderer owns escaping.
+
+`PromptCompactElement` treats its validated name, attributes, and flags as structural content. An element with no surviving child renders in self-closing form. Attribute-only targets therefore require no zero-width character, whitespace child, comment, or placeholder.
 
 Self-closing support does not solve admission by itself. Target-bearing skeletons remain required PromptNodes or are admitted before construction. If required skeletons cannot fit, Build fails explicitly and abandons publication.
 
-JSON, TOON, or another textual projection may use `PromptText`, `PromptTextChunk`, `PromptGroup`, and `PromptChunk`. Textual fragments remain syntactically valid under their declared pruning behavior. A new PromptNode subtype is justified only by a genuinely new rendering, pruning, or serialization rule.
+Other textual projections may use `PromptText`, `PromptTextChunk`, `PromptGroup`, and `PromptChunk`. Textual fragments remain syntactically valid under their declared pruning behavior. `PromptElement` remains available where valid XML is actually required; the compact visual protocol does not change its contract.
 
 ### 4.3 Pruning and Publication
 
-Later `PromptDocument` pruning may shorten or remove optional preview and secondary metadata. It must never:
+The builder performs a bounded validation render before publication. It inspects the renderer's included, omitted, and truncated nodes, then monotonically shrinks the admitted target set until the returned locally limited PromptNode deterministically renders the same targets. Later `PromptDocument` pruning may shorten optional preview and secondary metadata. It must never:
 
 - remove a published target skeleton;
 - corrupt continuation;
@@ -316,9 +306,17 @@ Later `PromptDocument` pruning may shorten or remove optional preview and second
 
 `PromptRenderResult.OmittedNodes` remains Prompting renderer metadata. Known missing visual information is expressed as status before prompt construction.
 
-The estimator accounts for container punctuation, nesting, escaping, Composite metadata, attributes, and status. It does not assume each node has a standalone fixed cost.
+The Prompt renderer accounts for container punctuation, nesting, escaping, Composite metadata, attributes, and status. The visual pipeline does not maintain a duplicate estimator schema or assume each node has a standalone fixed cost.
 
 `VisualContextDetailLevel` controls semantic field inclusion and preview density. It does not select unrelated serialization formats.
+
+### 4.4 Automatic Attachment Boundary
+
+Automatic attachment processing supplies every valid attachment Element as a core of one bounded Snapshot. Snapshot limits therefore accumulate across the complete attachment forest instead of resetting for each process or native-window group. The prompt builder then publishes one coherent target set under the active visual target turn.
+
+The first valid `VisualElementAttachment` carries the combined `PromptNode`; later attachments leave their content null and are reported as duplicates by chat-history projection. `VisualElementAttachment.Content` remains structured at MessagePack key 2. Its member formatter reads the legacy string form as `PromptText`, writes new values through the normal polymorphic `PromptNode` union, and leaves the surrounding attachment union and inheritance format unchanged. This is a forward migration boundary: current code reads both forms, while an older executable is not expected to understand a newly written PromptNode union at that key.
+
+Flattening occurs only when `ChatHistoryBuilder` creates provider-facing `TextContent`. Snapshot disposal then releases every observed element that was not retained by final target publication; attachment disposal separately releases the original capture ownership.
 
 ## 5. Determinism
 
@@ -337,12 +335,12 @@ Determinism applies to equivalent snapshots, options, and initial publication st
 
 ## 6. Hot-Path Practices
 
-- prefer `AsValueEnumerable()` in repeated bounded Snapshot, Plan, and prompt projections when it avoids iterator and intermediate allocation;
+- prefer `AsValueEnumerable()` in repeated bounded Snapshot and prompt projections when it avoids iterator and intermediate allocation;
 - retain clear indexed loops or span operations when they are faster and easier to reason about;
 - never expose lazy `IEnumerable` beyond the Enumerator or ownership lifetime on which it depends;
 - materialize only bounded collections with explicit ownership;
 - use a monotonic clock for elapsed risk;
 - avoid logging in high-frequency traversal loops unless sampled;
-- use invariant formatting for PromptElement attributes and textual projections;
-- avoid a second full-forest DTO copy; Plan should reference snapshot nodes and bounded Composite parts;
+- use invariant formatting for PromptCompactElement attributes and textual projections;
+- avoid a second public full-forest DTO copy; private projection nodes should reference snapshot nodes and bounded Composite parts;
 - dispose remaining priority-queue Enumerators when budget exhaustion ends traversal.

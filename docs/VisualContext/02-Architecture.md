@@ -99,7 +99,7 @@ Typical owners are:
 |---|---|---|
 | Chat attachment or pointer selection | The user-visible attachment remains addressable | Attachment replacement/removal or Context disposal |
 | Relation Enumerator | `Current` and previously yielded canonical results must survive while the Enumerator is used | Enumerator disposal |
-| `VisualContextSnapshot` | Plan and publication need action/query handles after traversal | After target publication/handoff |
+| `VisualContextSnapshot` | Prompt projection and publication need action/query handles after traversal | After target publication/handoff |
 | `VisualTargetTurn` | The Agent may query or act on published IDs | Whole-turn eviction or Context disposal |
 
 Ownership transfer follows an add-before-release rule: first retain elements in the destination owner, then dispose the source owner. This prevents the identity entry from reaching zero between phases.
@@ -181,7 +181,7 @@ Existing retained targets reuse their Agent ID. New IDs are never reused within 
 
 ## 10. Snapshot Ownership
 
-`VisualContextSnapshot` owns the retention produced by graph traversal. Its nodes contain bounded facts plus canonical element handles for later publication. Plan and PromptNode construction perform no further platform reads.
+`VisualContextSnapshot` owns the retention produced by graph traversal. Its nodes contain bounded facts plus canonical element handles for later publication. Merged PromptNode projection performs no further platform reads.
 
 Before disposing a Snapshot, every Agent-visible element that must survive is added to the current turn or another destination retention. Snapshot disposal then releases elements that were observed but not published. This keeps large transient traversals out of long-term history.
 
