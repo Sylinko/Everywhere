@@ -43,7 +43,7 @@ partial class VisualContextBuilder
         sb.Append(indent).Append('<').Append(elementType);
 
         // Add ID
-        var id = AddTarget(element, elementType);
+        var id = AddTarget(element);
         sb.Append(" id=\"").Append(id).Append('"');
 
         // Add coreElement attribute if applicable
@@ -133,7 +133,7 @@ partial class VisualContextBuilder
         if (elementNode.HasOmittedChildren)
         {
             sb.Append(indent)
-                .Append("  <!-- more children omitted, use get_visual_tree(elementId=")
+                .Append("  <!-- more children omitted, use query_visual(target=")
                 .Append(id)
                 .Append(") to expand -->")
                 .AppendLine();

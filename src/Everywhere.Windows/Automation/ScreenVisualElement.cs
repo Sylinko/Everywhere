@@ -104,7 +104,7 @@ public sealed class ScreenVisualElement : VisualElement
 
         return new VisualElementQueryResult(
             this,
-            new VisualElementSnapshot(id, type, states, null, null, bounds, null, null),
+            new VisualElementSnapshot(id, type, states, null, null, false, bounds, null, null),
             availableFields,
             requestedFields & ~availableFields,
             null);

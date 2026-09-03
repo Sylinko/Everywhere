@@ -293,7 +293,7 @@ macOS implementation must stop for review before publishing cross-backend Parent
 The review chooses separately:
 
 1. canonical structural Parent/Child relations;
-2. whether display membership is another relation or only Snapshot/Plan metadata;
+2. whether display membership is another relation or only Snapshot/projection metadata;
 3. Application and TopLevel ordering;
 4. whether screen grouping is projection-only and must not duplicate live identity;
 5. Enumerator invalidation versus best-effort continuation on topology changes.

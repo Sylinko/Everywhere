@@ -131,10 +131,8 @@ internal static class PromptNodeRenderer
             case PromptContainer container:
             {
                 var materialized = new MaterializedContainer(source, parent);
-                var childEscape = escapeText || source is PromptElement;
-                var childBudget = source is PromptTokenLimit limit
-                    ? Math.Min(inheritedBudget, limit.MaxTokens)
-                    : inheritedBudget;
+                var childEscape = escapeText || source is PromptElement or PromptCompactElement;
+                var childBudget = source is PromptTokenLimit limit ? Math.Min(inheritedBudget, limit.MaxTokens) : inheritedBudget;
                 foreach (var child in container.Children)
                 {
                     materialized.Children.Add(
@@ -357,7 +355,7 @@ internal static class PromptNodeRenderer
 
         public bool IsAtomic => Source is PromptChunk;
 
-        public bool HasOwnContent => Source is PromptElement;
+        public bool HasOwnContent => Source is PromptElement or PromptCompactElement;
 
         public bool HasVisibleChildren => Children.AsValueEnumerable().Any(static child => !child.IsEmpty);
 
@@ -374,9 +372,9 @@ internal static class PromptNodeRenderer
             if (IsEmpty) return _rendered = string.Empty;
 
             var builder = new StringBuilder();
-            if (Source is PromptElement element)
+            if (TryGetElementName(Source, out var elementName))
             {
-                AppendElementStart(builder, element);
+                AppendElementStart(builder, Source);
                 if (!HasVisibleChildren)
                 {
                     builder.Append("/>");
@@ -391,9 +389,9 @@ internal static class PromptNodeRenderer
                 builder.Append(child.Render());
             }
 
-            if (Source is PromptElement closingElement)
+            if (elementName is not null)
             {
-                builder.Append("</").Append(closingElement.Name).Append('>');
+                builder.Append("</").Append(elementName).Append('>');
             }
 
             return _rendered = builder.ToString();
@@ -410,10 +408,10 @@ internal static class PromptNodeRenderer
         {
             if (IsEmpty) return 0;
             var total = Children.Sum(static child => child.UpperBoundTokenCount);
-            if (Source is not PromptElement element) return total;
+            if (!TryGetElementName(Source, out var elementName)) return total;
 
             var opening = new StringBuilder();
-            AppendElementStart(opening, element);
+            AppendElementStart(opening, Source);
             if (!HasVisibleChildren)
             {
                 opening.Append("/>");
@@ -422,17 +420,66 @@ internal static class PromptNodeRenderer
 
             opening.Append('>');
             total += TokenHelper.EstimateTokenCount(opening.ToString());
-            total += TokenHelper.EstimateTokenCount($"</{element.Name}>");
+            total += TokenHelper.EstimateTokenCount($"</{elementName}>");
             return total;
         }
 
-        private static void AppendElementStart(StringBuilder builder, PromptElement element)
+        private static bool TryGetElementName(PromptNode source, out string? name)
         {
-            builder.Append('<').Append(element.Name);
-            foreach (var (name, value) in element.Attributes.AsValueEnumerable())
+            name = source switch
             {
-                builder.Append(' ').Append(name).Append("=\"").Append(SecurityElement.Escape(value)).Append('\"');
+                PromptElement element => element.Name,
+                PromptCompactElement element => element.Name,
+                _ => null,
+            };
+            return name is not null;
+        }
+
+        private static void AppendElementStart(StringBuilder builder, PromptNode source)
+        {
+            switch (source)
+            {
+                case PromptElement element:
+                    builder.Append('<').Append(element.Name);
+                    AppendQuotedAttributes(builder, element.Attributes);
+                    break;
+                case PromptCompactElement element:
+                    builder.Append('<').Append(element.Name);
+                    AppendCompactAttributes(builder, element.Attributes);
+                    foreach (var flag in element.Flags) builder.Append(' ').Append(flag);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Prompt node '{source.GetType().FullName}' is not an element.");
             }
+        }
+
+        private static void AppendQuotedAttributes(StringBuilder builder, PromptAttributeCollection attributes)
+        {
+            foreach (var (name, value) in attributes.AsValueEnumerable())
+                builder.Append(' ').Append(name).Append("=\"").Append(SecurityElement.Escape(value)).Append('\"');
+        }
+
+        private static void AppendCompactAttributes(StringBuilder builder, PromptAttributeCollection attributes)
+        {
+            foreach (var (name, value) in attributes.AsValueEnumerable())
+            {
+                builder.Append(' ').Append(name).Append('=');
+                var escapedValue = SecurityElement.Escape(value);
+                if (CanOmitAttributeQuotes(value)) builder.Append(escapedValue);
+                else builder.Append('\"').Append(escapedValue).Append('\"');
+            }
+        }
+
+        private static bool CanOmitAttributeQuotes(string value)
+        {
+            if (value.Length == 0) return false;
+            foreach (var character in value)
+            {
+                if (char.IsWhiteSpace(character) || char.IsControl(character) ||
+                    character is '"' or '\'' or '`' or '=' or '<' or '>' or '&') return false;
+            }
+
+            return true;
         }
     }
 }

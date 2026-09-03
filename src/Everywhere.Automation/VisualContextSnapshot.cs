@@ -10,15 +10,35 @@ public sealed class VisualContextSnapshot : IDisposable
     /// </summary>
     public IReadOnlyList<VisualContextSnapshotNode> Roots { get; }
 
+    /// <summary>
+    /// Gets whether every requested traversal branch completed within the Snapshot limits.
+    /// </summary>
+    public bool IsComplete { get; }
+
+    /// <summary>
+    /// Gets bounded Agent-facing explanations for Snapshot-wide incompleteness.
+    /// </summary>
+    public IReadOnlyList<string> Status { get; }
+
     private VisualElementRetention Retention { get; }
 
     /// <summary>
     /// Initializes a Snapshot over a completed graph-build retention. The caller transfers ownership of the retention to this Snapshot.
     /// </summary>
-    public VisualContextSnapshot(VisualElementRetention retention, IReadOnlyList<VisualContextSnapshotNode> roots)
+    /// <param name="retention">The ownership batch transferred into the Snapshot.</param>
+    /// <param name="roots">The ordered roots of the bounded observation forest.</param>
+    /// <param name="isComplete">Whether every requested branch completed within the Snapshot limits.</param>
+    /// <param name="status">Bounded Snapshot-wide explanations for incompleteness.</param>
+    public VisualContextSnapshot(
+        VisualElementRetention retention,
+        IReadOnlyList<VisualContextSnapshotNode> roots,
+        bool isComplete,
+        IReadOnlyList<string> status)
     {
         Retention = retention;
         Roots = roots;
+        IsComplete = isComplete;
+        Status = status;
     }
 
     /// <summary>
@@ -67,6 +87,16 @@ public sealed class VisualContextSnapshotNode
     public IReadOnlyList<VisualContextSnapshotNode> Children => _children;
 
     /// <summary>
+    /// Gets whether a structural relation supplied a sibling index.
+    /// </summary>
+    public bool HasSiblingIndex { get; private set; }
+
+    /// <summary>
+    /// Gets the best observed provider or traversal-relative sibling index.
+    /// </summary>
+    public int SiblingIndex { get; private set; }
+
+    /// <summary>
     /// Gets the distance accumulated within the originating core traversal.
     /// </summary>
     public int LocalDistance { get; init; }
@@ -108,20 +138,54 @@ public sealed class VisualContextSnapshotNode
     /// Appends an observed child and establishes its parent relationship.
     /// </summary>
     /// <param name="child">The child to append in observation order.</param>
-    public void AddChild(VisualContextSnapshotNode child)
+    /// <returns><see langword="true" /> when the relationship already exists or was established; otherwise, <see langword="false" />.</returns>
+    public bool TryAddChild(VisualContextSnapshotNode child)
     {
+        if (ReferenceEquals(child.Parent, this))
+        {
+            return true;
+        }
+
         if (ReferenceEquals(child, this) || child.Parent is not null)
         {
-            throw new InvalidOperationException("A visual-context snapshot node cannot contain itself or belong to more than one parent.");
+            return false;
+        }
+
+        for (var ancestor = this; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            if (ReferenceEquals(ancestor, child))
+            {
+                return false;
+            }
         }
 
         child.Parent = this;
         _children.Add(child);
+        return true;
+    }
+
+    /// <summary>
+    /// Records a structural sibling index when one has not already been observed.
+    /// </summary>
+    /// <param name="siblingIndex">The provider or traversal-relative sibling index.</param>
+    public void ObserveSiblingIndex(int siblingIndex)
+    {
+        if (!HasSiblingIndex)
+        {
+            HasSiblingIndex = true;
+            SiblingIndex = siblingIndex;
+        }
     }
 
     /// <summary>
     /// Appends one bounded Agent-facing status message.
     /// </summary>
     /// <param name="status">The status message to append.</param>
-    public void AddStatus(string status) => _status.Add(status);
+    public void AddStatus(string status)
+    {
+        if (!_status.Contains(status, StringComparer.Ordinal))
+        {
+            _status.Add(status);
+        }
+    }
 }

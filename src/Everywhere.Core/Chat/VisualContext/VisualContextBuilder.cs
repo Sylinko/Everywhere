@@ -29,99 +29,6 @@ public sealed partial class VisualContextBuilder(
     VisualElementEffect.ScanEffectScope? effectScope = null
 )
 {
-    private static readonly ActivitySource ActivitySource = new(typeof(VisualContextBuilder).FullName.NotNull());
-
-    /// <summary>
-    /// Builds the text representation of the visual tree for the given attachments as core elements and populates the attachment contents.
-    /// </summary>
-    /// <param name="attachments"></param>
-    /// <param name="approximateTokenLimit"></param>
-    /// <param name="detailLevel"></param>
-    /// <param name="effectScope"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public static IReadOnlyDictionary<int, VisualElement> BuildAndPopulate(
-        IReadOnlyList<VisualElementAttachment> attachments,
-        VisualElementRetention retention,
-        VisualTargetPublicationBatch targetPublication,
-        int approximateTokenLimit,
-        VisualContextDetailLevel detailLevel,
-        VisualElementEffect.ScanEffectScope? effectScope,
-        CancellationToken cancellationToken)
-    {
-        using var builderActivity = ActivitySource.StartActivity();
-
-        var result = new Dictionary<int, VisualElement>();
-        var validAttachments = attachments
-            .AsValueEnumerable()
-            .Where(attachment => attachment is { Element: not null, InitialQuery: not null })
-            .Select(attachment => (Attachment: attachment, Element: attachment.Element!, QueryResult: attachment.InitialQuery!))
-            .ToArray();
-
-        if (validAttachments.Length == 0)
-        {
-            return result;
-        }
-
-        // 1. Group core elements by their observed process and native window. Elements without a native window remain independent roots.
-        var groups = validAttachments
-            .AsValueEnumerable()
-            .GroupBy(item => (item.QueryResult.Snapshot.ProcessId, Root: item.QueryResult.Snapshot.NativeWindowHandle is > 0 and var handle ? $"hwnd:{handle}" : $"element:{item.Element.Id}"))
-            .ToArray();
-
-        var totalElements = validAttachments.Length;
-        var totalBuiltElements = 0;
-
-        foreach (var group in groups.AsValueEnumerable())
-        {
-            var groupElements = group.AsValueEnumerable().Select(x => x.Element).ToArray();
-            var groupCount = groupElements.Length;
-
-            // 2. Build XML for each root group
-            // Allocate token limit relative to the number of elements in the group
-            var groupTokenLimit = (int)((long)approximateTokenLimit * groupCount / totalElements);
-
-            var visualTreeBuilder = new VisualContextBuilder(
-                groupElements,
-                retention,
-                targetPublication,
-                groupTokenLimit,
-                detailLevel,
-                effectScope: effectScope);
-
-            var content = visualTreeBuilder.Build(cancellationToken);
-
-            // 3. for attachments in the same group
-            // First attachment gets the full XML, others got null.
-            var isFirst = true;
-            foreach (var (attachment, _, _) in group.AsValueEnumerable())
-            {
-                if (isFirst)
-                {
-                    attachment.Content = content;
-                    isFirst = false;
-                }
-                else
-                {
-                    attachment.Content = null;
-                }
-            }
-
-            foreach (var kvp in visualTreeBuilder.BuiltVisualElements.AsValueEnumerable())
-            {
-                result[kvp.Key] = kvp.Value;
-            }
-
-            totalBuiltElements += visualTreeBuilder.BuiltVisualElements.Count;
-        }
-
-        builderActivity?.SetTag("xml.detail_level", detailLevel);
-        builderActivity?.SetTag("xml.length_limit", approximateTokenLimit);
-        builderActivity?.SetTag("xml.built_visual_elements.count", totalBuiltElements);
-
-        return result;
-    }
-
     /// <summary>
     /// Represents a node in the XML tree being built.
     /// This class is mutable to support dynamic updates of activation state during traversal.
@@ -650,20 +557,16 @@ public sealed partial class VisualContextBuilder(
         {
             var dto = dtos[i];
             var children = dto.Children is null ? null : AssignDtoTargetIds(dto.Children);
-            var id = dto.Target is null ? 0 : AddTarget(dto.Target, dto.Type);
+            var id = dto.Target is null ? 0 : AddTarget(dto.Target);
             dtos[i] = dto with { Id = id, Children = children };
         }
 
         return dtos;
     }
 
-    private int AddTarget(VisualElement element, VisualElementType type)
+    private int AddTarget(VisualElement element)
     {
-        var capabilities = VisualTargetCapabilities.Inspect | VisualTargetCapabilities.Navigate | VisualTargetCapabilities.Expand | VisualTargetCapabilities.ReadContent | VisualTargetCapabilities.Find | VisualTargetCapabilities.Capture;
-        if (IsInteractiveElement(type, VisualElementStates.None)) capabilities |= VisualTargetCapabilities.Invoke | VisualTargetCapabilities.Focus;
-        if (type == VisualElementType.TextEdit) capabilities |= VisualTargetCapabilities.SetText | VisualTargetCapabilities.SendKeyGesture;
-
-        var id = targetPublication.Add(new ElementTarget { Element = element, Capabilities = capabilities });
+        var id = targetPublication.Add(new ElementTarget { Element = element });
         BuiltVisualElements[id] = element;
         return id;
     }

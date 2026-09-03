@@ -411,15 +411,25 @@ public sealed class VisualTargetTurn : IDisposable
     internal void AddTarget(int id, VisualTarget target)
     {
         ObjectDisposedException.ThrowIf(_isReleased, this);
-        if (target is ElementTarget elementTarget)
+        switch (target)
         {
-            _context.ValidateRetainedElement(elementTarget.Element);
-            _retention.Retain(elementTarget.Element);
-            _elementTargetIds[elementTarget.Element.Id] = id;
-        }
-        else
-        {
-            _otherTargetIds[target] = id;
+            case ElementTarget elementTarget:
+                _context.ValidateRetainedElement(elementTarget.Element);
+                _retention.Retain(elementTarget.Element);
+                _elementTargetIds[elementTarget.Element.Id] = id;
+                break;
+            case CompositeTarget compositeTarget:
+                foreach (var part in compositeTarget.Parts)
+                {
+                    _context.ValidateRetainedElement(part.Element);
+                    _retention.Retain(part.Element);
+                }
+
+                _otherTargetIds[target] = id;
+                break;
+            default:
+                _otherTargetIds[target] = id;
+                break;
         }
 
         if (_targets.TryAdd(id, target))
