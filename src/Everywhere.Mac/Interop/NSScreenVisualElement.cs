@@ -79,6 +79,7 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
 
     public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var bounds = BoundingRectangle;
         var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
 
@@ -91,7 +92,9 @@ public class NSScreenVisualElement(NSScreen screen) : IVisualElement
             return Task.FromException<IVisualElementCapture>(new InvalidOperationException("Failed to create CGImage wrapper."));
         }
 
-        return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(cgImage));
+        // Bounds already uses the top-left desktop convention consumed by Avalonia, not backing pixels.
+        // TODO(macOS): Verify ScreenImage coverage/orientation on rotated and mixed-density displays.
+        return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(cgImage, bounds));
     }
 
     private static int GetScreenNumber(NSScreen screen)

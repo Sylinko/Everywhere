@@ -2,14 +2,15 @@
 
 ## 1. Strategy
 
-Verification has four distinct evidence layers:
+Verification has five distinct evidence layers:
 
 1. **pure contract tests** for Context identity, ownership, turns, publication, prompt projection, and PromptNode;
 2. **deterministic Mock scenarios** for traversal, limits, mutation, failures, and exact attempts;
 3. **controlled real TestApps** for provider trees and native actions across WinForms, Avalonia, and CefSharp;
-4. **explicit native probes** for platform behavior that public documentation does not fully specify.
+4. **native real-web probes** for mutable public pages rendered by WebView2, WKWebView, or a supported Linux WebKit provider;
+5. **explicit native probes** for platform behavior that public documentation does not fully specify.
 
-No layer may claim evidence supplied only by another. Mock timeout injection verifies policy and status, not that UIA terminates a blocked provider. A controlled UI dispatcher hang verifies a real provider boundary, not arbitrary element-scoped failure. A native probe reports observed platform behavior and remains explicit rather than becoming a required deterministic CI assertion.
+No layer may claim evidence supplied only by another. Mock timeout injection verifies policy and status, not that UIA terminates a blocked provider. A controlled UI dispatcher hang verifies a real provider boundary, not arbitrary element-scoped failure. A native or real-web probe reports observed platform behavior and remains explicit rather than becoming a required deterministic CI assertion.
 
 [Testing](Testing.md) defines the declarative scenario infrastructure. Scenario and seed reproduce one generated logical UI within the same commit. Later code changes are allowed to change the generated result.
 
@@ -303,7 +304,10 @@ Verify:
 - Composite never aliases a source element ID or becomes actionable;
 - the same Prompt renderer owns structural cost, escaping, attributes, status, and pruning evidence;
 - allocation is progressive and cannot be consumed entirely by one huge region before root fairness policy applies;
-- final result is native `PromptNode`/`PromptCompactElement` structure rather than prebuilt markup text;
+- final result is bounded text, internally rendered through Prompting primitives rather than hand-assembled markup;
+- admitted competing bodies receive progressive shares within a single root as well as across roots;
+- short bodies release demand, while a lone long body can use remaining capacity;
+- final text, published IDs, and continuation are fixed before the tool returns;
 - required attribute-only compact elements remain present as self-closing nodes without placeholder content;
 - compact attributes and child text are escaped, only delimiter-free nonempty values omit quotes, and ordered sparse state flags remain valueless;
 - normal results omit `complete`, capabilities, implementation priority, and empty status;
@@ -319,17 +323,17 @@ Verify:
 - tool description states bounded, incomplete, mutable-tree semantics;
 - one structural query handles Element and Composite targets without requiring the Agent to choose Inspect versus Expand;
 - every query enforces request/result limits;
-- Agent offsets are 1-based and `nextOffset` follows items actually returned;
+- structural offsets are 1-based and root `next` identifies the following selected retained-member range; current observation failures remain explicit, allowing overlap or retry;
 - relation/provider failure preserves partial items and does not report definitive exhaustion;
 - unavailable IDs fail without heuristic re-anchoring;
 - historical IDs promote into the active turn on successful lookup;
 - a new call is the only retry boundary;
 - Composite actions reject before platform code;
-- continuation distinguishes provider ranging from local slicing of a complete Value;
+- text offsets are zero-based UTF-16 positions regardless of bounded-prefix or complete-Value acquisition; automatic page boundaries preserve surrogate pairs;
 - any later search contract never claims exhaustive absence from an unbounded live tree;
 - output remains PromptNode before rendering.
 
-Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows CEF probe loads a real HTTP/HTTPS page, requires Chromium's UIA `Document` to appear, and saves the exact compact Agent projection for manual inspection.
+Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows native WebView probe loads a real HTTP/HTTPS page through WebView2, requires its UIA `Document` to appear after renderer accessibility is enabled, and saves the exact compact Agent projection for manual inspection. Equivalent macOS and Linux evidence remains platform work rather than an inference from this Windows result.
 
 ## 15. Scenario Coverage and Acceptance
 

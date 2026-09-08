@@ -11,12 +11,13 @@ namespace Everywhere.Views;
 
 public class ScanVisualElementParticle : VisualElementParticle
 {
-    private RefCountedSKImage? _windowMaskRef;
+    private VisualEffectImage<SKImage>? _windowMaskRef;
     private double _animationProgress;
 
     public override void Spawn(Point startPosition, IParticleTargetTracker? targetTracker, object? startContent, object? endContent, Size startSize)
     {
-        _windowMaskRef = new RefCountedSKImage(startContent.NotNull<SKImage>());
+        _windowMaskRef = startContent.NotNull<VisualEffectImage<SKImage>>();
+        _windowMaskRef.AddRef();
 
         Width = startSize.Width;
         Height = startSize.Height;
@@ -52,28 +53,6 @@ public class ScanVisualElementParticle : VisualElementParticle
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d));
     }
 
-    private sealed class RefCountedSKImage(SKImage image) : IDisposable
-    {
-        private int _refCount = 1;
-
-        public SKImage? Image { get; private set; } = image;
-
-        public void AddRef()
-        {
-            if (Image != null)
-            {
-                Interlocked.Increment(ref _refCount);
-            }
-        }
-
-        public void Dispose()
-        {
-            if (Interlocked.Decrement(ref _refCount) != 0) return;
-
-            Image?.Dispose();
-            Image = null;
-        }
-    }
 
     /// <summary>
     /// A custom drawing operation that renders a fluid scanline effect over a target window bounds.
@@ -195,7 +174,7 @@ public class ScanVisualElementParticle : VisualElementParticle
 
         private readonly float _timeSeconds;
         private readonly Rect _bounds;
-        private readonly RefCountedSKImage? _windowMaskRef;
+        private readonly VisualEffectImage<SKImage>? _windowMaskRef;
         private readonly float _progress;
 
         /// <summary>

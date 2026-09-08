@@ -2193,7 +2193,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Query Visual Context</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
-        <value>Query a bounded region around an Element or Composite visual target.</value>
+        <value>Query a bounded region around a visual element.</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>Sign up for free credits and get access to popular models right out of the box. More features like cloud sync are coming soon...</value>
@@ -2741,9 +2741,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>Wait {0} milliseconds</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>Window {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>Element {0}</value>
@@ -3960,5 +3957,11 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluid</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>Reading visual text</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>Read a bounded continuation page from a visual element</value>
     </data>
 </root>

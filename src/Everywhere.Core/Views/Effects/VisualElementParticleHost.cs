@@ -37,11 +37,21 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
             Children.Add(particle); // Add to VisualTree immediately. Pool elements remain in tree but are hidden.
         }
 
-        particle.Spawn(startPosition, targetTracker, startContent, endContent, startSize);
-        particle.IsVisible = true;
-        _activeParticles.Add(particle);
-
-        StartAnimationLoop();
+        try
+        {
+            particle.Spawn(startPosition, targetTracker, startContent, endContent, startSize);
+            particle.IsVisible = true;
+            _activeParticles.Add(particle);
+            StartAnimationLoop();
+        }
+        catch
+        {
+            _activeParticles.Remove(particle);
+            particle.IsVisible = false;
+            particle.Recycle();
+            Children.Remove(particle);
+            throw;
+        }
     }
 
     /// <summary>

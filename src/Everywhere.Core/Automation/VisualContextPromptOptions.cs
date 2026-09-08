@@ -1,4 +1,4 @@
-namespace Everywhere.Chat;
+namespace Everywhere.Automation;
 
 /// <summary>
 /// Configures one in-memory projection from a visual-context Snapshot to model-facing prompt content.
@@ -34,11 +34,6 @@ public sealed record VisualContextPromptOptions
     /// Gets the maximum number of UTF-16 characters retained in one Composite preview.
     /// </summary>
     public int MaximumCompositePreviewCharacters { get; init; } = 4_096;
-
-    /// <summary>
-    /// Gets bounded operation-level status appended to Snapshot and prompt-budget status on the visual-context root.
-    /// </summary>
-    public IReadOnlyList<string> AdditionalStatus { get; init; } = [];
 
     internal void Validate()
     {

@@ -1,8 +1,6 @@
 using System.Runtime.CompilerServices;
-using Avalonia;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
-using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.I18N;

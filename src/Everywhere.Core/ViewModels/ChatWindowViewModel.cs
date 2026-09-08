@@ -282,7 +282,16 @@ public sealed partial class ChatWindowViewModel :
 
                 if (visualElementEffect is not null)
                 {
-                    await visualElementEffect.CreatePickEffect(targetResult.Element, chatAttachment);
+                    try
+                    {
+                        var capture = await Task.Run(() => targetResult.Element.CaptureAsync());
+                        await visualElementEffect.CreatePickEffect(capture, chatAttachment);
+                    }
+                    catch (Exception exception)
+                    {
+                        chatAttachment.Opacity = 1d;
+                        _logger.LogWarning(exception, "Failed to prepare pick capture.");
+                    }
                 }
             }
             else
@@ -356,7 +365,16 @@ public sealed partial class ChatWindowViewModel :
                 _chatAttachmentsSource.Add(chatAttachment.With(x => x.Opacity = 0d));
                 pendingAttachment = null;
 
-                await visualElementEffect.CreatePickEffect(queryResult.Element, chatAttachment);
+                try
+                {
+                    var capture = await Task.Run(() => queryResult.Element.CaptureAsync(cancellationToken), cancellationToken);
+                    await visualElementEffect.CreatePickEffect(capture, chatAttachment);
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    chatAttachment.Opacity = 1d;
+                    _logger.LogWarning(exception, "Failed to prepare pick capture.");
+                }
             }
             else
             {
@@ -901,7 +919,11 @@ public sealed partial class ChatWindowViewModel :
                 }
 
                 // Insert the new attachment at the beginning if it has text
+                // ReSharper disable AccessToDisposedClosure
+                // ReSharper disable AccessToModifiedClosure
                 if (pendingAttachment is not null) list.Insert(0, pendingAttachment);
+                // ReSharper restore AccessToDisposedClosure
+                // ReSharper restore AccessToModifiedClosure
             });
             pendingAttachment = null;
         }

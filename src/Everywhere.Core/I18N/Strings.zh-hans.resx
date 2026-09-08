@@ -2194,7 +2194,7 @@
         <value>查询视觉上下文</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_QueryVisual_Description" xml:space="preserve">
-        <value>查询元素或组合视觉目标周围的有界区域。</value>
+        <value>查询视觉元素周围的有界区域。</value>
     </data>
     <data name="UserProfilePresenter_CloudDescriptionTextBlock_Text" xml:space="preserve">
         <value>注册即享免费积分，获得开箱即用的主流模型。更有云同步等功能持续上线中……</value>
@@ -2742,9 +2742,6 @@
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>等待 {0} 毫秒</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>窗口 {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>元素 {0}</value>
@@ -3961,5 +3958,11 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>灵动</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>正在读取视觉文本</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>从视觉元素中续读一页有界文本</value>
     </data>
 </root>

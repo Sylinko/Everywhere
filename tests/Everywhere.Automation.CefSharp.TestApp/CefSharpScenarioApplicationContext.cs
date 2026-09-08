@@ -12,8 +12,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly TestAppOptions _options;
-    private readonly GeneratedVisualScenario? _scenario;
-    private readonly string? _externalAddress;
+    private readonly GeneratedVisualScenario _scenario;
     private readonly TestAppControlChannel _channel = new();
     private readonly ManualResetEventSlim _resumeUiThread = new(initialState: true);
     private readonly List<Form> _forms = [];
@@ -23,14 +22,12 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
     private long _step;
     private long _revision;
     private int _closedRoots;
-    private volatile bool _isControlledNavigation;
 
-    public CefSharpScenarioApplicationContext(TestAppOptions options, string? externalAddress = null)
+    public CefSharpScenarioApplicationContext(TestAppOptions options)
     {
         _options = options;
-        _externalAddress = externalAddress;
-        _scenario = externalAddress is null ? new VisualScenarioGenerator().Generate(options.ResolveScenario(), options.Seed) : null;
-        _areRootsRendered = new bool[_scenario?.Roots.Count ?? 1];
+        _scenario = new VisualScenarioGenerator().Generate(options.ResolveScenario(), options.Seed);
+        _areRootsRendered = new bool[_scenario.Roots.Count];
         CreateRootForms();
 
         _channel.CommandReceived += OnCommandReceived;
@@ -65,8 +62,8 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
     private void CreateRootForms()
     {
         var pagePath = Path.Combine(AppContext.BaseDirectory, "Assets", "index.html");
-        var pageAddress = _externalAddress ?? new Uri(pagePath).AbsoluteUri;
-        var rootCount = _scenario?.Roots.Count ?? 1;
+        var pageAddress = new Uri(pagePath).AbsoluteUri;
+        var rootCount = _scenario.Roots.Count;
         for (var i = 0; i < rootCount; i++)
         {
             var rootIndex = i;
@@ -78,7 +75,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
             var form = new Form
             {
                 Name = $"ScenarioRoot{rootIndex}",
-                Text = _scenario is null ? $"Everywhere Visual Context CefSharp Web Probe — {pageAddress}" : $"Everywhere Visual Context CefSharp TestApp — {_scenario.Name} — Root {rootIndex}",
+                Text = $"Everywhere Visual Context CefSharp TestApp — {_scenario.Name} — Root {rootIndex}",
                 Width = 1000,
                 Height = 720,
                 StartPosition = FormStartPosition.Manual,
@@ -109,7 +106,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
 
     private void OnLoadError(int rootIndex, LoadErrorEventArgs eventArgs)
     {
-        if (_externalAddress is null || _isControlledNavigation || !eventArgs.Frame.IsMain || eventArgs.ErrorCode == CefErrorCode.Aborted) return;
+        if (!eventArgs.Frame.IsMain || eventArgs.ErrorCode == CefErrorCode.Aborted) return;
         var form = _forms[rootIndex];
         if (form.IsHandleCreated && !form.IsDisposed)
         {
@@ -128,14 +125,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
     private void CompleteInitialLoad(int rootIndex)
     {
         if (_areRootsRendered[rootIndex]) return;
-        if (_externalAddress is null)
-        {
-            RenderInitialRoot(rootIndex);
-            return;
-        }
-
-        _areRootsRendered[rootIndex] = true;
-        if (_areRootsRendered.All(static isRendered => isRendered)) Publish(TestAppStatusKind.Ready);
+        RenderInitialRoot(rootIndex);
     }
 
     private async void RenderInitialRoot(int rootIndex)
@@ -157,9 +147,8 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
 
     private async Task RenderRootAsync(int rootIndex)
     {
-        var scenario = _scenario ?? throw new InvalidOperationException("External webpage mode does not use declarative scenario rendering.");
         _anchors.RemoveAll(anchor => anchor.RootIndex == rootIndex);
-        var root = CreateDto(Resolve(scenario.Roots[rootIndex]), rootIndex.ToString(), shouldCollectAnchors: true);
+        var root = CreateDto(Resolve(_scenario.Roots[rootIndex]), rootIndex.ToString(), shouldCollectAnchors: true);
         var json = JsonSerializer.Serialize(root, JsonOptions);
         var response = await _browsers[rootIndex]
             .EvaluateScriptAsync($"globalThis.everywhere.render({json}, {_step});")
@@ -275,14 +264,13 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
 
     private VisualControl ResolvePath(int rootIndex, string path)
     {
-        var scenario = _scenario ?? throw new InvalidOperationException("External webpage mode does not expose declarative controls.");
         var segments = path.Split('/');
         if (segments.Length == 0 || !int.TryParse(segments[0], out var pathRootIndex) || pathRootIndex != rootIndex)
         {
             throw new ArgumentException($"Invalid virtual control path '{path}'.", nameof(path));
         }
 
-        var control = Resolve(scenario.Roots[rootIndex]);
+        var control = Resolve(_scenario.Roots[rootIndex]);
         for (var i = 1; i < segments.Length; i++)
         {
             control = Resolve(control.GetChild(int.Parse(segments[i])));
@@ -336,7 +324,6 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
             switch (command.Kind)
             {
                 case TestAppCommandKind.MoveNext:
-                    if (_externalAddress is not null) throw new InvalidOperationException("MoveNext is not defined for an external webpage probe.");
                     _step++;
                     _revision++;
                     for (var i = 0; i < _browsers.Count; i++)
@@ -353,7 +340,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
                     Publish(TestAppStatusKind.UiThreadResumed);
                     break;
                 case TestAppCommandKind.Navigate:
-                    await NavigateAsync(command.Address).ConfigureAwait(true);
+                    Publish(TestAppStatusKind.Error, "Navigate is supported only by the real-web WebView TestApp.");
                     break;
                 case TestAppCommandKind.Stop:
                     foreach (var form in _forms)
@@ -369,33 +356,6 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
         catch (Exception exception)
         {
             Publish(TestAppStatusKind.Error, exception.Message);
-        }
-    }
-
-    private async Task NavigateAsync(string? address)
-    {
-        if (_externalAddress is null) throw new InvalidOperationException("Navigate is available only in the CefSharp external webpage mode.");
-        if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-        {
-            throw new ArgumentException("Navigate requires an absolute HTTP or HTTPS address.", nameof(address));
-        }
-
-        _isControlledNavigation = true;
-        try
-        {
-            var response = await _browsers[0].LoadUrlAsync(uri.AbsoluteUri).ConfigureAwait(true);
-            if (response.ErrorCode != CefErrorCode.None || response.HttpStatusCode is < 200 or >= 400)
-            {
-                throw new InvalidOperationException($"Failed to navigate to '{uri.AbsoluteUri}': HTTP {response.HttpStatusCode}, {response.ErrorCode}.");
-            }
-
-            _revision++;
-            _forms[0].Text = $"Everywhere Visual Context CefSharp Web Probe — {_browsers[0].Address}";
-            Publish(TestAppStatusKind.Navigated);
-        }
-        finally
-        {
-            _isControlledNavigation = false;
         }
     }
 
@@ -428,8 +388,7 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
             Environment.ProcessId,
             roots,
             [.. _anchors],
-            error,
-            _externalAddress is null ? null : _browsers[0].Address));
+            error));
     }
 
     private sealed record BrowserControlDto(

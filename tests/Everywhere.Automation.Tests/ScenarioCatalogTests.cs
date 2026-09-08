@@ -56,17 +56,13 @@ public sealed class ScenarioCatalogTests
         var generated = new VisualScenarioGenerator().Generate(ExtremeScenarios.DisconnectedRoots, 42);
         using var backend = new ScenarioMockBackend(generated);
         using var turn = backend.Context.BeginTurn();
-        var targetPublication = backend.Context.BeginPublication();
-        using var retention = backend.Context.CreateRetention();
-        var builder = new VisualContextBuilder(
+        var limits = new VisualContextSnapshotLimits { MaximumNodes = 128, MaximumChildrenPerNode = 64, MaximumPlatformOperations = 512 };
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            backend.Context,
             backend.RootElements,
-            retention,
-            targetPublication,
-            512,
-            VisualContextDetailLevel.Compact,
+            limits,
             VisualContextTraverseDirections.Child);
-
-        var output = builder.Build(CancellationToken.None);
+        var output = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 512 }).ToString();
 
         Assert.Multiple(() =>
         {
@@ -84,29 +80,25 @@ public sealed class ScenarioCatalogTests
         var generated = new VisualScenarioGenerator().Generate(scenario, 42);
         using var backend = new ScenarioMockBackend(generated);
         using var turn = backend.Context.BeginTurn();
-        var targetPublication = backend.Context.BeginPublication();
-        using var retention = backend.Context.CreateRetention();
-        var builder = new VisualContextBuilder(
+        var limits = new VisualContextSnapshotLimits { MaximumNodes = 128, MaximumChildrenPerNode = 64, MaximumPlatformOperations = 512 };
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            backend.Context,
             [backend.RootElement],
-            retention,
-            targetPublication,
-            512,
-            VisualContextDetailLevel.Compact,
+            limits,
             VisualContextTraverseDirections.Child);
-
-        var output = builder.Build(CancellationToken.None);
+        var output = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 512 }).ToString();
 
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.Empty, $"Scenario '{scenario.Name}', seed 42 produced no output.");
             Assert.That(
                 backend.Operations.MoveNextAttemptCount,
-                Is.LessThan(1_000),
-                $"Scenario '{scenario.Name}', seed 42 exceeded the characterization bound.");
+                Is.LessThanOrEqualTo(limits.MaximumPlatformOperations),
+                $"Scenario '{scenario.Name}', seed 42 exceeded the Snapshot platform-operation bound.");
             Assert.That(
                 backend.Operations.ElementCreatedCount,
-                Is.LessThan(500),
-                $"Scenario '{scenario.Name}', seed 42 materialized too many elements.");
+                Is.LessThanOrEqualTo(limits.MaximumPlatformOperations + backend.RootElements.Count),
+                $"Scenario '{scenario.Name}', seed 42 materialized more elements than bounded platform progress permits.");
         });
     }
 

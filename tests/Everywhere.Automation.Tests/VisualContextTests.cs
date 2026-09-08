@@ -13,7 +13,7 @@ public sealed class VisualContextTests
         using (var firstTurn = backend.Context.BeginTurn())
         {
             var batch = backend.Context.BeginPublication();
-            Assert.That(batch.Add(CreateTarget(backend.RootElement, "initial")), Is.EqualTo(1));
+            Assert.That(batch.Add(CreateTarget(backend.RootElement)), Is.EqualTo(1));
             batch.Commit();
             firstTurn.Complete();
         }
@@ -21,20 +21,20 @@ public sealed class VisualContextTests
         using (var secondTurn = backend.Context.BeginTurn())
         {
             var batch = backend.Context.BeginPublication();
-            var childId = batch.Add(CreateTarget(backend.GetElement(0), "child"));
+            var childId = batch.Add(CreateTarget(backend.GetElement(0)));
             batch.Commit();
 
             Assert.That(backend.Context.TryGetTarget(1, out var promotedTarget), Is.True);
             var updateBatch = backend.Context.BeginPublication();
-            var repeatedId = updateBatch.Add(CreateTarget(backend.RootElement, "updated"));
+            var repeatedId = updateBatch.Add(CreateTarget(backend.RootElement));
             updateBatch.Commit();
             Assert.Multiple(() =>
             {
                 Assert.That(repeatedId, Is.EqualTo(1));
                 Assert.That(childId, Is.EqualTo(2));
-                Assert.That(promotedTarget?.Status, Is.EqualTo(new[] { "initial" }));
                 Assert.That(backend.Context.TryGetTarget(1, out var target), Is.True);
-                Assert.That(target?.Status, Is.EqualTo(new[] { "updated" }));
+                Assert.That(((ElementTarget?)promotedTarget)?.Element, Is.SameAs(backend.RootElement));
+                Assert.That(((ElementTarget?)target)?.Element, Is.SameAs(backend.RootElement));
             });
             secondTurn.Complete();
         }
@@ -54,10 +54,10 @@ public sealed class VisualContextTests
         using var backend = CreateBackend();
         using var turn = backend.Context.BeginTurn();
         var abandonedBatch = backend.Context.BeginPublication();
-        Assert.That(abandonedBatch.Add(CreateTarget(backend.RootElement, "abandoned")), Is.EqualTo(1));
+        Assert.That(abandonedBatch.Add(CreateTarget(backend.RootElement)), Is.EqualTo(1));
 
         var committedBatch = backend.Context.BeginPublication();
-        var committedId = committedBatch.Add(CreateTarget(backend.RootElement, "committed"));
+        var committedId = committedBatch.Add(CreateTarget(backend.RootElement));
         committedBatch.Commit();
 
         Assert.Multiple(() =>
@@ -141,8 +141,8 @@ public sealed class VisualContextTests
         using (var firstTurn = backend.Context.BeginTurn())
         {
             var batch = backend.Context.BeginPublication();
-            batch.Add(CreateTarget(firstOnly, "first"));
-            batch.Add(CreateTarget(shared, "shared-first"));
+            batch.Add(CreateTarget(firstOnly));
+            batch.Add(CreateTarget(shared));
             batch.Commit();
             firstTurn.Complete();
         }
@@ -150,8 +150,8 @@ public sealed class VisualContextTests
         using (var secondTurn = backend.Context.BeginTurn())
         {
             var batch = backend.Context.BeginPublication();
-            batch.Add(CreateTarget(shared, "shared-second"));
-            batch.Add(CreateTarget(secondOnly, "second"));
+            batch.Add(CreateTarget(shared));
+            batch.Add(CreateTarget(secondOnly));
             batch.Commit();
             secondTurn.Complete();
         }
@@ -185,7 +185,7 @@ public sealed class VisualContextTests
         {
             using var turn = context.BeginTurn();
             var batch = context.BeginPublication();
-            batch.Add(CreateTarget(element, element.Id));
+            batch.Add(CreateTarget(element));
             batch.Commit();
             turn.Complete();
         }
@@ -215,7 +215,7 @@ public sealed class VisualContextTests
             var batch = context.BeginPublication();
             var startIndex = turnIndex;
             var endIndex = turnIndex == 2 ? 4 : turnIndex + 1;
-            for (var elementIndex = startIndex; elementIndex < endIndex; elementIndex++) batch.Add(CreateTarget(elements[elementIndex], elements[elementIndex].Id));
+            for (var elementIndex = startIndex; elementIndex < endIndex; elementIndex++) batch.Add(CreateTarget(elements[elementIndex]));
             batch.Commit();
             turn.Complete();
         }
@@ -238,10 +238,9 @@ public sealed class VisualContextTests
         return new ScenarioMockBackend(new VisualScenarioGenerator().Generate(scenario, 42));
     }
 
-    private static ElementTarget CreateTarget(VisualElement element, string status) => new()
+    private static ElementTarget CreateTarget(VisualElement element) => new()
     {
         Element = element,
-        Status = [status],
     };
 
     private sealed record TestIdentity(int Value);
@@ -252,7 +251,7 @@ public sealed class VisualContextTests
 
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();
 
-        protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementEnumerationOptions options) => throw new NotSupportedException();
+        protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) => throw new NotSupportedException();
 
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) => Task.FromException<IVisualElementCapture>(new NotSupportedException());
 

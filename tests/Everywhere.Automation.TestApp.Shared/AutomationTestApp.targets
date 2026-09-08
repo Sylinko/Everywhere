@@ -8,7 +8,8 @@
     <Error Condition="'$(UseAppHost)' != 'true'" Text="Visual Context TestApps must enable UseAppHost so controlled tests can launch them directly." />
 
     <PropertyGroup>
-      <_AutomationTestAppExecutablePathValue>$([System.IO.Path]::ChangeExtension('$(TargetPath)', '.exe'))</_AutomationTestAppExecutablePathValue>
+      <_AutomationTestAppExecutableExtension Condition="$([MSBuild]::IsOSPlatform('Windows'))">.exe</_AutomationTestAppExecutableExtension>
+      <_AutomationTestAppExecutablePathValue>$(TargetDir)$(TargetName)$(_AutomationTestAppExecutableExtension)</_AutomationTestAppExecutablePathValue>
     </PropertyGroup>
 
     <ItemGroup>

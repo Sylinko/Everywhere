@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Everywhere.Automation.CefSharp.Probe;
+namespace Everywhere.Automation.WebView.Probe;
 
 internal static class Program
 {
@@ -35,7 +35,7 @@ internal static class Program
     private static async Task<int> RunBatchAsync(ProbeOptions options, CancellationToken cancellationToken)
     {
         var results = new List<ProbeStepResult>();
-        await using var session = new CefSharpProbeSession(options);
+        await using var session = new WebViewProbeSession(options);
         for (var index = 0; index < options.Addresses.Count; index++)
         {
             var requestedAddress = options.Addresses[index].AbsoluteUri;
@@ -62,7 +62,7 @@ internal static class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project tests/Everywhere.Automation.CefSharp.Probe -- [options] [URL ...]");
+        Console.WriteLine("Usage: dotnet run --project tests/Everywhere.Automation.WebView.Probe -- [options] [URL ...]");
         Console.WriteLine("Options:");
         Console.WriteLine("  --mcp                 Run a long-lived Streamable HTTP MCP server.");
         Console.WriteLine("  --listen <http-url>   MCP listen address; default http://127.0.0.1:5187.");

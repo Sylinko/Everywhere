@@ -1,7 +1,9 @@
-using Everywhere.Automation;
+using System.Security;
+using System.Text;
+using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 
-namespace Everywhere.Chat;
+namespace Everywhere.Automation;
 
 /// <summary>
 /// Normalizes one bounded visual-context Snapshot, projects structural Composites, builds model-facing prompt content, and atomically publishes every represented target.
@@ -18,31 +20,48 @@ public static class VisualContextPromptBuilder
     /// <param name="snapshot">The bounded platform observation retained until target publication completes.</param>
     /// <param name="options">The projection options, or <see langword="null" /> to use <see cref="VisualContextPromptOptions.Default" />.</param>
     /// <param name="cancellationToken">The caller cancellation token.</param>
-    /// <returns>A structured prompt node whose local limit deterministically preserves every committed target skeleton.</returns>
-    public static PromptNode Build(
+    /// <returns>Final bounded text containing every committed target skeleton.</returns>
+    public static string Build(
         VisualContext context,
         VisualContextSnapshot snapshot,
         VisualContextPromptOptions? options = null,
+        CancellationToken cancellationToken = default) => BuildWithOutcome(context, snapshot, options, cancellationToken: cancellationToken).Content;
+
+    /// <summary>
+    /// Builds final bounded text together with operation-local publication statistics.
+    /// </summary>
+    /// <param name="context">The target and lifetime domain that owns the active Agent turn.</param>
+    /// <param name="snapshot">The bounded platform observation retained until target publication completes.</param>
+    /// <param name="options">The projection options, or <see langword="null" /> to use <see cref="VisualContextPromptOptions.Default" />.</param>
+    /// <param name="nextOffset">The next retained-member offset emitted on the result root, or <see langword="null" /> when the current query has no continuation.</param>
+    /// <param name="cancellationToken">The caller cancellation token.</param>
+    /// <returns>The final bounded text and operation-local publication count.</returns>
+    internal static VisualContextPromptBuildResult BuildWithOutcome(
+        VisualContext context,
+        VisualContextSnapshot snapshot,
+        VisualContextPromptOptions? options = null,
+        int? nextOffset = null,
         CancellationToken cancellationToken = default)
     {
         var effectiveOptions = options ?? VisualContextPromptOptions.Default;
         effectiveOptions.Validate();
+        if (nextOffset is { } value) ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
         cancellationToken.ThrowIfCancellationRequested();
 
         var roots = Normalize(snapshot.Roots, effectiveOptions);
         var allNodes = OrderNodesByRootFairness(roots);
         for (var index = 0; index < allNodes.Length; index++) allNodes[index].RelevanceRank = index;
 
+
         var selectedNodes = new HashSet<ProjectionNode>(allNodes, ReferenceEqualityComparer.Instance);
-        var contentLimitedNodes = new HashSet<ProjectionNode>(ReferenceEqualityComparer.Instance);
         var hasBudgetOmission = false;
-        var maximumAttempts = checked(allNodes.Length * 2 + 2);
+        var maximumAttempts = checked(allNodes.Length + 2);
 
         for (var attemptIndex = 0; attemptIndex < maximumAttempts; attemptIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, contentLimitedNodes, hasBudgetOmission, effectiveOptions);
-            var document = new PromptDocument { attempt.Content, };
+            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, effectiveOptions, nextOffset);
+            var document = new PromptDocument { new PromptTokenLimit(effectiveOptions.TargetTokenBudget, attempt.ContextElement) };
             var rendered = document.Render(int.MaxValue);
             var includedNodes = new HashSet<PromptNode>(rendered.IncludedNodes, ReferenceEqualityComparer.Instance);
             if (!includedNodes.Contains(attempt.ContextElement))
@@ -60,22 +79,21 @@ public static class VisualContextPromptBuilder
                     $"The required visual target '{missingRequiredNode.PrimarySource.Element.Id}' cannot fit within the target budget of {effectiveOptions.TargetTokenBudget} tokens.");
             }
 
-            var newlyLimitedNodes = attempt.ContentNodes
-                .AsValueEnumerable()
-                .Where(pair => survivingNodes.Contains(pair.Value) &&
-                    (rendered.OmittedNodes.Contains(pair.Key) || rendered.TruncatedNodes.Contains(pair.Key)))
-                .Select(static pair => pair.Value)
-                .Where(node => !contentLimitedNodes.Contains(node))
-                .ToArray();
-            var hasNewBudgetOmission = survivingNodes.Count != selectedNodes.Count;
-            if (!hasNewBudgetOmission && newlyLimitedNodes.Length == 0)
+            if (survivingNodes.Count == selectedNodes.Count)
             {
-                attempt.Publication.Commit();
-                return attempt.Content;
+                return AllocateAndPublish(
+                    context,
+                    snapshot,
+                    roots,
+                    selectedNodes,
+                    hasBudgetOmission,
+                    effectiveOptions,
+                    rendered.TokenCount,
+                    nextOffset,
+                    cancellationToken);
             }
 
             selectedNodes.IntersectWith(survivingNodes);
-            contentLimitedNodes.UnionWith(newlyLimitedNodes);
             hasBudgetOmission = true;
         }
 
@@ -111,6 +129,101 @@ public static class VisualContextPromptBuilder
         }
 
         return ordered;
+    }
+
+    private static VisualContextPromptBuildResult AllocateAndPublish(
+        VisualContext context,
+        VisualContextSnapshot snapshot,
+        IReadOnlyList<ProjectionNode> roots,
+        HashSet<ProjectionNode> selectedNodes,
+        bool hasBudgetOmission,
+        VisualContextPromptOptions options,
+        int skeletonTokens,
+        int? nextOffset,
+        CancellationToken cancellationToken)
+    {
+        var bodiesByRoot = roots.AsValueEnumerable().Select(root => EnumerateNodes([root])
+            .Where(node => selectedNodes.Contains(node) && !string.IsNullOrEmpty(node.Content))
+            .OrderBy(static node => node.RelevanceRank).ToArray()).ToArray();
+        var demandsByRoot = bodiesByRoot.AsValueEnumerable().Select(nodes => nodes.AsValueEnumerable()
+            .Select(static node => EstimateBodyTokens(node.Content ?? string.Empty)).ToArray()).ToArray();
+        var rootDemands = demandsByRoot.AsValueEnumerable().Select(static demands => demands.Sum()).ToArray();
+        var bodyBudget = Math.Max(0, options.TargetTokenBudget - skeletonTokens);
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var rootShares = AllocateShares(rootDemands, bodyBudget);
+            for (var rootIndex = 0; rootIndex < bodiesByRoot.Length; rootIndex++)
+            {
+                var nodes = bodiesByRoot[rootIndex];
+                var shares = AllocateShares(demandsByRoot[rootIndex], rootShares[rootIndex]);
+                for (var index = 0; index < nodes.Length; index++)
+                {
+                    nodes[index].AllocatedContent = FitBody(nodes[index].Content ?? string.Empty, shares[index]);
+                }
+            }
+
+            // Render without pruning: generic priority removal must not undo fair body allocation.
+            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, options, nextOffset);
+            var content = attempt.ContextElement.ToString();
+            var tokenCount = TokenHelper.EstimateTokenCount(content);
+            if (tokenCount <= options.TargetTokenBudget)
+            {
+                var representedTargetCount = attempt.Publication.Count;
+                cancellationToken.ThrowIfCancellationRequested();
+                attempt.Publication.Commit();
+                return new VisualContextPromptBuildResult(content, representedTargetCount);
+            }
+
+            if (bodyBudget == 0) throw new PromptBudgetExceededException("The admitted visual-context skeleton exceeds its target budget.");
+            // Escaping is included in demands; combined token boundaries still require a final check.
+            // The budget strictly decreases, so this correction cannot oscillate.
+            bodyBudget = Math.Max(0, bodyBudget - Math.Max(1, tokenCount - options.TargetTokenBudget));
+        }
+    }
+
+    private static int[] AllocateShares(int[] demands, int budget)
+    {
+        var shares = new int[demands.Length];
+        var pending = Enumerable.Range(0, demands.Length).Where(index => demands[index] > 0).ToList();
+        while (budget > 0 && pending.Count > 0)
+        {
+            var quantum = Math.Max(1, budget / pending.Count);
+            foreach (var index in pending)
+            {
+                var granted = Math.Min(budget, Math.Min(quantum, demands[index] - shares[index]));
+                shares[index] += granted;
+                budget -= granted;
+                if (budget == 0) break;
+            }
+            pending.RemoveAll(index => shares[index] == demands[index]);
+        }
+        return shares;
+    }
+
+    private static int EstimateBodyTokens(string content) => TokenHelper.EstimateTokenCount(SecurityElement.Escape(content));
+
+    private static string FitBody(string content, int tokenBudget)
+    {
+        if (tokenBudget <= 0) return string.Empty;
+        if (EstimateBodyTokens(content) <= tokenBudget) return content;
+
+        var low = 0;
+        var high = content.Length;
+        var result = string.Empty;
+        while (low <= high)
+        {
+            var middle = low + (high - low) / 2;
+            var prefix = content.TruncateUtf16(middle);
+            if (EstimateBodyTokens(prefix) <= tokenBudget)
+            {
+                result = prefix;
+                low = middle + 1;
+            }
+            else high = middle - 1;
+        }
+        return result;
     }
 
     private static List<ProjectionNode> Normalize(IReadOnlyList<VisualContextSnapshotNode> roots, VisualContextPromptOptions options)
@@ -204,7 +317,7 @@ public static class VisualContextPromptBuilder
     {
         if (maximumCharacters == 0) return (null, sources.Count > 0);
 
-        var builder = new System.Text.StringBuilder(Math.Min(maximumCharacters, 256));
+        var builder = new StringBuilder(Math.Min(maximumCharacters, 256));
         var isTruncated = false;
         foreach (var source in sources)
         {
@@ -226,7 +339,7 @@ public static class VisualContextPromptBuilder
                 continue;
             }
 
-            builder.Append(content.AsSpan(0, remaining));
+            builder.Append(content.TruncateUtf16(remaining));
             isTruncated = true;
             break;
         }
@@ -239,28 +352,25 @@ public static class VisualContextPromptBuilder
         VisualContextSnapshot snapshot,
         IReadOnlyList<ProjectionNode> roots,
         HashSet<ProjectionNode> selectedNodes,
-        HashSet<ProjectionNode> contentLimitedNodes,
         bool hasBudgetOmission,
-        VisualContextPromptOptions options)
+        VisualContextPromptOptions options,
+        int? nextOffset)
     {
         var publication = context.BeginPublication();
         var targetElements = new Dictionary<PromptCompactElement, ProjectionNode>(ReferenceEqualityComparer.Instance);
-        var contentNodes = new Dictionary<PromptTextChunk, ProjectionNode>(ReferenceEqualityComparer.Instance);
-        var contextStatus = GetContextStatus(snapshot, options.AdditionalStatus, hasBudgetOmission, options.MaximumScalarCharacters);
-        var contextElement = new PromptCompactElement("visual-context").AttributeNotNullOrEmpty("status", contextStatus);
-        AppendProjectedChildren(contextElement, roots, selectedNodes, contentLimitedNodes, publication, targetElements, contentNodes, options);
-        var content = new PromptTokenLimit(options.TargetTokenBudget, contextElement);
-        return new BuildAttempt(content, contextElement, publication, targetElements, contentNodes);
+        var contextStatus = GetContextStatus(snapshot, hasBudgetOmission, options.MaximumScalarCharacters);
+        var contextElement = new PromptCompactElement("visual-context").AttributeNotNull("next", nextOffset)
+            .AttributeNotNullOrEmpty("status", contextStatus);
+        AppendProjectedChildren(contextElement, roots, selectedNodes, publication, targetElements, options);
+        return new BuildAttempt(contextElement, publication, targetElements);
     }
 
     private static void AppendProjectedChildren(
         PromptCompactElement parent,
         IReadOnlyList<ProjectionNode> nodes,
         HashSet<ProjectionNode> selectedNodes,
-        HashSet<ProjectionNode> contentLimitedNodes,
         VisualTargetPublicationBatch publication,
         Dictionary<PromptCompactElement, ProjectionNode> targetElements,
-        Dictionary<PromptTextChunk, ProjectionNode> contentNodes,
         VisualContextPromptOptions options)
     {
         foreach (var node in nodes)
@@ -271,32 +381,29 @@ public static class VisualContextPromptBuilder
                     parent,
                     node.Children,
                     selectedNodes,
-                    contentLimitedNodes,
                     publication,
                     targetElements,
-                    contentNodes,
                     options);
                 continue;
             }
 
-            var status = GetNodeStatus(node, contentLimitedNodes.Contains(node));
-            var target = CreateTarget(node, status);
+            var status = GetNodeStatus(node);
+            var target = CreateTarget(node);
             var id = publication.Add(target);
-            var element = CreatePromptElement(node, id, status, options, contentNodes);
+            var element = CreatePromptElement(node, id, status, options);
             targetElements.Add(element, node);
-            AppendProjectedChildren(element, node.Children, selectedNodes, contentLimitedNodes, publication, targetElements, contentNodes, options);
+            AppendProjectedChildren(element, node.Children, selectedNodes, publication, targetElements, options);
             parent.Add(element);
         }
     }
 
-    private static VisualTarget CreateTarget(ProjectionNode node, IReadOnlyList<string> status)
+    private static VisualTarget CreateTarget(ProjectionNode node)
     {
         if (!node.IsComposite)
         {
             return new ElementTarget
             {
                 Element = node.PrimarySource.Element,
-                Status = status,
             };
         }
 
@@ -306,11 +413,7 @@ public static class VisualContextPromptBuilder
             {
                 Element = source.Element,
                 Snapshot = source.Snapshot,
-                IsCore = source.IsCore,
-                Status = source.Status.ToArray(),
             }).ToArray(),
-            Preview = node.Preview,
-            Status = status,
         };
     }
 
@@ -318,8 +421,7 @@ public static class VisualContextPromptBuilder
         ProjectionNode node,
         int id,
         IReadOnlyList<string> status,
-        VisualContextPromptOptions options,
-        Dictionary<PromptTextChunk, ProjectionNode> contentNodes)
+        VisualContextPromptOptions options)
     {
         var snapshot = node.PrimarySource.Snapshot;
         var element = new PromptCompactElement(node.IsComposite ? "Composite" : node.Type.ToString())
@@ -331,24 +433,14 @@ public static class VisualContextPromptBuilder
             .AttributeNotNullOrEmpty("status", Bound(string.Join("; ", status), options.MaximumScalarCharacters));
         AppendStateFlags(element, snapshot.States);
         if (node.IsComposite) element.Attribute("observedMembers", node.Sources.Count);
-        if (node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText)) element.Flag("moreText");
+        if (node.AllocatedContent.Length < (node.Content?.Length ?? 0) || node.IsPreviewTruncated ||
+            node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText)) element.Flag("moreText");
         if (ShouldIncludeBounds(options.DetailLevel, node.Type) && GetBounds(node) is { } bounds)
         {
             element.Attribute("box", $"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
         }
 
-        var content = node.IsComposite ? node.Preview : GetElementContent(snapshot);
-        if (!string.IsNullOrEmpty(content))
-        {
-            var contentNode = new PromptTextChunk(content)
-            {
-                Priority = Math.Max(0, 500_000 - node.RelevanceRank),
-            };
-            if (content.AsSpan().ContainsAny('\r', '\n')) contentNode.BreakOnLines();
-            else contentNode.BreakOnWhitespace();
-            contentNodes.Add(contentNode, node);
-            element.Add(contentNode);
-        }
+        if (node.AllocatedContent.Length > 0) element.Add(new PromptText(node.AllocatedContent));
 
         return element;
     }
@@ -366,7 +458,7 @@ public static class VisualContextPromptBuilder
             .Flag("password", (value & VisualElementStates.Password) != 0);
     }
 
-    private static List<string> GetNodeStatus(ProjectionNode node, bool isContentLimited)
+    private static List<string> GetNodeStatus(ProjectionNode node)
     {
         var status = new List<string>();
         foreach (var source in node.Sources)
@@ -377,23 +469,15 @@ public static class VisualContextPromptBuilder
             }
         }
 
-        if (node.IsPreviewTruncated) status.Add("Composite preview reached its character limit.");
-        if (isContentLimited) status.Add("Content was limited by the prompt budget.");
         return status;
     }
 
     private static string? GetContextStatus(
         VisualContextSnapshot snapshot,
-        IReadOnlyList<string> additionalStatus,
         bool hasBudgetOmission,
         int maximumCharacters)
     {
         var status = new List<string>(snapshot.Status);
-        foreach (var item in additionalStatus)
-        {
-            if (!string.IsNullOrWhiteSpace(item) && !status.Contains(item, StringComparer.Ordinal)) status.Add(item);
-        }
-        if (!snapshot.IsComplete && status.Count == 0) status.Add("Snapshot observation is incomplete.");
         if (hasBudgetOmission) status.Add("Some visual targets were omitted by the prompt budget.");
         return status.Count == 0 ? null : Bound(string.Join("; ", status), maximumCharacters);
     }
@@ -444,7 +528,7 @@ public static class VisualContextPromptBuilder
     }
 
     private static string? Bound(string? value, int maximumCharacters) =>
-        value is null || value.Length <= maximumCharacters ? value : value[..maximumCharacters];
+        value?.TruncateUtf16(maximumCharacters);
 
     private static IEnumerable<ProjectionNode> EnumerateNodes(IEnumerable<ProjectionNode> roots)
     {
@@ -479,8 +563,6 @@ public static class VisualContextPromptBuilder
 
         public bool IsRequired => IsCore || Type is VisualElementType.Screen or VisualElementType.TopLevel;
 
-        public string? Preview { get; } = preview;
-
         public bool IsPreviewTruncated { get; } = isPreviewTruncated;
 
         public float TraversalPriority => Sources.AsValueEnumerable().Min(static source => source.TraversalPriority);
@@ -488,13 +570,20 @@ public static class VisualContextPromptBuilder
         public long TraversalOrdinal => Sources.AsValueEnumerable().Min(static source => source.TraversalOrdinal);
 
         public int RelevanceRank { get; set; }
+
+        public string? Content => IsComposite ? preview : GetElementContent(PrimarySource.Snapshot);
+
+        public string AllocatedContent { get; set; } = string.Empty;
     }
 
     private sealed record BuildAttempt(
-        PromptTokenLimit Content,
         PromptCompactElement ContextElement,
         VisualTargetPublicationBatch Publication,
-        IReadOnlyDictionary<PromptCompactElement, ProjectionNode> TargetElements,
-        IReadOnlyDictionary<PromptTextChunk, ProjectionNode> ContentNodes
+        IReadOnlyDictionary<PromptCompactElement, ProjectionNode> TargetElements
     );
 }
+
+/// <summary>
+/// Contains final model-facing text and the number of targets represented by that individual build.
+/// </summary>
+public sealed record VisualContextPromptBuildResult(string Content, int RepresentedTargetCount);

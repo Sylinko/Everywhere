@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using ZLinq;
+using Everywhere.Extensions;
 
 namespace Everywhere.Automation;
 
@@ -9,7 +10,7 @@ namespace Everywhere.Automation;
 /// <remarks>
 /// This is the only replacement-pipeline phase that calls platform Elements. Planning and PromptNode construction consume the returned in-memory Snapshot.
 /// </remarks>
-public sealed class VisualContextSnapshotter
+public static class VisualContextSnapshotter
 {
     /// <summary>
     /// Creates one bounded Snapshot around the supplied core Elements.
@@ -19,17 +20,19 @@ public sealed class VisualContextSnapshotter
     /// <param name="limits">The monotonic risk limits, or <see langword="null" /> to use <see cref="VisualContextSnapshotLimits.Default" />.</param>
     /// <param name="allowedTraverseDirections">The relations that traversal may observe.</param>
     /// <param name="cancellationToken">The caller cancellation token.</param>
+    /// <param name="onTopLevelObserved">Optional synchronous notification for each newly admitted TopLevel. The Snapshot retains the borrowed element; the callback must not perform platform work.</param>
     /// <returns>A disposable Snapshot that owns every admitted Element until publication or disposal.</returns>
     public static VisualContextSnapshot CreateSnapshot(
         VisualContext context,
         IReadOnlyList<VisualElement> coreElements,
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
+        Action<VisualElementQueryResult>? onTopLevelObserved = null,
         CancellationToken cancellationToken = default)
     {
         var effectiveLimits = limits ?? VisualContextSnapshotLimits.Default;
         effectiveLimits.Validate();
-        return new Traversal(context, coreElements, effectiveLimits, allowedTraverseDirections, cancellationToken).CreateSnapshot();
+        return new Traversal(context, coreElements, effectiveLimits, allowedTraverseDirections, onTopLevelObserved, cancellationToken).CreateSnapshot();
     }
 
     private sealed class Traversal(
@@ -37,6 +40,7 @@ public sealed class VisualContextSnapshotter
         IReadOnlyList<VisualElement> coreElements,
         VisualContextSnapshotLimits limits,
         VisualContextTraverseDirections allowedTraverseDirections,
+        Action<VisualElementQueryResult>? onTopLevelObserved,
         CancellationToken cancellationToken
     )
     {
@@ -65,6 +69,19 @@ public sealed class VisualContextSnapshotter
                 result.MissingFields,
                 result.Failure?.Kind,
                 GetFailureStatus(result.Failure?.Kind));
+
+            public static Observation FromTextResult(VisualElement element, VisualElementTextReadResult result)
+            {
+                var availableFields = result.Text is null ? VisualElementFields.None : VisualElementFields.Text;
+                var failureKind = result.Failure?.Kind == VisualElementQueryFailureKind.Unsupported ? null : result.Failure?.Kind;
+                return new Observation(
+                    element,
+                    new VisualElementSnapshot(null, null, null, null, result.Text, result.HasMoreText, null, null, null),
+                    availableFields,
+                    VisualElementFields.Text & ~availableFields,
+                    failureKind,
+                    GetFailureStatus(failureKind));
+            }
 
             public static Observation FromException(VisualElement element, Exception exception, VisualElementFields requestedFields) => new(
                 element,
@@ -182,6 +199,11 @@ public sealed class VisualContextSnapshotter
                     score *= GetTypeWeight(snapshot.Type ?? VisualElementType.Unknown);
                 }
 
+                if ((Observation.Snapshot.States.GetValueOrDefault() & VisualElementStates.Offscreen) != 0)
+                {
+                    score *= 0.9f; // Offscreen elements are less important than onscreen elements.
+                }
+
                 return -score;
             }
         }
@@ -200,7 +222,6 @@ public sealed class VisualContextSnapshotter
         private int _platformOperationCount;
         private int _providerFailureCount;
         private int _totalTextCharacters;
-        private bool _isComplete = true;
         private bool _shouldStop;
         private bool _isRetentionTransferred;
 
@@ -212,7 +233,7 @@ public sealed class VisualContextSnapshotter
                 ProcessQueue();
                 var roots = _nodes.Values.AsValueEnumerable().Where(static node => node.Parent is null).OrderBy(static node => node.TraversalOrdinal)
                     .ToArray();
-                var snapshot = new VisualContextSnapshot(_retention, roots, _isComplete, _status.ToArray());
+                var snapshot = new VisualContextSnapshot(_retention, roots, _status.ToArray());
                 _isRetentionTransferred = true;
                 return snapshot;
             }
@@ -299,6 +320,8 @@ public sealed class VisualContextSnapshotter
                 observation = CompleteObservation(observation);
                 node = CreateNode(work, observation);
                 _nodes.Add(id, node);
+                if (node.Snapshot.Type == VisualElementType.TopLevel)
+                    onTopLevelObserved?.Invoke(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
             }
 
             ApplyRelation(work, node!);
@@ -323,7 +346,6 @@ public sealed class VisualContextSnapshotter
             if (maximumTextCharacters == 0)
             {
                 AddSnapshotStatus("Snapshot text-content limit reached.");
-                _isComplete = false;
                 return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
             }
 
@@ -333,10 +355,11 @@ public sealed class VisualContextSnapshotter
             }
 
             Observation textObservation;
-            var request = new VisualElementQueryRequest(VisualElementFields.Text, maximumTextCharacters);
             try
             {
-                textObservation = Observation.FromResult(structuralObservation.Element.Query(request));
+                textObservation = Observation.FromTextResult(
+                    structuralObservation.Element,
+                    structuralObservation.Element.ReadText(0, maximumTextCharacters));
             }
             catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
             {
@@ -367,9 +390,8 @@ public sealed class VisualContextSnapshotter
                     Math.Max(0, limits.MaximumTotalTextCharacters - _totalTextCharacters));
                 if (text.Length > maximumLength)
                 {
-                    snapshot = snapshot with { TextPreview = text[..maximumLength], HasMoreText = true };
+                    snapshot = snapshot with { TextPreview = text.TruncateUtf16(maximumLength), HasMoreText = true };
                     status = "Text preview was truncated by the Snapshot content limit.";
-                    _isComplete = false;
                 }
 
                 _totalTextCharacters += snapshot.TextPreview?.Length ?? 0;
@@ -391,11 +413,6 @@ public sealed class VisualContextSnapshotter
             if (status is not null)
             {
                 node.AddStatus(status);
-            }
-            else if (snapshot.HasMoreText)
-            {
-                node.AddStatus("More text is available beyond this bounded preview.");
-                _isComplete = false;
             }
 
             return node;
@@ -469,7 +486,6 @@ public sealed class VisualContextSnapshotter
             if (!parent.TryAddChild(child))
             {
                 child.AddStatus("A conflicting parent observation was ignored.");
-                _isComplete = false;
             }
         }
 
@@ -479,7 +495,6 @@ public sealed class VisualContextSnapshotter
             {
                 node.AddStatus(failureStatus);
                 _providerFailureCount++;
-                _isComplete = false;
                 if (_providerFailureCount >= limits.MaximumProviderFailures)
                 {
                     Stop("Snapshot provider-failure limit reached.");
@@ -565,7 +580,7 @@ public sealed class VisualContextSnapshotter
             IVisualElementEnumerator enumerator;
             try
             {
-                enumerator = previous.Observation.Element.CreateEnumerator(relation, new VisualElementEnumerationOptions(_structuralQueryRequest));
+                enumerator = previous.Observation.Element.CreateEnumerator(relation, _structuralQueryRequest);
             }
             catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
             {
@@ -683,8 +698,6 @@ public sealed class VisualContextSnapshotter
             {
                 AddSnapshotStatus(status);
             }
-
-            _isComplete = false;
         }
 
         private bool TryBeginPlatformOperation()
@@ -719,7 +732,6 @@ public sealed class VisualContextSnapshotter
         private void Stop(string status)
         {
             AddSnapshotStatus(status);
-            _isComplete = false;
             _shouldStop = true;
         }
 

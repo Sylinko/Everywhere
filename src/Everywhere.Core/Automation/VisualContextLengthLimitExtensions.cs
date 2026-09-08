@@ -1,4 +1,4 @@
-﻿namespace Everywhere.Chat;
+﻿namespace Everywhere.Automation;
 
 public static class VisualContextLengthLimitExtensions
 {
