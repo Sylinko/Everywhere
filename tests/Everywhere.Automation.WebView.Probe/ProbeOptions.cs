@@ -1,7 +1,7 @@
 using System.Globalization;
 using Everywhere.Chat;
 
-namespace Everywhere.Automation.CefSharp.Probe;
+namespace Everywhere.Automation.WebView.Probe;
 
 internal sealed record ProbeOptions(bool IsMcpServer, IReadOnlyList<Uri> Addresses, string ListenAddress, string OutputDirectory, int Limit, int TargetTokenBudget, TimeSpan SettleDelay, TimeSpan NavigationTimeout)
 {

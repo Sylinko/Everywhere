@@ -1,7 +1,7 @@
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 
-namespace Everywhere.Automation.CefSharp.Probe;
+namespace Everywhere.Automation.WebView.Probe;
 
 internal static class McpProbeServer
 {
@@ -10,7 +10,7 @@ internal static class McpProbeServer
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = [] });
         builder.WebHost.UseUrls(options.ListenAddress);
         builder.Services.AddSingleton(options);
-        builder.Services.AddSingleton<CefSharpProbeSession>();
+        builder.Services.AddSingleton<WebViewProbeSession>();
         builder.Services
             .AddMcpServer()
             .WithHttpTransport()

@@ -62,14 +62,46 @@ public abstract class VisualElement
     }
 
     /// <summary>
+    /// Reads one bounded page of this element's textual content.
+    /// </summary>
+    /// <remarks>
+    /// Offsets address the UTF-16 text exposed by this element. The operation is best effort over a live tree and does not promise cross-call immutability.
+    /// A page may exceed <paramref name="maxCharacters" /> by one UTF-16 code unit rather than split a surrogate pair.
+    /// </remarks>
+    /// <param name="offset">The non-negative UTF-16 offset in the text exposed to the caller.</param>
+    /// <param name="maxCharacters">The positive target maximum number of UTF-16 code units requested for this page.</param>
+    public virtual VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCharacters);
+
+        EnsureUsable();
+        try
+        {
+            return ReadTextCore(offset, maxCharacters);
+        }
+        catch (Exception exception) when (TryConvertPlatformException(exception, out var convertedException))
+        {
+            if (ReferenceEquals(exception, convertedException))
+            {
+                throw;
+            }
+
+            throw convertedException;
+        }
+    }
+
+    /// <summary>
     /// Creates a lazy relation Enumerator through this element's concrete platform implementation.
     /// </summary>
-    public virtual IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementEnumerationOptions options)
+    /// <param name="relation">The topological relation to enumerate.</param>
+    /// <param name="request">The bounded scalar query applied to each yielded element.</param>
+    public virtual IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementQueryRequest request)
     {
         EnsureUsable();
         try
         {
-            return CreateEnumeratorCore(relation, options);
+            return CreateEnumeratorCore(relation, request);
         }
         catch (Exception exception) when (TryConvertPlatformException(exception, out var convertedException))
         {
@@ -154,9 +186,17 @@ public abstract class VisualElement
     protected abstract VisualElementQueryResult QueryCore(VisualElementQueryRequest request);
 
     /// <summary>
+    /// Reads one bounded text page through the concrete platform implementation.
+    /// </summary>
+    protected virtual VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) =>
+        new(null, null, new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null));
+
+    /// <summary>
     /// Creates a lazy relation Enumerator through the concrete platform implementation.
     /// </summary>
-    protected abstract IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementEnumerationOptions options);
+    /// <param name="relation">The topological relation to enumerate.</param>
+    /// <param name="request">The bounded scalar query applied to each yielded element.</param>
+    protected abstract IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request);
 
     /// <summary>
     /// Invokes the concrete element's semantic default action.

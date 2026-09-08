@@ -1,20 +1,66 @@
 ﻿using Avalonia;
 using Avalonia.Platform;
 using Everywhere.Automation;
+using Everywhere.Utilities;
+using SkiaSharp;
 using X11;
 
 namespace Everywhere.Linux.Interop.X11Backend;
 
-public class X11CapturedBitmapData(XImage xImage) : IVisualElementCapture
+/// <summary>Owns bounded copied pixels independently of the temporary XImage.</summary>
+public sealed class X11CapturedBitmapData : IVisualElementCapture
 {
-    public PixelFormat Format { get; } = DeterminePixelFormat(xImage);
-    public AlphaFormat AlphaFormat { get; } = xImage.depth == 32 ? AlphaFormat.Unpremul : AlphaFormat.Opaque;
-    public nint Data => _xImage.data;
-    public PixelSize Size { get; } = new(xImage.width, xImage.height);
-    public int Stride => _xImage.bytes_per_line;
+    /// <inheritdoc />
+    public PixelRect Bounds { get; }
 
-    private XImage _xImage = xImage;
-    private bool _disposed;
+    /// <inheritdoc />
+    public PixelFormat Format => PixelFormat.Bgra8888;
+
+    /// <inheritdoc />
+    public AlphaFormat AlphaFormat { get; }
+
+    /// <inheritdoc />
+    public nint Data => _bitmap?.GetPixels() ?? 0;
+
+    /// <inheritdoc />
+    public PixelSize Size { get; }
+
+    /// <inheritdoc />
+    public int Stride { get; }
+
+    private SKBitmap? _bitmap;
+
+    /// <summary>Copies or scales a borrowed XImage; its caller destroys the source on both success and failure.</summary>
+    public X11CapturedBitmapData(XImage xImage, PixelRect bounds)
+    {
+        Bounds = bounds;
+        Size = IVisualElementCapture.LimitOutputSize(new PixelSize(xImage.width, xImage.height));
+        if (xImage.byte_order != 0) throw new NotSupportedException("Big-endian XImage capture is not supported.");
+
+        var format = DeterminePixelFormat(xImage);
+        var colorType = format == PixelFormat.Bgra8888 ?
+            SKColorType.Bgra8888 :
+            format == PixelFormat.Rgba8888 ? SKColorType.Rgba8888 : SKColorType.Rgb565;
+        AlphaFormat = xImage.depth == 32 ? AlphaFormat.Unpremul : AlphaFormat.Opaque;
+        var alpha = xImage.depth == 32 ? SKAlphaType.Unpremul : SKAlphaType.Opaque;
+        var bitmap = new SKBitmap(new SKImageInfo(Size.Width, Size.Height, SKColorType.Bgra8888, alpha));
+        try
+        {
+            using var source = new SKPixmap(new SKImageInfo(xImage.width, xImage.height, colorType, alpha), xImage.data, xImage.bytes_per_line);
+            using var destination = bitmap.PeekPixels();
+
+            if (!source.ScalePixels(destination, new SKSamplingOptions(SKCubicResampler.CatmullRom)))
+                throw new InvalidOperationException("Failed to copy X11 pixels.");
+
+            Stride = bitmap.RowBytes;
+            _bitmap = bitmap;
+        }
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
+    }
 
     /// <summary>
     /// Infers the pixel format from XImage masks and bits_per_pixel.
@@ -39,23 +85,6 @@ public class X11CapturedBitmapData(XImage xImage) : IVisualElementCapture
         }
     }
 
-    ~X11CapturedBitmapData() => Dispose();
-
-    void IDisposable.Dispose()
-    {
-        Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose()
-    {
-        if (_disposed) return;
-
-        if (_xImage.data != IntPtr.Zero)
-        {
-            Xutil.XDestroyImage(ref _xImage);
-            _xImage = default;
-        }
-        _disposed = true;
-    }
+    /// <inheritdoc />
+    public void Dispose() => DisposeHelper.DisposeToDefault(ref _bitmap);
 }

@@ -42,9 +42,11 @@ public abstract class VisualElement
 
     public virtual VisualElementQueryResult Query(VisualElementQueryRequest request);
 
+    public virtual VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
+
     public virtual IVisualElementEnumerator CreateEnumerator(
         VisualElementRelation relation,
-        VisualElementEnumerationOptions options);
+        VisualElementQueryRequest request);
 
     public virtual void Invoke();
     public virtual void SetText(string text);
@@ -114,7 +116,7 @@ Relation semantics are:
 - `Child` yields immediate children in platform-composed order;
 - `PreviousSibling` and `NextSibling` begin at the adjacent sibling and continue outward;
 - results remain lazy; a large child collection is not eagerly materialized merely to discover Count;
-- callers clamp enumeration with `VisualElementEnumerationOptions` and the Traverser budget.
+- each yielded element uses the supplied `VisualElementQueryRequest`, while the Traverser budget bounds how many results are advanced and admitted.
 
 An Enumerator owns a `VisualElementRetention` for canonical elements it exposes. Disposing the Enumerator releases that batch. If a result must outlive the Enumerator, the caller retains it in the destination Snapshot, attachment, or turn before disposing the Enumerator. This is ordinary ownership transfer, not an execution pin.
 
@@ -158,6 +160,8 @@ An `ElementTarget` retains the exact canonical element represented in the output
 
 A `CompositeTarget` is a real logical target. It does not borrow the first source element's ID and is not actionable as though it were one native accessibility element. It can expose bounded member inspection, fragment expansion, and content paging according to `VisualQuery`.
 
+At the Agent boundary, both target implementations are visual elements addressed by the same integer-ID tools. `Composite` is the logical element's Prompt tag, like `Button` or `Document`, rather than a second tool-level target category. `observedMembers` communicates the member-oriented continuation behavior when it exists. The internal distinction remains necessary because a `CompositeTarget` owns retained parts and cannot be passed to a platform operation as a `VisualElement`.
+
 ## 9. Composite Semantics
 
 Composite projection addresses a real output problem: providers often split one human-readable paragraph into many tiny elements, causing structural syntax to dominate useful content. Merging is therefore required, but it must preserve queryability and action honesty.
@@ -171,9 +175,9 @@ A Composite may contain:
 - explicit evidence that it contains multiple underlying members;
 - continuation metadata when its full content or member list is not included.
 
-Planning may merge adjacent fragments, collapse transparent containers, and group a large logical region without reading the platform again. Interactive controls are not silently flattened into text. Content paging resembles `ReadFileAsync`: bounded offset and limit, explicit `hasMore`, and no promise that a later live observation is identical.
+Planning may merge adjacent fragments, collapse transparent containers, and group a large logical region without reading the platform again. Interactive controls are not silently flattened into text. `read_visual_text` pages content independently from structural queries through a zero-based UTF-16 offset. A Composite defines one logical text stream by joining its retained nonempty member texts with line separators; each call reconstructs only the bounded prefix needed to reach the requested offset and page, never the complete Composite merely to return one page. There is no promise that a later live observation is identical.
 
-The type name `Composite` intentionally describes structure rather than application semantics. It does not claim the region is a Document, chat message, article, card, or list unless the provider exposed that fact.
+The Agent-facing type name `Composite` intentionally describes structure rather than application semantics. It does not claim the region is a Document, chat message, article, card, or list unless the provider exposed that fact.
 
 ## 10. Status
 
@@ -196,7 +200,7 @@ Status strings are intentionally not decomposed into many fragile fields. Stable
 
 Target IDs are published only after the merged prompt projection determines which targets are actually visible or queryable. Publication is provisional until commit:
 
-1. `BeginTurn` establishes the current Agent ownership boundary.
+1. Chat orchestration establishes the current conversation-turn ownership boundary.
 2. `BeginPublication` captures the current monotonic ID and publication version.
 3. `Add` reuses an already retained target ID or assigns a provisional new one.
 4. Prompt construction renders a bounded validation copy, abandons targets removed by its local budget without consuming IDs, and rebuilds monotonically until target survival is stable.

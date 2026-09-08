@@ -12,10 +12,12 @@ The original monolithic [Visual Context Refactoring Specification](Refactor.md) 
 2. **[Architecture](02-Architecture.md)** — platform Backend, conversation Context, ownership batches, Agent turns, and their lifetimes.
 3. **[Element and Target Model](03-ElementModel.md)** — `VisualElement`, bounded query results, Enumerators, Agent targets, Composites, status, identity, and publication.
 4. **[Platform Backend and Native Services](04-PlatformRuntime.md)** — root acquisition, native clients, platform timeouts, failure conversion, platform-internal graph composition, and input guards.
-5. **[Snapshot Pipeline](05-SnapshotPipeline.md)** — Snapshot, merged PromptNode projection, convergence, compression, budget allocation, and determinism.
+5. **[Snapshot Pipeline](05-SnapshotPipeline.md)** — Snapshot, final-text construction, convergence, compression, budget allocation, and determinism.
 6. **[VisualQuery](06-VisualQuery.md)** — the Agent-facing query contract, continuation, mutation semantics, and action routing.
 7. **[Migration](07-Migration.md)** — current-to-target mapping, staged cutover, and deletion criteria.
 8. **[Verification](08-Verification.md)** — acceptance requirements and links to the declarative test infrastructure.
+9. **[Final Text Allocation](09-FinalTextAllocation.md)** — final-string results, progressive Root/body allocation, and publication before return.
+10. **[Query and Scan Images](10-QueryAndScanImages.md)** — Context-bound queries, optional capture preparation, and image-only animation ownership.
 
 Supporting specifications:
 
@@ -49,7 +51,7 @@ VisualElement
 |- asynchronous pixel Snapshot only where the capture API requires it
 `- concrete platform behavior and native resource release
 
-Snapshot -> Project PromptNode -> atomic target publication
+Snapshot -> build and validate final text -> atomic target publication
 ```
 
 The decisive separation is:
@@ -65,11 +67,10 @@ There is no current in-process worker pool, Dispatcher, custom `TaskScheduler`, 
 
 ## 4. Pipeline
 
-The implementation pipeline has three phases:
+The implementation pipeline has two phases:
 
 1. **Snapshot** is the only phase allowed to read live platform visual state. It preserves Weighted BFS and returns a bounded, partial observation plus explicit status.
-2. **Plan** is pure in-memory normalization, root coalescing, transparent-container collapse, Composite projection, and approximate budget allocation.
-3. **Build PromptNode** owns output structure, escaping, cost estimation, late target-ID publication, and the final structured `PromptNode` result.
+2. **Build** performs pure in-memory normalization, transparent-container collapse, Composite projection, progressive budget allocation, and final-text validation before target publication. PromptNode remains an internal syntax mechanism, not a deferred Chat-side allocation strategy.
 
 `VisualQuery` is the Agent-facing boundary over these phases. It replaces the assumption that one eager `get_visual_tree` call can describe the complete application.
 
@@ -79,7 +80,7 @@ The implementation pipeline has three phases:
 2. **Preserve the tuned relevance algorithm.** Weighted BFS, `TraverseDistance`, direction weights, type weights, core priority, and visited-element deduplication remain the canonical observation order.
 3. **Compress without losing queryability.** Fragmented content and structurally expensive regions may become `Composite` targets while useful members and interactive descendants remain inspectable.
 4. **Keep identity honest.** An Element ID resolves to one retained `VisualElement`; a Composite ID resolves to a logical `CompositeTarget` and never aliases a convenient source element.
-5. **Support bounded follow-up reads.** Large content, collections, and Composites use 1-based offsets, clamped limits, `nextOffset`, and `hasMore` semantics similar to `read_file`.
+5. **Support bounded follow-up reads.** Structural member paging uses 1-based offsets; text paging uses zero-based UTF-16 offsets. Clamped limits, structural `moreText`, and the current page's `next` keep discovery and continuation separate.
 6. **Keep degradation explicit.** Missing fields, limits, timeouts, incomplete enumeration, unavailable input quiescence, and unresponsive providers appear as bounded status on the affected target or root.
 7. **Remain deterministic for equivalent observations.** Equivalent snapshot facts, options, and initial publication state produce the same ordering, projections, status, and IDs.
 8. **Remove legacy entanglement.** The final implementation deletes the old DTO, pre-render ID allocation, detail-level format selection, and legacy `get_visual_tree` contract.
@@ -94,7 +95,7 @@ The implementation pipeline has three phases:
 - A read is best effort. An overlay may reduce user-driven mutation, but it is not a tree lock, immutable snapshot, native transaction, or lifetime owner.
 - Continuation is Agent-directed. The implementation does not use fingerprints, similarity matching, hidden retry, or automatic re-anchoring to pretend a live tree is stable.
 - Token counts are approximate because model tokenizers differ. A projection-specific estimator guides Plan; exact character or serialized-byte fences remain valid transport protections.
-- The durable model-facing result is a `PromptNode`. The current visual projection uses `PromptCompactElement`, an intentionally XML-like but non-XML node with compact scalar attributes and sparse valueless flags. Safe delimiter-free values may omit quotes. Syntax belongs to the prompt builder and Renderer rather than platform traversal.
+- The durable model-facing result is final text. Internal construction uses `PromptCompactElement`, an intentionally XML-like but non-XML node with compact scalar attributes and sparse valueless flags. Safe delimiter-free values may omit quotes. Syntax belongs to the prompt builder and Renderer rather than platform traversal.
 - Future query-host process isolation is a separate containment boundary. Current process-local APIs do not introduce speculative handles or RPC-shaped abstractions.
 
 ## 7. Non-Goals

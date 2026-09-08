@@ -22,8 +22,8 @@ namespace Everywhere.Views;
 ///    and a UI particle dynamically morphs (fades and scales) from the raw image bounds into its 
 ///    final DataContext-bound destination (e.g., a `ChatAttachment` chip) while tracking the window.
 ///    
-/// 2. Multi-Element Swarm (`ScanEffectScope` / `VisualContextBuilder`):
-///    Used during automated visual tree building. Employs a DPI-aware, batched TopLevel screenshot strategy
+/// 2. Multi-Element Swarm (`ScanEffectScope` / visual-context Snapshot pipeline):
+///    Used during automated visual-tree observation. Employs a DPI-aware, batched TopLevel screenshot strategy
 ///    where hundreds of `IImage` sub-crops are fired sequentially based on a heuristic queue. 
 ///    The physics engine applies lateral scattering ("flocking") and Hooke's Law spring dynamics to 
 ///    absorb particles seamlessly behind the chatbot mascot (Eva). Masking is handled via a transparent Overlay window.
@@ -36,8 +36,10 @@ public sealed class VisualElementEffect(
     private readonly IVisualElementAnimationTarget _animationTarget = animationTarget;
     private readonly List<VisualElementEffectWindow> _effectWindows = [];
 
-    public async Task CreatePickEffect(VisualElement visualElement, ChatAttachment chatAttachment)
+    /// <summary>Consumes an owned capture and plays a pick animation, releasing it on every exit path.</summary>
+    public async Task CreatePickEffect(IVisualElementCapture capture, ChatAttachment chatAttachment)
     {
+        using var ownedCapture = capture;
         try
         {
             if (_effectWindows.Count == 0)
@@ -53,22 +55,15 @@ public sealed class VisualElementEffect(
                 return;
             }
 
-            var (sourceBounds, startBitmap) = await Task.Run(async () =>
-            {
-                var bounds = visualElement.Query(new VisualElementQueryRequest(VisualElementFields.Bounds, 0)).Snapshot.Bounds.GetValueOrDefault();
-                if (bounds.Width <= 0 || bounds.Height <= 0)
-                {
-                    return (bounds, null);
-                }
-
-                return (bounds, await CreateStartBitmapAsync(visualElement));
-            }).WaitAsync(TimeSpan.FromSeconds(3));
+            var sourceBounds = capture.Bounds;
+            var startBitmap = capture.ToAvaloniaBitmap();
             if (startBitmap is null)
             {
                 chatAttachment.Opacity = 1d;
                 return;
             }
 
+            using var image = new VisualEffectImage<Bitmap>(startBitmap);
             foreach (var effectWindow in _effectWindows)
             {
 #if !IsMacOS
@@ -86,7 +81,7 @@ public sealed class VisualElementEffect(
                 effectWindow.AddParticle<PickVisualElementParticle>(
                     startPoint,
                     tracker,
-                    startBitmap,
+                    image,
                     chatAttachment,
                     startSize);
             }
@@ -97,20 +92,8 @@ public sealed class VisualElementEffect(
         }
     }
 
-    private static async Task<Bitmap?> CreateStartBitmapAsync(VisualElement visualElement)
-    {
-        try
-        {
-            using var pointer = await visualElement.CaptureAsync(CancellationToken.None);
-            return pointer.ToAvaloniaBitmap();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public ScanEffectScope CreateScanEffect(VisualContext context, CancellationToken cancellationToken) => new(this, logger, context.CreateRetention(), cancellationToken);
+    /// <summary>Creates an image-consumer scope with no native-element or Context ownership.</summary>
+    public ScanEffectScope CreateScanEffect(CancellationToken cancellationToken) => new(this, logger, cancellationToken);
 
     public void ArrangeEffectWindows()
     {
@@ -148,142 +131,80 @@ public sealed class VisualElementEffect(
         }
     }
 
-    /// <summary>
-    /// Owns the asynchronous visual-effect queue and every element retained while that queue is active.
-    /// </summary>
-    public sealed class ScanEffectScope(
-        VisualElementEffect owner,
-        ILogger logger,
-        VisualElementRetention retention,
-        CancellationToken cancellationToken
-    ) : IDisposable
+    /// <summary>Owns a bounded capture queue. Complete hands draining to the consumer; disposing before Complete abandons queued images.</summary>
+    public sealed class ScanEffectScope(VisualElementEffect owner, ILogger logger, CancellationToken cancellationToken) : IDisposable
     {
-
-        private readonly HashSet<nint> _emittedWindowHandles = [];
-        private readonly Channel<VisualElementQueryResult> _emissionQueue = Channel.CreateBounded<VisualElementQueryResult>(
-            new BoundedChannelOptions(1000)
-            {
-                SingleReader = true,
-                SingleWriter = false
-            });
-
-        private readonly CancellationTokenSource _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // A capture can occupy 64 MiB. Do not turn the old thousand-element queue into a thousand-image queue.
+        private readonly Channel<IVisualElementCapture> _emissionQueue = Channel.CreateBounded<IVisualElementCapture>(new BoundedChannelOptions(4)
+        {
+            SingleReader = true, SingleWriter = true
+        });
         private int _completionState;
 
-        public void Add(VisualElementQueryResult queryResult)
+        /// <summary>Takes ownership, including when a completed, canceled, or full scope discards the capture.</summary>
+        public void AddCapture(IVisualElementCapture capture)
         {
-            if (Volatile.Read(ref _completionState) != 0) return;
-            if (!_emissionQueue.Writer.TryWrite(queryResult)) return;
-            retention.Retain(queryResult.Element);
+            if (cancellationToken.IsCancellationRequested || Volatile.Read(ref _completionState) != 0 || !_emissionQueue.Writer.TryWrite(capture))
+                capture.Dispose();
         }
 
-        /// <summary>
-        /// Completes successful production and starts draining the queued visual effects.
-        /// </summary>
-        /// <remarks>
-        /// Consumption starts only after production so the effect does not mutate the same VisualContext concurrently with Snapshot traversal.
-        /// </remarks>
+        /// <summary>Completes production and drains owned images independently of the query Context.</summary>
         public void Complete()
         {
             if (Interlocked.CompareExchange(ref _completionState, 1, 0) != 0) return;
             _emissionQueue.Writer.TryComplete();
-            Task.Run(() => EmissionLoopAsync(_cancellationTokenSource.Token), CancellationToken.None).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+            Task.Run(EmissionLoopAsync, CancellationToken.None).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         }
 
-        /// <summary>
-        /// Cancels an incomplete effect scope so its operation-level element retention can be released promptly.
-        /// </summary>
+        /// <summary>Discards incomplete production; after Complete the consumer owns cleanup.</summary>
         public void Dispose()
         {
             if (Interlocked.CompareExchange(ref _completionState, 2, 0) != 0) return;
             _emissionQueue.Writer.TryComplete();
-            retention.Dispose();
-            _cancellationTokenSource.Dispose();
+            Drain();
         }
 
-        private async Task EmissionLoopAsync(CancellationToken cancellationToken)
+        private void Drain()
+        {
+            while (_emissionQueue.Reader.TryRead(out var capture)) capture.Dispose();
+        }
+
+        private async Task EmissionLoopAsync()
         {
             try
             {
                 await Dispatcher.UIThread.InvokeAsync(owner.ArrangeEffectWindows, DispatcherPriority.Render, cancellationToken);
-
-                while (await _emissionQueue.Reader.WaitToReadAsync(cancellationToken))
+                while (_emissionQueue.Reader.TryRead(out var capture))
                 {
-                    while (_emissionQueue.Reader.TryRead(out var queryResult))
+                    using (capture)
                     {
-                        if (owner._effectWindows.Count == 0) return;
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (capture.Bounds.Width <= 16 || capture.Bounds.Height <= 16) continue;
 
-                        try
-                        {
-                            if (GetTopLevel(queryResult) is not { } topLevelResult) continue;
-                            var topLevel = topLevelResult.Element;
-                            var topLevelSnapshot = topLevelResult.Snapshot;
-                            if (topLevelSnapshot.States.GetValueOrDefault().HasFlag(VisualElementStates.Offscreen)) continue;
+                        var image = capture.ToSKImage();
+                        if (image is null) continue;
 
-                            var windowHandle = topLevelSnapshot.NativeWindowHandle.GetValueOrDefault();
-                            if (windowHandle == 0) continue; // Allow screen (-1)
-
-                            if (!_emittedWindowHandles.Add(windowHandle)) continue; // Already emitted
-
-                            var boundingRectangle = topLevelSnapshot.Bounds.GetValueOrDefault();
-                            if (boundingRectangle.Width <= 16 || boundingRectangle.Height <= 16) continue;
-
-                            SKImage? topLevelImage;
-                            try
-                            {
-                                using var pointer = await topLevel.CaptureAsync(cancellationToken);
-                                topLevelImage = pointer.ToSKImage();
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogWarning(ex, "Failed to capture TopLevel for visual effect. {NativeWindowHandle}", windowHandle);
-                                continue;
-                            }
-
-                            if (topLevelImage is null) continue;
-
-                            await Dispatcher.UIThread.InvokeAsync(
-                                () => EmitParticle(boundingRectangle, topLevelImage),
-                                DispatcherPriority.Render,
-                                cancellationToken);
-                        }
-                        catch (Exception)
-                        {
-                            logger.LogWarning("Failed to emit visual element particle for element {ElementId}", queryResult.Element.Id);
-                        }
+                        using var sharedImage = new VisualEffectImage<SKImage>(image);
+                        await Dispatcher.UIThread.InvokeAsync(
+                            () => EmitParticle(capture.Bounds, sharedImage),
+                            DispatcherPriority.Render,
+                            cancellationToken);
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+            catch (Exception exception)
             {
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Unexpected error in visual element effect emission loop");
+                logger.LogWarning(exception, "Failed to play scan captures.");
             }
             finally
             {
                 Interlocked.Exchange(ref _completionState, 2);
-                _emissionQueue.Writer.TryComplete();
-                retention.Dispose();
-                _cancellationTokenSource.Dispose();
+                Drain();
             }
         }
 
-        private VisualElementQueryResult? GetTopLevel(VisualElementQueryResult current)
-        {
-            var node = current;
-            while (true)
-            {
-                if (node.Snapshot.Type == VisualElementType.TopLevel) return node;
-                using var parentEnumerator = node.Element.CreateEnumerator(VisualElementRelation.Parent, new VisualElementEnumerationOptions(VisualElementQueryRequest.Default));
-                if (!parentEnumerator.MoveNext()) return null;
-                node = parentEnumerator.Current;
-                retention.Retain(node.Element);
-            }
-        }
-
-        private void EmitParticle(PixelRect bounds, SKImage image)
+        private void EmitParticle(PixelRect bounds, VisualEffectImage<SKImage> image)
         {
             foreach (var effectWindow in owner._effectWindows)
             {
@@ -292,16 +213,8 @@ public sealed class VisualElementEffect(
 
                 var sourceCenter = new PixelPoint(bounds.Center.X, bounds.Center.Y);
                 var startPoint = effectWindow.ScreenPixelToLocal(sourceCenter);
-                var startSize = new Size(
-                    Math.Max(16, bounds.Width / effectWindow.Scale),
-                    Math.Max(16, bounds.Height / effectWindow.Scale));
-
-                effectWindow.AddParticle<ScanVisualElementParticle>(
-                    startPoint,
-                    null,
-                    image,
-                    null,
-                    startSize);
+                var startSize = new Size(Math.Max(16, bounds.Width / effectWindow.Scale), Math.Max(16, bounds.Height / effectWindow.Scale));
+                effectWindow.AddParticle<ScanVisualElementParticle>(startPoint, null, image, null, startSize);
             }
         }
     }

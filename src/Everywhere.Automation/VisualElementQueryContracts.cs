@@ -251,18 +251,6 @@ public readonly record struct VisualElementQueryRequest
 }
 
 /// <summary>
-/// Configures lazy enumeration of one visual relation.
-/// </summary>
-/// <param name="QueryRequest">The bounded scalar query applied to every enumerated element.</param>
-public readonly record struct VisualElementEnumerationOptions(VisualElementQueryRequest QueryRequest)
-{
-    /// <summary>
-    /// Gets the default bounded enumeration options.
-    /// </summary>
-    public static VisualElementEnumerationOptions Default { get; } = new(VisualElementQueryRequest.Default);
-}
-
-/// <summary>
 /// Contains the requested scalar fields observed for one visual element.
 /// </summary>
 /// <param name="Id">The stable identity within the owning Visual Context.</param>

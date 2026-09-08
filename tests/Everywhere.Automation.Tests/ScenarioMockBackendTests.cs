@@ -36,7 +36,7 @@ public sealed class ScenarioMockBackendTests
             return new Text($"item-{index}");
         }));
         using var backend = new ScenarioMockBackend(new VisualScenarioGenerator().Generate(scenario, 42));
-        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementEnumerationOptions.Default);
+        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
 
         Assert.Multiple(() =>
         {
@@ -57,7 +57,7 @@ public sealed class ScenarioMockBackendTests
     public void CreateEnumerator_WhenCountIsUnavailable_PreservesLookaheadWithoutMaterialization()
     {
         using var backend = CreateBackend(new Panel(new Text("first"), new Text("second")), hasCount: false);
-        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementEnumerationOptions.Default);
+        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
         Assert.Multiple(() =>
         {
             Assert.That(enumerator.Count, Is.EqualTo(-1));
@@ -71,7 +71,7 @@ public sealed class ScenarioMockBackendTests
     public void MoveNext_WhenScenarioIsMutable_AdvancesExactlyOncePerAttempt()
     {
         using var backend = CreateBackend(new OnMoveNext(step => new Panel(new Text($"state-{step}-first"), new Text($"state-{step}-second"))));
-        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementEnumerationOptions.Default);
+        using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
         Assert.That(enumerator.MoveNext(), Is.True);
         var first = enumerator.Current.Snapshot.TextPreview;
         Assert.That(enumerator.MoveNext(), Is.True);
@@ -103,22 +103,60 @@ public sealed class ScenarioMockBackendTests
     }
 
     [Test]
+    public void ReadText_WhenContentSpansPages_ReturnsNumericOffsetsWithoutSkippingText()
+    {
+        using var backend = CreateBackend(new Text("0123456789"));
+
+        var first = backend.RootElement.ReadText(maxCharacters: 4);
+        var second = backend.RootElement.ReadText(first.NextOffset.GetValueOrDefault(), 4);
+        var third = backend.RootElement.ReadText(second.NextOffset.GetValueOrDefault(), 4);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.Text, Is.EqualTo("0123"));
+            Assert.That(first.NextOffset, Is.EqualTo(4));
+            Assert.That(second.Text, Is.EqualTo("4567"));
+            Assert.That(second.NextOffset, Is.EqualTo(8));
+            Assert.That(third.Text, Is.EqualTo("89"));
+            Assert.That(third.NextOffset, Is.Null);
+        });
+    }
+
+    [Test]
+    public void ReadText_WhenControlHasNoText_ReturnsUnsupportedFailure()
+    {
+        using var backend = CreateBackend(new Button("Run"));
+
+        var result = backend.RootElement.ReadText();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Text, Is.Null);
+            Assert.That(result.NextOffset, Is.Null);
+            Assert.That(result.Failure?.Kind, Is.EqualTo(VisualElementQueryFailureKind.Unsupported));
+        });
+    }
+
+    [Test]
     public void Build_WhenUsingAutomationElements_ConsumesScenarioWithinBudget()
     {
         var generated = new VisualScenarioGenerator().Generate(CommonScenarios.Chat, 42);
         using var backend = new ScenarioMockBackend(generated);
         using var turn = backend.Context.BeginTurn();
-        var targetPublication = backend.Context.BeginPublication();
-        using var retention = backend.Context.CreateRetention();
-        var builder = new VisualContextBuilder([backend.RootElement], retention, targetPublication, 512, VisualContextDetailLevel.Compact, VisualContextTraverseDirections.Child);
-        var output = builder.Build(CancellationToken.None);
+        var limits = new VisualContextSnapshotLimits { MaximumNodes = 128, MaximumChildrenPerNode = 64, MaximumPlatformOperations = 512 };
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            backend.Context,
+            [backend.RootElement],
+            limits,
+            VisualContextTraverseDirections.Child);
+        var output = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 512 }).ToString();
 
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.Empty);
-            Assert.That(builder.BuiltVisualElements, Is.Not.Empty);
-            Assert.That(backend.Operations.MoveNextAttemptCount, Is.LessThan(200));
-            Assert.That(backend.Operations.ElementCreatedCount, Is.LessThan(100));
+            Assert.That(turn.Count, Is.GreaterThan(0));
+            Assert.That(backend.Operations.MoveNextAttemptCount, Is.LessThanOrEqualTo(limits.MaximumPlatformOperations));
+            Assert.That(backend.Operations.ElementCreatedCount, Is.LessThanOrEqualTo(limits.MaximumPlatformOperations + backend.RootElements.Count));
         });
     }
 

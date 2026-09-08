@@ -60,4 +60,12 @@ public sealed class VisualElementEffectWindow : VisualElementOverlayWindow
     {
         if (!_pickHost.HasActiveParticles && !_scanHost.HasActiveParticles) Hide();
     }
+
+    /// <inheritdoc />
+    protected override void OnClosed(EventArgs e)
+    {
+        _pickHost.ClearParticles();
+        _scanHost.ClearParticles();
+        base.OnClosed(e);
+    }
 }

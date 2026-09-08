@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WebViewTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.WebView.TestApp\Everywhere.Automation.WebView.TestApp.csproj</WebViewTestAppProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj" />
+    <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
+  </ItemGroup>
+
+  <Target Name="GenerateWebViewTestAppPath" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="$(WebViewTestAppProject)" Targets="Build" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained" />
+    <MSBuild Projects="$(WebViewTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_WebViewTestAppExecutablePath" />
+    </MSBuild>
+
+    <Error Condition="'@(_WebViewTestAppExecutablePath)' == ''" Text="The WebView TestApp did not report an executable path." />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_WebViewTestAppExecutablePath)')" Text="The WebView TestApp executable was not built: @(_WebViewTestAppExecutablePath)" />
+
+    <PropertyGroup>
+      <GeneratedWebViewTestAppPath>$(IntermediateOutputPath)WebViewTestAppPath.g.cs</GeneratedWebViewTestAppPath>
+      <_WebViewTestAppExecutablePathValue>@(_WebViewTestAppExecutablePath)</_WebViewTestAppExecutablePathValue>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_WebViewTestAppPathSource Remove="@(_WebViewTestAppPathSource)" />
+      <_WebViewTestAppPathSource Include="// &lt;auto-generated /&gt;" />
+      <_WebViewTestAppPathSource Include="namespace Everywhere.Automation.WebView.Probe%3B" />
+      <_WebViewTestAppPathSource Include="internal static class WebViewTestAppPath" />
+      <_WebViewTestAppPathSource Include="{" />
+      <_WebViewTestAppPathSource Include="    public const string Executable = &quot;&quot;&quot;$(_WebViewTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_WebViewTestAppPathSource Include="}" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(GeneratedWebViewTestAppPath)" Lines="@(_WebViewTestAppPathSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedWebViewTestAppPath)" Visible="false" />
+    </ItemGroup>
+  </Target>
+</Project>
