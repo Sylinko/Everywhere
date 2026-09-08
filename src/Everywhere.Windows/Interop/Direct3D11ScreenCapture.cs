@@ -36,6 +36,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     public AlphaFormat AlphaFormat => AlphaFormat.Premul;
     public nint Data { get; private set; }
     public PixelSize Size { get; private set; }
+    public PixelRect Bounds { get; }
     public int Stride { get; private set; }
 
     private readonly ID3D11Device? _d3D11Device;
@@ -56,7 +57,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 
     // https://blog.adeltax.com/dwm-thumbnails-but-with-idcompositionvisual/
     // https://gist.github.com/ADeltaX/aea6aac248604d0cb7d423a61b06e247
-    private Direct3D11ScreenCapture(nint sourceHWnd, PixelRect relativeRect)
+    private Direct3D11ScreenCapture(nint sourceHWnd, PixelPoint sourceOrigin, PixelRect relativeRect)
     {
         try
         {
@@ -77,6 +78,18 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
             {
                 throw new InvalidOperationException("Failed to query thumbnail source size.");
             }
+
+            // Clip against the actual thumbnail surface, not the desktop or the queried TopLevel bounds.
+            // DWM may expose content for an offscreen or minimized window.
+            relativeRect = relativeRect.Intersect(new PixelRect(0, 0, srcSize.Width, srcSize.Height));
+            if (relativeRect.Width <= 0 || relativeRect.Height <= 0)
+                throw new InvalidOperationException("The requested region does not intersect the DWM source surface.");
+
+            Bounds = new PixelRect(
+                checked(sourceOrigin.X + relativeRect.X),
+                checked(sourceOrigin.Y + relativeRect.Y),
+                relativeRect.Width,
+                relativeRect.Height);
 
             // Create D3D and DXGI device
             _d3D11Device = D3D11.D3D11CreateDevice(DriverType.Hardware, DeviceCreationFlags.BgraSupport);
@@ -123,21 +136,24 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 
             // Create a transform matrix for translation
             using var transform = _dCompositionDesktopDevice.CreateMatrixTransform();
-            var matrix = Matrix3x2.CreateTranslation(-relativeRect.X, -relativeRect.Y);
+            var outputSize = IVisualElementCapture.LimitOutputSize(relativeRect.Size);
+            var matrix =
+                Matrix3x2.CreateTranslation(-relativeRect.X, -relativeRect.Y) *
+                Matrix3x2.CreateScale((float)outputSize.Width / relativeRect.Width, (float)outputSize.Height / relativeRect.Height);
             transform.SetMatrix(ref matrix);
             _dCompositionVisual.SetTransform(transform);
 
             // Set the clip region
-            containerVisual.SetClip(new RawRectF(0, 0, relativeRect.Width, relativeRect.Height));
+            containerVisual.SetClip(new RawRectF(0, 0, outputSize.Width, outputSize.Height));
 
             var visual = Visual.FromAbi(containerVisual.NativePointer);
-            visual.Size = new Vector2(relativeRect.Width, relativeRect.Height);
+            visual.Size = new Vector2(outputSize.Width, outputSize.Height);
 
             _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                 _direct3DDevice,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 2, // Use a buffer of 2 to avoid capture lag
-                new SizeInt32(relativeRect.Width, relativeRect.Height));
+                new SizeInt32(outputSize.Width, outputSize.Height));
 
             var item = GraphicsCaptureItem.CreateFromVisual(visual);
             _session = _framePool.CreateCaptureSession(item);
@@ -254,17 +270,23 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         });
     }
 
+    /// <summary>Captures the available part of a window-local region, scaling composition output before readback.</summary>
+    /// <param name="sourceHWnd">The native window providing the DWM surface.</param>
+    /// <param name="sourceOrigin">The observed screen-space origin corresponding to the surface origin.</param>
+    /// <param name="relativeRect">The requested physical-pixel rectangle relative to that origin.</param>
+    /// <param name="cancellationToken">Cancellation for the frame wait.</param>
     public static async Task<IVisualElementCapture> CaptureAsync(
         nint sourceHWnd,
+        PixelPoint sourceOrigin,
         PixelRect relativeRect,
         CancellationToken cancellationToken = default)
     {
-        var screenCapture = await Dispatcher.UIThread.InvokeOnDemandAsync(() => new Direct3D11ScreenCapture(sourceHWnd, relativeRect));
+        var screenCapture = await Dispatcher.UIThread.InvokeOnDemandAsync(() => new Direct3D11ScreenCapture(sourceHWnd, sourceOrigin, relativeRect));
 
         try
         {
             await screenCapture.CaptureFrameAsync(cancellationToken);
-            return screenCapture;
+            return ResizedScreenCapture.Limit(screenCapture);
         }
         catch
         {

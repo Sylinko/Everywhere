@@ -5,14 +5,23 @@ using Everywhere.Automation;
 
 namespace Everywhere.Mac.Interop;
 
+/// <summary>Owns a bounded RGBA bitmap and its independently specified desktop coverage.</summary>
 public sealed class CapturedBitmapData : SafeHandle, IVisualElementCapture
 {
+    /// <inheritdoc />
+    public PixelRect Bounds { get; }
+    /// <inheritdoc />
     public PixelFormat Format { get; }
+    /// <inheritdoc />
     public AlphaFormat AlphaFormat { get; }
+    /// <inheritdoc />
     public nint Data => handle;
+    /// <inheritdoc />
     public PixelSize Size { get; }
+    /// <inheritdoc />
     public int Stride { get; }
 
+    /// <summary>Creates an empty owned capture for an element without a drawable region.</summary>
     public static CapturedBitmapData Empty => new();
 
     private CapturedBitmapData() : base(0, true)
@@ -23,33 +32,41 @@ public sealed class CapturedBitmapData : SafeHandle, IVisualElementCapture
         Stride = 0;
     }
 
-    public CapturedBitmapData(CGImage cgImage) : base(0, true)
+    /// <summary>Draws a borrowed CGImage into bounded owned storage without changing its desktop coverage.</summary>
+    public CapturedBitmapData(CGImage cgImage, PixelRect bounds) : base(0, true)
     {
         Format = PixelFormat.Rgba8888;
         AlphaFormat = AlphaFormat.Premul;
 
-        var width = (int)cgImage.Width;
-        var height = (int)cgImage.Height;
+        Bounds = bounds;
+        Size = VisualElementCapture.GetOutputSize(new PixelSize(checked((int)cgImage.Width), checked((int)cgImage.Height)));
+        var width = Size.Width;
+        var height = Size.Height;
 
-        Size = new PixelSize(width, height);
-        Stride = width * 4;
+        Stride = checked(width * 4);
 
-        SetHandle(Marshal.AllocHGlobal(Stride * height));
+        SetHandle(Marshal.AllocHGlobal(checked(Stride * height)));
 
-        using var colorSpace = CGColorSpace.CreateDeviceRGB();
-        const int bitsPerComponent = 8;
-        using var context = new CGBitmapContext(
-            Data,
-            width,
-            height,
-            bitsPerComponent,
-            Stride,
-            colorSpace,
-            CGImageAlphaInfo.PremultipliedLast);
+        try
+        {
+            using var colorSpace = CGColorSpace.CreateDeviceRGB();
+            const int bitsPerComponent = 8;
+            using var context = new CGBitmapContext(Data, width, height, bitsPerComponent, Stride, colorSpace, CGImageAlphaInfo.PremultipliedLast);
 
-        context.DrawImage(new CGRect(0, 0, width, height), cgImage);
+            // Allocate the destination at its final resolution, not an intermediate full-size RGBA copy.
+            // TODO(macOS): Verify row orientation and channel order with an asymmetric colored test image.
+            var destination = new CGRect(0, 0, width, height);
+            context.ClearRect(destination);
+            context.DrawImage(destination, cgImage);
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
+    /// <inheritdoc />
     protected override bool ReleaseHandle()
     {
         Marshal.FreeHGlobal(Data);

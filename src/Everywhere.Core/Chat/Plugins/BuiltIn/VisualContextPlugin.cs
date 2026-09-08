@@ -1,9 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Security;
-using System.Text;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
@@ -13,7 +10,6 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
-using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 using Everywhere.Statistics;
 using Everywhere.Storage;
@@ -25,6 +21,8 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 
 public sealed class VisualContextPlugin : BuiltInChatPlugin
 {
+    private const int ListWindowsTokenBudget = 20_000;
+
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Description);
     public override LucideIconKind? Icon => LucideIconKind.Component;
@@ -66,6 +64,11 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                     isExperimental: true));
             list.Add(
                 new BuiltInChatFunction(
+                    ReadVisualText,
+                    ChatFunctionPermissions.ScreenRead,
+                    isExperimental: true));
+            list.Add(
+                new BuiltInChatFunction(
                     ExecuteVisualActionsAsync,
                     ChatFunctionPermissions.ScreenAccess,
                     isExperimental: true,
@@ -74,7 +77,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     }
 
     [KernelFunction("list_windows")]
-    [Description("Lists all windows with their hwnd, title, process information, and state.")]
+    [Description("List current top-level windows and return integer visual element IDs for later query, capture, or action calls.")]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Description)]
@@ -82,99 +85,49 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginDisplaySink displaySink)
     {
-        var windowCount = 0;
-        var xmlBuilder = new StringBuilder();
+        var windows = new List<VisualElementQueryResult>();
         using var retention = chatContext.VisualContext.CreateRetention();
         foreach (var screenResult in GetScreens(retention))
         {
             var screen = screenResult.Element;
-            var screenSnapshot = screenResult.Snapshot;
-            xmlBuilder.Append("<Screen");
-            if (screenSnapshot.Bounds is { } screenBounds)
-            {
-                xmlBuilder.Append(" box=\"")
-                    .Append(screenBounds.X).Append(',')
-                    .Append(screenBounds.Y).Append(',')
-                    .Append(screenBounds.Width).Append(',')
-                    .Append(screenBounds.Height).Append('"');
-            }
-            xmlBuilder.AppendLine(">");
-
-            using var windows = screen.CreateEnumerator(
+            using var windowEnumerator = screen.CreateEnumerator(
                 VisualElementRelation.Child,
-                new VisualElementEnumerationOptions(VisualElementQueryRequest.Default));
-            while (windows.MoveNext())
+                new VisualElementQueryRequest(
+                    VisualElementFields.Type | VisualElementFields.States | VisualElementFields.Name | VisualElementFields.Bounds |
+                    VisualElementFields.ProcessId,
+                    0));
+            while (windowEnumerator.MoveNext())
             {
                 try
                 {
-                    var windowResult = windows.Current;
-                    var windowSnapshot = windowResult.Snapshot;
-                    if (windowSnapshot.Type != VisualElementType.TopLevel) continue;
-                    xmlBuilder.Append("  <TopLevel ");
-
-                    if (windowSnapshot.Name is { Length: > 0 } name)
-                    {
-                        xmlBuilder.Append(" name=\"").Append(SecurityElement.Escape(name)).Append('"');
-                    }
-
-                    if (windowSnapshot.Bounds is { } bounds)
-                    {
-                        xmlBuilder.Append(" box=\"")
-                            .Append(bounds.X).Append(',')
-                            .Append(bounds.Y).Append(',')
-                            .Append(bounds.Width).Append(',')
-                            .Append(bounds.Height).Append('"');
-                    }
-
-                    var processId = windowSnapshot.ProcessId.GetValueOrDefault(-1);
-                    if (processId > 0)
-                    {
-                        xmlBuilder.Append(" pid=\"").Append(processId).Append('"');
-                        try
-                        {
-                            using var process = Process.GetProcessById(processId);
-                            xmlBuilder.Append(" process=\"").Append(SecurityElement.Escape(process.ProcessName)).Append('"');
-                        }
-                        catch
-                        {
-                            // Ignore if process not found
-                        }
-                    }
-
-                    var windowHandle = windowSnapshot.NativeWindowHandle.GetValueOrDefault();
-                    if (windowHandle > 0)
-                    {
-                        xmlBuilder.Append(" handle=\"0x").Append(windowHandle.ToString("X")).Append('"');
-                    }
-
-                    xmlBuilder.Append(" state=\"").Append(windowSnapshot.States.GetValueOrDefault().ToString()).Append('"');
-                    xmlBuilder.AppendLine("/>");
-
-                    windowCount++;
+                    var window = windowEnumerator.Current;
+                    if (window.Snapshot.Type != VisualElementType.TopLevel) continue;
+                    retention.Retain(window.Element);
+                    windows.Add(window);
                 }
                 catch
                 {
                     // Ignore windows that cannot be accessed
                 }
             }
-
-            xmlBuilder.AppendLine("</Screen>");
         }
+
+        var content = BuildWindowList(chatContext.VisualContext, windows, out var representedWindowCount);
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
-                new DirectLocaleKey(windowCount)));
+                new DirectLocaleKey(representedWindowCount)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: windowCount),
+                    ElementCount: representedWindowCount),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
-        return TokenHelper.Omit(xmlBuilder.TrimEnd().ToString(), 20000);
+        return content;
     }
 
     [KernelFunction("capture_visual_element")]
@@ -184,7 +137,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description)]
     private async Task<FileAttachment?> CaptureVisualElementAsync(
         [FromKernelServices] ChatContext chatContext,
-        [Description("ElementId, or hwnd startswith 0x")] string target,
+        [Description("Integer visual element ID returned by visual context")] int target,
         CancellationToken cancellationToken = default)
     {
         using var retention = chatContext.VisualContext.CreateRetention();
@@ -221,31 +174,27 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         Read a bounded, best-effort region of the live visual tree. Use this like read_file for on-screen UI, then follow returned integer IDs with narrower queries.
         The tree may be extremely large and can change between calls. A result can be incomplete; status reports known timeouts, provider failures, traversal limits, or prompt-budget omissions. Absence of status does not promise an exhaustive or immutable result, and this tool never retries automatically.
 
-        A decimal target ID may identify either one platform Element or one logical Composite of fragmented elements. Query both with this same operation. A hexadecimal target such as 0x1A2B3C resolves a current native window. Unavailable IDs fail instead of being reconstructed.
+        Every integer ID addresses a visual element and uses this same operation. Unavailable IDs fail instead of being reconstructed.
 
         Directions may contain parent, child, previous, next, siblings, all, or none. The result uses compact XML-like markup but is not strict XML: target IDs and delimiter-free attributes can be unquoted, and states such as focused or disabled are bare flags.
 
-        Offset is 1-based and pages only the retained observed members of a Composite. Element targets support offset 1; query a returned child ID to continue into an Element tree. Limit bounds admitted nodes and is clamped to the tool maximum.
+        Offset is 1-based. When an element exposes observedMembers, offset selects its retained observed members; pass the root's next value back with the same target to continue. Otherwise use 1 and follow returned child IDs for narrower queries. Limit bounds admitted nodes and is clamped to the tool maximum.
         """)]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Description)]
-    private PromptNode QueryVisual(
+    private async Task<string> QueryVisual(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [Description("A decimal Element or Composite ID returned by visual context, or a native window handle beginning with 0x")]
-        string target,
+        [Description("Integer visual element ID returned by visual context")] int target,
         [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, or none")]
         string directions = "all",
-        [Description("1-based retained-member offset for Composite targets; Element targets require 1")]
+        [Description("1-based retained-member offset when the element exposes observedMembers; otherwise use 1")]
         int offset = 1,
         [Description("Maximum admitted nodes; values above 256 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
         CancellationToken cancellationToken = default)
     {
-        using var targetTurn = chatContext.VisualContext.BeginTurn();
-        using var traversalRetention = chatContext.VisualContext.CreateRetention();
-        var visualTarget = ResolveVisualTarget(chatContext, traversalRetention, target);
-        var resolvedTargetCount = targetTurn.Count;
+        var visualTarget = ResolveVisualTarget(chatContext, target);
         var request = new VisualQueryRequest { Directions = ParseTraverseDirections(directions), Offset = offset, Limit = limit };
         var promptOptions = new VisualContextPromptOptions
         {
@@ -253,33 +202,60 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             DetailLevel = _persistentState.VisualContextDetailLevel,
         };
         using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
-            ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
+            ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
             null;
-        Action<VisualContextSnapshotNode>? onNodeObserved = effectScope is null ?
-            null :
-            node =>
-                effectScope.Add(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
-        var result = VisualQuery.Execute(chatContext.VisualContext, visualTarget, request, promptOptions, onNodeObserved, cancellationToken);
-        var isResolvedTargetRepresented = visualTarget is ElementTarget && request.Offset == 1;
-        var representedTargetCount = targetTurn.Count - (isResolvedTargetRepresented ? 0 : resolvedTargetCount);
+        var query = new VisualQuery(chatContext.VisualContext, effectScope is null ? null : effectScope.AddCapture);
+        var outcome = await query.ExecuteAsync(
+            visualTarget,
+            request,
+            promptOptions,
+            cancellationToken);
 
-        targetTurn.Complete();
         effectScope?.Complete();
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Result,
-                new DirectLocaleKey(representedTargetCount)));
+                new DirectLocaleKey(outcome.RepresentedTargetCount)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: representedTargetCount),
+                    ElementCount: outcome.RepresentedTargetCount),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
-        return result;
+        return outcome.Content;
+    }
+
+    [KernelFunction("read_visual_text")]
+    [Description(
+        """
+        Read one bounded page of textual content from an integer visual element ID returned by visual context. Use this when a structural result has moreText or its preview is insufficient; use query_visual for structure and navigation.
+        Pass the numeric next offset back unchanged to read the following page. Offsets address the current logical UTF-16 text stream and do not freeze the live UI, so concurrent content changes may cause overlap or omission. Known timeouts, unavailable elements, unsupported text providers, and other degraded results are reported in status. This tool never retries automatically.
+        Offset defaults to zero and is bounded to 16777216. Limit is an approximate UTF-16 code-unit bound, defaults to 4096, and is clamped to 16384. If a complete page cannot fit the tool's local prompt budget, no offset is advanced; retry the same position with a smaller limit.
+        """)]
+    [DynamicLocaleKey(
+        LocaleKey.BuiltInChatPlugin_VisualContext_ReadVisualText_Header,
+        LocaleKey.BuiltInChatPlugin_VisualContext_ReadVisualText_Description)]
+    private static string ReadVisualText(
+        [FromKernelServices] ChatContext chatContext,
+        [Description("Integer visual element ID returned by visual context")] int target,
+        [Description("Zero-based UTF-16 offset; pass the preceding result's next value, or zero for the first page")]
+        int offset = 0,
+        [Description("Approximate maximum UTF-16 code units requested; values above 16384 are clamped")]
+        int limit = VisualQuery.DefaultTextLimit)
+    {
+        if (target <= 0)
+        {
+            throw new HandledFunctionInvokingException(
+                HandledFunctionInvokingExceptionType.ArgumentError,
+                nameof(target),
+                new ArgumentException("read_visual_text requires a positive visual element ID.", nameof(target)));
+        }
+
+        return new VisualQuery(chatContext.VisualContext).ReadText(target, offset, limit);
     }
 
     [KernelFunction("execute_visual_actions")]
@@ -288,7 +264,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description)]
-    private async Task<string> ExecuteVisualActionsAsync(
+    private async static Task<string> ExecuteVisualActionsAsync(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")]
@@ -396,13 +372,11 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     }
 
     /// <summary>
-    /// Resolves the target <see cref="VisualElement"/> from either an elementId or a window handle string.
-    /// Validates that exactly one of the two identifiers is provided and throws descriptive exceptions for invalid input or if the target element cannot be found.
-    /// This ensures robust handling of user input and clear error messages for troubleshooting.
+    /// Resolves one published Element target and retains it for the current operation.
     /// </summary>
-    private VisualElement ResolveTargetElement(ChatContext chatContext, VisualElementRetention retention, string target)
+    private static VisualElement ResolveTargetElement(ChatContext chatContext, VisualElementRetention retention, int target)
     {
-        var visualTarget = ResolveVisualTarget(chatContext, retention, target);
+        var visualTarget = ResolveVisualTarget(chatContext, target);
         if (visualTarget is ElementTarget elementTarget)
         {
             retention.Retain(elementTarget.Element);
@@ -413,60 +387,98 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             HandledFunctionInvokingExceptionType.ArgumentError,
             nameof(target),
             new ArgumentException(
-                $"Visual target '{target}' is a Composite and cannot receive platform actions or capture. Use query_visual to inspect its members.",
+                $"Visual element '{target}' does not support platform actions or capture. Use query_visual to inspect its observed members.",
                 nameof(target)));
     }
 
-    private VisualTarget ResolveVisualTarget(ChatContext chatContext, VisualElementRetention retention, string target)
+    /// <summary>
+    /// Resolves a visual target by its ID.
+    /// </summary>
+    private static VisualTarget ResolveVisualTarget(ChatContext chatContext, int target)
     {
-        if (target.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-        {
-            return new ElementTarget { Element = ResolveVisualElementByHwnd(retention, target) };
-        }
-
-        if (!int.TryParse(target, out var elementId))
+        if (!chatContext.VisualContext.TryGetTarget(target, out var visualTarget))
         {
             throw new HandledFunctionInvokingException(
                 HandledFunctionInvokingExceptionType.ArgumentError,
                 nameof(target),
                 new ArgumentException(
-                    $"Invalid target format: '{target}'. Expected either an elementId (integer) or a window handle (hex string like '0x1A2B3C')."));
-        }
-
-        if (!chatContext.VisualContext.TryGetTarget(elementId, out var visualTarget))
-        {
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(target),
-                new ArgumentException(
-                    $"Visual target with id '{elementId}' is not found or has been released.",
+                    $"Visual target with id '{target}' is not found or has been released.",
                     nameof(target)));
         }
 
         return visualTarget;
     }
 
-    /// <summary>
-    /// Finds a top-level window by its native window handle across all screens.
-    /// </summary>
-    private VisualElement ResolveVisualElementByHwnd(VisualElementRetention retention, string hwndString)
+    private static string BuildWindowList(VisualContext context, IReadOnlyList<VisualElementQueryResult> windows, out int representedWindowCount)
     {
-        if (!long.TryParse(hwndString.AsSpan(2), NumberStyles.HexNumber, null, out var hwndValue))
+        var selectedIndexes = new HashSet<int>();
+        for (var index = 0; index < windows.Count; index++) selectedIndexes.Add(index);
+
+        var hasBudgetOmission = false;
+        for (var attempt = 0; attempt < windows.Count + 2; attempt++)
         {
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(hwndString),
-                new ArgumentException($"Invalid window handle format: '{hwndString}'. Expected hex format like '0x1A2B3C'."));
+            var publication = context.BeginPublication();
+            var targetElements = new Dictionary<PromptCompactElement, int>(ReferenceEqualityComparer.Instance);
+            var root = new PromptCompactElement("windows")
+                .AttributeNotNullOrEmpty("status", hasBudgetOmission ? "Some windows were omitted by the prompt budget." : null);
+            for (var index = 0; index < windows.Count; index++)
+            {
+                if (!selectedIndexes.Contains(index)) continue;
+                var window = windows[index];
+                var id = publication.Add(new ElementTarget { Element = window.Element });
+                var element = CreateWindowPromptElement(id, window.Snapshot);
+                targetElements.Add(element, index);
+                root.Add(element.Atomic().WithPriority(Math.Max(1, 1_000_000 - index)));
+            }
+
+            var content = new PromptTokenLimit(ListWindowsTokenBudget, root);
+            var rendered = new PromptDocument { content }.Render(int.MaxValue);
+            var includedNodes = new HashSet<PromptNode>(rendered.IncludedNodes, ReferenceEqualityComparer.Instance);
+            var survivingIndexes = new HashSet<int>();
+            foreach (var (element, index) in targetElements)
+            {
+                if (includedNodes.Contains(element)) survivingIndexes.Add(index);
+            }
+
+            if (survivingIndexes.Count == selectedIndexes.Count)
+            {
+                publication.Commit();
+                representedWindowCount = publication.Count;
+                return rendered.Content;
+            }
+
+            selectedIndexes.IntersectWith(survivingIndexes);
+            hasBudgetOmission = true;
         }
 
-        var window = _visualElementBackend.Query(retention, VisualElementLocator.FromNativeWindow((nint)hwndValue));
-        return window?.Element ??
-            throw new HandledFunctionInvokingException(
-                HandledFunctionInvokingExceptionType.ArgumentError,
-                nameof(hwndString),
-                new ArgumentException(
-                    $"No top-level window with handle '{hwndString}' was found. The window may have been closed. " +
-                    "Use list_windows to get the current list of available windows."));
+        throw new InvalidOperationException("Window-list prompt projection did not converge after every monotonic target state was exhausted.");
+    }
+
+    private static PromptCompactElement CreateWindowPromptElement(int id, VisualElementSnapshot snapshot)
+    {
+        var element = new PromptCompactElement("TopLevel")
+            .Attribute("id", id)
+            .AttributeNotNullOrEmpty("name", snapshot.Name?.SafeSubstring(0, 1_024));
+        if (snapshot.Bounds is { } bounds) element.Attribute("box", $"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
+        if (snapshot.ProcessId is > 0 and var processId)
+        {
+            element.Attribute("pid", processId);
+            try
+            {
+                using var process = Process.GetProcessById(processId);
+                element.AttributeNotNullOrEmpty("process", process.ProcessName);
+            }
+            catch
+            {
+                // A process can exit between UI Automation enumeration and metadata lookup.
+            }
+        }
+
+        var states = snapshot.States.GetValueOrDefault();
+        return element
+            .Flag("focused", states.HasFlag(VisualElementStates.Focused))
+            .Flag("disabled", states.HasFlag(VisualElementStates.Disabled))
+            .Flag("offscreen", states.HasFlag(VisualElementStates.Offscreen));
     }
 
     private List<VisualElementQueryResult> GetScreens(VisualElementRetention retention)
@@ -475,7 +487,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         if (primaryScreen is null) return [];
 
         var screens = new List<VisualElementQueryResult> { primaryScreen };
-        using (var previous = primaryScreen.Element.CreateEnumerator(VisualElementRelation.PreviousSibling, VisualElementEnumerationOptions.Default))
+        using (var previous = primaryScreen.Element.CreateEnumerator(VisualElementRelation.PreviousSibling, VisualElementQueryRequest.Default))
         {
             while (previous.MoveNext())
             {
@@ -485,7 +497,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             }
         }
 
-        using (var next = primaryScreen.Element.CreateEnumerator(VisualElementRelation.NextSibling, VisualElementEnumerationOptions.Default))
+        using (var next = primaryScreen.Element.CreateEnumerator(VisualElementRelation.NextSibling, VisualElementQueryRequest.Default))
         {
             while (next.MoveNext())
             {
@@ -555,8 +567,8 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         /// <summary>
         /// The ID of the target visual element
         /// </summary>
-        [Description("ID (decimal) or HWND (hex startswith 0x) of the target. Required for Click, SetText and SendKey")]
-        public string? Target { get; init; }
+        [Description("Integer visual element ID returned by visual context. Required for Click, SetText and SendKey")]
+        public int? Target { get; init; }
 
         /// <summary>
         /// The text to input (for SetText actions)
@@ -582,7 +594,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [Description("Delay in milliseconds for wait action")]
         public int? DelayMs { get; init; }
 
-        public string EnsureTarget() => Target ?? throw new HandledFunctionInvokingException(
+        public int EnsureTarget() => Target ?? throw new HandledFunctionInvokingException(
             HandledFunctionInvokingExceptionType.ArgumentError,
             nameof(Target),
             new ArgumentException($"{nameof(Target)} is required for this action.", nameof(Target)));
@@ -644,14 +656,10 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
             IDynamicLocaleKey GetTargetDescriptionKey()
             {
-                if (Target.IsNullOrEmpty()) return DirectLocaleKey.Empty;
-                if (Target.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    return new FormattedDynamicLocaleKey(
-                        LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd,
-                        new DirectLocaleKey(Target));
+                if (Target is not { } target) return DirectLocaleKey.Empty;
                 return new FormattedDynamicLocaleKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId,
-                    new DirectLocaleKey(Target));
+                    new DirectLocaleKey(target));
             }
         }
 

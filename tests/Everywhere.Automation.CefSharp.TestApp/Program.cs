@@ -9,7 +9,7 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        var (options, externalAddress) = ParseOptions(args);
+        var options = TestAppOptions.Parse(args);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
@@ -27,7 +27,7 @@ internal static class Program
 
         try
         {
-            using var context = new CefSharpScenarioApplicationContext(options, externalAddress);
+            using var context = new CefSharpScenarioApplicationContext(options);
             Application.Run(context);
             return 0;
         }
@@ -37,26 +37,4 @@ internal static class Program
         }
     }
 
-    private static (TestAppOptions Options, string? ExternalAddress) ParseOptions(params IReadOnlyList<string> arguments)
-    {
-        var scenarioArguments = new List<string>(arguments.Count);
-        string? externalAddress = null;
-        for (var index = 0; index < arguments.Count; index++)
-        {
-            if (arguments[index] != "--url")
-            {
-                scenarioArguments.Add(arguments[index]);
-                continue;
-            }
-
-            if (++index >= arguments.Count || !Uri.TryCreate(arguments[index], UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
-                throw new ArgumentException("The CefSharp --url argument must contain an absolute HTTP or HTTPS address.", nameof(arguments));
-            }
-
-            externalAddress = uri.AbsoluteUri;
-        }
-
-        return (TestAppOptions.Parse(scenarioArguments), externalAddress);
-    }
 }

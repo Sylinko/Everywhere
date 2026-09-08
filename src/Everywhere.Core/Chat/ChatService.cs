@@ -103,6 +103,7 @@ public sealed partial class ChatService : IChatService
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
+                chatContext.AdvanceVisualTargetTurn();
                 chatContext.Add(message);
                 var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                     chatContext,
@@ -117,7 +118,7 @@ public sealed partial class ChatService : IChatService
                     return;
                 }
 
-                ProcessUserChatMessage(chatContext, message, cancellationToken);
+                await ProcessUserChatMessageAsync(chatContext, message, cancellationToken);
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
@@ -149,6 +150,7 @@ public sealed partial class ChatService : IChatService
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
+                chatContext.AdvanceVisualTargetTurn();
                 chatContext.CreateBranchOn(oldNode, newMessage);
                 var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                     chatContext,
@@ -163,7 +165,7 @@ public sealed partial class ChatService : IChatService
                     return;
                 }
 
-                ProcessUserChatMessage(chatContext, newMessage, cancellationToken);
+                await ProcessUserChatMessageAsync(chatContext, newMessage, cancellationToken);
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
@@ -195,6 +197,7 @@ public sealed partial class ChatService : IChatService
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
+                chatContext.AdvanceVisualTargetTurn();
                 if (customAssistant is null)
                 {
                     chatContext.CreateBranchOn(node, CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
@@ -322,7 +325,7 @@ public sealed partial class ChatService : IChatService
     /// <param name="chatContext"></param>
     /// <param name="userChatMessage"></param>
     /// <param name="cancellationToken"></param>
-    private void ProcessUserChatMessage(
+    private async Task ProcessUserChatMessageAsync(
         ChatContext chatContext,
         UserChatMessage userChatMessage,
         CancellationToken cancellationToken)
@@ -331,7 +334,7 @@ public sealed partial class ChatService : IChatService
         activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
         // All VisualElementAttachment should be strongly referenced here.
-        // So we have to need to check alive status before building visual tree XML.
+        // Check attachment validity before building the Snapshot and PromptNode projection.
         var visualElementAttachments = userChatMessage
             .Attachments
             .AsValueEnumerable()
@@ -365,39 +368,24 @@ public sealed partial class ChatService : IChatService
             if (coreElements.Count == 0) return;
 
             using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
-                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(chatContext.VisualContext, cancellationToken) :
+                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
                 null;
 
-            using var targetTurn = chatContext.VisualContext.BeginTurn();
-            using var snapshot = VisualContextSnapshotter.CreateSnapshot(
-                chatContext.VisualContext,
+            var query = new VisualQuery(chatContext.VisualContext, effectScope is null ? null : effectScope.AddCapture);
+            var outcome = await query.BuildAsync(
                 coreElements,
-                cancellationToken: cancellationToken);
-            var pendingNodes = new Stack<VisualContextSnapshotNode>();
-            for (var index = snapshot.Roots.Count - 1; index >= 0; index--) pendingNodes.Push(snapshot.Roots[index]);
-            while (pendingNodes.TryPop(out var node))
-            {
-                effectScope?.Add(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
-                for (var index = node.Children.Count - 1; index >= 0; index--) pendingNodes.Push(node.Children[index]);
-            }
-
-            var prompt = VisualContextPromptBuilder.Build(
-                chatContext.VisualContext,
-                snapshot,
                 new VisualContextPromptOptions { TargetTokenBudget = approximateTokenLimit, DetailLevel = detailLevel },
-                cancellationToken);
-            var representedTargetCount = targetTurn.Count;
-            validAttachments[0].Content = prompt;
+                cancellationToken: cancellationToken);
+            validAttachments[0].Content = new PromptText(outcome.Content);
             for (var index = 1; index < validAttachments.Count; index++) validAttachments[index].Content = null;
 
-            targetTurn.Complete();
             effectScope?.Complete();
             _statisticsRecorder.RecordVisualContextAsync(
                     new StatisticsVisualContextDraft(
                         _currentTurnEventId.Value,
                         chatContext.Metadata.Id,
                         StatisticsVisualContextSource.AutomaticAttachmentProcessing,
-                        ElementCount: representedTargetCount),
+                        ElementCount: outcome.RepresentedTargetCount),
                     CancellationToken.None)
                 .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
@@ -555,6 +543,7 @@ public sealed partial class ChatService : IChatService
     {
         using var activity = _activitySource.StartChatActivity("chat", assistant);
         activity?.SetTag("id", chatContext.Metadata.Id);
+        chatContext.EnsureVisualTargetTurn();
 
         GenerationContext? environment = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;

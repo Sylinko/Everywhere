@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI;
-using Everywhere.Chat;
+using Everywhere.Automation;
 
 namespace Everywhere.Configuration;
 
