@@ -245,79 +245,55 @@ public partial class AXUIElement : NSObject, IVisualElement
 
     public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var bounds = BoundingRectangle;
-        var rect = new CGRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        if (bounds.Width <= 0 || bounds.Height <= 0) return Task.FromResult<IVisualElementCapture>(CapturedBitmapData.Empty);
 
-        if (rect.Width < 1f && rect.Height < 1f)
-        {
-            return Task.FromResult<IVisualElementCapture>(CapturedBitmapData.Empty);
-        }
+        using var windowRef = Role == AXRoleAttribute.AXWindow ? null : GetAttributeAsElement(AXAttributeConstants.Window);
+        var windowBounds = Role == AXRoleAttribute.AXWindow ? bounds :
+            windowRef?.BoundingRectangle ?? throw new InvalidOperationException("Cannot locate the captured window's desktop region.");
+        if (windowBounds.Width <= 0 || windowBounds.Height <= 0) throw new InvalidOperationException("The captured window has no drawable region.");
 
-        // we use CGSHWCaptureWindowList because it can screenshot minimized windows, which CGWindowListCreateImage can't
-        // Use BestResolution to get physical pixel size (matches BackingScaleFactor).
-        // NominalResolution returns 1x logical pixels which causes scaling mismatches when cropping with scale factor.
+        // Retain the hardware path: it can capture minimized windows unlike CGWindowListCreateImage.
+        // FullSize preserves the existing Stage Manager workaround.
+        // Keep best resolution for the general capture API. An animation-only producer may request
+        // NominalResolution later; neither option changes Bounds or Avalonia's desktop coordinates.
         using var cgImage = SkyLightInterop.HardwareCaptureWindowList(
             [(uint)NativeWindowHandle],
             SkyLightInterop.CGSWindowCaptureOptions.IgnoreGlobalCLipShape |
             SkyLightInterop.CGSWindowCaptureOptions.BestResolution |
             SkyLightInterop.CGSWindowCaptureOptions.FullSize);
+        if (cgImage is null) throw new InvalidOperationException("Failed to capture screen image.");
+        cancellationToken.ThrowIfCancellationRequested();
 
-        if (cgImage is null)
-        {
-            return Task.FromException<IVisualElementCapture>(new InvalidOperationException("Failed to capture screen image."));
-        }
+        var imageWidth = checked((int)cgImage.Width);
+        var imageHeight = checked((int)cgImage.Height);
+        if (imageWidth <= 0 || imageHeight <= 0) throw new InvalidOperationException("The captured window image is empty.");
 
-        var screen = NSScreen.Screens.FirstOrDefault(s => s.Frame.IntersectsWith(rect));
-        var scale = screen?.BackingScaleFactor ?? 1.0;
+        // Derive surface density from the returned image, not the first intersecting NSScreen.
+        // TODO(macOS): Verify that FullSize's full image maps to AX window bounds for shadowed,
+        // borderless, minimized, and Stage Manager windows. If it includes extra framing, obtain
+        // that surface's actual desktop origin/extent instead of compensating with size tolerances.
+        var scaleX = (double)imageWidth / windowBounds.Width;
+        var scaleY = (double)imageHeight / windowBounds.Height;
+        var left = (int)Math.Clamp(Math.Floor(((double)bounds.X - windowBounds.X) * scaleX), 0, imageWidth);
+        var top = (int)Math.Clamp(Math.Floor(((double)bounds.Y - windowBounds.Y) * scaleY), 0, imageHeight);
+        var right = (int)Math.Clamp(Math.Ceiling(((double)bounds.Right - windowBounds.X) * scaleX), 0, imageWidth);
+        var bottom = (int)Math.Clamp(Math.Ceiling(((double)bounds.Bottom - windowBounds.Y) * scaleY), 0, imageHeight);
+        if (right <= left || bottom <= top) throw new InvalidOperationException("The requested region does not intersect the captured surface.");
 
-        // cgImage captures the window content starting at (0,0) in Window Local Coordinates.
-        // rect contains Screen Coordinates (including Dock/Menu bar offsets).
-        // To crop correctly, we must transform rect to Window-Relative coordinates.
-        double windowX = 0;
-        double windowY = 0;
+        // TODO(macOS): Verify CGImage crop row orientation using a top/bottom-marked window.
+        using var croppedImage = cgImage.WithImageInRect(new CGRect(left, top, right - left, bottom - top));
+        if (croppedImage is null) throw new InvalidOperationException("Failed to crop image.");
 
-        // Try to find the parent window to get its screen position.
-        var windowRef = GetAttributeAsElement(AXAttributeConstants.Window);
-        if (windowRef != null)
-        {
-            var wRect = windowRef.BoundingRectangle;
-            windowX = wRect.X;
-            windowY = wRect.Y;
-        }
-        else if (Role == AXRoleAttribute.AXWindow)
-        {
-            // Fallback: if we are the window itself
-            windowX = rect.X;
-            windowY = rect.Y;
-        }
-
-        // Check if captured image approximately matches target size (allowing for rounding/shadows).
-        // If it matches, we assume full window capture and start at 0,0.
-        var targetWidth = rect.Width * scale;
-        var isFullWindow = cgImage.Width >= targetWidth - 2 && cgImage.Width <= targetWidth + 100;
-
-        // If full window, offset is 0.
-        // If partial (element inside window), offset is (ElementScreenPos - WindowScreenPos).
-        var cropX = isFullWindow ? 0 : (rect.X - windowX) * scale;
-        var cropY = isFullWindow ? 0 : (rect.Y - windowY) * scale;
-
-        // Clamp invalid values
-        if (cropX < 0) cropX = 0;
-        if (cropY < 0) cropY = 0;
-
-        using var croppedImage = cgImage.WithImageInRect(
-            new CGRect(
-                cropX,
-                cropY,
-                rect.Width * scale,
-                rect.Height * scale));
-
-        if (croppedImage is null)
-        {
-            return Task.FromException<IVisualElementCapture>(new InvalidOperationException("Failed to crop image."));
-        }
-
-        return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(croppedImage));
+        // Report the pixel-aligned crop's coverage, not the original request. PixelRect preserves
+        // the existing integer desktop API; outward rounding can add less than one point per edge.
+        var desktopLeft = checked((int)Math.Floor(windowBounds.X + left / scaleX));
+        var desktopTop = checked((int)Math.Floor(windowBounds.Y + top / scaleY));
+        var desktopRight = checked((int)Math.Ceiling(windowBounds.X + right / scaleX));
+        var desktopBottom = checked((int)Math.Ceiling(windowBounds.Y + bottom / scaleY));
+        var capturedBounds = new PixelRect(desktopLeft, desktopTop, checked(desktopRight - desktopLeft), checked(desktopBottom - desktopTop));
+        return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(croppedImage, capturedBounds));
     }
 
     public bool SetAttribute(NSString attributeName, NSObject value)

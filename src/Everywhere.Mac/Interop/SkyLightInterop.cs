@@ -93,10 +93,11 @@ internal static partial class SkyLightInterop
         IgnoreGlobalCLipShape = 1 << 11,
 
         /// <summary>
-        /// on a retina display, 1px is spread on 4px, so nominalResolution is 1/4 of bestResolution
+        /// Requests nominal resolution. At a 2x backing scale this is approximately half the width/height and one quarter of the pixel count of best resolution.
         /// </summary>
         NominalResolution = 1 << 9,
 
+        /// <summary>Requests best available image resolution; this changes bitmap density, not desktop coordinates.</summary>
         BestResolution = 1 << 8,
 
         /// <summary>

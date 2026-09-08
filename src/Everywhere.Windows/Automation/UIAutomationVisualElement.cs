@@ -53,6 +53,31 @@ public sealed class UIAutomationVisualElement(
     /// <inheritdoc />
     protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => QueryCurrent(request);
 
+    /// <inheritdoc />
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters)
+    {
+        try
+        {
+            using var cacheRequest = Backend.Automation.CreateCacheRequest(
+                UIAutomationCacheOptions.Value | UIAutomationCacheOptions.ValuePattern | UIAutomationCacheOptions.TextPattern);
+            using var cachedElement = AutomationElement.BuildUpdatedCache(cacheRequest);
+            if (!cachedElement.HasValue)
+            {
+                throw new InvalidOperationException("UI Automation did not return an updated element cache for text reading.");
+            }
+
+            var probeLength = (int)Math.Min((long)offset + maxCharacters + 2, int.MaxValue);
+            var text = cachedElement.GetCachedText(probeLength) ?? cachedElement.GetCachedValue();
+            return text is null ?
+                VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null)) :
+                VisualElementTextReadResult.FromSuccess(text, offset, maxCharacters);
+        }
+        catch (Exception exception) when (WindowsUIAutomationFailure.IsProviderException(exception))
+        {
+            return VisualElementTextReadResult.FromFailure(WindowsUIAutomationFailure.CreateFailure(exception));
+        }
+    }
+
     private VisualElementQueryResult QueryCurrent(VisualElementQueryRequest request)
     {
         try
@@ -80,11 +105,11 @@ public sealed class UIAutomationVisualElement(
     /// <inheritdoc />
     protected override IVisualElementEnumerator CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementEnumerationOptions options)
+        VisualElementQueryRequest request)
     {
         return IsTopLevelWindow(NativeWindowHandle) && relation is VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling ?
-            CreateTopLevelWindowSiblingEnumerator(relation, options.QueryRequest) :
-            new UIAutomationVisualElementEnumerator(this, relation, options.QueryRequest);
+            CreateTopLevelWindowSiblingEnumerator(relation, request) :
+            new UIAutomationVisualElementEnumerator(this, relation, request);
     }
 
     private VisualElementQueryResult? QueryNext(
@@ -399,13 +424,14 @@ public sealed class UIAutomationVisualElement(
                     throw new InvalidOperationException("The top-level window does not expose capture bounds.");
                 return await Direct3D11ScreenCapture.CaptureAsync(
                     windowHandle,
+                    windowBounds.Position,
                     new PixelRect(sourceBounds.X - windowBounds.X, sourceBounds.Y - windowBounds.Y, sourceBounds.Width, sourceBounds.Height),
                     cancellationToken);
             }
 
             using var parents = current.Element.CreateEnumerator(
                 VisualElementRelation.Parent,
-                new VisualElementEnumerationOptions(request));
+                request);
             if (!parents.MoveNext())
             {
                 throw new InvalidOperationException("Failed to find the top-level window for the visual element.");

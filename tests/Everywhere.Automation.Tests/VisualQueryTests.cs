@@ -7,14 +7,14 @@ namespace Everywhere.Automation.Tests;
 public sealed class VisualQueryTests
 {
     [Test]
-    public void Execute_WhenTargetIsElement_UsesCanonicalSnapshotAndPromptPipeline()
+    public async Task Execute_WhenTargetIsElement_UsesCanonicalSnapshotAndPromptPipeline()
     {
         using var backend = CreateBackend(new Window(new Panel(new Button("Save"), new TextBox("Draft"))));
         using var turn = backend.Context.BeginTurn();
         var target = new ElementTarget { Element = backend.RootElement };
         var request = new VisualQueryRequest { Directions = VisualContextTraverseDirections.Child, Limit = 16 };
 
-        var rendered = VisualQuery.Execute(backend.Context, target, request, VisualContextPromptOptions.Default).ToString();
+        var rendered = (await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default)).Content;
 
         Assert.Multiple(() =>
         {
@@ -25,7 +25,7 @@ public sealed class VisualQueryTests
     }
 
     [Test]
-    public void Execute_WhenCompositeIsPaged_ExpandsSelectedObservedMembersWithoutPretendingTheyAreOneElement()
+    public async Task Execute_WhenCompositeIsPaged_ExpandsSelectedObservedMembersWithoutPretendingTheyAreOneElement()
     {
         using var backend = CreateBackend(new Window(new Panel(new Text("first fragment"), new Text("second fragment"))));
         var first = backend.GetElement(0, 0);
@@ -37,34 +37,36 @@ public sealed class VisualQueryTests
                 new CompositePart { Element = first, Snapshot = first.Query(VisualElementQueryRequest.Default).Snapshot },
                 new CompositePart { Element = second, Snapshot = second.Query(VisualElementQueryRequest.Default).Snapshot },
             ],
-            Preview = "first fragment\nsecond fragment",
         };
         using var turn = backend.Context.BeginTurn();
         var request = new VisualQueryRequest { Directions = VisualContextTraverseDirections.Core, Offset = 1, Limit = 1 };
 
-        var rendered = VisualQuery.Execute(backend.Context, target, request, VisualContextPromptOptions.Default).ToString();
+        var rendered = (await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default)).Content;
 
         Assert.Multiple(() =>
         {
             Assert.That(rendered, Does.Contain("first fragment").And.Not.Contain("second fragment"));
-            Assert.That(rendered, Does.Contain("continue with offset 2"));
+            Assert.That(rendered, Does.Contain("<visual-context next=2>"));
+            Assert.That(rendered, Does.Not.Contain("status="));
             Assert.That(rendered, Does.Not.Contain("<Composite"));
+            Assert.That(rendered, Does.Not.Contain("Composite query"));
             Assert.That(turn.Count, Is.EqualTo(1));
         });
     }
 
     [Test]
-    public void Execute_WhenElementOffsetExceedsAnchor_ReturnsActionableStatusWithoutPublishingTargets()
+    public async Task Execute_WhenElementOffsetExceedsAnchor_ReturnsActionableStatusWithoutPublishingTargets()
     {
         using var backend = CreateBackend(new Window(new Button("Save")));
         using var turn = backend.Context.BeginTurn();
         var target = new ElementTarget { Element = backend.RootElement };
         var request = new VisualQueryRequest { Offset = 2 };
 
-        var rendered = VisualQuery.Execute(backend.Context, target, request, VisualContextPromptOptions.Default).ToString();
+        var rendered = (await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default)).Content;
 
         Assert.Multiple(() =>
         {
+            Assert.That(rendered, Does.Contain("this visual element").And.Contain("single anchor"));
             Assert.That(rendered, Does.Contain("Query a returned child ID instead."));
             Assert.That(turn.Count, Is.Zero);
         });

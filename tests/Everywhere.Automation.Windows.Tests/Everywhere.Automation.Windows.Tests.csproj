@@ -4,6 +4,7 @@
     <WinFormsTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.WinForms.TestApp\Everywhere.Automation.WinForms.TestApp.csproj</WinFormsTestAppProject>
     <AvaloniaTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.Avalonia.TestApp\Everywhere.Automation.Avalonia.TestApp.csproj</AvaloniaTestAppProject>
     <CefSharpTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.CefSharp.TestApp\Everywhere.Automation.CefSharp.TestApp.csproj</CefSharpTestAppProject>
+    <WebViewTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.WebView.TestApp\Everywhere.Automation.WebView.TestApp.csproj</WebViewTestAppProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework" />
+    <Compile Include="..\Everywhere.Automation.WebView.Probe\TopologyProbe.cs" Link="Probes\TopologyProbe.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +40,9 @@
     <ProjectReference Include="..\Everywhere.Automation.CefSharp.TestApp\Everywhere.Automation.CefSharp.TestApp.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\Everywhere.Automation.WebView.TestApp\Everywhere.Automation.WebView.TestApp.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <Target Name="GenerateControlledTestAppPaths" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
@@ -50,19 +55,25 @@
     <MSBuild Projects="$(CefSharpTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
       <Output TaskParameter="TargetOutputs" ItemName="_CefSharpTestAppExecutablePath" />
     </MSBuild>
+    <MSBuild Projects="$(WebViewTestAppProject)" Targets="GetAutomationTestAppExecutablePath" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="_WebViewTestAppExecutablePath" />
+    </MSBuild>
 
     <Error Condition="'@(_WinFormsTestAppExecutablePath)' == ''" Text="The WinForms TestApp did not report an executable path." />
     <Error Condition="'@(_AvaloniaTestAppExecutablePath)' == ''" Text="The Avalonia TestApp did not report an executable path." />
     <Error Condition="'@(_CefSharpTestAppExecutablePath)' == ''" Text="The CefSharp TestApp did not report an executable path." />
+    <Error Condition="'@(_WebViewTestAppExecutablePath)' == ''" Text="The WebView TestApp did not report an executable path." />
     <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_WinFormsTestAppExecutablePath)')" Text="The WinForms TestApp executable was not built: @(_WinFormsTestAppExecutablePath)" />
     <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_AvaloniaTestAppExecutablePath)')" Text="The Avalonia TestApp executable was not built: @(_AvaloniaTestAppExecutablePath)" />
     <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_CefSharpTestAppExecutablePath)')" Text="The CefSharp TestApp executable was not built: @(_CefSharpTestAppExecutablePath)" />
+    <Error Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('@(_WebViewTestAppExecutablePath)')" Text="The WebView TestApp executable was not built: @(_WebViewTestAppExecutablePath)" />
 
     <PropertyGroup>
       <GeneratedControlledTestAppPaths>$(IntermediateOutputPath)ControlledTestAppPaths.g.cs</GeneratedControlledTestAppPaths>
       <_WinFormsTestAppExecutablePathValue>@(_WinFormsTestAppExecutablePath)</_WinFormsTestAppExecutablePathValue>
       <_AvaloniaTestAppExecutablePathValue>@(_AvaloniaTestAppExecutablePath)</_AvaloniaTestAppExecutablePathValue>
       <_CefSharpTestAppExecutablePathValue>@(_CefSharpTestAppExecutablePath)</_CefSharpTestAppExecutablePathValue>
+      <_WebViewTestAppExecutablePathValue>@(_WebViewTestAppExecutablePath)</_WebViewTestAppExecutablePathValue>
     </PropertyGroup>
 
     <ItemGroup>
@@ -74,6 +85,7 @@
       <_ControlledTestAppPathSource Include="    public const string WinForms = &quot;&quot;&quot;$(_WinFormsTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
       <_ControlledTestAppPathSource Include="    public const string Avalonia = &quot;&quot;&quot;$(_AvaloniaTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
       <_ControlledTestAppPathSource Include="    public const string CefSharp = &quot;&quot;&quot;$(_CefSharpTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
+      <_ControlledTestAppPathSource Include="    public const string WebView = &quot;&quot;&quot;$(_WebViewTestAppExecutablePathValue)&quot;&quot;&quot;%3B" />
       <_ControlledTestAppPathSource Include="}" />
     </ItemGroup>
 

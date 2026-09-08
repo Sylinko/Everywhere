@@ -135,7 +135,8 @@ public abstract class VisualElement
 {
     public string Id { get; }
     public virtual VisualElementQueryResult Query(VisualElementQueryRequest request);
-    public virtual IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementEnumerationOptions options);
+    public virtual VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
+    public virtual IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementQueryRequest request);
     public virtual void Invoke();
     public virtual void SetText(string text);
     public virtual void Focus();
@@ -152,7 +153,9 @@ Relations form a logical platform graph rather than one provider tree. A UIA top
 
 ## 8. Agent Turns and Historical Retention
 
-`BeginTurn` creates the only active `VisualTargetTurn`. Publication and successful historical lookup add targets to that turn and retain any underlying element once.
+`ChatContext` owns the only active `VisualTargetTurn`. A new Send, Edit, or Retry completes the previous turn and begins another before attachment processing; automatic attachment publication, model calls, `query_visual`, `read_visual_text`, and actions then share it. Continue reuses the current turn. The common generation entry ensures a turn exists for direct nested/subagent generation without advancing an existing one, while each subagent's independent `ChatContext` naturally owns an independent target generation.
+
+Completion is deliberately delayed until the next conversation turn begins. The latest completed response therefore keeps its targets current throughout follow-up tool calls and Continue without reopening a historical generation. Publication and successful historical lookup add targets to the active turn and retain any underlying element once.
 
 `Complete` transfers the turn into ordered history. Disposing an incomplete turn abandons it. Completed turns are evicted oldest-first as indivisible units:
 

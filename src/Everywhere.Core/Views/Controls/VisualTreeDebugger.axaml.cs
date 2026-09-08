@@ -34,7 +34,11 @@ public partial class VisualTreeDebugger : UserControl
     private readonly VisualElementOverlayWindow _treeViewPointerOverOverlayWindow;
     private VisualElementRetention _retention;
 
-    public VisualTreeDebugger(IShortcutListener shortcutListener, IScreenSelectionService screenSelectionService, IWindowHelper windowHelper, IVisualElementBackend visualElementBackend)
+    public VisualTreeDebugger(
+        IShortcutListener shortcutListener,
+        IScreenSelectionService screenSelectionService,
+        IWindowHelper windowHelper,
+        IVisualElementBackend visualElementBackend)
     {
         _screenSelectionService = screenSelectionService;
         _windowHelper = windowHelper;
@@ -129,7 +133,9 @@ public partial class VisualTreeDebugger : UserControl
             using var pointer = await selectedItem.Element.CaptureAsync(CancellationToken.None);
             var bitmap = pointer.ToAvaloniaBitmap();
 #if DEBUG
-            bitmap?.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"), PngBitmapEncoderOptions.Default);
+            bitmap?.Save(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"),
+                PngBitmapEncoderOptions.Default);
 #endif
             CaptureImage.Source = bitmap;
         }
@@ -146,24 +152,18 @@ public partial class VisualTreeDebugger : UserControl
         {
             const VisualContextDetailLevel level = VisualContextDetailLevel.Compact;
             var tokenLimit = int.Parse(TokenLimitTextBox.Text ?? "8000");
-            var selectedElements = VisualTreeView.SelectedItems.AsValueEnumerable().OfType<DebuggerVisualElement>().Select(item => item.Element).ToArray();
+            var selectedElements = VisualTreeView.SelectedItems.AsValueEnumerable().OfType<DebuggerVisualElement>().Select(item => item.Element)
+                .ToArray();
             if (selectedElements.Length == 0) return;
 
             using var targetTurn = _visualContext.BeginTurn();
-            using var traversalRetention = _visualContext.CreateRetention();
-            var targetPublication = _visualContext.BeginPublication();
-            using var effectScope = ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(_visualContext, CancellationToken.None);
-            var builder = new VisualContextBuilder(selectedElements, traversalRetention, targetPublication, tokenLimit, level, effectScope: effectScope);
-            var visualTree = await Task.Run(() => builder.Build(CancellationToken.None));
+            using var effectScope = ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(CancellationToken.None);
+            var result = await Task.Run(() => new VisualQuery(_visualContext, effectScope.AddCapture).BuildAsync(
+                selectedElements, new VisualContextPromptOptions { TargetTokenBudget = tokenLimit, DetailLevel = level }));
+            var visualTree = result.Content;
             effectScope.Complete();
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var extension = level switch
-            {
-                VisualContextDetailLevel.Compact => "json",
-                VisualContextDetailLevel.Detailed => "xml",
-                _ => "toon"
-            };
-            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"visual_tree_{timestamp}.{extension}");
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"visual_tree_{timestamp}.txt");
             await File.WriteAllTextAsync(filePath, visualTree);
             await App.Launcher.LaunchFileInfoAsync(new FileInfo(filePath));
         }
@@ -185,7 +185,7 @@ public partial class VisualTreeDebugger : UserControl
         var current = result;
         while (true)
         {
-            using var parents = current.Element.CreateEnumerator(VisualElementRelation.Parent, VisualElementEnumerationOptions.Default);
+            using var parents = current.Element.CreateEnumerator(VisualElementRelation.Parent, VisualElementQueryRequest.Default);
             if (!parents.MoveNext()) return current;
 
             _retention.Retain(parents.Current.Element);
@@ -202,19 +202,19 @@ public partial class VisualTreeDebugger : UserControl
 }
 
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-internal sealed class DebuggerVisualElement : ObservableObject
+internal sealed class DebuggerVisualElement(VisualElementQueryResult queryResult, VisualElementRetention retention) : ObservableObject
 {
-    public VisualElement Element => _queryResult.Element;
+    public VisualElement Element => queryResult.Element;
 
     public string Id => Element.Id;
 
-    public string? Name => _queryResult.Snapshot.Name;
+    public string? Name => queryResult.Snapshot.Name;
 
-    public VisualElementType? Type => _queryResult.Snapshot.Type;
+    public VisualElementType? Type => queryResult.Snapshot.Type;
 
-    public VisualElementStates? States => _queryResult.Snapshot.States;
+    public VisualElementStates? States => queryResult.Snapshot.States;
 
-    public int? ProcessId => _queryResult.Snapshot.ProcessId;
+    public int? ProcessId => queryResult.Snapshot.ProcessId;
 
     public string ProcessName
     {
@@ -233,32 +233,22 @@ internal sealed class DebuggerVisualElement : ObservableObject
         }
     }
 
-    public nint? NativeWindowHandle => _queryResult.Snapshot.NativeWindowHandle;
+    public nint? NativeWindowHandle => queryResult.Snapshot.NativeWindowHandle;
 
-    public PixelRect? BoundingRectangle => _queryResult.Snapshot.Bounds;
+    public PixelRect? BoundingRectangle => queryResult.Snapshot.Bounds;
 
-    public string? Text => _queryResult.Snapshot.TextPreview;
+    public string? Text => queryResult.Snapshot.TextPreview;
 
-    public IReadOnlyList<DebuggerVisualElement> Children => _children ??= LoadChildren();
-
-    private readonly VisualElementQueryResult _queryResult;
-    private readonly VisualElementRetention _retention;
-    private IReadOnlyList<DebuggerVisualElement>? _children;
-
-    public DebuggerVisualElement(VisualElementQueryResult queryResult, VisualElementRetention retention)
-    {
-        _queryResult = queryResult;
-        _retention = retention;
-    }
+    public IReadOnlyList<DebuggerVisualElement> Children => field ??= LoadChildren();
 
     private IReadOnlyList<DebuggerVisualElement> LoadChildren()
     {
         var children = new List<DebuggerVisualElement>();
-        using var enumerator = Element.CreateEnumerator(VisualElementRelation.Child, VisualElementEnumerationOptions.Default);
+        using var enumerator = Element.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
         while (enumerator.MoveNext())
         {
-            _retention.Retain(enumerator.Current.Element);
-            children.Add(new DebuggerVisualElement(enumerator.Current, _retention));
+            retention.Retain(enumerator.Current.Element);
+            children.Add(new DebuggerVisualElement(enumerator.Current, retention));
         }
 
         return children;

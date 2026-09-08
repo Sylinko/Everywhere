@@ -46,12 +46,12 @@ The replacement foundation currently includes:
 - `WM_DISPLAYCHANGE`-driven immutable Windows display topology;
 - Invoke/Toggle/Select/Expand, ValuePattern SetText, Focus, SendKeyGesture, and clickable-point fallback;
 - declarative scenario/seed infrastructure, Mock backend, and controlled WinForms/Avalonia/CefSharp TestApps;
-- the `query_visual` tool over Element and Composite targets through the canonical Snapshot/PromptNode pipeline;
+- the `query_visual` tool over published visual element IDs through the canonical Snapshot/PromptNode pipeline;
 - retained Windows UIA behavior probes.
 
 The worker, custom scheduler, SynchronizationContext, bounded-proxy, watchdog, Scope, Direct Scope, operation lease, pin, and per-Scope client implementation has been deleted. It did not provide a real termination boundary for a synchronous RPC and added lifetime complexity unrelated to the production call path.
 
-Windows production observation, actions, attachments, debugger, text-selection, interactive picking, and Chat target lookup now use the canonical `VisualElement`, one neutral `VisualContext` per chat, and the singleton `WindowsVisualElementBackend`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention; application UI uses separate screen-selection and text-selection-monitor services. `ChatContext` constructs its Context directly, including after deserialization and for derived Agents. The Backend owns shared UIA services but never retains Contexts or Elements. Automatic attachments and the `query_visual` tool now share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` remains only in the debugger and characterization tests until those callers are intentionally migrated.
+Windows production observation, actions, attachments, debugger, text-selection, interactive picking, and Chat target lookup now use the canonical `VisualElement`, one neutral `VisualContext` per chat, and the singleton `WindowsVisualElementBackend`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention; application UI uses separate screen-selection and text-selection-monitor services. `ChatContext` constructs its Context directly, including after deserialization and for derived Agents. The Backend owns shared UIA services but never retains Contexts or Elements. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` and its debug recorder have been deleted.
 
 ## 4. Migration Stages
 
@@ -100,7 +100,7 @@ Completed work:
 9. evict completed history by whole turn rather than arbitrary individual element;
 10. automatically enforce the configured completed-turn count and soft retained-target count after every successful turn completion.
 
-Automatic chat attachment processing now uses the replacement Snapshotter and merged PromptNode builder under the Context-owned current turn. The attachment stores structured prompt content at its existing MessagePack key and renders it only at the provider boundary; old flattened strings remain readable through a member-level compatibility formatter.
+Automatic chat attachment processing now uses the replacement Snapshotter and merged PromptNode builder under the Context-owned current turn. The attachment stores a PromptText wrapper around the already rendered final string at its existing MessagePack key. Old strings and structured PromptNode data remain readable through the existing compatibility boundary.
 
 ### 4.4 Complete Windows Platform Migration
 
@@ -129,7 +129,7 @@ The legacy Windows UIA and Screen element implementations and the production RCW
 
 ### 4.5 Migrate Snapshot
 
-The replacement Snapshotter is now the production path for automatic visual attachments and `query_visual`. The legacy Builder remains temporarily callable only by the debugger and characterization tests; it is no longer an Agent-facing boundary.
+The replacement Snapshotter is now the sole path for automatic visual attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests. The legacy Builder has been deleted.
 
 Implemented replacement Snapshot foundation:
 
@@ -140,18 +140,18 @@ Implemented replacement Snapshot foundation:
 5. preserve the existing direction/type weights, distance transitions, deterministic queue tie-breaking, and traversal metadata;
 6. separate element materialization from relation observation so a repeated Parent still attaches another core sibling and a repeated relation Enumerator still advances;
 7. enforce monotonic elapsed, operation, node, per-child-relation, per-node text, aggregate text, and provider-failure limits;
-8. preserve bounded scalar and relation status, including explicit `HasMoreText` from platform adapters;
+8. preserve bounded scalar and relation status, and represent ordinary text continuation separately with `HasMoreText`;
 9. return the retention as part of disposable `VisualContextSnapshot`;
-10. dispose all Enumerators on completion, cancellation, limits, provider failure, and unexpected exit.
+10. dispose all Enumerators on completion, cancellation, limits, provider failure, and unexpected exit;
+11. apply one modest offscreen admission multiplier while preserving every offscreen branch for later traversal and protecting core nodes.
 
-Snapshot follow-up work:
-
-1. add provider/PID-scoped suppression without starving unrelated roots;
-2. model provider-supported ranged continuation beyond the current `HasMoreText` fact.
+Snapshot follow-up work is provider/PID-scoped suppression without starving unrelated roots. Long content continuation is a separate Element and Agent-tool boundary rather than another structural Snapshot phase.
 
 Snapshot must be useful with one extremely large text element and with one parent exposing hundreds of thousands of virtualized children. It must not first materialize either extreme.
 
 ### 4.6 Build Merged Prompt Projection
+
+The final-text boundary and progressive root/body allocation now follow [09-FinalTextAllocation.md](09-FinalTextAllocation.md). Tools return strings; attachments wrap final strings in PromptText without a storage-format migration. Generic Prompting priority pruning remains unchanged. The covered-ancestor implementation was removed; its investigation is retained.
 
 Implemented foundation:
 
@@ -165,29 +165,32 @@ Implemented foundation:
 - renderer-validated, monotonic admission;
 - provisional target IDs and atomic current-turn publication without a public intermediate Plan model;
 - deterministic root-interleaved relevance admission that preserves the exact inner ordering when only one root exists;
-- automatic attachment integration that produces one structured prompt for the complete bounded attachment forest.
+- automatic attachment integration that produces one final text result for the complete bounded attachment forest.
 
-Prompt-projection follow-up work:
+Evidence-gated prompt-projection options (not mandatory completion items):
 
-- evidence-based root coalescing and full fragment-cost Deficit Round Robin scheduling beyond the current initial root-fair admission order;
+- evidence-based root coalescing only where native evidence supports it;
 - broader Composite candidates for expensive ranges and subtrees;
-- provider-supported long Element content continuation beyond the current local bounded Value projection.
+- further real-provider characterization beyond the existing Mock, native editor, and real-WebView continuation checks.
+- evaluate structure/content admission only if fixed-Snapshot evidence shows that skeletons routinely leave insufficient body budget.
 
 Before disposing Snapshot, publication retains every surviving `ElementTarget` in the active Agent turn. Elements observed but not published then release with Snapshot.
 
 ### 4.7 Implement VisualQuery
 
-Implemented: one `query_visual` structural query handles both Element and Composite targets, returns structured PromptNode content, applies a default node limit of 128 and hard maximum of 256, and performs no hidden retry. Target resolution selects live Element traversal or a retained Composite-member slice internally. Offset is 1-based; Composite targets use it for retained observed-member paging, while Element targets accept only offset 1 and direct the Agent to a returned child ID for narrower continuation. Broader search and Computer Use actions remain separate contracts to design from real calling needs.
+Implemented: one `query_visual` structural query handles every published visual element ID, returns final bounded text, applies a default node limit of 128 and hard maximum of 256, and performs no hidden retry. Target resolution selects live Element traversal or a retained Composite-member slice internally. Offset is 1-based; targets exposing `observedMembers` use it for retained-member paging, while other targets accept only offset 1 and direct the Agent to a returned child ID for narrower continuation. The internal Element-versus-Composite branch is not part of the tool schema. Broader search and Computer Use actions remain separate contracts to design from real calling needs.
 
-Each Agent call begins or participates in a `VisualTargetTurn`. Successful lookup of a historical target promotes it into the active turn. Completing the chat turn moves that ownership into history; retention policy later trims whole old turns.
+One active `VisualTargetTurn` now corresponds to one real conversation turn rather than one visual operation. Send, Edit, and Retry advance it; Continue and every generation/tool call reuse it. Successful lookup of a historical target promotes it into the active turn. The next conversation turn moves that ownership into history, where retention policy later trims whole old turns. Operation-local Prompt Builder outcomes provide statistics without reading the cumulative turn count.
+
+Implemented long-text retrieval includes the platform-neutral `VisualElement.ReadText` contract, deterministic Mock paging, Windows TextPattern bounded-prefix reads with ValuePattern fallback, Composite cross-member paging, and the independent `read_visual_text` Agent tool. Context-bound `VisualQuery.ReadText` owns the bounded page, page-local status normalization, continuation, and final text projection used by both the Chat plugin and the Streamable HTTP Probe. Expected Snapshot continuation is represented only by `moreText`; the current read's `next` is authoritative and historical structural status is not replayed into the page. Continuation is a stateless zero-based UTF-16 offset. Failure and live mutation remain explicit best-effort boundaries. The previously prototyped provider-native TextRange position and binary-fit algorithm is retained in `06-VisualQuery.md` as an evidence-gated future optimization rather than part of the current contract.
+
+Agent-facing visual tools now accept only strongly typed integer visual element IDs. `list_windows` converts internally acquired top-level Elements into atomically published targets and returns those IDs; query, text read, capture, and actions no longer accept or expose HWND strings. `Composite` remains an Agent-visible element type rather than a separate tool parameter kind. Native-window Locators remain a platform Backend acquisition mechanism for host code, probes, and diagnostics rather than an Agent identity format.
 
 ### 4.8 Migrate Actions and Callers Together
 
-Completed caller cutover includes action validation and invocation, automatic visual-context attachment, `query_visual`, statistics, and ChatContext target storage. Remaining contract migration includes:
+Completed caller cutover includes action validation and invocation, automatic visual-context attachment, `query_visual`, statistics, ChatContext target storage, the Visual Tree Debugger, and scenario characterization tests. Remaining contract migration includes:
 
 - StrategyEngine sibling queries;
-- debugger migration away from the legacy Builder;
-- prompt/detail-setting cleanup after the legacy Builder is deleted.
 
 A Composite must never be adapted to pretend it is a `VisualElement`. It is rejected before platform invocation.
 
@@ -240,14 +243,14 @@ The following concerns migrate together because splitting them would expose inco
 
 - `query_visual` description and result schema;
 - ChatContext target lookup;
-- PromptNode target publication;
+- final-text target publication;
 - Element-versus-Composite action rejection;
 - automatic context attachment;
 - debugger rendering;
 - status/continuation syntax;
 - Element-versus-Composite statistics.
 
-No target ID is published before its final target-bearing PromptNode is known to survive. No legacy adapter makes a Composite actionable. No ID silently refers to a reconstructed different element.
+No target ID is published before it is known to appear in the final rendered text. No legacy adapter makes a Composite actionable. No ID silently refers to a reconstructed different element.
 
 ## 6. Implementation Practices
 
@@ -277,7 +280,7 @@ The refactor is complete when:
 - Snapshot performs all live platform reads through direct Backend root acquisition and receiver-centered Element operations;
 - heterogeneous concrete elements own their behavior without leaking backend assumptions upward;
 - merged PromptNode planning and construction are platform-free;
-- final output is PromptNode plus atomic current-turn target publication;
+- final output is bounded text plus atomic current-turn target publication;
 - VisualQuery and actions resolve discriminated target types correctly;
 - Windows production-entry tests pass;
 - macOS behavior is validated natively;

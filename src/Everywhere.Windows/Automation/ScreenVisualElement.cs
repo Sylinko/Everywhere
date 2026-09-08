@@ -113,7 +113,7 @@ public sealed class ScreenVisualElement : VisualElement
     /// <inheritdoc />
     protected override IVisualElementEnumerator CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementEnumerationOptions options)
+        VisualElementQueryRequest request)
     {
         var topology = WindowsDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
@@ -132,11 +132,11 @@ public sealed class ScreenVisualElement : VisualElement
                 HWND.Null,
                 true,
                 GET_WINDOW_CMD.GW_HWNDNEXT,
-                options.QueryRequest),
+                request),
             VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling => CreateSiblingEnumerator(
                 topology,
                 relation,
-                options.QueryRequest),
+                request),
             _ => throw new ArgumentOutOfRangeException(nameof(relation), relation, null),
         };
     }

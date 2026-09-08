@@ -5,10 +5,6 @@ namespace Everywhere.Automation;
 /// </summary>
 public abstract class VisualTarget
 {
-    /// <summary>
-    /// Gets bounded explanations for incomplete or degraded target state.
-    /// </summary>
-    public IReadOnlyList<string> Status { get; init; } = [];
 }
 
 /// <summary>
@@ -37,15 +33,6 @@ public sealed record CompositePart
     /// </summary>
     public required VisualElementSnapshot Snapshot { get; init; }
 
-    /// <summary>
-    /// Gets whether this source member originated from a caller-supplied core element.
-    /// </summary>
-    public bool IsCore { get; init; }
-
-    /// <summary>
-    /// Gets bounded explanations for incomplete or degraded source observation.
-    /// </summary>
-    public IReadOnlyList<string> Status { get; init; } = [];
 }
 
 /// <summary>
@@ -60,9 +47,4 @@ public sealed class CompositeTarget : VisualTarget
     /// Gets the ordered bounded source members represented by this Composite.
     /// </summary>
     public required IReadOnlyList<CompositePart> Parts { get; init; }
-
-    /// <summary>
-    /// Gets the bounded preview exposed when the Composite was published.
-    /// </summary>
-    public string? Preview { get; init; }
 }

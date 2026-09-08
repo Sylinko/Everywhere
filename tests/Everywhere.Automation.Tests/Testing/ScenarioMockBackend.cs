@@ -193,7 +193,7 @@ internal sealed class ScenarioMockOperations
 internal sealed class ScenarioMockQueryEnumerator(
     ScenarioVisualElement origin,
     VisualElementRelation relation,
-    VisualElementEnumerationOptions options
+    VisualElementQueryRequest queryRequest
 ) : IVisualElementEnumerator
 {
     /// <inheritdoc />
@@ -211,7 +211,7 @@ internal sealed class ScenarioMockQueryEnumerator(
     public bool HasMore => _navigator.HasMore;
 
     private readonly ScenarioRelationNavigator _navigator = new(origin, relation);
-    private readonly VisualElementQueryRequest _queryRequest = options.QueryRequest;
+    private readonly VisualElementQueryRequest _queryRequest = queryRequest;
     private VisualElementQueryResult? _current;
     private bool _isDisposed;
 
@@ -399,6 +399,35 @@ internal sealed class ScenarioVisualElement(
     /// <inheritdoc />
     protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => QueryDirect(request);
 
+    /// <inheritdoc />
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters)
+    {
+        Backend.Operations.ScalarQuery();
+        var providerFailure = Backend.GetFailure(this);
+        if (providerFailure is not null)
+        {
+            return new VisualElementTextReadResult(null, null, providerFailure);
+        }
+
+        if (!TryGetControl(out var control))
+        {
+            return new VisualElementTextReadResult(
+                null,
+                null,
+                new VisualElementQueryFailure(
+                    VisualElementQueryFailureKind.ElementUnavailable,
+                    new DynamicLocaleKey(VisualContextLocaleKey.VisualContext_QueryFailure_ElementUnavailable)));
+        }
+
+        var text = Backend.GetText(this, control);
+        if (text is null)
+        {
+            return VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null));
+        }
+
+        return VisualElementTextReadResult.FromSuccess(text, offset, maxCharacters);
+    }
+
     private VisualElementQueryResult QueryDirect(VisualElementQueryRequest request)
     {
         Backend.Operations.ScalarQuery();
@@ -440,8 +469,8 @@ internal sealed class ScenarioVisualElement(
     /// <inheritdoc />
     protected override IVisualElementEnumerator CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementEnumerationOptions options)
-        => new ScenarioMockQueryEnumerator(this, relation, options);
+        VisualElementQueryRequest request)
+        => new ScenarioMockQueryEnumerator(this, relation, request);
 
     /// <inheritdoc />
     protected override void InvokeCore()

@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Everywhere.Utilities;
 
 namespace Everywhere.Views;
 
@@ -24,6 +26,7 @@ public sealed partial class PickVisualElementParticle : VisualElementParticle
     private readonly DropShadowEffect _dropShadowEffect;
 
     private VisualElementEffectWindow? _owner;
+    private VisualEffectImage<Bitmap>? _image;
     private Point _startPosition;
     private IParticleTargetTracker? _targetTracker;
     private Size _startSize;
@@ -65,7 +68,9 @@ public sealed partial class PickVisualElementParticle : VisualElementParticle
 
         _startPosition = startPosition;
         _targetTracker = targetTracker;
-        StartContentPresenter.Content = startContent;
+        _image = startContent.NotNull<VisualEffectImage<Bitmap>>();
+        _image.AddRef();
+        StartContentPresenter.Content = _image.Image;
         EndContentPresenter.Content = endContent;
         _startSize = startSize;
 
@@ -101,6 +106,7 @@ public sealed partial class PickVisualElementParticle : VisualElementParticle
     {
         _targetTracker = null;
         StartContentPresenter.Content = null;
+        DisposeHelper.DisposeToDefault(ref _image);
         EndContentPresenter.Content = null;
     }
 

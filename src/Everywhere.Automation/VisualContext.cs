@@ -8,7 +8,7 @@ namespace Everywhere.Automation;
 public sealed class VisualContext : IDisposable
 {
     /// <summary>
-    /// Gets the default maximum number of completed Agent turns retained for historical lookup.
+    /// Gets the default maximum number of completed conversation turns retained for historical lookup.
     /// </summary>
     public const int DefaultMaximumRetainedTurnCount = 8;
 
@@ -23,22 +23,22 @@ public sealed class VisualContext : IDisposable
     public int TargetCount => _targetTurnCounts.Count;
 
     /// <summary>
-    /// Gets the number of completed Agent turns currently retained for historical lookup.
+    /// Gets the number of completed conversation turns currently retained for historical lookup.
     /// </summary>
     public int RetainedTurnCount => _retainedTurns.Count;
 
     /// <summary>
     /// Gets the next monotonically allocated Agent identifier. Identifiers are never reused within this Context.
     /// </summary>
-    public int NextTargetId => _nextTargetId;
+    public int NextTargetId { get; private set; } = 1;
 
     /// <summary>
-    /// Gets the maximum number of completed Agent turns retained for historical lookup.
+    /// Gets the maximum number of completed conversation turns retained for historical lookup.
     /// </summary>
     public int MaximumRetainedTurnCount { get; }
 
     /// <summary>
-    /// Gets the soft maximum number of distinct Agent targets retained by completed turns.
+    /// Gets the soft maximum number of distinct Agent targets retained by completed conversation turns.
     /// </summary>
     /// <remarks>
     /// The newest completed turn is preserved even when it alone exceeds this limit, so targets just returned to the Agent remain resolvable.
@@ -50,7 +50,6 @@ public sealed class VisualContext : IDisposable
     private readonly LinkedList<VisualTargetTurn> _retainedTurns = [];
     private readonly Dictionary<int, int> _targetTurnCounts = [];
     private VisualTargetTurn? _activeTurn;
-    private int _nextTargetId = 1;
     private long _publicationVersion;
     private bool _isDisposed;
 
@@ -81,14 +80,14 @@ public sealed class VisualContext : IDisposable
     }
 
     /// <summary>
-    /// Begins the Agent turn that will own every target published or successfully looked up before completion.
+    /// Begins the conversation turn that will own every target published or successfully looked up before completion.
     /// </summary>
     public VisualTargetTurn BeginTurn()
     {
         ThrowIfDisposed();
         if (_activeTurn is not null)
         {
-            throw new InvalidOperationException("A VisualContext cannot have more than one active Agent turn.");
+            throw new InvalidOperationException("A VisualContext cannot have more than one active conversation turn.");
         }
 
         var turn = new VisualTargetTurn(this, CreateRetention());
@@ -97,20 +96,20 @@ public sealed class VisualContext : IDisposable
     }
 
     /// <summary>
-    /// Begins a provisional target-publication batch for the active Agent turn. Abandoning it does not consume identifiers.
+    /// Begins a provisional target-publication batch for the active conversation turn. Abandoning it does not consume identifiers.
     /// </summary>
     public VisualTargetPublicationBatch BeginPublication()
     {
         ThrowIfDisposed();
         return new VisualTargetPublicationBatch(
             this,
-            _activeTurn ?? throw new InvalidOperationException("Target publication requires an active Agent turn."),
+            _activeTurn ?? throw new InvalidOperationException("Target publication requires an active conversation turn."),
             _publicationVersion,
-            _nextTargetId);
+            NextTargetId);
     }
 
     /// <summary>
-    /// Resolves a retained target and promotes a historical target into the active Agent turn when one exists.
+    /// Resolves a retained target and promotes a historical target into the active conversation turn when one exists.
     /// </summary>
     public bool TryGetTarget(int id, [NotNullWhen(true)] out VisualTarget? target)
     {
@@ -276,7 +275,7 @@ public sealed class VisualContext : IDisposable
     internal void Commit(VisualTargetPublicationBatch batch, IReadOnlyDictionary<int, VisualTarget> targets, int newTargetCount)
     {
         ThrowIfDisposed();
-        if (!ReferenceEquals(batch.Turn, _activeTurn) || batch.StartingVersion != _publicationVersion || batch.StartingTargetId != _nextTargetId)
+        if (!ReferenceEquals(batch.Turn, _activeTurn) || batch.StartingVersion != _publicationVersion || batch.StartingTargetId != NextTargetId)
         {
             throw new InvalidOperationException(
                 "The visual-target publication batch is stale because VisualContext state changed before it committed.");
@@ -287,7 +286,7 @@ public sealed class VisualContext : IDisposable
             _activeTurn.AddTarget(id, target);
         }
 
-        _nextTargetId = checked(_nextTargetId + newTargetCount);
+        NextTargetId = checked(NextTargetId + newTargetCount);
         _publicationVersion++;
     }
 
@@ -296,7 +295,7 @@ public sealed class VisualContext : IDisposable
         ThrowIfDisposed();
         if (!ReferenceEquals(turn, _activeTurn))
         {
-            throw new InvalidOperationException("Only the active Agent turn can be completed.");
+            throw new InvalidOperationException("Only the active conversation turn can be completed.");
         }
 
         _activeTurn = null;
@@ -356,7 +355,7 @@ public sealed class VisualContext : IDisposable
 }
 
 /// <summary>
-/// Owns every Agent target published or looked up during one chat turn.
+/// Owns every Agent target published or looked up during one conversation turn.
 /// </summary>
 public sealed class VisualTargetTurn : IDisposable
 {
@@ -464,7 +463,7 @@ public sealed class VisualTargetTurn : IDisposable
 }
 
 /// <summary>
-/// Assigns provisional target identifiers and publishes their latest observation metadata to the active Agent turn.
+/// Assigns provisional target identifiers and publishes retained targets to the active conversation turn.
 /// </summary>
 public sealed class VisualTargetPublicationBatch
 {

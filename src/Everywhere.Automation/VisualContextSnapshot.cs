@@ -3,6 +3,7 @@ namespace Everywhere.Automation;
 /// <summary>
 /// Contains one bounded, potentially partial observation snapshot of the live visual tree.
 /// </summary>
+/// <remarks>Reports observed facts and concrete limitations without making a global completeness or success claim.</remarks>
 public sealed class VisualContextSnapshot : IDisposable
 {
     /// <summary>
@@ -11,12 +12,7 @@ public sealed class VisualContextSnapshot : IDisposable
     public IReadOnlyList<VisualContextSnapshotNode> Roots { get; }
 
     /// <summary>
-    /// Gets whether every requested traversal branch completed within the Snapshot limits.
-    /// </summary>
-    public bool IsComplete { get; }
-
-    /// <summary>
-    /// Gets bounded Agent-facing explanations for Snapshot-wide incompleteness.
+    /// Gets bounded Agent-facing explanations for Snapshot-wide limits and failures. Local issues belong to the affected nodes.
     /// </summary>
     public IReadOnlyList<string> Status { get; }
 
@@ -27,17 +23,14 @@ public sealed class VisualContextSnapshot : IDisposable
     /// </summary>
     /// <param name="retention">The ownership batch transferred into the Snapshot.</param>
     /// <param name="roots">The ordered roots of the bounded observation forest.</param>
-    /// <param name="isComplete">Whether every requested branch completed within the Snapshot limits.</param>
-    /// <param name="status">Bounded Snapshot-wide explanations for incompleteness.</param>
+    /// <param name="status">Bounded explanations for Snapshot-wide limits and failures.</param>
     public VisualContextSnapshot(
         VisualElementRetention retention,
         IReadOnlyList<VisualContextSnapshotNode> roots,
-        bool isComplete,
         IReadOnlyList<string> status)
     {
         Retention = retention;
         Roots = roots;
-        IsComplete = isComplete;
         Status = status;
     }
 

@@ -30,17 +30,21 @@ public sealed class GDIScreenCapture : IVisualElementCapture
     public PixelSize Size { get; }
 
     /// <inheritdoc />
+    public PixelRect Bounds { get; }
+
+    /// <inheritdoc />
     public int Stride { get; }
 
     private GdiBitmapSafeHandle? _bitmapHandle;
     private nint _data;
 
-    private GDIScreenCapture(GdiBitmapSafeHandle bitmapHandle, nint data, PixelSize size)
+    private GDIScreenCapture(GdiBitmapSafeHandle bitmapHandle, nint data, PixelRect bounds)
     {
         _bitmapHandle = bitmapHandle;
         _data = data;
-        Size = size;
-        Stride = size.Width * 4;
+        Bounds = bounds;
+        Size = bounds.Size;
+        Stride = checked(bounds.Width * 4);
     }
 
     /// <summary>
@@ -48,7 +52,7 @@ public sealed class GDIScreenCapture : IVisualElementCapture
     /// </summary>
     /// <param name="requestedBounds">The requested rectangle in virtual-screen physical pixel coordinates.</param>
     /// <returns>An owned capture, or <see langword="null" /> when the requested rectangle does not intersect the virtual screen.</returns>
-    public static unsafe GDIScreenCapture? Capture(PixelRect requestedBounds)
+    public static unsafe IVisualElementCapture? Capture(PixelRect requestedBounds)
     {
         var virtualBounds = new PixelRect(
             PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_XVIRTUALSCREEN),
@@ -113,7 +117,8 @@ public sealed class GDIScreenCapture : IVisualElementCapture
 
             var bitmapHandle = new GdiBitmapSafeHandle(bitmap);
             bitmap = default;
-            return new GDIScreenCapture(bitmapHandle, (nint)pixels, bounds.Size);
+            // BitBlt captures 1:1. Bound the returned buffer after capture; the temporary DIB can be larger.
+            return ResizedScreenCapture.Limit(new GDIScreenCapture(bitmapHandle, (nint)pixels, bounds));
         }
         finally
         {
