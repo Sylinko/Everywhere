@@ -108,15 +108,168 @@ jobs:
           -o ./publish `
           --no-restore
 
-    - name: Login, Compile, and Sign
+    # 步骤 1：下载并安装 SimplySignDesktop
+    - name: Download and Install SimplySignDesktop
+      shell: pwsh
+      env:
+        CERTUM_VERSION: "9.4.4.92"   # 可按需更新
+      run: |
+        $version = $env:CERTUM_VERSION
+        $url = "https://files.certum.eu/software/SimplySignDesktop/Windows/$version/SimplySignDesktop-$version-64-bit-en.msi"
+        $msiPath = "$env:TEMP\SimplySignDesktop-$version.msi"
+        $logPath = "$env:TEMP\install.log"
+
+        Write-Host "Downloading SimplySignDesktop from: $url"
+        $retryCount = 0
+        $maxRetries = 3
+        do {
+          try {
+            Invoke-WebRequest -Uri $url -OutFile $msiPath -UseBasicParsing -ErrorAction Stop
+            $downloadSuccess = $true
+          } catch {
+            $retryCount++
+            Write-Warning "Download attempt $retryCount failed: $_"
+            if ($retryCount -ge $maxRetries) {
+              Write-Error "Failed to download after $maxRetries attempts."
+              exit 1
+            }
+            Start-Sleep -Seconds 2
+          }
+        } while (-not $downloadSuccess -and $retryCount -lt $maxRetries)
+
+        Write-Host "Installing SimplySignDesktop..."
+        $proc = Start-Process msiexec -ArgumentList "/i `"$msiPath`" /qn /norestart ALLUSERS=1 /l*v `"$logPath`"" -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+          Write-Error "Installation failed with exit code $($proc.ExitCode)"
+          if (Test-Path $logPath) {
+            Write-Host "Install log (last 50 lines):"
+            Get-Content $logPath -Tail 50
+          }
+          exit $proc.ExitCode
+        }
+        Write-Host "SimplySignDesktop installed successfully."
+        Remove-Item $msiPath -Force
+
+    # 步骤 2：登录并等待证书注入，然后签名所有二进制文件 + 编译安装包
+    - name: Login, Sign and Build Installer
       shell: pwsh
       env:
         SIGN_USERNAME: ${{ secrets.CERTUM_USERNAME }}
         SIGN_OTP_TOKEN: ${{ secrets.CERTUM_OTP_TOKEN }}
+        CERTUM_FINGERPRINT: ${{ secrets.CERTUM_FINGERPRINT }}
+        PUBLISH_PATH: "publish"   # 根据实际发布目录调整
       run: |
-        python -m pip install --upgrade pip
-        pip install pyotp
-        python -u tools/sign_and_pack.py ./publish tools/installer.iss
+        $ErrorActionPreference = "Stop"
+
+        # ---- 2.1 生成 OTP 并登录 ----
+        pip install pyotp --quiet
+        $otp = python -c "import pyotp; print(pyotp.TOTP('$env:SIGN_OTP_TOKEN', digest='SHA256').now())"
+
+        $exe = "C:\Program Files\Certum\SimplySign Desktop\SimplySignDesktop.exe"
+        if (-not (Test-Path $exe)) {
+          Write-Error "SimplySignDesktop.exe not found at $exe"
+          exit 1
+        }
+
+        Write-Host "Launching SimplySignDesktop with auto-login..."
+        Start-Process -FilePath $exe -ArgumentList "/autologin", "$env:SIGN_USERNAME", "$otp" -NoNewWindow
+
+        # ---- 2.2 轮询等待证书可用 ----
+        $fingerprint = $env:CERTUM_FINGERPRINT
+        Write-Host "Waiting for certificate with fingerprint $fingerprint to become available..."
+        $certAvailable = $false
+        $maxWaitSeconds = 60
+        $waited = 0
+        do {
+          # 检查当前用户的个人证书存储中是否存在该指纹的证书
+          $cert = Get-ChildItem -Path Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq $fingerprint }
+          if ($cert) {
+            $certAvailable = $true
+            Write-Host "Certificate found after $waited seconds."
+            break
+          }
+          Start-Sleep -Seconds 2
+          $waited += 2
+        } while ($waited -lt $maxWaitSeconds)
+
+        if (-not $certAvailable) {
+          Write-Error "Certificate did not appear within $maxWaitSeconds seconds."
+          exit 1
+        }
+
+        # ---- 2.3 定位 signtool ----
+        $signtool = "${{ github.workspace }}\tools\sign_windows\signtool.exe"
+        if (-not (Test-Path $signtool)) {
+          $signtool = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+        }
+        if (-not $signtool) {
+          Write-Error "signtool.exe not found"
+          exit 1
+        }
+        Write-Host "Using signtool: $signtool"
+
+        # ---- 2.4 扫描并签名发布目录下的 exe/dll（跳过已签名文件） ----
+        $targetDir = Join-Path ${{ github.workspace }} $env:PUBLISH_PATH
+        if (-not (Test-Path $targetDir)) {
+          Write-Error "Publish directory not found: $targetDir"
+          exit 1
+        }
+
+        $files = Get-ChildItem -Path $targetDir -Include *.exe,*.dll -Recurse
+        Write-Host "Found $($files.Count) files to potentially sign."
+
+        foreach ($file in $files) {
+          # 检查是否已经签名（使用 /pa 默认验证策略）
+          $alreadySigned = $false
+          $verifyResult = & $signtool verify /pa $file.FullName 2>&1
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "[SKIP] Already signed: $($file.Name)"
+            $alreadySigned = $true
+          }
+
+          if (-not $alreadySigned) {
+            Write-Host "Signing: $($file.Name)"
+            & $signtool sign /v /fd sha256 /sha1 $fingerprint /tr "http://time.certum.pl" /td sha256 $file.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Sign failed for $($file.Name)"
+              exit 1
+            }
+            Write-Host "[SUCCESS] Signed: $($file.Name)"
+          }
+        }
+
+        # ---- 2.5 编译 Inno Setup 安装包并签名（如果存在 .iss 文件） ----
+        $issPath = "${{ github.workspace }}\tools\installer.iss"
+        if (Test-Path $issPath) {
+          Write-Host "Compiling Inno Setup installer..."
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            Write-Error "Inno Setup compiler not found at $iscc"
+            exit 1
+          }
+          & $iscc $issPath /O+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Inno Setup compilation failed"
+            exit 1
+          }
+
+          # 查找生成的安装包（假设输出在 publish 目录或其父目录）
+          $outputDir = Split-Path $issPath -Parent | Split-Path -Parent
+          $installer = Get-ChildItem -Path $outputDir -Filter *setup*.exe -Recurse | Select-Object -First 1
+          if ($installer) {
+            Write-Host "Signing installer: $($installer.Name)"
+            & $signtool sign /v /fd sha256 /sha1 $fingerprint /tr "http://time.certum.pl" /td sha256 $installer.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Installer signing failed"
+              exit 1
+            }
+            Write-Host "[SUCCESS] Installer signed."
+          } else {
+            Write-Warning "Could not find compiled installer."
+          }
+        }
+
+        Write-Host "=== All signing and packaging steps completed successfully ==="
 
     - name: Create release zip
       shell: pwsh
