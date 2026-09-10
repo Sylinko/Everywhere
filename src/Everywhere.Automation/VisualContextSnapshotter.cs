@@ -32,7 +32,13 @@ public static class VisualContextSnapshotter
     {
         var effectiveLimits = limits ?? VisualContextSnapshotLimits.Default;
         effectiveLimits.Validate();
-        return new Traversal(context, coreElements, effectiveLimits, allowedTraverseDirections, onTopLevelObserved, cancellationToken).CreateSnapshot();
+        return new Traversal(
+            context,
+            coreElements,
+            effectiveLimits,
+            allowedTraverseDirections,
+            onTopLevelObserved,
+            cancellationToken).CreateSnapshot();
     }
 
     private sealed class Traversal(
@@ -101,10 +107,10 @@ public static class VisualContextSnapshotter
 
             private static string? GetFailureStatus(VisualElementQueryFailureKind? kind) => kind switch
             {
-                VisualElementQueryFailureKind.Timeout => "Element query timed out.",
-                VisualElementQueryFailureKind.ElementUnavailable => "Element became unavailable during query.",
-                VisualElementQueryFailureKind.Unsupported => "Element query is unsupported.",
-                VisualElementQueryFailureKind.ProviderFailure => "Element query failed in the platform provider.",
+                VisualElementQueryFailureKind.Timeout => "Element query timed out",
+                VisualElementQueryFailureKind.ElementUnavailable => "Element became unavailable during query",
+                VisualElementQueryFailureKind.Unsupported => "Element query is unsupported",
+                VisualElementQueryFailureKind.ProviderFailure => "Element query failed in the platform provider",
                 _ => null,
             };
         }
@@ -306,6 +312,17 @@ public static class VisualContextSnapshotter
 
         private void ProcessWork(TraversalWork work)
         {
+            if (work.Direction != VisualContextTraverseDirections.Core &&
+                work.Observation.FailureKind == VisualElementQueryFailureKind.ElementUnavailable)
+            {
+                // Live providers can invalidate a relation item between enumeration and its first structural query.
+                // Such an item has no usable Snapshot or stable navigation target, so omit it and keep advancing the
+                // originating Enumerator. Core failures remain visible, as do elements that fail only after their
+                // structural observation succeeded.
+                ContinueRelation(work);
+                return;
+            }
+
             var id = work.Observation.Element.Id;
             var isNewNode = !_nodes.TryGetValue(id, out var node);
             var observation = work.Observation;
@@ -313,7 +330,7 @@ public static class VisualContextSnapshotter
             {
                 if (_nodes.Count >= limits.MaximumNodes)
                 {
-                    Stop("Snapshot node limit reached.");
+                    Stop("Snapshot node limit reached");
                     return;
                 }
 
@@ -321,7 +338,8 @@ public static class VisualContextSnapshotter
                 node = CreateNode(work, observation);
                 _nodes.Add(id, node);
                 if (node.Snapshot.Type == VisualElementType.TopLevel)
-                    onTopLevelObserved?.Invoke(new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
+                    onTopLevelObserved?.Invoke(
+                        new VisualElementQueryResult(node.Element, node.Snapshot, node.AvailableFields, node.MissingFields, null));
             }
 
             ApplyRelation(work, node!);
@@ -337,7 +355,7 @@ public static class VisualContextSnapshotter
         {
             if (structuralObservation.FailureKind is not null)
             {
-                return structuralObservation with { MissingFields = VisualElementFields.All };
+                return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
             }
 
             var maximumTextCharacters = Math.Min(
@@ -345,7 +363,7 @@ public static class VisualContextSnapshotter
                 Math.Max(0, limits.MaximumTotalTextCharacters - _totalTextCharacters));
             if (maximumTextCharacters == 0)
             {
-                AddSnapshotStatus("Snapshot text-content limit reached.");
+                AddSnapshotStatus("Snapshot text-content limit reached");
                 return structuralObservation with { MissingFields = structuralObservation.MissingFields | VisualElementFields.Text };
             }
 
@@ -391,7 +409,7 @@ public static class VisualContextSnapshotter
                 if (text.Length > maximumLength)
                 {
                     snapshot = snapshot with { TextPreview = text.TruncateUtf16(maximumLength), HasMoreText = true };
-                    status = "Text preview was truncated by the Snapshot content limit.";
+                    status = "Text preview was truncated by the Snapshot content limit";
                 }
 
                 _totalTextCharacters += snapshot.TextPreview?.Length ?? 0;
@@ -485,7 +503,7 @@ public static class VisualContextSnapshotter
         {
             if (!parent.TryAddChild(child))
             {
-                child.AddStatus("A conflicting parent observation was ignored.");
+                child.AddStatus("A conflicting parent observation was ignored");
             }
         }
 
@@ -494,11 +512,7 @@ public static class VisualContextSnapshotter
             if (observation.FailureStatus is { } failureStatus)
             {
                 node.AddStatus(failureStatus);
-                _providerFailureCount++;
-                if (_providerFailureCount >= limits.MaximumProviderFailures)
-                {
-                    Stop("Snapshot provider-failure limit reached.");
-                }
+                RecordProviderHealthFailure(observation.FailureKind);
             }
         }
 
@@ -513,7 +527,7 @@ public static class VisualContextSnapshotter
             if (work.Relation == VisualElementRelation.Child && enumerator.Index + 1 >= limits.MaximumChildrenPerNode)
             {
                 enumerator.Dispose();
-                AddRelationStatus(work.OriginElementId, "Child enumeration reached the per-node limit.");
+                AddRelationStatus(work.OriginElementId, "Child enumeration reached the per-node limit");
                 return;
             }
 
@@ -674,17 +688,38 @@ public static class VisualContextSnapshotter
 
         private void RecordRelationFailure(string originElementId, VisualElementRelation relation, Exception exception)
         {
-            var status = exception switch
+            var failureKind = exception switch
             {
-                TimeoutException => $"{relation} enumeration timed out.",
-                NotSupportedException => $"{relation} enumeration is unsupported.",
-                _ => $"{relation} enumeration failed in the platform provider.",
+                TimeoutException => VisualElementQueryFailureKind.Timeout,
+                NotSupportedException => VisualElementQueryFailureKind.Unsupported,
+                ObjectDisposedException => VisualElementQueryFailureKind.ElementUnavailable,
+                _ => VisualElementQueryFailureKind.ProviderFailure,
+            };
+            var status = failureKind switch
+            {
+                VisualElementQueryFailureKind.Timeout => $"{relation} enumeration timed out",
+                VisualElementQueryFailureKind.Unsupported => $"{relation} enumeration is unsupported",
+                VisualElementQueryFailureKind.ElementUnavailable => $"{relation} enumeration became unavailable",
+                _ => $"{relation} enumeration failed in the platform provider",
             };
             AddRelationStatus(originElementId, status);
+            RecordProviderHealthFailure(failureKind);
+        }
+
+        private void RecordProviderHealthFailure(VisualElementQueryFailureKind? failureKind)
+        {
+            // Unsupported capabilities and individual elements disappearing are normal observations in a live,
+            // heterogeneous accessibility tree. Only failures that indicate provider health risk consume the
+            // circuit-breaker budget.
+            if (failureKind is not (VisualElementQueryFailureKind.Timeout or VisualElementQueryFailureKind.ProviderFailure))
+            {
+                return;
+            }
+
             _providerFailureCount++;
             if (_providerFailureCount >= limits.MaximumProviderFailures)
             {
-                Stop("Snapshot provider-failure limit reached.");
+                Stop("Snapshot provider-failure limit reached");
             }
         }
 
@@ -709,7 +744,7 @@ public static class VisualContextSnapshotter
 
             if (_platformOperationCount >= limits.MaximumPlatformOperations)
             {
-                Stop("Snapshot platform-operation limit reached.");
+                Stop("Snapshot platform-operation limit reached");
                 return false;
             }
 
@@ -725,7 +760,7 @@ public static class VisualContextSnapshotter
                 return true;
             }
 
-            Stop("Snapshot elapsed-time limit reached.");
+            Stop("Snapshot elapsed-time limit reached");
             return false;
         }
 

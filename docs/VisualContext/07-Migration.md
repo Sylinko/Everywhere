@@ -14,7 +14,8 @@ The refactor is a clean internal replacement. Compatibility exists only long eno
 | `VisualElementStore` | expanded into `VisualContext` |
 | `VisualContextService` | removed; root acquisition and process-shared platform services are owned by `IVisualElementBackend` implementations |
 | Windows `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `WindowsVisualElementBackend`; interactive screen selection and text-selection monitoring are separate services |
-| macOS/Linux `IVisualElementContext` / `VisualElementContext` | retained only as platform migration sources until native Context work |
+| macOS `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `MacVisualElementBackend`; interactive selection and text-selection monitoring moved to `MacScreenSelectionService` and `MacTextSelectionWatcher` |
+| Linux `IVisualElementContext` / `VisualElementContext` | retained only as a platform migration source until native Context work |
 | `WindowsVisualElementQuerySession` | removed; shared UIA services and root acquisition live in `WindowsVisualElementBackend`, while existing-element behavior lives in concrete elements |
 | worker/Dispatcher/TaskScheduler/SynchronizationContext/Scope | removed after the native-timeout and real-call-path review |
 | element Pin/Unpin/operation leases | replaced by real-owner `VisualElementRetention` batches |
@@ -39,8 +40,9 @@ The replacement foundation currently includes:
 - provisional publication that consumes no Agent ID until commit;
 - current-turn ownership, historical target promotion, and automatic whole-turn/soft-target-capacity eviction;
 - Windows UIA and Win32 Screen concrete elements;
+- macOS AX, AX system-wide, and NSScreen concrete elements;
 - one Backend Query with orthogonal default/focused/pointer/point/native-window Locators and Direct/TopLevel/Screen Resolution;
-- separate Windows interactive screen-selection and text-selection-monitor services;
+- separate Windows and macOS interactive screen-selection and text-selection-monitor services;
 - the unmanaged CsWin32 UIA facade and deterministic COM ownership model;
 - one process-shared immutable-policy Windows UIA client and TreeWalker;
 - `WM_DISPLAYCHANGE`-driven immutable Windows display topology;
@@ -52,6 +54,8 @@ The replacement foundation currently includes:
 The worker, custom scheduler, SynchronizationContext, bounded-proxy, watchdog, Scope, Direct Scope, operation lease, pin, and per-Scope client implementation has been deleted. It did not provide a real termination boundary for a synchronous RPC and added lifetime complexity unrelated to the production call path.
 
 Windows production observation, actions, attachments, debugger, text-selection, interactive picking, and Chat target lookup now use the canonical `VisualElement`, one neutral `VisualContext` per chat, and the singleton `WindowsVisualElementBackend`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention; application UI uses separate screen-selection and text-selection-monitor services. `ChatContext` constructs its Context directly, including after deserialization and for derived Agents. The Backend owns shared UIA services but never retains Contexts or Elements. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` and its debug recorder have been deleted.
+
+macOS production root acquisition, AX identity, screen topology, interactive picking, screenshot selection, and selected-text monitoring now use the same Context-owned contract through the singleton `MacVisualElementBackend`. The Backend owns one AX system-wide reference with a fixed messaging timeout, while each acquired AX reference is independently owned and canonicalized by Core Foundation equality inside the destination Context. The removed macOS legacy Context has not been retained as an adapter.
 
 ## 4. Migration Stages
 
@@ -196,17 +200,18 @@ A Composite must never be adapted to pretend it is a `VisualElement`. It is reje
 
 ### 4.9 macOS Implementation
 
-Treat macOS as several concrete element domains from the beginning:
+Implemented:
 
-1. implement AX query, relations, actions, ownership, equality, failure, and timeout through native macOS validation;
-2. migrate NSScreen as a separate element implementation;
-3. keep Screen operations outside fake AX provider/PID semantics;
-4. probe descendant/TopLevel/Application Parent chains and multi-window Applications;
-5. stop for design review before publishing cross-backend Parent/Child/sibling topology;
-6. validate coordinate conversion, permissions, capture, mutation, unresponsive providers, and native release on macOS;
-7. preserve backend-independent Snapshot, VisualQuery, and Agent targets.
+1. AX query, batched scalar reads, offset-based ranged text with AXValue fallback, indexed child paging, actions, ownership, equality, failure conversion, and fixed messaging timeout;
+2. separate AX, AX system-wide, and NSScreen concrete element domains;
+3. Context identity canonicalization based on Core Foundation equality rather than transient native pointer values;
+4. `Default + Direct` as an isolated AX system-wide root and `Default + TopLevel` as the first eligible window in global Z-order;
+5. Screen -> AXWindow -> AX descendants as the structural tree, with AXApplication excluded from the Parent/Child main chain;
+6. immutable display topology replaced atomically after `NSApplicationDidChangeScreenParametersNotification`;
+7. separate screen-selection and selected-text-monitor services over the canonical Backend and Context contracts;
+8. native app-host probes for identity, timeout scope, batching, query resolution, window states, display changes, ranged and Value-only text paging, paged children, and pixel-level capture contracts.
 
-Only declarations and compile-time preparation may be completed from Windows. Native behavior is not inferred from sparse documentation or another platform.
+Remaining native validation includes third-party Value-only text providers, multi-display and spanning-window assignment, inactive Stage/separate Space and rotated/mixed-density capture, permission transitions, key/full-screen/windowless cases, repeated page-boundary mutation, and aggregate repeated-provider-failure policy. These gaps remain in repository-root `temp.md`; they must not be filled by Windows assumptions.
 
 ### 4.10 Cut Over and Delete Legacy Production Code
 
@@ -219,7 +224,7 @@ After production-entry verification succeeds, remove:
 - obsolete merge logic;
 - unused JSON/TOON/XML traversal branches;
 - compatibility constructors and adapters without callers;
-- legacy `Everywhere.Interop.IVisualElement` and the remaining macOS/Linux implementations after their final behavior review.
+- legacy `Everywhere.Interop.IVisualElement` and the remaining Linux implementation after its final behavior review.
 
 The legacy resilient element cache and old Windows UIA/Screen implementations are already removed from production.
 

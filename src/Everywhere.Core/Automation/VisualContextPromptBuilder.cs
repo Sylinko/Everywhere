@@ -246,7 +246,7 @@ public static class VisualContextPromptBuilder
         }
 
         MergeCompositeRuns(children, options);
-        if (!ShouldProject(source, children.Count, options.DetailLevel))
+        if (!ShouldProject(source, children.Count))
         {
             output.AddRange(children);
             return;
@@ -255,7 +255,7 @@ public static class VisualContextPromptBuilder
         output.Add(new ProjectionNode([source], children, false, null, false));
     }
 
-    private static bool ShouldProject(VisualContextSnapshotNode source, int projectedChildCount, VisualContextDetailLevel detailLevel)
+    private static bool ShouldProject(VisualContextSnapshotNode source, int projectedChildCount)
     {
         var snapshot = source.Snapshot;
         var type = snapshot.Type ?? VisualElementType.Unknown;
@@ -266,15 +266,8 @@ public static class VisualContextPromptBuilder
             return true;
         }
 
-        return detailLevel switch
-        {
-            VisualContextDetailLevel.Detailed => projectedChildCount > 0,
-            VisualContextDetailLevel.Compact when source.Parent is null => projectedChildCount > 0,
-            VisualContextDetailLevel.Compact when type == VisualElementType.Document => projectedChildCount > 0,
-            VisualContextDetailLevel.Compact when type == VisualElementType.Panel => projectedChildCount > 1,
-            VisualContextDetailLevel.Minimal => source.Parent is null && projectedChildCount > 0,
-            _ => false,
-        };
+        if (source.Parent is null || type == VisualElementType.Document) return projectedChildCount > 0;
+        return type == VisualElementType.Panel && projectedChildCount > 1;
     }
 
     private static void MergeCompositeRuns(List<ProjectionNode> nodes, VisualContextPromptOptions options)
@@ -435,7 +428,7 @@ public static class VisualContextPromptBuilder
         if (node.IsComposite) element.Attribute("observedMembers", node.Sources.Count);
         if (node.AllocatedContent.Length < (node.Content?.Length ?? 0) || node.IsPreviewTruncated ||
             node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText)) element.Flag("moreText");
-        if (ShouldIncludeBounds(options.DetailLevel, node.Type) && GetBounds(node) is { } bounds)
+        if (ShouldIncludeBounds(node.Type) && GetBounds(node) is { } bounds)
         {
             element.Attribute("box", $"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
         }
@@ -478,7 +471,7 @@ public static class VisualContextPromptBuilder
         int maximumCharacters)
     {
         var status = new List<string>(snapshot.Status);
-        if (hasBudgetOmission) status.Add("Some visual targets were omitted by the prompt budget.");
+        if (hasBudgetOmission) status.Add("Some visual targets were omitted by the prompt budget");
         return status.Count == 0 ? null : Bound(string.Join("; ", status), maximumCharacters);
     }
 
@@ -494,15 +487,10 @@ public static class VisualContextPromptBuilder
         return result;
     }
 
-    private static bool ShouldIncludeBounds(VisualContextDetailLevel detailLevel, VisualElementType type) => detailLevel switch
-    {
-        VisualContextDetailLevel.Detailed => true,
-        VisualContextDetailLevel.Compact when type is VisualElementType.TextEdit or VisualElementType.Button or VisualElementType.CheckBox or
+    private static bool ShouldIncludeBounds(VisualElementType type) =>
+        type is VisualElementType.TextEdit or VisualElementType.Button or VisualElementType.CheckBox or
             VisualElementType.ListView or VisualElementType.TreeView or VisualElementType.DataGrid or VisualElementType.TabControl or
-            VisualElementType.Table or VisualElementType.Document or VisualElementType.TopLevel or VisualElementType.Screen => true,
-        VisualContextDetailLevel.Minimal when type is VisualElementType.TopLevel or VisualElementType.Screen => true,
-        _ => false,
-    };
+            VisualElementType.Table or VisualElementType.Document or VisualElementType.TopLevel or VisualElementType.Screen;
 
     private static string? GetElementContent(VisualElementSnapshot snapshot)
     {

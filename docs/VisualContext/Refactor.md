@@ -828,7 +828,7 @@ JSON, TOON, or another textual projection may use `PromptText`, `PromptTextChunk
 
 The prompt estimator must account for container punctuation, nesting, escaping, Composite metadata, and status. It must not assume every node has a standalone fixed cost. `PromptRenderResult.OmittedNodes` remains Prompting render metadata; it is not a second Visual Context omission protocol. Known missing visual information is expressed as status before prompt construction.
 
-`VisualContextDetailLevel` controls semantic field inclusion and preview density. It does not select unrelated serialization formats.
+The historical detail-level option has been removed. Production uses the fixed compact projection described in [Snapshot Pipeline](05-SnapshotPipeline.md), with configurable token budgets.
 
 The Agent-target index in `VisualElementStore` is the source of truth for both query and action routing:
 

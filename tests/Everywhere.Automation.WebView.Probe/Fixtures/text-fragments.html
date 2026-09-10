@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Text fragment separator probe</title>
+<style>body { font: 20px sans-serif; max-width: 850px; margin: 30px; } section { margin: 18px 0; }</style>
+<body>
+  <section aria-label="English inline"><p>Hello <strong>bold</strong> world.</p></section>
+  <section aria-label="Chinese inline"><p>这是一段<strong>加粗</strong>中文。</p></section>
+  <section aria-label="Split word"><p>auto<strong>mation</strong>!</p></section>
+  <section aria-label="Paragraphs"><p>First paragraph.</p><p>Second paragraph.</p></section>
+  <section aria-label="Line break"><p>First line.<br>Second line.</p></section>
+  <section aria-label="Interactive link"><p>Read <a href="#destination">the guide</a> now.</p></section>
+  <section aria-label="Separate values"><span>Alpha</span> <span>Beta</span></section>
+  <p id="destination">End of fixture.</p>
+</body>
+</html>

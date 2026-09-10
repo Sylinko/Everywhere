@@ -16,11 +16,6 @@ public sealed record VisualContextPromptOptions
     public int TargetTokenBudget { get; init; } = 4_096;
 
     /// <summary>
-    /// Gets the semantic detail level used for container and bounds projection.
-    /// </summary>
-    public VisualContextDetailLevel DetailLevel { get; init; } = VisualContextDetailLevel.Compact;
-
-    /// <summary>
     /// Gets the minimum number of adjacent passive leaf nodes required to form a Composite.
     /// </summary>
     public int MinimumCompositeMemberCount { get; init; } = 2;

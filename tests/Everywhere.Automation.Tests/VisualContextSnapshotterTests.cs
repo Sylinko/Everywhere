@@ -47,10 +47,10 @@ public sealed class VisualContextSnapshotterTests
         {
             Assert.That(snapshot.Roots, Has.Count.EqualTo(1));
             Assert.That(snapshot.Roots[0].Children, Has.Count.EqualTo(5));
-            Assert.That(snapshot.Roots[0].Status, Does.Contain("Child enumeration reached the per-node limit."));
+            Assert.That(snapshot.Roots[0].Status, Does.Contain("Child enumeration reached the per-node limit"));
             Assert.That(snapshot.Status, Is.Empty);
-            Assert.That(prompt, Does.Contain("Child enumeration reached the per-node limit."));
-            Assert.That(prompt, Does.Not.Contain("Snapshot observation is incomplete."));
+            Assert.That(prompt, Does.Contain("Child enumeration reached the per-node limit"));
+            Assert.That(prompt, Does.Not.Contain("Snapshot observation is incomplete"));
             Assert.That(backend.Operations.ElementCreatedCount, Is.EqualTo(6));
             Assert.That(generatedItems, Is.LessThan(100));
             Assert.That(backend.Operations.EnumeratorDisposedCount, Is.EqualTo(backend.Operations.EnumeratorCreatedCount));
@@ -87,7 +87,7 @@ public sealed class VisualContextSnapshotterTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(snapshot.Status, Does.Contain("Snapshot platform-operation limit reached."));
+            Assert.That(snapshot.Status, Does.Contain("Snapshot platform-operation limit reached"));
             Assert.That(backend.Operations.EnumeratorDisposedCount, Is.EqualTo(backend.Operations.EnumeratorCreatedCount));
         });
     }

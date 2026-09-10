@@ -199,7 +199,6 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         var promptOptions = new VisualContextPromptOptions
         {
             TargetTokenBudget = VisualContextLengthLimit.Detailed.ToTokenLimit(),
-            DetailLevel = _persistentState.VisualContextDetailLevel,
         };
         using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
             ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
@@ -420,7 +419,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             var publication = context.BeginPublication();
             var targetElements = new Dictionary<PromptCompactElement, int>(ReferenceEqualityComparer.Instance);
             var root = new PromptCompactElement("windows")
-                .AttributeNotNullOrEmpty("status", hasBudgetOmission ? "Some windows were omitted by the prompt budget." : null);
+                .AttributeNotNullOrEmpty("status", hasBudgetOmission ? "Some windows were omitted by the prompt budget" : null);
             for (var index = 0; index < windows.Count; index++)
             {
                 if (!selectedIndexes.Contains(index)) continue;

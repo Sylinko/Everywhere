@@ -3,7 +3,13 @@ using System.Globalization;
 using System.Text.Json;
 using Everywhere.Automation.TestApp;
 using Everywhere.Chat;
+#if WINDOWS
 using Everywhere.Windows.Automation;
+using PlatformVisualElementBackend = Everywhere.Windows.Automation.WindowsVisualElementBackend;
+#elif MACOS
+using Everywhere.Mac.Automation;
+using PlatformVisualElementBackend = Everywhere.Mac.Automation.MacVisualElementBackend;
+#endif
 
 namespace Everywhere.Automation.WebView.Probe;
 
@@ -14,7 +20,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
     public int RetainedTurnCount => _context.RetainedTurnCount;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private readonly WindowsVisualElementBackend _backend = new();
+    private readonly PlatformVisualElementBackend _backend = new();
     private readonly VisualContext _context = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
     private TestAppProcessController? _controller;
@@ -132,6 +138,53 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
         }
     }
 
+#if MACOS
+    /// <summary>Queries each scalar field independently so a malformed AX value cannot obscure the failing field.</summary>
+    public async Task<string> DiagnoseAXTargetAsync(int target, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
+            var visualTarget = ResolveTarget(target);
+            if (visualTarget is not ElementTarget elementTarget)
+            {
+                throw new InvalidOperationException("AX diagnostics require an Element target.");
+            }
+
+            var fields = new[]
+            {
+                VisualElementFields.Id,
+                VisualElementFields.Type,
+                VisualElementFields.States,
+                VisualElementFields.Name,
+                VisualElementFields.Text,
+                VisualElementFields.Bounds,
+                VisualElementFields.ProcessId,
+                VisualElementFields.NativeWindowHandle,
+            };
+            var observations = fields.Select(field =>
+            {
+                var result = elementTarget.Element.Query(new VisualElementQueryRequest(field, 256));
+                return new
+                {
+                    field = field.ToString(),
+                    availableFields = result.AvailableFields.ToString(),
+                    missingFields = result.MissingFields.ToString(),
+                    result.Snapshot,
+                    failureKind = result.Failure?.Kind.ToString(),
+                    exception = result.Failure?.Exception?.ToString(),
+                };
+            });
+            return JsonSerializer.Serialize(observations, JsonOptions);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+#endif
+
     public async Task<ProbeTextReadResult> ReadTextAsync(int target, int offset = 0, int limit = VisualQuery.DefaultTextLimit, CancellationToken cancellationToken = default, bool shouldStartNewTurn = false)
     {
         await _gate.WaitAsync(cancellationToken);
@@ -168,6 +221,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
         }
     }
 
+#if WINDOWS
     /// <summary>Saves a bounded native edge trace for the controlled window without publishing Agent targets.</summary>
     public async Task<string> DiagnoseTopologyAsync(CancellationToken cancellationToken)
     {
@@ -184,6 +238,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
         }
         finally { _gate.Release(); }
     }
+#endif
 
     public async ValueTask DisposeAsync()
     {
@@ -212,7 +267,7 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
         {
             var status = _status ?? throw new InvalidOperationException("The WebView TestApp has no current status.");
             var rootHandle = (nint)status.Roots.Single().NativeHandle;
-            var root = _backend.Query(retention, VisualElementLocator.FromNativeWindow(rootHandle), VisualElementResolution.TopLevel) ?? throw new InvalidOperationException("The Windows reader did not resolve the native WebView probe window.");
+            var root = _backend.Query(retention, VisualElementLocator.FromNativeWindow(rootHandle), VisualElementResolution.TopLevel) ?? throw new InvalidOperationException("The platform reader did not resolve the native WebView probe window.");
             return new ElementTarget { Element = root.Element };
         }
 

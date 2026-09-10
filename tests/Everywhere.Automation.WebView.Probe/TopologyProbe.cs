@@ -1,3 +1,4 @@
+#if WINDOWS
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Everywhere.Windows.Interop;
@@ -93,3 +94,4 @@ public static class TopologyProbe
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_pointer")]
     private static extern ref nint GetPointer(ComReference reference);
 }
+#endif
