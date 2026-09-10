@@ -17,14 +17,14 @@ namespace Everywhere.Windows.Automation;
 /// Represents one Context-owned Windows UI Automation element.
 /// </summary>
 public sealed class UIAutomationVisualElement(
-    VisualContext context,
+    VisualElementIdentity identity,
     WindowsVisualElementBackend backend,
     UIAutomationElementReference automationElement,
     string id,
     int processId,
     nint nativeWindowHandle,
     UIAutomationControlType controlType
-) : VisualElement(context, id)
+) : VisualElement(identity, id)
 {
     private const int MaxNativeWindowAncestorDepth = 256;
 
@@ -197,7 +197,7 @@ public sealed class UIAutomationVisualElement(
         var display = topology.FindTopLevelWindowDisplay((HWND)NativeWindowHandle);
         if (display is null)
         {
-            return new EmptyVisualElementEnumerator();
+            return EmptyVisualElementEnumerator.Shared;
         }
 
         var direction = relation == VisualElementRelation.PreviousSibling ? GET_WINDOW_CMD.GW_HWNDPREV : GET_WINDOW_CMD.GW_HWNDNEXT;

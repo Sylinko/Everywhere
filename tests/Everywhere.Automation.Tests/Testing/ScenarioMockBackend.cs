@@ -376,9 +376,9 @@ internal sealed class ScenarioVisualElement(
     ScenarioMockBackend backend,
     ScenarioVisualElement? parent,
     int siblingIndex,
-    string id,
+    VisualElementIdentity<string> identity,
     Func<VisualControl> controlResolver
-) : VisualElement(backend.Context, id)
+) : VisualElement(identity, identity.Value)
 {
     public PixelRect BoundingRectangle =>
         ParentElement is null ? new PixelRect(0, 0, 1280, 720) : new PixelRect(SiblingIndex * 8, GetDepth() * 24, 320, 20);

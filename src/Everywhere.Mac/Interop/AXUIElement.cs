@@ -2,7 +2,6 @@
 using Avalonia;
 using CoreFoundation;
 using Everywhere.Automation;
-using Everywhere.Interop;
 using ObjCRuntime;
 
 namespace Everywhere.Mac.Interop;
@@ -10,182 +9,9 @@ namespace Everywhere.Mac.Interop;
 /// <summary>
 /// Provides interop methods for macOS Accessibility API (AXUIElement).
 /// </summary>
-public partial class AXUIElement : NSObject, IVisualElement
+public partial class AXUIElement : NSObject
 {
-    public string Id => $"{ProcessId}.{NativeWindowHandle}.{CFInterop.CFHash(Handle)}";
-
-    public IVisualElement? Parent => field ??= GetAttributeAsElement(AXAttributeConstants.Parent);
-
-    public VisualElementSiblingAccessor SiblingAccessor => new SiblingAccessorImpl(this);
-
-    public IEnumerable<IVisualElement> Children
-    {
-        get
-        {
-            using var children = GetAttribute<NSArray>(AXAttributeConstants.Children);
-            if (children is null) yield break;
-
-            for (nuint i = 0; i < children.Count; i++)
-            {
-                if (FromCopyArray(children, i) is { } child)
-                {
-                    yield return child;
-                }
-            }
-        }
-    }
-
-    public AXRoleAttribute Role { get; }
-
-    public AXSubroleAttribute Subrole { get; }
-
-    public VisualElementType Type
-    {
-        get
-        {
-            return Role switch
-            {
-                AXRoleAttribute.AXStaticText => VisualElementType.Label,
-                AXRoleAttribute.AXTextField or
-                    AXRoleAttribute.AXTextArea => VisualElementType.TextEdit,
-
-                AXRoleAttribute.AXButton or
-                    AXRoleAttribute.AXMenuButton or
-                    AXRoleAttribute.AXPopUpButton or
-                    AXRoleAttribute.AXDisclosureTriangle => VisualElementType.Button,
-
-                AXRoleAttribute.AXCheckBox => VisualElementType.CheckBox,
-                AXRoleAttribute.AXRadioButton => VisualElementType.RadioButton,
-                AXRoleAttribute.AXComboBox => VisualElementType.ComboBox,
-
-                AXRoleAttribute.AXList or
-                    AXRoleAttribute.AXRuler => VisualElementType.ListView,
-
-                AXRoleAttribute.AXOutline => VisualElementType.TreeView,
-                AXRoleAttribute.AXTable => VisualElementType.Table,
-                AXRoleAttribute.AXRow => VisualElementType.TableRow,
-
-                AXRoleAttribute.AXMenuBar or
-                    AXRoleAttribute.AXMenu => VisualElementType.Menu,
-
-                AXRoleAttribute.AXMenuBarItem or
-                    AXRoleAttribute.AXMenuItem => VisualElementType.MenuItem,
-
-                AXRoleAttribute.AXTabGroup => VisualElementType.TabControl,
-                AXRoleAttribute.AXToolbar => VisualElementType.ToolBar,
-
-                AXRoleAttribute.AXGroup or
-                    AXRoleAttribute.AXRadioGroup or
-                    AXRoleAttribute.AXSplitGroup or
-                    AXRoleAttribute.AXBrowser or
-                    AXRoleAttribute.AXSheet or
-                    AXRoleAttribute.AXDrawer or
-                    AXRoleAttribute.AXCell => VisualElementType.Panel,
-
-                AXRoleAttribute.AXWindow or
-                    AXRoleAttribute.AXApplication or
-                    AXRoleAttribute.AXSystemWide => VisualElementType.TopLevel,
-
-                AXRoleAttribute.AXSplitter => VisualElementType.Splitter,
-                AXRoleAttribute.AXSlider => VisualElementType.Slider,
-                AXRoleAttribute.AXScrollBar => VisualElementType.ScrollBar,
-
-                AXRoleAttribute.AXBusyIndicator => VisualElementType.Spinner,
-                AXRoleAttribute.AXProgressIndicator or
-                    AXRoleAttribute.AXLevelIndicator or
-                    AXRoleAttribute.AXRelevanceIndicator or
-                    AXRoleAttribute.AXValueIndicator => VisualElementType.ProgressBar,
-
-                AXRoleAttribute.AXImage => VisualElementType.Image,
-                AXRoleAttribute.AXLink => VisualElementType.Hyperlink,
-                AXRoleAttribute.AXWebArea => VisualElementType.Document,
-
-                AXRoleAttribute.AXScrollArea or
-                    AXRoleAttribute.AXLayoutArea or
-                    AXRoleAttribute.AXLayoutItem or
-                    AXRoleAttribute.AXGrowArea or
-                    AXRoleAttribute.AXMatte or
-                    AXRoleAttribute.AXRulerMarker or
-                    AXRoleAttribute.AXColumn or
-                    AXRoleAttribute.AXGrid or
-                    AXRoleAttribute.AXPage or
-                    AXRoleAttribute.AXPopover => VisualElementType.Panel,
-
-                _ => Subrole switch
-                {
-                    AXSubroleAttribute.AXCloseButton or
-                        AXSubroleAttribute.AXMinimizeButton or
-                        AXSubroleAttribute.AXZoomButton or
-                        AXSubroleAttribute.AXToolbarButton or
-                        AXSubroleAttribute.AXSortButton or
-                        AXSubroleAttribute.AXTabButton => VisualElementType.Button,
-
-                    AXSubroleAttribute.AXSearchField => VisualElementType.TextEdit,
-
-                    AXSubroleAttribute.AXToggle or
-                        AXSubroleAttribute.AXSwitch => VisualElementType.CheckBox,
-
-                    AXSubroleAttribute.AXStandardWindow or
-                        AXSubroleAttribute.AXDialog or
-                        AXSubroleAttribute.AXSystemDialog or
-                        AXSubroleAttribute.AXFloatingWindow or
-                        AXSubroleAttribute.AXSystemFloatingWindow => VisualElementType.Panel,
-
-                    _ => VisualElementType.Unknown
-                }
-            };
-        }
-    }
-
-    public VisualElementStates States
-    {
-        get
-        {
-            var states = VisualElementStates.None;
-            if (GetAttribute<NSNumber>(AXAttributeConstants.Enabled)?.BoolValue == false) states |= VisualElementStates.Disabled;
-            if (GetAttribute<NSNumber>(AXAttributeConstants.Focused)?.BoolValue == true) states |= VisualElementStates.Focused;
-            if (GetAttribute<NSNumber>(AXAttributeConstants.Hidden)?.BoolValue == true) states |= VisualElementStates.Offscreen;
-            if (GetAttribute<NSNumber>(AXAttributeConstants.Selected)?.BoolValue == true) states |= VisualElementStates.Selected;
-
-            if (Subrole == AXSubroleAttribute.AXSecureTextField) states |= VisualElementStates.Password;
-
-            return states;
-        }
-    }
-
-    public string? Name => GetAttribute<NSString>(AXAttributeConstants.Title);
-
-    public PixelRect BoundingRectangle
-    {
-        get
-        {
-            try
-            {
-                var posVal = GetAttribute<AXValue>(AXAttributeConstants.Position);
-                var sizeVal = GetAttribute<AXValue>(AXAttributeConstants.Size);
-
-                if (posVal is null || sizeVal is null) return default;
-
-                var pos = posVal.Point;
-                var size = sizeVal.Size;
-                return new PixelRect((int)pos.X, (int)pos.Y, (int)size.Width, (int)size.Height);
-            }
-            catch
-            {
-                return default;
-            }
-        }
-    }
-
-    public int ProcessId => GetPid(Handle, out var pid) == AXError.Success ? pid : 0;
-
-    public nint NativeWindowHandle => GetWindow(Handle, out var windowId) == AXError.Success ? (nint)windowId : 0;
-
-    static AXUIElement()
-    {
-        // default timeout for AX calls is 6s, which is too long for our use case.
-        AXUIElementSetMessagingTimeout(SystemWide.Handle.Handle, 1f);
-    }
+    internal nint NativeHandle => Handle.Handle;
 
     /// <summary>
     /// Create AXUIElement from NSArray at given index.
@@ -202,38 +28,30 @@ public partial class AXUIElement : NSObject, IVisualElement
         return new AXUIElement(pValue.Handle);
     }
 
-    private AXUIElement(NativeHandle handle) : base(handle, true)
+    /// <summary>
+    /// Retains one borrowed AX element stored in an array and returns an independent managed owner.
+    /// </summary>
+    internal static AXUIElement? FromArray(NSArray array, nuint index) => FromCopyArray(array, index);
+
+    /// <summary>
+    /// Creates another managed owner for the same native AX element.
+    /// </summary>
+    internal AXUIElement Retain()
     {
-        var axRole = GetAttribute<NSString>(AXAttributeConstants.Role);
-        Role = Enum.TryParse<AXRoleAttribute>(axRole, true, out var role) ? role : AXRoleAttribute.AXUnknown;
-        var axSubrole = GetAttribute<NSString>(AXAttributeConstants.Subrole);
-        Subrole = Enum.TryParse<AXSubroleAttribute>(axSubrole, true, out var subrole) ? subrole : AXSubroleAttribute.AXUnknown;
+        CFInterop.CFRetain(Handle);
+        return new AXUIElement(Handle);
     }
 
-    public string? GetText(int maxLength = -1)
-    {
-        var text = GetAttribute<NSObject>(AXAttributeConstants.Value)?.ToString();
-        if (string.IsNullOrEmpty(text)) return null;
-
-        if (Role == AXRoleAttribute.AXCheckBox) return text == "0" ? "false" : "true"; // don't apply trim
-
-        return maxLength > 0 && text.Length > maxLength ? text[..maxLength] : text;
-    }
-
-    // TODO: Is press enough?
-    public void Invoke() => PerformAction(AXAttributeConstants.Press);
+    private AXUIElement(NativeHandle handle) : base(handle, true) { }
 
     public void SetText(string text)
     {
         using var nsText = new NSString(text);
-        SetAttributeValue(Handle, AXAttributeConstants.Value.Handle, nsText.Handle);
-    }
-
-    public void SendShortcut(KeyboardShortcut shortcut)
-    {
-        // This is complex on macOS. It usually involves using CoreGraphics CGEventCreateKeyboardEvent
-        // to create and post keyboard events to the process that owns the element.
-        throw new NotImplementedException();
+        var error = SetAttributeValue(Handle, AXAttributeConstants.Value.Handle, nsText.Handle);
+        if (error != AXError.Success)
+        {
+            throw new AXException(error, $"Failed to set the AX value. AX returned {error}.");
+        }
     }
 
     /// <summary>
@@ -241,25 +59,54 @@ public partial class AXUIElement : NSObject, IVisualElement
     /// In case of numeric input fields that return NSNumber, it will be converted to string.
     /// </summary>
     /// <returns></returns>
-    public string? GetSelectionText() => GetAttribute<NSObject>(AXAttributeConstants.SelectedText)?.ToString();
+    public string? GetSelectionText()
+    {
+        var error = CopyDescriptionAttribute(AXAttributeConstants.SelectedText, out var text);
+        return error switch
+        {
+            AXError.Success => text,
+            AXError.AttributeUnsupported or AXError.NoValue or AXError.NotImplemented => null,
+            _ => throw new AXException(error, $"Failed to copy the AX selected text. AX returned {error}."),
+        };
+    }
 
     public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var bounds = BoundingRectangle;
+        var bounds = GetBounds();
         if (bounds.Width <= 0 || bounds.Height <= 0) return Task.FromResult<IVisualElementCapture>(CapturedBitmapData.Empty);
 
-        using var windowRef = Role == AXRoleAttribute.AXWindow ? null : GetAttributeAsElement(AXAttributeConstants.Window);
-        var windowBounds = Role == AXRoleAttribute.AXWindow ? bounds :
-            windowRef?.BoundingRectangle ?? throw new InvalidOperationException("Cannot locate the captured window's desktop region.");
+        var roleError = CopyStringAttribute(AXAttributeConstants.Role, out var role);
+        ThrowIfRequiredAttributeFailed(roleError, "read the AX role before capture");
+        var isWindow = roleError == AXError.Success && role == nameof(AXRoleAttribute.AXWindow);
+        var windowError = AXError.Success;
+        using var windowRef = isWindow ? null : GetAttributeAsElement(AXAttributeConstants.Window, out windowError);
+        ThrowIfRequiredAttributeFailed(windowError, "locate the captured element's AX window");
+        var windowBounds = isWindow ?
+            bounds :
+            windowRef?.GetBounds() ?? throw new InvalidOperationException("Cannot locate the captured window's desktop region.");
         if (windowBounds.Width <= 0 || windowBounds.Height <= 0) throw new InvalidOperationException("The captured window has no drawable region.");
 
-        // Retain the hardware path: it can capture minimized windows unlike CGWindowListCreateImage.
+        // Retain the hardware path: unlike CGWindowListCreateImage, the native probe verifies that it
+        // captures minimized, fully occluded, and partially off-desktop windows without clipping the
+        // returned surface to the visible display area. On macOS 15.7.3 it returns no image once the
+        // whole window is outside every display, even when its AX element and Quartz ID remain valid.
+        // Do not reposition another application's window as an implicit capture fallback.
         // FullSize preserves the existing Stage Manager workaround.
         // Keep best resolution for the general capture API. An animation-only producer may request
         // NominalResolution later; neither option changes Bounds or Avalonia's desktop coordinates.
+        // NativeWindowHandle belongs only to a real AXWindow. Descendants, including cross-process
+        // WebKit nodes, reach their enclosing window through AXWindow for capture without publishing
+        // the enclosing Quartz identifier as if it were the descendant's own scalar field.
+        var nativeWindowError = (windowRef ?? this).GetNativeWindowHandle(out var nativeWindowHandle);
+        if (nativeWindowError != AXError.Success || nativeWindowHandle == 0)
+        {
+            return Task.FromException<IVisualElementCapture>(
+                new AXException(nativeWindowError, $"Failed to map the AX element to a Quartz window. AX returned {nativeWindowError}."));
+        }
+
         using var cgImage = SkyLightInterop.HardwareCaptureWindowList(
-            [(uint)NativeWindowHandle],
+            [nativeWindowHandle],
             SkyLightInterop.CGSWindowCaptureOptions.IgnoreGlobalCLipShape |
             SkyLightInterop.CGSWindowCaptureOptions.BestResolution |
             SkyLightInterop.CGSWindowCaptureOptions.FullSize);
@@ -270,10 +117,10 @@ public partial class AXUIElement : NSObject, IVisualElement
         var imageHeight = checked((int)cgImage.Height);
         if (imageWidth <= 0 || imageHeight <= 0) throw new InvalidOperationException("The captured window image is empty.");
 
-        // Derive surface density from the returned image, not the first intersecting NSScreen.
-        // TODO(macOS): Verify that FullSize's full image maps to AX window bounds for shadowed,
-        // borderless, minimized, and Stage Manager windows. If it includes extra framing, obtain
-        // that surface's actual desktop origin/extent instead of compensating with size tolerances.
+        // Derive surface density from the returned image, not the first intersecting NSScreen. A native
+        // AppKit probe verifies exact AX-bound mapping for ordinary shadowed, borderless, minimized, and
+        // active-Stage-Manager windows. This does not characterize an inactive Stage or separate Space;
+        // if either adds framing, obtain that surface's actual origin/extent rather than adding tolerances.
         var scaleX = (double)imageWidth / windowBounds.Width;
         var scaleY = (double)imageHeight / windowBounds.Height;
         var left = (int)Math.Clamp(Math.Floor(((double)bounds.X - windowBounds.X) * scaleX), 0, imageWidth);
@@ -282,7 +129,8 @@ public partial class AXUIElement : NSObject, IVisualElement
         var bottom = (int)Math.Clamp(Math.Ceiling(((double)bounds.Bottom - windowBounds.Y) * scaleY), 0, imageHeight);
         if (right <= left || bottom <= top) throw new InvalidOperationException("The requested region does not intersect the captured surface.");
 
-        // TODO(macOS): Verify CGImage crop row orientation using a top/bottom-marked window.
+        // CGImage cropping and the copied buffer both preserve the top-left desktop orientation; the
+        // asymmetric native probe verifies a top quadrant independently from the full-window image.
         using var croppedImage = cgImage.WithImageInRect(new CGRect(left, top, right - left, bottom - top));
         if (croppedImage is null) throw new InvalidOperationException("Failed to crop image.");
 
@@ -294,6 +142,12 @@ public partial class AXUIElement : NSObject, IVisualElement
         var desktopBottom = checked((int)Math.Ceiling(windowBounds.Y + bottom / scaleY));
         var capturedBounds = new PixelRect(desktopLeft, desktopTop, checked(desktopRight - desktopLeft), checked(desktopBottom - desktopTop));
         return Task.FromResult<IVisualElementCapture>(new CapturedBitmapData(croppedImage, capturedBounds));
+    }
+
+    private static void ThrowIfRequiredAttributeFailed(AXError error, string operation)
+    {
+        if (error is AXError.Success or AXError.AttributeUnsupported or AXError.NoValue or AXError.NotImplemented) return;
+        throw new AXException(error, $"Failed to {operation}. AX returned {error}.");
     }
 
     public bool SetAttribute(NSString attributeName, NSObject value)
@@ -314,116 +168,190 @@ public partial class AXUIElement : NSObject, IVisualElement
 
     #region Helpers
 
-    private T? GetAttribute<T>(NSString attributeName) where T : NSObject
+    private PixelRect GetBounds()
     {
-        var error = CopyAttributeValue(Handle, attributeName.Handle, out var value);
-        return error == AXError.Success && value != 0 ? Runtime.GetNSObject<T>(value, owns: true) : null;
+        using var batch = AXAttributeBatch.Copy(this, [AXAttributeConstants.Position, AXAttributeConstants.Size]);
+        if (batch.Error != AXError.Success ||
+            batch.GetPoint(AXAttributeConstants.Position, out var position) != AXError.Success ||
+            batch.GetSize(AXAttributeConstants.Size, out var size) != AXError.Success ||
+            position is not { } point ||
+            size is not { } dimensions)
+        {
+            return default;
+        }
+
+        return new PixelRect((int)point.X, (int)point.Y, (int)dimensions.Width, (int)dimensions.Height);
     }
 
-    private AXUIElement? GetAttributeAsElement(NSString attributeName)
+    internal AXUIElement? GetAttributeAsElement(NSString attributeName, out AXError error)
     {
-        var error = CopyAttributeValue(Handle, attributeName.Handle, out var value);
+        error = CopyAttributeValue(Handle, attributeName.Handle, out var value);
         if (error == AXError.Success && value != 0)
         {
             return new AXUIElement(value);
         }
 
+        if (value != 0) CFInterop.CFRelease(value);
         return null;
     }
 
-    private void PerformAction(NSString actionName)
+    internal AXError CopyMultipleAttributeValues(NSArray attributes, out NSArray? values)
+    {
+        var error = CopyMultipleAttributeValues(Handle, attributes.Handle, 0, out var valuesHandle);
+        if (error != AXError.Success)
+        {
+            if (valuesHandle != 0) CFInterop.CFRelease(valuesHandle);
+            values = null;
+            return error;
+        }
+
+        values = valuesHandle != 0 ? Runtime.GetNSObject<NSArray>(valuesHandle, owns: true) : null;
+        return error;
+    }
+
+    internal AXError GetAttributeValueCount(NSString attributeName, out nint count) =>
+        GetAttributeValueCount(Handle, attributeName.Handle, out count);
+
+    internal AXError CopyAttributeValues(NSString attributeName, nint index, nint maximumValues, out NSArray? values)
+    {
+        var error = CopyAttributeValues(Handle, attributeName.Handle, index, maximumValues, out var valuesHandle);
+        if (error != AXError.Success)
+        {
+            if (valuesHandle != 0) CFInterop.CFRelease(valuesHandle);
+            values = null;
+            return error;
+        }
+
+        values = valuesHandle != 0 ? Runtime.GetNSObject<NSArray>(valuesHandle, owns: true) : null;
+        return error;
+    }
+
+    internal AXError CopyStringAttribute(NSString attributeName, out string? value)
+    {
+        var error = CopyAttributeValue(Handle, attributeName.Handle, out var valueHandle);
+        try
+        {
+            value = error == AXError.Success && AXScalarValueReader.TryReadString(valueHandle, out var result) ? result : null;
+            return error == AXError.Success && value is null ? AXError.Failure : error;
+        }
+        finally
+        {
+            if (valueHandle != 0) CFInterop.CFRelease(valueHandle);
+        }
+    }
+
+    internal AXError CopyBooleanAttribute(NSString attributeName, out bool? value)
+    {
+        var error = CopyAttributeValue(Handle, attributeName.Handle, out var valueHandle);
+        try
+        {
+            value = error == AXError.Success && AXScalarValueReader.TryReadBoolean(valueHandle, out var result) ? result : null;
+            return error == AXError.Success && value is null ? AXError.Failure : error;
+        }
+        finally
+        {
+            if (valueHandle != 0) CFInterop.CFRelease(valueHandle);
+        }
+    }
+
+    internal AXError CopyDescriptionAttribute(NSString attributeName, out string? value)
+    {
+        var error = CopyAttributeValue(Handle, attributeName.Handle, out var valueHandle);
+        try
+        {
+            value = error == AXError.Success ? AXScalarValueReader.ReadDescription(valueHandle) : null;
+            return error == AXError.Success && value is null ? AXError.Failure : error;
+        }
+        finally
+        {
+            if (valueHandle != 0) CFInterop.CFRelease(valueHandle);
+        }
+    }
+
+    internal AXError CopyParameterizedInt64Attribute(NSString attributeName, AXUIElement parameter, out long? value)
+    {
+        var error = CopyParameterizedAttributeValue(Handle, attributeName.Handle, parameter.NativeHandle, out var valueHandle);
+        try
+        {
+            value = error == AXError.Success && AXScalarValueReader.TryReadInt64(valueHandle, out var result) ? result : null;
+            return error == AXError.Success && value is null ? AXError.Failure : error;
+        }
+        finally
+        {
+            if (valueHandle != 0) CFInterop.CFRelease(valueHandle);
+        }
+    }
+
+    internal unsafe AXError CopyParameterizedStringAttribute(NSString attributeName, nint location, nint length, out string? value)
+    {
+        value = null;
+        var range = new NativeCFRange(location, length);
+        var parameter = AXValueCreate(AXValueType.CFRange, (nint)(&range));
+        if (parameter == 0) return AXError.Failure;
+
+        try
+        {
+            var error = CopyParameterizedAttributeValue(Handle, attributeName.Handle, parameter, out var valueHandle);
+            try
+            {
+                value = error == AXError.Success && AXScalarValueReader.TryReadString(valueHandle, out var result) ? result : null;
+                return error == AXError.Success && value is null ? AXError.Failure : error;
+            }
+            finally
+            {
+                if (valueHandle != 0) CFInterop.CFRelease(valueHandle);
+            }
+        }
+        finally
+        {
+            CFInterop.CFRelease(parameter);
+        }
+    }
+
+    internal void PerformAction(NSString actionName)
     {
         var error = PerformAction(Handle, actionName.Handle);
         if (error != AXError.Success)
         {
-            throw new InvalidOperationException($"Failed to perform action {actionName}. Error: {error}");
+            throw new AXException(error, $"Failed to perform the AX action {actionName}. AX returned {error}.");
         }
     }
 
     private const string AppServices = "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices";
 
-    public static AXUIElement SystemWide { get; } = new(CreateSystemWide());
-
-    public AXUIElement? ElementAtPosition(float x, float y)
+    public static AXUIElement CreateSystemWideElement()
     {
-        var error = CopyElementAtPosition(Handle, x, y, out var element);
-        return error == AXError.Success && element != 0 ? new AXUIElement(element) : null;
+        var handle = CreateSystemWide();
+        return handle != 0 ?
+            new AXUIElement(handle) :
+            throw new InvalidOperationException("Could not create the macOS system-wide Accessibility element.");
     }
 
-    public AXUIElement? ElementByAttributeValue(NSString attributeName)
+    public AXError SetMessagingTimeout(TimeSpan timeout) => AXUIElementSetMessagingTimeout(Handle, (float)timeout.TotalSeconds);
+
+    public AXError GetProcessId(out int processId) => GetPid(Handle, out processId);
+
+    public AXError GetNativeWindowHandle(out uint nativeWindowHandle) => GetWindow(Handle, out nativeWindowHandle);
+
+    public AXError SetAttributeValueWithError(NSString attributeName, NSObject value) =>
+        SetAttributeValue(Handle, attributeName.Handle, value.Handle);
+
+    public AXUIElement? ElementAtPosition(float x, float y, out AXError error)
     {
-        var error = CopyAttributeValue(Handle, attributeName.Handle, out var value);
-        return error == AXError.Success && value != 0 ? new AXUIElement(value) : null;
+        error = CopyElementAtPosition(Handle, x, y, out var element);
+        if (error == AXError.Success && element != 0)
+        {
+            return new AXUIElement(element);
+        }
+
+        if (element != 0) CFInterop.CFRelease(element);
+        return null;
     }
 
     public static AXUIElement? ElementFromPid(int pid)
     {
         var handle = CreateApplication(pid);
         return handle != 0 ? new AXUIElement(handle) : null;
-    }
-
-    /// <summary>
-    /// Gets the AXUIElement corresponding to the specified CGWindowID.
-    /// This is a reverse lookup using _AXUIElementGetWindow under the hood.
-    /// </summary>
-    /// <param name="cgWindowId">The target CGWindowID.</param>
-    /// <returns>The matching AXUIElement, or null if not found.</returns>
-    public static AXUIElement? ElementFromWindowId(uint cgWindowId)
-    {
-        if (cgWindowId == 0) return null;
-
-        // 1. Get the owner PID from the CGWindowID using CoreGraphics
-        var ownerPid = 0;
-        var windowInfoArrayPtr = CGInterop.CGWindowListCopyWindowInfo(CGWindowListOption.IncludingWindow, cgWindowId);
-
-        if (windowInfoArrayPtr != 0)
-        {
-            // Take ownership of the CFArray returned by Create/Copy rule
-            using var windowInfoArray = Runtime.GetNSObject<NSArray>(windowInfoArrayPtr, owns: true);
-            if (windowInfoArray is { Count: > 0 })
-            {
-                using var windowInfo = windowInfoArray.GetItem<NSDictionary>(0);
-                using var pidKey = new NSString("kCGWindowOwnerPID");
-
-                if (windowInfo?.ObjectForKey(pidKey) is NSNumber pidNumber)
-                {
-                    ownerPid = pidNumber.Int32Value;
-                }
-            }
-        }
-
-        if (ownerPid == 0) return null;
-
-        // 2. Create the AXApplication element from the PID
-        using var appElement = ElementFromPid(ownerPid);
-        if (appElement is null) return null;
-
-        // 3. Get all windows of the application
-        // Note: Replace with AXAttributeConstants.Windows if you have it defined.
-        using var windowsKey = new NSString("AXWindows");
-        using var windows = appElement.GetAttribute<NSArray>(windowsKey);
-
-        if (windows is null) return null;
-
-        // 4. Iterate through the windows and find the matching CGWindowID
-        for (nuint i = 0; i < windows.Count; i++)
-        {
-            var windowElement = FromCopyArray(windows, i);
-            if (windowElement is null) continue;
-
-            // Use your existing property which correctly handles the _AXUIElementGetWindow P/Invoke
-            if (windowElement.NativeWindowHandle == (nint)cgWindowId)
-            {
-                // Found it! Return the retained element.
-                return windowElement;
-            }
-
-            // Not a match: explicitly dispose to release the CFRetain applied in FromCopyArray,
-            // avoiding memory leaks during traversal.
-            windowElement.Dispose();
-        }
-
-        return null;
     }
 
     [LibraryImport(AppServices, EntryPoint = "AXUIElementCreateSystemWide")]
@@ -437,6 +365,21 @@ public partial class AXUIElement : NSObject, IVisualElement
 
     [LibraryImport(AppServices, EntryPoint = "AXUIElementCopyAttributeValue")]
     private static partial AXError CopyAttributeValue(nint element, nint attribute, out nint value);
+
+    [LibraryImport(AppServices, EntryPoint = "AXUIElementCopyMultipleAttributeValues")]
+    private static partial AXError CopyMultipleAttributeValues(nint element, nint attributes, uint options, out nint values);
+
+    [LibraryImport(AppServices, EntryPoint = "AXUIElementGetAttributeValueCount")]
+    private static partial AXError GetAttributeValueCount(nint element, nint attribute, out nint count);
+
+    [LibraryImport(AppServices, EntryPoint = "AXUIElementCopyAttributeValues")]
+    private static partial AXError CopyAttributeValues(nint element, nint attribute, nint index, nint maximumValues, out nint values);
+
+    [LibraryImport(AppServices, EntryPoint = "AXUIElementCopyParameterizedAttributeValue")]
+    private static partial AXError CopyParameterizedAttributeValue(nint element, nint parameterizedAttribute, nint parameter, out nint value);
+
+    [LibraryImport(AppServices, EntryPoint = "AXValueCreate")]
+    private static partial nint AXValueCreate(AXValueType valueType, nint value);
 
     [LibraryImport(AppServices, EntryPoint = "AXUIElementPerformAction")]
     private static partial AXError PerformAction(nint element, nint action);
@@ -456,55 +399,9 @@ public partial class AXUIElement : NSObject, IVisualElement
     [LibraryImport(AppServices, EntryPoint = "AXUIElementCreateApplication")]
     private static partial nint CreateApplication(int pid);
 
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly record struct NativeCFRange(nint Location, nint Length);
+
     #endregion
-
-    private class SiblingAccessorImpl(AXUIElement origin) : VisualElementSiblingAccessor
-    {
-        private NSArray? _siblings;
-        private nint _index;
-
-        protected override void EnsureResources()
-        {
-            if (_siblings is not null) return;
-            if (origin.Parent is not AXUIElement parent) return;
-
-            _siblings = parent.GetAttribute<NSArray>(AXAttributeConstants.Children);
-            _index = _siblings is not null ? (nint)_siblings.IndexOf(origin) : nint.MaxValue;
-        }
-
-        protected override void ReleaseResources()
-        {
-            if (_siblings is null) return;
-
-            _siblings.Dispose();
-            _siblings = null;
-        }
-
-        protected override IEnumerator<IVisualElement> CreateForwardEnumerator()
-        {
-            if (_siblings is not { } siblings || _index == nint.MaxValue) yield break;
-
-            var count = (nint)siblings.Count;
-            for (var i = _index + 1; i < count; i++)
-            {
-                if (FromCopyArray(siblings, (nuint)i) is { } sibling)
-                {
-                    yield return sibling;
-                }
-            }
-        }
-
-        protected override IEnumerator<IVisualElement> CreateBackwardEnumerator()
-        {
-            if (_siblings is not { } siblings || _index == nint.MaxValue) yield break;
-
-            for (var i = _index - 1; i >= 0; i--)
-            {
-                if (FromCopyArray(siblings, (nuint)i) is { } sibling)
-                {
-                    yield return sibling;
-                }
-            }
-        }
-    }
 }

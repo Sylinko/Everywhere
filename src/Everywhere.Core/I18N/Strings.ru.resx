@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Закрепить при вводе</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Подробно</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Компактный (рекомендуется)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Минимально</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Режим закрепления окна</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Определяет режим закрепления окна чата при его открытии. Когда окно не закреплено, оно будет автоматически скрываться при потере фокуса.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Уровень Подробности Визуального Контекста</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Если добавлены визуальные элементы, Everywhere соберет их с окружающими элементами в структурированный текст перед отправкой помощнику. Эта опция контролирует степень богатства и объема собранной информации.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Ошибка клиента.</value>

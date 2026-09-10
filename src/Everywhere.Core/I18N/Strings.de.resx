@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Beim Eingeben anheften</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detailliert</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Kompakt (Empfohlen)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Verifizierung fehlgeschlagen</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Fenster-Pin-Modus</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Gibt den Pin-Modus für das Chat-Fenster an, wenn es geöffnet wird. Wenn das Fenster nicht fixiert ist, wird es automatisch ausgeblendet, wenn es den Fokus verliert.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Detailgrad des visuellen Kontexts</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Wenn visuelle Elemente angehängt werden, sammelt Everywhere diese zusammen mit den umgebenden Elementen als strukturierte Texte, bevor sie an den Assistenten gesendet werden. Diese Option steuert den Reichtum und die Informationsmenge der Sammlung.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Client-Fehler.</value>

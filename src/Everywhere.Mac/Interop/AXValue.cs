@@ -23,6 +23,8 @@ public enum AXValueType
 /// </summary>
 public partial class AXValue : NSObject
 {
+    internal static nuint TypeId => AXValueGetTypeID();
+
     public AXValueType Type { get; }
 
     public CGPoint Point { get; }
@@ -88,7 +90,39 @@ public partial class AXValue : NSObject
         }
     }
 
+    internal static AXValueType GetValueType(nint value) => AXValueGetType(value);
+
+    internal static unsafe bool TryGetPoint(nint value, out CGPoint result)
+    {
+        result = default;
+        fixed (CGPoint* pointer = &result)
+        {
+            return AXValueGetValue(value, AXValueType.CGPoint, (nint)pointer);
+        }
+    }
+
+    internal static unsafe bool TryGetSize(nint value, out CGSize result)
+    {
+        result = default;
+        fixed (CGSize* pointer = &result)
+        {
+            return AXValueGetValue(value, AXValueType.CGSize, (nint)pointer);
+        }
+    }
+
+    internal static unsafe bool TryGetError(nint value, out AXError result)
+    {
+        result = default;
+        fixed (AXError* pointer = &result)
+        {
+            return AXValueGetValue(value, AXValueType.AXError, (nint)pointer);
+        }
+    }
+
     private const string AppServices = "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices";
+
+    [LibraryImport(AppServices)]
+    private static partial nuint AXValueGetTypeID();
 
     [LibraryImport(AppServices)]
     private static partial AXValueType AXValueGetType(nint value);

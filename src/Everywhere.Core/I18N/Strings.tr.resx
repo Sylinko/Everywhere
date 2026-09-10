@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Girişte sabitle</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detaylı</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Kompakt (Önerilen)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Minimum</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Pencere Sabitleme Modu</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Sohbet penceresi açıldığında sabitleme modunu belirler. Pencere sabitlenmemişse odak kaybolduğunda otomatik olarak gizlenecektir.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Görsel Bağlam Detay Seviyesi</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Görsel öğe eklenmişse, Everywhere asistanınıza göndermeden önce bunu ve çevresindeki öğeleri yapılandırılmış metin olarak toplar. Bu seçenek, toplanan bilgilerin zenginliğini ve miktarını kontrol eder.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>İstemci hatası.</value>

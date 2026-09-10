@@ -17,26 +17,28 @@ public abstract class VisualElement
     public string Id { get; }
 
     /// <summary>
+    /// Gets the immutable identity of this element within its owning Context.
+    /// </summary>
+    public VisualElementIdentity Identity { get; }
+
+    /// <summary>
+    /// Gets metadata accumulated by platform and projection stages for this active element incarnation.
+    /// </summary>
+    public VisualElementMetadata Metadata { get; } = new();
+
+    /// <summary>
     /// Gets the Context that owns this element's logical identity domain.
     /// </summary>
-    protected VisualContext Context { get; }
+    public VisualContext Context => Identity.Context;
 
-    internal VisualContext OwnerContext => Context;
-
-    internal bool HasIdentityEntry => _identityEntry is not null;
-
-    internal VisualElementIdentityEntry IdentityEntry =>
-        _identityEntry ?? throw new InvalidOperationException("The visual element has not entered its Context identity map.");
-
-    private VisualElementIdentityEntry? _identityEntry;
     private bool _isReleased;
 
     /// <summary>
-    /// Initializes an unretained platform candidate. The owning identity map attaches it atomically before exposure.
+    /// Initializes an unretained platform element with its immutable Context identity.
     /// </summary>
-    protected VisualElement(VisualContext context, string id)
+    protected VisualElement(VisualElementIdentity identity, string id)
     {
-        Context = context;
+        Identity = identity;
         Id = id;
     }
 
@@ -243,18 +245,6 @@ public abstract class VisualElement
     /// </summary>
     protected abstract void ReleaseCore();
 
-    internal bool IsOwnedBy(VisualContext context) => ReferenceEquals(Context, context);
-
-    internal void AttachIdentity(VisualElementIdentityEntry entry)
-    {
-        if (_identityEntry is not null || _isReleased)
-        {
-            throw new InvalidOperationException("The visual element cannot enter an identity map more than once.");
-        }
-
-        _identityEntry = entry;
-    }
-
     internal void ReleaseRetained()
     {
         if (_isReleased)
@@ -273,9 +263,9 @@ public abstract class VisualElement
             return;
         }
 
-        if (_identityEntry is { RetainerCount: 0 } entry)
+        if (Identity.RetainerCount == 0)
         {
-            entry.RemoveFromMap();
+            Identity.RemoveFromMap(this);
         }
 
         _isReleased = true;
@@ -286,7 +276,7 @@ public abstract class VisualElement
     {
         Context.ThrowIfDisposed();
         ObjectDisposedException.ThrowIf(_isReleased, this);
-        _ = IdentityEntry;
+        GC.KeepAlive(Identity);
     }
 
     private void ExecuteAction<TState>(TState state, Action<VisualElement, TState> action)

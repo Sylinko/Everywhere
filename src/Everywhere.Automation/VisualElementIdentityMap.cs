@@ -1,24 +1,34 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Everywhere.Automation;
+
+/// <summary>
+/// Creates one unretained visual element with its immutable Context identity.
+/// </summary>
+/// <typeparam name="TIdentity">The immutable backend-qualified identity type.</typeparam>
+/// <typeparam name="TState">The factory state type.</typeparam>
+/// <typeparam name="TElement">The concrete visual element type.</typeparam>
+/// <param name="identity">The identity that the new element must receive during construction.</param>
+/// <param name="state">The caller-supplied factory state.</param>
+/// <returns>The constructed unretained element.</returns>
+public delegate TElement VisualElementFactory<TIdentity, in TState, out TElement>(VisualElementIdentity<TIdentity> identity, TState state)
+    where TIdentity : notnull
+    where TState : allows ref struct
+    where TElement : VisualElement;
 
 /// <summary>
 /// Maintains the one retained managed <see cref="VisualElement" /> incarnation for each platform identity within a <see cref="VisualContext" />.
 /// </summary>
 /// <typeparam name="TIdentity">The immutable backend-qualified identity type.</typeparam>
 /// <remarks>
-/// The map canonicalizes identity but does not independently retain elements. An entry exists exactly while at least one <see cref="VisualElementRetention" /> owns it.
+/// The map canonicalizes identity but does not independently retain elements. An element remains mapped exactly while at least one <see cref="VisualElementRetention" /> owns it.
 /// </remarks>
-public sealed class VisualElementIdentityMap<TIdentity> where TIdentity : notnull
+public sealed class VisualElementIdentityMap<TIdentity>(VisualContext context, IEqualityComparer<TIdentity>? comparer) where TIdentity : notnull
 {
-    private readonly VisualContext _context;
-    private readonly Dictionary<TIdentity, VisualElementIdentityEntry<TIdentity>> _entries;
+    public VisualContext Context { get; } = context;
 
-    internal VisualElementIdentityMap(VisualContext context, IEqualityComparer<TIdentity>? comparer)
-    {
-        _context = context;
-        _entries = new Dictionary<TIdentity, VisualElementIdentityEntry<TIdentity>>(comparer ?? EqualityComparer<TIdentity>.Default);
-    }
+    private readonly Dictionary<TIdentity, VisualElement> _elements = new(comparer ?? EqualityComparer<TIdentity>.Default);
 
     /// <summary>
     /// Gets the canonical element for an identity and retains it for the supplied logical owner.
@@ -28,30 +38,31 @@ public sealed class VisualElementIdentityMap<TIdentity> where TIdentity : notnul
     /// <param name="retention">The owner that receives the canonical element before it is returned.</param>
     /// <param name="identity">The backend-qualified platform identity.</param>
     /// <param name="state">The state passed to <paramref name="factory" />.</param>
-    /// <param name="factory">Creates an unretained candidate when no canonical element exists.</param>
+    /// <param name="factory">Creates an unretained element with the supplied immutable identity when no canonical element exists.</param>
     /// <returns>The retained canonical element.</returns>
     public TElement GetOrAdd<TElement, TState>(
         VisualElementRetention retention,
         TIdentity identity,
         TState state,
-        Func<TIdentity, TState, TElement> factory) where TElement : VisualElement
+        VisualElementFactory<TIdentity, TState, TElement> factory)
+        where TElement : VisualElement
+        where TState : allows ref struct
     {
-        _context.ValidateRetention(retention);
-        if (_entries.TryGetValue(identity, out var existingEntry))
+        Context.ValidateRetention(retention);
+        if (_elements.TryGetValue(identity, out var existingElement))
         {
-            var existingElement = GetCompatibleElement<TElement>(existingEntry.Element);
-            retention.Retain(existingEntry);
-            return existingElement;
+            var compatibleElement = GetCompatibleElement<TElement>(existingElement);
+            retention.RetainCanonical(compatibleElement);
+            return compatibleElement;
         }
 
-        var candidate = factory(identity, state);
+        var elementIdentity = new VisualElementIdentity<TIdentity>(this, identity);
+        var candidate = factory(elementIdentity, state);
         try
         {
-            _context.ValidateIdentityCandidate(candidate);
-            var entry = new VisualElementIdentityEntry<TIdentity>(this, identity, candidate);
-            candidate.AttachIdentity(entry);
-            _entries.Add(identity, entry);
-            retention.Retain(entry);
+            Debug.Assert(ReferenceEquals(candidate.Identity, elementIdentity));
+            _elements.Add(identity, candidate);
+            retention.RetainCanonical(candidate);
             return candidate;
         }
         catch
@@ -67,15 +78,15 @@ public sealed class VisualElementIdentityMap<TIdentity> where TIdentity : notnul
     public bool TryGet<TElement>(VisualElementRetention retention, TIdentity identity, [NotNullWhen(true)] out TElement? element)
         where TElement : VisualElement
     {
-        _context.ValidateRetention(retention);
-        if (!_entries.TryGetValue(identity, out var entry))
+        Context.ValidateRetention(retention);
+        if (!_elements.TryGetValue(identity, out var existingElement))
         {
             element = null;
             return false;
         }
 
-        element = GetCompatibleElement<TElement>(entry.Element);
-        retention.Retain(entry);
+        element = GetCompatibleElement<TElement>(existingElement);
+        retention.RetainCanonical(element);
         return true;
     }
 
@@ -89,16 +100,16 @@ public sealed class VisualElementIdentityMap<TIdentity> where TIdentity : notnul
         where TAlternateIdentity : notnull, allows ref struct
         where TElement : VisualElement
     {
-        _context.ValidateRetention(retention);
-        var lookup = _entries.GetAlternateLookup<TAlternateIdentity>();
-        if (!lookup.TryGetValue(identity, out var entry))
+        Context.ValidateRetention(retention);
+        var lookup = _elements.GetAlternateLookup<TAlternateIdentity>();
+        if (!lookup.TryGetValue(identity, out var existingElement))
         {
             element = null;
             return false;
         }
 
-        element = GetCompatibleElement<TElement>(entry.Element);
-        retention.Retain(entry);
+        element = GetCompatibleElement<TElement>(existingElement);
+        retention.RetainCanonical(element);
         return true;
     }
 
@@ -107,33 +118,51 @@ public sealed class VisualElementIdentityMap<TIdentity> where TIdentity : notnul
     /// </summary>
     public TIdentity CreateIdentity<TAlternateIdentity>(TAlternateIdentity identity) where TAlternateIdentity : notnull, allows ref struct
     {
-        _context.ThrowIfDisposed();
-        var comparer = _entries.Comparer as IAlternateEqualityComparer<TAlternateIdentity, TIdentity> ??
+        Context.ThrowIfDisposed();
+        var comparer = _elements.Comparer as IAlternateEqualityComparer<TAlternateIdentity, TIdentity> ??
             throw new InvalidOperationException($"The identity comparer does not support alternate keys of type {typeof(TAlternateIdentity)}.");
         return comparer.Create(identity);
     }
 
-    internal void Remove(VisualElementIdentityEntry<TIdentity> entry) =>
-        ((ICollection<KeyValuePair<TIdentity, VisualElementIdentityEntry<TIdentity>>>)_entries).Remove(
-            new KeyValuePair<TIdentity, VisualElementIdentityEntry<TIdentity>>(entry.Identity, entry));
+    internal void Remove(TIdentity identity, VisualElement element) =>
+        ((ICollection<KeyValuePair<TIdentity, VisualElement>>)_elements).Remove(new KeyValuePair<TIdentity, VisualElement>(identity, element));
 
     private static TElement GetCompatibleElement<TElement>(VisualElement element) where TElement : VisualElement =>
         element as TElement ?? throw new InvalidOperationException("One platform identity resolved to incompatible VisualElement implementations.");
 }
 
-internal abstract class VisualElementIdentityEntry(VisualElement element)
+/// <summary>
+/// Binds a visual element to one immutable backend identity in its owning Context.
+/// </summary>
+public abstract class VisualElementIdentity
 {
-    internal VisualElement Element { get; } = element;
+    public VisualContext Context { get; }
 
-    internal int RetainerCount { get; set; }
+    public int RetainerCount { get; internal set; }
 
-    internal abstract void RemoveFromMap();
+    private protected VisualElementIdentity(VisualContext context) => Context = context;
+
+    internal abstract void RemoveFromMap(VisualElement element);
 }
 
-internal sealed class VisualElementIdentityEntry<TIdentity>(VisualElementIdentityMap<TIdentity> map, TIdentity identity, VisualElement element)
-    : VisualElementIdentityEntry(element) where TIdentity : notnull
+/// <summary>
+/// Binds a visual element to one immutable typed backend identity in its owning Context.
+/// </summary>
+/// <typeparam name="TIdentity">The immutable backend-qualified identity type.</typeparam>
+public sealed class VisualElementIdentity<TIdentity> : VisualElementIdentity where TIdentity : notnull
 {
-    internal TIdentity Identity { get; } = identity;
+    /// <summary>
+    /// Gets the immutable backend-qualified identity value.
+    /// </summary>
+    public TIdentity Value { get; }
 
-    internal override void RemoveFromMap() => map.Remove(this);
+    private readonly VisualElementIdentityMap<TIdentity> _map;
+
+    internal VisualElementIdentity(VisualElementIdentityMap<TIdentity> map, TIdentity value) : base(map.Context)
+    {
+        _map = map;
+        Value = value;
+    }
+
+    internal override void RemoveFromMap(VisualElement element) => _map.Remove(Value, element);
 }

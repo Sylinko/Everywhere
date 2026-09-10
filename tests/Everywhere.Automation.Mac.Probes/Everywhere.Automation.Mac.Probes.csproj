@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
+    <TargetPlatformVersion>26.2</TargetPlatformVersion>
+    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <ApplicationId>com.sylinko.everywhere.automation-probes</ApplicationId>
+    <ApplicationManifest>Info.plist</ApplicationManifest>
+    <SelfContained>true</SelfContained>
+    <LinkMode>None</LinkMode>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsARM64)' == 'true'">
+    <RuntimeIdentifier>osx-arm64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsX64)' == 'true'">
+    <RuntimeIdentifier>osx-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Everywhere.Mac\Everywhere.Mac.csproj" />
+  </ItemGroup>
+
+  <!-- dotnet run launches a macOS app bundle without reliably forwarding its stdout or exit code. -->
+  <Target Name="RunProbes" DependsOnTargets="Build">
+    <Exec Command="&quot;$(AppBundleDir)/Contents/MacOS/$(AssemblyName)&quot;" />
+  </Target>
+</Project>

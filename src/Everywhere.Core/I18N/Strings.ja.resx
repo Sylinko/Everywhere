@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>入力時に固定</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>詳細</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>コンパクト (推奨)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>最小限</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>ウィンドウ固定モード</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>チャットウィンドウを開いたときの固定モードを指定します。ウィンドウが固定されていない場合、フォーカスを失うと自動的に隠れます。</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>視覚コンテキスト詳細レベル</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>視覚要素の添付が追加された場合、Everywhereはそれを周囲の要素と共に構造化テキストとして収集します。このオプションは収集の豊かさと情報量を制御します。</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>クライアントエラー。</value>

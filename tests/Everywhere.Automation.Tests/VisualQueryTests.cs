@@ -67,7 +67,7 @@ public sealed class VisualQueryTests
         Assert.Multiple(() =>
         {
             Assert.That(rendered, Does.Contain("this visual element").And.Contain("single anchor"));
-            Assert.That(rendered, Does.Contain("Query a returned child ID instead."));
+            Assert.That(rendered, Does.Contain("Query a returned child ID instead"));
             Assert.That(turn.Count, Is.Zero);
         });
     }
