@@ -542,15 +542,6 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Pin When Typing</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detailed</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Compact (Recommended)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Minimal</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Window Pin Mode</value>
     </data>

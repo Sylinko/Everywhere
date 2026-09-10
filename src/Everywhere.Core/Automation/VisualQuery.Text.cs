@@ -40,8 +40,8 @@ public sealed partial class VisualQuery
         if (outcome.NextOffset is > MaximumTextOffset)
         {
             status = string.IsNullOrEmpty(status) ?
-                "The text-read offset safety limit was reached." :
-                $"{status}; The text-read offset safety limit was reached.";
+                "The text-read offset safety limit was reached" :
+                $"{status}; The text-read offset safety limit was reached";
         }
 
         var element = new PromptCompactElement("visual-text", string.IsNullOrEmpty(outcome.Text) ? null : new PromptText(outcome.Text))
@@ -54,7 +54,7 @@ public sealed partial class VisualQuery
             element = new PromptCompactElement("visual-text")
                 .Attribute("target", targetId)
                 .Attribute("offset", offset)
-                .Attribute("status", "The requested page cannot fit the local prompt budget. Retry the same offset with a smaller limit.");
+                .Attribute("status", "The requested page cannot fit the local prompt budget. Retry the same offset with a smaller limit");
         }
 
         return new PromptTokenLimit(PromptTokenBudget, element.Atomic()).ToString();
@@ -171,10 +171,10 @@ public sealed partial class VisualQuery
 
     private static string GetFailureStatus(VisualElementQueryFailureKind kind) => kind switch
     {
-        VisualElementQueryFailureKind.Timeout => "Text reading timed out.",
-        VisualElementQueryFailureKind.ElementUnavailable => "The visual element became unavailable while reading text.",
-        VisualElementQueryFailureKind.Unsupported => "The visual element does not expose readable text.",
-        _ => "Text reading failed in the platform provider.",
+        VisualElementQueryFailureKind.Timeout => "Text reading timed out",
+        VisualElementQueryFailureKind.ElementUnavailable => "The visual element became unavailable while reading text",
+        VisualElementQueryFailureKind.Unsupported => "The visual element does not expose readable text",
+        _ => "Text reading failed in the platform provider",
     };
 
     private static void AppendDistinct(List<string> destination, string item)

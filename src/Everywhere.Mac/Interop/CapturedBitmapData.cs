@@ -39,7 +39,7 @@ public sealed class CapturedBitmapData : SafeHandle, IVisualElementCapture
         AlphaFormat = AlphaFormat.Premul;
 
         Bounds = bounds;
-        Size = VisualElementCapture.GetOutputSize(new PixelSize(checked((int)cgImage.Width), checked((int)cgImage.Height)));
+        Size = IVisualElementCapture.LimitOutputSize(new PixelSize(checked((int)cgImage.Width), checked((int)cgImage.Height)));
         var width = Size.Width;
         var height = Size.Height;
 
@@ -54,7 +54,7 @@ public sealed class CapturedBitmapData : SafeHandle, IVisualElementCapture
             using var context = new CGBitmapContext(Data, width, height, bitsPerComponent, Stride, colorSpace, CGImageAlphaInfo.PremultipliedLast);
 
             // Allocate the destination at its final resolution, not an intermediate full-size RGBA copy.
-            // TODO(macOS): Verify row orientation and channel order with an asymmetric colored test image.
+            // The native capture probe verifies top-down rows and RGBA byte order with four asymmetric colors.
             var destination = new CGRect(0, 0, width, height);
             context.ClearRect(destination);
             context.DrawImage(destination, cgImage);

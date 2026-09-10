@@ -542,15 +542,6 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>입력 시 고정</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>상세</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>간략 (추천)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>최소</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>창 고정 모드</value>
     </data>

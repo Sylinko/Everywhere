@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.Chat;
+using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;

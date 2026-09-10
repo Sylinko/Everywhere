@@ -542,15 +542,6 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Fijar al ingresar</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detallado</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Compacto (Recomendado)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Mínimo</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Modo de Fijación de Ventana</value>
     </data>

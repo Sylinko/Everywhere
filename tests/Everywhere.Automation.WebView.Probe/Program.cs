@@ -1,4 +1,8 @@
 using System.Text.Json;
+#if MACOS
+using AppKit;
+using Everywhere.Mac.Interop;
+#endif
 
 namespace Everywhere.Automation.WebView.Probe;
 
@@ -6,8 +10,13 @@ internal static class Program
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
+    [STAThread]
     private static async Task<int> Main(string[] args)
     {
+#if MACOS
+        NSApplication.Init();
+        CGDisplayTopology.Initialize();
+#endif
         if (args.Contains("--help", StringComparer.Ordinal))
         {
             PrintUsage();

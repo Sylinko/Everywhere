@@ -80,7 +80,7 @@ The caller supplies the real ownership batch before acquisition. `retention.Cont
 
 Resolution is orthogonal to location: `Point + Direct` resolves the accessibility element at a point, while `Point + Screen` resolves the containing or nearest Screen without requiring a provider call. `Focused + Screen` resolves the Screen containing the focused element. The Backend may use native shortcuts, but only the final result enters the caller retention; intermediate native references or elements remain operation-local.
 
-`Default` carries no spatial or object anchor. Resolution therefore selects the platform-default object at the requested level: Direct selects the platform-wide accessibility root, TopLevel selects the platform-default top-level window, and Screen selects the platform-default Screen. On Windows these are respectively the UI Automation desktop root, the first eligible top-level window in global Z-order, and the primary display. This remains orthogonal rather than overloading the Locator: `Default` consistently means “no anchor,” while the platform Backend owns the policy for each requested result level. A future macOS Backend is expected to map Direct to the AX system-wide object, but its TopLevel and Screen defaults must be validated against the native hierarchy before implementation.
+`Default` carries no spatial or object anchor. Resolution therefore selects the platform-default object at the requested level: Direct selects the platform-wide accessibility root, TopLevel selects the platform-default top-level window, and Screen selects the platform-default Screen. On Windows these are respectively the UI Automation desktop root, the first eligible top-level window in global Z-order, and the primary display. macOS uses the corresponding AX system-wide special root, first eligible window in global Z-order, and primary NSScreen. This remains orthogonal rather than overloading the Locator: `Default` consistently means “no anchor,” while the platform Backend owns the policy for each requested result level.
 
 ## 5. Composed Platform Graph
 
@@ -90,7 +90,7 @@ The visual graph is platform-defined and may cross backends:
 - Windows top-level and descendant nodes normally use UI Automation;
 - a UIA top-level window may have a Screen parent;
 - a Screen may enumerate UIA top-level windows as children;
-- macOS may require distinct Screen, Application, TopLevel, and descendant implementations.
+- macOS uses distinct Screen, AX system-wide, and ordinary AX implementations; AXApplication is not part of the structural Parent/Child chain.
 
 A relation result is required to remain in the same `VisualContext`, but it need not share its origin's concrete CLR type or native provider. Identity keys are backend-qualified so unrelated native identity domains cannot collide.
 
@@ -241,3 +241,18 @@ Deterministic release is still explicit:
 Operation-local native owners use stack-friendly `using` values. Durable Windows COM wrappers dispose deterministically and may use finalization only as a leak fallback; finalization is not the normal element-lifetime policy. Borrowed handles such as `HMONITOR` have a no-op physical release but still follow the same logical identity lifetime.
 
 Captured pixel buffers are independently disposable and do not retain the element implicitly. They expose physical pixel format, size, address, and stride; logical DPI is presentation metadata and is not part of the capture contract.
+
+## 14. Pipeline Metadata
+
+Each active canonical `VisualElement` owns a typed metadata collection. Backends and later pipeline stages may use distinct key instances to attach reusable observations such as a provider-specific sibling position or the route through containers omitted by prompt projection. Key names are diagnostic only; key object identity prevents unrelated producers from colliding.
+
+Metadata is deliberately weaker than identity and Snapshot data:
+
+- it does not participate in identity lookup or equality;
+- it belongs only to the current active element incarnation and is not transferred when an equal native identity is acquired after final release;
+- it may describe a live tree and therefore may be stale when consumed;
+- consumers validate hints when incorrect reuse could select another element;
+- storing a value neither retains another `VisualElement` nor transfers ownership of native or disposable resources to the metadata collection;
+- access follows the Context's existing caller-serialization boundary rather than introducing a second synchronization model.
+
+Pipeline stages should write metadata only after their observation or projection has succeeded. A later observation replaces or removes an obsolete value for the same key. Metadata can accelerate or guide a best-effort query, but it is not a durable shadow tree or a cross-call consistency guarantee.

@@ -542,15 +542,6 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Girişte sabitle</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detaylı</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Kompakt (Önerilen)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Minimum</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Pencere Sabitleme Modu</value>
     </data>

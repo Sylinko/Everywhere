@@ -14,7 +14,7 @@ public sealed class VisualContextPluginTests
         using var retention = context.CreateRetention();
         using var turn = context.BeginTurn();
         var element = context.GetIdentityMap<string>(StringComparer.Ordinal)
-            .GetOrAdd(retention, "window", context, static (identity, owner) => new TestVisualElement(owner, identity));
+            .GetOrAdd(retention, "window", "window", static (identity, id) => new TestVisualElement(identity, id));
         var snapshot = new VisualElementSnapshot(
             element.Id,
             VisualElementType.TopLevel,
@@ -51,7 +51,7 @@ public sealed class VisualContextPluginTests
         IReadOnlyList<VisualElementQueryResult> windows,
         out int representedWindowCount);
 
-    private sealed class TestVisualElement(VisualContext context, string id) : VisualElement(context, id)
+    private sealed class TestVisualElement(VisualElementIdentity identity, string id) : VisualElement(identity, id)
     {
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();
 

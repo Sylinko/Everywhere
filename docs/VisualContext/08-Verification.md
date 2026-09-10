@@ -252,6 +252,14 @@ Guard tests are independent of element retention. Ending a guard does not releas
 
 ## 11. macOS Native Verification
 
+The native app-host probe project now covers AX reference equality and ownership, messaging-timeout scope across equal references, per-position batch failures, production batched queries, Context identity and isolation, query resolution, controlled window states and relations, offset-based ranged text, controlled AXValue fallback, indexed child paging under mutation, concurrent providers, display-topology notification replacement, and pixel-level capture contracts. The production macOS Backend and selection services compile against the canonical Context-owned model without the legacy macOS Context adapter.
+
+The controlled `NSTextView` probe reconstructs its 100,000 UTF-16 code units through 390 pages of at most 257 units, apart from the permitted two-unit surrogate page when the requested limit is one. It also verifies a nonzero offset, terminal and exhausted reads, a controlled element whose `AXNumberOfCharacters` is unsupported but whose AXValue is pageable locally, and a blocked-provider read that returns `CannotComplete` after one configured messaging timeout without starting the fallback.
+
+On macOS 15.7.3, where the macOS 26 child-index parameterized attribute is unavailable, the controlled 130-child collection verifies that a focused element acquired before its parent enumeration receives a position hint through canonical identity reuse. Removing the first 16 children and appending 16 replacements invalidates that hint; subsequent NextSibling navigation rejects it through `CFEqual`, falls back to bounded scanning, refreshes the hint, and returns Item 066 followed by the correct PreviousSibling Item 064.
+
+The focused capture probe uses an asymmetric red/green/blue/yellow AppKit surface. On macOS 15.7.3 with a 2x Retina display it verifies RGBA bytes, top-left row orientation, a top-quadrant AX descendant crop, exact FullSize-to-AX-bounds density for ordinary shadowed, minimized, borderless, fully occluded, and half-off-desktop windows, and Screen capture before and after the 4096-pixel output limit. The occlusion case verifies that an opaque front window precedes and covers the target in Quartz Z-order while the target's own pixels remain capturable. Both retained-element and fresh NativeWindow paths capture the complete half-off-desktop surface. With a probe window explicitly exempted from AppKit's normal keep-visible placement constraint, a zero-intersection window remains directly reacquirable but loses its Screen relation and produces no image through `CGSHWCaptureWindowList`; this is a characterized platform boundary, not a permission result. TCC preflight is recorded independently. A controlled comparison on that host also established that the two-parameter `ScreenImage(0, bounds)` overload returns null while the explicit `OnScreenOnly` window-list overload succeeds.
+
 Run on macOS and record:
 
 - `AXUIElementRef` equality from different acquisition paths;
@@ -268,13 +276,13 @@ Run on macOS and record:
 - multi-display and spanning-window cases;
 - focused, key, minimized, hidden, sheet, panel, full-screen Space, and windowless Applications.
 
-Do not accept cross-backend Parent/Child/sibling tests until the topology checkpoint in [04-PlatformRuntime](04-PlatformRuntime.md) is reviewed. Windows cross-compilation is not evidence of runtime correctness.
+The topology checkpoint in [04-PlatformRuntime](04-PlatformRuntime.md) has been reviewed and implemented. Keep the remaining multi-display, spanning-window, inactive Stage/separate Space, rotated/mixed-density capture, permission-transition, third-party Value-only text, full-screen/windowless, repeated page-boundary mutation, and aggregate-provider-failure cases explicit until native probes record them. Cross-compilation is not evidence of runtime correctness.
 
 ## 12. Snapshot
 
 Verify:
 
-Current deterministic mock coverage verifies repeated Parent observations for two core siblings, bounded preview continuation facts, per-node child limits over a 100,000-item virtual collection, operation-limit partial results, and Enumerator disposal. The remaining bullets continue to define acceptance for production cutover.
+Current deterministic mock coverage verifies repeated Parent observations for two core siblings, bounded preview continuation facts, per-node child limits over a 100,000-item virtual collection, operation-limit partial results, Enumerator disposal, unavailable non-Core relation items being skipped without stopping their Enumerator, unsupported observations not consuming the provider-health budget, and repeated true provider failures still stopping at that budget. The remaining bullets continue to define acceptance for production cutover.
 
 - Weighted BFS order, distances, weights, core priority, and deduplication remain characterized;
 - every loop iteration commits a node, advances an Enumerator, or closes a branch;
@@ -282,6 +290,7 @@ Current deterministic mock coverage verifies repeated Parent observations for tw
 - one huge text element retains only a bounded preview and honest continuation/status;
 - Value-only providers remain valid under native timeout even if payload transfer is complete;
 - document providers use ranged text where supported;
+- a provider that reports a positive character count but returns an empty successful range falls back to `AXValue` without publishing a provider-failure status;
 - one huge/virtualized child collection stops without realizing or counting everything;
 - known scalar failure retains a skeleton;
 - root/edge failure attaches status to the nearest representable boundary;
@@ -333,7 +342,7 @@ Verify:
 - any later search contract never claims exhaustive absence from an unbounded live tree;
 - output remains PromptNode before rendering.
 
-Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows native WebView probe loads a real HTTP/HTTPS page through WebView2, requires its UIA `Document` to appear after renderer accessibility is enabled, and saves the exact compact Agent projection for manual inspection. Equivalent macOS and Linux evidence remains platform work rather than an inference from this Windows result.
+Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows native WebView probe loads a real HTTP/HTTPS page through WebView2, requires its UIA `Document` to appear after renderer accessibility is enabled, and saves the exact compact Agent projection for manual inspection. A macOS Streamable HTTP MCP journey now composes the same TestApp with the production AX Backend: Example Domain exposed `AXWebArea` as `Document`, a retained StaticText ID remained readable after ten later queries, and beginning the next persistent turn advanced history once. That WKWebView reported zero characters on the WebArea itself, so Document-level text paging is not claimed; child StaticText retrieval is the observed capability. Linux remains platform work.
 
 ## 15. Scenario Coverage and Acceptance
 

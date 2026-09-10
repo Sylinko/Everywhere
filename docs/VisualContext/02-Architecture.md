@@ -91,7 +91,7 @@ Managed cycles inside the aggregate are harmless when no GC root reaches them. T
 - disposing it releases the whole batch;
 - an element shared by another batch remains alive through that other owner.
 
-The identity entry carries a count of retention batches, not a count of queries, native pointers, property reads, or local variables. This gives the required reference-counting precision without asking every temporary managed reference to participate.
+The immutable identity binding carried by each `VisualElement` counts retention batches, not queries, native pointers, property reads, or local variables. This gives the required reference-counting precision without asking every temporary managed reference to participate.
 
 Typical owners are:
 
@@ -102,7 +102,7 @@ Typical owners are:
 | `VisualContextSnapshot` | Prompt projection and publication need action/query handles after traversal | After target publication/handoff |
 | `VisualTargetTurn` | The Agent may query or act on published IDs | Whole-turn eviction or Context disposal |
 
-Ownership transfer follows an add-before-release rule: first retain elements in the destination owner, then dispose the source owner. This prevents the identity entry from reaching zero between phases.
+Ownership transfer follows an add-before-release rule: first retain elements in the destination owner, then dispose the source owner. This prevents the identity binding from reaching zero between phases.
 
 Operation-level owners are deterministic even though the enclosing chat aggregate may be collected lazily. In particular, the visual scan-effect queue starts consuming only after successful production completes; an abandoned scope releases its retention synchronously, while a completed scope owns its queued elements until the bounded asynchronous drain finishes. This avoids concurrent retention mutation between Snapshot traversal and its visual observer.
 
@@ -111,18 +111,21 @@ Operation-level owners are deterministic even though the enclosing chat aggregat
 An identity map canonicalizes one backend-qualified platform identity only while at least one retention owns it:
 
 ```text
-native candidate
+native candidate identity
     -> identity lookup
-       |- active entry: retain existing VisualElement, release candidate
-       `- miss: attach candidate, retain it, publish canonical element
+       |- active element: retain existing VisualElement
+       `- miss: create identity binding
+                 -> construct VisualElement with binding
+                 -> add element to map
+                 -> retain and publish canonical element
 
 last retention released
-    -> remove exact map entry
+    -> remove exact identity/element pair from map
     -> release concrete native resource once
     -> incarnation ends
 ```
 
-The map itself is not a cache and does not prolong lifetime. While an entry is active, equal identities resolve to the same managed `VisualElement` even when UI Automation returns different COM pointers. After the final owner releases it, a later equal RuntimeId is a new incarnation. It may receive a new Agent target ID; old Agent IDs are never silently rebound.
+The map itself is not a cache and does not independently prolong lifetime. It stores the canonical `VisualElement` directly; the element receives its immutable identity binding during construction and therefore has no attachable or partially initialized identity state. While an element is active, equal identities resolve to that same managed object even when UI Automation returns different COM pointers. After the final owner releases it, a later equal RuntimeId is a new incarnation. It may receive a new Agent target ID; old Agent IDs are never silently rebound.
 
 This boundary matches what the system can honestly guarantee. It does not depend on COM pointer equality, RCW reuse, process-wide permanence of RuntimeId, property fingerprints, or heuristic resurrection.
 

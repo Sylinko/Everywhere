@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -8,6 +9,7 @@ using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
+using Everywhere.Mac.Automation;
 using Everywhere.Mac.Interop;
 using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +32,12 @@ public static class Program
                 #region Basic
 
                 .AddApplicationLogging()
-                .AddSingleton<IVisualElementContext, VisualElementContext>()
+                .AddSingleton<MacVisualElementBackend>()
+                .AddSingleton<IVisualElementBackend>(sp => sp.GetRequiredService<MacVisualElementBackend>())
+                .AddSingleton<MacScreenSelectionService>()
+                .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<MacScreenSelectionService>())
+                .AddSingleton<MacTextSelectionWatcher>()
+                .AddSingleton<ITextSelectionWatcher>(sp => sp.GetRequiredService<MacTextSelectionWatcher>())
                 .AddSingleton<IShortcutListener, CGEventShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
@@ -69,6 +76,7 @@ public static class Program
 
         NSApplication.CheckForIllegalCrossThreadCalls = false;
         NSApplication.Init();
+        CGDisplayTopology.Initialize();
         NSApplication.SharedApplication.Delegate = new AppDelegate();
 
         BuildAvaloniaApp(ServiceLocator.Resolve<IServiceProvider>()).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);

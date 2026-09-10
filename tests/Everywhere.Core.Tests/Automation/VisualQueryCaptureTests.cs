@@ -19,7 +19,7 @@ public sealed class VisualQueryCaptureTests
         using var retention = context.CreateRetention();
         using var turn = context.BeginTurn();
         var capture = new TestCapture();
-        var element = context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(retention, "window", context, (_, owner) => new CaptureElement(owner, capture));
+        var element = context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(retention, "window", capture, static (identity, value) => new CaptureElement(identity, value));
         var received = new List<IVisualElementCapture>();
         Action<IVisualElementCapture>? receiver = hasReceiver ? image =>
         {
@@ -51,7 +51,7 @@ public sealed class VisualQueryCaptureTests
         using var turn = context.BeginTurn();
         using var cancellation = new CancellationTokenSource();
         var capture = new TestCapture();
-        var element = context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(retention, "window", context, (_, owner) => new CaptureElement(owner, capture, cancellation));
+        var element = context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(retention, "window", (Capture: capture, Cancellation: cancellation), static (identity, state) => new CaptureElement(identity, state.Capture, state.Cancellation));
         var query = new VisualQuery(context, _ => Assert.Fail("Canceled capture must not be delivered."));
         Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync([element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Core, cancellationToken: cancellation.Token));
         Assert.Multiple(() =>
@@ -95,7 +95,7 @@ public sealed class VisualQueryCaptureTests
         Assert.That(resource.DisposeCount, Is.EqualTo(1));
     }
 
-    private sealed class CaptureElement(VisualContext context, TestCapture capture, CancellationTokenSource? cancellation = null) : VisualElement(context, "window")
+    private sealed class CaptureElement(VisualElementIdentity identity, TestCapture capture, CancellationTokenSource? cancellation = null) : VisualElement(identity, "window")
     {
         public int CaptureCount { get; private set; }
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => new(this,

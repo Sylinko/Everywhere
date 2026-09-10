@@ -181,6 +181,8 @@ Coalescing never merges genuinely disconnected roots merely because their proper
 
 ### 3.3 Transparent Containers
 
+The production projection uses one fixed compact policy. There is no detail-level option in the Builder, chat settings, or debugger. Token budgets remain configurable. Core, interactive, Screen/TopLevel, content-bearing, state-bearing, and status-bearing nodes are retained during normalization. Otherwise roots and Documents require a projected child, Panels require more than one projected child, and other nodes are collapsed. Child counts are evaluated after recursive normalization and Composite merging, before token-budget pruning.
+
 `HasRenderableDescendant` and `ShouldRenderSelf` express different facts. A nameless Panel with no own text, state, action, bounds requirement, or status responsibility normally has:
 
 ```text

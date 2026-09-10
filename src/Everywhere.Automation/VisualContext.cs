@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Everywhere.Automation;
@@ -208,48 +209,36 @@ public sealed class VisualContext : IDisposable
         }
     }
 
-    internal void ValidateIdentityCandidate(VisualElement candidate)
-    {
-        ThrowIfDisposed();
-        if (!candidate.IsOwnedBy(this) || candidate.HasIdentityEntry)
-        {
-            throw new InvalidOperationException("Only a new unretained candidate owned by this VisualContext can enter its identity map.");
-        }
-    }
-
     internal void ValidateRetainedElement(VisualElement element)
     {
         ThrowIfDisposed();
-        if (!element.IsOwnedBy(this) || !element.HasIdentityEntry || element.IdentityEntry.RetainerCount <= 0)
+        if (!ReferenceEquals(element.Context, this) || element.Identity.RetainerCount <= 0)
         {
             throw new InvalidOperationException("Only a live canonical element owned by this VisualContext can be retained.");
         }
     }
 
-    internal void Retain(VisualElementIdentityEntry entry)
+    internal void Retain(VisualElement element)
     {
         ThrowIfDisposed();
-        entry.RetainerCount = checked(entry.RetainerCount + 1);
+        element.Identity.RetainerCount = checked(element.Identity.RetainerCount + 1);
     }
 
-    internal void Release(VisualElementRetention retention, IReadOnlyCollection<VisualElementIdentityEntry> entries)
+    internal void Release(VisualElementRetention retention, IReadOnlyCollection<VisualElement> elements)
     {
         _retentions.Remove(retention);
-        foreach (var entry in entries)
+        foreach (var element in elements)
         {
-            if (entry.RetainerCount <= 0)
-            {
-                throw new InvalidOperationException("The visual-element retention count is inconsistent.");
-            }
-
-            entry.RetainerCount--;
-            if (entry.RetainerCount != 0)
+            var identity = element.Identity;
+            Debug.Assert(identity.RetainerCount > 0);
+            identity.RetainerCount--;
+            if (identity.RetainerCount != 0)
             {
                 continue;
             }
 
-            entry.RemoveFromMap();
-            entry.Element.ReleaseRetained();
+            identity.RemoveFromMap(element);
+            element.ReleaseRetained();
         }
     }
 

@@ -164,7 +164,7 @@ public sealed class VisualContextPromptBuilderTests
         {
             Assert.That(targets.Length, Is.GreaterThan(0).And.LessThan(children.Length + 1));
             Assert.That(backend.Context.NextTargetId, Is.EqualTo(targets.Length + 1));
-            Assert.That(rendered, Does.Contain("Some visual targets were omitted by the prompt budget."));
+            Assert.That(rendered, Does.Contain("Some visual targets were omitted by the prompt budget"));
             for (var id = 1; id < backend.Context.NextTargetId; id++) Assert.That(rendered, Does.Contain($"id={id}"));
         });
     }
@@ -200,7 +200,7 @@ public sealed class VisualContextPromptBuilderTests
         {
             Assert.That(rendered, Does.Contain("First root action"));
             Assert.That(rendered, Does.Contain("Second root action"));
-            Assert.That(rendered, Does.Contain("Some visual targets were omitted by the prompt budget."));
+            Assert.That(rendered, Does.Contain("Some visual targets were omitted by the prompt budget"));
         });
     }
 

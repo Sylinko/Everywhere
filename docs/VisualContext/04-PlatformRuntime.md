@@ -59,7 +59,7 @@ The system distinguishes several independent limits:
 
 On Windows, `IUIAutomation2.ConnectionTimeout` and `TransactionTimeout` are configured once on the shared client. Connection timeout concerns provider connection establishment; transaction timeout concerns an ordinary UIA request after routing exists. A controlled blocked-provider probe observed an existing-element `ElementFromHandleBuildCache` call following TransactionTimeout, not ConnectionTimeout. That probe does not claim to reproduce delayed first-time provider connection.
 
-On macOS, `AXUIElementSetMessagingTimeout` is the native per-message boundary. Its exact scope and equality interaction must be validated on macOS before choosing the final shared-client policy.
+On macOS, `AXUIElementSetMessagingTimeout` is the native per-message boundary. Native app-host probes establish that configuring the retained system-wide reference applies to independently obtained Core Foundation-equal references, including references acquired before and after configuration. `MacVisualElementBackend` therefore owns one system-wide reference and configures one fixed timeout before publication; callers do not race mutable timeout policy per Context or operation.
 
 ## 5. Aggregate Risk
 
@@ -83,12 +83,15 @@ Concrete platform elements convert known native failures into the neutral Automa
 
 Snapshot records failure at the closest representable boundary:
 
-- a known element keeps a skeleton node and missing-field status;
+- a known Core element keeps a skeleton node and missing-field status;
+- a non-Core relation item that is already unavailable on its first structural query is omitted while its Enumerator continues, because it has neither usable fields nor a stable navigation target;
 - a child edge failure attaches status to the parent;
 - a root-acquisition failure attaches status to the result root/operation;
 - repeated failures from one PID may produce a concise unresponsive/degraded status and suppress further risky expansion for that observation.
 
 The Agent-facing representation uses bounded `status` text rather than a large matrix of speculative fields. Typed failures remain available internally for policy and tests.
+
+The provider-health circuit breaker counts only `Timeout` and `ProviderFailure`. Unsupported capabilities and admitted elements disappearing from a live tree remain explicit local observations but do not consume that budget; stale non-Core relation items that never produced a structural observation are skipped as described above. A successful platform batch may also contain a failure for one requested field; that field remains missing unless the returned error establishes element unavailability or provider communication failure, and must not be promoted automatically into the provider-wide `VisualElementQueryResult.Failure` channel.
 
 ## 7. Windows Backend and Context Propagation
 
@@ -100,7 +103,7 @@ TopLevel and Focused-to-Screen resolution may require a temporary source element
 
 The client is not recreated per Context, query, element, or turn. Retained UIA element references may be operated through the shared client regardless of the client that originally returned their native pointer. The application serializes mutation of each individual Context, while UIA itself may service calls from different Contexts concurrently.
 
-For a future macOS Backend, `Default + Direct` is expected to represent the AX system-wide object. The native Application -> TopLevel -> Screen shape does not establish a self-evident default TopLevel, so that policy and the Screen mapping must be validated on macOS instead of copied mechanically from Windows.
+macOS resolves `Default + Direct` to an isolated AX system-wide object and `Default + TopLevel` to the first eligible window in global Z-order. `Default + Screen` resolves the primary NSScreen. Point and Pointer Screen resolution use display topology directly; Focused and NativeWindow Screen queries resolve the containing AX window and assign it to the display with the largest visible intersection. A fully off-screen window has no Screen relation.
 
 Every root method receives a `VisualElementRetention`; `retention.Context` selects the destination identity domain. On a UIA or Screen identity-map miss, the Backend creates a concrete element with immutable references to that Context and this Backend. On a hit, it returns the Context-local canonical element. This means equal UIA RuntimeIds in two Contexts create two high-level elements, while repeated acquisition inside one retained Context reuses one high-level element.
 
@@ -199,7 +202,7 @@ Determine capturable coverage before applying output-resolution limits. DWM clip
 
 The Bounds origin follows the source-to-screen mapping used by the capture operation. Window movement and native frame production remain best effort, not an atomic observation. Source elements need only remain retained until capture completes; independent copied image buffers can outlive those elements. Existing RPC transport is unchanged.
 
-macOS draws the selected CGImage into a bounded CGBitmapContext before allocating a full-size copied pixel buffer. AX capture retains BestResolution and the FullSize Stage Manager workaround, deriving image density from actual image dimensions and the observed window coverage rather than an arbitrary screen's backing scale. Mapping the private FullSize surface exactly to AX bounds remains a native-validation assumption documented beside the code; extra framing must be handled through actual source coverage. NominalResolution is a future animation-only quality choice, not a desktop-coordinate conversion. Linux XGetImage requires a viewable window and a rectangle within its screen; its temporary image is copied/resampled to bounded owned storage and then destroyed once. Neither backend is claimed natively verified by Windows builds.
+macOS draws the selected CGImage into a bounded CGBitmapContext before allocating a full-size copied pixel buffer. AX capture retains BestResolution and the FullSize Stage Manager workaround, deriving image density from actual image dimensions and the observed window coverage rather than an arbitrary screen's backing scale. A four-quadrant native AppKit probe verifies RGBA byte order, top-left row orientation, descendant cropping, and exact FullSize-to-AX-bounds mapping for ordinary shadowed, borderless, minimized, fully occluded, and partially off-desktop windows on macOS 15. The same contract passes in an active Stage while Stage Manager is globally enabled; inactive Stages and separate Spaces remain uncharacterized. Occlusion does not replace the captured window surface with the front window, and a half-off-desktop window returns its complete surface through both a retained AX element and fresh NativeWindow acquisition. A window with zero intersection against every display remains directly reacquirable by Quartz ID but has no Screen relation, and `CGSHWCaptureWindowList` returns no image; fully off-desktop capture is therefore an explicit macOS limitation and the Backend does not reposition another application's window as a fallback. Screen capture uses the explicit four-parameter window-list overload with `OnScreenOnly`; the two-parameter relative-window overload returns null for window number zero even when TCC preflight succeeds. NominalResolution is a future animation-only quality choice, not a desktop-coordinate conversion. Linux XGetImage requires a viewable window and a rectangle within its screen; its temporary image is copied/resampled to bounded owned storage and then destroyed once. Neither backend is claimed natively verified by Windows builds.
 
 Windows normally projects cached UIA BoundingRectangle coordinates directly. For a UIA element backed by a top-level HWND, a successful `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)` replaces that rectangle with the visible compositor frame; failure falls back to the cached UIA rectangle. This preserves the established capture-alignment behavior while leaving descendant bounds provider-defined. Capture of a minimized top-level window remains a known limitation even when child-element capture works.
 
@@ -268,43 +271,42 @@ The overlay may reduce user-driven mutation but does not create a native tree tr
 
 ## 14. macOS Backend
 
-The macOS Backend is a platform service rather than an AX-only service. The legacy surface already demonstrates distinct AX and NSScreen domains. The replacement must preserve that heterogeneity through Context-owned concrete elements.
+The macOS Backend is a platform service rather than an AX-only service. `MacVisualElementBackend` preserves distinct AX, AX system-wide, and NSScreen domains through Context-owned concrete elements and owns the process-shared AX system-wide reference and display topology.
 
 ### 14.1 Accessibility Backend
 
-Target AX behavior includes:
+Implemented AX behavior includes:
 
 - use `AXUIElementSetMessagingTimeout` as the native per-message safety boundary;
 - avoid racing mutable process-global timeout policy;
 - use `AXUIElementCopyMultipleAttributeValues` to batch scalar attributes while preserving per-position errors;
+- keep generic or malformed per-position results field-local after the enclosing batch succeeds; `InvalidUIElement`, `CannotComplete`, and `APIDisabled` still retain their element/provider-wide semantics;
 - use `AXUIElementGetAttributeValueCount` plus `AXUIElementCopyAttributeValues(index, maxValues)` for bounded large arrays;
 - prefer `AXNumberOfCharacters`, parameterized `AXStringForRange`, and `CFRange` for ranged document content where supported;
+- treat a successful but empty `AXStringForRange` for a positive character count as non-progressing ranged access and fall back to bounded local paging over `AXValue`; a missing fallback is unsupported rather than a provider failure;
+- treat generic `kAXErrorFailure` from the optional `AXValue` text fallback as unsupported only in that fallback context, because observed providers may advertise `AXValue` on non-text elements yet fail to produce it; the original `AXException` remains diagnostic evidence, and whole-transaction failures are not reclassified;
+- expose `NativeWindowHandle` only on a real `AXWindow`; descendants do not inherit the enclosing Quartz identifier, while capture may resolve `AXWindow` internally as an operation detail;
 - accept that ordinary string attributes have no maximum-length argument and may require one timeout-bounded complete read followed by local truncation;
-- implement sibling navigation through bounded parent/child access rather than misusing split-view-only Next/PreviousContents attributes;
+- implement sibling navigation through the macOS 26 parameterized child-index attribute when the current provider supports it, a validated Context-incarnation metadata hint otherwise, and bounded parent/child scanning as the final fallback;
 - preserve Create/Copy ownership and distinguish unsupported, permission, destroyed-element, and provider communication failures.
 
-Windows declarations and cross-compilation cannot establish runtime CoreFoundation types, equality of independently obtained `AXUIElementRef` values, messaging-timeout scope, or real provider behavior. The implementation must retain native probes and TODOs rather than asserting completion from Windows.
+Native app-host probes establish the Core Foundation types, equality of independently obtained `AXUIElementRef` values, fixed messaging-timeout scope, and the implemented provider behaviors. Cross-compilation remains only a compile check; unresolved native cases stay explicit in repository-root `temp.md`.
 
 ### 14.2 Topology Design Checkpoint
 
-macOS implementation must stop for review before publishing cross-backend Parent, Child, or sibling behavior. Native probes must establish:
+The topology checkpoint is accepted as follows:
 
-- the AX Parent chain from descendants through TopLevel windows and Applications;
-- ordering and identity of multiple TopLevel windows under one Application;
-- windows on one display, multiple displays, and spanning display boundaries;
-- focused, key, minimized, hidden, sheet, panel, full-screen Space, and windowless Application cases;
-- display changes, window movement, coordinate conversion, destruction, and permission failures;
-- equality when the same Application/window is reached through different entry points.
+- Screen -> AXWindow -> AX descendants is the canonical structural Parent/Child chain;
+- AXApplication is excluded from that main chain and may later appear through an Application/Owner relation or projection grouping;
+- the AX system-wide element is an isolated special root for direct queries and is not traversable;
+- a Screen lazily enumerates eligible top-level AX windows assigned to that display in global Z-order;
+- top-level sibling order follows the containing Screen's child order;
+- descendant sibling order follows the parent's bounded AXChildren order;
+- display topology is rebuilt and atomically replaced after `NSApplicationDidChangeScreenParametersNotification`.
 
-The review chooses separately:
+Native probes have established descendant/window/Application relationships, ordering of multiple windows, focused/minimized/hidden/closed windows, panels, sheets, destruction, equality across acquisition paths, and capture coordinates on the current unrotated Retina display. The same full-size window and descendant crop checks pass in an active Stage while Stage Manager is globally enabled; inactive Stages and separate Spaces remain uncharacterized. Remaining validation includes rotated and mixed-density displays, multi-display and spanning-window assignment, permission transitions, key/full-screen/windowless cases, and repeated page-boundary mutation.
 
-1. canonical structural Parent/Child relations;
-2. whether display membership is another relation or only Snapshot/projection metadata;
-3. Application and TopLevel ordering;
-4. whether screen grouping is projection-only and must not duplicate live identity;
-5. Enumerator invalidation versus best-effort continuation on topology changes.
-
-Do not select a primary Screen for an Application from focus, first-window order, largest intersection, or pointer location without native evidence and an explicit product requirement.
+Screen grouping is structural and does not duplicate live AX identity: the same AX window canonicalizes within its destination Context regardless of acquisition path. Screen elements and relation Enumerators reject use after their topology generation is replaced. Window-to-display assignment uses largest visible intersection and does not derive Application ownership from focus or pointer location.
 
 ## 15. Other Platforms and Fallbacks
 

@@ -169,7 +169,7 @@ public sealed partial class VisualQuery
         if (target is ElementTarget elementTarget)
         {
             if (offset == 1) return [elementTarget.Element];
-            status.Add("The requested offset is beyond this visual element's single anchor. Query a returned child ID instead.");
+            status.Add("The requested offset is beyond this visual element's single anchor. Query a returned child ID instead");
             return [];
         }
 
@@ -178,7 +178,7 @@ public sealed partial class VisualQuery
         var startIndex = offset - 1;
         if (startIndex >= composite.Parts.Count)
         {
-            status.Add($"Offset {offset} is beyond this visual element's {composite.Parts.Count} retained observed members.");
+            status.Add($"Offset {offset} is beyond this visual element's {composite.Parts.Count} retained observed members");
             return [];
         }
 

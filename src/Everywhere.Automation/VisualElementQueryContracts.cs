@@ -261,7 +261,7 @@ public readonly record struct VisualElementQueryRequest
 /// <param name="HasMoreText">Whether the provider or adapter observed text beyond <paramref name="TextPreview" />.</param>
 /// <param name="Bounds">The screen-space bounds when available.</param>
 /// <param name="ProcessId">The owning process identifier when available.</param>
-/// <param name="NativeWindowHandle">The native top-level or control handle when available.</param>
+/// <param name="NativeWindowHandle">The native window or control handle exposed by this element itself when available. This field is not inherited from an ancestor.</param>
 public readonly record struct VisualElementSnapshot(
     string? Id,
     VisualElementType? Type,

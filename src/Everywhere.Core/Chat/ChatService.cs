@@ -357,7 +357,6 @@ public sealed partial class ChatService : IChatService
             chatContext.Add(analyzingContextMessage);
 
             var approximateTokenLimit = customAssistant.VisualContextLengthLimit.ToTokenLimit();
-            var detailLevel = VisualContextDetailLevel.Compact;
             var validAttachments = new List<VisualElementAttachment>(visualElementAttachments.Length);
             var coreElements = new List<VisualElement>(visualElementAttachments.Length);
             foreach (var attachment in visualElementAttachments)
@@ -376,7 +375,7 @@ public sealed partial class ChatService : IChatService
             var query = new VisualQuery(chatContext.VisualContext, effectScope is null ? null : effectScope.AddCapture);
             var outcome = await query.BuildAsync(
                 coreElements,
-                new VisualContextPromptOptions { TargetTokenBudget = approximateTokenLimit, DetailLevel = detailLevel },
+                new VisualContextPromptOptions { TargetTokenBudget = approximateTokenLimit },
                 cancellationToken: cancellationToken);
             validAttachments[0].Content = new PromptText(outcome.Content);
             for (var index = 1; index < validAttachments.Count; index++) validAttachments[index].Content = null;

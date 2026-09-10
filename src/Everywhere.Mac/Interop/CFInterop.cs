@@ -10,6 +10,13 @@ internal static partial class CFInterop
     public static partial nuint CFHash(nint cf);
 
     [LibraryImport(CoreFoundation)]
+    public static partial nuint CFGetTypeID(nint cf);
+
+    [LibraryImport(CoreFoundation)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool CFEqual(nint first, nint second);
+
+    [LibraryImport(CoreFoundation)]
     public static partial void CFRelease(IntPtr cf);
 
     [LibraryImport(CoreFoundation)]

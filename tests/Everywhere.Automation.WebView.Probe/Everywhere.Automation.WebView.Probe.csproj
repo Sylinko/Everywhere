@@ -1,15 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="'$(IsWindows)' == 'true'">$(TargetFrameworkPrefix)-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="'$(IsMacOS)' == 'true'">$(TargetFrameworkPrefix)-macos</TargetFramework>
+    <TargetPlatformVersion Condition="'$(IsMacOS)' == 'true'">26.2</TargetPlatformVersion>
+    <SupportedOSPlatformVersion Condition="'$(IsMacOS)' == 'true'">12.0</SupportedOSPlatformVersion>
+    <ApplicationId Condition="'$(IsMacOS)' == 'true'">com.sylinko.everywhere.webview-probe</ApplicationId>
+    <ServerGarbageCollection Condition="'$(IsMacOS)' == 'true'">false</ServerGarbageCollection>
     <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(IsWindows)' == 'true'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(IsMacOS)' == 'true' AND '$(IsARM64)' == 'true'">osx-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(IsMacOS)' == 'true' AND '$(IsX64)' == 'true'">osx-x64</RuntimeIdentifier>
+    <LinkMode Condition="'$(IsMacOS)' == 'true'">None</LinkMode>
     <WebViewTestAppProject>$(MSBuildThisFileDirectory)..\Everywhere.Automation.WebView.TestApp\Everywhere.Automation.WebView.TestApp.csproj</WebViewTestAppProject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
-    <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj" />
+    <ProjectReference Include="..\..\src\Everywhere.Windows\Everywhere.Windows.csproj" Condition="'$(IsWindows)' == 'true'" />
+    <ProjectReference Include="..\..\src\Everywhere.Mac\Everywhere.Mac.csproj" Condition="'$(IsMacOS)' == 'true'" />
     <ProjectReference Include="..\Everywhere.Automation.TestApp.Shared\Everywhere.Automation.TestApp.Shared.csproj" />
   </ItemGroup>
 
