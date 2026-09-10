@@ -75,12 +75,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public VisualContextDetailLevel VisualContextDetailLevel
-    {
-        get => Get(VisualContextDetailLevel.Compact);
-        set => Set(value);
-    }
-
     public VisualContextLengthLimit VisualContextLengthLimit
     {
         get => Get(VisualContextLengthLimit.Balanced);

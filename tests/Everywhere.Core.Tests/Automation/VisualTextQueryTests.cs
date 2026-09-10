@@ -51,7 +51,7 @@ public sealed class VisualTextQueryTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Does.Contain("offset=5 next=5"));
-            Assert.That(result, Does.Contain("status=\"Text reading timed out.\""));
+            Assert.That(result, Does.Contain("status=\"Text reading timed out\""));
             Assert.That(result, Does.Not.Contain("old structural"));
         });
     }
@@ -97,8 +97,8 @@ public sealed class VisualTextQueryTests
         context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(
             retention,
             id,
-            (Context: context, Text: text, Failure: failure),
-            static (identity, state) => new TextVisualElement(state.Context, identity, state.Text, state.Failure));
+            (Text: text, Failure: failure),
+            static (identity, state) => new TextVisualElement(identity, identity.Value, state.Text, state.Failure));
 
     private static CompositePart CreatePart(VisualElement element) => new()
     {
@@ -106,7 +106,7 @@ public sealed class VisualTextQueryTests
         Snapshot = new VisualElementSnapshot(null, VisualElementType.Label, null, null, null, false, null, null, null),
     };
 
-    private sealed class TextVisualElement(VisualContext context, string id, string? text, VisualElementQueryFailure? failure) : VisualElement(context, id)
+    private sealed class TextVisualElement(VisualElementIdentity identity, string id, string? text, VisualElementQueryFailure? failure) : VisualElement(identity, id)
     {
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();
 

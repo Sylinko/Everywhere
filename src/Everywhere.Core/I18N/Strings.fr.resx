@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Épingler à l'entrée</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Détaillé</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Compact (Recommandé)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Minimal</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Mode d'épinglage de la fenêtre</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Spécifie le mode d'épinglage pour la fenêtre de chat lorsqu'elle est ouverte. Lorsque la fenêtre n'est pas fixée, elle sera automatiquement masquée lorsqu'elle perd le focus.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Niveau de Détail du Contexte Visuel</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Si des éléments visuels sont ajoutés, Everywhere les collectera avec les éléments environnants en tant que texte structuré avant de les envoyer à l'assistant. Cette option contrôle la richesse et la quantité d'informations collectées.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Erreur du client.</value>

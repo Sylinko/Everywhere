@@ -11,10 +11,21 @@ internal sealed class WebViewProbeTools
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
     private readonly WebViewProbeSession _session;
 
+#if WINDOWS
     /// <summary>Records bounded native parent/child edges without the production identity map or Snapshotter.</summary>
     [McpServerTool(Name = "diagnose_topology", ReadOnly = true, Destructive = false, OpenWorld = true)]
     [Description("Diagnose parent conflicts in the controlled WebView. Samples native Content View edges twice and saves topology.json; diagnostic IDs and pointers are not Agent target IDs.")]
     public Task<string> DiagnoseTopologyAsync(CancellationToken cancellationToken = default) => _session.DiagnoseTopologyAsync(cancellationToken);
+#endif
+
+#if MACOS
+    /// <summary>Queries each scalar field independently for one retained AX element.</summary>
+    [McpServerTool(Name = "diagnose_ax_target", ReadOnly = true, Destructive = false, OpenWorld = false)]
+    [Description("Diagnose a retained macOS AX element by querying each scalar field independently and preserving its native failure details.")]
+    public Task<string> DiagnoseAXTargetAsync(
+        [Description("Integer visual element ID returned by query_visual")] int target,
+        CancellationToken cancellationToken = default) => _session.DiagnoseAXTargetAsync(target, cancellationToken);
+#endif
 
     public WebViewProbeTools(WebViewProbeSession session) => _session = session;
 

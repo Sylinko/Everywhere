@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using DynamicData;
 using Everywhere.Automation;
 using Everywhere.Interop;
+using Everywhere.Mac.Automation;
 using Everywhere.Views;
 using ObjCRuntime;
 using ZLinq;
@@ -23,8 +24,14 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     // Track current mouse location for updates
     protected CGPoint CurrentMouseLocation { get; private set; }
 
-    protected IVisualElement? SelectedElement { get; private set; }
+    protected VisualElementQueryResult? PickingElement { get; private set; }
 
+    private static readonly VisualElementQueryRequest PickingQueryRequest = new(
+        VisualElementFields.Id | VisualElementFields.Type | VisualElementFields.Bounds | VisualElementFields.ProcessId,
+        0);
+
+    private readonly MacVisualElementBackend _visualElementBackend;
+    private readonly VisualContext _context;
     private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
     private readonly uint _windowNumber;
     private readonly CGRect _allScreenFrame;
@@ -34,12 +41,20 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     /// We reuse a single list to avoid allocations during picking.
     /// </summary>
     private readonly List<int> _windowOwnerPids = [];
+    private VisualElementRetention? _pickingRetention;
 
-    protected ScreenSelectionSession(IWindowHelper windowHelper, IReadOnlyList<ScreenSelectionMode> allowedModes, ScreenSelectionMode initialMode)
+    protected ScreenSelectionSession(
+        IWindowHelper windowHelper,
+        MacVisualElementBackend visualElementBackend,
+        VisualContext context,
+        IReadOnlyList<ScreenSelectionMode> allowedModes,
+        ScreenSelectionMode initialMode)
     {
         Debug.Assert(allowedModes.Count > 0);
 
         WindowHelper = windowHelper;
+        _visualElementBackend = visualElementBackend;
+        _context = context;
         _allowedModes = allowedModes;
         CurrentMode = initialMode;
 
@@ -113,6 +128,15 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
         foreach (var maskWindow in MaskWindows) maskWindow.Show(this);
         ToolTipWindow.Show(this);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        CGEventListener.Default.EventReceived -= HandleCGEvent;
+        foreach (var maskWindow in MaskWindows) maskWindow.Close();
+        ToolTipWindow.Close();
+        ReleasePickingRetention();
+        base.OnClosed(e);
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -300,70 +324,62 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
     protected virtual void OnCanceled()
     {
-        SelectedElement = null;
-        CGEventListener.Default.EventReceived -= HandleCGEvent;
+        PickingElement = null;
+        ReleasePickingRetention();
     }
 
     protected virtual void OnMove(CGPoint point)
     {
+        ReleasePickingRetention();
+        _pickingRetention = _context.CreateRetention();
+        PickingElement = null;
         var maskRect = new PixelRect();
         switch (CurrentMode)
         {
             case ScreenSelectionMode.Screen:
             {
-                var primaryHeight = NSScreen.Screens[0].Frame.Height;
-                var screen = NSScreen.Screens.FirstOrDefault(s =>
-                {
-                    var quartzRect = new CGRect(
-                        s.Frame.X,
-                        primaryHeight - (s.Frame.Y + s.Frame.Height),
-                        s.Frame.Width,
-                        s.Frame.Height);
-                    return quartzRect.Contains(point);
-                });
-
-                if (screen != null)
-                {
-                    // Temporary element just for rect
-                    var el = new NSScreenVisualElement(screen);
-                    SelectedElement = el; // used for screenshot capture later
-                    maskRect = el.BoundingRectangle;
-                }
+                var pixelPoint = new PixelPoint((int)point.X, (int)point.Y);
+                PickingElement = _visualElementBackend.Query(
+                    _pickingRetention,
+                    VisualElementLocator.FromPoint(pixelPoint),
+                    VisualElementResolution.Screen,
+                    PickingQueryRequest);
+                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
                 break;
             }
             case ScreenSelectionMode.Window:
             {
-                SelectedElement = GetElementAtPoint();
-                while (SelectedElement is AXUIElement axui && axui.Role != AXRoleAttribute.AXWindow)
-                {
-                    SelectedElement = SelectedElement.Parent;
-                }
-                if (SelectedElement != null) maskRect = SelectedElement.BoundingRectangle;
+                PickingElement = GetElementAtPoint(VisualElementResolution.TopLevel);
+                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
                 break;
             }
             case ScreenSelectionMode.Element:
             {
-                SelectedElement = GetElementAtPoint();
-                if (SelectedElement != null) maskRect = SelectedElement.BoundingRectangle;
+                PickingElement = GetElementAtPoint(VisualElementResolution.Direct);
+                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
                 break;
             }
         }
 
         foreach (var maskWindow in MaskWindows) maskWindow.SetMask(maskRect);
-        ToolTipWindow.ToolTip.Element = SelectedElement;
+        ToolTipWindow.ToolTip.Element = PickingElement;
         UpdateToolTipInfo(maskRect);
 
-        AXUIElement? GetElementAtPoint()
+        VisualElementQueryResult? GetElementAtPoint(VisualElementResolution resolution)
         {
             _windowOwnerPids.Clear();
             GetWindowOwnerPidsAtLocation(point, _windowNumber, _windowOwnerPids);
             foreach (var windowOwnerPid in _windowOwnerPids)
             {
-                if (AXUIElement.ElementFromPid(windowOwnerPid) is not { } element) continue;
-
-                if (element.ElementAtPosition((float)point.X, (float)point.Y) is { } foundElement)
+                var result = _visualElementBackend.QueryElementAtPointForProcess(
+                    _pickingRetention,
+                    windowOwnerPid,
+                    new PixelPoint((int)point.X, (int)point.Y),
+                    resolution,
+                    PickingQueryRequest);
+                if (result is not null)
                 {
-                    return foundElement;
+                    return result;
                 }
             }
 
@@ -378,6 +394,12 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     /// </summary>
     /// <returns>if true, the picking session will end and the window will close.</returns>
     protected virtual bool OnLeftButtonUp() => true;
+
+    protected VisualElementQueryResult? RetainPickingElement(VisualElementRetention retention)
+    {
+        if (PickingElement is { } result) retention.Retain(result.Element);
+        return PickingElement;
+    }
 
     protected void UpdateToolTipInfo(PixelRect rect)
     {
@@ -429,5 +451,11 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         {
             CFInterop.CFRelease(pArray);
         }
+    }
+
+    private void ReleasePickingRetention()
+    {
+        _pickingRetention?.Dispose();
+        _pickingRetention = null;
     }
 }

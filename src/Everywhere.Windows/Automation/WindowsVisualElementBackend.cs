@@ -85,27 +85,11 @@ public sealed class WindowsVisualElementBackend : IVisualElementBackend, IDispos
         }
 
         var identity = resolution.Identity ?? throw new InvalidOperationException("UI Automation returned an element without a cached RuntimeId.");
-        var automationElement = cachedElement.Realize();
-        UIAutomationVisualElement? candidate = null;
-        try
-        {
-            candidate = new UIAutomationVisualElement(
-                context,
-                this,
-                automationElement,
-                identity.ToString(),
-                cachedElement.CachedProcessId,
-                cachedElement.CachedNativeWindowHandle,
-                cachedElement.CachedControlType);
-            return identityMap.GetOrAdd(retention, identity, candidate, static (_, element) => element);
-        }
-        finally
-        {
-            if (candidate is null)
-            {
-                automationElement.Dispose();
-            }
-        }
+        return identityMap.GetOrAdd(
+            retention,
+            identity,
+            new UIAutomationElementCreationState(this, cachedElement),
+            static (elementIdentity, state) => CreateUIAutomationVisualElement(elementIdentity, state.Backend, state.Element));
     }
 
     internal ScreenVisualElement GetOrCreateScreenElement(VisualElementRetention retention, WindowsDisplayTopology topology, WindowsDisplay display)
@@ -114,8 +98,32 @@ public sealed class WindowsVisualElementBackend : IVisualElementBackend, IDispos
         return context.GetIdentityMap<ScreenIdentity>().GetOrAdd(
             retention,
             new ScreenIdentity(topology.Generation, display.MonitorHandle),
-            (Context: context, Backend: this, TopologyGeneration: topology.Generation, Display: display),
-            static (_, state) => new ScreenVisualElement(state.Context, state.Backend, state.TopologyGeneration, state.Display));
+            (Backend: this, TopologyGeneration: topology.Generation, Display: display),
+            static (identity, state) => new ScreenVisualElement(identity, state.Backend, state.TopologyGeneration, state.Display));
+    }
+
+    private static UIAutomationVisualElement CreateUIAutomationVisualElement(
+        VisualElementIdentity<UIAutomationRuntimeId> identity,
+        WindowsVisualElementBackend backend,
+        UIAutomationElement cachedElement)
+    {
+        var automationElement = cachedElement.Realize();
+        try
+        {
+            return new UIAutomationVisualElement(
+                identity,
+                backend,
+                automationElement,
+                identity.Value.ToString(),
+                cachedElement.CachedProcessId,
+                cachedElement.CachedNativeWindowHandle,
+                cachedElement.CachedControlType);
+        }
+        catch
+        {
+            automationElement.Dispose();
+            throw;
+        }
     }
 
     private VisualElementQueryResult?
@@ -222,6 +230,16 @@ public sealed class WindowsVisualElementBackend : IVisualElementBackend, IDispos
     }
 
     private readonly record struct UIAutomationIdentityResolution(UIAutomationVisualElement? Element, UIAutomationRuntimeId? Identity);
+
+    private readonly ref struct UIAutomationElementCreationState(
+        WindowsVisualElementBackend backend,
+        UIAutomationElement element
+    )
+    {
+        internal WindowsVisualElementBackend Backend { get; } = backend;
+
+        internal UIAutomationElement Element { get; } = element;
+    }
 
     [Serializable]
     private readonly record struct ScreenIdentity(long TopologyGeneration, nint MonitorHandle);

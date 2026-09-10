@@ -1,18 +1,22 @@
-using System.Diagnostics;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 using Everywhere.Automation;
+using Everywhere.Extensions;
 using Everywhere.Interop;
 using Serilog;
 
 namespace Everywhere.Mac.Interop;
 
-partial class VisualElementContext
+/// <summary>
+/// Monitors text selection through macOS accessibility, input, and clipboard facilities.
+/// </summary>
+public sealed class MacTextSelectionWatcher(IVisualElementBackend visualElementBackend) : ITextSelectionWatcher
 {
     private readonly Subject<TextSelectionData> _textSelectionSubject = new();
     private IDisposable? _hookSubscription;
     private int _subscriberCount;
 
+    /// <inheritdoc />
     public IDisposable Subscribe(IObserver<TextSelectionData> observer)
     {
         var subscription = _textSelectionSubject.Subscribe(observer);
@@ -38,7 +42,7 @@ partial class VisualElementContext
     {
         if (_hookSubscription != null) return;
 
-        var detector = new TextSelectionDetector();
+        var detector = new TextSelectionDetector(visualElementBackend);
         detector.SelectionDetected += OnSelectionDetected;
         _hookSubscription = detector;
     }
@@ -70,20 +74,25 @@ partial class VisualElementContext
         // Atomic flags
         private volatile int _isProcessing; // 0 = false, 1 = true
 
+        private readonly IVisualElementBackend _visualElementBackend;
+
         private DateTimeOffset _lastMouseDownTime, _lastMouseUpTime;
         private CGPoint _lastMouseDownPos, _lastMouseUpPos;
         private bool _isLastIBeamCursor, _isLastValidClick;
         private long _clipboardSequence;
 
-        private const int MIN_DRAG_DISTANCE = 8;
-        private const int MAX_DRAG_TIME_MS = 15000;
-        private const int DOUBLE_CLICK_MAX_DISTANCE = 3;
-        private const int DOUBLE_CLICK_TIME_MS = 500;
+        private const int MinDragDistance = 8;
+        private const int MaxDragTimeMilliseconds = 15_000;
+        private const int DoubleClickMaxDistance = 3;
+        private const int DoubleClickTimeMilliseconds = 500;
+        private const int MaximumSelectedTextCharacters = 65_536;
+        private const int MaximumSelectedTextChildProbes = 32;
 
         private static readonly HashSet<string> ExcludeProcessNames = new(StringComparer.OrdinalIgnoreCase);
 
-        public TextSelectionDetector()
+        public TextSelectionDetector(IVisualElementBackend visualElementBackend)
         {
+            _visualElementBackend = visualElementBackend;
             CGEventListener.ListenOnly.EventReceived += HandleEvent;
         }
 
@@ -110,15 +119,15 @@ partial class VisualElementContext
             var distance = Math.Sqrt(dx * dx + dy * dy);
 
             var currentTime = DateTimeOffset.Now;
-            var isCurrentClickValid = (currentTime - _lastMouseDownTime).TotalMilliseconds <= DOUBLE_CLICK_TIME_MS;
+            var isCurrentClickValid = (currentTime - _lastMouseDownTime).TotalMilliseconds <= DoubleClickTimeMilliseconds;
             var isCursorValid = _isLastIBeamCursor || isIBeamCursor;
 
-            if ((currentTime - _lastMouseDownTime).TotalMilliseconds > MAX_DRAG_TIME_MS)
+            if ((currentTime - _lastMouseDownTime).TotalMilliseconds > MaxDragTimeMilliseconds)
             {
                 shouldDetectSelection = false;
             }
             // Check for drag selection
-            else if (distance >= MIN_DRAG_DISTANCE)
+            else if (distance >= MinDragDistance)
             {
                 // Only support IBeamCursor for now
                 if (isCursorValid)
@@ -127,14 +136,14 @@ partial class VisualElementContext
                 }
             }
             // Check for double-click selection
-            else if (_isLastValidClick && isCurrentClickValid && distance <= DOUBLE_CLICK_MAX_DISTANCE)
+            else if (_isLastValidClick && isCurrentClickValid && distance <= DoubleClickMaxDistance)
             {
                 var dx2 = cgEvent.Location.X - _lastMouseUpPos.X;
                 var dy2 = cgEvent.Location.Y - _lastMouseUpPos.Y;
                 var distance2 = Math.Sqrt(dx2 * dx2 + dy2 * dy2);
 
-                if (distance2 <= DOUBLE_CLICK_MAX_DISTANCE &&
-                    (_lastMouseDownTime - _lastMouseUpTime).TotalMilliseconds <= DOUBLE_CLICK_TIME_MS)
+                if (distance2 <= DoubleClickMaxDistance &&
+                    (_lastMouseDownTime - _lastMouseUpTime).TotalMilliseconds <= DoubleClickTimeMilliseconds)
                 {
                     // Only support IBeamCursor for now
                     if (isCursorValid)
@@ -207,8 +216,7 @@ partial class VisualElementContext
                 try
                 {
                     // 1. Try to get selection from element (Priority 1)
-                    var element = AXUIElement.ElementFromPid(pid);
-                    var text = GetTextViaAXAPI(element);
+                    var text = GetTextViaAXAPI(pid, out var locator);
 
                     // 2. Fallback to Clipboard (Priority 3)
                     if (string.IsNullOrEmpty(text))
@@ -218,7 +226,7 @@ partial class VisualElementContext
 
                     // Trigger event whatever we got
                     // A null or empty text indicates selection was canceled or failed
-                    SelectionDetected?.Invoke(new TextSelectionData(text, element));
+                    SelectionDetected?.Invoke(new TextSelectionData(text, locator));
                 }
                 catch (Exception ex)
                 {
@@ -229,41 +237,50 @@ partial class VisualElementContext
                 {
                     Interlocked.Exchange(ref _isProcessing, 0);
                 }
-            });
+            }).Detach();
         }
 
-        private static string? GetTextViaAXAPI(AXUIElement? applicationElement)
+        private string? GetTextViaAXAPI(int processId, out VisualElementLocator? locator)
         {
-            if (applicationElement is null) return null;
-
-            var focusElement = applicationElement.ElementByAttributeValue(AXAttributeConstants.FocusedUIElement);
-
-            // if we can't find focusedElement, we'll fallback to find focusedWindow
-            focusElement ??= applicationElement.ElementByAttributeValue(AXAttributeConstants.FocusedWindow);
-            if (focusElement is null) return null;
-
-            // Strategy 1: Try to get selected text from the focused element
-            var text = focusElement.GetSelectionText();
-            if (!string.IsNullOrEmpty(text))
+            locator = null;
+            using var context = new VisualContext();
+            using var retention = context.CreateRetention();
+            try
             {
-                return text;
-            }
+                var request = new VisualElementQueryRequest(VisualElementFields.Id | VisualElementFields.ProcessId, 0);
+                var result = _visualElementBackend.Query(retention, VisualElementLocator.Focused, VisualElementResolution.Direct, request);
+                if (result?.Snapshot.ProcessId != processId) return null;
 
-            // Strategy 2: If the focused element doesn't have selected text, try to traverse child elements
-            foreach (var child in focusElement.Children)
-            {
-                text = child.GetSelectionText();
-                if (!string.IsNullOrEmpty(text))
+                locator = VisualElementLocator.Focused;
+                var text = result.Element.GetSelectedText(MaximumSelectedTextCharacters);
+                if (!string.IsNullOrEmpty(text)) return text;
+
+                // Some providers expose the selection only on a direct child of the focused container. Preserve
+                // that legacy behavior, but cap the number of synchronous AX messages in one detection attempt.
+                var childRequest = new VisualElementQueryRequest(VisualElementFields.Id, 0);
+                using var children = result.Element.CreateEnumerator(
+                    VisualElementRelation.Child,
+                    childRequest);
+                for (var index = 0; index < MaximumSelectedTextChildProbes && children.MoveNext(); index++)
                 {
-                    return text;
+                    text = children.Current.Element.GetSelectedText(MaximumSelectedTextCharacters);
+                    if (!string.IsNullOrEmpty(text)) return text;
                 }
             }
+            catch (Exception ex)
+            {
+                Log.ForContext<TextSelectionDetector>().Debug(ex, "Could not read selected text through the macOS Accessibility backend");
+            }
 
-            // if we can't get text by AXAPI, we have to do final try for special cases
-            // Chrome/Chromium: set "AXEnhancedUserInterface" to true to enable AXAPI
-            applicationElement.SetAttribute(AXAttributeConstants.EnhancedUserInterface, NSNumber.FromBoolean(true));
-            // Electron Apps: set "AXManualAccessibility" to true to enable AXAPI
-            applicationElement.SetAttribute(AXAttributeConstants.ManualAccessibility, NSNumber.FromBoolean(true));
+            using var applicationElement = AXUIElement.ElementFromPid(processId);
+            if (applicationElement is not null)
+            {
+                // Chrome/Chromium: set "AXEnhancedUserInterface" to true to enable AXAPI.
+                using var enabled = NSNumber.FromBoolean(true);
+                applicationElement.SetAttribute(AXAttributeConstants.EnhancedUserInterface, enabled);
+                // Electron Apps: set "AXManualAccessibility" to true to enable AXAPI.
+                applicationElement.SetAttribute(AXAttributeConstants.ManualAccessibility, enabled);
+            }
 
             return null;
         }

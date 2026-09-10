@@ -150,7 +150,6 @@ public partial class VisualTreeDebugger : UserControl
     {
         try
         {
-            const VisualContextDetailLevel level = VisualContextDetailLevel.Compact;
             var tokenLimit = int.Parse(TokenLimitTextBox.Text ?? "8000");
             var selectedElements = VisualTreeView.SelectedItems.AsValueEnumerable().OfType<DebuggerVisualElement>().Select(item => item.Element)
                 .ToArray();
@@ -159,7 +158,7 @@ public partial class VisualTreeDebugger : UserControl
             using var targetTurn = _visualContext.BeginTurn();
             using var effectScope = ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(CancellationToken.None);
             var result = await Task.Run(() => new VisualQuery(_visualContext, effectScope.AddCapture).BuildAsync(
-                selectedElements, new VisualContextPromptOptions { TargetTokenBudget = tokenLimit, DetailLevel = level }));
+                selectedElements, new VisualContextPromptOptions { TargetTokenBudget = tokenLimit }));
             var visualTree = result.Content;
             effectScope.Complete();
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");

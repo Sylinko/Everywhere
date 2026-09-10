@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>Fijar al ingresar</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>Detallado</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>Compacto (Recomendado)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>Mínimo</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>Modo de Fijación de Ventana</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Especifica el modo de fijación para la ventana de chat cuando se abre. Cuando la ventana no está fijada, se ocultará automáticamente al perder el foco.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Nivel De Detalle Del Contexto Visual</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Si se añaden elementos visuales adjuntos, Everywhere los recopilará junto con los elementos circundantes como texto estructurado antes de enviarlos al asistente. Esta opción controla la riqueza y cantidad de información recopilada.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Error del cliente.</value>

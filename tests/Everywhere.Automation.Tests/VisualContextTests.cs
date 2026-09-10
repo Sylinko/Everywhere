@@ -74,9 +74,9 @@ public sealed class VisualContextTests
         using var backend = CreateBackend();
         var identityMap = backend.Context.GetIdentityMap<TestIdentity>();
         using var firstOwner = backend.Context.CreateRetention();
-        var first = identityMap.GetOrAdd(firstOwner, new TestIdentity(42), backend.Context, static (_, context) => new TestVisualElement(context, "test:42"));
+        var first = identityMap.GetOrAdd(firstOwner, new TestIdentity(42), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:42"));
         var secondOwner = backend.Context.CreateRetention();
-        var second = identityMap.GetOrAdd(secondOwner, new TestIdentity(42), backend.Context, static (_, context) => new TestVisualElement(context, "test:42"));
+        var second = identityMap.GetOrAdd(secondOwner, new TestIdentity(42), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:42"));
 
         Assert.That(second, Is.SameAs(first));
         firstOwner.Dispose();
@@ -85,8 +85,34 @@ public sealed class VisualContextTests
         Assert.That(first.ReleaseCount, Is.EqualTo(1));
 
         using var replacementOwner = backend.Context.CreateRetention();
-        var replacement = identityMap.GetOrAdd(replacementOwner, new TestIdentity(42), backend.Context, static (_, context) => new TestVisualElement(context, "test:42"));
+        var replacement = identityMap.GetOrAdd(replacementOwner, new TestIdentity(42), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:42"));
         Assert.That(replacement, Is.Not.SameAs(first));
+    }
+
+    [Test]
+    public void GetOrAdd_WhenFactoryConstructsElement_ProvidesItsBoundIdentity()
+    {
+        using var context = new VisualContext();
+        using var retention = context.CreateRetention();
+        var identityMap = context.GetIdentityMap<TestIdentity>();
+        var key = new TestIdentity(42);
+        VisualElementIdentity<TestIdentity>? receivedIdentity = null;
+
+        var element = identityMap.GetOrAdd(
+            retention,
+            key,
+            "test:42",
+            (identity, id) =>
+            {
+                receivedIdentity = identity;
+                return new TestVisualElement(identity, id);
+            });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(receivedIdentity, Is.SameAs(element.ConstructorIdentity));
+            Assert.That(receivedIdentity?.Value, Is.EqualTo(key));
+        });
     }
 
     [Test]
@@ -95,8 +121,8 @@ public sealed class VisualContextTests
         using var context = new VisualContext();
         using var acquisition = context.CreateRetention();
         var identityMap = context.GetIdentityMap<TestIdentity>();
-        var first = identityMap.GetOrAdd(acquisition, new TestIdentity(1), context, static (_, owner) => new TestVisualElement(owner, "test:1"));
-        var second = identityMap.GetOrAdd(acquisition, new TestIdentity(2), context, static (_, owner) => new TestVisualElement(owner, "test:2"));
+        var first = identityMap.GetOrAdd(acquisition, new TestIdentity(1), context, static (identity, _) => new TestVisualElement(identity, "test:1"));
+        var second = identityMap.GetOrAdd(acquisition, new TestIdentity(2), context, static (identity, _) => new TestVisualElement(identity, "test:2"));
         using (var turn = context.BeginTurn())
         {
             var batch = context.BeginPublication();
@@ -134,9 +160,9 @@ public sealed class VisualContextTests
         using var backend = CreateBackend();
         var identityMap = backend.Context.GetIdentityMap<TestIdentity>();
         using var acquisition = backend.Context.CreateRetention();
-        var firstOnly = identityMap.GetOrAdd(acquisition, new TestIdentity(1), backend.Context, static (_, context) => new TestVisualElement(context, "test:1"));
-        var shared = identityMap.GetOrAdd(acquisition, new TestIdentity(2), backend.Context, static (_, context) => new TestVisualElement(context, "test:2"));
-        var secondOnly = identityMap.GetOrAdd(acquisition, new TestIdentity(3), backend.Context, static (_, context) => new TestVisualElement(context, "test:3"));
+        var firstOnly = identityMap.GetOrAdd(acquisition, new TestIdentity(1), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:1"));
+        var shared = identityMap.GetOrAdd(acquisition, new TestIdentity(2), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:2"));
+        var secondOnly = identityMap.GetOrAdd(acquisition, new TestIdentity(3), backend.Context, static (identity, _) => new TestVisualElement(identity, "test:3"));
 
         using (var firstTurn = backend.Context.BeginTurn())
         {
@@ -179,7 +205,7 @@ public sealed class VisualContextTests
         using var context = new VisualContext(2, 100);
         using var acquisition = context.CreateRetention();
         var identityMap = context.GetIdentityMap<TestIdentity>();
-        var elements = Enumerable.Range(1, 3).Select(value => identityMap.GetOrAdd(acquisition, new TestIdentity(value), (Context: context, Value: value), static (_, state) => new TestVisualElement(state.Context, $"test:{state.Value}"))).ToArray();
+        var elements = Enumerable.Range(1, 3).Select(value => identityMap.GetOrAdd(acquisition, new TestIdentity(value), value, static (identity, state) => new TestVisualElement(identity, $"test:{state}"))).ToArray();
 
         foreach (var element in elements)
         {
@@ -207,7 +233,7 @@ public sealed class VisualContextTests
         using var context = new VisualContext(8, 2);
         using var acquisition = context.CreateRetention();
         var identityMap = context.GetIdentityMap<TestIdentity>();
-        var elements = Enumerable.Range(1, 4).Select(value => identityMap.GetOrAdd(acquisition, new TestIdentity(value), (Context: context, Value: value), static (_, state) => new TestVisualElement(state.Context, $"test:{state.Value}"))).ToArray();
+        var elements = Enumerable.Range(1, 4).Select(value => identityMap.GetOrAdd(acquisition, new TestIdentity(value), value, static (identity, state) => new TestVisualElement(identity, $"test:{state}"))).ToArray();
 
         for (var turnIndex = 0; turnIndex < 3; turnIndex++)
         {
@@ -245,8 +271,10 @@ public sealed class VisualContextTests
 
     private sealed record TestIdentity(int Value);
 
-    private sealed class TestVisualElement(VisualContext context, string id) : VisualElement(context, id)
+    private sealed class TestVisualElement(VisualElementIdentity identity, string id) : VisualElement(identity, id)
     {
+        public VisualElementIdentity ConstructorIdentity { get; } = identity;
+
         public int ReleaseCount { get; private set; }
 
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();

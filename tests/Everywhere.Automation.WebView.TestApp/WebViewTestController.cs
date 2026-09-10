@@ -4,10 +4,13 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Everywhere.Automation.TestApp;
+#if MACOS
+using System.Runtime.InteropServices;
+#endif
 
 namespace Everywhere.Automation.WebView.TestApp;
 
-internal sealed class WebViewTestController
+internal sealed partial class WebViewTestController
 {
     public Window MainWindow { get; }
 
@@ -19,6 +22,11 @@ internal sealed class WebViewTestController
     private Uri _address;
     private long _revision;
     private bool _isInitialNavigation = true;
+
+#if MACOS
+    private const string ObjectiveCLibrary = "/usr/lib/libobjc.A.dylib";
+    private static readonly nint WindowNumberSelector = RegisterSelector("windowNumber");
+#endif
 
     public WebViewTestController(IClassicDesktopStyleApplicationLifetime desktop, WebViewTestOptions options)
     {
@@ -133,7 +141,37 @@ internal sealed class WebViewTestController
 
     private void Publish(TestAppStatusKind kind, string? error = null)
     {
-        var root = new TestAppRootStatus(0, MainWindow.TryGetPlatformHandle()?.Handle.ToInt64() ?? 0);
+        var root = new TestAppRootStatus(0, GetNativeWindowHandle());
         _channel.Publish(new TestAppStatus(kind, _options.Common.Scenario, _options.Common.Seed, 0, _revision, Environment.ProcessId, [root], [], error, _address.AbsoluteUri));
     }
+
+    private long GetNativeWindowHandle()
+    {
+        var handle = MainWindow.TryGetPlatformHandle();
+        if (handle is null)
+        {
+            return 0;
+        }
+
+#if MACOS
+        if (!string.Equals(handle.HandleDescriptor, "NSWindow", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"The macOS WebView TestApp received an unexpected '{handle.HandleDescriptor}' platform handle.");
+        }
+
+        // Avalonia exposes an in-process NSWindow pointer, while the macOS Automation Backend's
+        // NativeWindow locator intentionally consumes the cross-process-safe Quartz window number.
+        return SendWindowNumber(handle.Handle, WindowNumberSelector);
+#else
+        return handle.Handle.ToInt64();
+#endif
+    }
+
+#if MACOS
+    [LibraryImport(ObjectiveCLibrary, EntryPoint = "sel_registerName", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial nint RegisterSelector(string name);
+
+    [LibraryImport(ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial long SendWindowNumber(nint receiver, nint selector);
+#endif
 }

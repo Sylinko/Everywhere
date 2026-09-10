@@ -36,11 +36,11 @@ public sealed class ScreenVisualElement : VisualElement
     private WindowsDisplay Display { get; }
 
     internal ScreenVisualElement(
-        VisualContext context,
+        VisualElementIdentity identity,
         WindowsVisualElementBackend backend,
         long topologyGeneration,
         WindowsDisplay display)
-        : base(context, $"screen:{topologyGeneration}:{display.MonitorHandle}")
+        : base(identity, $"screen:{topologyGeneration}:{display.MonitorHandle}")
     {
         Backend = backend;
         TopologyGeneration = topologyGeneration;
@@ -123,7 +123,7 @@ public sealed class ScreenVisualElement : VisualElement
 
         return relation switch
         {
-            VisualElementRelation.Parent => new EmptyVisualElementEnumerator(),
+            VisualElementRelation.Parent => EmptyVisualElementEnumerator.Shared,
             VisualElementRelation.Child => new TopLevelWindowEnumerator(
                 Context,
                 Backend,
@@ -187,7 +187,7 @@ public sealed class ScreenVisualElement : VisualElement
         }
         var direction = relation == VisualElementRelation.PreviousSibling ? -1 : 1;
         return originIndex < 0 ?
-            new EmptyVisualElementEnumerator() :
+            EmptyVisualElementEnumerator.Shared :
             new ScreenSiblingEnumerator(Context, Backend, topology, originIndex + direction, direction, request);
     }
 

@@ -542,26 +542,11 @@
     <data name="ChatWindowPinMode_PinOnInput" xml:space="preserve">
         <value>입력 시 고정</value>
     </data>
-    <data name="VisualContextDetailLevel_Detailed" xml:space="preserve">
-        <value>상세</value>
-    </data>
-    <data name="VisualContextDetailLevel_Compact" xml:space="preserve">
-        <value>간략 (추천)</value>
-    </data>
-    <data name="VisualContextDetailLevel_Minimal" xml:space="preserve">
-        <value>최소</value>
-    </data>
     <data name="ChatWindowSettings_WindowPinMode_Header" xml:space="preserve">
         <value>창 고정 모드</value>
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>채팅 창이 열릴 때 고정 모드를 지정합니다. 창이 고정되지 않은 경우, 포커스를 잃으면 자동으로 숨겨집니다.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>시각적 맥락 세부 수준</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>시각 요소 첨부가 추가된 경우, Everywhere는 이를 주변 요소와 함께 구조화된 텍스트로 수집하여 도우미에게 보냅니다. 이 옵션은 수집의 풍부함과 정보량을 제어합니다.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>클라이언트 오류입니다.</value>

@@ -4,22 +4,27 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Everywhere.Automation;
 using Everywhere.Interop;
+using Everywhere.Mac.Automation;
 using ImageIO;
 
 namespace Everywhere.Mac.Interop;
 
-partial class VisualElementContext
+public sealed partial class MacScreenSelectionService
 {
     private sealed class ScreenshotSession : ScreenSelectionSession
     {
         private static ScreenSelectionMode _previousMode = ScreenSelectionMode.Element;
 
-        public static async Task<Bitmap?> TakeAsync(IWindowHelper windowHelper, ScreenSelectionMode? initialMode)
+        public static async Task<Bitmap?> TakeAsync(
+            IWindowHelper windowHelper,
+            MacVisualElementBackend visualElementBackend,
+            VisualContext context,
+            ScreenSelectionMode? initialMode)
         {
             // Give time to hide other windows
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
-            var window = new ScreenshotSession(windowHelper, initialMode ?? _previousMode);
+            var window = new ScreenshotSession(windowHelper, visualElementBackend, context, initialMode ?? _previousMode);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -34,9 +39,15 @@ partial class VisualElementContext
         private CGPoint _dragStart;
         private PixelRect _dragRect;
 
-        private ScreenshotSession(IWindowHelper windowHelper, ScreenSelectionMode initialMode)
+        private ScreenshotSession(
+            IWindowHelper windowHelper,
+            MacVisualElementBackend visualElementBackend,
+            VisualContext context,
+            ScreenSelectionMode initialMode)
             : base(
                 windowHelper,
+                visualElementBackend,
+                context,
                 [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
                 initialMode)
         {
@@ -113,8 +124,8 @@ partial class VisualElementContext
             }
             else
             {
-                if (SelectedElement == null) return false;
-                captureRect = SelectedElement.BoundingRectangle;
+                if (PickingElement == null) return false;
+                captureRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
             }
 
             WindowHelper.SetCloaked(ToolTipWindow, true);

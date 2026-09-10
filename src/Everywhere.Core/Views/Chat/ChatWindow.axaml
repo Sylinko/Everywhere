@@ -1196,37 +1196,6 @@
                       <TextBlock
                         VerticalAlignment="Center"
                         FontSize="{DynamicResource FontSizeS}"
-                        Text="{I18N {x:Static LocaleKey.PersistentState_VisualContextDetailLevel_Header}}"/>
-                      <LucideIcon
-                        Kind="CircleQuestionMark"
-                        Size="{DynamicResource FontSizeS}"
-                        ToolTip.Placement="Right"
-                        ToolTip.Tip="{I18N {x:Static LocaleKey.PersistentState_VisualContextDetailLevel_Description}}"/>
-                    </StackPanel>
-
-                    <TextBlock
-                      Classes="Muted" VerticalAlignment="Center"
-                      FontSize="{DynamicResource FontSizeS}">
-                      <TextBlock.Text>
-                        <I18N Key="{Binding PersistentState.VisualContextDetailLevel, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
-                      </TextBlock.Text>
-                    </TextBlock>
-
-                    <Slider
-                      MinWidth="160" Margin="0,-2,0,0"
-                      IsSnapToTickEnabled="True" Maximum="2"
-                      Minimum="0" TickFrequency="1"
-                      Value="{Binding PersistentState.VisualContextDetailLevel, Mode=TwoWay, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
-                  </StackPanel>
-
-                  <StackPanel
-                    Margin="0,4,0,4" Orientation="Vertical"
-                    Spacing="4">
-                    <StackPanel
-                      Orientation="Horizontal" Spacing="4">
-                      <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="{DynamicResource FontSizeS}"
                         Text="{I18N {x:Static LocaleKey.PersistentState_MaxContextRounds_Header}}"/>
                       <LucideIcon
                         Kind="CircleQuestionMark"

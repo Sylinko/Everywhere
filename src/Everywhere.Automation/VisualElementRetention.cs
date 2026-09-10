@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Everywhere.Automation;
 
 /// <summary>
@@ -16,11 +18,11 @@ public sealed class VisualElementRetention : IDisposable
     /// <summary>
     /// Gets the number of distinct elements owned by this retention.
     /// </summary>
-    public int Count => _entries.Count;
+    public int Count => _elements.Count;
 
     public bool IsDisposed { get; private set; }
 
-    private readonly HashSet<VisualElementIdentityEntry> _entries = [];
+    private readonly HashSet<VisualElement> _elements = new(ReferenceEqualityComparer.Instance);
 
     internal VisualElementRetention(VisualContext context) => Context = context;
 
@@ -32,7 +34,7 @@ public sealed class VisualElementRetention : IDisposable
     {
         Context.ValidateRetention(this);
         Context.ValidateRetainedElement(element);
-        Retain(element.IdentityEntry);
+        RetainCanonical(element);
     }
 
     /// <summary>
@@ -46,16 +48,18 @@ public sealed class VisualElementRetention : IDisposable
         }
 
         IsDisposed = true;
-        Context.Release(this, _entries);
-        _entries.Clear();
+        Context.Release(this, _elements);
+        _elements.Clear();
     }
 
-    internal void Retain(VisualElementIdentityEntry entry)
+    internal void RetainCanonical(VisualElement element)
     {
-        ObjectDisposedException.ThrowIf(IsDisposed, this);
-        if (_entries.Add(entry))
+        Debug.Assert(!IsDisposed);
+        Debug.Assert(ReferenceEquals(element.Context, Context));
+
+        if (_elements.Add(element))
         {
-            Context.Retain(entry);
+            Context.Retain(element);
         }
     }
 }
