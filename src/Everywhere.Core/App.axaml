@@ -62,6 +62,8 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SoftwareUpdateControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/TextSelectionToolbarActionForm.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/TextSelectionToolbarActionsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/GlowBorder.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>

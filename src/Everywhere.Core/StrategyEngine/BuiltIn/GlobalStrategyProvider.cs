@@ -6,7 +6,7 @@ namespace Everywhere.StrategyEngine.BuiltIn;
 /// Global strategy that provides always-available commands.
 /// These commands work regardless of context and have lower priority.
 /// </summary>
-public sealed class GlobalStrategyProvider : BuiltInStrategyProvider
+public sealed class GlobalStrategyProvider() : BuiltInStrategyProvider("global")
 {
     public override IEnumerable<Strategy> GetStrategies() =>
     [

@@ -71,4 +71,10 @@ public sealed partial record Strategy
     /// Displays in the watermark as a hint for the user input after selecting this command.
     /// </summary>
     [Key(6)] public IDynamicLocaleKey? ArgumentHintKey { get; init; }
+
+    /// <summary>
+    /// Provider-qualified identity for configuration. Unlike Id, this distinguishes context-specific
+    /// variants of the same intent. Chat history retains Id and does not persist this registry metadata.
+    /// </summary>
+    internal string ConfigurationId { get; init; } = string.Empty;
 }

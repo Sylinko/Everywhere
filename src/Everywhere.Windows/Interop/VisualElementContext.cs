@@ -59,9 +59,11 @@ public partial class VisualElementContext(IWindowHelper windowHelper) : IVisualE
         return null;
     }
 
+    public PixelPoint? PointerPosition => PInvoke.GetCursorPos(out var point) ? new PixelPoint(point.X, point.Y) : null;
+
     public IVisualElement? ElementFromPointer(ScreenSelectionMode mode = ScreenSelectionMode.Element)
     {
-        return !PInvoke.GetCursorPos(out var point) ? null : ElementFromPoint(new PixelPoint(point.X, point.Y), mode);
+        return PointerPosition is { } point ? ElementFromPoint(point, mode) : null;
     }
 
     public IVisualElement? ElementFromWindowHandle(IntPtr windowHandle)

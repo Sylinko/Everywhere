@@ -3959,8 +3959,77 @@
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>点击展开</value>
     </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
+        <value>划词工具栏</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
+        <value>在任意应用中选中文本时，显示悬浮操作工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+        <value>启用划词工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
+        <value>全局监听划词操作，并在选中的文本旁显示小工具栏</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
+        <value>最多显示操作数</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
+        <value>工具栏一次最多显示多少个操作按钮</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
+        <value>显示操作名称</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
+        <value>在每个图标旁显示名称。关闭后工具栏仅显示图标</value>
+    </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_Actions_Header" xml:space="preserve">
+        <value>工具管理</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_Actions_Description" xml:space="preserve">
+        <value>默认提供六个划词工具，也可以添加自定义提示词。拖动左侧抓手调整顺序，靠近列表顶部或底部可自动滚动。工具栏按顺序显示符合划词场景的已启用工具，数量不超过设置上限。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>添加自定义工具</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>编辑工具</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>名称</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>提示词</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>选中的文本会自动作为附件传入。只需描述处理要求，例如“将选中的文本翻译成中文”。点击工具后会打开聊天并发送这段提示词。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>选择图标</value>
+    </data>
+    <data name="TextSelectionToolbarActions_MoveUp" xml:space="preserve">
+        <value>上移</value>
+    </data>
+    <data name="TextSelectionToolbarActions_MoveDown" xml:space="preserve">
+        <value>下移</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>拖动调整顺序</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>符合划词场景时显示此工具</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>恢复默认名称、图标和提示词</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>未命名工具</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>确定删除自定义工具“{0}”吗？</value>
     </data>
     <data name="ChatTurnPreview_Waiting" xml:space="preserve">
         <value>正在等待回复…</value>

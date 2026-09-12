@@ -3958,8 +3958,77 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>Click to expand</value>
     </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
+        <value>Selection Toolbar</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
+        <value>Show a floating action toolbar when you select text in any application</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+        <value>Enable Selection Toolbar</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
+        <value>Watch for text selections system-wide and show a small toolbar next to the selected text</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
+        <value>Maximum Actions</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
+        <value>How many action buttons the toolbar may show at once</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
+        <value>Show Action Labels</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
+        <value>Show the name next to each icon. When disabled, the toolbar shows icons only</value>
+    </data>
     <data name="ModelProviderSchema_Mistral" xml:space="preserve">
         <value>Mistral</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_Actions_Header" xml:space="preserve">
+        <value>Manage Actions</value>
+    </data>
+    <data name="TextSelectionToolbarSettings_Actions_Description" xml:space="preserve">
+        <value>Start with six text selection actions or add your own prompts. Drag the handle on the left to reorder; hold near the top or bottom edge to scroll. Only enabled actions matching the selection are shown, up to the configured limit.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>Add Custom Action</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>Edit Action</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>Prompt</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>The selected text is attached automatically. Describe what to do with it, such as “Translate the selected text into Chinese.” Clicking the action opens the chat and sends this prompt.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>Choose Icon</value>
+    </data>
+    <data name="TextSelectionToolbarActions_MoveUp" xml:space="preserve">
+        <value>Move Up</value>
+    </data>
+    <data name="TextSelectionToolbarActions_MoveDown" xml:space="preserve">
+        <value>Move Down</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>Drag to reorder</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>Show this action when it matches the selection</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>Restore the default name, icon and prompt</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>Unnamed Action</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>Delete the custom action “{0}”?</value>
     </data>
     <data name="ChatTurnPreview_Waiting" xml:space="preserve">
         <value>Waiting for a response…</value>
