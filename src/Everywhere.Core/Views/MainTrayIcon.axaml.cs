@@ -115,5 +115,5 @@ public sealed partial class MainTrayIcon : TrayIcon
     private void ShowDebugWindow() => _app.ShowDebugWindow();
 
     [RelayCommand]
-    private static void Exit() => Environment.Exit(0);
+    private void Exit() => _app.Shutdown();
 }

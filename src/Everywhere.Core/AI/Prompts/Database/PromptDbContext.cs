@@ -76,12 +76,14 @@ public sealed class PromptDbInitializer(IDbContextFactory<PromptDbContext> dbFac
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         logger.LogInformation("Initializing prompt database...");
 
-        await using var dbContext = await dbFactory.CreateDbContextAsync();
-        await dbContext.Database.MigrateAsync();
+        await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await dbContext.Database.MigrateAsync(cancellationToken);
 
         logger.LogInformation("Prompt database initialized.");
     }

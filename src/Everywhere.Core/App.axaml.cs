@@ -44,20 +44,15 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
     public static ThemeManager ThemeManager => _themeManager ?? throw new InvalidOperationException("Application is not initialized.");
 
-    /// <summary>
-    /// Gets the task for the asynchronous application startup sequence. The
-    /// process entry point awaits it after the Avalonia lifetime exits so DI
-    /// resources are not disposed while startup is still using them.
-    /// </summary>
-    public Task InitializationTask => _initializationTask ?? Task.CompletedTask;
-
     private static TopLevel? _topLevel;
     private static ThemeManager? _themeManager;
-    private Task? _initializationTask;
 
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
+    private readonly CancellationTokenSource _initializationCancellation = new();
     private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
+
+    private Task? _initializationTask;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -96,6 +91,37 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
         WeakReferenceMessenger.Default.Register(this);
 
         InitializeMarkdown();
+    }
+
+    /// <summary>
+    /// Requests application shutdown through the active Avalonia lifetime.
+    /// </summary>
+    public void Shutdown(int exitCode = 0)
+    {
+        if (ApplicationLifetime is IControlledApplicationLifetime lifetime)
+        {
+            lifetime.Shutdown(exitCode);
+        }
+    }
+
+    /// <summary>
+    /// Cancels and waits for the startup sequence before the process entry point
+    /// disposes the dependency injection container after Avalonia exits.
+    /// </summary>
+    public async Task WaitForShutdownAsync()
+    {
+        await _initializationCancellation.CancelAsync().ConfigureAwait(false);
+
+        if (_initializationTask is { } initializationTask)
+        {
+            try
+            {
+                await initializationTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (_initializationCancellation.IsCancellationRequested)
+            {
+            }
+        }
     }
 
     private void HandleTransientWindowClosed(TransientWindow sender, RoutedEventArgs args)
@@ -172,16 +198,12 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
                 if (messageTemplate is null)
                 {
-                    Log.Logger.Warning(
-                        "Automatic recovery stopped notification ignored for unsupported process role {ProcessRole}.",
-                        e.Role);
+                    Log.Logger.Warning("Automatic recovery stopped notification ignored for unsupported process role {ProcessRole}.", e.Role);
                     return;
                 }
 
                 var message = messageTemplate.Format(e.FailureCount, (int)e.FailureWindow.TotalMinutes);
-                _nativeHelper
-                    .ShowDesktopNotificationAsync(message, LocaleResolver.Common_Warning)
-                    .Detach(Log.Logger.ToExceptionHandler());
+                _nativeHelper.ShowDesktopNotificationAsync(message, LocaleResolver.Common_Warning).Detach(Log.Logger.ToExceptionHandler());
             });
         };
     }
@@ -202,37 +224,6 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
         MarkdownRenderer.ConfigurePipeline += x => x.UseMermaid().UseExtendedMathematics();
         MarkdownNode.Register<MermaidBlockNode>();
-    }
-
-    private async Task InitializeAppAsync()
-    {
-        try
-        {
-            foreach (var group in serviceProvider
-                         .GetRequiredService<IEnumerable<IAsyncInitializer>>()
-                         .GroupBy(i => i.Index)
-                         .OrderBy(g => g.Key))
-            {
-                await Task.WhenAll(group.Select(i => i.InitializeAsync()));
-            }
-
-            TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
-            RecordAppLaunchMetric();
-            ShowMainWindowOnNeeded();
-        }
-        catch (Exception ex)
-        {
-            Log.Logger.Fatal(ex, "Failed to initialize application");
-            NativeMessageBox.Show(
-                "Initialization Error",
-                $"An error occurred during application initialization:\n{ex.Message}\n\nPlease check the logs for more details.",
-                NativeMessageBoxButtons.Ok,
-                NativeMessageBoxIcon.Error);
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                desktop.Shutdown(1);
-            }
-        }
     }
 
     private static void RecordAppLaunchMetric()
@@ -265,27 +256,62 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
         switch (ApplicationLifetime)
         {
-            case IClassicDesktopStyleApplicationLifetime:
+            case IClassicDesktopStyleApplicationLifetime desktop:
             {
+                desktop.Exit += (_, _) => _initializationCancellation.Cancel();
+
                 if (!Design.IsDesignMode)
                 {
                     // SetupWithLifetime invokes this callback before ClassicDesktopLifetime starts
                     // its main loop. Queue startup so all continuations run under Avalonia's UI
                     // synchronization context without requiring a nested dispatcher frame.
                     Dispatcher.UIThread.Post(
-                        StartApplicationInitialization,
+                        () =>
+                        {
+                            _initializationTask = InitializeAppAsync(_initializationCancellation.Token);
+                            _initializationTask.Detach(NativeMessageBox.ExceptionHandler);
+                        },
                         DispatcherPriority.Normal);
                 }
 
                 break;
             }
         }
-    }
 
-    private void StartApplicationInitialization()
-    {
-        _initializationTask = InitializeAppAsync();
-        _initializationTask.Detach(NativeMessageBox.ExceptionHandler);
+        async Task InitializeAppAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                foreach (var group in serviceProvider
+                             .GetRequiredService<IEnumerable<IAsyncInitializer>>()
+                             .GroupBy(i => i.Index)
+                             .OrderBy(g => g.Key))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await Task.WhenAll(group.Select(i => i.InitializeAsync(cancellationToken)));
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                RecordAppLaunchMetric();
+                TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
+                ShowMainWindowOnNeeded();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                Log.Logger.Information("Application initialization was canceled.");
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Fatal(ex, "Failed to initialize application");
+                NativeMessageBox.Show(
+                    "Initialization Error",
+                    $"An error occurred during application initialization:\n{ex.Message}\n\nPlease check the logs for more details.",
+                    NativeMessageBoxButtons.Ok,
+                    NativeMessageBoxIcon.Error);
+
+                Shutdown(1);
+            }
+        }
     }
 
     /// <summary>

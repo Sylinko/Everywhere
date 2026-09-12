@@ -7,11 +7,12 @@ using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
+using Everywhere.Mac.Automation;
 using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
-using Everywhere.Mac.Automation;
 using Everywhere.Mac.Interop;
 using Everywhere.Mac.ProcessIsolation.Input;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Watchdog;
@@ -37,20 +38,75 @@ public static class Program
         }
 
         var role = ProcessRoleCommandLine.Parse(args);
-        if (role is not ProcessRole.Main)
+        switch (role)
         {
-            return await (role is ProcessRole.Input ?
-                ProcessRoleHostRunner.RunAsync(role, args, static () => new MacInputHostSession()) :
-                ProcessRoleHostRunner.RunAsync(role, args)).ConfigureAwait(false);
+            case ProcessRole.Main:
+            {
+                await using var entrance = Entrance.Initialize(args);
+                if (!entrance.IsPrimary)
+                {
+                    return await entrance.ForwardAsync().ConfigureAwait(false);
+                }
+
+                return await RunMainAsync(args).ConfigureAwait(false);
+            }
+            case ProcessRole.Input:
+            {
+                return await ProcessRoleHostRunner
+                    .RunAsync(role, args, static () => new MacInputHostSession())
+                    .ConfigureAwait(false);
+            }
+            case ProcessRole.Automation:
+            {
+                return await RunAutomationHostAsync(args).ConfigureAwait(false);
+            }
+            default:
+            {
+                throw new ArgumentOutOfRangeException(nameof(role), role, null);
+            }
+        }
+    }
+
+    private static Task<int> RunAutomationHostAsync(string[] args)
+    {
+        if (!NSThread.IsMain)
+        {
+            throw new InvalidOperationException("The macOS Automation Host must initialize AppKit on the process main thread.");
         }
 
-        await using var entrance = Entrance.Initialize(args);
-        if (!entrance.IsPrimary)
+        NSApplication.Init();
+        var application = NSApplication.SharedApplication;
+        application.ActivationPolicy = NSApplicationActivationPolicy.Prohibited;
+        CGDisplayTopology.Initialize();
+
+        // ProcessRoleHostRunner creates the platform session synchronously before
+        // its first connection wait, so AppKit and AX bootstrap remain on the
+        // process main thread. RPC work continues independently while this thread
+        // owns the native application loop.
+        var hostTask = ProcessRoleHostRunner.RunAsync(
+            ProcessRole.Automation,
+            args,
+            static () => new AutomationHostSession(new MacVisualElementBackend()));
+        if (hostTask.IsCompleted)
         {
-            return await entrance.ForwardAsync().ConfigureAwait(false);
+            return hostTask;
         }
 
-        return await RunMainAsync(args).ConfigureAwait(false);
+        StopApplicationWhenHostExitsAsync(hostTask, application).Detach(NativeMessageBox.ExceptionHandler);
+        application.Run();
+        return hostTask;
+    }
+
+    private static async Task StopApplicationWhenHostExitsAsync(Task hostTask, NSApplication application)
+    {
+        try
+        {
+            await hostTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            application.BeginInvokeOnMainThread(() => application.Stop(application));
+        }
     }
 
     /// <summary>
@@ -72,7 +128,7 @@ public static class Program
 
         await using var serviceProvider = ServiceLocator.Build(x => x
 
-            #region Basic
+                #region Basic
 
                 .AddApplicationLogging()
                 .AddProcessIsolation()
@@ -94,25 +150,20 @@ public static class Program
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()
+                .AddStrategyEngine()
 
-            #endregion
+                #endregion
 
-            #region Chat Plugins
+                #region Chat Plugins
 
-            .AddTransient<BuiltInChatPlugin, SystemPlugin>()
+                .AddTransient<BuiltInChatPlugin, SystemPlugin>()
 
-            #endregion
+                #endregion
 
-            #region Strategy Engine
+                #region Initialize
 
-            .AddStrategyEngine()
-
-            #endregion
-
-            #region Initialize
-
-            .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-            .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
             #endregion
 
@@ -121,7 +172,7 @@ public static class Program
         var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
         if (Application.Current is App app)
         {
-            await app.InitializationTask.ConfigureAwait(false);
+            await app.WaitForShutdownAsync().ConfigureAwait(false);
         }
 
         return exitCode;

@@ -27,5 +27,9 @@ public interface IAsyncInitializer
     /// </summary>
     AsyncInitializerIndex Index { get; }
 
-    Task InitializeAsync();
+    /// <summary>
+    /// Initializes the service as part of application startup.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the current startup sequence. Long-running service lifetimes must use service-owned cancellation.</param>
+    Task InitializeAsync(CancellationToken cancellationToken);
 }

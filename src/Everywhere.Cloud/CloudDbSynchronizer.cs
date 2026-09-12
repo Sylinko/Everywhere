@@ -41,8 +41,10 @@ public sealed partial class CloudChatDbSynchronizer(
     private static readonly TimeSpan[] ErrorBackoffSchedule =
         [TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(10)];
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // If the cloud sync base URL is not configured, skip synchronization.
         if (CloudConstants.CloudSyncBaseUrl.IsNullOrEmpty()) return Task.CompletedTask;
 

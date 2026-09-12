@@ -340,8 +340,10 @@ public sealed partial class OAuthCloudClient :
     /// Initializes the client by attempting a silent login using stored tokens.
     /// This allows the app to restore the user's session without requiring them to log in again.
     /// </summary>
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Fire and forget the initialization to avoid blocking app startup.
         lock (_initializeTaskGate)
         {

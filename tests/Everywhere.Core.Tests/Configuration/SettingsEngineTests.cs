@@ -39,7 +39,7 @@ public sealed class SettingsEngineTests
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var engine = new SettingsEngine(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync();
+        await engine.InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var titleGeneration = Require(Require(root["SystemAssistant"])["TitleGeneration"]).AsObject();
@@ -114,7 +114,7 @@ public sealed class SettingsEngineTests
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
         var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
-        await engine.InitializeAsync();
+        await engine.InitializeAsync(default);
 
         Assert.That(engine.Settings, Is.SameAs(settings));
         Assert.That(settings.Version, Is.EqualTo("99.0.0"));
@@ -141,7 +141,7 @@ public sealed class SettingsEngineTests
         var settings = new Settings(serviceProvider);
         var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync();
+        await engine.InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var chatWindow = Require(Require(root["Shortcut"])["ChatWindow"]).AsObject();

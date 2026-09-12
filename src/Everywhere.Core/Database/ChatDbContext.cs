@@ -110,22 +110,24 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         logger.LogInformation("Initializing chat database...");
 
-        await using var dbContext = await dbFactory.CreateDbContextAsync();
-        await dbContext.Database.MigrateAsync();
+        await using var dbContext = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await dbContext.Database.MigrateAsync(cancellationToken);
 
-        await EnsureSyncMetadataAsync(dbContext);
-        await EnsureRootNodeIdsMigratedAsync(dbContext);
+        await EnsureSyncMetadataAsync(dbContext, cancellationToken);
+        await EnsureRootNodeIdsMigratedAsync(dbContext, cancellationToken);
 
         logger.LogInformation("Chat database initialized.");
     }
 
-    private async Task EnsureSyncMetadataAsync(ChatDbContext dbContext)
+    private async Task EnsureSyncMetadataAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
     {
-        var meta = await dbContext.Set<CloudSyncMetadataEntity>().FirstOrDefaultAsync(m => m.Id == CloudSyncMetadataEntity.SingletonId);
+        var meta = await dbContext.Set<CloudSyncMetadataEntity>().FirstOrDefaultAsync(m => m.Id == CloudSyncMetadataEntity.SingletonId, cancellationToken);
         if (meta is not null) return;
 
         logger.LogInformation("Initializing sync metadata...");
@@ -138,13 +140,13 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
             LastPulledVersion = -1
         };
         dbContext.SyncMetadata.Add(meta);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task EnsureRootNodeIdsMigratedAsync(ChatDbContext dbContext)
+    private async Task EnsureRootNodeIdsMigratedAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
     {
         // 1. Check if there are any legacy root nodes (Id == Guid.Empty)
-        var hasLegacyRootNodes = await dbContext.Nodes.AnyAsync(x => x.Id == Guid.Empty);
+        var hasLegacyRootNodes = await dbContext.Nodes.AnyAsync(x => x.Id == Guid.Empty, cancellationToken);
         if (!hasLegacyRootNodes) return;
 
         logger.LogInformation("Migrating legacy Root Nodes (Guid.Empty) to Version-0 deterministic IDs...");
@@ -155,12 +157,12 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
             .AsNoTracking()
             .Where(x => x.Id == Guid.Empty)
             .Select(x => x.ChatContextId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         // 3. Start migration
         // It's recommended to use ExecuteUpdateAsync (EF Core 7+), as it generates SQL directly,
         // avoiding the "Load -> Modify PK -> Save" operation that would cause errors
-        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             foreach (var chatId in targetIds)
@@ -171,17 +173,17 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
                 // A. First update all child nodes (where ParentId points to old Root, change to new Root)
                 await dbContext.Nodes
                     .Where(n => n.ChatContextId == chatId && n.ParentId == oldRootId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.ParentId, newRootId));
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.ParentId, newRootId), cancellationToken);
 
                 // B. Update the Root node's primary key itself
                 // Note: Directly modifying PKs is not allowed in EF Core, but ExecuteUpdate bypasses this via SQL, so it's feasible.
                 // The WHERE clause must include all primary key columns (ChatContextId, Id)
                 await dbContext.Nodes
                     .Where(n => n.ChatContextId == chatId && n.Id == oldRootId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.Id, newRootId));
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.Id, newRootId), cancellationToken);
             }
 
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(cancellationToken);
             logger.LogInformation("Successfully migrated {Count} root nodes.", targetIds.Count);
         }
         catch (Exception ex)
@@ -374,7 +376,7 @@ public sealed class CloudSyncMetadataEntity
     /// The unique identifier for the metadata row. Typically set to a constant "1" to ensure a singleton.
     /// </summary>
     [System.ComponentModel.DataAnnotations.Key]
-    public required int Id { get; set; }
+    public required int Id { get; init; }
 
     /// <summary>
     /// The current global version of the local database.

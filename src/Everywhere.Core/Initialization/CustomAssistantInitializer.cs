@@ -7,8 +7,9 @@ public sealed class CustomAssistantInitializer(Settings settings) : IAsyncInitia
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         foreach (var customAssistant in settings.Model.CustomAssistants)
         {
             customAssistant.Configurator.Initialize();

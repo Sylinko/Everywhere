@@ -34,8 +34,9 @@ public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
             TimeSpan.FromSeconds(0.5));
     }
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         ApplyProxySettings(false);
         _settingsObserver ??= new DeepObserver(HandleProxySettingsChanged).Observe(_proxySettings);
 

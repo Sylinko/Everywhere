@@ -52,8 +52,10 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
     /// Proactively schedules Watchdog startup on a worker thread. Returning a
     /// completed task is deliberate: Watchdog readiness must not delay Everywhere's UI.
     /// </summary>
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (IsInitialized.FlipIfFalse())
         {
             _sessionTask = Task.Run(() => StartSessionAsync(_lifetime.Token));

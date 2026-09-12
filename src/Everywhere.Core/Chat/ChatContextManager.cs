@@ -965,7 +965,11 @@ public sealed partial class ChatContextManager :
     /// <summary>
     /// Defers history I/O until the history viewport requests its first page.
     /// </summary>
-    public Task InitializeAsync() => Task.CompletedTask;
+    public Task InitializeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Releases the manager-owned DynamicData pipeline and cancels pending history searches.

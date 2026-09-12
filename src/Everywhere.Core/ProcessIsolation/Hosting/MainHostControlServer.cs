@@ -37,13 +37,15 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
     /// Starts accepting controller connections. Completion means the control pipe
     /// has been created and can accept requests before the first Host generation starts.
     /// </summary>
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         lock (_disposeGate)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             ObjectDisposedException.ThrowIf(_disposeTask is not null, this);
             _runTask ??= RunAsync();
-            return _started.Task;
+            return _started.Task.WaitAsync(cancellationToken);
         }
     }
 
