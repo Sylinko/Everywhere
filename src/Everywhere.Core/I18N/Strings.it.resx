@@ -738,10 +738,10 @@
         <value>Percorsi Approvati</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Le operazioni sul file system che corrispondono a questi percorsi assoluti glob non richiederanno nuovamente l'approvazione del percorso. Usa ** per indicare directory di qualsiasi profondità, ad esempio C:\** o D:\**\3rd.</value>
+        <value>Le operazioni sul file system i cui percorsi finali risolti corrispondono a questi modelli glob assoluti vengono approvate senza un'altra richiesta sul percorso. Le regole non vengono risolte tramite collegamenti simbolici o giunzioni. Usa / come separatore e ** per directory a qualsiasi profondità, ad esempio C:/** o D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Percorso glob assoluto, ad esempio C:\Source\Everywhere\**</value>
+        <value>Glob assoluto del percorso finale, ad esempio C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Operazione non valida.</value>
@@ -1316,6 +1316,27 @@ La mia intelligenza è fornita da un grande modello linguistico e ho bisogno del
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Consentire questa operazione su file?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Percorso richiesto: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Voce del collegamento conservata: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Destinazione del contenuto aggiornata: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Voce del collegamento rimossa: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Oggetto referenziato conservato; destinazione memorizzata nel collegamento: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Origine del contenuto letta senza modifiche: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Destinazione normale scritta: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Creare {0}?</value>

@@ -738,10 +738,10 @@
         <value>承認されたパス</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>これらの絶対パス glob に一致するファイルシステム操作は、再度パスの承認を要求する必要がありません。** を使用して任意の深さのディレクトリを示します。例：C:\** または D:\**\3rd。</value>
+        <value>最終的に解決されたパスがこれらの絶対 glob パターンに一致するファイルシステム操作は、再度パスの承認を求めずに許可されます。ルール自体はシンボリックリンクやジャンクションを通して解決されません。区切り文字には /、任意のディレクトリ階層には ** を使用します。例：C:/** または D:/**/3rd。</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>絶対 glob パス、例：C:\Source\Everywhere\**</value>
+        <value>最終パスの絶対 glob、例：C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>無効な操作です。</value>
@@ -1316,6 +1316,27 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>このファイル操作を実行してもよろしいですか？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>要求されたパス：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>保持されるリンクエントリ：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>更新されるコンテンツの対象：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>削除されるリンクエントリ：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>参照先は保持されます。リンクに保存された対象：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>変更せずに読み取るコンテンツ元：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>通常ファイルとして書き込む先：{0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>{0} を新規作成しますか？</value>

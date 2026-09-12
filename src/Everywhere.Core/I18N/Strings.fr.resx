@@ -738,10 +738,10 @@
         <value>Chemins Approuvés</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Les opérations sur le système de fichiers correspondant à ces chemins absolus glob n'ont pas besoin de demander à nouveau l'approbation du chemin. Utilisez ** pour indiquer des répertoires de profondeur arbitraire, par exemple C:\** ou D:\**\3rd.</value>
+        <value>Les opérations dont les chemins finaux résolus correspondent à ces motifs glob absolus sont approuvées sans nouvelle demande de chemin. Les règles ne sont pas résolues via les liens symboliques ou les jonctions. Utilisez / comme séparateur et ** pour une profondeur de répertoire quelconque, par exemple C:/** ou D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Chemin glob absolu, par exemple C:\Source\Everywhere\**</value>
+        <value>Motif glob absolu de chemin final, par exemple C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Opération invalide.</value>
@@ -1316,6 +1316,27 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Autoriser cette opération de fichier ?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Chemin demandé : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Entrée de lien conservée : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Cible du contenu mise à jour : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Entrée de lien supprimée : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Cible référencée conservée ; cible enregistrée du lien : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Source du contenu lue sans modification : {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Destination ordinaire écrite : {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Créer {0} ?</value>

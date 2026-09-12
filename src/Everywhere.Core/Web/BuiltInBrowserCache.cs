@@ -139,7 +139,7 @@ public sealed class BuiltInBrowserCache
                 try
                 {
                     var executablePath = browser.GetExecutablePath();
-                    if (!PathContainment.IsInsideDirectory(executablePath, CachePath))
+                    if (!PathUtilities.IsInsideDirectory(executablePath, CachePath))
                     {
                         _logger.LogWarning(
                             "Skipping obsolete built-in browser version {BuildId} because its path escapes the managed cache.",

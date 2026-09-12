@@ -738,10 +738,10 @@
         <value>Onaylı Yollar</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Bu mutlak yolların glob'u ile eşleşen dosya sistemi işlemleri, yol onayı istemeden gerçekleştirilebilir. ** ile herhangi bir derinlikteki dizinleri belirtmek için kullanın, örneğin C:\** veya D:\**\3rd.</value>
+        <value>Son çözümlenmiş yolları bu mutlak glob desenleriyle eşleşen dosya sistemi işlemleri, yeniden yol onayı istenmeden onaylanır. Kurallar sembolik bağlantılar veya bağlantı noktaları üzerinden çözümlenmez. Ayırıcı olarak /, herhangi bir dizin derinliği için ** kullanın; örneğin C:/** veya D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Mutlak glob yolu, örneğin C:\Source\Everywhere\**</value>
+        <value>Son yol için mutlak glob, örneğin C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Geçersiz işlem.</value>
@@ -1316,6 +1316,27 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Bu dosya işlemini gerçekleştirmeye izin veriyor musunuz?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>İstenen yol: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Korunacak bağlantı girdisi: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Güncellenecek içerik hedefi: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Kaldırılacak bağlantı girdisi: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Başvurulan nesne korunacak; bağlantıda saklanan hedef: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Değiştirilmeden okunacak içerik kaynağı: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Normal dosya olarak yazılacak hedef: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Yeni {0} oluşturulsun mu?</value>

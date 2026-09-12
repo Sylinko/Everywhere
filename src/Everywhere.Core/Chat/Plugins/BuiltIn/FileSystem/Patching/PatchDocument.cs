@@ -4,33 +4,37 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// Represents a fully parsed multi-file patch document.
 /// </summary>
 /// <param name="Operations">The file operations in their source order.</param>
-internal sealed record PatchDocument(IReadOnlyList<PatchFileOperation> Operations);
+public sealed record PatchDocument(IReadOnlyList<PatchFileOperation> Operations);
 
 /// <summary>
 /// Describes one file operation in the parsed patch.
 /// </summary>
 /// <param name="Path">The source or target path from the patch.</param>
-internal abstract record PatchFileOperation(string Path)
+/// <param name="HeaderLineNumber">The one-based patch line containing the operation header.</param>
+public abstract record PatchFileOperation(string Path, int HeaderLineNumber)
 {
     /// <summary>
     /// Describes an update to an existing file.
     /// </summary>
     /// <param name="Path">The source path from the patch.</param>
     /// <param name="Hunks">The content hunks to apply.</param>
-    internal sealed record Update(string Path, IReadOnlyList<PatchHunk> Hunks) : PatchFileOperation(Path);
+    /// <param name="HeaderLineNumber">The one-based patch line containing the operation header.</param>
+    public sealed record Update(string Path, IReadOnlyList<PatchHunk> Hunks, int HeaderLineNumber) : PatchFileOperation(Path, HeaderLineNumber);
 
     /// <summary>
     /// Describes creation of a new file.
     /// </summary>
     /// <param name="Path">The target path from the patch.</param>
     /// <param name="Hunks">The added-file content represented as one optional hunk.</param>
-    internal sealed record Add(string Path, IReadOnlyList<PatchHunk> Hunks) : PatchFileOperation(Path);
+    /// <param name="HeaderLineNumber">The one-based patch line containing the operation header.</param>
+    public sealed record Add(string Path, IReadOnlyList<PatchHunk> Hunks, int HeaderLineNumber) : PatchFileOperation(Path, HeaderLineNumber);
 
     /// <summary>
     /// Describes deletion of an existing file.
     /// </summary>
     /// <param name="Path">The source path from the patch.</param>
-    internal sealed record Delete(string Path) : PatchFileOperation(Path);
+    /// <param name="HeaderLineNumber">The one-based patch line containing the operation header.</param>
+    public sealed record Delete(string Path, int HeaderLineNumber) : PatchFileOperation(Path, HeaderLineNumber);
 
     /// <summary>
     /// Describes moving an existing file, optionally while changing its content.
@@ -38,11 +42,13 @@ internal abstract record PatchFileOperation(string Path)
     /// <param name="Path">The source path from the patch.</param>
     /// <param name="DestinationPath">The destination path from the patch.</param>
     /// <param name="Hunks">The content hunks to apply before moving the file.</param>
-    internal sealed record Move(
+    /// <param name="HeaderLineNumber">The one-based patch line containing the operation header.</param>
+    public sealed record Move(
         string Path,
         string DestinationPath,
-        IReadOnlyList<PatchHunk> Hunks
-    ) : PatchFileOperation(Path);
+        IReadOnlyList<PatchHunk> Hunks,
+        int HeaderLineNumber
+    ) : PatchFileOperation(Path, HeaderLineNumber);
 }
 
 /// <summary>
@@ -52,7 +58,7 @@ internal abstract record PatchFileOperation(string Path)
 /// <param name="Lines">The context, addition, and removal lines.</param>
 /// <param name="EndOfFile">Whether the hunk explicitly anchors at end of file.</param>
 /// <param name="HeaderLineNumber">The one-based patch line containing the hunk header.</param>
-internal sealed record PatchHunk(
+public sealed record PatchHunk(
     PatchHunkAnchor Anchor,
     IReadOnlyList<PatchLine> Lines,
     bool EndOfFile,
@@ -62,7 +68,7 @@ internal sealed record PatchHunk(
 /// <summary>
 /// Selects the source location for a patch hunk.
 /// </summary>
-internal abstract record PatchHunkAnchor
+public abstract record PatchHunkAnchor
 {
     private PatchHunkAnchor()
     {
@@ -71,7 +77,7 @@ internal abstract record PatchHunkAnchor
     /// <summary>
     /// Represents a bare <c>@@</c> header with no explicit anchor.
     /// </summary>
-    internal sealed record Unanchored : PatchHunkAnchor
+    public sealed record Unanchored : PatchHunkAnchor
     {
         public static Unanchored Instance { get; } = new();
     }
@@ -80,13 +86,13 @@ internal abstract record PatchHunkAnchor
     /// Represents a literal source line from an <c>@@ &lt;context&gt;</c> header.
     /// </summary>
     /// <param name="Text">The literal anchor text without the header marker.</param>
-    internal sealed record Context(string Text) : PatchHunkAnchor;
+    public sealed record Context(string Text) : PatchHunkAnchor;
 }
 
 /// <summary>
 /// Identifies how a line in a hunk contributes to the target content.
 /// </summary>
-internal enum PatchLineKind
+public enum PatchLineKind
 {
     Context,
     Add,
@@ -98,4 +104,4 @@ internal enum PatchLineKind
 /// </summary>
 /// <param name="Kind">The line operation.</param>
 /// <param name="Text">The line text without its patch prefix.</param>
-internal sealed record PatchLine(PatchLineKind Kind, string Text);
+public sealed record PatchLine(PatchLineKind Kind, string Text);

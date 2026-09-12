@@ -3,7 +3,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <summary>
 /// Parses the strict Codex-style patch envelope without touching the filesystem.
 /// </summary>
-internal static class PatchParser
+public static class PatchParser
 {
     private const string BeginPatch = "*** Begin Patch";
     private const string EndPatch = "*** End Patch";
@@ -103,8 +103,8 @@ internal static class PatchParser
         }
 
         return destinationPath is { } destination ?
-            new PatchFileOperation.Move(path, destination, hunks) :
-            new PatchFileOperation.Update(path, hunks);
+            new PatchFileOperation.Move(path, destination, hunks, headerLineNumber) :
+            new PatchFileOperation.Update(path, hunks, headerLineNumber);
     }
 
     private static PatchFileOperation ParseAdd(IReadOnlyList<string> lines, ref int index, int headerLineNumber)
@@ -133,7 +133,7 @@ internal static class PatchParser
         var hunks = content.Count == 0 ?
             Array.Empty<PatchHunk>() :
             new[] { new PatchHunk(PatchHunkAnchor.Unanchored.Instance, content, false, headerLineNumber) };
-        return new PatchFileOperation.Add(path, hunks);
+        return new PatchFileOperation.Add(path, hunks, headerLineNumber);
     }
 
     private static PatchFileOperation ParseDelete(List<string> lines, ref int index, int headerLineNumber)
@@ -148,7 +148,7 @@ internal static class PatchParser
             throw new PatchParseException(index + 1, "A delete operation cannot contain patch content.");
         }
 
-        return new PatchFileOperation.Delete(path);
+        return new PatchFileOperation.Delete(path, headerLineNumber);
     }
 
     private static List<PatchHunk> ParseHunks(IReadOnlyList<string> lines, ref int index, string path)
@@ -420,7 +420,7 @@ internal static class PatchParser
 /// <summary>
 /// Reports a structural patch parsing failure and its one-based input line.
 /// </summary>
-internal sealed class PatchParseException(int lineNumber, string message) : FormatException($"Invalid patch at line {lineNumber}: {message}")
+public sealed class PatchParseException(int lineNumber, string message) : FormatException($"Invalid patch at line {lineNumber}: {message}")
 {
     public int LineNumber { get; } = lineNumber;
 }

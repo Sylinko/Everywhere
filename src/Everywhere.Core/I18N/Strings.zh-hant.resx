@@ -738,10 +738,10 @@
         <value>已批准的路徑</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>匹配這些絕對路徑 glob 的檔案系統操作無需再次請求路徑批准。使用 ** 表示任意深度的目錄，例如 C:\** 或 D:\**\3rd。</value>
+        <value>最終解析路徑符合這些絕對 glob 的檔案系統操作無需再次請求路徑批准。規則本身不會經過符號連結或目錄聯結解析。請使用 / 作為分隔符號，並使用 ** 表示任意深度的目錄，例如 C:/** 或 D:/**/3rd。</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>絕對 glob 路徑，例如 C:\Source\Everywhere\**</value>
+        <value>最終路徑的絕對 glob，例如 C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>無效的操作。</value>
@@ -1316,6 +1316,27 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>是否允許執行此文件操作？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>請求路徑：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>保留連結目錄項目：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>更新內容目標：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>移除連結目錄項目：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>保留連結指向的物件；連結中儲存的目標：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>只讀取而不修改的內容來源：{0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>寫入一般檔案目標：{0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>要新建 {0} 嗎？</value>

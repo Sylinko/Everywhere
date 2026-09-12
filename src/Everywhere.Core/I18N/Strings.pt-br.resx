@@ -738,10 +738,10 @@
         <value>Caminhos Aprovados</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Operações no sistema de arquivos que correspondem a esses caminhos absolutos glob não precisam de nova aprovação. Use ** para indicar diretórios de qualquer profundidade, como C:\** ou D:\**\3rd.</value>
+        <value>As operações do sistema de arquivos cujos caminhos finais resolvidos correspondam a estes padrões glob absolutos são aprovadas sem outra solicitação de caminho. As regras não são resolvidas por meio de links simbólicos ou junções. Use / como separador e ** para qualquer profundidade de diretório, por exemplo C:/** ou D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Caminho glob absoluto, como C:\Source\Everywhere\**</value>
+        <value>Glob absoluto do caminho final, por exemplo C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Operação inválida.</value>
@@ -1317,6 +1317,27 @@ Minha inteligência é alimentada por um grande modelo de linguagem, e preciso d
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Permitir esta operação de arquivo?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Caminho solicitado: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Entrada de link preservada: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Destino do conteúdo atualizado: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Entrada de link removida: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Referente preservado; destino armazenado no link: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Origem do conteúdo lida sem modificação: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Destino regular gravado: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Criar {0}?</value>

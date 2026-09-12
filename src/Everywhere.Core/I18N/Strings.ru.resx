@@ -738,10 +738,10 @@
         <value>Одобренные пути</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Файловые операции с этими абсолютными путями glob не требуют повторного запроса на одобрение пути. Используйте ** для обозначения директорий любой глубины, например C:\** или D:\**\3rd.</value>
+        <value>Операции с файловой системой, чьи окончательно разрешённые пути соответствуют этим абсолютным glob-шаблонам, выполняются без повторного запроса пути. Правила не разрешаются через символические ссылки или точки соединения. Используйте / как разделитель, а ** — для любой глубины каталогов, например C:/** или D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Абсолютный glob путь, например C:\Source\Everywhere\**</value>
+        <value>Абсолютный glob-шаблон окончательного пути, например C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Недопустимая операция.</value>
@@ -1316,6 +1316,27 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Разрешить выполнение этой операции с файлом?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Запрошенный путь: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Сохраняемая запись ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Обновляемая цель содержимого: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Удаляемая запись ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Объект ссылки сохраняется; записанная цель ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Источник содержимого читается без изменений: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Записываемый обычный файл назначения: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Создать {0}?</value>

@@ -3,7 +3,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <summary>
 /// Coordinates review of every file in one patch before any commit is started.
 /// </summary>
-internal sealed class PatchReviewSession : IDisposable
+public sealed class PatchReviewSession : IDisposable
 {
     /// <summary>
     /// Gets the file review items in patch order.
@@ -60,7 +60,7 @@ internal sealed class PatchReviewSession : IDisposable
 /// <summary>
 /// Represents one planned file and the DisplayBlock used by its consent request.
 /// </summary>
-internal sealed class PatchReviewItem : IDisposable
+public sealed class PatchReviewItem : IDisposable
 {
     /// <summary>
     /// Gets the planned file operation.
@@ -179,4 +179,4 @@ internal sealed class PatchReviewItem : IDisposable
 /// <summary>
 /// Reports a review flow that cannot safely produce a complete decision set.
 /// </summary>
-internal sealed class PatchReviewException(string message) : InvalidOperationException(message);
+public sealed class PatchReviewException(string message) : InvalidOperationException(message);

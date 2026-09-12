@@ -45,13 +45,14 @@ public class FileHandlerTests
     [Test]
     public async Task Factory_NewFileIsText_EvenWithPdfExtension()
     {
-        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf");
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + "%23.pdf");
 
         var context = await CreateLocalFactory().CreateAsync(path, Path.GetTempPath());
 
         Assert.Multiple(() =>
         {
             Assert.That(context.Handler, Is.TypeOf<TextFileHandler>());
+            Assert.That(context.Path, Is.EqualTo(path));
             Assert.That(File.Exists(path), Is.False);
         });
     }

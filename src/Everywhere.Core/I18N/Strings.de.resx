@@ -738,10 +738,10 @@
         <value>Genehmigte Pfade</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Dateisystemoperationen, die mit diesen absoluten Pfad-Globs übereinstimmen, benötigen keine erneute Genehmigung des Pfades. Verwenden Sie ** für Verzeichnistiefen beliebiger Art, z. B. C:\** oder D:\**\3rd.</value>
+        <value>Dateisystemoperationen, deren endgültig aufgelöste Pfade mit diesen absoluten Glob-Mustern übereinstimmen, werden ohne erneute Pfadabfrage genehmigt. Regeln werden nicht über symbolische Links oder Junctions aufgelöst. Verwenden Sie / als Trennzeichen und ** für eine beliebige Verzeichnistiefe, z. B. C:/** oder D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Absolute Glob-Pfade, z. B. C:\Source\Everywhere\**</value>
+        <value>Absolutes Glob-Muster für endgültige Pfade, z. B. C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Ungültiger Vorgang.</value>
@@ -1316,6 +1316,27 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Darf diese Dateioperation ausgeführt werden?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Angefordert: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Linkeintrag bleibt erhalten: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Inhaltsziel wird aktualisiert: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Linkeintrag wird entfernt: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Verweisziel bleibt erhalten; gespeichertes Linkziel: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Inhaltsquelle wird ohne Änderung gelesen: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Reguläres Ziel wird geschrieben: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Neues {0} erstellen?</value>

@@ -738,10 +738,10 @@
         <value>승인된 경로</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>이 절대 경로 glob와 일치하는 파일 시스템 작업은 경로 승인을 다시 요청할 필요가 없습니다. **는 임의 깊이의 디렉토리를 나타냅니다. 예: C:\** 또는 D:\**\3rd.</value>
+        <value>최종 확인 경로가 이 절대 glob 패턴과 일치하는 파일 시스템 작업은 경로 승인을 다시 요청하지 않고 허용됩니다. 규칙 자체는 심볼릭 링크나 정션을 통해 확인되지 않습니다. 구분자로 /를 사용하고 임의의 디렉터리 깊이에는 **를 사용하세요. 예: C:/** 또는 D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>절대 glob 경로, 예: C:\Source\Everywhere\**</value>
+        <value>최종 경로의 절대 glob, 예: C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>잘못된 작업입니다.</value>
@@ -1316,6 +1316,27 @@
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>이 파일 작업을 허용하시겠습니까?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>요청한 경로: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>유지되는 링크 항목: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>업데이트되는 콘텐츠 대상: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>제거되는 링크 항목: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>참조 대상은 유지됨; 링크에 저장된 대상: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>수정 없이 읽는 콘텐츠 원본: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>일반 파일로 쓰는 대상: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>{0}을(를) 새로 만들겠습니까?</value>
