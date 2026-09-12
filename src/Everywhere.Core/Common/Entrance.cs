@@ -47,13 +47,13 @@ public static class Entrance
     }
 
     /// <summary>
-    /// Releases the single-instance mutex before an intentional process replacement.
+    /// Releases the single-instance claim before an intentional process replacement.
     /// The activation pipe remains owned by the startup session until normal cleanup.
     /// </summary>
-    public static void ReleaseMutex() => _startup?.ReleaseMutex();
+    public static void ReleaseSingleInstanceClaim() => _startup?.ReleaseSingleInstanceClaim();
 
     /// <summary>
-    /// Initializes the application mutex to ensure a single instance of the application.
+    /// Atomically claims the application-wide named object used to identify the primary instance.
     /// </summary>
     private static EntranceStartup InitializeSingleInstance(string[] args)
     {
@@ -61,15 +61,17 @@ public static class Entrance
         if (Design.IsDesignMode) return EntranceStartup.CreatePrimary();
 #endif
 
-        var appMutex = new Mutex(true, BundleName, out var createdNew);
+        // The mutex is used only as a cross-process named object. Never acquiring it
+        // avoids tying the application lifetime to the thread that created the handle.
+        var instanceClaim = new Mutex(false, BundleName, out var createdNew);
         if (createdNew)
         {
             var lifetime = new CancellationTokenSource();
             var pipeServerTask = StartHostPipeServer(lifetime.Token);
-            return EntranceStartup.CreatePrimary(appMutex, lifetime, pipeServerTask);
+            return EntranceStartup.CreatePrimary(instanceClaim, lifetime, pipeServerTask);
         }
 
-        appMutex.Dispose();
+        instanceClaim.Dispose();
 
         if (args.Contains("--autorun"))
         {
@@ -301,30 +303,29 @@ public static class Entrance
 
 /// <summary>
 /// Owns the single-instance resources created during process bootstrap. A primary
-/// instance owns the mutex and activation pipe; a secondary instance owns only the
+/// instance owns the named-object claim and activation pipe; a secondary instance owns only the
 /// asynchronous operation that forwards its activation request.
 /// </summary>
 public sealed class EntranceStartup : IAsyncDisposable
 {
     public bool IsPrimary { get; }
 
-    private readonly Mutex? _appMutex;
+    private readonly Mutex? _instanceClaim;
     private readonly CancellationTokenSource? _lifetime;
     private readonly Task? _pipeServerTask;
     private readonly Task<int>? _forwardTask;
 
     private int _isDisposed;
-    private int _isMutexReleased;
 
     private EntranceStartup(
         bool isPrimary,
-        Mutex? appMutex = null,
+        Mutex? instanceClaim = null,
         CancellationTokenSource? lifetime = null,
         Task? pipeServerTask = null,
         Task<int>? forwardTask = null)
     {
         IsPrimary = isPrimary;
-        _appMutex = appMutex;
+        _instanceClaim = instanceClaim;
         _lifetime = lifetime;
         _pipeServerTask = pipeServerTask;
         _forwardTask = forwardTask;
@@ -335,8 +336,8 @@ public sealed class EntranceStartup : IAsyncDisposable
 
     internal static EntranceStartup CreatePrimary() => new(true);
 
-    internal static EntranceStartup CreatePrimary(Mutex appMutex, CancellationTokenSource lifetime, Task pipeServerTask) =>
-        new(true, appMutex, lifetime, pipeServerTask);
+    internal static EntranceStartup CreatePrimary(Mutex instanceClaim, CancellationTokenSource lifetime, Task pipeServerTask) =>
+        new(true, instanceClaim, lifetime, pipeServerTask);
 
     internal static EntranceStartup CreateExit() => new(false, forwardTask: Task.FromResult(0));
 
@@ -354,7 +355,7 @@ public sealed class EntranceStartup : IAsyncDisposable
         }
 
         _lifetime?.Cancel();
-        ReleaseMutex();
+        ReleaseSingleInstanceClaim();
     }
 
     public async ValueTask DisposeAsync()
@@ -369,9 +370,9 @@ public sealed class EntranceStartup : IAsyncDisposable
             await _lifetime.CancelAsync().ConfigureAwait(false);
             try
             {
-                if (_pipeServerTask is { } pipeServerTask)
+                if (_pipeServerTask is not null)
                 {
-                    await pipeServerTask.ConfigureAwait(false);
+                    await _pipeServerTask.ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
@@ -383,23 +384,11 @@ public sealed class EntranceStartup : IAsyncDisposable
             }
         }
 
-        ReleaseMutex();
+        ReleaseSingleInstanceClaim();
     }
 
-    internal void ReleaseMutex()
+    internal void ReleaseSingleInstanceClaim()
     {
-        if (Interlocked.Exchange(ref _isMutexReleased, 1) != 0 || _appMutex is null)
-        {
-            return;
-        }
-
-        try
-        {
-            _appMutex.ReleaseMutex();
-        }
-        finally
-        {
-            _appMutex.Dispose();
-        }
+        _instanceClaim?.Dispose();
     }
 }

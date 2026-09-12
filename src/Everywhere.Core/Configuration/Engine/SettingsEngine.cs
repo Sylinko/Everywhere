@@ -74,8 +74,9 @@ public sealed class SettingsEngine : IAsyncInitializer, IDisposable
         _observer = new DeepObserver(HandleSettingsChanges);
     }
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         RunMigrations();
 
         _storage = JsonSettingsStorage.Load(_filePath, _loggerFactory.CreateLogger<JsonSettingsStorage>());

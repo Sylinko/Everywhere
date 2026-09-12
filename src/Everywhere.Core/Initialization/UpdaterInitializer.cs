@@ -32,8 +32,9 @@ public sealed class UpdaterInitializer(
 
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         settings.Common.PropertyChanged += HandleCommonPropertyChanged;
         softwareUpdater.PropertyChanged += HandleSoftwareUpdaterPropertyChanged;
         ObserveLatestUpdate(softwareUpdater.LatestUpdate);

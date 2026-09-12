@@ -125,7 +125,7 @@ public class NativeHelper : INativeHelper
             Verb = "runas" // This will prompt for elevation
         };
 
-        Entrance.ReleaseMutex();
+        Entrance.ReleaseSingleInstanceClaim();
         Process.Start(startInfo);
         Environment.Exit(0); // Exit the current process
     }

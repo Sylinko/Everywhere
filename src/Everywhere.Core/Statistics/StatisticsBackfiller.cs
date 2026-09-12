@@ -25,12 +25,14 @@ public sealed class StatisticsDbInitializer(
     /// <summary>
     /// Initializes the statistics database schema.
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         logger.LogInformation("Initializing statistics database...");
 
-        await using var db = await dbFactory.CreateDbContextAsync();
-        await db.Database.MigrateAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await db.Database.MigrateAsync(cancellationToken);
 
         logger.LogInformation("Statistics database initialized.");
     }
@@ -59,9 +61,10 @@ public sealed class StatisticsBackfiller(
     /// <summary>
     /// Starts backfill in the background after database initialization.
     /// </summary>
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
-        Task.Run(BackfillAsync).Detach(logger.ToExceptionHandler());
+        cancellationToken.ThrowIfCancellationRequested();
+        Task.Run(BackfillAsync, cancellationToken).Detach(logger.ToExceptionHandler());
         return Task.CompletedTask;
     }
 

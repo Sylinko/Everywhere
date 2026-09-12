@@ -111,7 +111,7 @@ public static class Program
         var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
         if (Application.Current is App app)
         {
-            await app.InitializationTask.ConfigureAwait(false);
+            await app.WaitForShutdownAsync().ConfigureAwait(false);
         }
 
         return exitCode;

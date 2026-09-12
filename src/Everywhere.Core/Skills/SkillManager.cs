@@ -54,7 +54,7 @@ public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPrompt
     }
 
     /// <inheritdoc />
-    public Task InitializeAsync() => RefreshAsync();
+    public Task InitializeAsync(CancellationToken cancellationToken) => RefreshAsync(cancellationToken);
 
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken cancellationToken = default)

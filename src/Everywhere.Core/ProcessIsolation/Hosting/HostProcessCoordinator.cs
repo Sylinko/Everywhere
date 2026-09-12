@@ -83,7 +83,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     public static HostProcessCoordinator Create() => new();
 
     /// <summary>Starts the first Host generation through the application initialization pipeline.</summary>
-    public Task InitializeAsync() => StartHostsAsync();
+    public Task InitializeAsync(CancellationToken cancellationToken) => StartHostsAsync(cancellationToken);
 
     /// <summary>
     /// Returns the currently authenticated connection for a Host role, waiting

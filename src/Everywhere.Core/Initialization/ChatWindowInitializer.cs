@@ -34,8 +34,9 @@ public sealed class ChatWindowInitializer(
 
     private IDisposable? _textSelectionSubscription;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var chatWindow = serviceProvider.GetRequiredService<ChatWindow>();
         var chatWindowViewModel = chatWindow.ViewModel;
         var chatWindowHandle = chatWindow.TryGetPlatformHandle()?.Handle ?? 0;

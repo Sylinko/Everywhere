@@ -41,8 +41,9 @@ public sealed class PersistentKeyValueStorage : IKeyValueStorage, IAsyncInitiali
             TimeSpan.FromSeconds(1));
     }
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         Load();
         _isLoaded = true;
         return Task.CompletedTask;

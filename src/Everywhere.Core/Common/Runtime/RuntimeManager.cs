@@ -26,8 +26,9 @@ public sealed class RuntimeManager(
 
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         Task.Run(() => RefreshAsync()).Detach(logger.ToExceptionHandler());
         return Task.CompletedTask;
     }
