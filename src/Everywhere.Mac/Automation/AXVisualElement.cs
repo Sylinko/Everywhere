@@ -268,7 +268,7 @@ public class AXVisualElement : VisualElement
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+    protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
     {
         ValidateRelation(relation);
         var role = ReadNativeRole(NativeElement, "read the AX role before creating a relation Enumerator");
@@ -296,7 +296,7 @@ public class AXVisualElement : VisualElement
         var topology = CGDisplayTopology.Current;
         return relation switch
         {
-            VisualElementRelation.Parent => new WindowScreenEnumerator(
+            VisualElementRelation.Parent => new CGDisplayEnumerator(
                 Context,
                 Backend,
                 topology,
@@ -341,6 +341,13 @@ public class AXVisualElement : VisualElement
     /// <inheritdoc />
     protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) =>
         NativeElement.CaptureAsync(cancellationToken);
+
+    /// <inheritdoc />
+    protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
+    {
+        using var nativeElement = NativeElement.Retain();
+        return Backend.GetOrCreateAXElement(destinationRetention, nativeElement);
+    }
 
     /// <inheritdoc />
     protected override bool TryConvertPlatformException(Exception exception, [NotNullWhen(true)] out Exception? convertedException)
@@ -590,7 +597,7 @@ public class AXVisualElement : VisualElement
             AXRoleAttribute.AXUnknown;
     }
 
-    private sealed class NativeAXVisualElementEnumerator : IVisualElementEnumerator
+    private sealed class NativeAXVisualElementEnumerator : IVisualElementCursor
     {
         public VisualElementQueryResult Current
         {
@@ -636,16 +643,6 @@ public class AXVisualElement : VisualElement
             _queryRequest = queryRequest;
             _retention = origin.Context.CreateRetention();
             _retention.Retain(origin);
-        }
-
-        public bool HasMore
-        {
-            get
-            {
-                ThrowIfUnavailable();
-                EnsureLookahead();
-                return _lookahead is not null;
-            }
         }
 
         public bool MoveNext()
@@ -888,7 +885,9 @@ public class AXVisualElement : VisualElement
 
             if (count > MaximumSiblingSearchCount)
             {
-                throw new InvalidOperationException($"AX sibling lookup exceeded the {MaximumSiblingSearchCount}-element search limit.");
+                throw new VisualElementProviderException(
+                    VisualElementQueryFailureKind.ProviderFailure,
+                    $"AX sibling lookup exceeded the {MaximumSiblingSearchCount}-element search limit.");
             }
 
             _isCompleted = true;

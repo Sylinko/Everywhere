@@ -40,20 +40,20 @@ public abstract class VisualElement
 {
     public string Id { get; }
 
-    public virtual VisualElementQueryResult Query(VisualElementQueryRequest request);
+    public VisualElementQueryResult Query(VisualElementQueryRequest request);
 
-    public virtual VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
+    public VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
 
-    public virtual IVisualElementEnumerator CreateEnumerator(
+    public IVisualElementEnumerator CreateEnumerator(
         VisualElementRelation relation,
         VisualElementQueryRequest request);
 
-    public virtual void Invoke();
-    public virtual void SetText(string text);
-    public virtual void Focus();
-    public virtual void SendKeyGesture(KeyGesture keyGesture);
-    public virtual string? GetSelectedText(int maxCharacters);
-    public virtual Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken = default);
+    public void Invoke();
+    public void SetText(string text);
+    public void Focus();
+    public void SendKeyGesture(KeyGesture keyGesture);
+    public string? GetSelectedText(int maxCharacters);
+    public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken = default);
 }
 ```
 
@@ -98,17 +98,22 @@ The exact macOS structural topology remains a native-validation checkpoint. An A
 
 ## 6. Relation Enumeration
 
-`IVisualElementEnumerator` follows the familiar .NET Enumerator model while exposing bounded traversal metadata:
+`IVisualElementEnumerator` is both a familiar single-use .NET Enumerator and an `IEnumerable<VisualElementEnumerationResult>` for natural `foreach` consumption:
 
-- `Current` is valid only after a successful `MoveNext` and before the end;
-- `Index` is zero-based internally;
-- `Count >= 0` means the total count is known without unbounded work;
-- `Count == -1` means unknown;
-- `HasMore` may use known count, provider metadata, or one-item lookahead;
-- lookahead does not change `Current` or `Index`;
-- provider failure is never converted into ordinary `HasMore == false`;
-- `Reset` is supported only where the implementation can honestly reproduce its starting relation;
-- disposal is idempotent.
+- creating it validates managed lifetime but performs no platform relation work;
+- the first `MoveNext` lazily creates and advances the platform cursor;
+- `Current` is valid only after a successful `MoveNext` and before the end, and reading it is always in-memory;
+- each `VisualElementEnumerationResult` contains exactly one `Result` or one relation-advancement `Failure` and supports deconstruction into those two values;
+- a recoverable relation failure is yielded once as the terminal item, so it cannot be confused with ordinary empty completion or silently retried;
+- a successful item's `VisualElementQueryResult.Failure` independently describes fields that could not be observed on an element that was nevertheless produced;
+- lifetime, cancellation, argument, and programming errors remain exceptions;
+- `Index` is the zero-based index of the current successful element;
+- `Count >= 0` means the total count became known without additional provider work, while `Count == -1` means it is not yet known or cannot be known cheaply;
+- `Reset` is not supported and disposal is idempotent.
+
+Platform implementations supply the lower-level `IVisualElementCursor`. Its `Current`, `Count`, and `Index` are cached managed state; its `MoveNext` may perform native work and throw provider exceptions. `VisualElement.CreateEnumerator` owns the only adapter that initializes that cursor lazily and normalizes recoverable failures. This keeps exception and completion semantics out of individual UIA, AX, display, and test cursors while leaving the extension point public for platform or plugin implementations.
+
+Native element disappearance and general provider failure use `VisualElementProviderException`; timeout and unsupported capability retain their standard .NET exception types. Arbitrary `InvalidOperationException` is deliberately not recoverable, because treating it as provider data would hide cursor and consumer defects.
 
 Relation semantics are:
 
@@ -118,7 +123,7 @@ Relation semantics are:
 - results remain lazy; a large child collection is not eagerly materialized merely to discover Count;
 - each yielded element uses the supplied `VisualElementQueryRequest`, while the Traverser budget bounds how many results are advanced and admitted.
 
-An Enumerator owns a `VisualElementRetention` for canonical elements it exposes. Disposing the Enumerator releases that batch. If a result must outlive the Enumerator, the caller retains it in the destination Snapshot, attachment, or turn before disposing the Enumerator. This is ordinary ownership transfer, not an execution pin.
+An Enumerator immediately retains its origin so deferred cursor creation cannot outlive that element. The platform cursor owns a `VisualElementRetention` for canonical elements it exposes. Completion, terminal failure, or disposal releases both batches. If a result must outlive the Enumerator, the caller retains it in the destination Snapshot, attachment, or turn before advancing or disposing the Enumerator. This is ordinary ownership transfer, not an execution pin.
 
 ## 7. Partial Success and Failure
 

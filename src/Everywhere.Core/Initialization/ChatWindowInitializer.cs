@@ -5,6 +5,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,16 +16,18 @@ namespace Everywhere.Initialization;
 /// <summary>
 /// Initializes the chat window hotkey listener and preloads the chat window.
 /// </summary>
+/// <param name="serviceProvider"></param>
 /// <param name="settings"></param>
 /// <param name="shortcutListener"></param>
 /// <param name="textSelectionWatcher"></param>
+/// <param name="chatVisualService"></param>
 /// <param name="logger"></param>
 public sealed class ChatWindowInitializer(
     IServiceProvider serviceProvider,
     Settings settings,
     IShortcutListener shortcutListener,
     ITextSelectionWatcher textSelectionWatcher,
-    IVisualElementBackend visualElementBackend,
+    ChatVisualService chatVisualService,
     ILogger<ChatWindowInitializer> logger
 ) : IAsyncInitializer
 {
@@ -117,49 +120,50 @@ public sealed class ChatWindowInitializer(
     {
         RegisterShortcutListener(
             shortcut,
-            () =>
-            {
-                VisualElementLocator? targetLocator;
-                nint? hWnd;
-                try
-                {
-                    using var visualContext = new VisualContext();
-                    using var retention = visualContext.CreateRetention();
-                    var queryRequest = VisualElementQueryRequest.Default;
-                    var result = visualElementBackend.Query(retention, VisualElementLocator.Focused, request: queryRequest);
-                    targetLocator = result is null ? null : VisualElementLocator.Focused;
-                    if (result is null)
-                    {
-                        result = visualElementBackend.Query(retention, VisualElementLocator.Pointer, VisualElementResolution.TopLevel, queryRequest);
-                        hWnd = result?.Snapshot.NativeWindowHandle;
-                        targetLocator = hWnd is > 0 and var nativeWindowHandle ? VisualElementLocator.FromNativeWindow(nativeWindowHandle) : null;
-                    }
-                    else
-                    {
-                        hWnd = result.Snapshot.NativeWindowHandle;
-                    }
-
-                    if (chatWindowHandle == hWnd) targetLocator = null; // Don't allow the chat window to select itself.
-                }
-                catch
-                {
-                    targetLocator = null;
-                    hWnd = null;
-                }
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (chatWindow.IsVisible && chatWindowHandle == hWnd)
-                    {
-                        WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true)); // Hide chat window if it's already focused
-                    }
-                    else
-                    {
-                        WeakReferenceMessenger.Default.Send(new ActivateChatSessionMessage(targetLocator));
-                    }
-                });
-            },
+            () => ResolveChatWindowTargetAsync(chatWindow, chatWindowHandle).Detach(logger.ToExceptionHandler()),
             ref subscription);
+    }
+
+    private async Task ResolveChatWindowTargetAsync(ChatWindow chatWindow, nint chatWindowHandle)
+    {
+        VisualElementLocator? targetLocator;
+        nint? nativeWindowHandle;
+        try
+        {
+            var query = new VisualElementQueryRequest(VisualElementFields.NativeWindowHandle, 0);
+            var snapshot = await chatVisualService.ObserveElementAsync(VisualElementLocator.Focused, query: query);
+            if (snapshot is { } focusedSnapshot)
+            {
+                targetLocator = VisualElementLocator.Focused;
+                nativeWindowHandle = focusedSnapshot.NativeWindowHandle;
+            }
+            else
+            {
+                var pointerSnapshot = await chatVisualService.ObserveElementAsync(VisualElementLocator.Pointer, VisualElementResolution.TopLevel, query);
+                nativeWindowHandle = pointerSnapshot?.NativeWindowHandle;
+                targetLocator = nativeWindowHandle is > 0 and var handle ? VisualElementLocator.FromNativeWindow(handle) : null;
+            }
+
+            if (chatWindowHandle == nativeWindowHandle) targetLocator = null;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to resolve the visual target for the chat-window shortcut.");
+            targetLocator = null;
+            nativeWindowHandle = null;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (chatWindow.IsVisible && chatWindowHandle == nativeWindowHandle)
+            {
+                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
+            }
+            else
+            {
+                WeakReferenceMessenger.Default.Send(new ActivateChatSessionMessage(targetLocator));
+            }
+        });
     }
 
     private void RegisterPickElementShortcut(ChatWindowViewModel chatWindowViewModel, KeyboardShortcut shortcut, ref IDisposable? subscription)

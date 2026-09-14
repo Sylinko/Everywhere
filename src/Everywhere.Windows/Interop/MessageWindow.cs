@@ -132,25 +132,22 @@ internal sealed class MessageWindow
 
     private LRESULT WindowProcedure(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
     {
+        var msg = new MSG { hwnd = hWnd, message = message, wParam = wParam, lParam = lParam };
         ImmutableArray<MessageHandler> handlers;
         lock (_lock)
         {
-            handlers = _handlers.GetValueOrDefault(msg.message, []);
+            handlers = _handlers.GetValueOrDefault(message, []);
         }
 
-        if (handlers.Length > 0)
+        foreach (var handler in handlers)
         {
-            var msg = new MSG { hwnd = hWnd, message = message, wParam = wParam, lParam = lParam };
-            foreach (var handler in handlers)
+            try
             {
-                try
-                {
-                    handler(in msg);
-                }
-                catch
-                {
-                    // A shared native message host must remain alive when an individual consumer fails.
-                }
+                handler(in msg);
+            }
+            catch
+            {
+                // A shared native message host must remain alive when an individual consumer fails.
             }
         }
 

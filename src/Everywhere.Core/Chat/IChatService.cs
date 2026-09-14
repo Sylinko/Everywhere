@@ -1,5 +1,4 @@
 ﻿using Everywhere.AI;
-
 using Everywhere.Statistics;
 
 namespace Everywhere.Chat;
@@ -9,15 +8,16 @@ public interface IChatService
     /// <summary>
     /// Send a message to the chat service. This method is NOT thread safe.
     /// </summary>
+    /// <param name="chatContext">The destination captured when the draft was submitted.</param>
     /// <param name="message"></param>
-    void SendMessage(UserChatMessage message);
+    bool SendMessage(ChatContext chatContext, UserChatMessage message);
 
     /// <summary>
     /// Edit a previously sent user message. This will create a branch in the chat history. This method is NOT thread safe.
     /// </summary>
     /// <param name="oldNode"></param>
     /// <param name="newMessage"></param>
-    void Edit(ChatMessageNode oldNode, UserChatMessage newMessage);
+    bool Edit(ChatMessageNode oldNode, UserChatMessage newMessage);
 
     /// <summary>
     /// Retry sending a message that previously failed. This will create a branch in the chat history. This method is NOT thread safe.

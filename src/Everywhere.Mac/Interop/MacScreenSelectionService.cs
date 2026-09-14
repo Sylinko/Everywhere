@@ -2,6 +2,7 @@ using Avalonia.Media.Imaging;
 using Everywhere.Automation;
 using Everywhere.Interop;
 using Everywhere.Mac.Automation;
+using Everywhere.ProcessIsolation.Automation;
 
 namespace Everywhere.Mac.Interop;
 
@@ -16,9 +17,17 @@ public sealed partial class MacScreenSelectionService(
     private readonly VisualContext _transientContext = new();
 
     /// <inheritdoc />
-    public Task<VisualElementQueryResult?> PickVisualElementAsync(
-        VisualElementRetention retention,
-        ScreenSelectionMode? initialMode) => PickerSession.PickAsync(windowHelper, visualElementBackend, retention, initialMode);
+    public Task<RemoteVisualAnchor?> PickVisualElementAsync(
+        IHostedVisualContext visualContext,
+        ScreenSelectionMode? initialMode,
+        CancellationToken cancellationToken = default) =>
+        PickerSession.PickAsync(
+            windowHelper,
+            visualElementBackend,
+            _transientContext,
+            visualContext,
+            initialMode,
+            cancellationToken);
 
     /// <inheritdoc />
     public Task<Bitmap?> TakeScreenshotAsync(ScreenSelectionMode? initialMode) =>

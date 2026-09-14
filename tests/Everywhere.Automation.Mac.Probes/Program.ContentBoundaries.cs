@@ -153,7 +153,7 @@ public static partial class Program
             for (var index = 0; index < 70; index++)
             {
                 Require(mutatingEnumerator.MoveNext(), $"The mutating Enumerator ended before item {index}.");
-                mutatedNames.Add(mutatingEnumerator.Current.Snapshot.Name ?? string.Empty);
+                mutatedNames.Add(RequireCurrentResult(mutatingEnumerator, "Enumerating the mutating collection").Snapshot.Name ?? string.Empty);
             }
 
             var retainedPageError = CopyAttributeValuesForContent(
@@ -180,7 +180,7 @@ public static partial class Program
                         throw new InvalidOperationException("The mutating production Enumerator did not remain bounded.");
                     }
 
-                    mutatedNames.Add(mutatingEnumerator.Current.Snapshot.Name ?? string.Empty);
+                    mutatedNames.Add(RequireCurrentResult(mutatingEnumerator, "Continuing the mutating collection enumeration").Snapshot.Name ?? string.Empty);
                 }
             }
 
@@ -283,7 +283,7 @@ public static partial class Program
                 throw new InvalidOperationException($"The child Enumerator exceeded its {maximumCount}-item probe limit.");
             }
 
-            names.Add(children.Current.Snapshot.Name ?? string.Empty);
+            names.Add(RequireCurrentResult(children, "Enumerating child names").Snapshot.Name ?? string.Empty);
         }
 
         return names;
@@ -292,7 +292,7 @@ public static partial class Program
     private static string? ReadFirstRelatedName(VisualElement element, VisualElementRelation relation, VisualElementQueryRequest request)
     {
         using var related = element.CreateEnumerator(relation, request);
-        return related.MoveNext() ? related.Current.Snapshot.Name : null;
+        return related.MoveNext() ? RequireCurrentResult(related, $"Enumerating the first {relation} relation").Snapshot.Name : null;
     }
 
     private static AXError CopyIntegerAttribute(AXUIElement element, NSString attribute, out long result)

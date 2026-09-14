@@ -11,7 +11,7 @@ public sealed partial class CGWindowZOrder
     /// <summary>
     /// Describes one visible Quartz window assigned to exactly one display in an operation-local Z-order observation.
     /// </summary>
-    public sealed record Entry(uint WindowId, int OwnerProcessId, PixelRect Bounds, MacDisplay Display);
+    public sealed record Entry(uint WindowId, int OwnerProcessId, PixelRect Bounds, CGDisplay Display);
 
     public IReadOnlyList<Entry> Windows { get; }
 

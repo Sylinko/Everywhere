@@ -87,9 +87,11 @@ Verify every concrete and Mock Enumerator:
 
 - `Current` validity follows .NET Enumerator rules;
 - `Index` starts at `-1` and advances only after successful `MoveNext`;
-- known `Count`, unknown `Count == -1`, and `HasMore` are consistent;
-- lookahead does not change `Current` or `Index`;
-- provider failure is never returned as ordinary `HasMore == false`;
+- creation does not initialize a platform cursor or issue a provider call;
+- known `Count` is cached after lazy cursor initialization and unknown `Count == -1` remains valid;
+- `foreach` and manual `MoveNext` observe the same result/failure sequence;
+- a terminal provider failure is yielded exactly once and is not returned as ordinary empty completion;
+- a relation failure is distinct from a successful element result carrying a scalar-query failure;
 - Parent yields zero or one item;
 - Child and sibling order matches the accepted composed topology;
 - limits do not cause eager collection materialization;

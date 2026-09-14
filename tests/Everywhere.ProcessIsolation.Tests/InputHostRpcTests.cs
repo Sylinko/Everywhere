@@ -123,12 +123,22 @@ public sealed class InputHostRpcTests
     {
         var endpoint = TestPipeNames.Create();
         var session = new TestRoleSession();
+        var callerThreadId = Environment.CurrentManagedThreadId;
+        var factoryThreadId = 0;
         using var runnerCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
-            () => session,
+            () =>
+            {
+                factoryThreadId = Environment.CurrentManagedThreadId;
+                return session;
+            },
             runnerCancellation.Token);
+
+        // This verifies the synchronous factory/thread contract. STA and platform-main-thread
+        // behavior remain the responsibility of the Windows and macOS entry points.
+        Assert.That(factoryThreadId, Is.EqualTo(callerThreadId));
 
         await using var stream = new NamedPipeClientStream(
             ".",

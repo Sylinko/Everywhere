@@ -6,12 +6,12 @@ using System.Reactive.Disposables.Fluent;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Automation;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Lucide.Avalonia;
@@ -85,10 +85,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public IReadOnlyList<ChatMessageNode> Items => _branchNodesSourceList.Items;
 
     /// <summary>
-    /// Gets the Automation identity, ownership, and Agent-target domain associated with this chat.
+    /// Gets the service-independent visual state owned by this chat.
     /// </summary>
     [IgnoreMember]
-    public VisualContext VisualContext { get; } = new();
+    public ChatVisualState VisualState { get; } = new();
 
     /// <summary>
     /// Exact approval-bypass decisions remembered for this chat session.
@@ -161,7 +161,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     [IgnoreMember] private readonly Lock _graphMutationLock = new();
     [IgnoreMember] private readonly Lock _presentationLock = new();
     [IgnoreMember] private ChatPresentation? _presentation;
-    [IgnoreMember] private VisualTargetTurn? _visualTargetTurn;
 
     /// <summary>
     /// Nodes on the currently selected branch. [0] is always the root node.
@@ -591,21 +590,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
     }
 
-    /// <summary>
-    /// Completes the previous visual-target generation and starts the generation owned by a new user conversation turn.
-    /// </summary>
-    internal void AdvanceVisualTargetTurn()
-    {
-        _visualTargetTurn?.Complete();
-        _visualTargetTurn = null;
-        _visualTargetTurn = VisualContext.BeginTurn();
-    }
-
-    /// <summary>
-    /// Ensures that visual targets produced while continuing the current conversation turn have an active owner.
-    /// </summary>
-    internal void EnsureVisualTargetTurn() => _visualTargetTurn ??= VisualContext.BeginTurn();
-
     public void Dispose()
     {
         // ChatPresentation owns Avalonia-facing DynamicData lists. ChatContext disposal is therefore
@@ -620,6 +604,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
 
         _isDisposed = true;
+        VisualState.Dispose();
 
         // The presentation subscribes to the branch and must be torn down before the branch source
         // itself. Clear the field under its dedicated lock so no concurrent lazy getter can publish
@@ -631,8 +616,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
             _presentation = null;
         }
         presentation?.Dispose();
-        DisposeHelper.DisposeToDefault(ref _visualTargetTurn);
-        VisualContext.Dispose();
 
         using (_graphMutationLock.EnterScope())
         {

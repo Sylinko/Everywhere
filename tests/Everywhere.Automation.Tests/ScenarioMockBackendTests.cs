@@ -27,7 +27,7 @@ public sealed class ScenarioMockBackendTests
     }
 
     [Test]
-    public void CreateEnumerator_WhenCollectionIsHuge_RemainsLazyAndReportsMetadata()
+    public void CreateEnumerator_WhenCollectionIsHuge_DefersCursorAndElementCreationUntilFirstMove()
     {
         var generatedItems = 0;
         var scenario = Scenario.Define("huge-list", context => new VirtualList(context, "items", 100_000, (_, index) =>
@@ -40,30 +40,38 @@ public sealed class ScenarioMockBackendTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(enumerator.Count, Is.EqualTo(100_000));
+            Assert.That(enumerator.Count, Is.EqualTo(-1));
             Assert.That(enumerator.Index, Is.EqualTo(-1));
-            Assert.That(enumerator.HasMore, Is.True);
             Assert.That(generatedItems, Is.Zero);
+            Assert.That(backend.Operations.EnumeratorCreatedCount, Is.Zero);
         });
         Assert.That(enumerator.MoveNext(), Is.True);
         Assert.Multiple(() =>
         {
-            Assert.That(enumerator.Current.Snapshot.TextPreview, Is.EqualTo("item-0"));
+            Assert.That(enumerator.Count, Is.EqualTo(100_000));
+            Assert.That(enumerator.Current.Result?.Snapshot.TextPreview, Is.EqualTo("item-0"));
             Assert.That(generatedItems, Is.EqualTo(1));
         });
     }
 
     [Test]
-    public void CreateEnumerator_WhenCountIsUnavailable_PreservesLookaheadWithoutMaterialization()
+    public void CreateEnumerator_WhenCountIsUnavailable_RemainsLazyAndReportsUnknownCount()
     {
         using var backend = CreateBackend(new Panel(new Text("first"), new Text("second")), hasCount: false);
         using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
         Assert.Multiple(() =>
         {
             Assert.That(enumerator.Count, Is.EqualTo(-1));
-            Assert.That(enumerator.HasMore, Is.True);
             Assert.That(enumerator.Index, Is.EqualTo(-1));
             Assert.That(backend.Operations.ElementCreatedCount, Is.EqualTo(1));
+            Assert.That(backend.Operations.EnumeratorCreatedCount, Is.Zero);
+        });
+        Assert.That(enumerator.MoveNext(), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(enumerator.Count, Is.EqualTo(-1));
+            Assert.That(enumerator.Current.IsSuccess, Is.True);
+            Assert.That(backend.Operations.ElementCreatedCount, Is.EqualTo(2));
         });
     }
 
@@ -73,9 +81,9 @@ public sealed class ScenarioMockBackendTests
         using var backend = CreateBackend(new OnMoveNext(step => new Panel(new Text($"state-{step}-first"), new Text($"state-{step}-second"))));
         using var enumerator = backend.RootElement.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
         Assert.That(enumerator.MoveNext(), Is.True);
-        var first = enumerator.Current.Snapshot.TextPreview;
+        var first = enumerator.Current.Result?.Snapshot.TextPreview;
         Assert.That(enumerator.MoveNext(), Is.True);
-        var second = enumerator.Current.Snapshot.TextPreview;
+        var second = enumerator.Current.Result?.Snapshot.TextPreview;
         Assert.That(enumerator.MoveNext(), Is.False);
 
         Assert.Multiple(() =>

@@ -194,7 +194,7 @@ internal sealed class ScenarioMockQueryEnumerator(
     ScenarioVisualElement origin,
     VisualElementRelation relation,
     VisualElementQueryRequest queryRequest
-) : IVisualElementEnumerator
+) : IVisualElementCursor
 {
     /// <inheritdoc />
     public VisualElementQueryResult Current => _current ?? throw new InvalidOperationException("The enumerator has no current item.");
@@ -206,9 +206,6 @@ internal sealed class ScenarioMockQueryEnumerator(
 
     /// <inheritdoc />
     public int Index => _navigator.Index;
-
-    /// <inheritdoc />
-    public bool HasMore => _navigator.HasMore;
 
     private readonly ScenarioRelationNavigator _navigator = new(origin, relation);
     private readonly VisualElementQueryRequest _queryRequest = queryRequest;
@@ -256,15 +253,6 @@ internal sealed class ScenarioRelationNavigator : IEnumerator<ScenarioVisualElem
     public int Count => _origin.Backend.HasKnownCount ? _initialCount : -1;
 
     public int Index { get; private set; } = -1;
-
-    public bool HasMore
-    {
-        get
-        {
-            ObjectDisposedException.ThrowIf(_isDisposed, this);
-            return !_isCompleted && HasTarget(_nextOrdinal);
-        }
-    }
 
     private readonly ScenarioVisualElement _origin;
     private readonly VisualElementRelation _relation;
@@ -467,7 +455,7 @@ internal sealed class ScenarioVisualElement(
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(
+    protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
         VisualElementQueryRequest request)
         => new ScenarioMockQueryEnumerator(this, relation, request);

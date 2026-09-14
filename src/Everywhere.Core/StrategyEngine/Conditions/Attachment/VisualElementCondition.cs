@@ -33,7 +33,7 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
     public Regex? TextPattern { get; init; }
 
     /// <summary>
-    /// Maximum text length to retrieve for matching (performance optimization).
+    /// Maximum text length requested when the attachment is initially acquired.
     /// </summary>
     public int TextMaxLength { get; init; } = 1000;
 
@@ -54,15 +54,10 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
 
     protected override bool MatchesAttachment(VisualElementAttachment attachment)
     {
-        var element = attachment.Element;
-        if (element is null)
+        if (attachment.InitialSnapshot is not { } snapshot)
         {
             return false;
         }
-
-        var fields = VisualElementFields.Type | VisualElementFields.States | VisualElementFields.Name | VisualElementFields.ProcessId;
-        if (TextPattern is not null) fields |= VisualElementFields.Text;
-        var snapshot = element.Query(new VisualElementQueryRequest(fields, TextMaxLength)).Snapshot;
 
         // Check element type
         if (ElementTypes is { Count: > 0 } && (snapshot.Type is not { } type || !ElementTypes.Contains(type)))
@@ -90,6 +85,7 @@ public sealed class VisualElementCondition : AttachmentConditionBase<VisualEleme
         if (TextPattern is not null)
         {
             var text = snapshot.TextPreview ?? string.Empty;
+            if (text.Length > TextMaxLength) text = text[..TextMaxLength];
             if (!TextPattern.IsMatch(text))
             {
                 return false;

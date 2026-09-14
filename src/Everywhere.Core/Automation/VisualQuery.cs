@@ -1,3 +1,5 @@
+using Everywhere.ProcessIsolation;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Prompting.Documents;
 
 namespace Everywhere.Automation;
@@ -46,6 +48,7 @@ public sealed record VisualQueryRequest
 /// <remarks>
 /// The caller owns the Context and active turn. This instance neither disposes them nor advances history. Capture delivery is optional and transfers owned pixel buffers, never native elements.
 /// </remarks>
+[InHostProcess(ProcessRole.Automation)]
 public sealed partial class VisualQuery
 {
     private readonly VisualContext _context;

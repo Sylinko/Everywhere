@@ -1,9 +1,11 @@
 using System.Threading.Channels;
 using Everywhere.Common;
 using Everywhere.Extensions;
+using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Input;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Utilities;
 
@@ -13,6 +15,7 @@ namespace Everywhere.Mac.ProcessIsolation.Input;
 /// Owns one authenticated macOS Input connection. Native registrations and
 /// capture state are released before the role acknowledges shutdown.
 /// </summary>
+[InHostProcess(ProcessRole.Input)]
 public sealed class MacInputHostSession : IProcessRoleSession
 {
     private const int EventQueueCapacity = 64;

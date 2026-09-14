@@ -1,8 +1,10 @@
 using System.Threading.Channels;
 using Windows.Win32;
+using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Input;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Utilities;
 
@@ -12,6 +14,7 @@ namespace Everywhere.Windows.ProcessIsolation.Input;
 /// Owns one authenticated Windows Input connection. Native registrations never
 /// escape this session, and draining removes them before Host shutdown is acknowledged.
 /// </summary>
+[InHostProcess(ProcessRole.Input)]
 public sealed class WindowsInputHostSession : IProcessRoleSession
 {
     private AtomicBoolean IsDisposed => new(ref _isDisposed);

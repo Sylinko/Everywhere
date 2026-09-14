@@ -1,22 +1,33 @@
-﻿namespace Everywhere.Automation;
+﻿using System.Collections;
+
+namespace Everywhere.Automation;
 
 /// <summary>
-/// Extends the standard enumerator contract with optional bounded-observation metadata and non-consuming lookahead.
+/// Enumerates one visual relation as successful element observations or one terminal relation failure.
 /// </summary>
-public interface IVisualElementEnumerator : IEnumerator<VisualElementQueryResult>
+/// <remarks>
+/// The Enumerator is single-use. A recoverable provider failure is yielded once as a
+/// <see cref="VisualElementEnumerationResult" /> and then ends the sequence. Lifetime, cancellation,
+/// argument, and programming errors continue to escape from <see cref="IEnumerator.MoveNext" />.
+/// </remarks>
+public interface IVisualElementEnumerator : IEnumerator<VisualElementEnumerationResult>, IEnumerable<VisualElementEnumerationResult>
 {
     /// <summary>
-    /// Gets the logical item count when known without provider work, or negative one when unknown.
+    /// Gets the logical element count when known without additional provider work, or negative one when unknown.
     /// </summary>
     int Count { get; }
 
     /// <summary>
-    /// Gets the zero-based index of the current item, or negative one when there is no current item.
+    /// Gets the zero-based index of the current successful element, or negative one when there is no current element.
     /// </summary>
     int Index { get; }
 
     /// <summary>
-    /// Gets whether another item is available without changing <see cref="IEnumerator{T}.Current"/>.
+    /// Returns this single-use Enumerator for natural <see langword="foreach" /> consumption.
     /// </summary>
-    bool HasMore { get; }
+    new IVisualElementEnumerator GetEnumerator() => this;
+
+    IEnumerator<VisualElementEnumerationResult> IEnumerable<VisualElementEnumerationResult>.GetEnumerator() => this;
+
+    IEnumerator IEnumerable.GetEnumerator() => this;
 }

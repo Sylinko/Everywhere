@@ -6,8 +6,10 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia.Input;
 using Everywhere.Common;
 using Everywhere.Extensions;
+using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Input;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Utilities;
 using Everywhere.Windows.Extensions;
 using Everywhere.Windows.Interop;
@@ -19,6 +21,7 @@ namespace Everywhere.Windows.ProcessIsolation.Input;
 /// Its callback returns whether a low-level keyboard event was accepted for delivery,
 /// which lets the hook fail open when the bounded session queue is full.
 /// </summary>
+[InHostProcess(ProcessRole.Input)]
 public sealed unsafe class Win32InputHook : IDisposable
 {
     public enum InputEventKind

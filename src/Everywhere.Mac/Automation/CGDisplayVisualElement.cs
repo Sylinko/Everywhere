@@ -2,13 +2,14 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Everywhere.Automation;
 using Everywhere.Mac.Interop;
+using CGDisplay = Everywhere.Mac.Interop.CGDisplay;
 
 namespace Everywhere.Mac.Automation;
 
 /// <summary>
 /// Represents one Context-owned macOS display without pretending that NSScreen is an AX provider.
 /// </summary>
-public sealed class ScreenVisualElement : VisualElement
+public sealed class CGDisplayVisualElement : VisualElement
 {
     /// <summary>
     /// Gets the topology generation that was current when this Screen element was observed.
@@ -27,13 +28,13 @@ public sealed class ScreenVisualElement : VisualElement
 
     private MacVisualElementBackend Backend { get; }
 
-    private MacDisplay Display { get; }
+    private CGDisplay Display { get; }
 
-    private ScreenVisualElement(
+    private CGDisplayVisualElement(
         VisualElementIdentity identity,
         MacVisualElementBackend backend,
         long topologyGeneration,
-        MacDisplay display,
+        CGDisplay display,
         string id
     ) : base(identity, id)
     {
@@ -42,18 +43,18 @@ public sealed class ScreenVisualElement : VisualElement
         Display = display;
     }
 
-    public static ScreenVisualElement GetOrCreate(
+    public static CGDisplayVisualElement GetOrCreate(
         VisualElementRetention retention,
         MacVisualElementBackend backend,
         CGDisplayTopology topology,
-        MacDisplay display)
+        CGDisplay display)
     {
         var context = retention.Context;
         return context.GetIdentityMap<ScreenIdentity>().GetOrAdd(
             retention,
             new ScreenIdentity(topology.Generation, display.DisplayId),
             (Backend: backend, Display: display),
-            static (identity, state) => new ScreenVisualElement(
+            static (identity, state) => new CGDisplayVisualElement(
                 identity,
                 state.Backend,
                 identity.Value.TopologyGeneration,
@@ -124,14 +125,16 @@ public sealed class ScreenVisualElement : VisualElement
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(
+    protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
         VisualElementQueryRequest request)
     {
         var topology = CGDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Screen element was observed.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
         }
 
         return relation switch
@@ -173,6 +176,20 @@ public sealed class ScreenVisualElement : VisualElement
     }
 
     /// <inheritdoc />
+    protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
+    {
+        var topology = CGDisplayTopology.Current;
+        if (TopologyGeneration != topology.Generation)
+        {
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
+        }
+
+        return GetOrCreate(destinationRetention, Backend, topology, Display);
+    }
+
+    /// <inheritdoc />
     protected override bool TryConvertPlatformException(Exception exception, [NotNullWhen(true)] out Exception? convertedException)
     {
         convertedException = null;
@@ -189,14 +206,16 @@ public sealed class ScreenVisualElement : VisualElement
     {
         if (TopologyGeneration != CGDisplayTopology.Current.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Screen element was observed.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
         }
     }
 
     [Serializable]
     private readonly record struct ScreenIdentity(long TopologyGeneration, uint DisplayId);
 
-    private IVisualElementEnumerator CreateSiblingEnumerator(
+    private IVisualElementCursor CreateSiblingEnumerator(
         CGDisplayTopology topology,
         VisualElementRelation relation,
         VisualElementQueryRequest request)
@@ -219,7 +238,7 @@ public sealed class ScreenVisualElement : VisualElement
         }
 
         var direction = relation == VisualElementRelation.PreviousSibling ? -1 : 1;
-        return new ScreenSiblingEnumerator(
+        return new CGDisplaySiblingEnumerator(
             Context,
             Backend,
             topology,

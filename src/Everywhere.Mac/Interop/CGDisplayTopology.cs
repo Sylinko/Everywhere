@@ -25,12 +25,12 @@ public sealed class CGDisplayTopology
     /// <summary>
     /// Gets the displays ordered from top to bottom and then from left to right in AX screen coordinates.
     /// </summary>
-    public IReadOnlyList<MacDisplay> Displays { get; }
+    public IReadOnlyList<CGDisplay> Displays { get; }
 
     /// <summary>
     /// Gets the primary display containing the menu bar, or the first display when AppKit did not identify one.
     /// </summary>
-    public MacDisplay? Primary => Displays.FirstOrDefault(static display => display.IsPrimary) ?? Displays.FirstOrDefault();
+    public CGDisplay? Primary => Displays.FirstOrDefault(static display => display.IsPrimary) ?? Displays.FirstOrDefault();
 
     private static CGDisplayTopology _current;
 
@@ -44,7 +44,7 @@ public sealed class CGDisplayTopology
         _current = Capture(1);
     }
 
-    private CGDisplayTopology(long generation, MacDisplay[] displays)
+    private CGDisplayTopology(long generation, CGDisplay[] displays)
     {
         Generation = generation;
         Displays = Array.AsReadOnly(displays);
@@ -60,16 +60,16 @@ public sealed class CGDisplayTopology
     /// </summary>
     /// <param name="displayId">The Core Graphics display identifier.</param>
     /// <returns>The display in this topology snapshot, or <see langword="null" /> when it is absent.</returns>
-    public MacDisplay? Find(uint displayId) => Displays.FirstOrDefault(display => display.DisplayId == displayId);
+    public CGDisplay? Find(uint displayId) => Displays.FirstOrDefault(display => display.DisplayId == displayId);
 
     /// <summary>
     /// Finds the display containing a point, or the nearest display when the point lies outside every display.
     /// </summary>
     /// <param name="point">The point in AX screen coordinates.</param>
     /// <returns>The nearest display, or <see langword="null" /> when the topology contains no displays.</returns>
-    public MacDisplay? FindNearest(PixelPoint point)
+    public CGDisplay? FindNearest(PixelPoint point)
     {
-        MacDisplay? nearest = null;
+        CGDisplay? nearest = null;
         var nearestDistance = long.MaxValue;
         foreach (var display in Displays)
         {
@@ -96,9 +96,9 @@ public sealed class CGDisplayTopology
     /// </summary>
     /// <param name="bounds">The top-level window bounds in AX screen coordinates.</param>
     /// <returns>The display with the largest intersection, or <see langword="null" /> when the window does not intersect a display.</returns>
-    internal MacDisplay? FindTopLevelWindowDisplay(PixelRect bounds)
+    internal CGDisplay? FindTopLevelWindowDisplay(PixelRect bounds)
     {
-        MacDisplay? bestDisplay = null;
+        CGDisplay? bestDisplay = null;
         var bestArea = 0L;
         foreach (var display in Displays)
         {
@@ -137,13 +137,13 @@ public sealed class CGDisplayTopology
 
         var primaryScreen = screens[0];
         var primaryHeight = primaryScreen.Frame.Height;
-        var displays = new MacDisplay[screens.Length];
+        var displays = new CGDisplay[screens.Length];
         for (var index = 0; index < screens.Length; index++)
         {
             var screen = screens[index];
             var displayId = GetDisplayId(screen);
             var frame = screen.Frame;
-            displays[index] = new MacDisplay(
+            displays[index] = new CGDisplay(
                 displayId,
                 new PixelRect((int)frame.X, (int)(primaryHeight - (frame.Y + frame.Height)), (int)frame.Width, (int)frame.Height),
                 screen.LocalizedName,
@@ -195,4 +195,4 @@ public sealed class CGDisplayTopology
 /// <param name="Bounds">The display bounds in AX screen coordinates.</param>
 /// <param name="Name">The localized display name captured with this observation.</param>
 /// <param name="IsPrimary">Whether this display was first in <see cref="NSScreen.Screens" />.</param>
-public sealed record MacDisplay(uint DisplayId, PixelRect Bounds, string Name, bool IsPrimary);
+public sealed record CGDisplay(uint DisplayId, PixelRect Bounds, string Name, bool IsPrimary);

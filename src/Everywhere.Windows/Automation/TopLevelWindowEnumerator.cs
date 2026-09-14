@@ -8,27 +8,20 @@ using Everywhere.Windows.Interop;
 
 namespace Everywhere.Windows.Automation;
 
-internal sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
+internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
 {
     public VisualElementQueryResult Current
     {
         get
         {
-            ThrowIfUnavailable();
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
             return _current ?? throw new InvalidOperationException("The Enumerator has no current item.");
         }
     }
 
     object IEnumerator.Current => Current;
 
-    public int Count
-    {
-        get
-        {
-            ThrowIfUnavailable();
-            return -1;
-        }
-    }
+    public int Count => -1;
 
     public int Index { get; private set; } = -1;
 
@@ -66,16 +59,6 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         _retention = context.CreateRetention();
     }
 
-    public bool HasMore
-    {
-        get
-        {
-            ThrowIfUnavailable();
-            EnsureLookahead();
-            return _lookahead is not null;
-        }
-    }
-
     public bool MoveNext()
     {
         ThrowIfUnavailable();
@@ -90,8 +73,6 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         _lookahead = null;
         _isLookaheadResolved = false;
         _current = next;
-        _lastWindow = (HWND)((UIAutomationVisualElement)next.Element).NativeWindowHandle;
-        _shouldStartAtTop = false;
         Index++;
         return true;
     }
@@ -128,33 +109,38 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         ObjectDisposedException.ThrowIf(_isDisposed, this);
         if (WindowsDisplayTopology.Current.Generation != _topology.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Enumerator was created.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Enumerator was created.");
         }
     }
 
     private VisualElementQueryResult? QueryTopLevelWindow()
     {
-        var windowHandle = FindNextTopLevelWindow();
-        if (windowHandle == HWND.Null)
+        while (true)
         {
-            return null;
-        }
+            var windowHandle = FindNextTopLevelWindow();
+            if (windowHandle == HWND.Null) return null;
+            _lastWindow = windowHandle;
+            _shouldStartAtTop = false;
 
-        try
-        {
-            using var cacheRequest = _backend.Automation.CreateElementCacheRequest(_queryRequest.RequestedFields);
-            using var cachedElement = _backend.Automation.ElementFromHandleBuildCache(windowHandle, cacheRequest);
-            if (!cachedElement.HasValue)
+            try
             {
-                throw new InvalidOperationException("UI Automation did not return an element for the top-level window.");
-            }
+                using var cacheRequest = _backend.Automation.CreateElementCacheRequest(_queryRequest.RequestedFields);
+                using var cachedElement = _backend.Automation.ElementFromHandleBuildCache(windowHandle, cacheRequest);
+                if (!cachedElement.HasValue) continue;
 
-            var element = _backend.GetOrCreateUIAutomationElement(_retention, in cachedElement);
-            return cachedElement.CreateQueryResult(element, _queryRequest);
-        }
-        catch (Exception exception) when (WindowsUIAutomationFailure.IsProviderException(exception))
-        {
-            throw WindowsUIAutomationFailure.CreateException(exception);
+                var element = _backend.GetOrCreateUIAutomationElement(_retention, in cachedElement);
+                return cachedElement.CreateQueryResult(element, _queryRequest);
+            }
+            catch (Exception exception) when (WindowsUIAutomationFailure.IsElementUnavailable(exception))
+            {
+                // The Win32 cursor has already advanced, so this vanished window can be skipped safely.
+            }
+            catch (Exception exception) when (WindowsUIAutomationFailure.IsProviderException(exception))
+            {
+                throw WindowsUIAutomationFailure.CreateException(exception);
+            }
         }
     }
 

@@ -5,14 +5,15 @@ using Everywhere.Utilities;
 namespace Everywhere.ProcessIsolation.Rpc;
 
 /// <summary>
-///     Typed local RPC connection for Everywhere's fixed client-to-server call model.
-///     The public surface composes three private owners: frame transport, operation
-///     routing, and correlation lifetime. It does not expose those implementation
-///     details as reusable framework APIs.
+///     Typed symmetric local RPC connection. Either authenticated peer may initiate
+///     requests, notifications, and response streams after the handshake.
+///     The public surface composes frame transport, operation routing, correlation
+///     lifetime, and remote-release delivery without exposing those details as a
+///     general networking framework.
 /// </summary>
 public sealed class RpcConnection : IAsyncDisposable
 {
-    /// <summary>Handles a one-way server-to-client notification.</summary>
+    /// <summary>Handles a one-way peer notification.</summary>
     public delegate ValueTask RpcNotificationHandler(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
 
     /// <summary>Handles a request payload and returns its serialized response.</summary>
@@ -21,7 +22,7 @@ public sealed class RpcConnection : IAsyncDisposable
     /// <summary>Produces serialized chunks for a streamed response.</summary>
     public delegate IAsyncEnumerable<ReadOnlyMemory<byte>> RpcStreamHandler(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
 
-    /// <summary>Whether this endpoint serves requests rather than initiating them.</summary>
+    /// <summary>Whether this endpoint accepted the underlying transport. Business frames remain symmetric.</summary>
     public bool IsServer { get; }
 
     /// <summary>Whether the reader and writer have been started.</summary>
@@ -52,6 +53,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly Lock _disposeGate = new();
     private readonly Lock _handshakeGate = new();
+    private readonly Lock _resourceGate = new();
     private readonly CancellationTokenSource _lifetime = new();
     private readonly OperationRegistry _operations = new();
     private readonly RpcConnectionOptions _options;
@@ -66,7 +68,9 @@ public sealed class RpcConnection : IAsyncDisposable
     private int _isGracefulShutdownRequested;
     private int _isHandshakeCompleted;
     private Task? _handshakeTimeoutTask;
+    private bool _isResourceQueueClosed;
     private int _isStarted;
+    private RpcSafeHandleReleaseQueue? _safeHandleReleaseQueue;
 
     /// <summary>Creates an unstarted connection over an owned full-duplex stream.</summary>
     public RpcConnection(Stream stream, bool isServer, RpcConnectionOptions? options = null, MessagePackRpcPayloadCodec? codec = null)
@@ -74,7 +78,7 @@ public sealed class RpcConnection : IAsyncDisposable
         IsServer = isServer;
         _options = options ?? new RpcConnectionOptions();
         _codec = codec ?? new MessagePackRpcPayloadCodec();
-        _transport = new FrameTransport(stream, isServer, _options);
+        _transport = new FrameTransport(stream, _options);
     }
 
     /// <summary>Idempotently stops the connection and disposes its owned stream.</summary>
@@ -83,6 +87,16 @@ public sealed class RpcConnection : IAsyncDisposable
         lock (_disposeGate)
         {
             return new ValueTask(_disposeTask ??= DisposeCoreAsync());
+        }
+    }
+
+    /// <summary>Gets the single remote-resource ID allocator and nonblocking release path owned by this connection.</summary>
+    public RpcSafeHandleReleaseQueue GetSafeHandleReleaseQueue()
+    {
+        lock (_resourceGate)
+        {
+            ObjectDisposedException.ThrowIf(IsDisposed || _isResourceQueueClosed, this);
+            return _safeHandleReleaseQueue ??= new RpcSafeHandleReleaseQueue(this);
         }
     }
 
@@ -108,13 +122,13 @@ public sealed class RpcConnection : IAsyncDisposable
         }
     }
 
-    /// <summary>Registers a fixed request operation on the server router.</summary>
+    /// <summary>Registers a fixed request operation initiated by the peer.</summary>
     public void RegisterRequestHandler(uint operationId, RpcRequestHandler handler)
     {
         _router.RegisterRequest(operationId, handler);
     }
 
-    /// <summary>Registers a fixed notification operation on the client router.</summary>
+    /// <summary>Registers a fixed notification operation initiated by the peer.</summary>
     public void RegisterNotificationHandler(uint operationId, RpcNotificationHandler handler)
     {
         _router.RegisterNotification(operationId, handler);
@@ -133,7 +147,7 @@ public sealed class RpcConnection : IAsyncDisposable
             });
     }
 
-    /// <summary>Registers a typed server-to-client notification handler.</summary>
+    /// <summary>Registers a typed peer-notification handler.</summary>
     public void RegisterNotificationHandler<TNotification>(uint operationId, Func<TNotification, CancellationToken, ValueTask> handler)
     {
         RegisterNotificationHandler(
@@ -145,7 +159,7 @@ public sealed class RpcConnection : IAsyncDisposable
             });
     }
 
-    /// <summary>Registers a fixed streamed-response operation on the server router.</summary>
+    /// <summary>Registers a fixed streamed-response operation initiated by the peer.</summary>
     public void RegisterStreamHandler(uint operationId, RpcStreamHandler handler)
     {
         _router.RegisterStream(operationId, handler);
@@ -162,15 +176,15 @@ public sealed class RpcConnection : IAsyncDisposable
                 cancellationToken));
     }
 
-    /// <summary>Sends one client request. Product-level retry policy remains outside the transport.</summary>
+    /// <summary>Sends one request to the peer. Product-level retry policy remains outside the transport.</summary>
     public ValueTask<TResponse> InvokeAsync<TRequest, TResponse>(uint operationId, TRequest request, CancellationToken cancellationToken = default)
     {
         return InvokeCoreAsync<TRequest, TResponse>(operationId, request, cancellationToken);
     }
 
     /// <summary>
-    ///     Enqueues a server-to-client notification. Completion means the local FIFO
-    ///     accepted the frame, not that the client callback has completed.
+    ///     Enqueues a notification to the peer. Completion means the local FIFO
+    ///     accepted the frame, not that the peer callback has completed.
     /// </summary>
     public ValueTask SendNotificationAsync<TNotification>(uint operationId, TNotification notification, CancellationToken cancellationToken = default)
     {
@@ -185,7 +199,7 @@ public sealed class RpcConnection : IAsyncDisposable
             cancellationToken);
     }
 
-    /// <summary>Invokes a client request whose response is a bounded chunk sequence.</summary>
+    /// <summary>Invokes a peer request whose response is a bounded chunk sequence.</summary>
     public async IAsyncEnumerable<TItem> InvokeStreamAsync<TRequest, TItem>(
         uint operationId,
         TRequest request,
@@ -207,7 +221,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
             // Registration follows FIFO acceptance so a cancellation frame cannot
             // overtake the request it targets.
-            await using var cancellationRegistration = cancellationToken.Register(() => CancelClientOperation(pending));
+            await using var cancellationRegistration = cancellationToken.Register(() => CancelOutgoingOperation(pending));
             await foreach (var payload in pending.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             {
                 yield return _codec.Deserialize<TItem>(payload);
@@ -220,7 +234,7 @@ public sealed class RpcConnection : IAsyncDisposable
                 _transport.TryEnqueue(OutboundFrame.Cancel(pending.CorrelationId));
             }
 
-            _operations.RemoveClient(pending.CorrelationId, pending);
+            _operations.RemoveOutgoing(pending.CorrelationId, pending);
         }
     }
 
@@ -272,13 +286,13 @@ public sealed class RpcConnection : IAsyncDisposable
 
             // Registration follows FIFO acceptance so a cancellation frame cannot
             // overtake the request it targets.
-            await using var cancellationRegistration = cancellationToken.Register(() => CancelClientOperation(pending));
+            await using var cancellationRegistration = cancellationToken.Register(() => CancelOutgoingOperation(pending));
             var payload = await pending.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
             return _codec.Deserialize<TResponse>(payload);
         }
         finally
         {
-            _operations.RemoveClient(pending.CorrelationId, pending);
+            _operations.RemoveOutgoing(pending.CorrelationId, pending);
         }
     }
 
@@ -308,7 +322,7 @@ public sealed class RpcConnection : IAsyncDisposable
                 DispatchNotification(frame, cancellationToken);
                 break;
             case RpcFrameKind.Cancel:
-                await _operations.CancelServerAsync(frame.Header.CorrelationId).ConfigureAwait(false);
+                await _operations.CancelIncomingAsync(frame.Header.CorrelationId).ConfigureAwait(false);
                 break;
             case RpcFrameKind.StreamChunk:
                 await DispatchStreamChunkAsync(frame, cancellationToken).ConfigureAwait(false);
@@ -346,9 +360,9 @@ public sealed class RpcConnection : IAsyncDisposable
         }
 
         using var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (!_operations.AddServer(frame.Header.CorrelationId, requestCancellation))
+        if (!_operations.AddIncoming(frame.Header.CorrelationId, requestCancellation))
         {
-            throw new RpcProtocolException("The RPC client reused an active correlation ID.");
+            throw new RpcProtocolException("The RPC peer reused an active incoming correlation ID.");
         }
 
         try
@@ -394,13 +408,13 @@ public sealed class RpcConnection : IAsyncDisposable
         }
         finally
         {
-            _operations.RemoveServer(frame.Header.CorrelationId, requestCancellation);
+            _operations.RemoveIncoming(frame.Header.CorrelationId, requestCancellation);
         }
     }
 
     private void DispatchResponse(RpcFrame frame)
     {
-        if (_operations.TryGetClient(frame.Header.CorrelationId, out var operation))
+        if (_operations.TryGetOutgoing(frame.Header.CorrelationId, out var operation))
         {
             operation.ValidateOperation(frame.Header.OperationId);
             if (operation is not PendingResponse response)
@@ -414,7 +428,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private void DispatchError(RpcFrame frame)
     {
-        if (!_operations.TryGetClient(frame.Header.CorrelationId, out var operation))
+        if (!_operations.TryGetOutgoing(frame.Header.CorrelationId, out var operation))
         {
             return;
         }
@@ -437,9 +451,9 @@ public sealed class RpcConnection : IAsyncDisposable
     private async ValueTask DispatchStreamRequestAsync(RpcFrame frame, RpcStreamHandler handler, CancellationToken cancellationToken)
     {
         using var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (!_operations.AddServer(frame.Header.CorrelationId, requestCancellation))
+        if (!_operations.AddIncoming(frame.Header.CorrelationId, requestCancellation))
         {
-            throw new RpcProtocolException("The RPC client reused an active correlation ID.");
+            throw new RpcProtocolException("The RPC peer reused an active incoming correlation ID.");
         }
 
         var sequence = 0u;
@@ -453,9 +467,10 @@ public sealed class RpcConnection : IAsyncDisposable
                         RpcFrameKind.StreamChunk,
                         frame.Header.OperationId,
                         frame.Header.CorrelationId,
-                        sequence++,
+                        sequence,
                         payload.ToArray()),
                     cancellationToken).ConfigureAwait(false);
+                sequence++;
                 sentChunk = true;
             }
 
@@ -524,13 +539,13 @@ public sealed class RpcConnection : IAsyncDisposable
         }
         finally
         {
-            _operations.RemoveServer(frame.Header.CorrelationId, requestCancellation);
+            _operations.RemoveIncoming(frame.Header.CorrelationId, requestCancellation);
         }
     }
 
     private ValueTask DispatchStreamChunkAsync(RpcFrame frame, CancellationToken cancellationToken)
     {
-        if (!_operations.TryGetClient(frame.Header.CorrelationId, out var operation))
+        if (!_operations.TryGetOutgoing(frame.Header.CorrelationId, out var operation))
         {
             return ValueTask.CompletedTask;
         }
@@ -546,7 +561,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
     private ValueTask DispatchStreamEndAsync(RpcFrame frame, CancellationToken cancellationToken)
     {
-        if (!_operations.TryGetClient(frame.Header.CorrelationId, out var operation))
+        if (!_operations.TryGetOutgoing(frame.Header.CorrelationId, out var operation))
         {
             return ValueTask.CompletedTask;
         }
@@ -606,7 +621,7 @@ public sealed class RpcConnection : IAsyncDisposable
         }
     }
 
-    private void CancelClientOperation(PendingOperation operation)
+    private void CancelOutgoingOperation(PendingOperation operation)
     {
         if (operation.TryCancel())
         {
@@ -668,11 +683,6 @@ public sealed class RpcConnection : IAsyncDisposable
     private void EnsureRequestReady(uint operationId)
     {
         EnsureStarted();
-        if (IsServer)
-        {
-            throw new InvalidOperationException("The server endpoint does not initiate RPC requests.");
-        }
-
         if (_options.RequireHandshake
             && !IsHandshakeCompleted
             && operationId != RpcProtocolConstants.HandshakeOperationId)
@@ -684,11 +694,6 @@ public sealed class RpcConnection : IAsyncDisposable
     private void EnsureNotificationReady()
     {
         EnsureStarted();
-        if (!IsServer)
-        {
-            throw new InvalidOperationException("Only the server endpoint sends RPC notifications.");
-        }
-
         if (_options.RequireHandshake && !IsHandshakeCompleted)
         {
             throw new InvalidOperationException("The RPC handshake must complete before sending notifications.");
@@ -729,7 +734,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
         _lifetime.Cancel();
         _transport.Complete(exception);
-        _operations.FailClientOperations(exception ?? new EndOfStreamException("The RPC peer disconnected."));
+        _operations.FailOutgoingOperations(exception ?? new EndOfStreamException("The RPC peer disconnected."));
     }
 
     private async Task DisposeCoreAsync()
@@ -755,6 +760,18 @@ public sealed class RpcConnection : IAsyncDisposable
         }
 
         _completion.TrySetResult();
+        RpcSafeHandleReleaseQueue? safeHandleReleaseQueue;
+        lock (_resourceGate)
+        {
+            _isResourceQueueClosed = true;
+            safeHandleReleaseQueue = _safeHandleReleaseQueue;
+        }
+
+        if (safeHandleReleaseQueue is not null)
+        {
+            await safeHandleReleaseQueue.Completion.ConfigureAwait(false);
+        }
+
         IsDisposed.FlipIfFalse();
         await _externalCancellationRegistration.DisposeAsync().ConfigureAwait(false);
         _lifetime.Dispose();
@@ -762,7 +779,7 @@ public sealed class RpcConnection : IAsyncDisposable
     }
 
     /// <summary>Owns byte-stream framing and the single bounded FIFO writer.</summary>
-    private sealed class FrameTransport(Stream stream, bool isServer, RpcConnectionOptions options) : IAsyncDisposable
+    private sealed class FrameTransport(Stream stream, RpcConnectionOptions options) : IAsyncDisposable
     {
         public Task Completion
         {
@@ -786,7 +803,6 @@ public sealed class RpcConnection : IAsyncDisposable
                 AllowSynchronousContinuations = false,
             });
 
-        private int _queuedPayloadBytes;
         private Task? _readerTask;
         private Task? _writerTask;
 
@@ -804,22 +820,7 @@ public sealed class RpcConnection : IAsyncDisposable
         public async ValueTask EnqueueAsync(OutboundFrame frame, CancellationToken cancellationToken)
         {
             ValidateOutboundPayload(frame);
-            var queuedBytes = Interlocked.Add(ref _queuedPayloadBytes, frame.Payload.Length);
-            if (queuedBytes > options.MaximumQueuedPayloadBytes)
-            {
-                Interlocked.Add(ref _queuedPayloadBytes, -frame.Payload.Length);
-                throw new RpcProtocolException("The RPC outbound payload queue is full.");
-            }
-
-            try
-            {
-                await _outbound.Writer.WriteAsync(frame, cancellationToken).ConfigureAwait(false);
-            }
-            catch
-            {
-                Interlocked.Add(ref _queuedPayloadBytes, -frame.Payload.Length);
-                throw;
-            }
+            await _outbound.Writer.WriteAsync(frame, cancellationToken).ConfigureAwait(false);
         }
 
         public void TryEnqueue(OutboundFrame frame)
@@ -892,7 +893,6 @@ public sealed class RpcConnection : IAsyncDisposable
                     }
 
                     await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    Interlocked.Add(ref _queuedPayloadBytes, -frame.Payload.Length);
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -932,19 +932,6 @@ public sealed class RpcConnection : IAsyncDisposable
             if (header.Flags != RpcFrameFlags.None)
             {
                 throw new RpcProtocolException("RPC frame flags are reserved and must be zero.");
-            }
-
-            switch (header.Kind)
-            {
-                case RpcFrameKind.Request when !isServer:
-                case RpcFrameKind.Cancel when !isServer:
-                    throw new RpcProtocolException("The RPC client received a client-to-server frame.");
-                case RpcFrameKind.Response when isServer:
-                case RpcFrameKind.Error when isServer:
-                case RpcFrameKind.Notification when isServer:
-                case RpcFrameKind.StreamChunk when isServer:
-                case RpcFrameKind.StreamEnd when isServer:
-                    throw new RpcProtocolException("The RPC server received a server-to-client frame.");
             }
 
             if (header.Kind is RpcFrameKind.Request or RpcFrameKind.Response or
@@ -1009,24 +996,23 @@ public sealed class RpcConnection : IAsyncDisposable
     private sealed class Router
     {
         private readonly Lock _dispatchGate = new();
-        private readonly Lock _notificationGate = new();
+        private readonly Lock _handlerGate = new();
         private readonly HashSet<Task> _dispatches = [];
         private readonly Dictionary<uint, RpcNotificationHandler> _notifications = [];
-        // Request and stream contracts are bound before Start. Main-side product
-        // proxies bind their notification contracts after the coordinator has
-        // authenticated and published a connection, so notification registration
-        // has one small synchronization boundary with reader dispatch.
         private readonly Dictionary<uint, RpcRequestHandler> _requests = [];
         private readonly Dictionary<uint, RpcStreamHandler> _streams = [];
 
         public void RegisterRequest(uint operationId, RpcRequestHandler handler)
         {
-            _requests.Add(operationId, handler);
+            lock (_handlerGate)
+            {
+                _requests.Add(operationId, handler);
+            }
         }
 
         public void RegisterNotification(uint operationId, RpcNotificationHandler handler)
         {
-            lock (_notificationGate)
+            lock (_handlerGate)
             {
                 _notifications.Add(operationId, handler);
             }
@@ -1034,17 +1020,23 @@ public sealed class RpcConnection : IAsyncDisposable
 
         public void RegisterStream(uint operationId, RpcStreamHandler handler)
         {
-            _streams.Add(operationId, handler);
+            lock (_handlerGate)
+            {
+                _streams.Add(operationId, handler);
+            }
         }
 
         public bool TryGetRequest(uint operationId, [NotNullWhen(true)] out RpcRequestHandler? handler)
         {
-            return _requests.TryGetValue(operationId, out handler);
+            lock (_handlerGate)
+            {
+                return _requests.TryGetValue(operationId, out handler);
+            }
         }
 
         public bool TryGetNotification(uint operationId, [NotNullWhen(true)] out RpcNotificationHandler? handler)
         {
-            lock (_notificationGate)
+            lock (_handlerGate)
             {
                 return _notifications.TryGetValue(operationId, out handler);
             }
@@ -1052,7 +1044,10 @@ public sealed class RpcConnection : IAsyncDisposable
 
         public bool TryGetStream(uint operationId, [NotNullWhen(true)] out RpcStreamHandler? handler)
         {
-            return _streams.TryGetValue(operationId, out handler);
+            lock (_handlerGate)
+            {
+                return _streams.TryGetValue(operationId, out handler);
+            }
         }
 
         public void Track(ValueTask dispatch, Action<Exception> failed)
@@ -1112,11 +1107,11 @@ public sealed class RpcConnection : IAsyncDisposable
     /// <summary>Owns correlation IDs and both sides' cancellable operation state.</summary>
     private sealed class OperationRegistry
     {
-        // Client completion, reader dispatch, cancellation, and disposal may touch
+        // Local completion, reader dispatch, cancellation, and disposal may touch
         // operation lifetime concurrently, so these two maps share one small lock.
-        private readonly Dictionary<ulong, PendingOperation> _client = [];
+        private readonly Dictionary<ulong, PendingOperation> _outgoing = [];
         private readonly Lock _gate = new();
-        private readonly Dictionary<ulong, CancellationTokenSource> _server = [];
+        private readonly Dictionary<ulong, CancellationTokenSource> _incoming = [];
         private ulong _nextCorrelationId;
 
         public PendingResponse AddResponse(uint operationId)
@@ -1124,7 +1119,7 @@ public sealed class RpcConnection : IAsyncDisposable
             lock (_gate)
             {
                 var pending = new PendingResponse(operationId, NextCorrelationId());
-                _client.Add(pending.CorrelationId, pending);
+                _outgoing.Add(pending.CorrelationId, pending);
                 return pending;
             }
         }
@@ -1134,44 +1129,44 @@ public sealed class RpcConnection : IAsyncDisposable
             lock (_gate)
             {
                 var pending = new PendingStream(operationId, NextCorrelationId());
-                _client.Add(pending.CorrelationId, pending);
+                _outgoing.Add(pending.CorrelationId, pending);
                 return pending;
             }
         }
 
-        public bool TryGetClient(ulong correlationId, [NotNullWhen(true)] out PendingOperation? operation)
+        public bool TryGetOutgoing(ulong correlationId, [NotNullWhen(true)] out PendingOperation? operation)
         {
             lock (_gate)
             {
-                return _client.TryGetValue(correlationId, out operation);
+                return _outgoing.TryGetValue(correlationId, out operation);
             }
         }
 
-        public void RemoveClient(ulong correlationId, PendingOperation operation)
+        public void RemoveOutgoing(ulong correlationId, PendingOperation operation)
         {
             lock (_gate)
             {
-                if (_client.TryGetValue(correlationId, out var current) && ReferenceEquals(current, operation))
+                if (_outgoing.TryGetValue(correlationId, out var current) && ReferenceEquals(current, operation))
                 {
-                    _client.Remove(correlationId);
+                    _outgoing.Remove(correlationId);
                 }
             }
         }
 
-        public bool AddServer(ulong correlationId, CancellationTokenSource cancellation)
+        public bool AddIncoming(ulong correlationId, CancellationTokenSource cancellation)
         {
             lock (_gate)
             {
-                return _server.TryAdd(correlationId, cancellation);
+                return _incoming.TryAdd(correlationId, cancellation);
             }
         }
 
-        public async ValueTask CancelServerAsync(ulong correlationId)
+        public async ValueTask CancelIncomingAsync(ulong correlationId)
         {
             CancellationTokenSource? cancellation;
             lock (_gate)
             {
-                _server.TryGetValue(correlationId, out cancellation);
+                _incoming.TryGetValue(correlationId, out cancellation);
             }
 
             if (cancellation is not null)
@@ -1180,24 +1175,24 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        public void RemoveServer(ulong correlationId, CancellationTokenSource cancellation)
+        public void RemoveIncoming(ulong correlationId, CancellationTokenSource cancellation)
         {
             lock (_gate)
             {
-                if (_server.TryGetValue(correlationId, out var current) && ReferenceEquals(current, cancellation))
+                if (_incoming.TryGetValue(correlationId, out var current) && ReferenceEquals(current, cancellation))
                 {
-                    _server.Remove(correlationId);
+                    _incoming.Remove(correlationId);
                 }
             }
         }
 
-        public void FailClientOperations(Exception exception)
+        public void FailOutgoingOperations(Exception exception)
         {
             PendingOperation[] pending;
             lock (_gate)
             {
-                pending = [.. _client.Values];
-                _client.Clear();
+                pending = [.. _outgoing.Values];
+                _outgoing.Clear();
             }
 
             foreach (var operation in pending)

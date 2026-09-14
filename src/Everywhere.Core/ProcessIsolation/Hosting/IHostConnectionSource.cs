@@ -9,6 +9,11 @@ namespace Everywhere.ProcessIsolation.Hosting;
 /// </summary>
 internal interface IHostConnectionSource
 {
+    /// <summary>Returns the current authenticated connection, waiting for its replacement when necessary.</summary>
+    ValueTask<RpcConnection> GetConnectionAsync(
+        ProcessRole role,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Yields the current connection and each later replacement for one role.</summary>
     IAsyncEnumerable<RpcConnection> WatchConnectionsAsync(
         ProcessRole role,

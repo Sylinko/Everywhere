@@ -29,8 +29,9 @@ public sealed partial class ModelsDevPresetModelProvider(
 
     private PresetModelCatalog _catalog = CreateInitialCatalog();
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         RefreshInBackground();
         return Task.CompletedTask;
     }

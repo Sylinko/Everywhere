@@ -8,7 +8,7 @@ namespace Everywhere.Automation;
 /// <remarks>
 /// The shared instance is safe because enumeration and disposal never mutate this type.
 /// </remarks>
-public sealed class EmptyVisualElementEnumerator : IVisualElementEnumerator
+public sealed class EmptyVisualElementEnumerator : IVisualElementCursor
 {
     /// <summary>
     /// Gets the shared empty Enumerator.
@@ -25,9 +25,6 @@ public sealed class EmptyVisualElementEnumerator : IVisualElementEnumerator
 
     /// <inheritdoc />
     public int Index => -1;
-
-    /// <inheritdoc />
-    public bool HasMore => false;
 
     private EmptyVisualElementEnumerator()
     {

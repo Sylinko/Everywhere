@@ -16,6 +16,7 @@ namespace Everywhere.Chat;
 [Union(1, typeof(AssistantChatMessageFunctionCallSpan))]
 [Union(2, typeof(AssistantChatMessageReasoningSpan))]
 [Union(3, typeof(AssistantChatMessageImageSpan))]
+[Union(4, typeof(AssistantChatMessageVisualContextResetSpan))]
 public abstract partial class AssistantChatMessageSpan : ObservableObject
 {
     [Key(0)]
@@ -246,6 +247,8 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class AssistantChatMessageImageSpan : AssistantChatMessageSpan, IHaveChatAttachments
 {
+    // TODO: if we want to support multiple images in a single span, we can change this to a list of FileAttachment and update the Attachments property accordingly.
+    // TODO: video output and other media types can be added in the future as well, just rename `AssistantChatMessageImageSpan` to `AssistantChatMessageMediaSpan` and add a list of media attachments.
     [Key(3)]
     [ObservableProperty]
     public partial FileAttachment? ImageOutput { get; set; }
@@ -254,4 +257,23 @@ public partial class AssistantChatMessageImageSpan : AssistantChatMessageSpan, I
     [JsonIgnore]
     public IEnumerable<ChatAttachment> Attachments =>
         ImageOutput is not null ? new[] { ImageOutput } : Array.Empty<ChatAttachment>();
+}
+
+/// <summary>
+/// Persists a model-visible visual Context reset at its exact boundary within an Assistant invocation.
+/// </summary>
+[MessagePackObject(OnlyIncludeKeyedMembers = true)]
+public sealed partial class AssistantChatMessageVisualContextResetSpan : AssistantChatMessageSpan
+{
+    /// <summary>Gets the reset notice emitted at this boundary.</summary>
+    [Key(3)]
+    public VisualContextResetChatMessage Message { get; }
+
+    /// <summary>Creates a visual Context reset span.</summary>
+    [SerializationConstructor]
+    public AssistantChatMessageVisualContextResetSpan(VisualContextResetChatMessage message)
+    {
+        Message = message;
+        FinishedAt = CreatedAt;
+    }
 }

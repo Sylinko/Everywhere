@@ -25,8 +25,10 @@ public sealed class AssistantCatalogSynchronizer(
     private INotifyCollectionChanged? _collection;
     private int _disposeState;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         settings.Model.PropertyChanged += HandleModelSettingsChanged;
         presetModels.CatalogChanged += HandleCatalogChanged;
         officialModels.CatalogChanged += HandleCatalogChanged;

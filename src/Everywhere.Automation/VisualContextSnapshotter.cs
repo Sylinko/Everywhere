@@ -101,7 +101,7 @@ public static class VisualContextSnapshotter
             {
                 TimeoutException => VisualElementQueryFailureKind.Timeout,
                 NotSupportedException => VisualElementQueryFailureKind.Unsupported,
-                ObjectDisposedException => VisualElementQueryFailureKind.ElementUnavailable,
+                VisualElementProviderException providerException => providerException.Kind,
                 _ => VisualElementQueryFailureKind.ProviderFailure,
             };
 
@@ -268,7 +268,7 @@ public static class VisualContextSnapshotter
                 {
                     observation = Observation.FromResult(element.Query(_structuralQueryRequest));
                 }
-                catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
+                catch (Exception exception) when (VisualElementFailure.IsRecoverable(exception))
                 {
                     observation = Observation.FromException(element, exception, _structuralQueryRequest.RequestedFields);
                 }
@@ -379,7 +379,7 @@ public static class VisualContextSnapshotter
                     structuralObservation.Element,
                     structuralObservation.Element.ReadText(0, maximumTextCharacters));
             }
-            catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
+            catch (Exception exception) when (VisualElementFailure.IsRecoverable(exception))
             {
                 textObservation = Observation.FromException(structuralObservation.Element, exception, VisualElementFields.Text);
             }
@@ -499,7 +499,7 @@ public static class VisualContextSnapshotter
             }
         }
 
-        private void Attach(VisualContextSnapshotNode parent, VisualContextSnapshotNode child)
+        private static void Attach(VisualContextSnapshotNode parent, VisualContextSnapshotNode child)
         {
             if (!parent.TryAddChild(child))
             {
@@ -586,22 +586,12 @@ public static class VisualContextSnapshotter
             VisualContextTraverseDirections direction,
             TraverseDistance distance)
         {
-            if (_shouldStop || !allowedTraverseDirections.HasFlag(direction) || !TryBeginPlatformOperation())
+            if (_shouldStop || !allowedTraverseDirections.HasFlag(direction))
             {
                 return;
             }
 
-            IVisualElementEnumerator enumerator;
-            try
-            {
-                enumerator = previous.Observation.Element.CreateEnumerator(relation, _structuralQueryRequest);
-            }
-            catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
-            {
-                RecordRelationFailure(previous.Observation.Element.Id, relation, exception);
-                return;
-            }
-
+            var enumerator = previous.Observation.Element.CreateEnumerator(relation, _structuralQueryRequest);
             TryAdvanceAndEnqueue(enumerator, previous, relation, distance, direction);
         }
 
@@ -618,22 +608,22 @@ public static class VisualContextSnapshotter
                 return;
             }
 
-            try
+            if (!enumerator.MoveNext())
             {
-                if (!enumerator.MoveNext())
-                {
-                    enumerator.Dispose();
-                    return;
-                }
+                enumerator.Dispose();
+                return;
             }
-            catch (Exception exception) when (IsRecoverablePlatformFailure(exception))
+
+            var item = enumerator.Current;
+            if (!item.IsSuccess)
             {
                 enumerator.Dispose();
                 var originElementId = relation.HasValue ? previous.Observation.Element.Id : previous.OriginElementId;
+                var failure = item.Failure ?? throw new InvalidOperationException("A visual relation item must contain either a result or a failure.");
                 RecordRelationFailure(
                     originElementId,
                     relation ?? previous.Relation ?? throw new InvalidOperationException("Relation work must identify its native relation."),
-                    exception);
+                    failure);
                 return;
             }
 
@@ -642,7 +632,7 @@ public static class VisualContextSnapshotter
             var effectiveDirection = direction ?? (effectiveRelation == VisualElementRelation.Child ?
                 VisualContextTraverseDirections.NextSibling :
                 previous.Direction);
-            var observation = Observation.FromResult(enumerator.Current);
+            var observation = Observation.FromResult(item.Result);
             _retention.Retain(observation.Element);
             var isInitialRelationItem = relation.HasValue;
             var directParentId = (effectiveDirection, isInitialRelationItem) switch
@@ -686,15 +676,9 @@ public static class VisualContextSnapshotter
                     pendingParentAnchorId));
         }
 
-        private void RecordRelationFailure(string originElementId, VisualElementRelation relation, Exception exception)
+        private void RecordRelationFailure(string originElementId, VisualElementRelation relation, VisualElementQueryFailure failure)
         {
-            var failureKind = exception switch
-            {
-                TimeoutException => VisualElementQueryFailureKind.Timeout,
-                NotSupportedException => VisualElementQueryFailureKind.Unsupported,
-                ObjectDisposedException => VisualElementQueryFailureKind.ElementUnavailable,
-                _ => VisualElementQueryFailureKind.ProviderFailure,
-            };
+            var failureKind = failure.Kind;
             var status = failureKind switch
             {
                 VisualElementQueryFailureKind.Timeout => $"{relation} enumeration timed out",
@@ -802,9 +786,6 @@ public static class VisualContextSnapshotter
             VisualElementType.Image or VisualElementType.ScrollBar => 0.5f,
             _ => 1.0f,
         };
-
-        private static bool IsRecoverablePlatformFailure(Exception exception) =>
-            exception is TimeoutException or NotSupportedException or InvalidOperationException;
 
         private static bool IsInteractive(VisualElementType type, VisualElementStates states)
         {

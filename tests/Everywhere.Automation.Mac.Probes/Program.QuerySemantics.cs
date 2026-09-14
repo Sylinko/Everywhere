@@ -60,11 +60,12 @@ public static partial class Program
             do
             {
                 using var parent = directWindow.Element.CreateEnumerator(VisualElementRelation.Parent, screenRequest);
-                parentCount = parent.Count;
-                if (parentCount == 1 && parent.HasMore && parent.MoveNext())
+                if (parent.MoveNext() && parent.Current.IsSuccess)
                 {
-                    projectedParent = parent.Current;
-                    Require(!parent.HasMore && !parent.MoveNext(), "The AXWindow enumerated more than one projected Screen parent.");
+                    parentCount = parent.Count;
+                    projectedParent = parent.Current.Result;
+                    Require(parentCount == 1, $"The AXWindow reported {parentCount} projected Screen parents.");
+                    Require(!parent.MoveNext(), "The AXWindow enumerated more than one projected Screen parent.");
                     break;
                 }
 
@@ -77,15 +78,16 @@ public static partial class Program
 
             using (var children = directWindow.Element.CreateEnumerator(VisualElementRelation.Child, identityRequest))
             {
-                Require(children.HasMore && children.MoveNext(), "The controlled AXWindow did not expose its native AX descendants.");
-                Require(children.Current.Snapshot.Type != VisualElementType.TopLevel, "An AXWindow child was incorrectly projected as another top-level element.");
+                Require(children.MoveNext(), "The controlled AXWindow did not expose its native AX descendants.");
+                var child = RequireCurrentResult(children, "Enumerating the controlled AXWindow's descendants");
+                Require(child.Snapshot.Type != VisualElementType.TopLevel, "An AXWindow child was incorrectly projected as another top-level element.");
             }
 
             var descendantWindowHandleRequest = new VisualElementQueryRequest(VisualElementFields.Type | VisualElementFields.NativeWindowHandle, 0);
             using (var children = directWindow.Element.CreateEnumerator(VisualElementRelation.Child, descendantWindowHandleRequest))
             {
-                Require(children.HasMore && children.MoveNext(), "The controlled AXWindow did not expose a descendant for NativeWindowHandle validation.");
-                var descendant = children.Current;
+                Require(children.MoveNext(), "The controlled AXWindow did not expose a descendant for NativeWindowHandle validation.");
+                var descendant = RequireCurrentResult(children, "Enumerating a descendant for NativeWindowHandle validation");
                 Require(descendant.IsSuccess, "A non-window AX descendant returned a provider failure while declining NativeWindowHandle.");
                 Require(descendant.Snapshot.Type != VisualElementType.TopLevel, "The NativeWindowHandle descendant check unexpectedly returned an AXWindow.");
                 Require(descendant.Snapshot.NativeWindowHandle is null, "A non-window AX descendant inherited its enclosing Quartz window identifier.");
@@ -97,18 +99,18 @@ public static partial class Program
             var observedScreenWindowCount = 0;
             using (var children = containingScreen.Element.CreateEnumerator(VisualElementRelation.Child, enumerationRequest))
             {
-                while (children.HasMore)
+                while (children.MoveNext())
                 {
-                    Require(children.MoveNext(), "Screen.Children reported lookahead but did not advance.");
+                    var child = RequireCurrentResult(children, "Enumerating Screen children");
                     observedScreenWindowCount++;
-                    Require(children.Current.Snapshot.Type == VisualElementType.TopLevel, "Screen.Children returned a non-AXWindow element.");
-                    if (children.Current.Snapshot.NativeWindowHandle != nativeWindowHandle)
+                    Require(child.Snapshot.Type == VisualElementType.TopLevel, "Screen.Children returned a non-AXWindow element.");
+                    if (child.Snapshot.NativeWindowHandle != nativeWindowHandle)
                     {
                         continue;
                     }
 
                     didScreenContainWindow = true;
-                    Require(ReferenceEquals(children.Current.Element, directWindow.Element), "Screen.Children did not reuse the canonical controlled AXWindow.");
+                    Require(ReferenceEquals(child.Element, directWindow.Element), "Screen.Children did not reuse the canonical controlled AXWindow.");
                 }
             }
 
@@ -158,7 +160,7 @@ public static partial class Program
         foreach (var relation in Enum.GetValues<VisualElementRelation>())
         {
             using var enumerator = element.CreateEnumerator(relation, request);
-            if (enumerator.Count != 0 || enumerator.HasMore || enumerator.MoveNext())
+            if (enumerator.MoveNext() || enumerator.Count != 0)
             {
                 return false;
             }

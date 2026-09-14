@@ -103,7 +103,7 @@ public sealed class UIAutomationVisualElement(
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(
+    protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
         VisualElementQueryRequest request)
     {
@@ -189,7 +189,7 @@ public sealed class UIAutomationVisualElement(
         };
     }
 
-    private IVisualElementEnumerator CreateTopLevelWindowSiblingEnumerator(
+    private IVisualElementCursor CreateTopLevelWindowSiblingEnumerator(
         VisualElementRelation relation,
         VisualElementQueryRequest request)
     {
@@ -437,9 +437,22 @@ public sealed class UIAutomationVisualElement(
                 throw new InvalidOperationException("Failed to find the top-level window for the visual element.");
             }
 
-            retention.Retain(parents.Current.Element);
-            current = parents.Current;
+            var parentItem = parents.Current;
+            if (!parentItem.IsSuccess)
+            {
+                throw parentItem.Failure?.Exception ?? new InvalidOperationException("Failed to enumerate the visual element's parent.");
+            }
+
+            retention.Retain(parentItem.Result.Element);
+            current = parentItem.Result;
         }
+    }
+
+    /// <inheritdoc />
+    protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
+    {
+        using var element = AutomationElement.Acquire();
+        return Backend.GetOrCreateUIAutomationElement(destinationRetention, in element);
     }
 
     /// <inheritdoc />
@@ -469,7 +482,7 @@ public sealed class UIAutomationVisualElement(
         return (style & (int)WINDOW_STYLE.WS_CHILD) == 0;
     }
 
-    private sealed class UIAutomationVisualElementEnumerator : IVisualElementEnumerator
+    private sealed class UIAutomationVisualElementEnumerator : IVisualElementCursor
     {
         public VisualElementQueryResult Current
         {
@@ -482,14 +495,7 @@ public sealed class UIAutomationVisualElement(
 
         object IEnumerator.Current => Current;
 
-        public int Count
-        {
-            get
-            {
-                ThrowIfUnavailable();
-                return -1;
-            }
-        }
+        public int Count => -1;
 
         public int Index { get; private set; } = -1;
 
@@ -515,16 +521,6 @@ public sealed class UIAutomationVisualElement(
             _queryRequest = queryRequest;
             _retention = origin.Context.CreateRetention();
             _retention.Retain(origin);
-        }
-
-        public bool HasMore
-        {
-            get
-            {
-                ThrowIfUnavailable();
-                EnsureLookahead();
-                return _lookahead is not null;
-            }
         }
 
         public bool MoveNext()

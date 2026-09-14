@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Everywhere.ProcessIsolation;
+using Everywhere.ProcessIsolation.Roles;
 
 namespace Everywhere.Automation;
 
 /// <summary>
 /// Represents the platform-neutral visual identity, lifetime, and Agent-target domain associated with one owning chat context.
 /// </summary>
+[InHostProcess(ProcessRole.Automation)]
 public sealed class VisualContext : IDisposable
 {
     /// <summary>
@@ -17,6 +20,11 @@ public sealed class VisualContext : IDisposable
     /// Gets the default soft maximum number of distinct Agent targets retained by completed turns.
     /// </summary>
     public const int DefaultMaximumRetainedTargetCount = 2048;
+
+    /// <summary>
+    /// Gets the globally unique identity of this Context instance.
+    /// </summary>
+    public Guid Id { get; } = Guid.CreateVersion7();
 
     /// <summary>
     /// Gets the number of distinct Agent identifiers retained by the current and historical turns.
@@ -65,6 +73,7 @@ public sealed class VisualContext : IDisposable
     {
         ArgumentOutOfRangeException.ThrowIfNegative(maximumRetainedTurnCount);
         ArgumentOutOfRangeException.ThrowIfNegative(maximumRetainedTargetCount);
+
         MaximumRetainedTurnCount = maximumRetainedTurnCount;
         MaximumRetainedTargetCount = maximumRetainedTargetCount;
     }

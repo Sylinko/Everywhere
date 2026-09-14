@@ -12,6 +12,7 @@ using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Watchdog;
@@ -48,7 +49,7 @@ public static class Program
         {
             return await (role is ProcessRole.Input ?
                 ProcessRoleHostRunner.RunAsync(role, args, static () => new WindowsInputHostSession()) :
-                ProcessRoleHostRunner.RunAsync(role, args)).ConfigureAwait(false);
+                RunAutomationHostAsync(args)).ConfigureAwait(false);
         }
 
         await using var entrance = Entrance.Initialize(args);
@@ -58,6 +59,29 @@ public static class Program
         }
 
         return await RunMainAsync(args).ConfigureAwait(false);
+    }
+
+    private static Task<int> RunAutomationHostAsync(string[] args) => Task.Run(
+        async () =>
+        {
+            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
+            {
+                throw new InvalidOperationException("The Windows Automation Host must run on an MTA thread.");
+            }
+
+            return await ProcessRoleHostRunner
+                .RunAsync(ProcessRole.Automation, args, CreateAutomationHostSession)
+                .ConfigureAwait(false);
+        });
+
+    private static IProcessRoleSession CreateAutomationHostSession()
+    {
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
+        {
+            throw new InvalidOperationException("The Windows Automation Host must initialize UI Automation on an MTA thread.");
+        }
+
+        return new AutomationHostSession(new WindowsVisualElementBackend(), new WindowsVisualPickerResolver());
     }
 
     private static async Task<int> RunMainAsync(string[] args)

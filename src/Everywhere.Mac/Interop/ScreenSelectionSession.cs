@@ -90,7 +90,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 (int)frame.Height);
             _allScreenBounds = _allScreenBounds.Union(bounds);
             var maskWindow = new ScreenSelectionMaskWindow(bounds);
-            SetNsWindowPlacement(maskWindow, frame);
+            SetNsWindowPlacement(maskWindow, frame, NSWindowLevel.ScreenSaver + 1);
             windowHelper.SetHitTestVisible(maskWindow, false);
             MaskWindows[i] = maskWindow;
         }
@@ -99,13 +99,13 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
         ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
         windowHelper.SetHitTestVisible(ToolTipWindow, false);
-        SetNsWindowPlacement(ToolTipWindow, null);
+        SetNsWindowPlacement(ToolTipWindow, null, NSWindowLevel.ScreenSaver + 2);
 
         // Since the window is full screen and transparent, we need to listen to keyboard events globally.
         CGEventListener.Default.EventReceived += HandleCGEvent;
     }
 
-    private static void SetNsWindowPlacement(Window window, CGRect? frame)
+    private static void SetNsWindowPlacement(Window window, CGRect? frame, NSWindowLevel level)
     {
         var handle = window.TryGetPlatformHandle()?.Handle ?? 0;
         if (handle == 0) return;
@@ -113,7 +113,8 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         using var nsWindow = Runtime.GetNSObject<NSWindow>(handle);
         if (nsWindow is null) return;
 
-        nsWindow.Level = NSWindowLevel.ScreenSaver; // above all other windows
+        // Keep the input window below the masks and the tooltip above them, independently of activation order.
+        nsWindow.Level = level;
         if (frame.HasValue) nsWindow.SetFrame(frame.Value, true);
         nsWindow.Handle = 0;
     }
@@ -124,7 +125,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
         // Place window to cover all screens
         // We must set after opened otherwise macOS may ignore the frame set in constructor
-        SetNsWindowPlacement(this, _allScreenFrame);
+        SetNsWindowPlacement(this, _allScreenFrame, NSWindowLevel.ScreenSaver);
 
         foreach (var maskWindow in MaskWindows) maskWindow.Show(this);
         ToolTipWindow.Show(this);
@@ -339,9 +340,10 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             case ScreenSelectionMode.Screen:
             {
                 var pixelPoint = new PixelPoint((int)point.X, (int)point.Y);
+                var locator = VisualElementLocator.FromPoint(pixelPoint);
                 PickingElement = _visualElementBackend.Query(
                     _pickingRetention,
-                    VisualElementLocator.FromPoint(pixelPoint),
+                    locator,
                     VisualElementResolution.Screen,
                     PickingQueryRequest);
                 if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
@@ -361,9 +363,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             }
         }
 
-        foreach (var maskWindow in MaskWindows) maskWindow.SetMask(maskRect);
-        ToolTipWindow.ToolTip.Element = PickingElement;
-        UpdateToolTipInfo(maskRect);
+        ApplyPickingSnapshot(PickingElement?.Snapshot, maskRect);
 
         VisualElementQueryResult? GetElementAtPoint(VisualElementResolution resolution)
         {
@@ -387,6 +387,19 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         }
     }
 
+    protected void ApplyPickingSnapshot(VisualElementSnapshot? snapshot)
+    {
+        var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
+        ApplyPickingSnapshot(snapshot, bounds);
+    }
+
+    private void ApplyPickingSnapshot(VisualElementSnapshot? snapshot, PixelRect bounds)
+    {
+        foreach (var maskWindow in MaskWindows) maskWindow.SetMask(bounds);
+        ToolTipWindow.ToolTip.Snapshot = snapshot;
+        UpdateToolTipInfo(bounds);
+    }
+
     protected virtual void OnLeftButtonDown() { }
 
     /// <summary>
@@ -394,12 +407,6 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     /// </summary>
     /// <returns>if true, the picking session will end and the window will close.</returns>
     protected virtual bool OnLeftButtonUp() => true;
-
-    protected VisualElementQueryResult? RetainPickingElement(VisualElementRetention retention)
-    {
-        if (PickingElement is { } result) retention.Retain(result.Element);
-        return PickingElement;
-    }
 
     protected void UpdateToolTipInfo(PixelRect rect)
     {

@@ -247,7 +247,7 @@ The Mock backend must support:
 
 - lazy parent, child, and sibling enumeration;
 - known and unknown counts;
-- deterministic `HasMore` and lookahead behavior;
+- deferred cursor creation and deterministic `MoveNext` behavior;
 - operation counters;
 - bounded text reads;
 - unavailable and unsupported fields;
@@ -478,7 +478,7 @@ Mock tests may assert exact logical traversal and operation counts. Real-process
 - every replacement element returned to test code is already owned by exactly one `VisualContext`;
 - Element and Composite capabilities remain honest;
 - partial results retain bounded status for limits, timeouts, unavailable fields, and incomplete enumeration;
-- a relation timeout does not become an empty successful relation or `HasMore = false`;
+- a relation timeout becomes one terminal failure item rather than empty successful completion;
 - a timed-out operation is attempted once and is not automatically retried;
 - repeated same-provider failures may suppress additional calls to that provider for the current Snapshot and add root status;
 - unrelated providers and roots remain eligible after one provider fails;

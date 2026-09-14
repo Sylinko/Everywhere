@@ -217,7 +217,7 @@ public static partial class Program
         using var children = screen.CreateEnumerator(VisualElementRelation.Child, request);
         while (children.MoveNext())
         {
-            var snapshot = children.Current.Snapshot;
+            var snapshot = RequireCurrentResult(children, "Enumerating provider windows").Snapshot;
             if (snapshot.ProcessId == providerProcessId && snapshot.NativeWindowHandle is > 0 and var windowId)
             {
                 result.Add(checked((uint)windowId));
@@ -232,10 +232,9 @@ public static partial class Program
         try
         {
             using var parent = element.CreateEnumerator(VisualElementRelation.Parent, request);
-            var count = parent.Count;
-            var hasMore = parent.HasMore;
             var didMoveNext = parent.MoveNext();
-            return new RelationObservation(false, null, count, hasMore, didMoveNext);
+            var failureKind = didMoveNext && !parent.Current.IsSuccess ? parent.Current.Failure?.Kind : null;
+            return new RelationObservation(false, null, parent.Count, didMoveNext, failureKind);
         }
         catch (Exception exception)
         {
@@ -378,8 +377,8 @@ public static partial class Program
         bool DidThrow,
         string? ExceptionType,
         int? Count,
-        bool? HasMore,
-        bool? DidMoveNext);
+        bool? DidMoveNext,
+        VisualElementQueryFailureKind? FailureKind);
 
     private sealed record RawAXWindowObservation(
         uint WindowId,

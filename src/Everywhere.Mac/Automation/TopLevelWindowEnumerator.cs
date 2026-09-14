@@ -7,27 +7,20 @@ namespace Everywhere.Mac.Automation;
 /// <summary>
 /// Enumerates Context-owned AXWindow elements in one operation-local Quartz Z-order observation.
 /// </summary>
-public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
+public sealed class TopLevelWindowEnumerator : IVisualElementCursor
 {
     public VisualElementQueryResult Current
     {
         get
         {
-            ThrowIfUnavailable();
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
             return _current ?? throw new InvalidOperationException("The Enumerator has no current item.");
         }
     }
 
     object IEnumerator.Current => Current;
 
-    public int Count
-    {
-        get
-        {
-            ThrowIfUnavailable();
-            return -1;
-        }
-    }
+    public int Count => -1;
 
     public int Index { get; private set; } = -1;
 
@@ -67,7 +60,7 @@ public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         _retention = context.CreateRetention();
     }
 
-    public static IVisualElementEnumerator CreateChildren(
+    public static IVisualElementCursor CreateChildren(
         VisualContext context,
         MacVisualElementBackend backend,
         CGDisplayTopology topology,
@@ -78,7 +71,7 @@ public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         return new TopLevelWindowEnumerator(context, backend, topology, windowZOrder, displayId, 0, 1, queryRequest);
     }
 
-    public static IVisualElementEnumerator CreateSiblings(
+    public static IVisualElementCursor CreateSiblings(
         VisualContext context,
         MacVisualElementBackend backend,
         CGDisplayTopology topology,
@@ -121,16 +114,6 @@ public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
             originIndex + direction,
             direction,
             queryRequest);
-    }
-
-    public bool HasMore
-    {
-        get
-        {
-            ThrowIfUnavailable();
-            EnsureLookahead();
-            return _lookahead is not null;
-        }
     }
 
     public bool MoveNext()
@@ -197,13 +180,16 @@ public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
                 continue;
             }
 
-            using var nativeWindow = _windowResolver.Resolve(window);
-            if (nativeWindow is null)
+            try
             {
-                continue;
+                using var nativeWindow = _windowResolver.Resolve(window);
+                if (nativeWindow is null) continue;
+                return _backend.GetOrCreateAXElement(_retention, nativeWindow).Query(_queryRequest);
             }
-
-            return _backend.GetOrCreateAXElement(_retention, nativeWindow).Query(_queryRequest);
+            catch (AXException exception) when (exception.Error == AXError.InvalidUIElement)
+            {
+                // The Quartz cursor has already advanced, so this vanished AX window can be skipped safely.
+            }
         }
 
         return null;
@@ -214,7 +200,9 @@ public sealed class TopLevelWindowEnumerator : IVisualElementEnumerator
         ObjectDisposedException.ThrowIf(_isDisposed, this);
         if (CGDisplayTopology.Current.Generation != _topology.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Enumerator was created.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Enumerator was created.");
         }
     }
 }

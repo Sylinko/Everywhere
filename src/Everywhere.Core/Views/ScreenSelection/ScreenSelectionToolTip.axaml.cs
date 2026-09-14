@@ -46,9 +46,15 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         set => SetValue(SizeInfoProperty, value);
     }
 
-    public VisualElementQueryResult? Element
+    /// <summary>Gets or sets the current scalar picker observation.</summary>
+    public VisualElementSnapshot? Snapshot
     {
-        set => Header = GetElementDescription(value);
+        get;
+        set
+        {
+            field = value;
+            Header = GetElementDescription(value);
+        }
     }
 
     private readonly Dictionary<int, string> _processNameCache = new();
@@ -63,14 +69,13 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         }
     }
 
-    private string? GetElementDescription(VisualElementQueryResult? queryResult)
+    private string? GetElementDescription(VisualElementSnapshot? snapshot)
     {
-        if (queryResult is null) return LocaleResolver.Common_None;
+        if (snapshot is not { } observation) return LocaleResolver.Common_None;
 
-        var snapshot = queryResult.Snapshot;
         DynamicLocaleKey key;
-        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{snapshot.Type ?? VisualElementType.Unknown}");
-        var processId = snapshot.ProcessId.GetValueOrDefault(-1);
+        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{observation.Type ?? VisualElementType.Unknown}");
+        var processId = observation.ProcessId.GetValueOrDefault(-1);
         if (processId > 0)
         {
             if (!_processNameCache.TryGetValue(processId, out var processName))
