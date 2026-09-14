@@ -214,20 +214,19 @@ public sealed class AdversarialSnapshotTests
             VisualElementTextReadResult.FromSuccess(id == 3 ? "Useful content" : string.Empty, offset, maxCharacters);
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
         protected override void ReleaseCore() => ReleaseCount++;
-        protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
         {
             Assert.That(relation, Is.EqualTo(VisualElementRelation.Child));
             EnumerationCount++;
             return new GraphEnumerator(this, Children.GetEnumerator(), request);
         }
 
-        private sealed class GraphEnumerator(GraphElement origin, IEnumerator<GraphElement> items, VisualElementQueryRequest request) : IVisualElementEnumerator
+        private sealed class GraphEnumerator(GraphElement origin, IEnumerator<GraphElement> items, VisualElementQueryRequest request) : IVisualElementCursor
         {
             public VisualElementQueryResult Current => items.Current.Query(request);
             object IEnumerator.Current => Current;
             public int Count => -1;
             public int Index { get; private set; } = -1;
-            public bool HasMore => throw new NotSupportedException();
             public bool MoveNext() { origin.MoveCount++; Index++; return items.MoveNext(); }
             public void Reset() => throw new NotSupportedException();
             public void Dispose() { origin.EnumeratorDisposalCount++; items.Dispose(); }

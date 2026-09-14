@@ -1,10 +1,12 @@
 ﻿using System.Text;
-using ZLinq;
 
 namespace Everywhere.Chat;
 
 public static class ChatContextExporter
 {
+    // TODO: make this a proper export service with DI and support for multiple formats (Markdown, HTML, PDF, etc.)
+    // TODO: add support for exporting attachments (images, files, etc.) and include them in the exported file or as separate files.
+    // TODO: make it more beautiful and readable with proper formatting, headings, and styling.
     public static async Task ExportAsMarkdown(ChatContext chatContext, Stream outputStream, CancellationToken cancellationToken = default)
     {
         var markdownBuilder = new StringBuilder();
@@ -31,10 +33,7 @@ public static class ChatContextExporter
 
         markdownBuilder.AppendLine("---").AppendLine();
 
-        foreach (var chatMessage in chatContext
-                     .Items
-                     .AsValueEnumerable()
-                     .Select(node => node.Message))
+        foreach (var chatMessage in chatContext.Items.AsValueEnumerable().Select(node => node.Message))
         {
             switch (chatMessage)
             {
@@ -95,7 +94,9 @@ public static class ChatContextExporter
 
                                     foreach (var result in functionCall.Results
                                                  .AsValueEnumerable()
-                                                 .Select(r => r.Result?.ToString())
+                                                 .Select(static result => result.Result is ChatFunctionResult structuredResult ?
+                                                     structuredResult.Value?.ToString() :
+                                                     result.Result?.ToString())
                                                  .Where(r => !r.IsNullOrEmpty()))
                                     {
                                         markdownBuilder

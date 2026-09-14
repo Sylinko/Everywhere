@@ -7,7 +7,7 @@ namespace Everywhere.Automation;
 /// The supplied retention selects the destination <see cref="VisualContext" /> through <see cref="VisualElementRetention.Context" />.
 /// Implementations may own shared native clients, but must not retain contexts, retentions, or elements after a call returns.
 /// </remarks>
-public interface IVisualElementBackend
+public interface IVisualElementBackend : IDisposable
 {
     /// <summary>
     /// Locates and queries one platform element through the requested topological resolution.

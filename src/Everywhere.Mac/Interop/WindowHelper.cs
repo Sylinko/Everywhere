@@ -105,7 +105,7 @@ public sealed class WindowHelper : IWindowHelper
             ~(NSWindowCollectionBehavior.FullScreenPrimary |
                 NSWindowCollectionBehavior.Managed);
 
-        if (window is ScreenSelectionMaskWindow or VisualElementEffectWindow)
+        if (window is VisualElementEffectWindow)
         {
             nativeWindow.Level = NSWindowLevel.ScreenSaver + 1;
         }

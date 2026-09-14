@@ -297,6 +297,18 @@ public static partial class Program
         }
     }
 
+    private static VisualElementQueryResult RequireCurrentResult(IVisualElementEnumerator enumerator, string operation)
+    {
+        var item = enumerator.Current;
+        if (item.IsSuccess)
+        {
+            return item.Result;
+        }
+
+        var failure = item.Failure ?? throw new InvalidOperationException("A visual relation item must contain either a result or a failure.");
+        throw new InvalidOperationException($"{operation} failed with {failure.Kind}.", failure.Exception);
+    }
+
     private static string FormatPointer(nint pointer) => $"0x{pointer:x}";
 
     private static MultipleAttributeCallObservation CopyMultipleAttributes(nint element, NSArray attributes, AXCopyMultipleAttributeOptions options)

@@ -88,10 +88,7 @@ public sealed partial class WindowsScreenSelectionService
                 PInvoke.SetWindowLong((HWND)hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT);
                 PInvoke.SetLayeredWindowAttributes((HWND)hWnd, new COLORREF(0), 254, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
 
-                fixed (char* pStr = "UIA_WindowVisibilityOverridden")
-                {
-                    PInvoke.SetProp((HWND)hWnd, new PCWSTR(pStr), new HANDLE(2));
-                }
+                SetUiaWindowVisibilityOverridden((HWND)hWnd);
             }
 
             // Collect all overlay HWNDs so PickElement can skip them when looking for the window behind.
@@ -102,7 +99,10 @@ public sealed partial class WindowsScreenSelectionService
             foreach (var w in MaskWindows.Cast<Window>().Append(this).Append(ToolTipWindow))
             {
                 if (w.TryGetPlatformHandle()?.Handle is { } h and not 0)
+                {
                     _ownWindows.Add((HWND)h);
+                    SetUiaWindowVisibilityOverridden((HWND)h);
+                }
             }
 
             // Install a low-level keyboard hook as a safety net for focus-loss scenarios
@@ -276,6 +276,14 @@ public sealed partial class WindowsScreenSelectionService
             return result;
         }
 
+        private static unsafe void SetUiaWindowVisibilityOverridden(HWND window)
+        {
+            fixed (char* propertyName = "UIA_WindowVisibilityOverridden")
+            {
+                PInvoke.SetProp(window, new PCWSTR(propertyName), new HANDLE(2));
+            }
+        }
+
         private void Cancel()
         {
             OnCanceled();
@@ -308,7 +316,8 @@ public sealed partial class WindowsScreenSelectionService
                     var screen = Screens.All.FirstOrDefault(s => s.Bounds.Contains(pixelPoint));
                     if (screen == null) break;
 
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromPoint(pixelPoint), VisualElementResolution.Screen);
+                    var locator = VisualElementLocator.FromPoint(pixelPoint);
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator, VisualElementResolution.Screen);
                     if (PickingElement is not null) maskRect = screen.Bounds;
                     break;
                 }
@@ -320,7 +329,8 @@ public sealed partial class WindowsScreenSelectionService
                     var rootHWnd = PInvoke.GetAncestor(targetHWnd, GET_ANCESTOR_FLAGS.GA_ROOTOWNER);
                     if (rootHWnd.IsNull) break;
 
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromNativeWindow(rootHWnd));
+                    var locator = VisualElementLocator.FromNativeWindow(rootHWnd);
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator, VisualElementResolution.Direct);
                     if (PickingElement == null) break;
 
                     maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
@@ -328,7 +338,8 @@ public sealed partial class WindowsScreenSelectionService
                 }
                 case ScreenSelectionMode.Element:
                 {
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, VisualElementLocator.FromPoint(new PixelPoint(cursorPos.X, cursorPos.Y)));
+                    var locator = VisualElementLocator.FromPoint(new PixelPoint(cursorPos.X, cursorPos.Y));
+                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator, VisualElementResolution.Direct);
 
                     if (PickingElement == null) break;
 
@@ -337,14 +348,19 @@ public sealed partial class WindowsScreenSelectionService
                 }
             }
 
-            foreach (var maskWindow in MaskWindows) maskWindow.SetMask(maskRect);
-            ToolTipWindow.ToolTip.Element = PickingElement;
+            ApplyPickingSnapshot(PickingElement?.Snapshot, maskRect);
         }
 
-        protected VisualElementQueryResult? RetainPickingElement(VisualElementRetention retention)
+        protected void ApplyPickingSnapshot(VisualElementSnapshot? snapshot)
         {
-            if (PickingElement is { } result) retention.Retain(result.Element);
-            return PickingElement;
+            var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
+            ApplyPickingSnapshot(snapshot, bounds);
+        }
+
+        private void ApplyPickingSnapshot(VisualElementSnapshot? snapshot, PixelRect bounds)
+        {
+            foreach (var maskWindow in MaskWindows) maskWindow.SetMask(bounds);
+            ToolTipWindow.ToolTip.Snapshot = snapshot;
         }
 
         /// <summary>

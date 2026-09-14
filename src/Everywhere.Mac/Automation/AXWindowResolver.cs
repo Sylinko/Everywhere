@@ -1,3 +1,4 @@
+using Everywhere.Automation;
 using Everywhere.Mac.Interop;
 
 namespace Everywhere.Mac.Automation;
@@ -29,7 +30,9 @@ public sealed class AXWindowResolver : IDisposable
                 static group => group.Select(static window => window.WindowId).ToHashSet());
         if (_targetWindowIdsByProcess.Count > MaximumProviderCount)
         {
-            throw new InvalidOperationException($"The macOS window observation exceeded the {MaximumProviderCount}-provider safety limit.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ProviderFailure,
+                $"The macOS window observation exceeded the {MaximumProviderCount}-provider safety limit.");
         }
     }
 
@@ -137,7 +140,9 @@ public sealed class AXWindowResolver : IDisposable
 
             if (count > MaximumWindowsPerProvider && remainingWindowIds.Count > 0)
             {
-                throw new InvalidOperationException($"The AX application window list exceeded the {MaximumWindowsPerProvider}-element safety limit before every visible Quartz window could be resolved.");
+                throw new VisualElementProviderException(
+                    VisualElementQueryFailureKind.ProviderFailure,
+                    $"The AX application window list exceeded the {MaximumWindowsPerProvider}-element safety limit before every visible Quartz window could be resolved.");
             }
 
             return result;

@@ -288,7 +288,9 @@ public static class ChatHistoryBuilder
                                     }
 
                                     var resultContent = functionCall.Results.AsValueEnumerable().FirstOrDefault(r => r.CallId == callId);
-                                    if (resultContent?.Result is PromptNode promptNode)
+                                    var persistedResult = resultContent?.Result;
+                                    var modelResult = persistedResult is ChatFunctionResult structuredResult ? structuredResult.Value : persistedResult;
+                                    if (resultContent is not null && modelResult is PromptNode promptNode)
                                     {
                                         // Preserve the node in chat history and render only the temporary
                                         // provider-facing copy, including any declared local token limit.
@@ -303,6 +305,19 @@ public static class ChatHistoryBuilder
                                                 InnerContent = resultContent.InnerContent
                                             });
                                     }
+                                    else if (resultContent is not null && persistedResult is ChatFunctionResult)
+                                    {
+                                        resultItems.Add(
+                                            new FunctionResultContent(
+                                                resultContent.FunctionName,
+                                                resultContent.PluginName,
+                                                resultContent.CallId,
+                                                modelResult)
+                                            {
+                                                Metadata = resultContent.Metadata,
+                                                InnerContent = resultContent.InnerContent
+                                            });
+                                    }
                                     else
                                     {
                                         resultItems.Add(
@@ -312,10 +327,14 @@ public static class ChatHistoryBuilder
                                                 $"This may caused by an error during function execution or user cancellation."));
                                     }
 
-                                    // If the function call result is a ChatAttachment, add it as extra attachment message(s).
-                                    if (resultContent?.Result is ChatAttachment extraToolCallResult)
+                                    // If the function call result owns ChatAttachments, add them as extra attachment message(s).
+                                    if (persistedResult is ChatAttachment extraToolCallResult)
                                     {
                                         extraToolCallResults.Add(extraToolCallResult);
+                                    }
+                                    else if (persistedResult is ChatFunctionResult structuredAttachmentResult)
+                                    {
+                                        extraToolCallResults.AddRange(structuredAttachmentResult.Attachments);
                                     }
                                 }
                             }
@@ -339,6 +358,17 @@ public static class ChatHistoryBuilder
                                 yield return new ChatMessageContent(AuthorRole.User, attachmentItems);
                             }
 
+                            break;
+                        }
+                        case AssistantChatMessageVisualContextResetSpan resetSpan:
+                        {
+                            if (items.Count > 0)
+                            {
+                                yield return new ChatMessageContent(AuthorRole.Assistant, items, metadata: assistantChatMessage.Metadata);
+                                items = [];
+                            }
+
+                            yield return new ChatMessageContent(resetSpan.Message.Role, resetSpan.Message.Content);
                             break;
                         }
                         case AssistantChatMessageReasoningSpan { ReasoningOutput: { Length: > 0 } reasoningOutput }:

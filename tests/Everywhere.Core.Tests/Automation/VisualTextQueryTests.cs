@@ -116,7 +116,7 @@ public sealed class VisualTextQueryTests
             return text is null ? VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null)) : VisualElementTextReadResult.FromSuccess(text, offset, maxCharacters);
         }
 
-        protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) => throw new NotSupportedException();
+        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) => throw new NotSupportedException();
 
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) => Task.FromException<IVisualElementCapture>(new NotSupportedException());
 

@@ -35,6 +35,13 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                 formatter.Serialize(ref writer, promptNode, options);
                 break;
             }
+            case ChatFunctionResult structuredResult:
+            {
+                writer.Write(3);
+                var formatter = options.Resolver.GetFormatterWithVerify<ChatFunctionResult>();
+                formatter.Serialize(ref writer, structuredResult, options);
+                break;
+            }
             default:
             {
                 writer.Write(0);
@@ -78,6 +85,7 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                         0 => reader.ReadString(),
                         1 => options.Resolver.GetFormatterWithVerify<ChatAttachment>().Deserialize(ref reader, options),
                         2 => options.Resolver.GetFormatterWithVerify<PromptNode>().Deserialize(ref reader, options),
+                        3 => options.Resolver.GetFormatterWithVerify<ChatFunctionResult>().Deserialize(ref reader, options),
                         _ => throw new MessagePackSerializationException($"Unknown FunctionResultContent result type '{valueType}'.")
                     };
                     break;

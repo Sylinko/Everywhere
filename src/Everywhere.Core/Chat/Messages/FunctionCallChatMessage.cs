@@ -118,10 +118,6 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         }
     }
 
-    // [Key(11)]
-    // [ObservableProperty]
-    // public partial bool IsExpanded { get; set; } = true;
-
     [IgnoreMember]
     [JsonIgnore]
     public bool IsWaitingForUserInput =>
@@ -131,7 +127,12 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Attachments associated with this action message. Used to provide additional context of a tool call result.
     /// </summary>
     [IgnoreMember]
-    public IEnumerable<ChatAttachment> Attachments => Results.Select(r => r.Result).OfType<ChatAttachment>();
+    public IEnumerable<ChatAttachment> Attachments => Results.SelectMany(static result => result.Result switch
+    {
+        ChatAttachment attachment => [attachment],
+        ChatFunctionResult structuredResult => structuredResult.Attachments,
+        _ => []
+    });
 
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
@@ -213,6 +214,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     {
         ImmutableInterlocked.Update(ref _results, static (results, item) => results.Add(item), result);
         OnPropertyChanged(nameof(Results));
+        OnPropertyChanged(nameof(Attachments));
     }
 
     /// <summary>

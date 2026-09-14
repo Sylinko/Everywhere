@@ -7,6 +7,7 @@ using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Common;
 using Everywhere.Prompting.Documents;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Serialization;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
@@ -55,24 +56,20 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
     public PromptNode? Content { get; set; }
 
     /// <summary>
-    /// Ignore this property during serialization because it should already be converted into prompts and shouldn't appear in history.
+    /// Gets the initial Host observation of the anchored visual element.
     /// </summary>
     [IgnoreMember]
-    public VisualElement? Element { get; }
+    public VisualElementSnapshot? InitialSnapshot => Anchor?.Snapshot;
+
+    /// <summary>Gets the Host-owned pre-publication anchor.</summary>
+    [IgnoreMember]
+    public RemoteVisualAnchor? Anchor { get; private set; }
 
     /// <summary>
-    /// Gets the bounded observation captured when this attachment acquired its element.
+    /// Indicates whether the remote visual anchor belongs to the current Host Context incarnation.
     /// </summary>
     [IgnoreMember]
-    public VisualElementQueryResult? InitialQuery { get; }
-
-    /// <summary>
-    /// Indicates whether the visual element is valid.
-    /// </summary>
-    [IgnoreMember]
-    public bool IsElementValid => Element is not null && _retention is { IsDisposed: false };
-
-    [IgnoreMember] private VisualElementRetention? _retention;
+    public bool IsElementValid => Anchor is { IsClosed: false, Context.IsConnectionClosed: false };
 
     [SerializationConstructor]
     protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
@@ -80,20 +77,18 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
         Icon = icon;
     }
 
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, VisualElementQueryResult? queryResult, VisualElementRetention? retention) : base(headerKey)
+    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, RemoteVisualAnchor anchor) : base(headerKey)
     {
         Icon = icon;
-        Element = queryResult?.Element;
-        InitialQuery = queryResult;
-        _retention = retention;
+        Anchor = anchor;
     }
 
     /// <summary>
-    /// Creates an attachment and assumes ownership of the supplied element retention.
+    /// Creates an attachment and assumes ownership of the remote anchor.
     /// </summary>
-    public static VisualElementAttachment FromVisualElement(VisualElementQueryResult queryResult, VisualElementRetention retention)
+    public static VisualElementAttachment FromRemoteAnchor(RemoteVisualAnchor anchor)
     {
-        var snapshot = queryResult.Snapshot;
+        var snapshot = anchor.Snapshot;
         var elementType = snapshot.Type ?? VisualElementType.Unknown;
         DynamicLocaleKey headerKey;
         var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{elementType}");
@@ -144,14 +139,47 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
                 VisualElementType.Screen => LucideIconKind.Monitor,
                 _ => LucideIconKind.Component
             },
-            queryResult,
-            retention);
+            anchor);
+    }
+
+    /// <summary>Returns a fresh field-selected Host observation of this attachment.</summary>
+    public ValueTask<VisualElementSnapshot> GetElementSnapshotAsync(
+        VisualElementFields requestedFields,
+        int maxTextCharacters = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return Anchor is { } anchor ?
+            anchor.Context.GetElementSnapshotAsync(anchor, requestedFields, maxTextCharacters, cancellationToken) :
+            ValueTask.FromException<VisualElementSnapshot>(new InvalidOperationException("The visual attachment no longer owns a live Host anchor."));
+    }
+
+    /// <summary>Captures the current Host-owned visual element.</summary>
+    public ValueTask<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken = default)
+    {
+        return Anchor is { } anchor ?
+            anchor.Context.CaptureAnchorAsync(anchor, cancellationToken) :
+            ValueTask.FromException<IVisualElementCapture>(new InvalidOperationException("The visual attachment no longer owns a live Host anchor."));
+    }
+
+    internal void ReplaceAnchor(RemoteVisualAnchor source, RemoteVisualAnchor destination)
+    {
+        if (!ReferenceEquals(Anchor, source))
+        {
+            destination.Dispose();
+            throw new InvalidOperationException("The visual attachment changed ownership while its Anchor was moving.");
+        }
+
+        Anchor = destination;
     }
 
     /// <summary>
     /// Releases the attachment's pre-publication ownership of its live element.
     /// </summary>
-    public void Dispose() => DisposeHelper.DisposeToDefault(ref _retention);
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Anchor?.Dispose();
+    }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -170,17 +198,19 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     public string Text { get; }
 
     [SerializationConstructor]
-    private TextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
+    public TextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
     {
         Text = text;
         IsPrimary = true;
     }
 
-    public TextSelectionAttachment(string text, VisualElementQueryResult? queryResult, VisualElementRetention? retention) : base(
+    /// <summary>Creates a selected-text attachment and assumes ownership of its remote anchor.</summary>
+    public TextSelectionAttachment(
+        string text,
+        RemoteVisualAnchor anchor) : base(
         CreateHeaderKey(text),
         LucideIconKind.TextSelect,
-        queryResult,
-        retention)
+        anchor)
     {
         Text = text;
         IsPrimary = true;

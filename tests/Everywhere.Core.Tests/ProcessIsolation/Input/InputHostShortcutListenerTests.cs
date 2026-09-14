@@ -217,6 +217,11 @@ public sealed class InputHostShortcutListenerTests
 
         public void Publish(RpcConnection connection) => _connections.Writer.TryWrite(connection);
 
+        public ValueTask<RpcConnection> GetConnectionAsync(
+            ProcessRole role,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromException<RpcConnection>(new NotSupportedException());
+
         public async IAsyncEnumerable<RpcConnection> WatchConnectionsAsync(
             ProcessRole role,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)

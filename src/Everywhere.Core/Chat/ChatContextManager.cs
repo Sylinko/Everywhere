@@ -9,7 +9,6 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Automation;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;

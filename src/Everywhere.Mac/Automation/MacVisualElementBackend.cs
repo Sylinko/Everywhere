@@ -2,13 +2,17 @@ using System.Globalization;
 using Avalonia;
 using Everywhere.Automation;
 using Everywhere.Mac.Interop;
+using Everywhere.ProcessIsolation;
+using Everywhere.ProcessIsolation.Roles;
+using CGDisplay = Everywhere.Mac.Interop.CGDisplay;
 
 namespace Everywhere.Mac.Automation;
 
 /// <summary>
 /// Owns the process-shared macOS Accessibility entry point and acquires elements in caller-selected visual contexts.
 /// </summary>
-public sealed class MacVisualElementBackend : IVisualElementBackend, IDisposable
+[InHostProcess(ProcessRole.Automation)]
+public sealed class MacVisualElementBackend : IVisualElementBackend
 {
     private const int MaximumTopLevelAncestorDepth = 256;
 
@@ -179,7 +183,7 @@ public sealed class MacVisualElementBackend : IVisualElementBackend, IDisposable
         VisualElementQueryRequest request)
     {
         var topology = CGDisplayTopology.Current;
-        MacDisplay? display;
+        CGDisplay? display;
         switch (locator.Kind)
         {
             case VisualElementLocatorKind.Default:
@@ -336,7 +340,7 @@ public sealed class MacVisualElementBackend : IVisualElementBackend, IDisposable
         return resolver.Resolve(reference);
     }
 
-    private static MacDisplay? FindWindowDisplay(CGDisplayTopology topology, AXUIElement window)
+    private static CGDisplay? FindWindowDisplay(CGDisplayTopology topology, AXUIElement window)
     {
         var error = window.GetNativeWindowHandle(out var windowId);
         error.ThrowIfProviderFailure("map the AXWindow to its Quartz window identifier");
@@ -347,9 +351,7 @@ public sealed class MacVisualElementBackend : IVisualElementBackend, IDisposable
     {
         var error = element.CopyStringAttribute(AXAttributeConstants.Role, out var nativeRole);
         error.ThrowIfProviderFailure(operation);
-        return error == AXError.Success && Enum.TryParse<AXRoleAttribute>(nativeRole, true, out var role) ?
-            role :
-            AXRoleAttribute.AXUnknown;
+        return error == AXError.Success && Enum.TryParse<AXRoleAttribute>(nativeRole, true, out var role) ? role : AXRoleAttribute.AXUnknown;
     }
 
     private static PixelPoint GetPointerPoint(CGDisplayTopology topology)
@@ -359,8 +361,8 @@ public sealed class MacVisualElementBackend : IVisualElementBackend, IDisposable
         return new PixelPoint((int)location.X, (int)(primaryDisplay.Bounds.Height - location.Y));
     }
 
-    public ScreenVisualElement GetOrCreateScreenElement(VisualElementRetention retention, CGDisplayTopology topology, MacDisplay display)
+    public CGDisplayVisualElement GetOrCreateScreenElement(VisualElementRetention retention, CGDisplayTopology topology, CGDisplay display)
     {
-        return ScreenVisualElement.GetOrCreate(retention, this, topology, display);
+        return CGDisplayVisualElement.GetOrCreate(retention, this, topology, display);
     }
 }

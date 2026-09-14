@@ -1,5 +1,7 @@
 using System.Security;
 using System.Text;
+using Everywhere.ProcessIsolation;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Prompting;
 using Everywhere.Prompting.Documents;
 
@@ -11,6 +13,7 @@ namespace Everywhere.Automation;
 /// <remarks>
 /// This builder is a pure in-memory boundary. It must use only facts already present in the supplied Snapshot and must never query a live platform element.
 /// </remarks>
+[InHostProcess(ProcessRole.Automation)]
 public static class VisualContextPromptBuilder
 {
     /// <summary>

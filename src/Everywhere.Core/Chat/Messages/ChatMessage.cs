@@ -14,6 +14,7 @@ namespace Everywhere.Chat;
 [Union(5, typeof(UserStrategyChatMessage))]
 [Union(6, typeof(UserActionChatMessage))]
 [Union(7, typeof(ContextCompressionChatMessage))]
+[Union(8, typeof(VisualContextResetChatMessage))]
 public abstract partial class ChatMessage : ObservableObject
 {
     public abstract AuthorRole Role { get; }
@@ -44,4 +45,13 @@ public abstract partial class ChatMessage : ObservableObject
 public interface IHaveChatAttachments
 {
     IEnumerable<ChatAttachment> Attachments { get; }
+}
+
+/// <summary>
+/// Identifies persisted chat content that contains Agent-visible references scoped to one visual Context.
+/// </summary>
+public interface IHaveVisualReferences
+{
+    /// <summary>Gets the identity of the visual Context that owns the referenced Agent IDs.</summary>
+    Guid? VisualContextId { get; }
 }

@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace Everywhere.Chat;
 
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public partial class UserChatMessage : ChatMessage, IHaveChatAttachments
+public partial class UserChatMessage : ChatMessage, IHaveChatAttachments, IHaveVisualReferences
 {
     public override AuthorRole Role => AuthorRole.User;
 
@@ -22,6 +22,11 @@ public partial class UserChatMessage : ChatMessage, IHaveChatAttachments
 
     [IgnoreMember]
     IEnumerable<ChatAttachment> IHaveChatAttachments.Attachments => Attachments;
+
+    /// <inheritdoc />
+    [Key(2)]
+    [ObservableProperty]
+    public partial Guid? VisualContextId { get; internal set; }
 
     [Key(3)]
     public override DateTimeOffset CreatedAt { get; }

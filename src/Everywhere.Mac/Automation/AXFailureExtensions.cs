@@ -44,8 +44,11 @@ internal static class AXFailureExtensions
         {
             AXError.AttributeUnsupported or AXError.ActionUnsupported or AXError.ParameterizedAttributeUnsupported or AXError.NotImplemented =>
                 new NotSupportedException(exception.Message, exception),
-            AXError.InvalidUIElement => new InvalidOperationException("The macOS Accessibility element is no longer available.", exception),
-            _ => new InvalidOperationException(exception.Message, exception),
+            AXError.InvalidUIElement => new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The macOS Accessibility element is no longer available.",
+                exception),
+            _ => new VisualElementProviderException(VisualElementQueryFailureKind.ProviderFailure, exception.Message, exception),
         };
     }
 }

@@ -258,12 +258,12 @@ public sealed class MacTextSelectionWatcher(IVisualElementBackend visualElementB
                 // Some providers expose the selection only on a direct child of the focused container. Preserve
                 // that legacy behavior, but cap the number of synchronous AX messages in one detection attempt.
                 var childRequest = new VisualElementQueryRequest(VisualElementFields.Id, 0);
-                using var children = result.Element.CreateEnumerator(
-                    VisualElementRelation.Child,
-                    childRequest);
+                using var children = result.Element.CreateEnumerator(VisualElementRelation.Child, childRequest);
                 for (var index = 0; index < MaximumSelectedTextChildProbes && children.MoveNext(); index++)
                 {
-                    text = children.Current.Element.GetSelectedText(MaximumSelectedTextCharacters);
+                    var child = children.Current;
+                    if (!child.IsSuccess) break;
+                    text = child.Result.Element.GetSelectedText(MaximumSelectedTextCharacters);
                     if (!string.IsNullOrEmpty(text)) return text;
                 }
             }

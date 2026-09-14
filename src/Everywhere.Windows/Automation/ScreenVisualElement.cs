@@ -111,14 +111,16 @@ public sealed class ScreenVisualElement : VisualElement
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(
+    protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
         VisualElementQueryRequest request)
     {
         var topology = WindowsDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Screen element was observed.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
         }
 
         return relation switch
@@ -160,11 +162,27 @@ public sealed class ScreenVisualElement : VisualElement
         var topology = WindowsDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
         {
-            throw new InvalidOperationException("The display topology changed after this Screen element was observed.");
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
         }
 
         return Task.FromResult<IVisualElementCapture>(
             GDIScreenCapture.Capture(Bounds) ?? throw new InvalidOperationException("The display does not intersect the Windows virtual screen."));
+    }
+
+    /// <inheritdoc />
+    protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
+    {
+        var topology = WindowsDisplayTopology.Current;
+        if (TopologyGeneration != topology.Generation)
+        {
+            throw new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
+                "The display topology changed after this Screen element was observed.");
+        }
+
+        return Backend.GetOrCreateScreenElement(destinationRetention, topology, Display);
     }
 
     /// <inheritdoc />
@@ -173,7 +191,7 @@ public sealed class ScreenVisualElement : VisualElement
         // HMONITOR is a borrowed pseudo-handle and has no corresponding release operation.
     }
 
-    private IVisualElementEnumerator CreateSiblingEnumerator(
+    private IVisualElementCursor CreateSiblingEnumerator(
         WindowsDisplayTopology topology,
         VisualElementRelation relation,
         VisualElementQueryRequest request)
@@ -202,7 +220,7 @@ public sealed class ScreenVisualElement : VisualElement
         int nextMonitorIndex,
         int direction,
         VisualElementQueryRequest queryRequest
-    ) : IVisualElementEnumerator
+    ) : IVisualElementCursor
     {
         public VisualElementQueryResult Current => _current ?? throw new InvalidOperationException("The Enumerator has no current item.");
 
@@ -216,15 +234,6 @@ public sealed class ScreenVisualElement : VisualElement
         private readonly VisualElementRetention _retention = context.CreateRetention();
         private int _nextMonitorIndex = nextMonitorIndex;
         private bool _isDisposed;
-
-        public bool HasMore
-        {
-            get
-            {
-                ThrowIfUnavailable();
-                return _nextMonitorIndex >= 0 && _nextMonitorIndex < topology.Displays.Count;
-            }
-        }
 
         public bool MoveNext()
         {

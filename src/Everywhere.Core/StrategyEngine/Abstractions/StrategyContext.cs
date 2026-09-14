@@ -34,7 +34,7 @@ public sealed class StrategyContext
         var visualElements = attachments
             .AsValueEnumerable()
             .OfType<VisualElementAttachment>()
-            .Where(attachment => attachment is { Element: not null, InitialQuery: not null })
+            .Where(attachment => attachment.InitialSnapshot is not null)
             .ToArray();
 
         var activeProcess = DeriveActiveProcess(visualElements);
@@ -54,7 +54,7 @@ public sealed class StrategyContext
         // Find the first element with a valid process ID
         foreach (var attachment in attachments.AsValueEnumerable())
         {
-            var processId = attachment.InitialQuery?.Snapshot.ProcessId.GetValueOrDefault(-1) ?? -1;
+            var processId = attachment.InitialSnapshot?.ProcessId.GetValueOrDefault(-1) ?? -1;
             if (processId <= 0)
             {
                 continue;

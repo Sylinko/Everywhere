@@ -29,7 +29,8 @@ public static class ProcessRoleHostRunner
 
     /// <summary>
     /// Starts the role shell and composes one connection-owned platform session.
-    /// The factory runs only after a client has connected and before RPC starts.
+    /// The factory runs on the caller's execution thread after endpoint ownership
+    /// is established and before the first asynchronous connection wait.
     /// </summary>
     /// <param name="role">The non-Main role hosted by this process.</param>
     /// <param name="args">Role command-line arguments, including an optional endpoint override.</param>
@@ -57,7 +58,7 @@ public static class ProcessRoleHostRunner
         var configuredEndpoint = ProcessRoleCommandLine.ParseHostEndpointOverride(role, args);
         var endpoint = configuredEndpoint ?? ProcessRoleNames.GetDefaultEndpoint(role, localIdentity.DesktopSessionId);
 
-        await Console.Out.WriteLineAsync($"Everywhere role={ProcessRoleNames.ToWireName(role)} endpoint={endpoint}");
+        Console.Out.WriteLine($"Everywhere role={ProcessRoleNames.ToWireName(role)} endpoint={endpoint}");
 
         EndpointOwnershipLease? ownership = null;
         NamedPipeServerStream? server = null;
@@ -93,6 +94,8 @@ public static class ProcessRoleHostRunner
                     break;
                 }
 
+                session = sessionFactory?.Invoke();
+
                 using var connectionDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 connectionDeadline.CancelAfter(InitialConnectionTimeout);
                 try
@@ -114,7 +117,6 @@ public static class ProcessRoleHostRunner
 
                 connection = new RpcConnection(server, isServer: true);
                 server = null;
-                session = sessionFactory?.Invoke();
                 session?.Bind(connection);
                 lifecycle = new RoleHostLifecycle(role, connection, session);
                 lifecycle.SetListening();

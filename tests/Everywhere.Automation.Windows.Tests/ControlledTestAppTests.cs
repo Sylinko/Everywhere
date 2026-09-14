@@ -56,10 +56,10 @@ public sealed class ControlledTestAppTests
             VisualElementQueryResult child;
             using (var children = root.Element.CreateEnumerator(VisualElementRelation.Child, request))
             {
-                Assert.That(children.HasMore, Is.True);
                 Assert.That(children.MoveNext(), Is.True);
-                retention.Retain(children.Current.Element);
-                child = children.Current;
+                Assert.That(children.Current.IsSuccess, Is.True);
+                child = children.Current.Result ?? throw new InvalidOperationException("The Windows child relation returned a failure.");
+                retention.Retain(child.Element);
             }
 
             Assert.Multiple(() =>
@@ -82,8 +82,9 @@ public sealed class ControlledTestAppTests
             using (var parents = root.Element.CreateEnumerator(VisualElementRelation.Parent, request))
             {
                 Assert.That(parents.MoveNext(), Is.True);
-                retention.Retain(parents.Current.Element);
-                screen = parents.Current;
+                Assert.That(parents.Current.IsSuccess, Is.True);
+                screen = parents.Current.Result ?? throw new InvalidOperationException("The Windows parent relation returned a failure.");
+                retention.Retain(screen.Element);
             }
 
             var screenBounds = screen.Snapshot.Bounds ?? throw new InvalidOperationException("The composed Screen did not expose bounds.");
@@ -102,7 +103,8 @@ public sealed class ControlledTestAppTests
             {
                 for (var index = 0; index < 256 && windows.MoveNext(); index++)
                 {
-                    if (windows.Current.Snapshot.NativeWindowHandle == rootHandle)
+                    var window = windows.Current.Result;
+                    if (window?.Snapshot.NativeWindowHandle == rootHandle)
                     {
                         foundOriginalWindow = true;
                         break;

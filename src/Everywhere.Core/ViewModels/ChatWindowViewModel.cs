@@ -8,7 +8,6 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -16,6 +15,7 @@ using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
@@ -102,14 +102,13 @@ public sealed partial class ChatWindowViewModel :
     public ISoftwareUpdater SoftwareUpdater { get; }
 
     private readonly IChatService _chatService;
-    private readonly IVisualElementBackend _visualElementBackend;
     private readonly IScreenSelectionService _screenSelectionService;
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
     private readonly IChatWindowNotificationService _notificationService;
+    private readonly ChatVisualService _visualService;
     private readonly ILogger<ChatWindowViewModel> _logger;
-
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
     private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
 
@@ -117,6 +116,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly Gauge<int> _activeChatWindowsGauge;
 
     private ChatInputAreaSnapshot? _snapshotBeforeEdit;
+    private int _textSelectionVersion;
 
     public ChatWindowViewModel(
         Settings settings,
@@ -125,11 +125,11 @@ public sealed partial class ChatWindowViewModel :
         IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
-        IVisualElementBackend visualElementBackend,
         IScreenSelectionService screenSelectionService,
         IBlobStorage blobStorage,
         IStrategyEngine strategyEngine,
         IGreetings greetings,
+        ChatVisualService visualService,
         ILogger<ChatWindowViewModel> logger)
     {
         Settings = settings;
@@ -140,11 +140,11 @@ public sealed partial class ChatWindowViewModel :
         SoftwareUpdater = softwareUpdater;
 
         _chatService = chatService;
-        _visualElementBackend = visualElementBackend;
         _screenSelectionService = screenSelectionService;
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
         _greetings = greetings;
+        _visualService = visualService;
         _notificationService = notificationService;
         _logger = logger;
 
@@ -202,6 +202,7 @@ public sealed partial class ChatWindowViewModel :
         if (disposing)
         {
             WeakReferenceMessenger.Default.UnregisterAll(this);
+            foreach (var attachment in _chatAttachmentsSource.Items.OfType<IDisposable>()) attachment.Dispose();
         }
 
         base.Dispose(disposing);
@@ -215,88 +216,96 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     private async Task HandleActivateChatSessionMessageAsync(ActivateChatSessionMessage message)
     {
-        VisualElementRetention? pendingRetention = null;
+        RemoteVisualAnchor? pendingAnchor = null;
         VisualElementAttachment? pendingAttachment = null;
         try
         {
             var targetLocator = message.TargetLocator;
             if (targetLocator is null)
             {
+                VisualElementAttachment? removedAttachment = null;
                 _chatAttachmentsSource.Edit(list =>
                 {
-                    if (list is [VisualElementAttachment { IsPrimary: true }, ..]) list.RemoveAt(0);
+                    if (list is not [VisualElementAttachment { IsPrimary: true } attachment, ..]) return;
+                    removedAttachment = attachment;
+                    list.RemoveAt(0);
                 });
+                removedAttachment?.Dispose();
 
                 ShowChatWindow();
                 return;
             }
 
             PrepareChatContext();
-            var visualContext = ChatContextManager.Current.VisualContext;
-            pendingRetention = visualContext.CreateRetention();
-            var targetResult = _visualElementBackend.Query(pendingRetention, targetLocator.Value, message.TargetResolution);
-
-            if (targetResult is null)
-            {
-                ShowChatWindow();
-                return;
-            }
-
-            if (_chatAttachmentsSource.Items.Any(attachment => attachment is VisualElementAttachment { Element: { } element } && string.Equals(element.Id, targetResult.Element.Id, StringComparison.Ordinal)))
-            {
-                ShowChatWindow();
-                return;
-            }
-
             var createElement = Settings.ChatWindow.AutomaticallyAddElement;
-            var chatAttachment = createElement ? VisualElementAttachment.FromVisualElement(targetResult, pendingRetention) : null;
-            if (chatAttachment is not null)
-            {
-                pendingAttachment = chatAttachment;
-                pendingRetention = null;
-            }
-
-            if (chatAttachment is not null)
-            {
-                VisualElementEffect? visualElementEffect = null;
-                if (Settings.ChatWindow.EnableVisualElementPickAnimation)
-                {
-                    visualElementEffect = ServiceLocator.Resolve<VisualElementEffect>();
-                    visualElementEffect.ArrangeEffectWindows();
-                }
-
-                ShowChatWindow();
-
-                _chatAttachmentsSource.Edit(list =>
-                {
-                    list.RemoveWhere(a => a is VisualElementAttachment { IsPrimary: true });
-                    list.Insert(
-                        0,
-                        chatAttachment.With(a =>
-                        {
-                            a.IsPrimary = true;
-                            a.Opacity = visualElementEffect is not null ? 0d : 1d;
-                        }));
-                });
-                pendingAttachment = null;
-
-                if (visualElementEffect is not null)
-                {
-                    try
-                    {
-                        var capture = await Task.Run(() => targetResult.Element.CaptureAsync());
-                        await visualElementEffect.CreatePickEffect(capture, chatAttachment);
-                    }
-                    catch (Exception exception)
-                    {
-                        chatAttachment.Opacity = 1d;
-                        _logger.LogWarning(exception, "Failed to prepare pick capture.");
-                    }
-                }
-            }
-            else
+            if (!createElement)
             {
                 ShowChatWindow();
+                return;
+            }
+
+            pendingAnchor = await _visualService.AcquireAnchorAsync(
+                targetLocator.Value,
+                message.TargetResolution,
+                cancellationToken: CancellationToken.None);
+            if (pendingAnchor is null)
+            {
+                ShowChatWindow();
+                return;
+            }
+
+            if (_chatAttachmentsSource.Items.OfType<VisualElementAttachment>().Any(attachment =>
+                    attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
+                    ReferenceEquals(existingAnchor.Context, pendingAnchor.Context) &&
+                    string.Equals(attachment.InitialSnapshot?.Id, pendingAnchor.Snapshot.Id, StringComparison.Ordinal)))
+            {
+                ShowChatWindow();
+                return;
+            }
+
+            var chatAttachment = VisualElementAttachment.FromRemoteAnchor(pendingAnchor);
+            pendingAttachment = chatAttachment;
+            pendingAnchor = null;
+
+            VisualElementEffect? visualElementEffect = null;
+            if (Settings.ChatWindow.EnableVisualElementPickAnimation)
+            {
+                visualElementEffect = ServiceLocator.Resolve<VisualElementEffect>();
+                visualElementEffect.ArrangeEffectWindows();
+            }
+
+            ShowChatWindow();
+
+            var replacedAttachments = _chatAttachmentsSource.Items
+                .OfType<VisualElementAttachment>()
+                .Where(static attachment => attachment.IsPrimary)
+                .ToArray();
+            _chatAttachmentsSource.Edit(list =>
+            {
+                list.RemoveWhere(a => a is VisualElementAttachment { IsPrimary: true });
+                list.Insert(
+                    0,
+                    chatAttachment.With(a =>
+                    {
+                        a.IsPrimary = true;
+                        a.Opacity = visualElementEffect is not null ? 0d : 1d;
+                    }));
+            });
+            foreach (var attachment in replacedAttachments) attachment.Dispose();
+            pendingAttachment = null;
+
+            if (visualElementEffect is not null)
+            {
+                try
+                {
+                    var capture = await chatAttachment.CaptureAsync();
+                    await visualElementEffect.CreatePickEffect(capture, chatAttachment);
+                }
+                catch (Exception exception)
+                {
+                    chatAttachment.Opacity = 1d;
+                    _logger.LogWarning(exception, "Failed to prepare pick capture.");
+                }
             }
         }
         catch (OperationCanceledException) { }
@@ -308,7 +317,7 @@ public sealed partial class ChatWindowViewModel :
         finally
         {
             pendingAttachment?.Dispose();
-            pendingRetention?.Dispose();
+            pendingAnchor?.Dispose();
         }
 
         void ShowChatWindow()
@@ -320,54 +329,63 @@ public sealed partial class ChatWindowViewModel :
 
         void PrepareChatContext()
         {
-            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null)) ChatContextManager.CreateNewCommand.Execute(null);
+            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
+                ChatContextManager.CreateNewCommand.Execute(null);
         }
     }
 
     [RelayCommand]
     private async Task PickVisualElementAsync(CancellationToken cancellationToken)
     {
-        VisualElementRetention? pendingRetention = null;
+        RemoteVisualAnchor? pendingAnchor = null;
         VisualElementAttachment? pendingAttachment = null;
+        var isChatWindowCloaked = false;
         try
         {
             if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
 
             // Hide the chat window to avoid picking itself
-            var isOpened = IsOpened;
-            if (isOpened) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
-
-            var visualContext = ChatContextManager.Current.VisualContext;
-            pendingRetention = visualContext.CreateRetention();
-            var queryResult = await _screenSelectionService.PickVisualElementAsync(pendingRetention, null);
-            if (queryResult is null)
+            if (IsOpened)
             {
-                if (isOpened) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
+                isChatWindowCloaked = true;
+            }
+
+            pendingAnchor = await _screenSelectionService.PickVisualElementAsync(
+                _visualService.AcquisitionContext,
+                null,
+                cancellationToken);
+            if (pendingAnchor is null)
+            {
+                RestoreChatWindow();
                 return;
             }
 
-            if (_chatAttachmentsSource.Items.OfType<VisualElementAttachment>().Any(attachment => string.Equals(attachment.Element?.Id, queryResult.Element.Id, StringComparison.Ordinal)))
+            if (_chatAttachmentsSource.Items.OfType<VisualElementAttachment>().Any(attachment =>
+                    attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
+                    ReferenceEquals(existingAnchor.Context, pendingAnchor.Context) &&
+                    string.Equals(attachment.InitialSnapshot?.Id, pendingAnchor.Snapshot.Id, StringComparison.Ordinal)))
             {
-                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                RestoreChatWindow();
                 return;
             }
 
-            var chatAttachment = VisualElementAttachment.FromVisualElement(queryResult, pendingRetention);
+            var chatAttachment = VisualElementAttachment.FromRemoteAnchor(pendingAnchor);
             pendingAttachment = chatAttachment;
-            pendingRetention = null;
+            pendingAnchor = null;
 
             if (Settings.ChatWindow.EnableVisualElementPickAnimation)
             {
                 var visualElementEffect = ServiceLocator.Resolve<VisualElementEffect>();
                 visualElementEffect.ArrangeEffectWindows();
 
-                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                RestoreChatWindow();
                 _chatAttachmentsSource.Add(chatAttachment.With(x => x.Opacity = 0d));
                 pendingAttachment = null;
 
                 try
                 {
-                    var capture = await Task.Run(() => queryResult.Element.CaptureAsync(cancellationToken), cancellationToken);
+                    var capture = await chatAttachment.CaptureAsync(cancellationToken);
                     await visualElementEffect.CreatePickEffect(capture, chatAttachment);
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
@@ -378,7 +396,7 @@ public sealed partial class ChatWindowViewModel :
             }
             else
             {
-                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                RestoreChatWindow();
                 _chatAttachmentsSource.Add(chatAttachment);
                 pendingAttachment = null;
             }
@@ -392,7 +410,15 @@ public sealed partial class ChatWindowViewModel :
         finally
         {
             pendingAttachment?.Dispose();
-            pendingRetention?.Dispose();
+            pendingAnchor?.Dispose();
+            RestoreChatWindow();
+        }
+
+        void RestoreChatWindow()
+        {
+            if (!isChatWindowCloaked) return;
+            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+            isChatWindowCloaked = false;
         }
     }
 
@@ -626,41 +652,68 @@ public sealed partial class ChatWindowViewModel :
     private void RemoveAttachment(ChatAttachment attachment)
     {
         _chatAttachmentsSource.Remove(attachment);
+        (attachment as IDisposable)?.Dispose();
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void SendMessage(string? message)
+    private async Task SendMessage(string? message)
     {
         message = message?.Trim() ?? string.Empty;
 
         if (message.Length == 0 && SelectedStrategy is null && _chatAttachmentsSource.Count == 0) return;
 
-        ChatAttachment[]? attachments = null;
-        _chatAttachmentsSource.Edit(list =>
+        var editingMessageNode = EditingMessageNode;
+        var submittedStrategy = SelectedStrategy;
+        var destinationContext = editingMessageNode?.Context ?? ChatContextManager.Current;
+        var submittedAttachments = _chatAttachmentsSource.Items.ToArray();
+        try
         {
-            attachments = [..list];
-            list.Clear();
-        });
+            foreach (var attachment in submittedAttachments.OfType<VisualElementAttachment>())
+            {
+                if (attachment.Anchor is not { } sourceAnchor) continue;
+                var destinationAnchor = await _visualService.MoveAnchorAsync(destinationContext.VisualState, sourceAnchor);
+                if (!ReferenceEquals(sourceAnchor, destinationAnchor)) attachment.ReplaceAnchor(sourceAnchor, destinationAnchor);
+            }
+        }
+        catch (Exception exception)
+        {
+            if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = message;
+            _logger.LogError(exception, "Failed to move draft visual attachments into the destination chat");
+            ToastExceptionHandler.HandleException(HandledSystemException.Handle(exception));
+            return;
+        }
 
         UserChatMessage userMessage;
-        if (SelectedStrategy is { } selectedStrategy)
+        if (submittedStrategy is not null)
         {
-            userMessage = new UserStrategyChatMessage(message, attachments!, selectedStrategy);
-            SelectedStrategy = null;
+            userMessage = new UserStrategyChatMessage(message, submittedAttachments, submittedStrategy);
         }
         else
         {
-            userMessage = new UserChatMessage(message, attachments!);
+            userMessage = new UserChatMessage(message, submittedAttachments);
         }
 
-        if (EditingMessageNode is { } oldNode)
+        var isAccepted = editingMessageNode is not null ?
+            _chatService.Edit(editingMessageNode, userMessage) :
+            _chatService.SendMessage(destinationContext, userMessage);
+
+        if (!isAccepted)
         {
-            CancelEditing();
-            _chatService.Edit(oldNode, userMessage);
+            if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = message;
+            return;
         }
-        else
+
+        _chatAttachmentsSource.Edit(list =>
         {
-            _chatService.SendMessage(userMessage);
+            foreach (var attachment in submittedAttachments) list.Remove(attachment);
+        });
+        if (editingMessageNode is not null)
+        {
+            CompleteEditingSubmission(editingMessageNode, submittedStrategy);
+        }
+        else if (submittedStrategy is not null && ReferenceEquals(SelectedStrategy, submittedStrategy))
+        {
+            SelectedStrategy = null;
         }
     }
 
@@ -692,18 +745,42 @@ public sealed partial class ChatWindowViewModel :
     {
         if (EditingMessageNode is null) return;
 
+        var snapshot = _snapshotBeforeEdit;
+        _snapshotBeforeEdit = null;
+        EditingMessageNode = null;
+        ChatAttachment[] discardedAttachments = [];
+        _chatAttachmentsSource.Edit(list =>
+        {
+            var preservedAttachments = snapshot?.Attachments ?? [];
+            var preservedSet = new HashSet<ChatAttachment>(preservedAttachments, ReferenceEqualityComparer.Instance);
+            discardedAttachments = list.Where(attachment => !preservedSet.Contains(attachment)).ToArray();
+            list.Reset(preservedAttachments);
+        });
+        foreach (var attachment in discardedAttachments.OfType<IDisposable>()) attachment.Dispose();
+
+        ChatInputAreaText = snapshot?.Text;
+        SelectedStrategy = snapshot?.Strategy;
+    }
+
+    private void CompleteEditingSubmission(ChatMessageNode editingMessageNode, Strategy? submittedStrategy)
+    {
+        if (!ReferenceEquals(EditingMessageNode, editingMessageNode)) return;
+
+        var snapshot = _snapshotBeforeEdit;
+        _snapshotBeforeEdit = null;
         EditingMessageNode = null;
         _chatAttachmentsSource.Edit(list =>
         {
-            list.Clear();
-            if (_snapshotBeforeEdit is { Attachments: { } chatAttachmentsBeforeEditing })
+            var attachmentsAddedWhileSubmitting = list.ToArray();
+            list.Reset(snapshot?.Attachments ?? []);
+            foreach (var attachment in attachmentsAddedWhileSubmitting)
             {
-                list.AddRange(chatAttachmentsBeforeEditing);
+                if (!list.Contains(attachment)) list.Add(attachment);
             }
         });
 
-        ChatInputAreaText = _snapshotBeforeEdit?.Text;
-        SelectedStrategy = _snapshotBeforeEdit?.Strategy;
+        if (ChatInputAreaText.IsNullOrEmpty()) ChatInputAreaText = snapshot?.Text;
+        if (ReferenceEquals(SelectedStrategy, submittedStrategy)) SelectedStrategy = snapshot?.Strategy;
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
@@ -888,26 +965,38 @@ public sealed partial class ChatWindowViewModel :
 
     void IObserver<TextSelectionData>.OnNext(TextSelectionData data)
     {
+        var version = Interlocked.Increment(ref _textSelectionVersion);
+        HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
+    }
+
+    private async Task HandleTextSelectionAsync(TextSelectionData data, int version)
+    {
         if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
 
-        VisualElementRetention? retention = null;
+        RemoteVisualAnchor? anchor = null;
         TextSelectionAttachment? pendingAttachment = null;
         try
         {
-            VisualElementQueryResult? queryResult = null;
             if (data.Locator is { } locator)
             {
-                var visualContext = ChatContextManager.Current.VisualContext;
-                retention = visualContext.CreateRetention();
-                queryResult = _visualElementBackend.Query(retention, locator, data.Resolution);
-                if (queryResult?.Snapshot.ProcessId == Environment.ProcessId) return;
+                anchor = await _visualService.AcquireAnchorAsync(locator, data.Resolution);
+                if (anchor?.Snapshot.ProcessId == Environment.ProcessId) return;
             }
 
             if (!data.Text.IsNullOrEmpty())
             {
-                pendingAttachment = new TextSelectionAttachment(data.Text, queryResult, retention);
-                retention = null;
+                if (anchor is not null)
+                {
+                    pendingAttachment = new TextSelectionAttachment(data.Text, anchor);
+                    anchor = null;
+                }
+                else
+                {
+                    pendingAttachment = new TextSelectionAttachment(data.Text);
+                }
             }
+
+            if (version != Volatile.Read(ref _textSelectionVersion)) return;
 
             _chatAttachmentsSource.Edit(list =>
             {
@@ -930,7 +1019,7 @@ public sealed partial class ChatWindowViewModel :
         finally
         {
             pendingAttachment?.Dispose();
-            retention?.Dispose();
+            anchor?.Dispose();
         }
     }
 

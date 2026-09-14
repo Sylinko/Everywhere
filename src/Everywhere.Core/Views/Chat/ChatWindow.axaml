@@ -1206,21 +1206,21 @@
                         Value="{Binding PersistentState.VisualContextLengthLimit, Mode=TwoWay, Converter={x:Static vc:Int32Converters.FromEnum}}"/>
                     </StackPanel>
 
-                  <StackPanel
-                    Margin="0,4,0,4" Orientation="Vertical"
-                    Spacing="4">
                     <StackPanel
-                      Orientation="Horizontal" Spacing="4">
-                      <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="{DynamicResource FontSizeS}"
-                        Text="{I18N {x:Static LocaleKey.PersistentState_MaxContextRounds_Header}}"/>
-                      <LucideIcon
-                        Kind="CircleQuestionMark"
-                        Size="{DynamicResource FontSizeS}"
-                        ToolTip.Placement="Right"
-                        ToolTip.Tip="{I18N {x:Static LocaleKey.PersistentState_MaxContextRounds_Description}}"/>
-                    </StackPanel>
+                      Margin="0,4,0,4" Orientation="Vertical"
+                      Spacing="4">
+                      <StackPanel
+                        Orientation="Horizontal" Spacing="4">
+                        <TextBlock
+                          VerticalAlignment="Center"
+                          FontSize="{DynamicResource FontSizeS}"
+                          Text="{I18N {x:Static LocaleKey.PersistentState_MaxContextRounds_Header}}"/>
+                        <LucideIcon
+                          Kind="CircleQuestionMark"
+                          Size="{DynamicResource FontSizeS}"
+                          ToolTip.Placement="Right"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.PersistentState_MaxContextRounds_Description}}"/>
+                      </StackPanel>
 
                       <TextBlock
                         Classes="Muted" Height="16"

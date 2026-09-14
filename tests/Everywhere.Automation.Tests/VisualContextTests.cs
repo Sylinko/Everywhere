@@ -258,6 +258,46 @@ public sealed class VisualContextTests
         });
     }
 
+    [Test]
+    public void CreateEnumerator_WhenProviderRejectsRelation_DefersAndYieldsTerminalFailure()
+    {
+        using var context = new VisualContext();
+        using var retention = context.CreateRetention();
+        var element = context.GetIdentityMap<TestIdentity>().GetOrAdd(
+            retention,
+            new TestIdentity(42),
+            context,
+            static (identity, _) => new TestVisualElement(identity, "test:42"));
+
+        var enumerator = element.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
+        Assert.That(element.EnumerationAttemptCount, Is.Zero);
+
+        var items = enumerator.ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(element.EnumerationAttemptCount, Is.EqualTo(1));
+            Assert.That(items, Has.Length.EqualTo(1));
+            Assert.That(items[0].Result, Is.Null);
+            Assert.That(items[0].Failure?.Kind, Is.EqualTo(VisualElementQueryFailureKind.Unsupported));
+        });
+    }
+
+    [Test]
+    public void MoveNext_WhenCursorCreationHasProgrammingError_DoesNotNormalizeException()
+    {
+        using var context = new VisualContext();
+        using var retention = context.CreateRetention();
+        var element = context.GetIdentityMap<TestIdentity>().GetOrAdd(
+            retention,
+            new TestIdentity(42),
+            context,
+            static (identity, _) => new TestVisualElement(identity, "test:42"));
+        element.EnumerationException = new InvalidOperationException("Test programming error.");
+        using var enumerator = element.CreateEnumerator(VisualElementRelation.Child, VisualElementQueryRequest.Default);
+
+        Assert.That(() => enumerator.MoveNext(), Throws.TypeOf<InvalidOperationException>());
+    }
+
     private static ScenarioMockBackend CreateBackend()
     {
         var scenario = Scenario.Define("context", _ => new Panel(new Text("child")));
@@ -277,11 +317,29 @@ public sealed class VisualContextTests
 
         public int ReleaseCount { get; private set; }
 
+        public int EnumerationAttemptCount { get; private set; }
+
+        public Exception EnumerationException { get; set; } = new NotSupportedException();
+
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();
 
-        protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) => throw new NotSupportedException();
+        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+        {
+            EnumerationAttemptCount++;
+            throw EnumerationException;
+        }
 
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) => Task.FromException<IVisualElementCapture>(new NotSupportedException());
+
+        protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
+        {
+            var identity = (VisualElementIdentity<TestIdentity>)Identity;
+            return destinationRetention.Context.GetIdentityMap<TestIdentity>().GetOrAdd(
+                destinationRetention,
+                identity.Value,
+                Id,
+                static (destinationIdentity, id) => new TestVisualElement(destinationIdentity, id));
+        }
 
         protected override void ReleaseCore() => ReleaseCount++;
     }

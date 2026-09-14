@@ -157,9 +157,6 @@ public sealed record RpcConnectionOptions
     /// <summary>Maximum payload of one stream chunk.</summary>
     public int MaximumStreamChunkPayloadBytes { get; init; } = 256 * 1024;
 
-    /// <summary>Maximum total payload retained in outbound queues.</summary>
-    public int MaximumQueuedPayloadBytes { get; init; } = 8 * 1024 * 1024;
-
     /// <summary>Maximum number of queued outbound frames.</summary>
     public int MaximumQueuedFrames { get; init; } = 128;
 

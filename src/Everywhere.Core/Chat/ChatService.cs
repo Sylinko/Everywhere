@@ -11,6 +11,7 @@ using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Prompting.Documents;
 using Everywhere.Skills;
 using Everywhere.Statistics;
@@ -41,6 +42,7 @@ public sealed partial class ChatService : IChatService
     private readonly IPromptService _promptService;
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
+    private readonly ChatVisualService _visualService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ChatService> _logger;
     private readonly AsyncLocal<Guid?> _currentTurnEventId = new();
@@ -67,6 +69,7 @@ public sealed partial class ChatService : IChatService
         IPromptService promptService,
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
+        ChatVisualService visualService,
         IServiceProvider serviceProvider,
         ILogger<ChatService> logger)
     {
@@ -79,6 +82,7 @@ public sealed partial class ChatService : IChatService
         _promptService = promptService;
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
+        _visualService = visualService;
         _serviceProvider = serviceProvider;
         _logger = logger;
 
@@ -92,49 +96,55 @@ public sealed partial class ChatService : IChatService
         _toolCallsCounter = _meter.CreateCounter<long>("gen_ai.tool.calls");
     }
 
-    public void SendMessage(UserChatMessage message)
+    public bool SendMessage(ChatContext chatContext, UserChatMessage message)
     {
-        var chatContext = _chatContextManager.Current;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
 
-        chatContext.TryExecute(
+        return chatContext.TryExecute(
             async cancellationToken =>
             {
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
-                chatContext.AdvanceVisualTargetTurn();
-                chatContext.Add(message);
-                var turnEventId = await _statisticsRecorder.RecordTurnAsync(
-                    chatContext,
-                    FindMessageNode(chatContext, message),
-                    StatisticsTurnKind.Send,
-                    cancellationToken);
-                using var turnScope = BeginStatisticsTurn(turnEventId);
-
-                if (customAssistant is null)
+                try
                 {
-                    chatContext.Add(CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
-                    return;
+                    await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
+                    chatContext.Add(message);
+                    var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+                        chatContext,
+                        FindMessageNode(chatContext, message),
+                        StatisticsTurnKind.Send,
+                        cancellationToken);
+                    using var turnScope = BeginStatisticsTurn(turnEventId);
+
+                    if (customAssistant is null)
+                    {
+                        chatContext.Add(CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
+                        return;
+                    }
+
+                    await ProcessUserChatMessageAsync(chatContext, message, cancellationToken);
+
+                    var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                    chatContext.Add(assistantChatMessage);
+
+                    var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+                    await GenerateAsync(
+                        chatContext,
+                        customAssistant,
+                        assistantChatMessage,
+                        systemPromptOverride: systemPromptOverride,
+                        cancellationToken: cancellationToken);
                 }
-
-                await ProcessUserChatMessageAsync(chatContext, message, cancellationToken);
-
-                var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                chatContext.Add(assistantChatMessage);
-
-                var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
-                await GenerateAsync(
-                    chatContext,
-                    customAssistant,
-                    assistantChatMessage,
-                    systemPromptOverride: systemPromptOverride,
-                    cancellationToken: cancellationToken);
+                finally
+                {
+                    DisposeVisualAnchors(message);
+                }
             },
             _logger.ToExceptionHandler());
     }
 
-    public void Edit(ChatMessageNode oldNode, UserChatMessage newMessage)
+    public bool Edit(ChatMessageNode oldNode, UserChatMessage newMessage)
     {
         if (oldNode.Message.Role != AuthorRole.User)
         {
@@ -144,39 +154,46 @@ public sealed partial class ChatService : IChatService
         var chatContext = oldNode.Context;
         var customAssistant = _settings.Model.SelectedCustomAssistant;
 
-        chatContext.TryExecute(
+        return chatContext.TryExecute(
             async cancellationToken =>
             {
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
-                chatContext.AdvanceVisualTargetTurn();
-                chatContext.CreateBranchOn(oldNode, newMessage);
-                var turnEventId = await _statisticsRecorder.RecordTurnAsync(
-                    chatContext,
-                    FindMessageNode(chatContext, newMessage),
-                    StatisticsTurnKind.Edit,
-                    cancellationToken);
-                using var turnScope = BeginStatisticsTurn(turnEventId);
-
-                if (customAssistant is null)
+                try
                 {
-                    chatContext.Add(CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
-                    return;
+                    await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
+                    chatContext.CreateBranchOn(oldNode, newMessage);
+                    var turnEventId = await _statisticsRecorder.RecordTurnAsync(
+                        chatContext,
+                        FindMessageNode(chatContext, newMessage),
+                        StatisticsTurnKind.Edit,
+                        cancellationToken);
+                    using var turnScope = BeginStatisticsTurn(turnEventId);
+
+                    if (customAssistant is null)
+                    {
+                        chatContext.Add(CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
+                        return;
+                    }
+
+                    await ProcessUserChatMessageAsync(chatContext, newMessage, cancellationToken);
+
+                    var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                    chatContext.Add(assistantChatMessage);
+
+                    var systemPromptOverride = newMessage.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
+                    await GenerateAsync(
+                        chatContext,
+                        customAssistant,
+                        assistantChatMessage,
+                        systemPromptOverride: systemPromptOverride,
+                        cancellationToken: cancellationToken);
                 }
-
-                await ProcessUserChatMessageAsync(chatContext, newMessage, cancellationToken);
-
-                var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                chatContext.Add(assistantChatMessage);
-
-                var systemPromptOverride = newMessage.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
-                await GenerateAsync(
-                    chatContext,
-                    customAssistant,
-                    assistantChatMessage,
-                    systemPromptOverride: systemPromptOverride,
-                    cancellationToken: cancellationToken);
+                finally
+                {
+                    DisposeVisualAnchors(newMessage);
+                }
             },
             _logger.ToExceptionHandler());
     }
@@ -197,7 +214,7 @@ public sealed partial class ChatService : IChatService
                 using var activity = _activitySource.StartActivity();
                 activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
 
-                chatContext.AdvanceVisualTargetTurn();
+                await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                 if (customAssistant is null)
                 {
                     chatContext.CreateBranchOn(node, CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
@@ -288,20 +305,21 @@ public sealed partial class ChatService : IChatService
                     return;
                 }
 
-                GenerationContext? environment = null;
+                GenerationContext? generationContext = null;
                 try
                 {
-                    environment = await CreateGenerationEnvironmentAsync(chatContext, assistant, null, cancellationToken);
+                    await EnsureVisualContextResetNoticeAsync(chatContext, null, cancellationToken);
+                    generationContext = await CreateGenerationContextAsync(chatContext, assistant, null, cancellationToken);
                     await CompactContextAsync(
                         chatContext,
-                        environment,
+                        generationContext,
                         ContextCompressionTrigger.Manual,
                         ResolveCompressionBoundary(chatContext),
                         cancellationToken);
                 }
                 finally
                 {
-                    environment?.KernelMixin.Dispose();
+                    generationContext?.KernelMixin.Dispose();
                 }
             },
             _logger.ToExceptionHandler());
@@ -356,38 +374,33 @@ public sealed partial class ChatService : IChatService
 
             var approximateTokenLimit = _persistentState.VisualContextLengthLimit.ToTokenLimit();
             var validAttachments = new List<VisualElementAttachment>(visualElementAttachments.Length);
-            var coreElements = new List<VisualElement>(visualElementAttachments.Length);
+            var anchors = new List<RemoteVisualAnchor>(visualElementAttachments.Length);
             foreach (var attachment in visualElementAttachments)
             {
-                if (!attachment.IsElementValid || attachment.Element is not { } element || attachment.InitialQuery is null) continue;
+                if (!attachment.IsElementValid || attachment.Anchor is not { } anchor) continue;
                 validAttachments.Add(attachment);
-                coreElements.Add(element);
+                anchors.Add(anchor);
             }
 
-            if (coreElements.Count == 0) return;
+            if (anchors.Count == 0) return;
 
-            using var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
-                ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
-                null;
-
-            var query = new VisualQuery(chatContext.VisualContext, effectScope is null ? null : effectScope.AddCapture);
-            var outcome = await query.BuildAsync(
-                coreElements,
-                new VisualContextPromptOptions { TargetTokenBudget = approximateTokenLimit },
+            var (visualContextId, response) = await _visualService.BuildAnchorsAsync(
+                chatContext.VisualState,
+                anchors,
+                targetTokenBudget: approximateTokenLimit,
                 cancellationToken: cancellationToken);
-            validAttachments[0].Content = new PromptText(outcome.Content);
+            validAttachments[0].Content = new PromptText(response.Content);
             for (var index = 1; index < validAttachments.Count; index++) validAttachments[index].Content = null;
+            if (response.RepresentedTargetCount > 0) userChatMessage.VisualContextId = visualContextId;
 
-            effectScope?.Complete();
             _statisticsRecorder.RecordVisualContextAsync(
                     new StatisticsVisualContextDraft(
                         _currentTurnEventId.Value,
                         chatContext.Metadata.Id,
                         StatisticsVisualContextSource.AutomaticAttachmentProcessing,
-                        ElementCount: outcome.RepresentedTargetCount),
+                        ElementCount: response.RepresentedTargetCount),
                     CancellationToken.None)
                 .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-
         }
         catch (Exception ex)
         {
@@ -398,10 +411,14 @@ public sealed partial class ChatService : IChatService
         }
         finally
         {
-            foreach (var attachment in visualElementAttachments) attachment.Dispose();
             analyzingContextMessage.FinishedAt = DateTimeOffset.UtcNow;
             analyzingContextMessage.IsBusy = false;
         }
+    }
+
+    private static void DisposeVisualAnchors(UserChatMessage message)
+    {
+        foreach (var attachment in message.Attachments.OfType<VisualElementAttachment>()) attachment.Dispose();
     }
 
     /// <summary>
@@ -471,7 +488,7 @@ public sealed partial class ChatService : IChatService
         return builder.Build();
     }
 
-    private async Task<GenerationContext> CreateGenerationEnvironmentAsync(
+    private async Task<GenerationContext> CreateGenerationContextAsync(
         ChatContext chatContext,
         Assistant assistant,
         string? systemPromptOverride,
@@ -542,41 +559,39 @@ public sealed partial class ChatService : IChatService
     {
         using var activity = _activitySource.StartChatActivity("chat", assistant);
         activity?.SetTag("id", chatContext.Metadata.Id);
-        chatContext.EnsureVisualTargetTurn();
+        await _visualService.EnsureTurnAsync(chatContext.VisualState, cancellationToken);
 
-        GenerationContext? environment = null;
+        GenerationContext? generationContext = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
         try
         {
-            environment = await CreateGenerationEnvironmentAsync(
-                chatContext,
-                assistant,
-                systemPromptOverride,
-                cancellationToken);
-            var kernel = environment.Kernel;
-            var kernelMixin = environment.KernelMixin;
-            var promptRenderer = environment.PromptRenderer;
-            var systemPrompt = environment.SystemPrompt;
+            generationContext = await CreateGenerationContextAsync(chatContext, assistant, systemPromptOverride, cancellationToken);
+            var kernel = generationContext.Kernel;
+            var kernelMixin = generationContext.KernelMixin;
+            var promptRenderer = generationContext.PromptRenderer;
+            var systemPrompt = generationContext.SystemPrompt;
             var hasAttemptedAutomaticCompaction = false;
             var hasAttemptedContextLengthRecovery = false;
 
-            if (ResolvePendingAutomaticCompressionTrigger(
-                    chatContext,
-                    environment.ContextCompressionThreshold) is { } pendingCompressionTrigger)
+            await EnsureVisualContextResetNoticeAsync(chatContext, assistantChatMessage, cancellationToken);
+
+            if (ResolvePendingAutomaticCompressionTrigger(chatContext, generationContext.ContextCompressionThreshold) is { } compressionTrigger)
             {
                 hasAttemptedAutomaticCompaction = true;
                 var compacted = await CompactContextAsync(
                     chatContext,
-                    environment,
-                    pendingCompressionTrigger,
+                    generationContext,
+                    compressionTrigger,
                     ResolveCompressionBoundary(chatContext, assistantChatMessage),
                     cancellationToken);
-                if (!compacted && pendingCompressionTrigger == ContextCompressionTrigger.ContextLengthRecovery) return;
+                if (!compacted && compressionTrigger == ContextCompressionTrigger.ContextLengthRecovery) return;
             }
 
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                await EnsureVisualContextResetNoticeAsync(chatContext, assistantChatMessage, cancellationToken);
 
                 // Build the chat history for the current generation.
                 var chatHistory = await ChatHistoryBuilder.BuildChatHistoryAsync(
@@ -622,7 +637,7 @@ public sealed partial class ChatService : IChatService
                     hasAttemptedContextLengthRecovery = true;
                     var compacted = await CompactContextAsync(
                         chatContext,
-                        environment,
+                        generationContext,
                         ContextCompressionTrigger.ContextLengthRecovery,
                         ResolveCompressionBoundary(chatContext, assistantChatMessage),
                         cancellationToken);
@@ -652,13 +667,13 @@ public sealed partial class ChatService : IChatService
 
                 var shouldCompact = !hasAttemptedAutomaticCompaction &&
                     chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(
-                        environment.ContextCompressionThreshold);
+                        generationContext.ContextCompressionThreshold);
                 if (shouldCompact)
                 {
                     hasAttemptedAutomaticCompaction = true;
                     var compacted = await CompactContextAsync(
                         chatContext,
-                        environment,
+                        generationContext,
                         ContextCompressionTrigger.Automatic,
                         ResolveCompressionBoundary(chatContext, assistantChatMessage),
                         cancellationToken);
@@ -682,7 +697,7 @@ public sealed partial class ChatService : IChatService
         }
         catch (Exception ex)
         {
-            ex = HandledChatException.Handle(ex, environment?.KernelMixin);
+            ex = HandledChatException.Handle(ex, generationContext?.KernelMixin);
             _logger.LogError(ex, "Error generating chat response");
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message.Trim());
 
@@ -701,8 +716,29 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
             assistantChatMessage.IsBusy = false;
 
-            environment?.KernelMixin.Dispose();
+            generationContext?.KernelMixin.Dispose();
         }
+    }
+
+    private async ValueTask EnsureVisualContextResetNoticeAsync(
+        ChatContext chatContext,
+        AssistantChatMessage? assistantChatMessage,
+        CancellationToken cancellationToken)
+    {
+        var referencedContextIds = VisualContextReferenceTracker.GetActiveContextIds(chatContext.Items);
+        if (referencedContextIds.Count == 0) return;
+
+        var currentVisualContextId = await _visualService.GetCurrentContextIdAsync(chatContext.VisualState, cancellationToken);
+        if (referencedContextIds.All(id => id == currentVisualContextId)) return;
+
+        var resetMessage = new VisualContextResetChatMessage(ChatVisualService.ResetNotice, currentVisualContextId);
+        if (assistantChatMessage is null)
+        {
+            chatContext.Add(resetMessage);
+            return;
+        }
+
+        assistantChatMessage.AddSpan(new AssistantChatMessageVisualContextResetSpan(resetMessage));
     }
 
     private async Task<bool> CompactContextAsync(
@@ -922,7 +958,7 @@ public sealed partial class ChatService : IChatService
         if (currentAssistantMessage is not null)
         {
             boundaryIndex = FindMessageIndex(nodes, currentAssistantMessage);
-            if (boundaryIndex >= 0 && currentAssistantMessage.Count > 0) return nodes[boundaryIndex].Id;
+            if (boundaryIndex >= 0 && HasModelContent(currentAssistantMessage)) return nodes[boundaryIndex].Id;
 
             boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex - 1);
             if (boundaryIndex >= 0 && nodes[boundaryIndex].Message is UserChatMessage)
@@ -962,12 +998,16 @@ public sealed partial class ChatService : IChatService
     }
 
     private static bool IsCompressionSourceMessage(ChatMessage message) =>
-        message is ContextCompressionChatMessage { HasSummary: true } ||
-        message.Role.Label == AuthorRole.Assistant.Label ||
-        message.Role.Label == AuthorRole.User.Label ||
-        message.Role.Label == AuthorRole.Developer.Label ||
-        message.Role.Label == AuthorRole.System.Label ||
-        message.Role.Label == AuthorRole.Tool.Label;
+        message is not VisualContextResetChatMessage &&
+        (message is ContextCompressionChatMessage { HasSummary: true } ||
+            message.Role.Label == AuthorRole.Assistant.Label ||
+            message.Role.Label == AuthorRole.User.Label ||
+            message.Role.Label == AuthorRole.Developer.Label ||
+            message.Role.Label == AuthorRole.System.Label ||
+            message.Role.Label == AuthorRole.Tool.Label);
+
+    private static bool HasModelContent(AssistantChatMessage message) =>
+        message.Items.AsValueEnumerable().Any(static span => span is not AssistantChatMessageVisualContextResetSpan);
 
     private static ChatMessageNode[] SelectCompressionSourceNodes(
         IReadOnlyList<ChatMessageNode> nodes,
@@ -1276,7 +1316,7 @@ public sealed partial class ChatService : IChatService
         IReadOnlyList<FunctionCallContent> functionCallContents,
         CancellationToken cancellationToken)
     {
-        // Group function calls by plugin name, and create ActionChatMessages for each group.
+        // Group function calls by function name, and create a FunctionCallChatMessage for each group.
         // For example:
         // AI calls multiple functions at once:
         // {
@@ -1300,130 +1340,92 @@ public sealed partial class ChatService : IChatService
         var functionCallSpan = new AssistantChatMessageFunctionCallSpan();
         assistantChatMessage.AddSpan(functionCallSpan);
 
+        // Register the entire provider batch before executing any call. Calls and results belong to
+        // the persisted conversation, including calls left unexecuted by cancellation or failure.
+        var groups = new List<(string FunctionName, FunctionCallContent[] Calls, FunctionCallChatMessage Message)>();
+        foreach (var group in functionCallContents.GroupBy(static content => content.FunctionName))
+        {
+            var calls = group.ToArray();
+            var message = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey(group.Key)) { IsBusy = true };
+            foreach (var call in calls)
+            {
+                // Every call must already have an ID returned by the model or supplied upstream.
+                if (call.Id.IsNullOrEmpty()) throw new InvalidOperationException("Tool call must have an ID");
+                message.AddCall(call);
+            }
+
+            functionCallSpan.Add(message);
+            groups.Add((group.Key, calls, message));
+        }
+
         try
         {
-            foreach (var functionCallContentGroup in functionCallContents.GroupBy(f => f.FunctionName))
+            foreach (var group in groups)
             {
-                // 1. Grouped by function name.
-                // After grouping, we need to find the corresponding plugin and function.
-                // For example, in the above example,
-                // 1st functionCallContentGroup: Key = "Function1", Values = [Call1, Call2]
-                // 2nd functionCallContentGroup: Key = "Function2", Values = [Call1]
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // functionCallContentGroup.Key is the function name.
-                if (chatPluginScope is null)
-                {
-                    // Function calling is not enabled
-                    // Display error in the chat span (UI).
-                    var errorFunctionMessage = new FunctionCallChatMessage(
-                        LucideIconKind.X,
-                        new DirectLocaleKey(functionCallContentGroup.Key));
-                    functionCallSpan.Add(errorFunctionMessage);
-
-                    // Iterate through the function call contents in the group.
-                    // Add the error message for each function call.
-                    foreach (var functionCallContent in functionCallContentGroup)
-                    {
-                        // Add the function call content to the missing function chat message for DB storage.
-                        errorFunctionMessage.AddCall(functionCallContent);
-
-                        // Create the corresponding function result content with the error message.
-                        var missingFunctionResultContent = new FunctionResultContent(
-                            functionCallContent,
-                            "Tool calling is disabled by the user");
-
-                        // Add the function result content to the missing function chat message for DB storage.
-                        errorFunctionMessage.AddResult(missingFunctionResultContent);
-                        await RecordToolInvocationAsync(
-                            chatContext,
-                            functionCallContent,
-                            null,
-                            StatisticsToolInvocationStatus.Disabled,
-                            cancellationToken);
-                    }
-
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
-                        LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled,
-                        new DirectLocaleKey(functionCallContentGroup.Key));
-
-                    continue;
-                }
-
-                if (!chatPluginScope.TryGetPluginAndFunction(
-                        functionCallContentGroup.Key,
-                        out var chatPlugin,
-                        out var chatFunction,
-                        out var similarFunctionNames))
-                {
-                    // Not found the function, tell AI.
-
-                    var errorMessageBuilder = new StringBuilder();
-                    errorMessageBuilder.Append("Tool '").Append(functionCallContentGroup.Key).Append("' is not available.");
-
-                    if (similarFunctionNames.Count > 0)
-                    {
-                        errorMessageBuilder.Append(" Did you mean:");
-                        foreach (var similarFunctionName in similarFunctionNames)
-                        {
-                            errorMessageBuilder.Append(' ').AppendLine(similarFunctionName);
-                        }
-                    }
-
-                    // Display error in the chat span (UI).
-                    var errorFunctionMessage = new FunctionCallChatMessage(
-                        LucideIconKind.X,
-                        new DirectLocaleKey(functionCallContentGroup.Key));
-                    functionCallSpan.Add(errorFunctionMessage);
-
-                    // Iterate through the function call contents in the group.
-                    // Add the error message for each function call.
-                    foreach (var functionCallContent in functionCallContentGroup)
-                    {
-                        // Add the function call content to the missing function chat message for DB storage.
-                        errorFunctionMessage.AddCall(functionCallContent);
-
-                        // Create the corresponding function result content with the error message.
-                        var missingFunctionResultContent = new FunctionResultContent(functionCallContent, errorMessageBuilder.ToString());
-
-                        // Add the function result content to the missing function chat message for DB storage.
-                        errorFunctionMessage.AddResult(missingFunctionResultContent);
-                        await RecordToolInvocationAsync(
-                            chatContext,
-                            functionCallContent,
-                            null,
-                            StatisticsToolInvocationStatus.NotFound,
-                            cancellationToken);
-                    }
-
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
-                        LocaleKey.HandledFunctionInvokingException_FunctionNotFound,
-                        new DirectLocaleKey(functionCallContentGroup.Key));
-
-                    continue;
-                }
-
-                var functionCallChatMessage = new FunctionCallChatMessage(
-                    chatFunction.Icon ?? chatPlugin.Icon ?? LucideIconKind.Hammer,
-                    chatFunction.HeaderKey);
-                functionCallChatMessage.IsBusy = true;
-                functionCallSpan.Add(functionCallChatMessage); // functionCallSpan will dispose FunctionCallChatMessage
-
                 try
                 {
-                    // Iterate through the function call contents in the group.
-                    foreach (var functionCallContent in functionCallContentGroup)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (chatPluginScope is null)
+                    {
+                        group.Message.Icon = LucideIconKind.X;
+                        foreach (var call in group.Calls)
+                        {
+                            group.Message.AddResult(new FunctionResultContent(call, "Tool calling is disabled by the user"));
+                            await RecordToolInvocationAsync(
+                                chatContext,
+                                call,
+                                null,
+                                StatisticsToolInvocationStatus.Disabled,
+                                cancellationToken);
+                        }
+
+                        group.Message.ErrorMessageKey = new FormattedDynamicLocaleKey(
+                            LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled,
+                            new DirectLocaleKey(group.FunctionName));
+                        continue;
+                    }
+
+                    if (!chatPluginScope.TryGetPluginAndFunction(
+                            group.FunctionName,
+                            out var chatPlugin,
+                            out var chatFunction,
+                            out var similarFunctionNames))
+                    {
+                        var errorMessageBuilder = new StringBuilder();
+                        errorMessageBuilder.Append("Tool '").Append(group.FunctionName).Append("' is not available.");
+                        if (similarFunctionNames.Count > 0)
+                        {
+                            errorMessageBuilder.Append(" Did you mean:");
+                            foreach (var similarFunctionName in similarFunctionNames)
+                            {
+                                errorMessageBuilder.Append(' ').AppendLine(similarFunctionName);
+                            }
+                        }
+
+                        group.Message.Icon = LucideIconKind.X;
+                        foreach (var call in group.Calls)
+                        {
+                            group.Message.AddResult(new FunctionResultContent(call, errorMessageBuilder.ToString()));
+                            await RecordToolInvocationAsync(
+                                chatContext,
+                                call,
+                                null,
+                                StatisticsToolInvocationStatus.NotFound,
+                                cancellationToken);
+                        }
+
+                        group.Message.ErrorMessageKey = new FormattedDynamicLocaleKey(
+                            LocaleKey.HandledFunctionInvokingException_FunctionNotFound,
+                            new DirectLocaleKey(group.FunctionName));
+                        continue;
+                    }
+
+                    group.Message.Icon = chatFunction.Icon ?? chatPlugin.Icon ?? LucideIconKind.Hammer;
+                    group.Message.HeaderKey = chatFunction.HeaderKey;
+                    foreach (var call in group.Calls)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-
-                        // This should be processed in KernelMixin.
-                        // All function calls must have an ID (returned from the LLM, or generated by us).
-                        if (functionCallContent.Id.IsNullOrEmpty())
-                        {
-                            // This should never happen.
-                            throw new InvalidOperationException("Tool call must have an ID");
-                        }
 
                         // Each FunctionCallContent receives its own ambient context even though the
                         // visible FunctionCallChatMessage may aggregate calls to the same function.
@@ -1436,56 +1438,60 @@ public sealed partial class ChatService : IChatService
                             chatContext,
                             chatPlugin,
                             chatFunction,
-                            functionCallChatMessage,
-                            functionCallContent,
+                            group.Message,
+                            call,
                             _settings.Plugin.ToolBypassApprovalRulesets);
                         using var functionCallContextScope = chatContext.EnterFunctionCallContext(functionCallContext);
 
-                        // Add the function call content to the function call chat message.
-                        // This will record the function call in the database.
-                        functionCallChatMessage.AddCall(functionCallContent);
-
-                        // Also add a display block for the function call content.
-                        // This will allow the UI to display the function call content.
-                        var friendlyContent = chatFunction.GetFriendlyCallContent(functionCallContent);
+                        // Display blocks provide the UI representation; AddCall/AddResult retain
+                        // the corresponding structured invocation in the conversation history.
+                        var friendlyContent = chatFunction.GetFriendlyCallContent(call);
                         if (friendlyContent is not null) functionCallContext.DisplaySink.AppendBlock(friendlyContent);
 
                         var resultContent = await InvokeFunctionAsync(
                             kernelMixin,
-                            functionCallContent,
+                            call,
                             functionCallContext,
                             friendlyContent,
                             cancellationToken);
 
-                        // Try to cancel if requested immediately after function invocation (a long-time await).
+                        // Persist a completed result before observing cancellation. Every call in the
+                        // indivisible provider batch was already registered above, so history can
+                        // synthesize a result for any invocation that did not run.
+                        group.Message.AddResult(resultContent);
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        // dd the function result content to the function call chat message.
-                        // This will record the function result in the database.
-                        functionCallChatMessage.AddResult(resultContent);
-
-                        if (resultContent.InnerContent is Exception ex)
-                        {
-                            functionCallChatMessage.ErrorMessageKey = ex.GetFriendlyMessage();
-                            break; // If an error occurs, we stop processing further function calls.
-                        }
+                        if (resultContent.InnerContent is not Exception ex) continue;
+                        group.Message.ErrorMessageKey = ex.GetFriendlyMessage();
+                        // Stop the remaining calls in this function group; subsequent groups still run.
+                        break;
                     }
                 }
                 finally
                 {
-                    functionCallChatMessage.FinishedAt = DateTimeOffset.UtcNow;
-                    functionCallChatMessage.IsBusy = false;
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        functionCallChatMessage.ErrorMessageKey ??= new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
-                    }
+                    CompleteFunctionCallMessage(group.Message, cancellationToken.IsCancellationRequested);
                 }
             }
         }
         finally
         {
+            foreach (var group in groups)
+            {
+                CompleteFunctionCallMessage(group.Message, cancellationToken.IsCancellationRequested);
+            }
+
             functionCallSpan.FinishedAt = DateTimeOffset.UtcNow;
+        }
+
+        static void CompleteFunctionCallMessage(FunctionCallChatMessage message, bool isCancellationRequested)
+        {
+            if (!message.IsBusy) return;
+            message.FinishedAt = DateTimeOffset.UtcNow;
+            message.IsBusy = false;
+            if (isCancellationRequested)
+            {
+                message.ErrorMessageKey ??= new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
+            }
         }
     }
 

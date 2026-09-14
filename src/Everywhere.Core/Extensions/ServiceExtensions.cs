@@ -1,5 +1,4 @@
-﻿using System.Runtime.Versioning;
-using Everywhere.AI;
+﻿using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat;
@@ -14,6 +13,7 @@ using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Initialization;
 using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
 using Everywhere.Skills;
@@ -47,21 +47,19 @@ public static class ServiceExtensions
         public IServiceCollection AddProcessIsolation() =>
             services
                 .AddSingleton<HostProcessCoordinator>(_ => HostProcessCoordinator.Create())
-                .AddSingleton<IHostConnectionSource>(serviceProvider =>
-                    serviceProvider.GetRequiredService<HostProcessCoordinator>())
-                .AddSingleton<MainHostControlServer>(serviceProvider =>
-                    MainHostControlServer.Create(serviceProvider.GetRequiredService<HostProcessCoordinator>()))
-                .AddSingleton<IAsyncInitializer>(serviceProvider =>
-                    serviceProvider.GetRequiredService<HostProcessCoordinator>())
-                .AddSingleton<IAsyncInitializer>(serviceProvider =>
-                    serviceProvider.GetRequiredService<MainHostControlServer>());
+                .AddSingleton<IHostConnectionSource>(sp => sp.GetRequiredService<HostProcessCoordinator>())
+                .AddSingleton(sp => new ChatVisualService(sp.GetRequiredService<IHostConnectionSource>()))
+                .AddSingleton(sp => new DebuggerVisualContext(sp.GetRequiredService<IHostConnectionSource>()))
+                .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(sp.GetRequiredService<HostProcessCoordinator>()))
+                .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<HostProcessCoordinator>())
+                .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<MainHostControlServer>());
 
         /// <summary>Registers Main's connection-restoring Input Host proxy.</summary>
         public IServiceCollection AddInputHostShortcutListener() =>
-            services.AddSingleton<IShortcutListener>(serviceProvider =>
+            services.AddSingleton<IShortcutListener>(sp =>
                 new InputHostShortcutListener(
-                    serviceProvider.GetRequiredService<IHostConnectionSource>(),
-                    serviceProvider.GetRequiredService<ILogger<InputHostShortcutListener>>()));
+                    sp.GetRequiredService<IHostConnectionSource>(),
+                    sp.GetRequiredService<ILogger<InputHostShortcutListener>>()));
 
 #if WINDOWS
         [SupportedOSPlatform("windows")]

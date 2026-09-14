@@ -42,7 +42,7 @@ public sealed class AXSystemWideVisualElement(
     }
 
     /// <inheritdoc />
-    protected override IVisualElementEnumerator CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+    protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
     {
         ValidateRelation(relation);
         return EmptyVisualElementEnumerator.Shared;

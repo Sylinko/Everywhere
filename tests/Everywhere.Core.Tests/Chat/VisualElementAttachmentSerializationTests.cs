@@ -11,7 +11,7 @@ public sealed class VisualElementAttachmentSerializationTests
     [Test]
     public void Content_WhenStructuredPromptIsSerialized_RoundTripsPolymorphically()
     {
-        ChatAttachment source = new TextSelectionAttachment("selected text", null, null)
+        ChatAttachment source = new TextSelectionAttachment("selected text")
         {
             Content = new PromptCompactElement("Button").Attribute("id", 7).Flag("focused")
         };

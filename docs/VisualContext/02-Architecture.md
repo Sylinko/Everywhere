@@ -137,14 +137,14 @@ This boundary matches what the system can honestly guarantee. It does not depend
 public abstract class VisualElement
 {
     public string Id { get; }
-    public virtual VisualElementQueryResult Query(VisualElementQueryRequest request);
-    public virtual VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
-    public virtual IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementQueryRequest request);
-    public virtual void Invoke();
-    public virtual void SetText(string text);
-    public virtual void Focus();
-    public virtual void SendKeyGesture(KeyGesture keyGesture);
-    public virtual Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken = default);
+    public VisualElementQueryResult Query(VisualElementQueryRequest request);
+    public VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096);
+    public IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementQueryRequest request);
+    public void Invoke();
+    public void SetText(string text);
+    public void Focus();
+    public void SendKeyGesture(KeyGesture keyGesture);
+    public Task<IVisualElementCapture> CaptureAsync(CancellationToken cancellationToken = default);
 }
 ```
 

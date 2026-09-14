@@ -24,10 +24,10 @@ namespace Everywhere.Mac;
 public static class Program
 {
     [STAThread]
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
         NativeMessageBox.Register(NSAlertMessageBox.Show);
-        Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
+        return RunAsync(args).GetAwaiter().GetResult();
     }
 
     private static async Task<int> RunAsync(string[] args)
@@ -86,7 +86,7 @@ public static class Program
         var hostTask = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Automation,
             args,
-            static () => new AutomationHostSession(new MacVisualElementBackend()));
+            static () => new AutomationHostSession(new MacVisualElementBackend(), new MacVisualPickerResolver()));
         if (hostTask.IsCompleted)
         {
             return hostTask;
@@ -105,7 +105,12 @@ public static class Program
         }
         finally
         {
-            application.BeginInvokeOnMainThread(() => application.Stop(application));
+            application.BeginInvokeOnMainThread(() =>
+            {
+                application.Stop(application);
+                using var wakeEvent = NSEvent.OtherEvent(NSEventType.ApplicationDefined, CGPoint.Empty, 0, 0, 0, null, 0, 0, 0);
+                application.PostEvent(wakeEvent, true);
+            });
         }
     }
 

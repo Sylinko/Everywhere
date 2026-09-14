@@ -1,6 +1,8 @@
 using Avalonia.Input;
 using Everywhere.Mac.Interop;
+using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Hosts.Input;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Utilities;
 
 namespace Everywhere.Mac.ProcessIsolation.Input;
@@ -10,6 +12,7 @@ namespace Everywhere.Mac.ProcessIsolation.Input;
 /// Native callbacks only perform bounded state work and attempt a non-blocking
 /// write through the owning session.
 /// </summary>
+[InHostProcess(ProcessRole.Input)]
 public sealed class CGInputHook : IDisposable
 {
     /// <summary>Events that can be accepted by the session's bounded queue.</summary>

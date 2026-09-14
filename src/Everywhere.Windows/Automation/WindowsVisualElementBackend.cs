@@ -3,6 +3,8 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Everywhere.Automation;
+using Everywhere.ProcessIsolation;
+using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Utilities;
 using Everywhere.Windows.Interop;
 using Everywhere.Windows.Interop.UIAutomation;
@@ -12,6 +14,7 @@ namespace Everywhere.Windows.Automation;
 /// <summary>
 /// Owns the process-shared Windows Automation services and acquires root elements in caller-selected visual contexts.
 /// </summary>
+[InHostProcess(ProcessRole.Automation)]
 public sealed class WindowsVisualElementBackend : IVisualElementBackend, IDisposable
 {
     internal UIAutomationClient Automation => _automation ?? throw new ObjectDisposedException(nameof(WindowsVisualElementBackend));

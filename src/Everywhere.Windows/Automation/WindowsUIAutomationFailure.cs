@@ -22,6 +22,10 @@ internal static class WindowsUIAutomationFailure
     public static bool IsProviderException(Exception exception) =>
         exception is COMException or TimeoutException;
 
+    /// <summary>Determines whether a provider failure means that its element disappeared.</summary>
+    public static bool IsElementUnavailable(Exception exception) =>
+        exception is COMException { HResult: (int)UiaError.ElementNotAvailable };
+
     /// <summary>
     /// Determines whether a COM failure reports an unsupported UI Automation operation.
     /// </summary>
@@ -51,13 +55,15 @@ internal static class WindowsUIAutomationFailure
             VisualElementQueryFailureKind.Timeout => new TimeoutException(
                 "The Windows UI Automation provider request timed out.",
                 exception),
-            VisualElementQueryFailureKind.ElementUnavailable => new InvalidOperationException(
+            VisualElementQueryFailureKind.ElementUnavailable => new VisualElementProviderException(
+                VisualElementQueryFailureKind.ElementUnavailable,
                 "The Windows UI Automation element is no longer available.",
                 exception),
             VisualElementQueryFailureKind.Unsupported => new NotSupportedException(
                 "The Windows UI Automation provider does not support this request.",
                 exception),
-            _ => new InvalidOperationException(
+            _ => new VisualElementProviderException(
+                VisualElementQueryFailureKind.ProviderFailure,
                 "The Windows UI Automation provider request failed.",
                 exception),
         };
