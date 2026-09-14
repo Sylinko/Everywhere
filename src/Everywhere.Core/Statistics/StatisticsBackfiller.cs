@@ -191,13 +191,14 @@ public sealed class StatisticsBackfiller(
 
             foreach (var (spanIndex, messageIndex, toolMessage) in toolMessages)
             {
-                for (var index = 0; index < toolMessage.Calls.Count; index++)
+                var calls = toolMessage.Calls;
+                for (var index = 0; index < calls.Length; index++)
                 {
-                    var call = toolMessage.Calls[index];
+                    var call = calls[index];
                     var id = CreateBackfillToolInvocationId(assistantRow.Id, spanIndex, messageIndex, index, call.Id);
                     if (await statisticsDb.ToolInvocationEvents.AnyAsync(x => x.Id == id)) continue;
 
-                    var result = toolMessage.Results.FirstOrDefault(x => x.CallId == call.Id);
+                    var result = toolMessage.Results.AsValueEnumerable().FirstOrDefault(x => x.CallId == call.Id);
                     var isError = IsBackfilledToolError(toolMessage, result);
                     statisticsDb.ToolInvocationEvents.Add(
                         new ToolInvocationEventEntity

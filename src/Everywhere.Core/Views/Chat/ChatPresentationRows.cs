@@ -145,7 +145,7 @@ public sealed class FunctionCallActivityItemPresentationRow(
     public override bool IsWaitingForUserInput => functionCall.IsWaitingForUserInput;
     public override string? PreviewText => functionCall.Content;
     public IDynamicLocaleKey? ErrorMessageKey => functionCall.ErrorMessageKey;
-    public int CallCount => functionCall.Calls.Count;
+    public int CallCount => functionCall.Calls.Length;
     public ChatPluginActivityPreview? ActivityPreview => functionCall.ActivityPreview;
     public bool HasPreview => ActivityPreview is not null || !string.IsNullOrEmpty(PreviewText);
     public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => functionCall.DisplayBlocks;

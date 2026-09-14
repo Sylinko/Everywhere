@@ -34,7 +34,7 @@ public abstract partial class AssistantChatMessageSpan : ObservableObject
 
     [Key(2)]
     [ObservableProperty]
-    public partial MetadataDictionary? Metadata { get; set; }
+    public partial MetadataDictionary Metadata { get; set; } = MetadataDictionary.Empty;
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]

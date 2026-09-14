@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -48,17 +49,17 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     [Key(6)]
-    public IReadOnlyList<FunctionCallContent> Calls
+    public ImmutableArray<FunctionCallContent> Calls
     {
         get => _calls;
-        private init => _calls = value as List<FunctionCallContent> ?? [.. value];
+        private init => _calls = value;
     }
 
     [Key(7)]
-    public IReadOnlyList<FunctionResultContent> Results
+    public ImmutableArray<FunctionResultContent> Results
     {
         get => _results;
-        private init => _results = value as List<FunctionResultContent> ?? [.. value];
+        private init => _results = value;
     }
 
     [Key(8)]
@@ -146,12 +147,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     [IgnoreMember]
     public IEnumerable<ChatAttachment> Attachments => Results.Select(r => r.Result).OfType<ChatAttachment>();
 
-    [IgnoreMember] private readonly List<FunctionCallContent> _calls = [];
-    [IgnoreMember] private readonly List<FunctionResultContent> _results = [];
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
     [IgnoreMember] private readonly CompositeDisposable _disposables = new(2);
     [IgnoreMember] private readonly IDisposable _displayPersistenceConnection;
+
+    [IgnoreMember] private ImmutableArray<FunctionCallContent> _calls = [];
+    [IgnoreMember] private ImmutableArray<FunctionResultContent> _results = [];
     [IgnoreMember] private long _activityPreviewRevision;
 
     [SerializationConstructor]
@@ -190,7 +192,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddCall(FunctionCallContent call)
     {
-        _calls.Add(call);
+        ImmutableInterlocked.Update(ref _calls, static (calls, item) => calls.Add(item), call);
         OnPropertyChanged(nameof(Calls));
     }
 
@@ -199,7 +201,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddResult(FunctionResultContent result)
     {
-        _results.Add(result);
+        ImmutableInterlocked.Update(ref _results, static (results, item) => results.Add(item), result);
         OnPropertyChanged(nameof(Results));
     }
 

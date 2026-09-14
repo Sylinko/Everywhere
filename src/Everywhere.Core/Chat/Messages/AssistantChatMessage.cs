@@ -112,7 +112,7 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
 
     [Key(9)]
     [ObservableProperty]
-    public partial MetadataDictionary? Metadata { get; set; }
+    public partial MetadataDictionary Metadata { get; set; } = MetadataDictionary.Empty;
 
     [Key(10)]
     private IEnumerable<AssistantChatMessageSpan>? SerializableSpans
