@@ -467,3 +467,5 @@ $RECYCLE.BIN/
 tools/sync_i18n/sync_i18n_config.ps1
 tools/sync_i18n/i18n_validation_report.json
 .vscode/launch.json
+
+temp.md

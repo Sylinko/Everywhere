@@ -5,6 +5,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 
 ## Code of Conduct
 - Never modify the code unless explicitly instructed to do so-for example, with a command such as "Start implementation". But you can still execute commands, write temporary probe code, or use other methods to gather information.
+- During implementation, if any deviations from the plan occur, need a temporary workaround, or face other unexpected situations, depending on the severity of the issue, either record it in `temp.md` or pause and discuss it with the user.
 
 ## Required References
 
@@ -22,7 +23,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 
 - Follow standard .NET naming conventions, including .NET capitalization of acronyms.
 - Use `var` for all local variable declarations.
-- Prefer expression-bodied members (`=>`) for simple members.
+- Prefer expression-bodied (`=>`) for simple properties. Method is not required to be expression-bodied, but it is allowed when it improves readability.
 - Prefer guard clauses and early returns over unnecessary nesting.
 - Avoid unnecessary continuation wrapping within declarations, invocations, and expressions; wrap them when they exceed a readable line length. This does not apply to structural formatting: keep XML documentation tags and their text on separate lines, and use normal multiline formatting for property accessor blocks, method bodies, and other blocks. Do not mechanically reflow unrelated existing code solely to enforce this preference.
 - Within a type, normally order member categories as follows:
@@ -55,10 +56,6 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## Localization
 
 - Everywhere uses source-generated localization APIs. Use those APIs instead of manually maintained resource accessors.
-- When adding or changing localized text, edit only:
-  - `src/Everywhere.Core/I18N/Strings.resx`;
-  - `src/Everywhere.Core/I18N/Strings.zh-hans.resx`.
-- Do not edit any other locale-specific RESX file. GitHub Actions generates or updates those translations automatically.
 - Name localization keys after their current semantic meaning and owning area. Do not preserve an obsolete feature prefix after a value becomes shared.
 - Prefix genuinely shared localization keys with `Common_`.
 
