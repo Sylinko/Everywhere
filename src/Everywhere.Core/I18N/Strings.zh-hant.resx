@@ -612,7 +612,7 @@
         <value>支援圖像輸入</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>對話的最大上下文長度 (context_limit)。此項會影響構建視覺上下文的策略，請盡可能設為真實值。</value>
+        <value>對話的最大上下文長度 (context_limit)。此項會影響諸多策略，請盡可能設為真實值。</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大上下文長度 (context_limit)</value>
@@ -705,7 +705,7 @@
         <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>聊天工具包括內建工具和 MCP 伺服器，支援工具調用的大語言模型會在合適的時機使用這些工具（如搜尋網路、訪問本地檔案等）以獲得更強大的功能。</value>
+        <value>助手會在合適的時機使用這些工具（如搜尋網路、存取本機檔案等）以獲得更強大的能力。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>網頁搜尋引擎提供者</value>
@@ -726,13 +726,13 @@
         <value>網頁</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供瀏覽網頁的能力，允許助手即時瀏覽網頁內容從而提升助手能力。</value>
+        <value>提供瀏覽網頁的能力。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>檔案系統</value>
+        <value>檔案操作</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>提供存取檔案的能力，例如列舉、創建、刪除、重命名、讀取或寫入。</value>
+        <value>提供操作檔案的能力，如列出、建立、修改、刪除、重新命名檔案等。</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>已批准的路徑</value>
@@ -759,7 +759,7 @@
         <value>工具</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>視覺上下文</value>
+        <value>螢幕感知</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>提供感知和操作螢幕內容的能力。</value>
@@ -997,7 +997,7 @@
         <value>設置</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>視覺上下文長度預算</value>
+        <value>螢幕感知預算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>深入思考</value>
@@ -1066,7 +1066,8 @@
         <value>警告</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>您確定要刪除 &quot;{0}&quot; 嗎？</value>
+        <value>您確定要刪除目前的助手嗎？
+「{0}」將會永久消失！（真的很久！）</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>是</value>
@@ -1312,7 +1313,7 @@
         <value>移動到</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>允許建立目錄？</value>
+        <value>允許新建資料夾「{0}」嗎？</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>是否允許執行此文件操作？</value>
@@ -1414,7 +1415,7 @@
         <value>建立目錄</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>應用 Patch</value>
+        <value>修改檔案</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1438,7 +1439,7 @@
         <value>{0} 個網址</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>擷取 UI 元素</value>
+        <value>螢幕截圖</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>自動化操作</value>
@@ -1492,7 +1493,7 @@
         <value>獲取指定路徑中檔案或目錄的資訊。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>在檔案中搜尋特定文字並返回匹配的行。</value>
+        <value>在檔案中搜尋指定文字。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>讀取指定路徑中檔案的內容。</value>
@@ -1504,13 +1505,13 @@
         <value>複製或移動文件或文件夾，但不修改其內容。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>刪除明確列出的文件或文件夾。非空文件夾需要 recursive=true。</value>
+        <value>刪除文件或文件夾。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>在指定路徑中創建新目錄。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>使用 Codex 風格 patch 新增、更新、刪除或移動本地文本文件。</value>
+        <value>新增、改寫、刪除或移動文字檔案。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>檔案大小超過 {0} MB；不支援讀取操作。</value>
@@ -1534,7 +1535,7 @@
         <value>模型為參數 '{0}' 提供了無效的值，可能是由於幻覺造成的。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>無法應用補丁。請檢查補丁後重試。</value>
+        <value>無法套用修改，通常是由助手犯錯所導致。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>指定的路徑是檔案，而不是目錄。</value>
@@ -1552,7 +1553,7 @@
         <value>指定的路徑不存在。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>捕捉視覺元素的螢幕截圖。</value>
+        <value>對螢幕特定區域進行截圖。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>執行一組自動化操作，如點擊、輸入或發送快捷鍵。</value>
@@ -1561,7 +1562,7 @@
         <value>執行網頁搜尋。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>提取網頁的主要內容。這會在後台通過 Puppeteer 運行一個隱藏的網絡瀏覽器，並通過此瀏覽器訪問網頁。出於兼容性考慮，首次打開可能會自動下載網絡瀏覽器，視網絡情況可能需要較長的時間。</value>
+        <value>允許助手瀏覽網頁並獲取主要內容。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>未選擇網頁搜尋引擎，請在工具設定中的網路瀏覽器配置搜尋引擎。</value>
@@ -1919,7 +1920,7 @@
         <value>管理待辦清單</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>允許助手維護簡潔的待辦清單，這在處理複雜任務時非常有用。請注意，該清單是臨時的，並會在切換對話或退出Everywhere時消失。</value>
+        <value>允許助手維護一個簡潔的待辦清單，這在處理複雜任務時非常有用。</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>基本功能</value>
@@ -1937,10 +1938,10 @@
         <value>{0} 輸入 · {1} 輸出 · {2} 總計</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>詢問使用者</value>
+        <value>詢問問題</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>允許助手透過互動式對話框向使用者提問並收集輸入。</value>
+        <value>允許助手以單選、多選或自由輸入的形式提問，以便更好地理解當前任務。</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>下一個</value>
@@ -2130,7 +2131,7 @@
         <value>深度思考</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>採集視覺上下文的長度上限，單位為詞元。此項為估算，無法保證精確限制。對於簡單的上下文，消耗的詞元往往會小於這個數；對於複雜的上下文，超出的部分會被截斷。</value>
+        <value>單次螢幕感知消耗的 Token 估算上限。</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>開啟工具調用</value>

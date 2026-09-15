@@ -612,7 +612,7 @@
         <value>支持图像输入</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>对话的最大上下文长度 (context_limit)。此项会影响构建视觉上下文的策略，请尽可能设为真实值。</value>
+        <value>对话的最大上下文长度 (context_limit)。此项会影响诸多策略，请尽可能设为真实值。</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大上下文</value>
@@ -705,7 +705,7 @@
         <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>聊天工具包括内置工具和 MCP 服务器，支持工具调用的大语言模型会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
+        <value>助手会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的能力。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>网络搜索引擎提供方</value>
@@ -726,13 +726,13 @@
         <value>网页</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供浏览网页的能力，允许助手实时浏览网页内容从而提高助手能力。</value>
+        <value>提供浏览网页的能力。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>文件系统</value>
+        <value>文件操作</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>提供访问系统文件的能力, 如枚举、创建、删除、重命名、读取或写入文件等。</value>
+        <value>提供操作文件的能力，如列出、创建、修改、删除、重命名文件等。</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>已批准的路径</value>
@@ -759,7 +759,7 @@
         <value>工具</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>视觉上下文</value>
+        <value>屏幕感知</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>提供感知和操作屏幕内容的能力。</value>
@@ -997,7 +997,7 @@
         <value>设置</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>视觉上下文长度预算</value>
+        <value>屏幕感知预算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>深度思考</value>
@@ -1313,7 +1313,7 @@
         <value>移动到</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>新建文件夹 {0}？</value>
+        <value>允许新建文件夹“{0}”吗？</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>允许执行此文件操作？</value>
@@ -1415,7 +1415,7 @@
         <value>创建文件夹</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>应用 Patch</value>
+        <value>修改文件</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1439,7 +1439,7 @@
         <value>{0} 个链接</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>UI 元素截图</value>
+        <value>屏幕截图</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>自动化操作</value>
@@ -1493,7 +1493,7 @@
         <value>获取指定路径下文件或文件夹的信息。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>在文件中搜索指定文本并返回匹配的行。</value>
+        <value>在文件中搜索指定文本。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>读取指定路径下文件的内容。</value>
@@ -1505,13 +1505,13 @@
         <value>复制或移动文件或文件夹，但不修改其内容。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>删除明确列出的文件或文件夹。非空文件夹需要 recursive=true。</value>
+        <value>删除文件或文件夹。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>在指定路径下创建文件夹。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>使用 Codex 风格 patch 新增、更新、删除或移动本地文本文件。</value>
+        <value>新增、改写、删除或移动文本文件。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>文件大小超过 {0} MB，无法读取。</value>
@@ -1535,7 +1535,7 @@
         <value>模型为参数“{0}”提供了无效值，这可能是由模型幻觉导致的。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>无法应用 patch。请检查 patch 后重试。</value>
+        <value>无法应用修改，通常是由助手犯错导致的。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>指定的路径是文件，而非文件夹。</value>
@@ -1553,7 +1553,7 @@
         <value>指定的路径不存在。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>捕获界面元素的截图。</value>
+        <value>对屏幕特定区域进行截图。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>执行一组自动化操作，如点击、输入或发送快捷键。</value>
@@ -1562,7 +1562,7 @@
         <value>进行网络搜索。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>提取网页的主要内容。这会在后台通过 Puppeteer 运行一个隐藏的网络浏览器，并通过此浏览器访问网页。出于兼容性考虑，首次打开可能会自动下载网络浏览器，视网络情况可能需要较长的时间。</value>
+        <value>允许助手浏览网页并获取主要内容。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>未选择网页搜索引擎，请在工具设置中的网络浏览器配置搜索引擎。</value>
@@ -1920,7 +1920,7 @@
         <value>管理待办清单</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>允许助手维护一个简洁的待办清单，这在处理复杂任务时非常有用。请注意此清单是临时的，会在切换对话或退出 Everywhere 后消失。</value>
+        <value>允许助手维护一个简洁的待办清单，这在处理复杂任务时非常有用。</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>必备</value>
@@ -1938,10 +1938,10 @@
         <value>输入 {0} · 输出 {1} · 总计 {2}</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>询问用户</value>
+        <value>询问问题</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>允许助手通过交互式对话框向用户提问并收集输入。</value>
+        <value>允许助手通过单选、多选或自由输入的形式提问，以便更好地理解当前任务。</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>下一个</value>
@@ -2131,7 +2131,7 @@
         <value>深度思考</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>采集视觉上下文的长度上限，单位为 Token。此项为估算，无法保证精确限制。对于简单的上下文，消耗的 Token 往往会小于这个数；对于复杂的上下文，超出的部分会被截断。</value>
+        <value>单次屏幕感知消耗的 Token 估算上限。</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>开启工具调用</value>

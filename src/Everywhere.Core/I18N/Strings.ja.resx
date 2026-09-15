@@ -612,7 +612,7 @@
         <value>画像入力サポート</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>対話の最大コンテキスト長 (context_limit)。これは視覚的コンテキストを構築する戦略に影響を与えるため、できるだけ実際の値に設定してください。</value>
+        <value>対話の最大コンテキスト長 (context_limit)。これは多くの戦略に影響するため、できるだけ実際の値に設定してください。</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>最大コンテキスト長</value>
@@ -705,7 +705,7 @@
         <value>ツール</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>チャットツールには、組み込みツールとMCPサーバーが含まれており、ツール呼び出しをサポートする大規模言語モデルが適切なタイミングでこれらのツールを使用して、より強力な機能を提供します。</value>
+        <value>アシスタントは適切なタイミングでこれらのツール（Web検索、ローカルファイルへのアクセスなど）を使用し、より強力な機能を実現します。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>ウェブ検索エンジンプロバイダー</value>
@@ -726,13 +726,13 @@
         <value>ウェブ</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>ウェブページをブラウジングする能力を提供し、アシスタントがリアルタイムでウェブコンテンツを閲覧することで、アシスタントの能力を向上させます。</value>
+        <value>ウェブページを閲覧する能力を提供します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>ファイルシステム</value>
+        <value>ファイル操作</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>ファイルへのアクセス機能を提供し、列挙、作成、削除、名前変更、読み取り、書き込みなどが可能です。</value>
+        <value>ファイルを操作する機能を提供します。一覧表示、作成、変更、削除、名前変更などが可能です。</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>承認されたパス</value>
@@ -759,7 +759,7 @@
         <value>ツール</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>視覚コンテキスト</value>
+        <value>画面認識</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>画面の内容を認識し操作する能力を提供します。</value>
@@ -997,7 +997,7 @@
         <value>設定</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>視覚コンテキスト長予算</value>
+        <value>画面認識の予算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>深く考えています</value>
@@ -1066,7 +1066,8 @@
         <value>警告</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>&quot;{0}&quot;を削除してもよろしいですか？</value>
+        <value>現在のアシスタントを削除してもよろしいですか？
+「{0}」は永久に消えます！（本当に長い間！）</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>はい</value>
@@ -1267,7 +1268,7 @@
         <value>詳細な差分プレビューを読み込めませんでした。</value>
     </data>
     <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value>{0} 行を追加</value>
+        <value> {0} 行を追加</value>
     </data>
     <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
         <value>{0} 行を削除</value>
@@ -1312,7 +1313,7 @@
         <value>移動先</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>Allow directory creation?</value>
+        <value>フォルダー「{0}」の作成を許可しますか？</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>このファイル操作を実行してもよろしいですか？</value>
@@ -1414,7 +1415,7 @@
         <value>ディレクトリを作成</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>パッチを適用</value>
+        <value>ファイルを変更</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1438,7 +1439,7 @@
         <value>{0} リンク</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>UI要素をキャプチャ</value>
+        <value>スクリーンショット</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>自動化操作</value>
@@ -1492,7 +1493,7 @@
         <value>指定されたパスにあるファイルまたはディレクトリの情報を取得します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>ファイル内の特定のテキストを検索し、一致する行を返します。</value>
+        <value>ファイル内で指定したテキストを検索します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>指定されたパスにあるファイルの内容を読み取ります。</value>
@@ -1504,13 +1505,13 @@
         <value>ファイルまたはフォルダーをコピーまたは移動しますが、その内容は変更しません。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>明示的にリストされたファイルまたはフォルダーを削除します。非空のフォルダーは recursive=true が必要です。</value>
+        <value>ファイルまたはフォルダーを削除します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>指定されたパスに新しいディレクトリを作成します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>Codexスタイルのパッチを使用して、ローカルテキストファイルを追加、更新、削除、または移動します。</value>
+        <value>テキストファイルを追加、変更、削除、または移動します。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>ファイルサイズが{0} MBを超えているため、読み取り操作はサポートされていません。</value>
@@ -1534,7 +1535,7 @@
         <value>モデルがパラメータ'{0}'に無効な値を提供しました。おそらく幻覚によるものです。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>パッチを適用できませんでした。パッチを確認して再試行してください。</value>
+        <value>変更を適用できませんでした。これは通常、アシスタントのミスが原因です。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>指定されたパスはファイルであり、ディレクトリではありません。</value>
@@ -1552,7 +1553,7 @@
         <value>指定されたパスは存在しません。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>ビジュアル要素のスクリーンショットをキャプチャします。</value>
+        <value>画面の特定の領域をスクリーンショットします。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>クリック、入力、またはショートカットキーの送信など、一連の自動化操作を実行します。</value>
@@ -1561,7 +1562,7 @@
         <value>ウェブ検索を実行します。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>ウェブページの主要なコンテンツを抽出します。バックグラウンドでPuppeteerを使用して隠れたウェブブラウザを実行し、このブラウザを介してウェブページにアクセスします。互換性のため、初回起動時に自動的にウェブブラウザがダウンロードされる場合があり、ネットワーク状況によっては時間がかかることがあります。</value>
+        <value>アシスタントがウェブページを閲覧し、主要なコンテンツを取得できるようにします。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>ウェブ検索エンジンが選択されていません。ツール設定のウェブブラウザで検索エンジンを設定してください。</value>
@@ -1919,7 +1920,7 @@
         <value>タスク管理</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>アシスタントが簡潔なタスクリストを維持することを許可し、複雑なタスクを処理する際に非常に役立ちます。このリストは一時的であり、会話を切り替えたり、Everywhereを終了したりすると消えます。</value>
+        <value>アシスタントが簡潔なタスクリストを維持できるようにします。これは複雑なタスクを処理する際に非常に役立ちます。</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>基本機能</value>
@@ -1937,10 +1938,10 @@
         <value>{0} 入力 · {1} 出力 · {2} 合計</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>ユーザーに質問</value>
+        <value>質問する</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>アシスタントがインタラクティブなダイアログを通じてユーザーに質問し、入力を収集できるようにします。</value>
+        <value>アシスタントが単一選択、複数選択、または自由入力の形式で質問し、現在のタスクをよりよく理解できるようにします。</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>次へ</value>
@@ -2130,7 +2131,7 @@
         <value>深い思考</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>視覚コンテキストの長さの上限、単位はトークンです。この値は推定であり、正確な制限を保証するものではありません。単純なコンテキストでは、消費されるトークンはこの数値より少なくなることが多く、複雑なコンテキストでは超過分が切り捨てられます。</value>
+        <value>1回の画面認識で消費されるトークンの推定上限。</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>ツール呼び出しを有効にする</value>

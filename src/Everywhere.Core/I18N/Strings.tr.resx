@@ -612,7 +612,7 @@
         <value>Görsel Giriş Desteği</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>Sohbetin maksimum bağlam uzunluğu (context_limit). Bu, görsel bağlam oluşturma stratejisini etkiler, mümkünse gerçek bir değer olarak ayarlayın.</value>
+        <value>Sohbetin maksimum bağlam uzunluğu (context_limit). Bu, birçok stratejiyi etkiler, bu yüzden mümkünse gerçekçi bir değer ayarlayın.</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Maksimum Bağlam</value>
@@ -705,7 +705,7 @@
         <value>Eklentiler</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Sohbet araçları, yerleşik araçlar ve MCP sunucuları içerir; büyük dil modelleri, uygun zamanlarda bu araçları kullanarak (örneğin, web araması, yerel dosyalara erişim vb.) daha güçlü işlevsellik sunar.</value>
+        <value>Asistan, bu araçları uygun zamanlarda (örneğin web'de arama, yerel dosyalara erişim vb.) kullanarak daha güçlü yetenekler elde eder.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Arama Motoru Sağlayıcısı</value>
@@ -726,13 +726,13 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Web sayfalarını gezme yeteneği sağlar, böylece asistanın yeteneklerini artırmak için gerçek zamanlı olarak web içeriğini görüntülemesine olanak tanır.</value>
+        <value>Web'de gezinme yeteneği sağlar.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>Dosya Sistemi</value>
+        <value>Dosya İşlemleri</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>Dosyalara erişim yeteneği sağlar; sayım, oluşturma, silme, yeniden adlandırma, okuma veya yazma gibi işlemleri içerir.</value>
+        <value>Dosyalarla çalışma yeteneği sağlar; listeleme, oluşturma, değiştirme, silme ve yeniden adlandırma gibi işlemleri içerir.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>Onaylı Yollar</value>
@@ -759,7 +759,7 @@
         <value>Araçlar</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>Görsel Bağlam</value>
+        <value>Ekran Farkındalığı</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>Ekran içeriğini algılama ve işlem yapma yeteneği sağlar.</value>
@@ -997,7 +997,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Ayarlar</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>Görsel Bağlam Uzunluğu Bütçesi</value>
+        <value>Ekran Farkındalığı Bütçesi</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>Derin Düşünme</value>
@@ -1066,7 +1066,8 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Uyarı</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>&quot;{0}&quot; öğesini silmek istediğinizden emin misiniz?</value>
+        <value>Geçerli asistanı silmek istediğinizden emin misiniz?
+“{0}” kalıcı olarak kaybolacak! (Gerçekten çok uzun süre!)</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Evet</value>
@@ -1267,7 +1268,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Ayrıntılı fark önizlemesi yüklenemedi.</value>
     </data>
     <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value>{0} Satır Eklendi</value>
+        <value> {0} Satır Eklendi</value>
     </data>
     <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
         <value>{0} Satır Silindi</value>
@@ -1312,7 +1313,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Taşı</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>Allow directory creation?</value>
+        <value>“{0}” klasörünün oluşturulmasına izin verilsin mi?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Bu dosya işlemini gerçekleştirmeye izin veriyor musunuz?</value>
@@ -1414,7 +1415,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Dizin Oluştur</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>Patch Uygula</value>
+        <value>Dosyayı değiştir</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1438,7 +1439,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>{0} Bağlantı</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>UI Öğesini Yakala</value>
+        <value>Ekran görüntüsü</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>Otomatik İşlemler</value>
@@ -1492,7 +1493,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Belirtilen yoldaki bir dosya veya dizin hakkında bilgi alın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>Dosya(lar) içinde belirli bir metni arayın ve eşleşen satırları döndürün.</value>
+        <value>Dosyalarda belirtilen metni arayın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>Belirtilen yoldaki bir dosyanın içeriğini okuyun.</value>
@@ -1504,13 +1505,13 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Dosya veya klasörü kopyalayın veya taşıyın, ancak içeriğini değiştirmeyin.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>Açıkça listelenen dosya veya klasörleri silin. Boş olmayan klasörler için recursive=true gereklidir.</value>
+        <value>Dosyaları veya klasörleri silin.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>Belirtilen yolda yeni bir dizin oluşturun.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>Codex tarzı patch kullanarak yerel metin dosyalarını ekleyin, güncelleyin, silin veya taşıyın.</value>
+        <value>Metin dosyalarını ekleyin, değiştirin, silin veya taşıyın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>Dosya boyutu {0} MB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
@@ -1534,7 +1535,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Model, '{0}' parametresi için geçersiz bir değer sağladı, muhtemelen hayal görme nedeniyle.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>Yamanın uygulanamadı. Lütfen yamanın doğruluğunu kontrol edip tekrar deneyin.</value>
+        <value>Değişiklikler uygulanamadı. Bu genellikle asistanın bir hata yapmasından kaynaklanır.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>Belirtilen yol bir dosyadır, dizin değildir.</value>
@@ -1552,7 +1553,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Belirtilen yol mevcut değildir.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>Bir görsel öğenin ekran görüntüsünü alın.</value>
+        <value>Ekranın belirli bir bölgesinin ekran görüntüsünü alın.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>Tıklama, yazma veya kısayol gönderme gibi bir dizi otomatik işlem gerçekleştirin.</value>
@@ -1561,7 +1562,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Bir web araması yapın.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>Web'in ana içeriğini çıkarır. Bu, arka planda Puppeteer kullanarak gizli bir web tarayıcısı çalıştırır ve bu tarayıcı aracılığıyla web sayfasına erişir. Uyumluluk açısından, ilk açılışta otomatik olarak web tarayıcısı indirilebilir, internet durumuna bağlı olarak bu işlem uzun sürebilir.</value>
+        <value>Asistanın web sayfalarına göz atmasına ve ana içeriği almasına olanak tanır.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Web arama motoru seçilmedi, lütfen araç ayarlarında web tarayıcısı yapılandırmasını kontrol edin.</value>
@@ -1919,7 +1920,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Yapılacaklar Listesini Yönet</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>Asistanın, karmaşık görevleri yönetirken son derece faydalı olan kısa bir yapılacaklar listesi tutmasına izin vermek. Bu listenin geçici olduğunu ve sohbetleri değiştirdiğinizde veya Everywhere'dan çıktığınızda kaybolacağını unutmayın.</value>
+        <value>Asistanın kısa bir yapılacaklar listesi tutmasına izin verir; bu, karmaşık görevlerle uğraşırken çok faydalıdır.</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>Temel</value>
@@ -1937,10 +1938,10 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>{0} girdi · {1} çıktı · {2} toplam</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>Kullanıcıya Sor</value>
+        <value>Soru Sor</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>Asistanın etkileşimli bir diyalog kutusu aracılığıyla kullanıcıya soru sormasına ve girdi toplamasına olanak tanır.</value>
+        <value>Asistanın tekli seçim, çoklu seçim veya serbest giriş yoluyla soru sormasına ve geçerli görevi daha iyi anlamasına olanak tanır.</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>Sonraki</value>
@@ -2130,7 +2131,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Derin Düşünme</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>Görsel bağlamın toplanma uzunluğu sınırı, birim olarak token. Bu bir tahmindir, kesin bir sınır garantisi yoktur. Basit bağlamlar için harcanan token genellikle bu sayıdan daha azdır; karmaşık bağlamlar için fazlası kesilecektir.</value>
+        <value>Tek bir ekran algılamada tüketilen Token için tahmini üst sınır.</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>Araç Çağrısını Aç</value>
