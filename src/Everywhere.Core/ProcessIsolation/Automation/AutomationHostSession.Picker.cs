@@ -117,6 +117,16 @@ public sealed partial class AutomationHostSession
                     Candidate = result.ToResponse(),
                 };
             }
+            catch (Exception exception) when (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
+            {
+                if (isRetentionOwnedByOperation) retention.Dispose();
+                picker.Replace(request.Revision, null, null);
+                return new VisualPickerObservation
+                {
+                    Revision = request.Revision,
+                    Candidate = failureKind.ToUnavailableResponse(),
+                };
+            }
             catch
             {
                 if (isRetentionOwnedByOperation) retention.Dispose();

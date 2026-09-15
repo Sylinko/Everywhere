@@ -13,6 +13,7 @@ public sealed class AutomationHostClient
     /// <summary>Initializes a client for one authenticated Automation Host connection incarnation.</summary>
     public AutomationHostClient(RpcConnection connection)
     {
+        connection.RegisterExceptionMapper(AutomationRpcExceptionMapper.Shared);
         _connection = connection;
         _rpc = new AutomationHostRpcClient(connection);
         _releaseQueue = connection.GetSafeHandleReleaseQueue();

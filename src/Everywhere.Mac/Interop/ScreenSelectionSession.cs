@@ -390,13 +390,19 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     protected void ApplyPickingSnapshot(VisualElementSnapshot? snapshot)
     {
         var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
-        ApplyPickingSnapshot(snapshot, bounds);
+        ApplyPickingSnapshot(snapshot, bounds, null);
     }
 
-    private void ApplyPickingSnapshot(VisualElementSnapshot? snapshot, PixelRect bounds)
+    protected void ApplyPickingSnapshot(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
+    {
+        var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
+        ApplyPickingSnapshot(snapshot, bounds, failureKind);
+    }
+
+    private void ApplyPickingSnapshot(VisualElementSnapshot? snapshot, PixelRect bounds, VisualElementQueryFailureKind? failureKind = null)
     {
         foreach (var maskWindow in MaskWindows) maskWindow.SetMask(bounds);
-        ToolTipWindow.ToolTip.Snapshot = snapshot;
+        ToolTipWindow.ToolTip.SetObservation(snapshot, failureKind);
         UpdateToolTipInfo(bounds);
     }
 

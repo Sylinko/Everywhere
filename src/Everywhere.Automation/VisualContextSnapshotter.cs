@@ -99,6 +99,7 @@ public static class VisualContextSnapshotter
 
             private static VisualElementQueryFailureKind GetFailureKind(Exception exception) => exception switch
             {
+                UnauthorizedAccessException => VisualElementQueryFailureKind.PermissionDenied,
                 TimeoutException => VisualElementQueryFailureKind.Timeout,
                 NotSupportedException => VisualElementQueryFailureKind.Unsupported,
                 VisualElementProviderException providerException => providerException.Kind,
@@ -107,6 +108,7 @@ public static class VisualContextSnapshotter
 
             private static string? GetFailureStatus(VisualElementQueryFailureKind? kind) => kind switch
             {
+                VisualElementQueryFailureKind.PermissionDenied => "Element query was denied by platform security",
                 VisualElementQueryFailureKind.Timeout => "Element query timed out",
                 VisualElementQueryFailureKind.ElementUnavailable => "Element became unavailable during query",
                 VisualElementQueryFailureKind.Unsupported => "Element query is unsupported",
@@ -681,6 +683,7 @@ public static class VisualContextSnapshotter
             var failureKind = failure.Kind;
             var status = failureKind switch
             {
+                VisualElementQueryFailureKind.PermissionDenied => $"{relation} enumeration was denied by platform security",
                 VisualElementQueryFailureKind.Timeout => $"{relation} enumeration timed out",
                 VisualElementQueryFailureKind.Unsupported => $"{relation} enumeration is unsupported",
                 VisualElementQueryFailureKind.ElementUnavailable => $"{relation} enumeration became unavailable",

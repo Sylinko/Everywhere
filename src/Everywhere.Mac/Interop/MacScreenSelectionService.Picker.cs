@@ -105,6 +105,14 @@ public sealed partial class MacScreenSelectionService
                 _pickingPromise.TrySetResult(null);
                 await Dispatcher.UIThread.InvokeAsync(Close);
             }
+            catch (Exception exception) when (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    _isConfirming = false;
+                    ApplyPickingSnapshot(null, failureKind);
+                });
+            }
             catch (Exception exception)
             {
                 _pickingPromise.TrySetException(exception);
@@ -115,11 +123,20 @@ public sealed partial class MacScreenSelectionService
         private void HandleObservationReceived(VisualPickerObservation observation) =>
             Dispatcher.UIThread.Post(() =>
             {
-                if (IsVisible) ApplyPickingSnapshot(observation.Snapshot);
+                if (IsVisible) ApplyPickingSnapshot(observation.Snapshot, observation.FailureKind);
             });
 
         private void HandleUpdateFailed(Exception exception)
         {
+            if (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (IsVisible) ApplyPickingSnapshot(null, failureKind);
+                });
+                return;
+            }
+
             _pickingPromise.TrySetException(exception);
             Dispatcher.UIThread.Post(Close);
         }

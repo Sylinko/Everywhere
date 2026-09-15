@@ -11,6 +11,7 @@ internal static class WindowsUIAutomationFailure
     // Values are defined by the Windows SDK UIAutomationCoreApi.h boundary.
     private enum UiaError
     {
+        AccessDenied = unchecked((int)0x80070005),
         ElementNotAvailable = unchecked((int)0x80040201),
         NotSupported = unchecked((int)0x80040204),
         Timeout = unchecked((int)0x80131505),
@@ -20,7 +21,7 @@ internal static class WindowsUIAutomationFailure
     /// Determines whether an exception originated at the UI Automation provider boundary.
     /// </summary>
     public static bool IsProviderException(Exception exception) =>
-        exception is COMException or TimeoutException;
+        exception is UnauthorizedAccessException or COMException or TimeoutException;
 
     /// <summary>Determines whether a provider failure means that its element disappeared.</summary>
     public static bool IsElementUnavailable(Exception exception) =>
@@ -51,6 +52,10 @@ internal static class WindowsUIAutomationFailure
         var kind = GetFailureKind(exception);
         return kind switch
         {
+            VisualElementQueryFailureKind.PermissionDenied when exception is UnauthorizedAccessException => exception,
+            VisualElementQueryFailureKind.PermissionDenied => new UnauthorizedAccessException(
+                "The Windows UI Automation provider denied access to the requested element.",
+                exception),
             VisualElementQueryFailureKind.Timeout when exception is TimeoutException => exception,
             VisualElementQueryFailureKind.Timeout => new TimeoutException(
                 "The Windows UI Automation provider request timed out.",
@@ -72,6 +77,7 @@ internal static class WindowsUIAutomationFailure
     private static VisualElementQueryFailureKind GetFailureKind(Exception exception) =>
         exception switch
         {
+            UnauthorizedAccessException or COMException { HResult: (int)UiaError.AccessDenied } => VisualElementQueryFailureKind.PermissionDenied,
             TimeoutException or COMException { HResult: (int)UiaError.Timeout } => VisualElementQueryFailureKind.Timeout,
             COMException { HResult: (int)UiaError.ElementNotAvailable } => VisualElementQueryFailureKind.ElementUnavailable,
             COMException { HResult: (int)UiaError.NotSupported } => VisualElementQueryFailureKind.Unsupported,

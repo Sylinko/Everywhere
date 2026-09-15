@@ -49,15 +49,12 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     /// <summary>Gets or sets the current scalar picker observation.</summary>
     public VisualElementSnapshot? Snapshot
     {
-        get;
-        set
-        {
-            field = value;
-            Header = GetElementDescription(value);
-        }
+        get => _snapshot;
+        set => SetObservation(value, null);
     }
 
     private readonly Dictionary<int, string> _processNameCache = new();
+    private VisualElementSnapshot? _snapshot;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -69,8 +66,27 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         }
     }
 
-    private string? GetElementDescription(VisualElementSnapshot? snapshot)
+    /// <summary>Updates the current picker observation and its provider failure as one UI state.</summary>
+    public void SetObservation(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
     {
+        _snapshot = snapshot;
+        Header = GetElementDescription(snapshot, failureKind);
+    }
+
+    private string? GetElementDescription(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
+    {
+        if (snapshot is null && failureKind is { } failure)
+        {
+            return failure switch
+            {
+                VisualElementQueryFailureKind.PermissionDenied => LocaleResolver.ScreenSelectionToolTip_QueryFailure_PermissionDenied,
+                VisualElementQueryFailureKind.Timeout => LocaleResolver.ScreenSelectionToolTip_QueryFailure_Timeout,
+                VisualElementQueryFailureKind.ElementUnavailable => LocaleResolver.ScreenSelectionToolTip_QueryFailure_ElementUnavailable,
+                VisualElementQueryFailureKind.Unsupported => LocaleResolver.ScreenSelectionToolTip_QueryFailure_Unsupported,
+                _ => LocaleResolver.ScreenSelectionToolTip_QueryFailure_ProviderFailure,
+            };
+        }
+
         if (snapshot is not { } observation) return LocaleResolver.Common_None;
 
         DynamicLocaleKey key;

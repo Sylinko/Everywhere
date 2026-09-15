@@ -84,6 +84,27 @@ internal static class AutomationHostRpcModelExtensions
         };
     }
 
+    public static AcquireAutomationAnchorResponse ToUnavailableResponse(this VisualElementQueryFailureKind failureKind) => new()
+    {
+        IsAvailable = false,
+        ElementId = null,
+        Type = null,
+        States = null,
+        Name = null,
+        TextPreview = null,
+        HasMoreText = false,
+        HasBounds = false,
+        BoundsX = 0,
+        BoundsY = 0,
+        BoundsWidth = 0,
+        BoundsHeight = 0,
+        ProcessId = null,
+        NativeWindowHandle = null,
+        AvailableFields = VisualElementFields.None,
+        MissingFields = VisualElementFields.None,
+        FailureKind = failureKind,
+    };
+
     public static AcquireAutomationAnchorResponse ToResponse(this VisualContextSnapshotNode node)
     {
         var snapshot = node.Snapshot;

@@ -36,6 +36,7 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
     /// <inheritdoc />
     public void Bind(RpcConnection connection)
     {
+        connection.RegisterExceptionMapper(AutomationRpcExceptionMapper.Shared);
         _resources.Bind(connection);
         AutomationHostRpcBinding.Bind(connection, this);
         AutomationHostDiagnosticsRpcBinding.Bind(connection, this);

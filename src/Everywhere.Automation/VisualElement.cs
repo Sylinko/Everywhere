@@ -110,22 +110,22 @@ public abstract class VisualElement
     /// <summary>
     /// Invokes this element's semantic default action.
     /// </summary>
-    public void Invoke() => ExecuteAction(default(Void), static (element, _) => element.InvokeCore());
+    public virtual void Invoke() => ExecuteAction(default(Void), static (element, _) => element.InvokeCore());
 
     /// <summary>
     /// Replaces this element's editable scalar text.
     /// </summary>
-    public void SetText(string text) => ExecuteAction(text, static (element, value) => element.SetTextCore(value));
+    public virtual void SetText(string text) => ExecuteAction(text, static (element, value) => element.SetTextCore(value));
 
     /// <summary>
     /// Sets keyboard focus to this element.
     /// </summary>
-    public void Focus() => ExecuteAction(default(Void), static (element, _) => element.FocusCore());
+    public virtual void Focus() => ExecuteAction(default(Void), static (element, _) => element.FocusCore());
 
     /// <summary>
     /// Sends one keyboard gesture to this element.
     /// </summary>
-    public void SendKeyGesture(KeyGesture keyGesture) => ExecuteAction(keyGesture, static (element, value) => element.SendKeyGestureCore(value));
+    public virtual void SendKeyGesture(KeyGesture keyGesture) => ExecuteAction(keyGesture, static (element, value) => element.SendKeyGestureCore(value));
 
     /// <summary>
     /// Gets a bounded textual representation of this element's current selection.

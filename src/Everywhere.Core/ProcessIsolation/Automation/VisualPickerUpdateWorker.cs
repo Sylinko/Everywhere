@@ -52,13 +52,33 @@ public sealed class VisualPickerUpdateWorker : IDisposable
         {
             await worker.WaitAsync(cancellationToken).ConfigureAwait(false);
             var observation = GetLatestObservation();
-            if (observation is null) return null;
+            if (observation is null)
+            {
+                Dispose();
+                return null;
+            }
             using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetimeToken);
-            return await _context.ConfirmPickerAsync(_picker, observation, query, linkedCancellation.Token).ConfigureAwait(false);
+            var anchor = await _context.ConfirmPickerAsync(_picker, observation, query, linkedCancellation.Token).ConfigureAwait(false);
+            Dispose();
+            return anchor;
         }
-        finally
+        catch (Exception exception) when (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out _))
+        {
+            lock (_stateGate)
+            {
+                if (!_isDisposed)
+                {
+                    _isCompleting = false;
+                    _latestObservation = null;
+                }
+            }
+
+            throw;
+        }
+        catch
         {
             Dispose();
+            throw;
         }
     }
 
