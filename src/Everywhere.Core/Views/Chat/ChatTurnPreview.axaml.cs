@@ -10,8 +10,23 @@ namespace Everywhere.Views;
 /// <summary>
 /// A bounded preview with a font-relative minimum size and subscriptions only to running assistants.
 /// </summary>
-public sealed partial class ChatTurnPreview : UserControl, IDisposable
+public sealed partial class ChatTurnPreview : UserControl
 {
+    /// <summary>
+    /// Defines the indexed turn displayed by this preview.
+    /// </summary>
+    public static readonly StyledProperty<ChatTurnNavigationIndex.Entry?> EntryProperty =
+        AvaloniaProperty.Register<ChatTurnPreview, ChatTurnNavigationIndex.Entry?>(nameof(Entry));
+
+    /// <summary>
+    /// Gets or sets the indexed turn displayed by this preview.
+    /// </summary>
+    public ChatTurnNavigationIndex.Entry? Entry
+    {
+        get => GetValue(EntryProperty);
+        set => SetValue(EntryProperty, value);
+    }
+
     /// <summary>
     /// Defines the response line budget used for the overall minimum size.
     /// </summary>
@@ -33,41 +48,66 @@ public sealed partial class ChatTurnPreview : UserControl, IDisposable
     private ChatTurnNavigationIndex? _index;
     private ChatTurnNavigationIndex.Entry? _entry;
     private bool _isRefreshQueued;
-    private bool _isDisposed;
 
     /// <summary>
     /// Creates the preview visual tree.
     /// </summary>
     public ChatTurnPreview() => InitializeComponent();
 
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        ObserveEntry();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        Release();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property != EntryProperty || VisualRoot is null) return;
+
+        Release();
+        ObserveEntry();
+    }
+
     /// <summary>
     /// Reads the turn and observes its active assistants. Branch updates can add another assistant
     /// after compression without replacing the preview or subscriptions to unchanged messages.
     /// </summary>
-    public void Observe(ChatTurnNavigationIndex index, ChatTurnNavigationIndex.Entry entry)
+    private void ObserveEntry()
     {
-        if (_isDisposed) return;
-        _index = index;
+        if (Entry is not { } entry) return;
+        _index = entry.Index;
         _entry = entry;
+        _index.Changed += HandleIndexChanged;
         Refresh();
     }
 
     /// <summary>
     /// Stops observing the current turn so this preview can be reused for another realized entry.
     /// </summary>
-    public void Release()
+    private void Release()
     {
-        if (_isDisposed) return;
-
+        if (_index is not null) _index.Changed -= HandleIndexChanged;
         foreach (var assistant in _runningAssistants) assistant.PropertyChanged -= HandleAssistantChanged;
         _runningAssistants.Clear();
         _index = null;
         _entry = null;
     }
 
+    private void HandleIndexChanged() => Refresh();
+
     private void Refresh()
     {
-        if (_isDisposed || _index is not { } index || _entry is not { } entry) return;
+        if (_index is not { } index || _entry is not { } entry) return;
         var messages = index.GetMessages(entry).ToList();
         var assistants = messages.OfType<AssistantChatMessage>().ToList();
         foreach (var assistant in _runningAssistants.ToArray())
@@ -178,7 +218,7 @@ public sealed partial class ChatTurnPreview : UserControl, IDisposable
         // with no timer, delayed completion, or per-span subscription graph.
         Dispatcher.UIThread.PostOnDemand(() =>
         {
-            if (_isDisposed || _isRefreshQueued) return;
+            if (_isRefreshQueued) return;
 
             _isRefreshQueued = true;
             Dispatcher.UIThread.Post(
@@ -189,14 +229,5 @@ public sealed partial class ChatTurnPreview : UserControl, IDisposable
                 },
                 DispatcherPriority.Background);
         });
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (_isDisposed) return;
-
-        Release();
-        _isDisposed = true;
     }
 }
