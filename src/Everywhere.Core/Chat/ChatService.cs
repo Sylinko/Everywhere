@@ -715,7 +715,6 @@ public sealed partial class ChatService : IChatService
         var compressionMessage = new ContextCompressionChatMessage(
             coveredThroughNodeId,
             context.KernelMixin.ModelId,
-            DateTimeOffset.UtcNow,
             trigger,
             usageBefore.TotalTokenCount,
             context.KernelMixin.ContextLimit > 0 ? context.KernelMixin.ContextLimit : null);
