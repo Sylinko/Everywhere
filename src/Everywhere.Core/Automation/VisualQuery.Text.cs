@@ -134,6 +134,11 @@ public sealed partial class VisualQuery
         {
             return element.ReadText(offset, maxCharacters);
         }
+        catch (UnauthorizedAccessException exception)
+        {
+            return VisualElementTextReadResult.FromFailure(
+                new VisualElementQueryFailure(VisualElementQueryFailureKind.PermissionDenied, null, exception));
+        }
         catch (TimeoutException exception)
         {
             return VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Timeout, null, exception));
@@ -171,6 +176,7 @@ public sealed partial class VisualQuery
 
     private static string GetFailureStatus(VisualElementQueryFailureKind kind) => kind switch
     {
+        VisualElementQueryFailureKind.PermissionDenied => "Permission to read text from the visual element was denied",
         VisualElementQueryFailureKind.Timeout => "Text reading timed out",
         VisualElementQueryFailureKind.ElementUnavailable => "The visual element became unavailable while reading text",
         VisualElementQueryFailureKind.Unsupported => "The visual element does not expose readable text",

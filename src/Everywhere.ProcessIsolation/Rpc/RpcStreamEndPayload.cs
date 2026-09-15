@@ -30,4 +30,8 @@ internal sealed partial class RpcStreamEndPayload
     /// <summary>Redacted diagnostic message when the stream failed.</summary>
     [Key(2)]
     public string? ErrorMessage { get; init; }
+
+    /// <summary>Application-owned strongly typed exception payload, when the stream failure was mapped.</summary>
+    [Key(3)]
+    public byte[]? MappedException { get; init; }
 }

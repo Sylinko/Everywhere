@@ -60,6 +60,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private readonly Router _router = new();
     private readonly FrameTransport _transport;
 
+    private IRpcExceptionMapper? _exceptionMapper;
     private string? _connectionNonce;
     private Task? _disposeTask;
     private int _isDisposed;
@@ -79,6 +80,20 @@ public sealed class RpcConnection : IAsyncDisposable
         _options = options ?? new RpcConnectionOptions();
         _codec = codec ?? new MessagePackRpcPayloadCodec();
         _transport = new FrameTransport(stream, _options);
+    }
+
+    /// <summary>
+    /// Registers the application-owned mapping used for selected remote exceptions.
+    /// Re-registering the same mapper instance is idempotent.
+    /// </summary>
+    public void RegisterExceptionMapper(IRpcExceptionMapper exceptionMapper)
+    {
+        ArgumentNullException.ThrowIfNull(exceptionMapper);
+        var existingMapper = Interlocked.CompareExchange(ref _exceptionMapper, exceptionMapper, null);
+        if (existingMapper is not null && !ReferenceEquals(existingMapper, exceptionMapper))
+        {
+            throw new InvalidOperationException("This RPC connection already has a different exception mapper.");
+        }
     }
 
     /// <summary>Idempotently stops the connection and disposes its owned stream.</summary>
@@ -344,6 +359,7 @@ public sealed class RpcConnection : IAsyncDisposable
                 frame.Header.CorrelationId,
                 "handshake_required",
                 "The RPC handshake must complete before other operations.",
+                null,
                 cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -390,6 +406,7 @@ public sealed class RpcConnection : IAsyncDisposable
                 frame.Header.CorrelationId,
                 "cancelled",
                 "The RPC operation was cancelled.",
+                null,
                 cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -403,6 +420,7 @@ public sealed class RpcConnection : IAsyncDisposable
                 frame.Header.CorrelationId,
                 "handler_error",
                 exception.Message,
+                exception,
                 cancellationToken).ConfigureAwait(false);
             CompleteGracefulShutdownIfRequested();
         }
@@ -435,7 +453,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
         operation.ValidateOperation(frame.Header.OperationId);
         var error = _codec.Deserialize<RpcErrorPayload>(frame.Payload);
-        operation.Fail(new RpcRemoteException(error.Code, error.Message));
+        operation.Fail(CreateRemoteException(error.Code, error.Message, error.MappedException));
     }
 
     private void DispatchNotification(RpcFrame frame, CancellationToken cancellationToken)
@@ -504,6 +522,7 @@ public sealed class RpcConnection : IAsyncDisposable
                     frame.Header.CorrelationId,
                     "cancelled",
                     "The RPC stream was cancelled.",
+                    null,
                     cancellationToken).ConfigureAwait(false);
             }
         }
@@ -523,7 +542,8 @@ public sealed class RpcConnection : IAsyncDisposable
                     {
                         Status = RpcStreamEndStatus.Failed,
                         ErrorCode = "stream_error",
-                        ErrorMessage = exception.Message,
+                        ErrorMessage = CreateRemoteErrorMessage(exception, "The remote RPC stream failed.", out var mappedException),
+                        MappedException = mappedException,
                     },
                     cancellationToken).ConfigureAwait(false);
             }
@@ -534,6 +554,7 @@ public sealed class RpcConnection : IAsyncDisposable
                     frame.Header.CorrelationId,
                     "stream_error",
                     exception.Message,
+                    exception,
                     cancellationToken).ConfigureAwait(false);
             }
         }
@@ -573,7 +594,17 @@ public sealed class RpcConnection : IAsyncDisposable
         }
 
         var end = _codec.Deserialize<RpcStreamEndPayload>(frame.Payload);
-        return stream.CompleteAsync(frame.Header.Sequence, end, cancellationToken);
+        var exception = end.Status switch
+        {
+            RpcStreamEndStatus.Completed => null,
+            RpcStreamEndStatus.Cancelled => new OperationCanceledException(end.ErrorMessage),
+            RpcStreamEndStatus.Failed => CreateRemoteException(
+                end.ErrorCode ?? "stream_error",
+                end.ErrorMessage ?? "The remote RPC stream failed.",
+                end.MappedException),
+            _ => new RpcProtocolException("The RPC stream end status is invalid."),
+        };
+        return stream.CompleteAsync(frame.Header.Sequence, exception, cancellationToken);
     }
 
     private ValueTask SendErrorAsync(
@@ -581,17 +612,38 @@ public sealed class RpcConnection : IAsyncDisposable
         ulong correlationId,
         string code,
         string message,
+        Exception? exception,
         CancellationToken cancellationToken)
     {
+        var mappedException = exception is null ? null : TrySerializeMappedException(exception);
         return _transport.EnqueueAsync(
             new OutboundFrame(
                 RpcFrameKind.Error,
                 operationId,
                 correlationId,
                 0,
-                _codec.Serialize(new RpcErrorPayload { Code = code, Message = message })),
+                _codec.Serialize(new RpcErrorPayload
+                {
+                    Code = code,
+                    Message = mappedException is null ? message : "The remote RPC handler returned a mapped failure.",
+                    MappedException = mappedException,
+                })),
             cancellationToken);
     }
+
+    private byte[]? TrySerializeMappedException(Exception exception) =>
+        _exceptionMapper is { } exceptionMapper && exceptionMapper.TrySerialize(exception, _codec, out var payload) ? payload : null;
+
+    private string CreateRemoteErrorMessage(Exception exception, string mappedMessage, out byte[]? mappedException)
+    {
+        mappedException = TrySerializeMappedException(exception);
+        return mappedException is null ? exception.Message : mappedMessage;
+    }
+
+    private Exception CreateRemoteException(string code, string message, byte[]? mappedException) =>
+        mappedException is not null && _exceptionMapper is { } exceptionMapper ?
+            exceptionMapper.Deserialize(mappedException, _codec) :
+            new RpcRemoteException(code, message);
 
     private ValueTask SendStreamEndAsync(
         uint operationId,
@@ -1280,7 +1332,7 @@ public sealed class RpcConnection : IAsyncDisposable
             await _parts.Writer.WriteAsync(new StreamPart(payload, null, false), cancellationToken).ConfigureAwait(false);
         }
 
-        public async ValueTask CompleteAsync(uint sequence, RpcStreamEndPayload end, CancellationToken cancellationToken)
+        public async ValueTask CompleteAsync(uint sequence, Exception? exception, CancellationToken cancellationToken)
         {
             if (Closed)
             {
@@ -1288,15 +1340,6 @@ public sealed class RpcConnection : IAsyncDisposable
             }
 
             ValidateSequence(sequence);
-            Exception? exception = end.Status switch
-            {
-                RpcStreamEndStatus.Completed => null,
-                RpcStreamEndStatus.Cancelled => new OperationCanceledException(end.ErrorMessage),
-                RpcStreamEndStatus.Failed => new RpcRemoteException(
-                    end.ErrorCode ?? "stream_error",
-                    end.ErrorMessage ?? "The remote RPC stream failed."),
-                _ => new RpcProtocolException("The RPC stream end status is invalid."),
-            };
             await _parts.Writer.WriteAsync(new StreamPart(default, exception, true), cancellationToken).ConfigureAwait(false);
             Closed.FlipIfFalse();
             _parts.Writer.TryComplete();

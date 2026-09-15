@@ -10,8 +10,6 @@ public sealed class RemoteVisualPicker : RpcSafeHandle
     /// <summary>Gets the remote visual Context that owns this picker.</summary>
     public RemoteVisualContext Context { get; }
 
-    internal long ContextId => _contextLease.ResourceId;
-
     private readonly IAutomationHostRpc _rpc;
     private readonly RpcSafeHandleLease _contextLease;
     private readonly RpcSafeHandleReleaseQueue _releaseQueue;
@@ -42,7 +40,7 @@ public sealed class RemoteVisualPicker : RpcSafeHandle
         return await _rpc.UpdatePickerAsync(
             new UpdateVisualPickerRequest
             {
-                ContextId = ContextId,
+                ContextId = _contextLease.ResourceId,
                 PickerId = pickerLease.ResourceId,
                 Revision = revision,
                 PointX = point.X,
@@ -60,43 +58,38 @@ public sealed class RemoteVisualPicker : RpcSafeHandle
     {
         cancellationToken.ThrowIfCancellationRequested();
         using var pickerLease = AcquireLease();
+        var contextLease = Context.AcquireLease();
+        var anchorId = _releaseQueue.AllocateResourceId();
         try
         {
-            var contextLease = Context.AcquireLease();
-            var anchorId = _releaseQueue.AllocateResourceId();
-            try
-            {
-                var requestedQuery = query ?? VisualElementQueryRequest.Default;
-                var response = await _rpc.ConfirmPickerAsync(
-                    new ConfirmVisualPickerRequest
-                    {
-                        ContextId = ContextId,
-                        PickerId = pickerLease.ResourceId,
-                        AnchorId = anchorId,
-                        Revision = observation.Revision,
-                        RequestedFields = requestedQuery.RequestedFields,
-                        MaxTextCharacters = requestedQuery.MaxTextCharacters,
-                    },
-                    cancellationToken).ConfigureAwait(false);
-                if (response.IsAvailable)
+            var requestedQuery = query ?? VisualElementQueryRequest.Default;
+            var response = await _rpc.ConfirmPickerAsync(
+                new ConfirmVisualPickerRequest
                 {
-                    return new RemoteVisualAnchor(Context, contextLease, response, anchorId, _releaseQueue);
-                }
-
-                _releaseQueue.TryQueueRelease(anchorId);
-                contextLease.Dispose();
-                return null;
-            }
-            catch
-            {
-                _releaseQueue.TryQueueRelease(anchorId);
-                contextLease.Dispose();
-                throw;
-            }
-        }
-        finally
-        {
+                    ContextId = _contextLease.ResourceId,
+                    PickerId = pickerLease.ResourceId,
+                    AnchorId = anchorId,
+                    Revision = observation.Revision,
+                    RequestedFields = requestedQuery.RequestedFields,
+                    MaxTextCharacters = requestedQuery.MaxTextCharacters,
+                },
+                cancellationToken).ConfigureAwait(false);
+            
             Dispose();
+            if (response.IsAvailable)
+            {
+                return new RemoteVisualAnchor(Context, contextLease, response, anchorId, _releaseQueue);
+            }
+
+            _releaseQueue.TryQueueRelease(anchorId);
+            contextLease.Dispose();
+            return null;
+        }
+        catch
+        {
+            _releaseQueue.TryQueueRelease(anchorId);
+            contextLease.Dispose();
+            throw;
         }
     }
 

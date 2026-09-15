@@ -235,6 +235,109 @@ public sealed class AutomationHostSessionTests
     }
 
     [Test]
+    public async Task RemotePicker_WhenProviderDeniesUpdate_ReturnsFailureAndAcceptsNextUpdate()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend(shouldUsePointIdentity: true)
+        {
+            AcquisitionException = new UnauthorizedAccessException("denied by test provider"),
+        };
+        await using var session = new AutomationHostSession(backend);
+        session.Bind(pair.Server);
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var client = new AutomationHostClient(pair.Client);
+        using var context = await client.CreateContextAsync();
+        using var picker = await context.BeginPickerAsync();
+        var deniedObservation = await picker.UpdateAsync(new PixelPoint(20, 40), ScreenSelectionMode.Element);
+        var recoveredObservation = await picker.UpdateAsync(new PixelPoint(120, 240), ScreenSelectionMode.Element);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(deniedObservation.Snapshot, Is.Null);
+            Assert.That(deniedObservation.FailureKind, Is.EqualTo(VisualElementQueryFailureKind.PermissionDenied));
+            Assert.That(recoveredObservation.Snapshot, Is.Not.Null);
+            Assert.That(recoveredObservation.FailureKind, Is.Null);
+            Assert.That(picker.IsClosed, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task VisualPickerUpdateWorker_WhenConfirmationTimesOut_ReceivesTypedExceptionAndCanContinue()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend(shouldUsePointIdentity: true);
+        await using var session = new AutomationHostSession(backend);
+        session.Bind(pair.Server);
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var source = new TestHostConnectionSource(pair.Client);
+        using var visualService = new ChatVisualService(source);
+        var visualContext = visualService.AcquisitionContext;
+        var picker = await visualContext.BeginPickerAsync();
+        using var pump = new VisualPickerUpdateWorker(visualContext, picker);
+        var observationReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        pump.ObservationReceived += _ => observationReceived.TrySetResult();
+        pump.Update(new PixelPoint(10, 20), ScreenSelectionMode.Element);
+        await observationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        backend.ElementQueryException = new TimeoutException("test provider timeout");
+        var exception = Assert.ThrowsAsync<TimeoutException>(async () => await pump.ConfirmAsync());
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception?.Message, Is.EqualTo("The Automation Host visual-element operation timed out."));
+            Assert.That(exception?.Message, Does.Not.Contain("test provider timeout"));
+            Assert.That(picker.IsClosed, Is.False);
+        });
+
+        observationReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        pump.Update(new PixelPoint(30, 40), ScreenSelectionMode.Element);
+        await observationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        using var anchor = await pump.ConfirmAsync() ??
+                           throw new InvalidOperationException("The recovered picker did not retain its candidate.");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(anchor.Snapshot.Name, Is.EqualTo("Root"));
+            Assert.That(picker.IsClosed, Is.True);
+        });
+    }
+
+    [Test]
+    public async Task RpcStream_WhenMappedFailureFollowsChunk_RestoresTypedException()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        pair.Server.RegisterExceptionMapper(AutomationRpcExceptionMapper.Shared);
+        pair.Client.RegisterExceptionMapper(AutomationRpcExceptionMapper.Shared);
+        pair.Server.RegisterStreamHandler<int, int>(0x7FFF0002, ProduceStream);
+        pair.Server.Start();
+        pair.Client.Start();
+        var values = new List<int>();
+
+        var exception = Assert.ThrowsAsync<TimeoutException>(async () =>
+        {
+            await foreach (var value in pair.Client.InvokeStreamAsync<int, int>(0x7FFF0002, 0)) values.Add(value);
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(values, Is.EqualTo(new[] { 1 }));
+            Assert.That(exception?.Message, Is.EqualTo("The Automation Host visual-element operation timed out."));
+            Assert.That(exception?.Message, Does.Not.Contain("test stream timeout"));
+        });
+
+        static async IAsyncEnumerable<int> ProduceStream(int _, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return 1;
+            await Task.Yield();
+            throw new TimeoutException("test stream timeout");
+        }
+    }
+
+    [Test]
     public async Task RemoteAnchor_WhenMovedBetweenContexts_ConsumesOnlySourceOwnerAndUsesDestinationCanonicalElement()
     {
         await using var pair = await TestConnectionPair.CreateAsync();
@@ -488,6 +591,8 @@ public sealed class AutomationHostSessionTests
         public int LastMaxTextCharacters { get; private set; }
         public VisualElementLocator LastLocator { get; private set; }
         public VisualElementResolution LastResolution { get; private set; }
+        public Exception? AcquisitionException { get; set; }
+        public Exception? ElementQueryException { get; set; }
         public bool ShouldFailAdoption { get; set; }
 
         public VisualElementQueryResult Query(
@@ -499,6 +604,11 @@ public sealed class AutomationHostSessionTests
             AcquisitionCount++;
             LastLocator = locator;
             LastResolution = resolution;
+            if (AcquisitionException is { } acquisitionException)
+            {
+                AcquisitionException = null;
+                throw acquisitionException;
+            }
             queryStarted?.TrySetResult();
             if (continueQuery is not null && !continueQuery.Wait(TimeSpan.FromSeconds(10)))
             {
@@ -530,6 +640,11 @@ public sealed class AutomationHostSessionTests
         {
             LastRequestedFields = request.RequestedFields;
             LastMaxTextCharacters = request.MaxTextCharacters;
+            if (ElementQueryException is { } elementQueryException)
+            {
+                ElementQueryException = null;
+                throw elementQueryException;
+            }
         }
     }
 

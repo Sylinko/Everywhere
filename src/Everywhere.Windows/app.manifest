@@ -17,6 +17,16 @@
         </application>
     </compatibility>
 
+    <!-- Process roles such as the Automation Host branch before Avalonia initializes.
+         Declare DPI awareness at the executable boundary so UI Automation coordinates
+         and Win32 window bounds use physical desktop pixels in every role. -->
+    <application xmlns="urn:schemas-microsoft-com:asm.v3">
+        <windowsSettings>
+            <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+            <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+        </windowsSettings>
+    </application>
+
     <dependency>
         <dependentAssembly>
             <assemblyIdentity

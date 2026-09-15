@@ -167,8 +167,8 @@ public sealed class ScreenVisualElement : VisualElement
                 "The display topology changed after this Screen element was observed.");
         }
 
-        return Task.FromResult<IVisualElementCapture>(
-            GDIScreenCapture.Capture(Bounds) ?? throw new InvalidOperationException("The display does not intersect the Windows virtual screen."));
+        return Task.FromResult(GDIScreenCapture.Capture(Bounds) ??
+            throw new InvalidOperationException("The display does not intersect the Windows virtual screen."));
     }
 
     /// <inheritdoc />

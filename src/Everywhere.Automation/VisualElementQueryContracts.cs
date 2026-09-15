@@ -214,6 +214,7 @@ public enum VisualElementQueryFailureKind
     Unsupported,
     Timeout,
     ProviderFailure,
+    PermissionDenied,
 }
 
 /// <summary>

@@ -13,4 +13,8 @@ internal sealed partial class RpcErrorPayload
     /// <summary>Redacted diagnostic message that is safe to expose to the caller.</summary>
     [Key(1)]
     public required string Message { get; init; }
+
+    /// <summary>Application-owned strongly typed exception payload, when the exception was mapped.</summary>
+    [Key(2)]
+    public byte[]? MappedException { get; init; }
 }

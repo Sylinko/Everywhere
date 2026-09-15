@@ -1,4 +1,6 @@
-﻿using System.Runtime.Versioning;
+#if WINDOWS
+using System.Runtime.Versioning;
+#endif
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;

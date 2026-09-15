@@ -65,6 +65,10 @@ public sealed partial class VisualPickerObservation
     /// <summary>Gets the current candidate Snapshot, or <see langword="null" /> when no candidate is available.</summary>
     [IgnoreMember]
     public VisualElementSnapshot? Snapshot => Candidate.IsAvailable ? Candidate.ToSnapshot() : null;
+
+    /// <summary>Gets the provider failure that prevented a current candidate from being observed.</summary>
+    [IgnoreMember]
+    public VisualElementQueryFailureKind? FailureKind => Candidate.FailureKind;
 }
 
 /// <summary>Confirms and transfers a picker's exact current candidate into a remote visual anchor.</summary>
