@@ -6,7 +6,7 @@ This document describes the implemented Windows service-mode and installer behav
 
 - Main normally runs with the user's ordinary token. Service mode elevates only Input Host and Automation Host.
 - Service mode is an explicit installed capability. A configured task remains the launch route even when UAC is disabled or Main already has a full administrative token.
-- Inno Setup remains the installer. It elevates explicitly and registers an all-users installation.
+- Inno Setup 7.1 x64 remains the installer. It elevates explicitly and registers an all-users installation.
 - Setup EXE and portable ZIP remain supported release forms. Portable and Scoop copies launch ordinary Hosts until the user explicitly enables service mode.
 - Task Scheduler is an optional capability. Failure to create or start the task must not invalidate an otherwise usable installation.
 - An unprotected custom directory is allowed after a clear warning. The warning does not prohibit service-mode installation.
@@ -109,15 +109,24 @@ Task action path, working directory, task modification permissions, executable d
 The current Inno installer:
 
 - requests administrative installation and writes all-users registration;
+- uses Inno Setup 7.1's native x64 installer and modern UI with automatic light/dark appearance;
 - defaults to `D:\Program Files\Everywhere` when D is a fixed drive, otherwise the system Program Files directory;
 - remembers only a recognized layout-2 machine installation as the next default path;
 - allows an empty custom directory and warns when it is outside a Program Files directory;
 - recognizes the current HKLM registration and legacy same-account HKCU registration;
+- writes and verifies the layout-2 identity after Inno has finalized its HKLM uninstall registration;
+- registers the previous Main and Watchdog executables with Restart Manager before replacement;
+- removes the product-wide `Run\Everywhere` startup value from the current and loaded user hives during migration and uninstall;
+- removes the released legacy `\Everywhere` elevated-Main task only when its action belongs to the installation being migrated;
 - runs recognized previous Inno uninstallers before copying and requires a successful exit;
 - requires the selected target to be empty after removal and rejects unrelated nonempty targets;
 - installs or repairs service mode after copying, treating failure as a nonfatal degraded installation;
-- invokes session-local Host stop and ownership-aware task removal during uninstall;
+- invokes session-local Host stop and controller-based task removal during uninstall, with ownership-aware Task Scheduler COM cleanup as a fallback;
 - preserves settings and databases stored outside the application directory.
+
+The startup value is intentionally treated as one product-level preference. Installed and portable copies can overwrite or remove each other's `Run\Everywhere` value; presenting one understandable startup switch is preferred over exposing copy ownership in the UI. Scheduled service-mode tasks retain strict executable ownership because they form a privileged execution boundary.
+
+Release automation downloads the pinned official Inno Setup 7.1.0 x64 asset and verifies its GitHub artifact attestation before compiling. Local packaging discovers the 64-bit compiler under Program Files or uses `INNO_SETUP_COMPILER` when explicitly configured.
 
 Post-install launch uses Inno's original-user option. This works for the ordinary interactive account in the normal elevation flow, but it cannot recover the desired ordinary account when Setup itself was initially launched under different administrator credentials.
 

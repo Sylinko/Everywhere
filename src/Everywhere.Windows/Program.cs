@@ -30,10 +30,10 @@ namespace Everywhere.Windows;
 public static class Program
 {
     [STAThread]
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
         NativeMessageBox.Register(WindowsNativeMessageBox.Show);
-        Environment.ExitCode = RunAsync(args).GetAwaiter().GetResult();
+        return RunAsync(args).GetAwaiter().GetResult();
     }
 
     private static async Task<int> RunAsync(string[] args)
@@ -53,13 +53,20 @@ public static class Program
                 RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
         }
 
-        await using var entrance = Entrance.Initialize(args);
-        if (!entrance.IsPrimary)
+        var entrance = Entrance.Initialize(args);
+        try
         {
-            return await entrance.ForwardAsync().ConfigureAwait(false);
-        }
+            if (!entrance.IsPrimary)
+            {
+                return await entrance.ForwardAsync().ConfigureAwait(false);
+            }
 
-        return await RunMainAsync(args, hostsControlPlatform, peerVerifier).ConfigureAwait(false);
+            return await RunMainAsync(args, hostsControlPlatform, peerVerifier).ConfigureAwait(false);
+        }
+        finally
+        {
+            await entrance.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier) => Task.Run(
@@ -95,13 +102,13 @@ public static class Program
             throw new InvalidOperationException("Avalonia must be initialized on an STA thread.");
         }
 
-        await using var serviceProvider = ServiceLocator.Build(x => x
+        var serviceProvider = ServiceLocator.Build(x => x
 
             #region Basic
 
                 .AddApplicationLogging()
                 .AddSingleton<IHostsServiceModeManager>(hostsControlPlatform)
-                .AddSingleton<INamedPipePeerVerifier>(peerVerifier)
+                .AddSingleton(peerVerifier)
                 .AddProcessIsolation()
                 .AddInputHostShortcutListener()
                 .AddSingleton<WindowsScreenSelectionService>()
@@ -145,15 +152,23 @@ public static class Program
 
         );
 
-        RegisterUrlProtocol();
-
-        var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        if (Application.Current is App app)
+        try
         {
-            await app.WaitForShutdownAsync().ConfigureAwait(false);
-        }
+            RegisterUrlProtocol();
 
-        return exitCode;
+            var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+            if (Application.Current is App app)
+            {
+                await app.WaitForShutdownAsync().ConfigureAwait(false);
+            }
+
+            return exitCode;
+        }
+        finally
+        {
+            // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
+            await serviceProvider.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
