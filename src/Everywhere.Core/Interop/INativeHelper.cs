@@ -19,15 +19,7 @@ public interface INativeHelper
     /// <summary>
     /// Check if the application is set to start with the system as User.
     /// </summary>
-    bool IsUserStartupEnabled { get; set; }
-
-    /// <summary>
-    /// Check if the application is set to start with the system as Administrator (aka UAC on Windows).
-    /// This can only be set if the current user is an administrator.
-    /// </summary>
-    /// <exception cref="UnauthorizedAccessException">Thrown if the current user is not an administrator.</exception>
-    [SupportedOSPlatform("windows")]
-    bool IsAdministratorStartupEnabled { get; set; }
+    bool IsStartupEnabled { get; set; }
 
     /// <summary>
     /// Get whether the low data mode is currently active.
@@ -35,12 +27,6 @@ public interface INativeHelper
     /// e.g. automatically download updates.
     /// </summary>
     bool IsLowDataModeActive { get; }
-
-    /// <summary>
-    /// Restart the application as administrator (aka UAC on Windows).
-    /// </summary>
-    [SupportedOSPlatform("windows")]
-    void RestartAsAdministrator();
 
     /// <summary>
     /// Get the current state of the given key. True if the key is currently pressed down, false otherwise.

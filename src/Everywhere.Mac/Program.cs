@@ -11,10 +11,12 @@ using Everywhere.Mac.Automation;
 using Everywhere.Mac.Chat.Plugin;
 using Everywhere.Mac.Common;
 using Everywhere.Mac.Interop;
+using Everywhere.Mac.ProcessIsolation;
 using Everywhere.Mac.ProcessIsolation.Input;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,9 +34,10 @@ public static class Program
 
     private static async Task<int> RunAsync(string[] args)
     {
-        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlOperation)
+        var peerVerifier = MacNamedPipePeerVerifier.Instance;
+        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlCommand)
         {
-            return await HostsControlRunner.RunAsync(hostsControlOperation).ConfigureAwait(false);
+            return await HostsControlRunner.RunAsync(hostsControlCommand, DirectHostsControlPlatform.Instance, peerVerifier).ConfigureAwait(false);
         }
 
         var role = ProcessRoleCommandLine.Parse(args);
@@ -48,17 +51,17 @@ public static class Program
                     return await entrance.ForwardAsync().ConfigureAwait(false);
                 }
 
-                return await RunMainAsync(args).ConfigureAwait(false);
+                return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
             }
             case ProcessRole.Input:
             {
                 return await ProcessRoleHostRunner
-                    .RunAsync(role, args, static () => new MacInputHostSession())
+                    .RunAsync(role, args, peerVerifier, static () => new MacInputHostSession())
                     .ConfigureAwait(false);
             }
             case ProcessRole.Automation:
             {
-                return await RunAutomationHostAsync(args).ConfigureAwait(false);
+                return await RunAutomationHostAsync(args, peerVerifier).ConfigureAwait(false);
             }
             default:
             {
@@ -67,7 +70,7 @@ public static class Program
         }
     }
 
-    private static Task<int> RunAutomationHostAsync(string[] args)
+    private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier)
     {
         if (!NSThread.IsMain)
         {
@@ -86,6 +89,7 @@ public static class Program
         var hostTask = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Automation,
             args,
+            peerVerifier,
             static () => new AutomationHostSession(new MacVisualElementBackend(), new MacVisualPickerResolver()));
         if (hostTask.IsCompleted)
         {
@@ -118,7 +122,7 @@ public static class Program
     /// Keeps the full Avalonia/Core startup state machine out of early Host and
     /// controller dispatch so those paths do not resolve the production graph.
     /// </summary>
-    private static async Task<int> RunMainAsync(string[] args)
+    private static async Task<int> RunMainAsync(string[] args, INamedPipePeerVerifier peerVerifier)
     {
         if (!NSThread.IsMain)
         {
@@ -136,6 +140,7 @@ public static class Program
                 #region Basic
 
                 .AddApplicationLogging()
+                .AddSingleton<INamedPipePeerVerifier>(peerVerifier)
                 .AddProcessIsolation()
                 .AddInputHostShortcutListener()
                 .AddSingleton<MacVisualElementBackend>()

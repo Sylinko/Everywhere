@@ -14,17 +14,21 @@ No layer may claim evidence supplied only by another. Mock timeout injection ver
 
 [Testing](Testing.md) defines the declarative scenario infrastructure. Scenario and seed reproduce one generated logical UI within the same commit. Later code changes are allowed to change the generated result.
 
-## 2. Shared Backend Boundary
+## 2. Host and Shared Backend Boundary
 
 Verify:
 
-- production dependency injection supplies one platform Backend singleton;
-- creating and disposing multiple Contexts does not recreate or dispose that Backend;
+- the platform's early Automation Host session factory constructs one Backend without initializing Main's dependency-injection graph;
+- creating and releasing multiple connection-scoped Context resources does not recreate or dispose that Backend;
 - Backend root acquisition retains a returned element in the caller-provided retention before exposure;
 - Windows initializes one UIA client and Content View TreeWalker with the fixed timeout policy;
 - concurrent Backend initialization is serialized only around the known UIA activation constraint;
 - direct element operations do not route through a worker, Dispatcher, TaskScheduler, SynchronizationContext, or Scope;
-- Backend disposal releases shared platform objects exactly once;
+- draining the Automation Host session disposes the Backend and releases shared platform objects exactly once;
+- each remote Context owns one Host-side `VisualContext`, and releasing or disconnecting it disposes its complete identity and target domain;
+- one single-reader Channel serializes complete operations for each hosted Context without pretending to cancel a synchronous native call;
+- Automation Host replacement invalidates old resource IDs, anchors, pickers, and target IDs rather than replaying operations;
+- an action interrupted by connection loss reports an unknown outcome rather than being retried;
 - no test preserves a deleted execution layer through a forwarding compatibility type.
 
 Platform timeout and traversal budget are tested separately. A single provider timeout must not be described as a complete Snapshot deadline. Snapshot must stop between calls when its aggregate budget is exhausted.
@@ -46,7 +50,7 @@ Verify:
 - failed candidate creation or canonicalization releases the temporary native candidate;
 - a Context cannot publish or query with a retention belonging to another Context;
 - Context disposal releases active turn, historical turns, attachments/Snapshots, and identity entries without disposing Backend-owned native services;
-- losing the last external reference to a ChatContext leaves no Backend/client/static reverse reference to its Context or Elements;
+- disposing `ChatVisualState` eventually releases its remote Context, and no Backend/client/static reverse reference retains that Context or its Elements;
 - completing a turn automatically applies the configured whole-turn and soft target-count retention limits.
 
 Use a concrete mock element with an exact release counter. Do not add production release hooks only for tests; expose evidence through the Mock subclass or normal native wrapper behavior.
@@ -128,7 +132,7 @@ Verify:
 - every `Cached*` Pattern-property read has an explicit matching CacheRequest property; adding the Pattern alone is not considered sufficient;
 - Pattern-only operations do not accidentally transfer large scalar properties, especially ValuePattern.Value during `SetText`;
 - cached Value is the common scalar text path and TextPattern is an optional ranged-document supplement;
-- `UIA_E_TIMEOUT` becomes `TimeoutException` with the original exception retained;
+- `UIA_E_TIMEOUT` becomes `TimeoutException`; the original exception remains Host-side diagnostic evidence, while RPC transports only the neutral mapped failure kind;
 - unsupported, unavailable, timeout, and unknown provider failure remain distinguishable.
 
 ### 7.3 Retained Native Probes

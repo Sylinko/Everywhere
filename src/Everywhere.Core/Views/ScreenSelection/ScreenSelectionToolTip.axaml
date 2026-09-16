@@ -22,11 +22,11 @@
               FontWeight="SemiBold"
               Foreground="{DynamicResource PrimaryColor}"
               IsVisible="{Binding Mode, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static interop:ScreenSelectionMode.Free}}"
-              Text="{TemplateBinding Header}"/>
+              Text="{Binding Header^, RelativeSource={RelativeSource TemplatedParent}}"/>
             <TextBlock
               FontSize="12"
               Foreground="{DynamicResource ForegroundColor}"
-              Text="{TemplateBinding TipText}"/>
+              Text="{Binding TipText^, RelativeSource={RelativeSource TemplatedParent}}"/>
             <TextBlock
               FontSize="12"
               Foreground="{DynamicResource PrimaryColor}"

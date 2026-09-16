@@ -2,7 +2,7 @@
 
 ## 1. Responsibility
 
-`IVisualElementBackend` is the shared platform service for root acquisition and native resources that genuinely have application or query-host lifetime. `VisualContext` is a separate platform-neutral per-chat identity, ownership, and Agent-target domain. Neither is a conversation Session, execution transaction, or worker dispatcher.
+`IVisualElementBackend` is the composition-local platform service for root acquisition and native resources. Agent-facing operations use the Automation Host session's Backend; Main may own a separate Backend for UI-only screenshot selection and selected-text detection. `VisualContext` is a separate platform-neutral identity and ownership domain. Chat Contexts live behind connection-scoped remote resources, while Main-only UI helpers use short-lived local Contexts. Neither type is a conversation Session, execution transaction, or native-call dispatcher.
 
 The current neutral responsibility is deliberately narrow:
 
@@ -10,7 +10,7 @@ The current neutral responsibility is deliberately narrow:
 - configure one stable native timeout policy before publishing those clients;
 - acquire roots that have no existing receiver element into the caller's retention Context;
 - choose the appropriate concrete element implementation for a root locator;
-- release shared native services at application/query-host shutdown.
+- release shared native services when the owning process composition or Automation Host session drains.
 
 Existing `VisualElement` instances perform their own query, relation, action, and capture behavior directly. `VisualContext` owns their identity and logical lifetime. Snapshot Traverser owns aggregate risk and convergence.
 
@@ -27,23 +27,24 @@ public interface IVisualElementBackend
 }
 ```
 
-Locator answers where acquisition begins; `Default` deliberately supplies no anchor. Resolution answers whether the result is the direct element, its nearest TopLevel, or its containing Screen; with `Default`, it instead selects the platform-default object at that same level. Resolution defaults to Direct, and an omitted scalar request means `VisualElementQueryRequest.Default`. The Backend is normally registered as a process singleton. `ChatContext` constructs its own neutral `VisualContext`; Context is not created by or registered in dependency injection. Disposing a Context releases only that conversation's elements and targets; disposing the application or future query host releases the concrete Backend and shared services. The Backend and its shared clients must not retain managed Contexts, Retentions, Elements, or callbacks that capture them.
+Locator answers where acquisition begins; `Default` deliberately supplies no anchor. Resolution answers whether the result is the direct element, its nearest TopLevel, or its containing Screen; with `Default`, it instead selects the platform-default object at that same level. Resolution defaults to Direct, and an omitted scalar request means `VisualElementQueryRequest.Default`. The Backend is registered once in each owning composition. Each connection-scoped Host resource constructs and owns its own neutral `VisualContext`; it is not resolved from dependency injection. Releasing that remote resource disposes the conversation's elements and targets. Draining the authenticated Host session then disposes its concrete Backend and shared services. Main's UI-only services instead create and dispose transient local Contexts against Main's Backend. A Backend and its shared clients must not retain Contexts, Retentions, Elements, or callbacks that capture them after the owning Context is released.
 
 The Backend is platform-wide, not provider-specific. Windows root acquisition may return a Win32 Screen element or a UI Automation element. macOS may eventually return NSScreen-, Application-, TopLevel-, or AX-backed elements. Concrete element types retain honest native behavior after acquisition and store the Context selected by the acquisition retention.
 
 ## 3. Direct Native Execution
 
-UIA and AX expose object-oriented synchronous APIs over provider/RPC boundaries. The process-local model follows that reality:
+UIA and AX expose object-oriented synchronous APIs over provider/RPC boundaries. The Automation Host's process-local model follows that reality:
 
 - `VisualElement.Query`, navigation, and actions call the platform synchronously;
-- the native platform timeout is the per-RPC safety boundary;
+- the native platform timeout is the per-provider-call safety boundary;
 - the caller/Traverser decides the useful granularity of a sequence;
 - no mandatory async wrapper is inserted around every native call;
-- no custom worker, Channel, `TaskScheduler`, `SynchronizationContext`, Dispatcher, or watchdog participates in the current path.
+- one Channel serializes complete operations for each hosted `VisualContext`; it does not wrap or cancel individual native calls;
+- no custom native-call worker, `TaskScheduler`, `SynchronizationContext`, Dispatcher, or watchdog participates in the provider path.
 
-This is not a claim that native providers can never hang. It is a statement about containment strength: moving a synchronous call to an in-process worker does not make that call terminable. A watchdog can observe a stuck thread and create replacement capacity, but cannot safely reclaim the thread or native call. If native timeouts prove insufficient in production, the robust boundary is the already planned whole Automation query-host process, which can report queue state, exit, and restart.
+This is not a claim that native providers can never hang. Moving a synchronous call to another thread does not make it terminable. The implemented reclaimable boundary is the whole Automation Host process: Main can lose the connection, recover the role, create a fresh remote Context, and require the caller to re-observe. The old operation is never replayed, and an action interrupted by connection loss has an unknown outcome.
 
-The removed worker design remains useful research history in `Refactor.md` and prior commits, but it is not a current API or migration target.
+The removed worker design remains available in version history, but it is not a current API or migration target.
 
 ## 4. Timeout Domains
 
@@ -55,7 +56,7 @@ The system distinguishes several independent limits:
 | Native transaction/messaging timeout | One provider operation or message | A series of individually successful calls |
 | Traverser elapsed/operation budget | Aggregate Snapshot risk between native calls | A native call that ignores its own timeout and never returns |
 | Text/child/result limit | Data and output growth | Provider latency by itself |
-| Future query-host lifetime | Process-level crash/hang containment | Semantic correctness of a provider response |
+| Automation Host lifetime | Process-level crash/hang containment and replacement | Semantic correctness of a provider response or transparent replay |
 
 On Windows, `IUIAutomation2.ConnectionTimeout` and `TransactionTimeout` are configured once on the shared client. Connection timeout concerns provider connection establishment; transaction timeout concerns an ordinary UIA request after routing exists. A controlled blocked-provider probe observed an existing-element `ElementFromHandleBuildCache` call following TransactionTimeout, not ConnectionTimeout. That probe does not claim to reproduce delayed first-time provider connection.
 
@@ -79,7 +80,7 @@ Checks occur before starting the next dangerous operation and immediately after 
 
 ## 6. Failure and Status Flow
 
-Concrete platform elements convert known native failures into the neutral Automation contract. Windows converts `UIA_E_TIMEOUT` to `TimeoutException` with the original `COMException` retained as inner evidence. AX `kAXErrorCannotComplete` remains a broad provider-communication failure rather than being mislabeled as one exact timeout cause.
+Concrete platform elements convert known native failures into the neutral Automation contract. Windows converts `UIA_E_TIMEOUT` to `TimeoutException` with the original `COMException` retained as Host-side evidence. AX `kAXErrorCannotComplete` remains a broad provider-communication failure rather than being mislabeled as one exact timeout cause. The Automation RPC mapper transports only the neutral failure kind; native HRESULTs, stacks, and platform exception types stay in the Host.
 
 Snapshot records failure at the closest representable boundary:
 
@@ -95,13 +96,13 @@ The provider-health circuit breaker counts only `Timeout` and `ProviderFailure`.
 
 ## 7. Windows Backend and Context Propagation
 
-`WindowsVisualElementBackend` owns one process-shared `UIAutomationClient` (`CUIAutomation8`) and one Content View `UIAutomationTreeWalker`. It configures a fixed production policy of a 2-second connection timeout and a 10-second transaction timeout before the Backend becomes available. It neither creates nor stores `VisualContext` instances.
+`WindowsVisualElementBackend` owns one Automation-Host-shared `UIAutomationClient` (`CUIAutomation8`) and one Content View `UIAutomationTreeWalker`. It configures a fixed production policy of a 2-second connection timeout and a 10-second transaction timeout before the Backend becomes available. It neither creates nor stores `VisualContext` instances.
 
 Focused, current-pointer, explicit-point, and native-window Direct queries acquire UIA elements. Current-pointer lookup reads the cursor position inside the Backend and then uses the same point-based UIA acquisition path; Core callers do not require a Win32 query facade. Windows resolves `Default + Direct` to the UI Automation desktop root, `Default + TopLevel` to the first eligible visible, non-minimized root-owner window in global Z-order, and `Default + Screen` to the primary Win32 display. Point and Pointer Screen resolution use display topology directly; Focused and NativeWindow Screen resolution first identify the top-level native window and then map it into the observed topology.
 
 TopLevel and Focused-to-Screen resolution may require a temporary source element. Windows keeps that source in a short-lived retention owned by the query and canonicalizes only the final result into the caller retention. It does not retain every ancestor or fetch default scalar text merely to discover the containing native window.
 
-The client is not recreated per Context, query, element, or turn. Retained UIA element references may be operated through the shared client regardless of the client that originally returned their native pointer. The application serializes mutation of each individual Context, while UIA itself may service calls from different Contexts concurrently.
+The client is not recreated per Context, query, element, or turn. Retained UIA element references may be operated through the shared client regardless of the client that originally returned their native pointer. The Host serializes mutation of each individual Context, while UIA itself may service calls from different Contexts concurrently.
 
 macOS resolves `Default + Direct` to an isolated AX system-wide object and `Default + TopLevel` to the first eligible window in global Z-order. `Default + Screen` resolves the primary NSScreen. Point and Pointer Screen resolution use display topology directly; Focused and NativeWindow Screen queries resolve the containing AX window and assign it to the display with the largest visible intersection. A fully off-screen window has no Screen relation.
 
@@ -159,7 +160,7 @@ For an unknown operation-local element:
 
 This avoids durable-wrapper and RuntimeId allocation on the common duplicate path. The map is independent of COM pointer identity and does not retain entries by itself. When the final real ownership batch leaves, the high-level element releases its Reference and the active RuntimeId incarnation ends.
 
-The application guarantee is: while the last element for a RuntimeId remains retained, newly observed equal RuntimeIds resolve to the same managed reference. It does not claim that RuntimeId can never be reused after the final reference is gone.
+The Context guarantee is: while the last element for a RuntimeId remains retained, newly observed equal RuntimeIds resolve to the same managed reference. It does not claim that RuntimeId can never be reused after the final reference is gone.
 
 ### 8.4 Empirical Windows Evidence
 
@@ -290,7 +291,7 @@ Implemented AX behavior includes:
 - implement sibling navigation through the macOS 26 parameterized child-index attribute when the current provider supports it, a validated Context-incarnation metadata hint otherwise, and bounded parent/child scanning as the final fallback;
 - preserve Create/Copy ownership and distinguish unsupported, permission, destroyed-element, and provider communication failures.
 
-Native app-host probes establish the Core Foundation types, equality of independently obtained `AXUIElementRef` values, fixed messaging-timeout scope, and the implemented provider behaviors. Cross-compilation remains only a compile check; unresolved native cases stay explicit in repository-root `temp.md`.
+Native app-host probes establish the Core Foundation types, equality of independently obtained `AXUIElementRef` values, fixed messaging-timeout scope, and the implemented provider behaviors. Cross-compilation remains only a compile check; unresolved native cases remain listed in [07-Migration](07-Migration.md) and [08-Verification](08-Verification.md).
 
 ### 14.2 Topology Design Checkpoint
 
@@ -312,7 +313,8 @@ Screen grouping is structural and does not duplicate live AX identity: the same 
 
 Every platform follows the same high-level boundaries:
 
-- Backend owns root acquisition and shared platform services without retaining caller Contexts;
+- the Automation Host process is the outer crash/hang containment boundary;
+- Backend owns root acquisition and Host-shared platform services without retaining caller Contexts;
 - neutral Context owns its per-chat identity, lifetime, and Agent-target domain;
 - concrete elements retain honest native identity and behavior;
 - Context owns canonical identity and real retention batches;

@@ -7,7 +7,7 @@ namespace Everywhere.AI;
 /// Generated mappings keep snapshot membership aligned with the configuration types.
 /// </summary>
 [Mapper(UseDeepCloning = true, RequiredMappingStrategy = RequiredMappingStrategy.Both)]
-internal static partial class AssistantSnapshotMapper
+public static partial class AssistantSnapshotMapper
 {
     public static AssistantConfiguration Copy(AssistantConfiguration source) => source switch
     {

@@ -9,7 +9,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Everywhere.Cloud;
 
-public sealed partial class OfficialModelProvider : ModelCatalogProvider<OfficialModelDefinition[], OfficialModelDefinition[]>,
+public sealed partial class OfficialModelProvider :
+    ModelCatalogProvider<OfficialModelDefinition[], OfficialModelDefinition[]>,
     IOfficialModelProvider, IAsyncInitializer
 {
     public OfficialModelCatalog Catalog => Volatile.Read(ref _catalog);
@@ -48,9 +49,10 @@ public sealed partial class OfficialModelProvider : ModelCatalogProvider<Officia
         _disposables.Add(Disposable.Create(() => cloudClient.PropertyChanged -= HandleCloudClientPropertyChanged));
     }
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        await RestoreCacheAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        await RestoreCacheAsync(cancellationToken);
         HandleCloudClientStateChanged(nameof(ICloudClient.LoginStatus));
     }
 

@@ -1,0 +1,40 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:HostsServiceModeControl}"
+    TargetType="v:HostsServiceModeControl">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel
+          shadui:BindingAssist.ToolTip="{Binding Status.ToolTip^, RelativeSource={RelativeSource TemplatedParent}}"
+          Orientation="Horizontal" Spacing="8">
+          <Panel
+            Width="16" Height="16"
+            VerticalAlignment="Center"
+            IsVisible="{Binding Status.RequiresAttention, RelativeSource={RelativeSource TemplatedParent}}">
+            <LucideIcon
+              Foreground="{DynamicResource WarningColor}"
+              IsVisible="{Binding Status.IsWarning, RelativeSource={RelativeSource TemplatedParent}}"
+              Kind="TriangleAlert"/>
+            <LucideIcon
+              Foreground="{DynamicResource ErrorColor}"
+              IsVisible="{Binding Status.IsError, RelativeSource={RelativeSource TemplatedParent}}"
+              Kind="CircleX"/>
+          </Panel>
+          <Panel
+            Width="44" Height="32">
+            <ToggleSwitch
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              IsChecked="{Binding IsInstalled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+              IsVisible="{Binding !IsOperationRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
+            <shadui:Loading
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              IsVisible="{Binding IsOperationRunning, RelativeSource={RelativeSource TemplatedParent}}"
+              Size="{DynamicResource FontSizeM}"/>
+          </Panel>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

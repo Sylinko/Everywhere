@@ -37,7 +37,7 @@ public class AssistantCatalogTests
         var catalog = new AssistantCatalog(preset, official);
         using var synchronizer = new AssistantCatalogSynchronizer(settings, catalog, preset, official);
 
-        await synchronizer.InitializeAsync();
+        await synchronizer.InitializeAsync(CancellationToken.None);
         var requestSnapshot = AssistantSnapshotMapper.Copy(assistant.Configuration);
         officialCatalog = CreateOfficialCatalog(CreateOfficialDefinition(300, ModelProviderSchema.Anthropic));
         official.CatalogChanged += Raise.Event<EventHandler>(official, EventArgs.Empty);
@@ -75,7 +75,7 @@ public class AssistantCatalogTests
         official.Catalog.Returns(OfficialModelCatalog.Empty);
         var catalog = new AssistantCatalog(preset, official);
         using var synchronizer = new AssistantCatalogSynchronizer(settings, catalog, preset, official);
-        await synchronizer.InitializeAsync();
+        await synchronizer.InitializeAsync(CancellationToken.None);
 
         var apiKey = Guid.CreateVersion7();
         assistant.Configuration = new PresetAssistantConfiguration
@@ -117,7 +117,7 @@ public class AssistantCatalogTests
             new AssistantCatalog(preset, official),
             preset,
             official);
-        await synchronizer.InitializeAsync();
+        await synchronizer.InitializeAsync(CancellationToken.None);
 
         officialCatalog = CreateOfficialCatalog(CreateOfficialDefinition(300, ModelProviderSchema.Anthropic));
         await Task.Run(() => official.CatalogChanged += Raise.Event<EventHandler>(official, EventArgs.Empty));

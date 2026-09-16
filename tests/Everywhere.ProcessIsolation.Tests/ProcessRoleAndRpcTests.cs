@@ -41,13 +41,35 @@ public class ProcessRoleAndRpcTests
     [TestCase("--hosts-control", HostsControlOperation.Stop)]
     [TestCase("--hosts-control=install", HostsControlOperation.Install)]
     [TestCase("--hosts-control", HostsControlOperation.Uninstall)]
+    [TestCase("--hosts-control=launch", HostsControlOperation.Launch)]
     public void ParseHostsControl_RecognizesOperation(string switchValue, HostsControlOperation expectedOperation)
     {
         var args = switchValue == "--hosts-control"
             ? new[] { switchValue, expectedOperation.ToString().ToLowerInvariant() }
             : new[] { switchValue };
 
-        Assert.That(ProcessRoleCommandLine.ParseHostsControl(args), Is.EqualTo(expectedOperation));
+        Assert.That(ProcessRoleCommandLine.ParseHostsControl(args)?.Operation, Is.EqualTo(expectedOperation));
+    }
+
+    [Test]
+    public void ParseHostsControl_InstallOptions_ReturnsValidatedCommand()
+    {
+        var command = ProcessRoleCommandLine.ParseHostsControl(
+            new[] { "--hosts-control", "install", "--replace-existing", "--authorize-portable" });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(command?.Operation, Is.EqualTo(HostsControlOperation.Install));
+            Assert.That(command?.ShouldReplaceExisting, Is.True);
+            Assert.That(command?.ShouldAuthorizePortable, Is.True);
+        });
+    }
+
+    [Test]
+    public void ParseHostsControl_NonInstallOptions_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => ProcessRoleCommandLine.ParseHostsControl(
+            new[] { "--hosts-control=start", "--replace-existing" }));
     }
 
     [Test]
@@ -134,6 +156,21 @@ public class ProcessRoleAndRpcTests
         {
             Assert.That(endpoint, Is.Not.EqualTo(roleEndpoint));
             Assert.That(endpoint, Does.EndWith(".main-control"));
+        });
+    }
+
+    [Test]
+    public void GetApplicationActivationEndpoint_IsStableAndSessionSpecific()
+    {
+        var endpoint = ProcessRoleNames.GetApplicationActivationEndpoint("desktop-42");
+        var sameEndpoint = ProcessRoleNames.GetApplicationActivationEndpoint("desktop-42");
+        var otherSessionEndpoint = ProcessRoleNames.GetApplicationActivationEndpoint("desktop-43");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(endpoint, Is.EqualTo(sameEndpoint));
+            Assert.That(endpoint, Is.Not.EqualTo(otherSessionEndpoint));
+            Assert.That(endpoint, Does.EndWith(".main-activation"));
         });
     }
 
@@ -652,6 +689,7 @@ public class ProcessRoleAndRpcTests
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             runnerCancellation.Token);
 
         await using var clientStream = new NamedPipeClientStream(
@@ -692,6 +730,7 @@ public class ProcessRoleAndRpcTests
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             runnerCancellation.Token);
 
         await using var clientStream = new NamedPipeClientStream(
@@ -729,6 +768,7 @@ public class ProcessRoleAndRpcTests
         var firstRunner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             firstCancellation.Token);
 
         await using var firstClient = new NamedPipeClientStream(
@@ -742,6 +782,7 @@ public class ProcessRoleAndRpcTests
         var secondResult = await ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             secondCancellation.Token);
 
         Assert.That(secondResult, Is.EqualTo(0));
@@ -758,6 +799,7 @@ public class ProcessRoleAndRpcTests
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             runnerCancellation.Token);
 
         await using var clientStream = new NamedPipeClientStream(

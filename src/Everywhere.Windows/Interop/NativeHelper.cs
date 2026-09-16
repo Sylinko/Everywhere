@@ -7,7 +7,6 @@ using Windows.UI.Notifications;
 using Windows.Win32;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Avalonia.Input;
-using Everywhere.Common;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 using Microsoft.Win32;
@@ -17,18 +16,11 @@ namespace Everywhere.Windows.Interop;
 public class NativeHelper : INativeHelper
 {
     private const string AppName = nameof(Everywhere);
-    private const string RegistryInstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{D66EA41B-8DEB-4E5A-9D32-AB4F8305F664}}_is1";
     private const string RegistryRunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+
     private static string ProcessFullPath => Path.GetFullPath(Environment.ProcessPath.NotNull());
 
-    public bool IsInstalled
-    {
-        get
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RegistryInstallKey);
-            return key?.GetValue("InstallLocation")?.ToString() is not null;
-        }
-    }
+    public bool IsInstalled => InstallationIdentity.IsCurrentRegisteredInstallation(ProcessFullPath);
 
     public bool IsAdministrator
     {
@@ -40,7 +32,7 @@ public class NativeHelper : INativeHelper
         }
     }
 
-    public bool IsUserStartupEnabled
+    public bool IsStartupEnabled
     {
         get
         {
@@ -70,34 +62,6 @@ public class NativeHelper : INativeHelper
         }
     }
 
-    public bool IsAdministratorStartupEnabled
-    {
-        get
-        {
-            try
-            {
-                return TaskSchedulerHelper.IsTaskScheduled(AppName);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        set
-        {
-            if (!IsAdministrator) throw new UnauthorizedAccessException("The current user is not an administrator.");
-
-            if (value)
-            {
-                TaskSchedulerHelper.CreateScheduledTask(AppName, $"\"{ProcessFullPath}\" --autorun --load-user-profile");
-            }
-            else
-            {
-                TaskSchedulerHelper.DeleteScheduledTask(AppName);
-            }
-        }
-    }
-
     public bool IsLowDataModeActive
     {
         get
@@ -108,26 +72,6 @@ public class NativeHelper : INativeHelper
             var cost = profile.GetConnectionCost();
             return cost.NetworkCostType != NetworkCostType.Unrestricted || cost.ApproachingDataLimit || cost.OverDataLimit;
         }
-    }
-
-    public void RestartAsAdministrator()
-    {
-        if (IsAdministrator)
-        {
-            return;
-        }
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = Environment.ProcessPath.NotNull(),
-            Arguments = "--ui",
-            UseShellExecute = true,
-            Verb = "runas" // This will prompt for elevation
-        };
-
-        Entrance.ReleaseSingleInstanceClaim();
-        Process.Start(startInfo);
-        Environment.Exit(0); // Exit the current process
     }
 
     public bool GetKeyState(KeyModifiers keyModifiers)
