@@ -39,8 +39,37 @@ jobs:
 
     - name: Install Inno Setup
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-        choco install innosetup
+        $ErrorActionPreference = "Stop"
+        $version = "7.1.0"
+        $release = "is-7_1_0"
+        $asset = "innosetup-$version-x64.exe"
+        $installerPath = Join-Path $env:RUNNER_TEMP $asset
+        $installDirectory = Join-Path $env:RUNNER_TEMP "Inno Setup 7"
+
+        gh release download $release --repo jrsoftware/issrc --pattern $asset --dir $env:RUNNER_TEMP
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to download Inno Setup $version."
+        }
+        gh release verify-asset $installerPath --repo jrsoftware/issrc
+        if ($LASTEXITCODE -ne 0) {
+            throw "GitHub attestation verification failed for Inno Setup $version."
+        }
+
+        $process = Start-Process $installerPath `
+          -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/ALLUSERS", "/DIR=`"$installDirectory`"" `
+          -Wait -PassThru
+        if ($process.ExitCode -ne 0) {
+            throw "Inno Setup $version installation failed with exit code $($process.ExitCode)."
+        }
+
+        $compilerPath = Join-Path $installDirectory "ISCC.exe"
+        if (-not (Test-Path $compilerPath)) {
+            throw "Inno Setup compiler was not installed at $compilerPath."
+        }
+        "INNO_SETUP_COMPILER=$compilerPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Install SimplySignDesktop
       shell: pwsh

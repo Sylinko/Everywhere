@@ -92,7 +92,7 @@ The switch reflects actual task ownership rather than a stored Boolean. Enabling
 
 Setup writes installation layout version 2 and registers the machine installation under HKLM. A copy counts as the current machine installation only when the registered `InstallLocation`, layout marker, and executable directory agree.
 
-Before task registration, the elevated controller protects an installer-owned layout-2 directory. It assigns Administrators ownership, disables inherited modification rights, grants SYSTEM and Administrators full control, grants ordinary Users read/execute, and verifies the resulting owner and protected-DACL flag. Writable application data remains outside the installation directory.
+Before copying application files, Setup protects the installation directory. It assigns Administrators ownership, disables inherited modification rights, and grants SYSTEM and Administrators full control plus ordinary Users read/execute. Task registration relies on that installer-owned boundary; the controller does not rewrite installation ACLs. Writable application data remains outside the installation directory.
 
 Portable authorization never rewrites the directory ACL. Main instead assesses the executable environment. A writable location, non-fixed volume, reparse point, or otherwise uncertain boundary produces a warning and requires explicit confirmation, but the user may continue.
 
@@ -120,13 +120,20 @@ The current Inno installer:
 - removes the released legacy `\Everywhere` elevated-Main task only when its action belongs to the installation being migrated;
 - runs recognized previous Inno uninstallers before copying and requires a successful exit;
 - requires the selected target to be empty after removal and rejects unrelated nonempty targets;
+- uses read-only checks while choosing and waiting for a directory, then performs one write probe before removing the previous version;
+- creates the selected directory and applies its protected DACL in-process before copying or executing application files;
+- keeps Inno's path-redirection guard enabled and allows an interactive user to explicitly continue when directory protection cannot be established;
 - installs or repairs service mode after copying, treating failure as a nonfatal degraded installation;
 - invokes session-local Host stop and controller-based task removal during uninstall, with ownership-aware Task Scheduler COM cleanup as a fallback;
+- performs uninstall cleanup only after the user confirms removal; if both cleanup paths fail, an interactive user may abort, retry, or continue with a clear residual-service warning, while silent uninstall fails unless its calling Setup propagates that explicit continue decision;
+- signs both the Setup executable and the generated Inno uninstaller through the release SignTool integration;
+- uses the application mutex to detect a running same-session Main process and a global Setup mutex to prevent concurrent machine-wide Setup runs;
+- enables installation and uninstall logging, including logs from a previous Inno uninstaller invoked during migration;
 - preserves settings and databases stored outside the application directory.
 
 The startup value is intentionally treated as one product-level preference. Installed and portable copies can overwrite or remove each other's `Run\Everywhere` value; presenting one understandable startup switch is preferred over exposing copy ownership in the UI. Scheduled service-mode tasks retain strict executable ownership because they form a privileged execution boundary.
 
-Release automation downloads the pinned official Inno Setup 7.1.0 x64 asset and verifies its GitHub artifact attestation before compiling. Local packaging discovers the 64-bit compiler under Program Files or uses `INNO_SETUP_COMPILER` when explicitly configured.
+Release automation downloads the pinned official Inno Setup 7.1.0 x64 asset and verifies its GitHub artifact attestation before compiling. Local packaging discovers the 64-bit compiler under Program Files or uses `INNO_SETUP_COMPILER` when explicitly configured. Application binaries are signed before packaging; Inno then uses the same authenticated signing session to sign both the final Setup executable and its embedded uninstaller.
 
 Post-install launch uses Inno's original-user option. This works for the ordinary interactive account in the normal elevation flow, but it cannot recover the desired ordinary account when Setup itself was initially launched under different administrator credentials.
 
@@ -138,7 +145,7 @@ Every installed upgrade follows uninstall-then-install:
 2. Coordinate shutdown and prevent new processes from taking installation files.
 3. Run the previous uninstaller silently, wait for it, and require a successful exit code.
 4. Use bounded checks for uninstaller self-deletion and directory readiness.
-5. Validate the now-empty target, install the payload, protect the directory, and reconcile the task.
+5. Validate the now-empty target, create and protect the directory, then install the payload and reconcile the task. An interactive user may explicitly continue when directory protection fails; task registration remains a separate best-effort step.
 6. Persist the new layout metadata and optionally start Main as an ordinary user.
 
 Replacement of required files is not an optional capability. If processes cannot be stopped or the target cannot be made ready, the upgrade fails with an actionable message. A failed replacement after the old version was removed is reported and can be retried; the installer does not promise rollback of the previous application.

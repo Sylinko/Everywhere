@@ -59,12 +59,6 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
                 "This executable is not the registered machine installation. Portable service mode requires an explicit environment check and --authorize-portable.");
         }
 
-        var protection = isInstalled ? InstallationSecurity.ProtectInstalledDirectory(executablePath) : HostsControlPlatformResult.Success();
-        if (protection.Outcome is not HostsControlPlatformOutcome.Succeeded)
-        {
-            return protection;
-        }
-
         var taskResult = TaskSchedulerHelper.CreateOrUpdateHostsTask(TaskName, executablePath);
         if (!taskResult.Succeeded)
         {
