@@ -72,15 +72,29 @@ def sign_worker(fingerprint: str, target_path: str, signtool_exe: str, max_retri
                 f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
             )
 
-def compile_installer(iss_path: str) -> int:
-    """Compile Inno Setup Script (.iss) into an executable installer."""
-    iscc_path = r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+def compile_installer(iss_path: str, fingerprint: str, signtool_exe: str) -> str:
+    """Compile and sign the installer and its embedded uninstaller with Inno Setup."""
+    configured_path = os.getenv('INNO_SETUP_COMPILER')
+    candidates = [
+        configured_path,
+        r"C:\Program Files\Inno Setup 7\ISCC.exe",
+        r"C:\Program Files (x86)\Inno Setup 7\ISCC.exe"
+    ]
+    iscc_path = next((path for path in candidates if path and os.path.isfile(path)), None)
+    if not iscc_path:
+        raise RuntimeError("Inno Setup 7 compiler not found. Set INNO_SETUP_COMPILER to the ISCC.exe path.")
     
-    if not os.path.exists(iscc_path):
-        raise RuntimeError(f"Inno Setup compiler not found at {iscc_path}")
-    
+    sign_command = (
+        f'"{signtool_exe}" sign /sha1 {fingerprint} '
+        '/tr http://time.certum.pl /td sha256 /fd sha256 /v $f'
+    )
     result = subprocess.run(
-        [iscc_path, iss_path, "/O+"],
+        [
+            iscc_path,
+            "--output=yes",
+            f"--signtool=EverywhereSign={sign_command}",
+            iss_path,
+        ],
         capture_output=True,
         text=True,
         encoding='utf-8'
@@ -91,8 +105,20 @@ def compile_installer(iss_path: str) -> int:
         print(f"ISCC STDERR:\n{result.stderr}")
         raise RuntimeError(f"Inno Setup compilation failed with exit code {result.returncode}")
     
-    print("Inno Setup compilation completed successfully.")
-    return result.returncode
+    version = os.getenv('VERSION')
+    if not version:
+        raise RuntimeError("VERSION is required to locate the compiled installer.")
+
+    installer_path = os.path.abspath(
+        os.path.join(os.path.dirname(iss_path), '..', f'Everywhere-Windows-x64-Setup-v{version}.exe')
+    )
+    if not os.path.isfile(installer_path):
+        raise RuntimeError(f"Compiled installer was not found at: {installer_path}")
+    if not is_already_signed(installer_path, signtool_exe):
+        raise RuntimeError("Inno Setup completed, but the generated installer signature could not be verified.")
+
+    print("Inno Setup compiled and signed the installer and embedded uninstaller successfully.")
+    return installer_path
     
 if __name__ == "__main__":
     # Retrieve credentials from environment variables
@@ -196,24 +222,11 @@ if __name__ == "__main__":
                     print(f"\n[FATAL] Unhandled exception processing {os.path.basename(path)}: {exc}")
                     raise
         
-        # Phase 2 & 3: Compilation and signing of the Installer
+        # Phase 2: Inno signs both the installer and its embedded uninstaller.
         if iss_path:
-            print(f"\nPhase 2: Compiling installer from script: {iss_path}")
-            compile_installer(iss_path)
-            
-            iss_script_dir = os.path.dirname(os.path.abspath(iss_path))
-            output_dir = os.path.dirname(iss_script_dir)
-            print(f"\nPhase 3: Signing the generated installer in directory: {output_dir}")
-            
-            installer_found = False
-            for file_name in os.listdir(output_dir):
-                if file_name.lower().endswith('.exe') and 'setup' in file_name.lower():
-                    installer_found = True
-                    result_msg = sign_worker(fingerprint, os.path.join(output_dir, file_name), signtool_exe)
-                    print(result_msg)
-            
-            if not installer_found:
-                print(f"\n[WARNING] Could not find the compiled installer in any expected directory!")
+            print(f"\nPhase 2: Compiling and signing installer from script: {iss_path}")
+            installer_path = compile_installer(iss_path, fingerprint, signtool_exe)
+            print(f"[SUCCESS] Signed installer: {os.path.basename(installer_path)}")
         
         print("\n=== Workflow Completed Successfully ===")
         

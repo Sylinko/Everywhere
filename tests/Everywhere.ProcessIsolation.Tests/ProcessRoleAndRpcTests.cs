@@ -65,11 +65,12 @@ public class ProcessRoleAndRpcTests
         });
     }
 
-    [Test]
-    public void ParseHostsControl_NonInstallOptions_Throws()
+    [TestCase("--replace-existing")]
+    [TestCase("--authorize-portable")]
+    public void ParseHostsControl_NonInstallOptions_Throws(string option)
     {
         Assert.Throws<ArgumentException>(() => ProcessRoleCommandLine.ParseHostsControl(
-            new[] { "--hosts-control=start", "--replace-existing" }));
+            new[] { "--hosts-control=start", option }));
     }
 
     [Test]
