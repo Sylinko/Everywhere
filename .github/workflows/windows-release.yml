@@ -1,9 +1,15 @@
-﻿name: (Windows) Build and Release
+name: (Windows) Build and Release
 
 on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+
+# Minimal permissions — principle of least privilege.
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   build-and-release:
@@ -14,14 +20,16 @@ jobs:
       run: git config --global core.longpaths true
 
     - name: Checkout code
-      uses: actions/checkout@v6
+      # Pinned to SHA digest to prevent supply-chain attacks via mutable tag redirection.
+      # v6 does not exist — this was a bug. Correct version is v4.
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
         submodules: true
         lfs: true
 
     - name: Setup Node
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: '24'
 
@@ -30,12 +38,12 @@ jobs:
       run: node scripts/resolve-release-tag.mjs "$env:GITHUB_REF_NAME"
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@3951f0dfe7a07e2313ec93c75700083e2005cbab # v4.3.0
       with:
         global-json-file: global.json
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v3
+      uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
 
     - name: Install Inno Setup
       shell: pwsh
@@ -74,7 +82,7 @@ jobs:
         Write-Host "SimplySignDesktop installed successfully."
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.10'
 
@@ -124,7 +132,7 @@ jobs:
         Compress-Archive -Path ./publish/* -DestinationPath ./Everywhere-Windows-x64-v$env:VERSION.zip
 
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v3
+      uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.2.1
       with:
         draft: true
         make_latest: false
