@@ -101,10 +101,19 @@ SIZE
 CommandLineToArgv
 LocalFree
 
-LoadUserProfile
+TaskScheduler
+ITaskService
+ITaskFolder
+IRegisteredTask
+IRunningTask
+TASK_CREATION
+TASK_LOGON_TYPE
+TASK_RUN_FLAGS
 
 OpenProcess
 QueryFullProcessImageName
+GetNamedPipeClientProcessId
+GetNamedPipeServerProcessId
 LoadCursor
 IDC_IBEAM
 IDC_ARROW

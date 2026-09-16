@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>O Everywhere será executado automaticamente após a inicialização do sistema. Se a opção 'Executar como Administrador' estiver ativada, só será possível desativá-la no modo administrador.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Iniciar como Administrador</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>O Everywhere será iniciado como administrador ao iniciar o sistema. Somente no modo administrador será possível ativar ou desativar esta opção.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Devido a restrições do sistema operacional, quando qualquer aplicativo é executado como administrador (permissões elevadas), se o aplicativo com permissões elevadas estiver ativo ou tentar interagir com alguma funcionalidade do Everywhere (como 'Selecionar Elemento'), o Everywhere pode não funcionar corretamente. Você pode resolver isso executando o Everywhere como administrador.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Reiniciar como Administrador</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Reiniciar</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Recursos de Depuração</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Atualização de Software</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Se houver atualizações, clique em Atualizar para que o Everywhere baixe e instale a versão mais recente automaticamente. Durante o processo, pode ser necessário confirmar com 'Sim' em uma janela pop-up.</value>
+        <value>Atualizações frequentes proporcionam uma melhor experiência de uso.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Atualizações Automáticas</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Quando ativado, o Everywhere verificará se há atualizações regularmente (apenas enquanto estiver em execução, sem sobrecarregar o sistema).</value>
+        <value>Quando ativado, o Everywhere verificará atualizações periodicamente.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Baixando atualização...</value>
@@ -2093,12 +2078,6 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Esta é uma funcionalidade experimental que pode causar erros e resultados inesperados.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Iniciar com o Windows</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>O Everywhere será executado automaticamente após a inicialização.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluida</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>O Everywhere usa processos separados para hospedar os seguintes recursos, proporcionando maior segurança e flexibilidade.</value>
     </data>
 </root>

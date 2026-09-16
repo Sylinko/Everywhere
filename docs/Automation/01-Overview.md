@@ -4,7 +4,7 @@
 
 Visual Context is the platform-neutral subsystem that lets an Agent inspect, query, and act on a frequently changing logical visual graph without assuming that the complete graph can be observed safely. Accessibility trees are its main input, but a platform may compose them with monitor, window, capture, or other native topology.
 
-The original monolithic [Visual Context Refactoring Specification](Refactor.md) is retained as a historical design record. The numbered chapters are the current specification. When they disagree, the numbered chapters and the current implementation take precedence; [07-Migration](07-Migration.md) records unfinished cutover work.
+The numbered chapters are the current specification. [07-Migration](07-Migration.md) records the remaining platform and verification work; historical designs live in version control and are not an active source of truth.
 
 ## 2. Chapter Order
 
@@ -23,47 +23,42 @@ Supporting specifications:
 
 - [Declarative Visual Context Testing Specification](Testing.md) defines scenario/seed generation, Mock and real TestApp backends, mutation, unresponsive-provider controls, and execution tiers.
 - [PromptNode](../PromptNode.md) defines the reusable model-facing prompt tree and renderer behavior.
-- [`temp.md`](../../temp.md) records only unresolved implementation gaps and native-validation TODOs.
+- [Process Isolation](../ProcessIsolation/README.md) defines role startup, RPC resources, Host replacement, peer verification, and Windows service-mode integration.
 
 ## 3. Current Architecture in One View
 
 ```text
-process / dependency injection
-`- IVisualElementBackend (shared platform singleton)
-   |- native accessibility client and fixed timeout policy
-   |- root acquisition and cross-provider graph composition
-   `- never retains a VisualContext, Retention, or VisualElement
+Main
+`- ChatVisualState / HostedVisualContext
+   |- current Automation Host connection
+   |- RemoteVisualContext and remote resource handles
+   `- target-validity state across Host replacement
 
-ChatContext
-`- VisualContext (conversation identity, lifetime, and Agent-target domain)
-   |- platform identity maps
-   |- current Agent turn
-   |- completed-turn history
-   `- explicit VisualElementRetention owners
-      |- attachment or pointer selection
-      |- Enumerator while it exposes results
-      |- VisualContextSnapshot
-      `- current or retained Agent turn
+Automation Host connection
+|- IVisualElementBackend (connection-owned platform service)
+|  |- native accessibility client and fixed timeout policy
+|  `- root acquisition and cross-provider graph composition
+`- VisualContext resources
+   |- platform identity maps and explicit retention batches
+   |- current and completed Agent turns
+   |- Context-serialized operation queue
+   `- VisualElement instances and native resources
 
-VisualElement
-|- readonly owning VisualContext and platform Backend reference
-|- synchronous Query / enumeration / actions
-|- asynchronous pixel Snapshot only where the capture API requires it
-`- concrete platform behavior and native resource release
-
-Snapshot -> build and validate final text -> atomic target publication
+Snapshot -> build and validate final text -> atomic target publication -> RPC response
 ```
 
 The decisive separation is:
 
-- **execution safety** comes from the native platform timeout, aggregate traversal limits, and eventually process isolation;
+- **execution safety** comes from the Automation Host process boundary, native platform timeout, and aggregate traversal limits;
 - **logical lifetime** comes from explicit strong ownership batches;
 - **Agent lifetime** comes from current-turn ownership followed by whole-turn historical retention and eviction;
 - **identity** is canonical only while at least one real owner retains that platform identity.
 
-Root acquisition is the only operation without an existing element receiver. It enters through the singleton Backend with a caller-created `VisualElementRetention`; that retention alone selects the destination Context. After acquisition, the concrete element propagates the same Context and Backend through every relation result.
+Inside the Automation Host, root acquisition is the only operation without an existing element receiver. It enters through the connection-owned Backend with a caller-created `VisualElementRetention`; that retention alone selects the destination Context. After acquisition, the concrete element propagates the same Context and Backend through every relation result. Main invokes coarse Context operations through remote resource handles and never receives a native `VisualElement`.
 
-There is no current in-process worker pool, Dispatcher, custom `TaskScheduler`, `SynchronizationContext`, watchdog, operation pin, or execution Scope. Those mechanisms were explored and then removed because they could not terminate a synchronous native RPC and were not required by the actual serialized call path.
+Main also owns a platform Backend for narrow UI services that must run with the interactive application, including screenshot selection and selected-text detection. Those services use transient local Contexts and copied results; they do not publish chat target IDs or replace the Automation Host boundary for Agent-visible queries and actions.
+
+There is no native-call worker pool, Dispatcher, custom `TaskScheduler`, `SynchronizationContext`, operation pin, or execution Scope. Those mechanisms were explored and removed because they could not terminate a synchronous native RPC. Each Host-side Context now has one ordinary Channel consumer to serialize complete Context operations; process termination is the containment boundary when a native call ignores its platform timeout.
 
 ## 4. Pipeline
 
@@ -89,14 +84,14 @@ The implementation pipeline has two phases:
 
 - The visual tree may be arbitrarily large and may change during every read.
 - A platform graph may combine several native mechanisms. Windows already combines Win32 Screen elements with UI Automation windows. A relation may return a different concrete element implementation from its origin.
-- The application serializes calls that mutate one `VisualContext`. Its dictionaries therefore do not need locks merely to defend against hypothetical callers.
-- Element queries, relations, and actions are synchronous object operations. They call the provider directly and use its configured RPC timeout as the per-call safety boundary.
+- The Automation Host serializes calls that mutate one `VisualContext` through that Context resource's operation queue. Its dictionaries therefore do not need locks merely to defend against hypothetical callers.
+- Inside the Host, element queries, relations, and actions are synchronous object operations. They call the provider directly and use its configured native timeout as the per-call safety boundary. Main sees asynchronous coarse-grained RPC operations.
 - Native timeout does not bound a complete traversal. Snapshot/Traverser must separately enforce elapsed-time, operation, child, failure, and output budgets.
 - A read is best effort. An overlay may reduce user-driven mutation, but it is not a tree lock, immutable snapshot, native transaction, or lifetime owner.
 - Continuation is Agent-directed. The implementation does not use fingerprints, similarity matching, hidden retry, or automatic re-anchoring to pretend a live tree is stable.
 - Token counts are approximate because model tokenizers differ. A projection-specific estimator guides Plan; exact character or serialized-byte fences remain valid transport protections.
 - The durable model-facing result is final text. Internal construction uses `PromptCompactElement`, an intentionally XML-like but non-XML node with compact scalar attributes and sparse valueless flags. Safe delimiter-free values may omit quotes. Syntax belongs to the prompt builder and Renderer rather than platform traversal.
-- Future query-host process isolation is a separate containment boundary. Current process-local APIs do not introduce speculative handles or RPC-shaped abstractions.
+- Automation process isolation is an outer containment boundary. The process-local element model remains free of transport concerns; Main exposes only remote Context/anchor/picker handles and copied result contracts.
 
 ## 7. Non-Goals
 
@@ -107,21 +102,22 @@ The implementation pipeline has two phases:
 - Guaranteeing exhaustive `Find` results over an unbounded live tree.
 - Letting a `Composite` masquerade as an actionable accessibility element.
 - Making `VisualElement` itself an independently disposable ownership token.
-- Designing the process-local object model around hypothetical future RPC handles.
+- Letting transport resource IDs or RPC DTOs become native element identity.
 - Retaining a permanent compatibility layer around `VisualContextBuilder` or legacy `Everywhere.Interop.IVisualElement`.
 
 ## 8. Namespace and Assembly Boundaries
 
-Platform-neutral contracts and implementation live in `Everywhere.Automation`. Platform implementations live in `Everywhere.Windows.Automation`, `Everywhere.Mac.Automation`, and corresponding future assemblies. Raw ABI, COM, P/Invoke, AX, AT-SPI, and native-handle helpers remain in platform Interop namespaces. `Everywhere.Prompting` owns reusable `PromptNode` construction and rendering.
+Platform-neutral element contracts and implementation live in `Everywhere.Automation`. Process transport contracts live in `Everywhere.ProcessIsolation`; Main-side remote Contexts and the Automation Host session live in `Everywhere.Core.ProcessIsolation.Automation`. Platform implementations live in `Everywhere.Windows.Automation`, `Everywhere.Mac.Automation`, and corresponding future assemblies. Raw ABI, COM, P/Invoke, AX, AT-SPI, and native-handle helpers remain in platform Interop namespaces. `Everywhere.Prompting` owns reusable `PromptNode` construction and rendering.
 
 The intended dependency direction is:
 
 ```text
-Everywhere.Core --------------------+--> Everywhere.Automation --> Everywhere.Prompting
-Everywhere.Windows -----------------|
-Everywhere.Mac ---------------------|
-Everywhere.Linux -------------------|
-Automation tests -------------------+
+Everywhere.Core ------------+--> Everywhere.ProcessIsolation
+                            +--> Everywhere.Automation --> Everywhere.Prompting
+Everywhere.Windows ---------+
+Everywhere.Mac -------------+
+Everywhere.Linux -----------+
+Automation tests -----------+
 ```
 
 ## 9. Observed Failure Shape

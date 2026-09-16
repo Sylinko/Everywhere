@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhereはスタートアップ後に自動的に実行されます。「管理者としてスタートアップ」が有効な場合、このオプションは管理者モードでのみ無効にできます。</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>管理者として自動起動</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>起動時にEverywhereが管理者として自動起動します。このオプションは管理者モードでのみ切り替え可能です。</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>オペレーティングシステムの制限により、管理者としてアプリケーションを実行している場合（権限が昇格している場合）、Everywhereがフォーカスされている昇格されたアプリケーションや「要素を選択」などのEverywhereの機能と相互作用しようとする際に正しく動作しないことがあります。これを解決するには、Everywhereを管理者として実行してください。</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>管理者として再起動</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>再起動</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>デバッグ機能</value>
     </data>
@@ -669,13 +654,13 @@
         <value>ソフトウェア更新</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>更新が利用可能な場合、「更新」をクリックすると、Everywhereが自動的に最新バージョンをダウンロードしてインストールします。プロセス中にポップアップウィンドウで「はい」を選択する必要があるかもしれません。</value>
+        <value>頻繁に更新することで、より良い使用体験が得られます。</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>自動更新</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>有効にすると、Everywhereは定期的に更新を確認します（Everywhereが実行中の場合のみで、システムに余分な負荷をかけません）。</value>
+        <value>有効にすると、Everywhere は定期的に更新を確認します。</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>アップデートをダウンロード中...</value>
@@ -2093,12 +2078,6 @@
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>これは実験的な機能であり、予期しないエラーや結果を引き起こす可能性があります。</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>起動時に開始</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhereは、起動後に自動的に実行されます。</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>滑らか</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere は独立したプロセスで以下の機能を実行し、より高い安全性と柔軟性を提供します。</value>
     </data>
 </root>

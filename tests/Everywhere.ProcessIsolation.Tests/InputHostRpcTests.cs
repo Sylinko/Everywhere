@@ -129,6 +129,7 @@ public sealed class InputHostRpcTests
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            TestNamedPipePeerVerifier.Instance,
             () =>
             {
                 factoryThreadId = Environment.CurrentManagedThreadId;

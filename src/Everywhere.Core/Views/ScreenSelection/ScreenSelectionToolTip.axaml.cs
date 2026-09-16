@@ -8,10 +8,10 @@ namespace Everywhere.Views;
 
 public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedModes) : TemplatedControl
 {
-    public static readonly StyledProperty<string?> HeaderProperty =
-        AvaloniaProperty.Register<ScreenSelectionToolTip, string?>(nameof(Header));
+    public static readonly StyledProperty<IDynamicLocaleKey> HeaderProperty =
+        AvaloniaProperty.Register<ScreenSelectionToolTip, IDynamicLocaleKey>(nameof(Header), DirectLocaleKey.Empty);
 
-    public string? Header
+    public IDynamicLocaleKey Header
     {
         get => GetValue(HeaderProperty);
         set => SetValue(HeaderProperty, value);
@@ -28,14 +28,12 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         set => SetValue(ModeProperty, value);
     }
 
-    public static readonly DirectProperty<ScreenSelectionToolTip, string> TipTextProperty =
-        AvaloniaProperty.RegisterDirect<ScreenSelectionToolTip, string>(
+    public static readonly DirectProperty<ScreenSelectionToolTip, IDynamicLocaleKey> TipTextProperty =
+        AvaloniaProperty.RegisterDirect<ScreenSelectionToolTip, IDynamicLocaleKey>(
         nameof(TipText),
         o => o.TipText);
 
-    public string TipText => Mode == ScreenSelectionMode.Free ?
-        LocaleResolver.ScreenSelectionToolTip_TipText_Free :
-        LocaleResolver.ScreenSelectionToolTip_TipText_Normal;
+    public IDynamicLocaleKey TipText => GetTipText(Mode);
 
     public static readonly StyledProperty<string?> SizeInfoProperty =
         AvaloniaProperty.Register<ScreenSelectionToolTip, string?>(nameof(SizeInfo));
@@ -54,6 +52,8 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     }
 
     private readonly Dictionary<int, string> _processNameCache = new();
+    private readonly DynamicLocaleKey _freeTipText = new(LocaleKey.ScreenSelectionToolTip_TipText_Free);
+    private readonly DynamicLocaleKey _normalTipText = new(LocaleKey.ScreenSelectionToolTip_TipText_Normal);
     private VisualElementSnapshot? _snapshot;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -62,7 +62,11 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
         if (change.Property == ModeProperty)
         {
-            RaisePropertyChanged(TipTextProperty, string.Empty, TipText);
+            var oldTipText = GetTipText((ScreenSelectionMode)change.OldValue!);
+            if (!ReferenceEquals(oldTipText, TipText))
+            {
+                RaisePropertyChanged(TipTextProperty, oldTipText, TipText);
+            }
         }
     }
 
@@ -73,21 +77,22 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         Header = GetElementDescription(snapshot, failureKind);
     }
 
-    private string? GetElementDescription(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
+    private DynamicLocaleKey GetElementDescription(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
     {
         if (snapshot is null && failureKind is { } failure)
         {
-            return failure switch
+            var failureKey = failure switch
             {
-                VisualElementQueryFailureKind.PermissionDenied => LocaleResolver.ScreenSelectionToolTip_QueryFailure_PermissionDenied,
-                VisualElementQueryFailureKind.Timeout => LocaleResolver.ScreenSelectionToolTip_QueryFailure_Timeout,
-                VisualElementQueryFailureKind.ElementUnavailable => LocaleResolver.ScreenSelectionToolTip_QueryFailure_ElementUnavailable,
-                VisualElementQueryFailureKind.Unsupported => LocaleResolver.ScreenSelectionToolTip_QueryFailure_Unsupported,
-                _ => LocaleResolver.ScreenSelectionToolTip_QueryFailure_ProviderFailure,
+                VisualElementQueryFailureKind.PermissionDenied => LocaleKey.ScreenSelectionToolTip_QueryFailure_PermissionDenied,
+                VisualElementQueryFailureKind.Timeout => LocaleKey.ScreenSelectionToolTip_QueryFailure_Timeout,
+                VisualElementQueryFailureKind.ElementUnavailable => LocaleKey.ScreenSelectionToolTip_QueryFailure_ElementUnavailable,
+                VisualElementQueryFailureKind.Unsupported => LocaleKey.ScreenSelectionToolTip_QueryFailure_Unsupported,
+                _ => LocaleKey.ScreenSelectionToolTip_QueryFailure_ProviderFailure,
             };
+            return new DynamicLocaleKey(failureKey);
         }
 
-        if (snapshot is not { } observation) return LocaleResolver.Common_None;
+        if (snapshot is not { } observation) return new DynamicLocaleKey(LocaleKey.Common_None);
 
         DynamicLocaleKey key;
         var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{observation.Type ?? VisualElementType.Unknown}");
@@ -110,13 +115,19 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
             key = processName.IsNullOrWhiteSpace() ?
                 elementTypeKey :
-                new FormattedDynamicLocaleKey("{0} - {1}", new DirectLocaleKey(processName), elementTypeKey);
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.ScreenSelectionToolTip_ElementDescription,
+                    new DirectLocaleKey(processName),
+                    elementTypeKey);
         }
         else
         {
             key = elementTypeKey;
         }
 
-        return key.ToString();
+        return key;
     }
+
+    private DynamicLocaleKey GetTipText(ScreenSelectionMode mode) =>
+        mode is ScreenSelectionMode.Free ? _freeTipText : _normalTipText;
 }

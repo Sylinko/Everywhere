@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This chapter records the path from the legacy production implementation to the current target architecture. Stable ownership and behavior belong to the preceding numbered chapters; unresolved temporary deviations belong here or in repository-root `temp.md`.
+This chapter records the path from the legacy production implementation to the current target architecture. Stable ownership and behavior belong to the preceding numbered chapters; the remaining migration and native-validation work is listed here.
 
 The refactor is a clean internal replacement. Compatibility exists only long enough to migrate real callers and does not justify a permanent adapter framework.
 
@@ -10,9 +10,9 @@ The refactor is a clean internal replacement. Compatibility exists only long eno
 
 | Legacy or removed concept | Current target responsibility |
 |---|---|
-| `ChatContext.VisualElements` / `ResilientCache<int, IVisualElement>` | one `ChatContext`-owned `VisualContext` with current/historical Agent turns |
+| `ChatContext.VisualElements` / `ResilientCache<int, IVisualElement>` | Main-side `ChatVisualState` plus one connection-scoped remote Context; the Automation Host owns the real `VisualContext` and its current/historical Agent turns |
 | `VisualElementStore` | expanded into `VisualContext` |
-| `VisualContextService` | removed; root acquisition and process-shared platform services are owned by `IVisualElementBackend` implementations |
+| `VisualContextService` | replaced by `ChatVisualService` for Main-side remote operations and by the Host-side `IVisualElementBackend` for root acquisition and shared platform services |
 | Windows `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `WindowsVisualElementBackend`; interactive screen selection and text-selection monitoring are separate services |
 | macOS `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `MacVisualElementBackend`; interactive selection and text-selection monitoring moved to `MacScreenSelectionService` and `MacTextSelectionWatcher` |
 | Linux `IVisualElementContext` / `VisualElementContext` | retained only as a platform migration source until native Context work |
@@ -35,6 +35,11 @@ The replacement foundation currently includes:
 - synchronous receiver-centered `VisualElement` query, enumeration, actions, and platform failure conversion;
 - `IVisualElementBackend` as the non-retaining root-acquisition entry point and owner of process-shared platform services;
 - one sealed platform-neutral `VisualContext` as the identity, ownership, publication, and Agent-turn domain;
+- one connection-scoped remote Context resource per chat state, with Main-side `ChatVisualState`, `ChatVisualService`, and `RemoteVisualContext` proxies;
+- one `AutomationHostSession` that owns the platform Backend and the registry of Context, anchor, and picker resources;
+- `RpcSafeHandle` leases and an asynchronous release queue for remote-resource lifetime;
+- one single-reader Channel per hosted Context to serialize complete operations;
+- Host-generation replacement that invalidates old resources and requires re-observation instead of replay;
 - explicit `VisualElementRetention` ownership batches;
 - active-incarnation identity maps with allocation-free alternate identity lookup;
 - provisional publication that consumes no Agent ID until commit;
@@ -53,9 +58,9 @@ The replacement foundation currently includes:
 
 The worker, custom scheduler, SynchronizationContext, bounded-proxy, watchdog, Scope, Direct Scope, operation lease, pin, and per-Scope client implementation has been deleted. It did not provide a real termination boundary for a synchronous RPC and added lifetime complexity unrelated to the production call path.
 
-Windows production observation, actions, attachments, debugger, text-selection, interactive picking, and Chat target lookup now use the canonical `VisualElement`, one neutral `VisualContext` per chat, and the singleton `WindowsVisualElementBackend`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention; application UI uses separate screen-selection and text-selection-monitor services. `ChatContext` constructs its Context directly, including after deserialization and for derived Agents. The Backend owns shared UIA services but never retains Contexts or Elements. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` and its debug recorder have been deleted.
+Windows production observation, actions, attachments, debugger, and the retained result of interactive element picking use the Automation Host boundary. Main retains a remote Context and copied results; the Host session owns its `WindowsVisualElementBackend`, while each remote Context resource owns one neutral `VisualContext`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` and its debug recorder have been deleted. Main keeps a separate Backend for screenshot-selection UI and selected-text monitoring; those services create only transient local Context state and do not publish chat targets.
 
-macOS production root acquisition, AX identity, screen topology, interactive picking, screenshot selection, and selected-text monitoring now use the same Context-owned contract through the singleton `MacVisualElementBackend`. The Backend owns one AX system-wide reference with a fixed messaging timeout, while each acquired AX reference is independently owned and canonicalized by Core Foundation equality inside the destination Context. The removed macOS legacy Context has not been retained as an adapter.
+macOS production root acquisition, AX identity, screen topology, Agent-visible observation, and the retained result of interactive element picking use the same remote Context contract through the Automation Host's `MacVisualElementBackend`. That Backend owns one AX system-wide reference with a fixed messaging timeout, while each acquired AX reference is independently owned and canonicalized by Core Foundation equality inside the destination Context. Main keeps a separate Backend for screenshot-selection UI and selected-text monitoring, both with transient local Context state. The removed macOS legacy Context has not been retained as an adapter, and macOS starts its Hosts directly rather than exposing Windows service mode.
 
 ## 4. Migration Stages
 
@@ -80,12 +85,13 @@ Status: in progress and intentionally permanent for native probes.
 Completed work:
 
 1. remove mandatory asynchronous dispatch from single native calls;
-2. remove workers, Channels, Runtime scheduler/context, watchdog, caller proxies, and health snapshots;
+2. remove native-call workers, Runtime scheduler/context, watchdog, caller proxies, and health snapshots;
 3. remove execution Scope and Direct Scope hierarchies;
 4. make existing-element operations direct receiver methods;
 5. retain native UIA/AX timeout as the per-call safety boundary;
 6. retain Traverser aggregate elapsed/operation/failure limits as the sequence boundary;
-7. reserve whole query-host process isolation as the stronger future containment boundary.
+7. use the whole Automation Host process as the reclaimable containment boundary;
+8. serialize complete operations for each hosted Context with one ordinary single-reader Channel, without presenting it as a native-call cancellation mechanism.
 
 Do not reintroduce an in-process worker merely to move blocking elsewhere. A later worker is justified only by demonstrated platform thread affinity, useful parallelism, or a containment design with an honest external kill boundary.
 
@@ -110,8 +116,8 @@ Automatic chat attachment processing now uses the replacement Snapshotter and me
 
 Implemented:
 
-- one shared `WindowsVisualElementBackend` owns UIA client and TreeWalker without retaining caller Contexts;
-- each chat directly owns an independent platform-neutral `VisualContext` identity/target domain;
+- one shared `WindowsVisualElementBackend` in the Automation Host owns the UIA client and TreeWalker without retaining caller Contexts;
+- each Main-side chat owns `ChatVisualState`, which refers to one connection-scoped remote Context whose Host resource owns an independent platform-neutral `VisualContext` identity/target domain;
 - UIA timeout policy is configured once before publication;
 - unknown native elements include cached RuntimeId and canonicalize before exposure;
 - duplicate native pointers with equal RuntimeId reuse one high-level element;
@@ -192,7 +198,7 @@ Agent-facing visual tools now accept only strongly typed integer visual element 
 
 ### 4.8 Migrate Actions and Callers Together
 
-Completed caller cutover includes action validation and invocation, automatic visual-context attachment, `query_visual`, statistics, ChatContext target storage, the Visual Tree Debugger, and scenario characterization tests. Remaining contract migration includes:
+Completed caller cutover includes action validation and invocation, automatic visual-context attachment, `query_visual`, statistics, `ChatVisualState` target validity, the Visual Tree Debugger, and scenario characterization tests. Remaining contract migration includes:
 
 - StrategyEngine sibling queries;
 
@@ -211,7 +217,7 @@ Implemented:
 7. separate screen-selection and selected-text-monitor services over the canonical Backend and Context contracts;
 8. native app-host probes for identity, timeout scope, batching, query resolution, window states, display changes, ranged and Value-only text paging, paged children, and pixel-level capture contracts.
 
-Remaining native validation includes third-party Value-only text providers, multi-display and spanning-window assignment, inactive Stage/separate Space and rotated/mixed-density capture, permission transitions, key/full-screen/windowless cases, repeated page-boundary mutation, and aggregate repeated-provider-failure policy. These gaps remain in repository-root `temp.md`; they must not be filled by Windows assumptions.
+Remaining native validation includes third-party Value-only text providers, multi-display and spanning-window assignment, inactive Stage/separate Space and rotated/mixed-density capture, permission transitions, key/full-screen/windowless cases, repeated page-boundary mutation, and aggregate repeated-provider-failure policy. These gaps must not be filled by Windows assumptions.
 
 ### 4.10 Cut Over and Delete Legacy Production Code
 
@@ -247,7 +253,7 @@ Provider quirks and input simulation remain in the high-level Windows action pol
 The following concerns migrate together because splitting them would expose inconsistent target identity:
 
 - `query_visual` description and result schema;
-- ChatContext target lookup;
+- `ChatVisualState` remote target lookup and invalidation;
 - final-text target publication;
 - Element-versus-Composite action rejection;
 - automatic context attachment;
@@ -259,7 +265,7 @@ No target ID is published before it is known to appear in the final rendered tex
 
 ## 6. Implementation Practices
 
-- Treat one `VisualContext` as a serialized domain; do not add locks for hypothetical concurrent mutation.
+- Treat one hosted `VisualContext` as a serialized domain. Route whole remote operations through its single-reader Channel; do not add locks for hypothetical concurrent mutation.
 - Hold no synchronization primitive across platform work.
 - Configure shared native client timeout policy once before publication.
 - Keep CacheRequests and returned native wrappers operation-local.
@@ -271,14 +277,15 @@ No target ID is published before it is known to appear in the final rendered tex
 - Use `AsValueEnumerable()` where it improves repeated bounded transformations without obscuring clearer indexed or span code.
 - Keep hook callbacks constant-time and allocation-free.
 - Preserve useful legacy comments while migrating the behavior they explain.
-- Record a temporary workaround or deviation immediately in `temp.md`.
+- Record a temporary workaround or deviation in this chapter or the relevant verification section.
 
 ## 7. Completion Criteria
 
 The refactor is complete when:
 
-- `ChatContext` owns `VisualContext` as its only Agent target domain;
-- Backend owns only root acquisition and shared platform services and never retains caller Contexts or Elements;
+- `ChatContext` owns `ChatVisualState` as its Main-side target-validity state, and the current Automation Host connection owns the corresponding remote Context;
+- each Host-side Context resource owns one `VisualContext` as the chat's Agent target domain;
+- Backend is scoped to the Automation Host session, owns only root acquisition and shared platform services, and never retains caller Contexts or Elements;
 - sealed platform-neutral Context owns its chat-specific identity, ownership, and Agent-target domain;
 - attachments, Enumerators, Snapshots, and Agent turns express all element lifetime through real ownership batches;
 - public Query Session, Scope, worker dispatch, operation pins, and legacy element accessors are gone;
@@ -287,6 +294,7 @@ The refactor is complete when:
 - merged PromptNode planning and construction are platform-free;
 - final output is bounded text plus atomic current-turn target publication;
 - VisualQuery and actions resolve discriminated target types correctly;
+- connection replacement invalidates old target and remote-resource identities, while interrupted actions report unknown outcome and are never replayed;
 - Windows production-entry tests pass;
 - macOS behavior is validated natively;
 - obsolete compatibility and render paths are deleted.

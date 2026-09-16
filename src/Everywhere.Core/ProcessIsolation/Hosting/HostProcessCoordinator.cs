@@ -39,6 +39,31 @@ public sealed record HostRecoveryStoppedEventArgs(
 
 public delegate void AutomaticRecoveryStoppedHandler(HostRecoveryStoppedEventArgs e);
 
+/// <summary>Connection state shown for one isolated Host role.</summary>
+public enum HostConnectionState
+{
+    /// <summary>The Host is being launched or recovered.</summary>
+    Starting,
+
+    /// <summary>The Host is connected with its requested capabilities.</summary>
+    Connected,
+
+    /// <summary>The Host is connected through a fallback with reduced capabilities.</summary>
+    Degraded,
+
+    /// <summary>The Host could not establish or retain a connection.</summary>
+    Unavailable
+}
+
+/// <summary>Current user-facing state of one isolated Host role.</summary>
+/// <param name="Role">Host role represented by this status.</param>
+/// <param name="State">Current connection state.</param>
+/// <param name="MessageKey">Optional localized explanation suitable for persistent UI.</param>
+public sealed record HostRoleStatus(ProcessRole Role, HostConnectionState State, IDynamicLocaleKey? MessageKey = null);
+
+/// <summary>Receives a new user-facing status for one isolated Host role.</summary>
+public delegate void HostStatusChangedHandler(HostRoleStatus status);
+
 /// <summary>
 /// Owns Main's connection leases to the Input and Automation Hosts. Each start
 /// creates a fresh Host generation. A generation can be stopped explicitly and
@@ -58,6 +83,8 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
     public event AutomaticRecoveryStoppedHandler? AutomaticRecoveryStopped;
 
+    public event HostStatusChangedHandler? StatusChanged;
+
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
 
     private readonly ILogger _logger = Log.ForContext<HostProcessCoordinator>();
@@ -66,13 +93,20 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     private readonly SemaphoreSlim _generationGate = new(1, 1);
     private readonly Lock _generationStateGate = new();
     private readonly Lock _disposeGate = new();
+    private readonly Lock _statusGate = new();
+    private readonly INamedPipePeerVerifier _peerVerifier;
+    private readonly IHostsServiceModeManager? _serviceModeManager;
     private TaskCompletionSource _generationChanged = CreateStateChangeSource();
+    private HostRoleStatus _inputStatus = new(ProcessRole.Input, HostConnectionState.Starting);
+    private HostRoleStatus _automationStatus = new(ProcessRole.Automation, HostConnectionState.Starting);
     private HostGeneration? _generation;
     private Task? _disposeTask;
     private int _isDisposed;
 
-    private HostProcessCoordinator()
+    private HostProcessCoordinator(INamedPipePeerVerifier peerVerifier, IHostsServiceModeManager? serviceModeManager)
     {
+        _peerVerifier = peerVerifier;
+        _serviceModeManager = serviceModeManager;
     }
 
     /// <summary>
@@ -80,7 +114,24 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     /// the control endpoint before the first Host generation begins, closing the
     /// startup window in which an external stop could otherwise arrive too early.
     /// </summary>
-    public static HostProcessCoordinator Create() => new();
+    /// <param name="peerVerifier">Verifies the identity of each named-pipe peer.</param>
+    /// <param name="serviceModeManager">Optional platform service-mode integration. Platforms without one launch Hosts directly.</param>
+    public static HostProcessCoordinator Create(INamedPipePeerVerifier peerVerifier, IHostsServiceModeManager? serviceModeManager = null) =>
+        new(peerVerifier, serviceModeManager);
+
+    /// <summary>Returns the latest runtime status for one Host role.</summary>
+    public HostRoleStatus GetStatus(ProcessRole role)
+    {
+        lock (_statusGate)
+        {
+            return role switch
+            {
+                ProcessRole.Input => _inputStatus,
+                ProcessRole.Automation => _automationStatus,
+                _ => throw new ArgumentException("Main does not have an isolated Host status.", nameof(role))
+            };
+        }
+    }
 
     /// <summary>Starts the first Host generation through the application initialization pipeline.</summary>
     public Task InitializeAsync(CancellationToken cancellationToken) => StartHostsAsync(cancellationToken);
@@ -263,6 +314,9 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
         return generation;
     }
 
+    private bool ShouldUseServiceMode() =>
+        _serviceModeManager?.GetStatus().State is HostsServiceModeConfigurationState.CurrentExecutable;
+
     private async Task<HostStopResult> StopHostsCoreAsync(HostStopReason reason, CancellationToken cancellationToken)
     {
         await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -411,13 +465,53 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     }
 
     private void OnAutomaticRecoveryStopped(ProcessRole role, int failureCount, TimeSpan failureWindow) =>
+        ReportAutomaticRecoveryStopped(role, failureCount, failureWindow);
+
+    private void ReportAutomaticRecoveryStopped(ProcessRole role, int failureCount, TimeSpan failureWindow)
+    {
+        SetStatus(new HostRoleStatus(
+            role,
+            HostConnectionState.Unavailable,
+            new DynamicLocaleKey(LocaleKey.HostsStatusControl_RecoveryStopped_ToolTip)));
         AutomaticRecoveryStopped?.Invoke(new HostRecoveryStoppedEventArgs(role, failureCount, failureWindow));
+    }
+
+    private void SetStatus(HostRoleStatus status)
+    {
+        lock (_statusGate)
+        {
+            if (status.Role is ProcessRole.Input)
+            {
+                _inputStatus = status;
+            }
+            else if (status.Role is ProcessRole.Automation)
+            {
+                _automationStatus = status;
+            }
+            else
+            {
+                throw new ArgumentException("Main does not have an isolated Host status.", nameof(status));
+            }
+        }
+
+        StatusChanged?.Invoke(status);
+    }
 
     /// <summary>Reason sent to the role lifecycle contract.</summary>
     private enum HostStopReason
     {
         Shutdown,
         PrepareForUpdate
+    }
+
+    /// <summary>Generation-local result of the requested platform launch route.</summary>
+    private enum HostLaunchOutcome
+    {
+        Pending,
+        Preferred,
+        EquivalentFallback,
+        LimitedFallback,
+        Failed
     }
 
     /// <summary>
@@ -429,19 +523,26 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     {
         private readonly HostProcessCoordinator _owner;
         private readonly CancellationTokenSource _lifetime;
+        private readonly bool _isServiceModeRequested;
         private readonly RoleConnectionSupervisor _input;
         private readonly RoleConnectionSupervisor _automation;
         private readonly Lock _controllerGate = new();
+
         private Task? _controllerTask;
         private Task? _startupTask;
         private long _lastControllerStartTimestamp;
+        private int _launchOutcome;
 
         public HostGeneration(HostProcessCoordinator owner, CancellationToken parentToken)
         {
             _owner = owner;
             _lifetime = CancellationTokenSource.CreateLinkedTokenSource(parentToken);
+            _isServiceModeRequested = owner.ShouldUseServiceMode();
+            _launchOutcome = (int)(_isServiceModeRequested ? HostLaunchOutcome.Pending : HostLaunchOutcome.Preferred);
             _input = new RoleConnectionSupervisor(this, ProcessRole.Input, _lifetime.Token);
             _automation = new RoleConnectionSupervisor(this, ProcessRole.Automation, _lifetime.Token);
+            ReportStarting(ProcessRole.Input);
+            ReportStarting(ProcessRole.Automation);
         }
 
         /// <summary>
@@ -517,6 +618,51 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             return new HostStopResult(results[0], results[1]);
         }
 
+        private void ReportStarting(ProcessRole role, IDynamicLocaleKey? messageKey = null) =>
+            _owner.SetStatus(new HostRoleStatus(role, HostConnectionState.Starting, messageKey));
+
+        private void ReportUnavailable(ProcessRole role, IDynamicLocaleKey? messageKey) =>
+            _owner.SetStatus(new HostRoleStatus(role, HostConnectionState.Unavailable, messageKey));
+
+        private void ReportConnected(ProcessRole role)
+        {
+            var launchOutcome = (HostLaunchOutcome)Volatile.Read(ref _launchOutcome);
+            if (launchOutcome is HostLaunchOutcome.Pending)
+            {
+                ReportStarting(role);
+                return;
+            }
+
+            var isDegraded = launchOutcome is HostLaunchOutcome.LimitedFallback;
+            _owner.SetStatus(new HostRoleStatus(
+                role,
+                isDegraded ? HostConnectionState.Degraded : HostConnectionState.Connected));
+        }
+
+        private void SetLaunchOutcome(int exitCode)
+        {
+            var launchOutcome = exitCode switch
+            {
+                HostsControlExitCodes.Success => HostLaunchOutcome.Preferred,
+                HostsControlExitCodes.EquivalentFallbackStarted => HostLaunchOutcome.EquivalentFallback,
+                HostsControlExitCodes.LimitedFallbackStarted => HostLaunchOutcome.LimitedFallback,
+                _ => HostLaunchOutcome.Failed
+            };
+            Volatile.Write(ref _launchOutcome, (int)launchOutcome);
+
+            if (exitCode is not HostsControlExitCodes.Success and
+                not HostsControlExitCodes.EquivalentFallbackStarted and
+                not HostsControlExitCodes.LimitedFallbackStarted)
+            {
+                _input.ReportControllerUnavailable();
+                _automation.ReportControllerUnavailable();
+                return;
+            }
+
+            _input.RefreshStatus();
+            _automation.RefreshStatus();
+        }
+
         /// <summary>
         /// Coalesces concurrent recovery requests. The controller only creates
         /// candidates; authenticated pipes remain the health signal.
@@ -556,6 +702,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             if (string.IsNullOrWhiteSpace(executablePath))
             {
                 _owner._logger.Warning("Hosts Control could not run because the current executable path is unavailable.");
+                SetLaunchOutcome(HostsControlExitCodes.Failure);
                 return;
             }
 
@@ -566,17 +713,23 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                     FileName = executablePath,
                     WorkingDirectory = Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    RedirectStandardError = true
                 };
                 startInfo.ArgumentList.Add("--hosts-control");
-                startInfo.ArgumentList.Add("start");
+                startInfo.ArgumentList.Add(_isServiceModeRequested ? "start" : "launch");
 
                 using var process = Process.Start(startInfo);
                 if (process is null)
                 {
                     _owner._logger.Warning("Hosts Control process creation returned no process handle.");
+                    SetLaunchOutcome(HostsControlExitCodes.Failure);
                     return;
                 }
+
+                using var outputLifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var errorLines = new List<string>();
+                var errorTask = ReadControllerErrorsAsync(process.StandardError, errorLines, outputLifetime.Token);
 
                 try
                 {
@@ -584,13 +737,25 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                 }
                 catch (TimeoutException)
                 {
+                    await outputLifetime.CancelAsync();
+                    await errorTask.ConfigureAwait(false);
                     _owner._logger.Warning("Hosts Control did not exit within {ControllerTimeout}.", ControllerTimeout);
+                    SetLaunchOutcome(HostsControlExitCodes.Unavailable);
                     return;
                 }
 
+                // Hosts can inherit this pipe. Controller exit, rather than EOF from
+                // its long-lived children, must release Main to connect to them.
+                await outputLifetime.CancelAsync();
+                await errorTask.ConfigureAwait(false);
+                var detail = string.Join(Environment.NewLine, errorLines).Trim();
+                SetLaunchOutcome(process.ExitCode);
                 if (process.ExitCode != 0)
                 {
-                    _owner._logger.Warning("Hosts Control exited with code {ExitCode}.", process.ExitCode);
+                    _owner._logger.Warning(
+                        "Hosts Control exited with code {ExitCode}. Detail: {Detail}",
+                        process.ExitCode,
+                        string.IsNullOrWhiteSpace(detail) ? "none" : detail);
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -599,6 +764,21 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             catch (Exception exception)
             {
                 _owner._logger.Warning(exception, "Hosts Control could not be started.");
+                SetLaunchOutcome(HostsControlExitCodes.Failure);
+            }
+        }
+
+        private static async Task ReadControllerErrorsAsync(StreamReader reader, List<string> lines, CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+                {
+                    lines.Add(line);
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
             }
         }
 
@@ -612,6 +792,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             try
             {
                 await stream.ConnectAsync((int)ConnectAttemptTimeout.TotalMilliseconds, cancellationToken).ConfigureAwait(false);
+                _owner._peerVerifier.VerifyServer(stream);
                 connection = new RpcConnection(stream, isServer: false);
                 HostDiagnosticsRpcBinding.Bind(connection, new HostDiagnosticsLogSink(role));
                 connection.Start(cancellationToken);
@@ -791,6 +972,9 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                         var connection = await ConnectWithinStartupWindowAsync(_stopping.Token).ConfigureAwait(false);
                         if (connection is null)
                         {
+                            generation.ReportUnavailable(
+                                role,
+                                new DynamicLocaleKey(LocaleKey.HostsStatusControl_StartupTimedOut_ToolTip));
                             if (isInitialAttempt)
                             {
                                 _initialConnection.TrySetResult(false);
@@ -921,6 +1105,8 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
                 nextConnection.TrySetResult(connection);
 
+                generation.ReportConnected(role);
+
                 _logger.Information("Authenticated the Host RPC connection.");
             }
 
@@ -935,6 +1121,40 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
                     _connection = null;
                 }
+
+                if (!StopRequested && !_stopping.IsCancellationRequested)
+                {
+                    generation.ReportStarting(
+                        role,
+                        new DynamicLocaleKey(LocaleKey.HostsStatusControl_Reconnecting_ToolTip));
+                }
+            }
+
+            public void RefreshStatus()
+            {
+                lock (_connectionGate)
+                {
+                    if (_connection is not null)
+                    {
+                        generation.ReportConnected(role);
+                    }
+                }
+            }
+
+            public void ReportControllerUnavailable()
+            {
+                lock (_connectionGate)
+                {
+                    if (_connection is not null)
+                    {
+                        generation.ReportConnected(role);
+                        return;
+                    }
+                }
+
+                generation.ReportUnavailable(
+                    role,
+                    new DynamicLocaleKey(LocaleKey.HostsStatusControl_ServiceLaunchFailed_ToolTip));
             }
 
             private bool RecordFailureAndIsCircuitOpen()

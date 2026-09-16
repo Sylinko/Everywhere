@@ -615,22 +615,106 @@
         <value>Run at Startup</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere will run automatically after startup. If “Startup as Administrator” is enabled, the current option can only be disabled in administrator mode.</value>
+        <value>Everywhere will run automatically after you sign in.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Startup as Administrator</value>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>System interaction</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere will start automatically as an administrator at boot. This option can only be toggled in administrator mode.</value>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>Feature status</value>
     </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Due to operating system restrictions, when running any application as an administrator (elevated permissions), Everywhere may not work correctly when the elevated applications are in focus or trying to interact with a Everywhere feature like &quot;Pick Element&quot;. This can be addressed by running Everywhere as administrator.</value>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>Shortcuts and input</value>
     </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Restart as Administrator</value>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>Screen recognition and actions</value>
     </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Restart</value>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>Getting ready…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>Connected</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>Some features are limited</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>Temporarily unavailable</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>Everywhere is available, but it may be unable to recognize or interact with apps running as administrator. Try reconnecting.</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>This feature could not connect. Try reconnecting.</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>The connection was interrupted. Everywhere is reconnecting automatically.</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>The background component did not become ready in time. Try reconnecting.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windows could not start the background component. Try reconnecting or check the service setup.</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>Repeated connection attempts were unsuccessful. Select Reconnect to try again.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>Install as a service</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>Allow Everywhere to recognize and interact with apps running as administrator. Windows may ask for administrator approval the first time.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>Checking setup…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>Setup is required before this can be used</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>Ready</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Another copy of Everywhere currently controls this feature</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable_ToolTip" xml:space="preserve">
+        <value>Configured by: {0}</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>This feature needs to be set up again</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>This feature could not be checked</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>Everywhere could not be installed as a service.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>The Everywhere service could not be removed.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Title" xml:space="preserve">
+        <value>Install Everywhere as a service?</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Continue" xml:space="preserve">
+        <value>Continue</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOwnershipConflict_Message" xml:space="preserve">
+        <value>This feature is already set up by another copy of Everywhere. Continuing will switch it to the current copy, and the other copy may no longer be able to interact with administrator apps.&#xA;&#xA;Currently configured: {0}&#xA;Current copy: {1}</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalidOwnership_Message" xml:space="preserve">
+        <value>An existing setup was found, but Everywhere could not verify which copy created it. Continuing will repair it for the current copy.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnsafeEnvironment_Message" xml:space="preserve">
+        <value>Other apps can modify Everywhere in its current location. Because this feature runs a background component with administrator privileges, we recommend installing Everywhere in a protected Program Files folder first.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Footer" xml:space="preserve">
+        <value>Do you want to continue?</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere is running as administrator. Drag and drop from standard apps may not work, and actions performed by the assistant have broader access to your system. Restart Everywhere normally when administrator access is not needed.</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>Reconnect</value>
     </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Debug Features</value>
@@ -669,13 +753,13 @@
         <value>Software Update</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>If an update is available, click Update and Everywhere will automatically download and install the latest version. You may need to select “Yes” in the pop-up window during the process.</value>
+        <value>Frequent updates provide a better experience.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Automatic Update</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>If enabled, Everywhere will periodically check for updates (only when Everywhere is running, no extra load to the system).</value>
+        <value>When enabled, Everywhere will periodically check for updates.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Downloading update...</value>
@@ -1586,6 +1670,9 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>None</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
     <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
         <value>This element cannot be accessed</value>
     </data>
@@ -2108,12 +2195,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>This is an experimental feature that may lead to unexpected errors and results.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Launch at Startup</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere will automatically run after startup.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3987,9 +4068,12 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Read a bounded continuation page from a visual element</value>
     </data>
     <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
-        <value>The input service crashed {0} times within {1} minutes, so automatic recovery has stopped. Restart Everywhere to restore shortcuts.</value>
+        <value>Everywhere couldn't restore shortcuts after {0} attempts in {1} minutes. Restart Everywhere to try again.</value>
     </data>
     <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
-        <value>The accessibility service crashed {0} times within {1} minutes, so automatic recovery has stopped. Restart Everywhere to restore visual element access.</value>
+        <value>Everywhere couldn't restore screen recognition after {0} attempts in {1} minutes. Restart Everywhere to try again.</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere uses separate processes to host the following features, providing greater security and flexibility.</value>
     </data>
 </root>

@@ -41,6 +41,10 @@ public static class ProcessRoleNames
     public static string GetMainControlEndpoint(string desktopSessionId) =>
         GetEndpoint("main-control", desktopSessionId);
 
+    /// <summary>Builds the per-user, per-session endpoint used to activate an existing Main instance.</summary>
+    public static string GetApplicationActivationEndpoint(string desktopSessionId) =>
+        GetEndpoint("main-activation", desktopSessionId);
+
     private static string GetEndpoint(string wireName, string desktopSessionId)
     {
         // macOS implements .NET named pipes with a Unix-domain socket below

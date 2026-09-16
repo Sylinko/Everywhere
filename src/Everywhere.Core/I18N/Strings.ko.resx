@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere는 시작 후 자동으로 실행됩니다. &quot;관리자 권한으로 시작&quot;이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>관리자 모드로 자동 시작</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>시작 시 Everywhere가 관리자 권한으로 자동 시작됩니다. 현재 옵션을 켜거나 끄려면 관리자 모드여야 합니다.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>운영 체제의 제한으로 인해, 관리자 권한(승격된 권한)으로 애플리케이션을 실행할 때, Everywhere가 포커스된 승격된 애플리케이션이나 &quot;요소 선택&quot;과 같은 Everywhere 기능과 상호작용하려고 할 때 제대로 작동하지 않을 수 있습니다. 이는 Everywhere를 관리자 권한으로 실행하여 해결할 수 있습니다.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>관리자 권한으로 다시 시작</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>다시 시작</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>디버그 기능</value>
     </data>
@@ -669,13 +654,13 @@
         <value>소프트웨어 업데이트</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>업데이트가 가능한 경우, 업데이트를 클릭하면 Everywhere가 최신 버전을 자동으로 다운로드하고 설치합니다. 과정 중 팝업 창에서 &quot;예&quot;를 선택해야 할 수 있습니다.</value>
+        <value>자주 업데이트하면 더 나은 사용 경험을 얻을 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>자동 업데이트</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>활성화된 경우, Everywhere는 주기적으로 업데이트를 확인합니다 (Everywhere가 실행 중일 때만, 시스템에 추가 부하를 주지 않습니다).</value>
+        <value>활성화하면 Everywhere가 주기적으로 업데이트를 확인합니다.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>업데이트 다운로드 중...</value>
@@ -2093,12 +2078,6 @@
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>이 기능은 실험적이며 예기치 않은 오류와 결과를 초래할 수 있습니다.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>시작 시 실행</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere가 시작 후 자동으로 실행됩니다.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>유연함</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere는 별도의 프로세스로 다음 기능을 호스팅하여 더 강력한 보안과 유연성을 제공합니다.</value>
     </data>
 </root>

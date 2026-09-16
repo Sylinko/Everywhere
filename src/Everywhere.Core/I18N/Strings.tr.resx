@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere başlatıldığında otomatik olarak çalışacak. “Yönetici Olarak Başlangıç” etkinse, mevcut seçenek yalnızca yönetici modunda devre dışı bırakılabilir.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Yönetici Olarak Başlangıçta Aç</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Her açılışta Everywhere yönetici olarak başlatılır. Bu seçeneği açıp kapatmak için yalnızca yönetici modunda olmalısınız.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>İşletim sistemi kısıtlamaları nedeniyle herhangi bir uygulamayı yönetici olarak çalıştırdığınızda (yükseltilmiş izinler), Everywhere yükseltilmiş uygulamalar odakta olduğunda veya “Öğe Seç” gibi bir Everywhere özelliğiyle etkileşime geçmeye çalışırken düzgün çalışmayabilir. Bu sorun, Everywhere'ı yönetici olarak çalıştırarak çözülebilir.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Yönetici Olarak Yeniden Başlat</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Yeniden Başlat</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Hata Ayıklama Özellikleri</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Yazılım Güncelleme</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Bir güncelleme mevcutsa Güncelle'ye tıklayın ve Everywhere en son sürümü otomatik olarak indirecek ve kuracaktır. İşlem sırasında açılan pencerede “Evet” seçeneğini seçmeniz gerekebilir.</value>
+        <value>Sık sık güncelleme yapmak daha iyi bir kullanım deneyimi sağlar.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Otomatik Güncelleme</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Etkinleştirildiğinde Everywhere, sistem üzerinde ek yük oluşturmadan aralıklarla güncellemeleri kontrol edecektir.</value>
+        <value>Etkinleştirildiğinde Everywhere düzenli olarak güncellemeleri kontrol eder.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Güncelleme indiriliyor...</value>
@@ -2093,12 +2078,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Bu özellik deneysel olup, beklenmedik hatalara ve sonuçlara yol açabilir.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Başlangıçta Çalıştır</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere, bilgisayar açıldığında otomatik olarak çalışacaktır.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Akıcı</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere, daha güçlü güvenlik ve esneklik sağlamak için aşağıdaki özellikleri ayrı süreçlerde barındırır.</value>
     </data>
 </root>

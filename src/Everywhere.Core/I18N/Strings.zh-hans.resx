@@ -615,22 +615,106 @@
         <value>开机时启动</value>
     </data>
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere 会在开机后自动运行。如果开启了“以管理员方式启动”，则只有在管理员模式下才能关闭当前选项。</value>
+        <value>登录系统后自动运行 Everywhere。</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>以管理员方式自启动</value>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>系统交互</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>开机时 Everywhere 会以管理员身份自启动。只有在管理员模式下才能开关当前选项。</value>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>功能状态</value>
     </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>由于操作系统限制，当以管理员身份运行任何应用程序（提升权限）时，如果提升权限的应用程序处于活动状态或试图与 Everywhere 的某个功能（如“选择元素”）交互，Everywhere 可能无法正常工作。可以通过以管理员身份运行 Everywhere 来解决此问题。</value>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>快捷键与输入</value>
     </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>以管理员身份重启</value>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>屏幕识别与操作</value>
     </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>重启</value>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>正在准备…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>已连接</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>部分功能受限</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>暂不可用</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>目前可以正常使用，但可能无法识别或操作以管理员身份运行的应用。你可以尝试重新连接。</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>此功能暂时无法连接。你可以尝试重新连接。</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>连接已中断，Everywhere 正在自动重新连接。</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>后台组件未能及时就绪。你可以尝试重新连接。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windows 无法启动后台组件。你可以尝试重新连接或检查服务设置。</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>多次连接尝试均未成功。请选择“重新连接”再次尝试。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>以服务的方式安装</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>开启后，Everywhere 也能识别和操作以管理员身份运行的应用。首次开启时，Windows 可能会请求管理员授权。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>正在检查设置…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>需要完成设置后才能使用</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>已就绪</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>此功能目前由另一份 Everywhere 管理</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable_ToolTip" xml:space="preserve">
+        <value>当前由以下程序配置：{0}</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>此功能需要重新设置</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>暂时无法检查此功能</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>无法将 Everywhere 安装为服务。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>无法卸载 Everywhere 服务。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Title" xml:space="preserve">
+        <value>将 Everywhere 安装为服务？</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Continue" xml:space="preserve">
+        <value>继续</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOwnershipConflict_Message" xml:space="preserve">
+        <value>此功能已由另一份 Everywhere 配置。继续将改为使用当前版本，另一份 Everywhere 可能无法再操作管理员权限应用。&#xA;&#xA;当前配置：{0}&#xA;当前版本：{1}</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalidOwnership_Message" xml:space="preserve">
+        <value>检测到已有设置，但 Everywhere 无法确认它属于哪个版本。继续将为当前版本修复此设置。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnsafeEnvironment_Message" xml:space="preserve">
+        <value>当前位置中的 Everywhere 程序文件可以被其他应用修改。此功能会让后台组件获得管理员权限，建议先将 Everywhere 安装到受保护的 Program Files 文件夹。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfirmation_Footer" xml:space="preserve">
+        <value>仍要继续吗？</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere 当前正以管理员身份运行。来自普通应用的拖放可能无法使用，助手执行的操作也会拥有更高的系统权限。不需要管理员权限时，请正常重新启动 Everywhere。</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>重新连接</value>
     </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>调试功能</value>
@@ -669,13 +753,13 @@
         <value>软件更新</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>如果有更新，点击更新之后 Everywhere 会自动下载并安装最新版本。过程中可能需要你在弹出窗口中选择“是”。</value>
+        <value>经常更新能带来更好的使用体验。</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>自动更新</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>开启后，Everywhere 会定期检查更新 (仅在 Everywhere 运行时，不会给系统增加额外负担)。</value>
+        <value>开启后，Everywhere 会定期检查更新。</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>下载更新中...</value>
@@ -1586,6 +1670,9 @@
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>无</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
     <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
         <value>无法访问此元素</value>
     </data>
@@ -2108,12 +2195,6 @@
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>此项为实验性功能，可能会导致意外的错误和结果</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>开机时启动</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere 会在开机后自动运行。</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3987,9 +4068,12 @@
         <value>从视觉元素中续读一页有界文本</value>
     </data>
     <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
-        <value>输入服务在 {1} 分钟内崩溃了 {0} 次，已停止自动恢复。请重启 Everywhere 以恢复快捷键。</value>
+        <value>Everywhere 在 {1} 分钟内尝试恢复快捷键 {0} 次，但仍未成功。请重启 Everywhere 后重试。</value>
     </data>
     <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
-        <value>辅助功能服务在 {1} 分钟内崩溃了 {0} 次，已停止自动恢复。请重启 Everywhere 以恢复视觉元素访问。</value>
+        <value>Everywhere 在 {1} 分钟内尝试恢复屏幕识别 {0} 次，但仍未成功。请重启 Everywhere 后重试。</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere 使用独立进程承载下列功能，以提供更强的安全性和灵活性。</value>
     </data>
 </root>

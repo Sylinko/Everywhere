@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere verrà eseguito automaticamente dopo l'avvio. Se “Avvio come amministratore” è abilitato, l'opzione corrente può essere disabilitata solo in modalità amministratore.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Avvio Automatico come Amministratore</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere si avvia automaticamente come amministratore all'accensione. Solo in modalità amministratore è possibile attivare o disattivare questa opzione.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>A causa delle restrizioni del sistema operativo, quando si esegue un'applicazione come amministratore (permessi elevati), Everywhere potrebbe non funzionare correttamente quando le applicazioni elevate sono in primo piano o tentano di interagire con una funzione di Everywhere come &quot;Seleziona elemento&quot;. Questo può essere risolto eseguendo Everywhere come amministratore.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Riavvia come amministratore</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Riavvia</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Funzionalità di Debug</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Aggiornamento software</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Se è disponibile un aggiornamento, clicca su Aggiorna e Everywhere scaricherà e installerà automaticamente l'ultima versione. Potrebbe essere necessario selezionare “Sì” nella finestra pop-up durante il processo.</value>
+        <value>Aggiornamenti frequenti offrono un'esperienza d'uso migliore.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Aggiornamento automatico</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Se abilitato, Everywhere controllerà periodicamente la disponibilità di aggiornamenti (solo quando Everywhere è in esecuzione, senza aggiungere carico extra al sistema).</value>
+        <value>Se abilitato, Everywhere controllerà periodicamente la disponibilità di aggiornamenti.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Scaricamento aggiornamento...</value>
@@ -2093,12 +2078,6 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Questa è una funzionalità sperimentale e potrebbe causare errori e risultati imprevisti.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Avvio Automatico</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere si avvierà automaticamente all'accensione.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluida</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere utilizza processi separati per ospitare le seguenti funzionalità, offrendo maggiore sicurezza e flessibilità.</value>
     </data>
 </root>

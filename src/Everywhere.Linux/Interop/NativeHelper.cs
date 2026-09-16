@@ -32,7 +32,7 @@ public class NativeHelper(IEventHelper eventHelper) : INativeHelper
 
     public bool IsAdministrator => Environment.UserName == "root";
 
-    public bool IsUserStartupEnabled
+    public bool IsStartupEnabled
     {
         get => File.Exists(ShortcutFile);
         set
@@ -65,14 +65,7 @@ public class NativeHelper(IEventHelper eventHelper) : INativeHelper
         }
     }
 
-    public bool IsAdministratorStartupEnabled { get; set; }
-
     public bool IsLowDataModeActive => throw new NotImplementedException();
-
-    public void RestartAsAdministrator()
-    {
-        throw new NotSupportedException();
-    }
 
     public bool GetKeyState(KeyModifiers keyModifiers)
     {

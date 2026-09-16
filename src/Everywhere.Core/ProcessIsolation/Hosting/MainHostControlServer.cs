@@ -18,6 +18,7 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
 
     private readonly ILogger _logger = Log.ForContext<MainHostControlServer>();
     private readonly HostProcessCoordinator _coordinator;
+    private readonly INamedPipePeerVerifier _peerVerifier;
     private readonly RpcHandshakeIdentity _mainIdentity = RpcRuntimeIdentity.CreateCurrent(ProcessRole.Main);
     private readonly CancellationTokenSource _lifetime = new();
     private readonly Lock _disposeGate = new();
@@ -25,13 +26,14 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
     private Task? _runTask;
     private Task? _disposeTask;
 
-    private MainHostControlServer(HostProcessCoordinator coordinator)
+    private MainHostControlServer(HostProcessCoordinator coordinator, INamedPipePeerVerifier peerVerifier)
     {
         _coordinator = coordinator;
+        _peerVerifier = peerVerifier;
     }
 
     /// <summary>Creates an unstarted Main-control listener for the current desktop session.</summary>
-    public static MainHostControlServer Create(HostProcessCoordinator coordinator) => new(coordinator);
+    public static MainHostControlServer Create(HostProcessCoordinator coordinator, INamedPipePeerVerifier peerVerifier) => new(coordinator, peerVerifier);
 
     /// <summary>
     /// Starts accepting controller connections. Completion means the control pipe
@@ -94,6 +96,7 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
                 server = CreateServer(endpoint);
                 _started.TrySetResult();
                 await server.WaitForConnectionAsync(_lifetime.Token).ConfigureAwait(false);
+                _peerVerifier.VerifyClient(server);
                 await HandleConnectionAsync(server).ConfigureAwait(false);
                 server = null;
             }

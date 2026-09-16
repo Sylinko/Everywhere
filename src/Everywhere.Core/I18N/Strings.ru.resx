@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere будет запускаться автоматически после старта системы. Если включена опция «Запуск от имени администратора», текущую опцию можно отключить только в режиме администратора.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Автозапуск от имени администратора</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere будет автоматически запускаться от имени администратора при включении компьютера. Только в режиме администратора можно включать или выключать эту опцию.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Из-за ограничений операционной системы, при запуске любого приложения от имени администратора (с повышенными правами) Everywhere может работать некорректно, если приложения с повышенными правами находятся в фокусе или пытаются взаимодействовать с функцией Everywhere, такой как «Выбор элемента». Это можно исправить, запустив Everywhere от имени администратора.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Перезапуск от имени администратора</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Перезапустить</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Отладочные функции</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Обновление программного обеспечения</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Если обновление доступно, нажмите «Обновить», и Everywhere автоматически загрузит и установит последнюю версию. Возможно, вам потребуется выбрать «Да» в всплывающем окне в процессе.</value>
+        <value>Частые обновления обеспечивают более удобное использование.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Автоматическое обновление</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Если включено, Everywhere будет периодически проверять наличие обновлений (только когда Everywhere запущен, без дополнительной нагрузки на систему).</value>
+        <value>Если включено, Everywhere будет периодически проверять наличие обновлений.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Загрузка обновления...</value>
@@ -2093,12 +2078,6 @@
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Эта функция является экспериментальной и может привести к неожиданным ошибкам и результатам.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Запуск При Включении</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere будет автоматически запускаться при включении компьютера.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Плавная</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere использует отдельные процессы для размещения следующих функций, что обеспечивает повышенную безопасность и гибкость.</value>
     </data>
 </root>

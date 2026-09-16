@@ -1,0 +1,198 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+
+  <ControlTheme
+    x:Key="{x:Type v:HostsStatusControl}"
+    TargetType="v:HostsStatusControl">
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="Margin" Value="-16"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel>
+          <Border
+            MinHeight="68" Padding="20,12">
+            <DockPanel
+              HorizontalSpacing="24" LastChildFill="True">
+              <Button
+                Classes="Outline" DockPanel.Dock="Right"
+                VerticalAlignment="Center"
+                shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+                shadui:ButtonAssist.ShowProgress="{Binding RetryHostsCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
+                Command="{Binding RetryHostsCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                Content="{I18N {x:Static LocaleKey.HostsStatusControl_Retry_Content}}"
+                IsEnabled="{Binding !RetryHostsCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
+              <StackPanel>
+                <TextBlock
+                  HorizontalAlignment="Left"
+                  Text="{I18N {x:Static LocaleKey.SoftwareSettings_HostsStatusItem_Header}}"
+                  TextWrapping="Wrap"/>
+                <TextBlock
+                  Classes="Muted Caption" HorizontalAlignment="Left"
+                  Text="{I18N {x:Static LocaleKey.SoftwareSettings_HostsStatusItem_Description}}"
+                  TextWrapping="Wrap"/>
+              </StackPanel>
+            </DockPanel>
+          </Border>
+
+          <Border
+            MinHeight="52" Padding="32,12"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="0,1,0,0">
+            <DockPanel
+              HorizontalSpacing="12" LastChildFill="True">
+              <v:LazyIndexedContentControl
+                DockPanel.Dock="Right" VerticalAlignment="Center"
+                shadui:BindingAssist.ToolTip="{Binding InputStatus.ToolTip^, RelativeSource={RelativeSource TemplatedParent}}"
+                Background="Transparent"
+                ContentDataBinding="{Binding InputStatus, RelativeSource={RelativeSource TemplatedParent}}"
+                ItemIndex="{Binding InputStatus.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:Int32Converters.FromEnum}}">
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <shadui:Loading
+                      VerticalAlignment="Center"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      Classes="Muted Caption" VerticalAlignment="Center"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource SuccessColor}"
+                      Kind="CircleCheck"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource SuccessColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource WarningColor}"
+                      Kind="TriangleAlert"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource WarningColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource ErrorColor}"
+                      Kind="CircleX"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource ErrorColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+              </v:LazyIndexedContentControl>
+
+              <LucideIcon
+                DockPanel.Dock="Left" VerticalAlignment="Center"
+                Kind="Keyboard"
+                Size="{DynamicResource FontSizeL}"/>
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.HostsStatusControl_InputHost_Header}}"
+                TextWrapping="Wrap"/>
+            </DockPanel>
+          </Border>
+
+          <Border
+            MinHeight="52" Padding="32,12"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="0,1,0,0">
+            <DockPanel
+              HorizontalSpacing="12" LastChildFill="True">
+              <v:LazyIndexedContentControl
+                DockPanel.Dock="Right" VerticalAlignment="Center"
+                shadui:BindingAssist.ToolTip="{Binding AutomationStatus.ToolTip^, RelativeSource={RelativeSource TemplatedParent}}"
+                Background="Transparent"
+                ContentDataBinding="{Binding AutomationStatus, RelativeSource={RelativeSource TemplatedParent}}"
+                ItemIndex="{Binding AutomationStatus.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static vc:Int32Converters.FromEnum}}">
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <shadui:Loading
+                      VerticalAlignment="Center"
+                      Size="{DynamicResource FontSizeM}"/>
+                    <TextBlock
+                      Classes="Muted Caption" VerticalAlignment="Center"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource SuccessColor}"
+                      Kind="CircleCheck"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource SuccessColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource WarningColor}"
+                      Kind="TriangleAlert"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource WarningColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+                <ControlTemplate x:DataType="v:HostStatusPresentation">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource ErrorColor}"
+                      Kind="CircleX"
+                      Size="{DynamicResource FontSizeL}"/>
+                    <TextBlock
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource ErrorColor}"
+                      Text="{Binding StatusText^}"/>
+                  </StackPanel>
+                </ControlTemplate>
+              </v:LazyIndexedContentControl>
+
+              <LucideIcon
+                DockPanel.Dock="Left" VerticalAlignment="Center"
+                Kind="Monitor"
+                Size="{DynamicResource FontSizeL}"/>
+              <TextBlock
+                VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.HostsStatusControl_AutomationHost_Header}}"
+                TextWrapping="Wrap"/>
+            </DockPanel>
+          </Border>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

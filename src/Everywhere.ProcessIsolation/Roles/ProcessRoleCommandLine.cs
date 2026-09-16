@@ -5,7 +5,7 @@ namespace Everywhere.ProcessIsolation.Roles;
 /// <summary>Short-lived controller operations accepted by <c>--hosts-control</c>.</summary>
 public enum HostsControlOperation
 {
-    /// <summary>Start both fixed Host roles at the current integrity level.</summary>
+    /// <summary>Request service-mode launch of both fixed Host roles.</summary>
     Start,
 
     /// <summary>Request bounded shutdown of the running Host roles.</summary>
@@ -15,8 +15,21 @@ public enum HostsControlOperation
     Install,
 
     /// <summary>Remove the Windows Hosts Control task.</summary>
-    Uninstall
+    Uninstall,
+
+    /// <summary>Launch the fixed Host roles directly at the controller's current integrity level.</summary>
+    Launch
 }
+
+/// <summary>Validated command accepted by the short-lived Hosts controller.</summary>
+/// <param name="Operation">Fixed operation to execute.</param>
+/// <param name="ShouldReplaceExisting">Whether the caller has authorized replacement of another task owner.</param>
+/// <param name="ShouldAuthorizePortable">Whether the caller has authorized service mode for a portable copy.</param>
+public sealed record HostsControlCommand(
+    HostsControlOperation Operation,
+    bool ShouldReplaceExisting = false,
+    bool ShouldAuthorizePortable = false
+);
 
 /// <summary>
 /// Parses early process-role and Hosts-control switches before any
@@ -83,7 +96,7 @@ public static class ProcessRoleCommandLine
     /// Parses the short-lived Hosts controller command. A null result means the
     /// command-line does not contain <c>--hosts-control</c>.
     /// </summary>
-    public static HostsControlOperation? ParseHostsControl(IReadOnlyList<string> args)
+    public static HostsControlCommand? ParseHostsControl(IReadOnlyList<string> args)
     {
         var optionIndex = -1;
         var inlineValue = default(string);
@@ -133,6 +146,8 @@ public static class ProcessRoleCommandLine
             throw new ArgumentException("The --process-role and --hosts-control options cannot be combined.", nameof(args));
         }
 
+        var shouldReplaceExisting = false;
+        var shouldAuthorizePortable = false;
         for (var index = 0; index < args.Count; index++)
         {
             if (index == optionIndex || (separateValue && index == optionIndex + 1))
@@ -140,18 +155,50 @@ public static class ProcessRoleCommandLine
                 continue;
             }
 
-            throw new ArgumentException("The --hosts-control command does not accept additional arguments.", nameof(args));
+            if (string.Equals(args[index], "--replace-existing", StringComparison.OrdinalIgnoreCase))
+            {
+                if (shouldReplaceExisting)
+                {
+                    throw new ArgumentException("The --replace-existing option may only be specified once.", nameof(args));
+                }
+
+                shouldReplaceExisting = true;
+                continue;
+            }
+
+            if (string.Equals(args[index], "--authorize-portable", StringComparison.OrdinalIgnoreCase))
+            {
+                if (shouldAuthorizePortable)
+                {
+                    throw new ArgumentException("The --authorize-portable option may only be specified once.", nameof(args));
+                }
+
+                shouldAuthorizePortable = true;
+                continue;
+            }
+
+            throw new ArgumentException($"The --hosts-control command contains an unsupported argument: {args[index]}", nameof(args));
         }
 
         var operationValue = inlineValue ?? throw new ArgumentException("The --hosts-control option requires a value.", nameof(args));
-        return operationValue.Trim().ToLowerInvariant() switch
+        var operation = operationValue.Trim().ToLowerInvariant() switch
         {
             "start" => HostsControlOperation.Start,
             "stop" => HostsControlOperation.Stop,
             "install" => HostsControlOperation.Install,
             "uninstall" => HostsControlOperation.Uninstall,
-            _ => throw new ArgumentException("The --hosts-control value must be start, stop, install, or uninstall.", nameof(args))
+            "launch" => HostsControlOperation.Launch,
+            _ => throw new ArgumentException("The --hosts-control value must be start, stop, install, uninstall, or launch.", nameof(args))
         };
+
+        if (operation is not HostsControlOperation.Install && (shouldReplaceExisting || shouldAuthorizePortable))
+        {
+            throw new ArgumentException(
+                "The replacement and portable-authorization options are valid only with --hosts-control install.",
+                nameof(args));
+        }
+
+        return new HostsControlCommand(operation, shouldReplaceExisting, shouldAuthorizePortable);
     }
 
     /// <summary>

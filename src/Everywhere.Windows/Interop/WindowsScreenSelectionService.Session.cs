@@ -276,7 +276,7 @@ public sealed partial class WindowsScreenSelectionService
             return result;
         }
 
-        private static void SetUiaWindowVisibilityOverridden(HWND window)
+        private static unsafe void SetUiaWindowVisibilityOverridden(HWND window)
         {
             fixed (char* propertyName = "UIA_WindowVisibilityOverridden")
             {

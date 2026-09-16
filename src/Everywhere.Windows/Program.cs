@@ -1,8 +1,4 @@
-﻿using System.Security.Principal;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.Shell;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
@@ -15,13 +11,16 @@ using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.Windows.Automation;
 using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
+using Everywhere.Windows.Initialization;
 using Everywhere.Windows.Interop;
 using Everywhere.Windows.ProcessIsolation.Input;
+using Everywhere.Windows.ProcessIsolation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Serilog;
@@ -39,17 +38,19 @@ public static class Program
 
     private static async Task<int> RunAsync(string[] args)
     {
-        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlOperation)
+        var hostsControlPlatform = new WindowsHostsControlPlatform();
+        var peerVerifier = WindowsNamedPipePeerVerifier.Instance;
+        if (ProcessRoleCommandLine.ParseHostsControl(args) is { } hostsControlCommand)
         {
-            return await HostsControlRunner.RunAsync(hostsControlOperation).ConfigureAwait(false);
+            return await HostsControlRunner.RunAsync(hostsControlCommand, hostsControlPlatform, peerVerifier).ConfigureAwait(false);
         }
 
         var role = ProcessRoleCommandLine.Parse(args);
         if (role is not ProcessRole.Main)
         {
             return await (role is ProcessRole.Input ?
-                ProcessRoleHostRunner.RunAsync(role, args, static () => new WindowsInputHostSession()) :
-                RunAutomationHostAsync(args)).ConfigureAwait(false);
+                ProcessRoleHostRunner.RunAsync(role, args, peerVerifier, static () => new WindowsInputHostSession()) :
+                RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
         }
 
         await using var entrance = Entrance.Initialize(args);
@@ -58,10 +59,10 @@ public static class Program
             return await entrance.ForwardAsync().ConfigureAwait(false);
         }
 
-        return await RunMainAsync(args).ConfigureAwait(false);
+        return await RunMainAsync(args, hostsControlPlatform, peerVerifier).ConfigureAwait(false);
     }
 
-    private static Task<int> RunAutomationHostAsync(string[] args) => Task.Run(
+    private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier) => Task.Run(
         async () =>
         {
             if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
@@ -70,7 +71,7 @@ public static class Program
             }
 
             return await ProcessRoleHostRunner
-                .RunAsync(ProcessRole.Automation, args, CreateAutomationHostSession)
+                .RunAsync(ProcessRole.Automation, args, peerVerifier, CreateAutomationHostSession)
                 .ConfigureAwait(false);
         });
 
@@ -84,13 +85,11 @@ public static class Program
         return new AutomationHostSession(new WindowsVisualElementBackend(), new WindowsVisualPickerResolver());
     }
 
-    private static async Task<int> RunMainAsync(string[] args)
+    private static async Task<int> RunMainAsync(
+        string[] args,
+        WindowsHostsControlPlatform hostsControlPlatform,
+        INamedPipePeerVerifier peerVerifier)
     {
-        if (args.Contains("--load-user-profile"))
-        {
-            LoadUserProfile();
-        }
-
         if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
         {
             throw new InvalidOperationException("Avalonia must be initialized on an STA thread.");
@@ -101,12 +100,14 @@ public static class Program
             #region Basic
 
                 .AddApplicationLogging()
+                .AddSingleton<IHostsServiceModeManager>(hostsControlPlatform)
+                .AddSingleton<INamedPipePeerVerifier>(peerVerifier)
                 .AddProcessIsolation()
                 .AddInputHostShortcutListener()
                 .AddSingleton<WindowsScreenSelectionService>()
-                .AddSingleton<IScreenSelectionService>(provider => provider.GetRequiredService<WindowsScreenSelectionService>())
+                .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<WindowsScreenSelectionService>())
                 .AddSingleton<WindowsTextSelectionWatcher>()
-                .AddSingleton<ITextSelectionWatcher>(provider => provider.GetRequiredService<WindowsTextSelectionWatcher>())
+                .AddSingleton<ITextSelectionWatcher>(sp => sp.GetRequiredService<WindowsTextSelectionWatcher>())
                 .AddSingleton<IVisualElementBackend, WindowsVisualElementBackend>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
@@ -138,6 +139,7 @@ public static class Program
 
             .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
             .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+            .AddTransient<IAsyncInitializer, ElevatedMainNotificationInitializer>()
 
             #endregion
 
@@ -159,41 +161,6 @@ public static class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
-
-    /// <summary>
-    /// -----------------------------------------------------------------------------------------
-    /// THE PROBLEM (ERROR 1312 - ERROR_NO_SUCH_LOGON_SESSION):
-    /// When a process is spawned automatically by the Task Scheduler in a "Highest Privileges" context,
-    /// Windows creates a specialized Logon Session. Often, for performance or security reasons (S4U),
-    /// the User Profile Service does NOT fully load the user's registry hive (HKCU) or the DPAPI
-    /// Master Keyring into the Local Security Authority (LSA) memory subsystem.
-    ///
-    /// Without this crypto context, the application has the correct User SID and Admin Token, but
-    /// strictly lacks the cryptographic keys required to access the Windows Credential Manager or
-    /// decrypt data protected by user-scope DPAPI. Attempts to call `CredWrite` or `CryptProtectData`
-    /// fail immediately with error 1312.
-    ///
-    /// THE SOLUTION (FORCED PROFILE LOADING):
-    /// By calling LoadUserProfileW here, we explicitly instruct the User Profile Service to:
-    /// 1. Mount the user's NTUSER.DAT registry hive.
-    /// 2. Decrypt and verify the user's Master Key using the logon credentials.
-    /// 3. Inject this cryptographic context into the new process's session.
-    /// -----------------------------------------------------------------------------------------
-    /// </summary>
-    private static unsafe void LoadUserProfile()
-    {
-        var token = WindowsIdentity.GetCurrent().Token;
-        fixed (char* pUserName = Environment.UserName)
-        {
-            var profileInfo = new PROFILEINFOW
-            {
-                dwSize = (uint)sizeof(PROFILEINFOW),
-                lpUserName = pUserName,
-                dwFlags = 0,
-            };
-            PInvoke.LoadUserProfile((HANDLE)token, &profileInfo);
-        }
-    }
 
     /// <summary>
     /// Register the "sylinko-everywhere" protocol handler in Registry

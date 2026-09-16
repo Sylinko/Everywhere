@@ -1,6 +1,4 @@
-﻿#if WINDOWS
-using System.Runtime.Versioning;
-#endif
+﻿
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
@@ -19,6 +17,7 @@ using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
+using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -28,9 +27,11 @@ using Everywhere.Views.Pages;
 using Everywhere.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
+#if WINDOWS
+using Microsoft.Extensions.Logging;
+#endif
 
 namespace Everywhere.Extensions;
 
@@ -49,11 +50,15 @@ public static class ServiceExtensions
         /// <summary>Registers Main's process-isolation lifecycle services.</summary>
         public IServiceCollection AddProcessIsolation() =>
             services
-                .AddSingleton<HostProcessCoordinator>(_ => HostProcessCoordinator.Create())
+                .AddSingleton<HostProcessCoordinator>(sp => HostProcessCoordinator.Create(
+                    sp.GetRequiredService<INamedPipePeerVerifier>(),
+                    sp.GetService<IHostsServiceModeManager>()))
                 .AddSingleton<IHostConnectionSource>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton(sp => new ChatVisualService(sp.GetRequiredService<IHostConnectionSource>()))
                 .AddSingleton(sp => new DebuggerVisualContext(sp.GetRequiredService<IHostConnectionSource>()))
-                .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(sp.GetRequiredService<HostProcessCoordinator>()))
+                .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(
+                    sp.GetRequiredService<HostProcessCoordinator>(),
+                    sp.GetRequiredService<INamedPipePeerVerifier>()))
                 .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton<IAsyncInitializer>(sp => sp.GetRequiredService<MainHostControlServer>());
 
@@ -64,23 +69,21 @@ public static class ServiceExtensions
                     sp.GetRequiredService<IHostConnectionSource>(),
                     sp.GetRequiredService<ILogger<InputHostShortcutListener>>()));
 
-#if WINDOWS
-        [SupportedOSPlatform("windows")]
-#endif
         public IServiceCollection AddSettings() =>
             services
                 .AddSingleton<Settings>()
                 .AddTransient<IAsyncInitializer, SettingsEngine>()
                 .AddTransient<SoftwareUpdateControl>()
+                .AddTransient<HostsStatusControl>()
 #if WINDOWS
-                .AddTransient<RestartAsAdministratorControl>()
+                .AddTransient<HostsServiceModeControl>()
 #endif
                 .AddTransient<OpenWebBrowserControl>()
                 .AddTransient<DebugFeaturesControl>()
                 .AddSingleton<FontFamilyCatalog>()
                 .AddSingleton<PersistentKeyValueStorage>()
-                .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
-                .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+                .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
+                .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
                 .AddSingleton<PersistentState>()
                 .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 

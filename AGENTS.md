@@ -60,6 +60,10 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 ## Localization
 
 - Everywhere uses source-generated localization APIs. Use those APIs instead of manually maintained resource accessors.
+- For persistent UI text, carry `IDynamicLocaleKey` through result models and RPC contracts and subscribe through bindings (e.g. `{Binding MessageKey^}`). It supports MessagePack serialization; do not resolve it before presentation.
+- Compose dynamic messages with `FormattedDynamicLocaleKey` and `AggregateDynamicLocaleKey`; use `DirectLocaleKey` for literal values such as paths. Avoid string interpolation or concatenation that discards localization structure.
+- `LocaleResolver` resolves once. Use it for intentional language snapshots such as Toast and Dialog text, not persistent UI state.
+- Logs and CLI stdout/stderr may remain English strings. Keep diagnostic text separate from localized UI messages; do not use CLI output as a structured UI message contract.
 - Name localization keys after their current semantic meaning and owning area. Do not preserve an obsolete feature prefix after a value becomes shared.
 - Prefix genuinely shared localization keys with `Common_`.
 

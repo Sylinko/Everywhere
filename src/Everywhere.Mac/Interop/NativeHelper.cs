@@ -33,7 +33,7 @@ public sealed class NativeHelper : INativeHelper
     /// which is the Apple-recommended way. For simplicity, we use the older, less reliable LaunchAgent method here.
     /// A full implementation would be more complex.
     /// </summary>
-    public bool IsUserStartupEnabled
+    public bool IsStartupEnabled
     {
         get => File.Exists(UserLaunchAgentPath);
         set
@@ -73,12 +73,6 @@ public sealed class NativeHelper : INativeHelper
         }
     }
 
-    public bool IsAdministratorStartupEnabled
-    {
-        get => throw new PlatformNotSupportedException();
-        set => throw new PlatformNotSupportedException();
-    }
-
     public bool IsLowDataModeActive
     {
         get
@@ -90,8 +84,6 @@ public sealed class NativeHelper : INativeHelper
             return isConstrained;
         }
     }
-
-    public void RestartAsAdministrator() => throw new PlatformNotSupportedException();
 
     public bool GetKeyState(KeyModifiers keyModifiers)
     {

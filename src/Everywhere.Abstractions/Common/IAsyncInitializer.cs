@@ -9,11 +9,11 @@ public enum AsyncInitializerIndex
 
     MainHostControl = Highest,
 
-    HostProcesses = Highest + 1,
-
     Database = 10,
 
     Settings = 100,
+
+    HostProcesses = Settings + 1,
 
     Network = 200,
 

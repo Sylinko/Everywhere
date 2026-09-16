@@ -17,13 +17,22 @@ public static class HostsControlRunner
     private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(10);
 
     /// <summary>Asynchronously executes one closed Hosts-control operation.</summary>
-    public static Task<int> RunAsync(HostsControlOperation operation, CancellationToken cancellationToken = default) => operation switch
+    /// <param name="command">Validated operation and its fixed confirmation switches.</param>
+    /// <param name="platform">Platform-specific service-mode controller.</param>
+    /// <param name="peerVerifier">Platform policy used when the stop operation connects to Main.</param>
+    /// <param name="cancellationToken">Cancels bounded controller work.</param>
+    public static Task<int> RunAsync(
+        HostsControlCommand command,
+        IHostsControlPlatform platform,
+        INamedPipePeerVerifier peerVerifier,
+        CancellationToken cancellationToken = default) => command.Operation switch
     {
-        HostsControlOperation.Start => Task.FromResult(StartHosts()),
-        HostsControlOperation.Stop => StopHostsAsync(cancellationToken),
-        HostsControlOperation.Install => Task.FromResult(ReportUnavailable("install", "Windows Scheduled Task integration is not implemented yet.")),
-        HostsControlOperation.Uninstall => Task.FromResult(ReportUnavailable("uninstall", "Windows Scheduled Task integration is not implemented yet.")),
-        _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null)
+        HostsControlOperation.Start => Task.FromResult(StartServiceModeHosts(platform)),
+        HostsControlOperation.Stop => StopHostsAsync(peerVerifier, cancellationToken),
+        HostsControlOperation.Install => Task.FromResult(ReportPlatformResult("install", platform.InstallServiceMode(command))),
+        HostsControlOperation.Uninstall => Task.FromResult(ReportPlatformResult("uninstall", platform.UninstallServiceMode())),
+        HostsControlOperation.Launch => Task.FromResult(StartHosts()),
+        _ => throw new ArgumentOutOfRangeException(nameof(command), command.Operation, null)
     };
 
     /// <summary>
@@ -37,10 +46,10 @@ public static class HostsControlRunner
         if (string.IsNullOrWhiteSpace(executablePath))
         {
             Console.Error.WriteLine("Everywhere Hosts Control could not resolve the current executable path.");
-            return 1;
+            return HostsControlExitCodes.Failure;
         }
 
-        var exitCode = 0;
+        var exitCode = HostsControlExitCodes.Success;
         foreach (var role in new[] { ProcessRole.Input, ProcessRole.Automation })
         {
             try
@@ -58,7 +67,7 @@ public static class HostsControlRunner
                 if (process is null)
                 {
                     Console.Error.WriteLine($"Everywhere Hosts Control could not start the {ProcessRoleNames.ToWireName(role)} Host.");
-                    exitCode = 1;
+                    exitCode = HostsControlExitCodes.Failure;
                     continue;
                 }
 
@@ -68,11 +77,49 @@ public static class HostsControlRunner
             {
                 Console.Error.WriteLine(
                     $"Everywhere Hosts Control failed to start the {ProcessRoleNames.ToWireName(role)} Host: {exception.Message}");
-                exitCode = 1;
+                exitCode = HostsControlExitCodes.Failure;
             }
         }
 
         return exitCode;
+    }
+
+    private static int StartServiceModeHosts(IHostsControlPlatform platform)
+    {
+        var result = platform.StartServiceMode(Process.GetCurrentProcess().SessionId);
+        if (!string.IsNullOrWhiteSpace(result.DiagnosticDetail))
+        {
+            var writer = result.Outcome is HostsControlPlatformOutcome.Succeeded or HostsControlPlatformOutcome.DirectLaunchRequired ?
+                Console.Out :
+                Console.Error;
+            writer.WriteLine(result.DiagnosticDetail);
+        }
+
+        if (result.Outcome is HostsControlPlatformOutcome.Succeeded)
+        {
+            return HostsControlExitCodes.Success;
+        }
+
+        var directExitCode = StartHosts();
+        if (directExitCode != HostsControlExitCodes.Success)
+        {
+            Console.Error.WriteLine("Everywhere Hosts ordinary fallback also failed.");
+            return HostsControlExitCodes.Failure;
+        }
+
+        if (result.Outcome is HostsControlPlatformOutcome.DirectLaunchRequired)
+        {
+            return HostsControlExitCodes.Success;
+        }
+
+        if (platform.IsDirectLaunchEquivalentToServiceMode)
+        {
+            Console.Out.WriteLine("Everywhere Hosts started directly with service-equivalent capabilities after service-mode launch failed.");
+            return HostsControlExitCodes.EquivalentFallbackStarted;
+        }
+
+        Console.Out.WriteLine("Everywhere Hosts started directly with reduced capabilities after service-mode launch failed.");
+        return HostsControlExitCodes.LimitedFallbackStarted;
     }
 
     /// <summary>
@@ -80,7 +127,7 @@ public static class HostsControlRunner
     /// role endpoint itself, because doing so would compete with Main's primary
     /// lifetime lease. Main's aggregate response is the explicit confirmation.
     /// </summary>
-    private static async Task<int> StopHostsAsync(CancellationToken cancellationToken)
+    private static async Task<int> StopHostsAsync(INamedPipePeerVerifier peerVerifier, CancellationToken cancellationToken)
     {
         var localIdentity = RpcRuntimeIdentity.CreateCurrent(ProcessRole.Main);
         var endpoint = ProcessRoleNames.GetMainControlEndpoint(localIdentity.DesktopSessionId);
@@ -96,6 +143,7 @@ public static class HostsControlRunner
         try
         {
             await stream.ConnectAsync((int)StopConnectTimeout.TotalMilliseconds, deadline.Token).ConfigureAwait(false);
+            peerVerifier.VerifyServer(stream);
             connection = new RpcConnection(stream, isServer: false);
             connection.Start(deadline.Token);
 
@@ -137,15 +185,15 @@ public static class HostsControlRunner
             if (!endpointsGone)
             {
                 await Console.Error.WriteLineAsync("Everywhere Hosts Control completed Main coordination, but a Host endpoint remained present.");
-                return 1;
+                return HostsControlExitCodes.Failure;
             }
 
-            return response.Succeeded ? 0 : 1;
+            return response.Succeeded ? HostsControlExitCodes.Success : HostsControlExitCodes.Failure;
         }
         catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
             await Console.Error.WriteLineAsync("Everywhere Hosts Control stop was cancelled or timed out.");
-            return 2;
+            return HostsControlExitCodes.Unavailable;
         }
         catch (TimeoutException)
         {
@@ -158,12 +206,12 @@ public static class HostsControlRunner
         catch (RpcRemoteException exception)
         {
             await Console.Error.WriteLineAsync($"Everywhere Hosts Control stop was rejected: {exception.Code}.");
-            return 2;
+            return HostsControlExitCodes.Unavailable;
         }
         catch (RpcProtocolException exception)
         {
             await Console.Error.WriteLineAsync($"Everywhere Hosts Control stop failed protocol validation: {exception.Message}");
-            return 2;
+            return HostsControlExitCodes.Unavailable;
         }
         finally
         {
@@ -181,19 +229,30 @@ public static class HostsControlRunner
             .ConfigureAwait(false);
         if (endpointsGone)
         {
-            return 0;
+            return HostsControlExitCodes.Success;
         }
 
         await Console.Error.WriteLineAsync(
             detail is null ?
                 "Everywhere Hosts Control could not reach the running Main process while Host endpoints are still present." :
                 $"Everywhere Hosts Control could not reach the running Main process while Host endpoints are still present: {detail}");
-        return 2;
+        return HostsControlExitCodes.Unavailable;
     }
 
-    private static int ReportUnavailable(string operation, string reason)
+    private static int ReportPlatformResult(string operation, HostsControlPlatformResult result)
     {
-        Console.Error.WriteLine($"Everywhere Hosts Control '{operation}' is unavailable: {reason}");
-        return 2;
+        var isSuccess = result.Outcome is HostsControlPlatformOutcome.Succeeded;
+        var writer = isSuccess ? Console.Out : Console.Error;
+        writer.WriteLine(
+            string.IsNullOrWhiteSpace(result.DiagnosticDetail) ?
+                $"Everywhere Hosts Control '{operation}' {(isSuccess ? "completed" : "failed")}." :
+                result.DiagnosticDetail);
+        return result.Outcome switch
+        {
+            HostsControlPlatformOutcome.Succeeded => HostsControlExitCodes.Success,
+            HostsControlPlatformOutcome.Conflict => HostsControlExitCodes.Conflict,
+            HostsControlPlatformOutcome.Failed => HostsControlExitCodes.Failure,
+            _ => HostsControlExitCodes.Unavailable
+        };
     }
 }

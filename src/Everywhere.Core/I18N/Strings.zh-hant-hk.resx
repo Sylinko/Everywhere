@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere 會在開機後自動運行。如果啟用了「以管理員身份啟動」，則只能在管理員模式下禁用此選項。</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>以管理員方式自啟動</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>開機時 Everywhere 會以管理員身份自啟動。只有在管理員模式下才能開關當前選項。</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>由於操作系統的限制，當以管理員（提升權限）運行任何應用程式時，Everywhere 可能在提升權限的應用程式聚焦或嘗試與 Everywhere 功能（如「選擇元素」）互動時無法正常運作。這可以通過以管理員身份運行 Everywhere 來解決。</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>以管理員身份重新啟動</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>重新啟動</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>除錯功能</value>
     </data>
@@ -669,13 +654,13 @@
         <value>軟件更新</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>如果有更新可用，請點擊更新，Everywhere 將自動下載並安裝最新版本。在過程中，您可能需要在彈出窗口中選擇「是」。</value>
+        <value>經常更新能帶來更好的使用體驗。</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>自動更新</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>如果啟用，Everywhere 將定期檢查更新（僅在 Everywhere 運行時，不會增加系統負擔）。</value>
+        <value>開啟後，Everywhere 會定期檢查更新。</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>正在下載更新...</value>
@@ -2093,12 +2078,6 @@
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>此項為實驗性功能，可能會導致意外的錯誤和結果。</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>開機時啟動</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere 會在開機後自動運行。</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>靈動</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere 使用獨立程序承載下列功能，以提供更高的安全性與靈活性。</value>
     </data>
 </root>

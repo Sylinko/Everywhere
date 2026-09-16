@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere se lancera automatiquement après le démarrage. Si « Démarrer en tant qu'administrateur » est activé, cette option ne peut être désactivée qu'en mode administrateur.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Démarrage en tant qu'administrateur</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere se lancera en tant qu'administrateur au démarrage. Cette option ne peut être activée ou désactivée qu'en mode administrateur.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>En raison des restrictions du système d'exploitation, lorsque vous exécutez une application en tant qu'administrateur (permissions élevées), Everywhere peut ne pas fonctionner correctement lorsque les applications élevées sont au premier plan ou tentent d'interagir avec une fonctionnalité d'Everywhere comme « Sélectionner un élément ». Cela peut être résolu en exécutant Everywhere en tant qu'administrateur.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Redémarrer en tant qu'administrateur</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Redémarrer</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Fonctionnalités de débogage</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Mise à jour du logiciel</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Si une mise à jour est disponible, cliquez sur Mettre à jour et Everywhere téléchargera et installera automatiquement la dernière version. Vous devrez peut-être sélectionner « Oui » dans la fenêtre pop-up pendant le processus.</value>
+        <value>Des mises à jour fréquentes offrent une meilleure expérience d'utilisation.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Mise à jour automatique</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Si activé, Everywhere vérifiera périodiquement les mises à jour (uniquement lorsque Everywhere est en cours d'exécution, sans ajouter de charge supplémentaire au système).</value>
+        <value>Si activé, Everywhere vérifiera périodiquement les mises à jour.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Téléchargement de la mise à jour...</value>
@@ -2093,12 +2078,6 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Cette fonctionnalité est expérimentale et peut entraîner des erreurs et des résultats inattendus.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Démarrer au Lancement</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere se lancera automatiquement au démarrage.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluide</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere utilise des processus distincts pour héberger les fonctionnalités suivantes, ce qui offre une meilleure sécurité et flexibilité.</value>
     </data>
 </root>

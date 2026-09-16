@@ -6,23 +6,25 @@ The architecture separates four questions:
 
 | Type | Question | Typical lifetime |
 |---|---|---|
-| `IVisualElementBackend` | Which platform acquires roots and supplies process-shared native facilities? | Application or future query-host process |
-| `VisualContext` | Which identities, ownership batches, and Agent targets belong to this conversation? | Owning `ChatContext` |
+| `IVisualElementBackend` | Which platform acquires roots and supplies composition-local native facilities? | Automation Host session, or Main lifetime for narrow UI-only services |
+| `VisualContext` | Which identities, ownership batches, and Agent targets belong to this conversation? | Host resource attached to one remote Main state |
 | `VisualElementRetention` | Which real owner currently keeps a set of elements alive? | Attachment, Enumerator, Snapshot, or Agent turn |
 | `VisualTargetTurn` | Which published and looked-up targets belong to one Agent turn? | Current turn, then historical retention |
+| `RemoteVisualContext` | Which Host resource and connection incarnation does Main address? | `ChatVisualState`, shared acquisition flow, or debugger |
 
 Native execution and native-object lifetime are deliberately independent. A timeout answers how long a provider call may block; a retention answers why a canonical element must remain usable after that call returns.
 
 ## 2. Object Graph
 
 ```text
-IVisualElementBackend  <---- shared singleton
-|- platform client and fixed timeout policy
-|- platform TreeWalker and other shared native services
-|- locator + resolution root query
-`- never retains Contexts, Retentions, or Elements
+AutomationHostSession
+`- IVisualElementBackend  <---- one per authenticated Main connection
+   |- platform client and fixed timeout policy
+   |- platform TreeWalker and other shared native services
+   |- locator + resolution root query
+   `- never retains Contexts, Retentions, or Elements
 
-VisualContext A  <---- ChatContext A; calls are serialized
+VisualContext A  <---- Host resource; queued calls are serialized
 |- identity maps (canonicalization only, no independent ownership)
 |- explicit retention batches
 |- one active VisualTargetTurn
@@ -35,9 +37,13 @@ VisualContext B
 VisualElement A
 |- belongs immutably to VisualContext A
 `- uses the shared Backend for concrete platform behavior
+
+Main ChatVisualState A
+`- RemoteVisualContext A
+   `- connection-scoped resource ID; no native element object crosses RPC
 ```
 
-A derived Agent constructs another Context and therefore has an independent identity and target namespace. Reusing a platform identity in another chat creates a distinct high-level element even when both elements use the same Backend and native RuntimeId.
+A derived Agent owns another `ChatVisualState` and therefore obtains an independent remote Context, identity domain, and target namespace. Reusing a platform identity in another chat creates a distinct high-level element even when both Host-side elements use the same Backend and native RuntimeId.
 
 ## 3. VisualElement Backend
 
@@ -54,11 +60,13 @@ public interface IVisualElementBackend
 }
 ```
 
-The Locator identifies the source sampled when the call executes, or explicitly supplies no anchor through `Default`. Resolution independently selects the direct element, nearest TopLevel, or containing Screen. With a default locator, the same Resolution selects the platform-default object at that level rather than implicitly sampling focus, pointer, or foreground state. The concrete Backend owns reusable platform resources such as the Windows UI Automation client and TreeWalker and releases those resources when the application or query-host shuts down. It does not create Contexts. The supplied retention is the single destination argument: `retention.Context` selects the identity and ownership domain into which a successful root is canonicalized before exposure.
+The Locator identifies the source sampled when the call executes, or explicitly supplies no anchor through `Default`. Resolution independently selects the direct element, nearest TopLevel, or containing Screen. With a default locator, the same Resolution selects the platform-default object at that level rather than implicitly sampling focus, pointer, or foreground state. The concrete Backend owns reusable platform resources such as the Windows UI Automation client and TreeWalker and releases those resources when the authenticated Automation Host session drains. It does not create Contexts. The supplied retention is the single destination argument: `retention.Context` selects the identity and ownership domain into which a successful root is canonicalized before exposure.
 
 The Backend does not own conversation identities, Agent IDs, traversal state, output budgets, current-turn lifetime, a worker pool, a custom scheduler, a `SynchronizationContext`, or an execution Scope. It must not store a Context, Retention, or Element in a child collection, identity table, event callback, or another reverse reference. Ordinary element calls remain implemented by the concrete `VisualElement`.
 
-The production Backend is normally one dependency-injection singleton. `ChatContext` creates and owns its `VisualContext` directly, including after deserialization and for derived Agents; Contexts are not DI services. Multiple Contexts may use the shared native client concurrently where the platform supports it. The Windows evidence currently supports one immutable-policy `CUIAutomation8` client shared across calls; element identity is independent of the client that returned a COM pointer.
+The Agent-facing Backend is created once for the Automation Host session, before the Host begins serving the authenticated Main connection. Host RPC creates `VisualContext` resources lazily for chats, acquisition, and diagnostics; Contexts are not DI services. `ChatVisualState` owns only the corresponding Main-side remote handle and recreates it when the Host connection changes. Multiple Host Contexts share the native client; their complete Context operations are independently serialized. The Windows evidence supports one immutable-policy `CUIAutomation8` client shared across calls; element identity is independent of the client that returned a COM pointer.
+
+Main separately registers one platform Backend for UI-only screenshot selection and selected-text monitoring. These paths create transient local Contexts, return copied UI data, and never participate in chat target identity or Agent action routing. Sharing the Backend contract does not merge the two processes' native clients or Context domains.
 
 ## 4. VisualContext
 
@@ -75,11 +83,11 @@ The production Backend is normally one dependency-injection singleton. `ChatCont
 
 `VisualContext` is sealed and has no platform subclass or native-service reference. Root acquisition belongs to `IVisualElementBackend`; provider behavior belongs to concrete `VisualElement` implementations. The Context does not own provider timeout configuration, traversal, PromptNode rendering, screenshot buffers, or input overlays.
 
-The application contract is that calls mutating one Context are serialized. Consequently the current implementation uses ordinary dictionaries and linked lists rather than locks or concurrent collections. No Context lock is ever held across UIA, AX, capture, or input work because no such lock exists.
+The Host resource serializes calls that mutate one Context through its operation queue. Consequently the Context implementation uses ordinary dictionaries and linked lists rather than locks or concurrent collections. No Context lock is ever held across UIA, AX, capture, or input work because no such lock exists.
 
-One `ChatContext` strongly owns its `VisualContext` from construction, including direct construction, deserialization, and derived-Agent construction. Normal chat switching may let that aggregate become unreachable and rely on GC's lazy reclamation; explicit Context disposal remains an early-release path for short-lived tools, tests, and shutdown. Context disposal abandons the active turn, releases all completed turns and other retentions, clears identity maps, and makes every no-longer-owned element unusable. It never disposes Backend-owned native clients.
+One Host resource strongly owns its `VisualContext`. Main's `ChatVisualState` is constructed without contacting the Host and lazily obtains a `RemoteVisualContext` on first use. Disposing the remote handle queues release on its originating connection; closing the connection releases the complete Host registry even if Main-side cleanup cannot be delivered. Host Context disposal abandons the active turn, releases all completed turns and other retentions, clears identity maps, and makes every no-longer-owned element unusable. It never disposes the session-owned Backend.
 
-Managed cycles inside the aggregate are harmless when no GC root reaches them. The required directions are `ChatContext -> VisualContext`, application DI -> Backend, and `VisualElement -> VisualContext + Backend`; the shared Backend, native client, static callback, or observer must never point back to a Context or Element. Durable native wrappers have finalizers as leak fallbacks, so lazy aggregate collection eventually releases COM/AX references even when the optional early-disposal path was not used.
+Managed cycles inside one Host Context are harmless after its remote resource is released. The required Host-side directions are session -> Backend, resource registry -> Context resource, and `VisualElement -> VisualContext + Backend`; the shared Backend, native client, static callback, or observer must never point back to a Context or Element. Main's remote wrapper may point only to its RPC client, connection-scoped release queue, and resource identity. Durable native wrappers have finalizers as leak fallbacks, while connection shutdown provides deterministic aggregate cleanup.
 
 ## 5. VisualElementRetention
 
@@ -156,7 +164,7 @@ Relations form a logical platform graph rather than one provider tree. A UIA top
 
 ## 8. Agent Turns and Historical Retention
 
-`ChatContext` owns the only active `VisualTargetTurn`. A new Send, Edit, or Retry completes the previous turn and begins another before attachment processing; automatic attachment publication, model calls, `query_visual`, `read_visual_text`, and actions then share it. Continue reuses the current turn. The common generation entry ensures a turn exists for direct nested/subagent generation without advancing an existing one, while each subagent's independent `ChatContext` naturally owns an independent target generation.
+The Host-side `VisualContext` owns the only active `VisualTargetTurn`; Main's `ChatVisualState` selects the current remote Context. A new Send, Edit, or Retry completes the previous turn and begins another before attachment processing; automatic attachment publication, model calls, `query_visual`, `read_visual_text`, and actions then share it. Continue reuses the current turn. The common generation entry ensures a turn exists for direct nested/subagent generation without advancing an existing one, while each subagent's independent `ChatContext` and `ChatVisualState` naturally select an independent remote target domain.
 
 Completion is deliberately delayed until the next conversation turn begins. The latest completed response therefore keeps its targets current throughout follow-up tool calls and Continue without reopening a historical generation. Publication and successful historical lookup add targets to the active turn and retain any underlying element once.
 
@@ -193,17 +201,20 @@ Before disposing a Snapshot, every Agent-visible element that must survive is ad
 
 ## 11. Safety Boundaries
 
-The current safety layers are intentionally coarse and honest:
+The safety layers are intentionally coarse and honest:
 
 1. the platform's native per-call timeout bounds a UIA/AX RPC where supported;
-2. Traverser bounds the aggregate operation count, elapsed duration, child expansion, provider failures, and result size;
+2. Traverser bounds aggregate operation count, elapsed duration, child expansion, provider failures, and result size;
 3. status records partial failure for the Agent;
-4. future process isolation can terminate and restart the entire Automation query host if a platform boundary proves insufficient.
+4. the Automation Host process is the reclaimable boundary when a native provider crashes or ignores its timeout;
+5. Main invalidates the old remote Context and requires re-observation after connection replacement.
 
-An in-process worker cannot terminate a synchronous RPC that never returns. Watchdog observation alone therefore does not create a stronger containment boundary. Worker, dispatcher, scheduler, SynchronizationContext, operation pin, and Scope machinery are not part of the current design.
+An in-process worker still cannot terminate a synchronous native RPC that never returns. The Host-side Channel serializes whole Context operations; it is not presented as native-call cancellation. Worker pools, dispatchers, custom schedulers, SynchronizationContext, operation pins, and Scope machinery are not part of the design.
 
 An optional UI overlay and input guard may still surround a user-visible read or action, but it is orchestration/UI policy. It does not own native clients or elements and must not be confused with a transaction or immutable platform snapshot.
 
 ## 12. Process Isolation
 
-The current object model is process-local. A future isolated query host may expose coarse-grained `VisualElementHandle`, Context/registry handles, snapshot, screenshot, action, and restart operations. Those transport types are not current `VisualElement` responsibilities and must not distort the in-process API before that boundary exists.
+The element object model remains process-local inside the Automation Host. Main uses coarse-grained RPC operations and connection-scoped handles for Contexts, anchors, and pickers; it never receives a native `VisualElement`. `RpcSafeHandle` lifetime protects remote resources while calls are in flight, and connection teardown releases the complete registry.
+
+Transport contracts contain copied observations, captures, status, and neutral failures. They do not become native identity or leak platform exceptions. Automation Host replacement invalidates all old handles and target IDs, so Main creates a new remote Context and callers re-observe. See [Process Isolation](../ProcessIsolation/README.md) for startup, authentication, RPC, and recovery details.

@@ -3,6 +3,8 @@ using System.IO.Pipes;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Roles;
+using Everywhere.ProcessIsolation.Rpc;
 using MessagePack;
 using PuppeteerSharp;
 using Serilog;
@@ -20,6 +22,7 @@ public static class Entrance
     public static event EventHandler<UnobservedTaskExceptionEventArgs>? UnobservedTaskExceptionFilter;
 
     private const string BundleName = "com.sylinko.everywhere";
+    private static string ActivationEndpoint => ProcessRoleNames.GetApplicationActivationEndpoint(RpcRuntimeIdentity.GetDesktopSessionId());
     private static EntranceStartup? _startup;
 
     public static EntranceStartup Initialize(string[] args)
@@ -102,7 +105,7 @@ public static class Entrance
             try
             {
                 server = new NamedPipeServerStream(
-                    BundleName,
+                    ActivationEndpoint,
                     PipeDirection.In,
                     1,
                     PipeTransmissionMode.Byte,
@@ -177,7 +180,7 @@ public static class Entrance
         {
             try
             {
-                await using var client = new NamedPipeClientStream(".", BundleName, PipeDirection.Out, PipeOptions.Asynchronous);
+                await using var client = new NamedPipeClientStream(".", ActivationEndpoint, PipeDirection.Out, PipeOptions.Asynchronous);
                 await client.ConnectAsync(connectTimeoutMs).ConfigureAwait(false);
 
                 var bytes = MessagePackSerializer.Serialize(message);

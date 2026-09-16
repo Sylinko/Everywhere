@@ -174,7 +174,7 @@ Compact status is emitted only when it should influence what the Agent does next
 - avoid an unresponsive application or PID;
 - report that requested information could not be observed safely.
 
-VisualQuery performs no delayed retry, retry queue, background recovery query, or hidden provider re-entry. A future query-host restart is a separate outer containment event and does not cause an old tool call to report fabricated success.
+VisualQuery performs no delayed retry, retry queue, background recovery query, or hidden provider re-entry. Automation Host replacement is a separate outer containment event. It invalidates the old remote Context and requires a fresh observation; it never causes an interrupted tool call to report fabricated success.
 
 ## 10. Search and Computer Use
 

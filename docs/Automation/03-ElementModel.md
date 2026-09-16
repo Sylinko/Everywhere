@@ -61,11 +61,11 @@ The base methods provide the common usability check and platform-exception conve
 
 `GetSelectedText` is an explicit bounded observation rather than a normal Snapshot field. It returns a textual representation of the element's current selection: platforms prefer true text ranges and may fall back to selected child labels for selection containers. Ordinary tree traversal must not query this transient state for every element. A null result means that no nonempty textual selection is available. Provider failures still cross the normal platform-exception boundary.
 
-Query, navigation, and actions are synchronous because the underlying UIA/AX operations are synchronous RPCs. Capture may remain asynchronous where the graphics backend already has an asynchronous contract. A later query-host transport may expose asynchronous coarse-grained operations without changing this process-local object model.
+Query, navigation, and actions are synchronous inside the Automation Host because the underlying UIA/AX operations are synchronous provider RPCs. Capture may remain asynchronous where the graphics backend already has an asynchronous contract. Main invokes asynchronous coarse-grained Host operations without changing this process-local object model.
 
 ## 4. Root Acquisition
 
-Focused element, current pointer, explicit screen point, native window, a platform-default root, and similar acquisitions have no existing receiver. They therefore enter through the single query on the process-shared platform Backend:
+Focused element, current pointer, explicit screen point, native window, a platform-default root, and similar acquisitions have no existing receiver. They therefore enter through the single query on the Automation Host session's shared platform Backend:
 
 ```csharp
 backend.Query(retention, VisualElementLocator.Focused);
@@ -138,7 +138,7 @@ Normalized failure kinds distinguish at least:
 - provider or transport failure;
 - platform failure whose exact category is unknown.
 
-Windows converts `UIA_E_TIMEOUT` to `TimeoutException` while preserving the original `COMException` as its inner exception. Other provider exceptions retain their normalized HRESULT/message boundary. The implementation does not collapse all native failures into `null`, empty text, or enumeration completion.
+Windows converts `UIA_E_TIMEOUT` to `TimeoutException` while preserving the original `COMException` as Host-side evidence. Other provider exceptions retain their normalized platform detail inside the Host. Selected failures cross RPC as `VisualElementQueryFailureKind` and become new neutral Main-side exceptions; HRESULTs and native exception objects do not cross the process boundary. The implementation does not collapse all native failures into `null`, empty text, or enumeration completion.
 
 A known element with incomplete scalar data remains a skeleton node with status. A relation or root failure that has no representable child contributes bounded status to the nearest retained parent or observation root.
 

@@ -617,21 +617,6 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere se ejecutará automáticamente después del inicio. Si “Iniciar como Administrador” está habilitado, la opción actual solo se puede desactivar en modo administrador.</value>
     </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Header" xml:space="preserve">
-        <value>Inicio Automático como Administrador</value>
-    </data>
-    <data name="SoftwareSettings_IsAdministratorStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere se iniciará automáticamente como administrador al encender el equipo. Solo se puede activar o desactivar esta opción en modo administrador.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Description" xml:space="preserve">
-        <value>Debido a restricciones del sistema operativo, al ejecutar cualquier aplicación como administrador (permisos elevados), Everywhere puede no funcionar correctamente cuando las aplicaciones elevadas están en foco o intentan interactuar con una función de Everywhere como &quot;Seleccionar Elemento&quot;. Esto se puede solucionar ejecutando Everywhere como administrador.</value>
-    </data>
-    <data name="SoftwareSettings_RestartAsAdministrator_Header" xml:space="preserve">
-        <value>Reiniciar como Administrador</value>
-    </data>
-    <data name="RestartAsAdministratorControl_RestartButton_Content" xml:space="preserve">
-        <value>Reiniciar</value>
-    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Características de depuración</value>
     </data>
@@ -669,13 +654,13 @@
         <value>Actualización de Software</value>
     </data>
     <data name="SoftwareSettings_SoftwareUpdate_Description" xml:space="preserve">
-        <value>Si hay una actualización disponible, haz clic en Actualizar y Everywhere descargará e instalará automáticamente la última versión. Puede que necesites seleccionar “Sí” en la ventana emergente durante el proceso.</value>
+        <value>Las actualizaciones frecuentes ofrecen una mejor experiencia de uso.</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header" xml:space="preserve">
         <value>Actualización Automática</value>
     </data>
     <data name="SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description" xml:space="preserve">
-        <value>Si está habilitado, Everywhere comprobará periódicamente si hay actualizaciones (solo cuando Everywhere está en ejecución, sin añadir carga extra al sistema).</value>
+        <value>Si está habilitado, Everywhere comprobará periódicamente si hay actualizaciones.</value>
     </data>
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Descargando actualización...</value>
@@ -2093,12 +2078,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="ExperimentalBadge_ToolTip" xml:space="preserve">
         <value>Esta es una función experimental que puede causar errores y resultados inesperados.</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Header" xml:space="preserve">
-        <value>Iniciar al Encender</value>
-    </data>
-    <data name="SoftwareSettings_IsUserStartupEnabled_Description" xml:space="preserve">
-        <value>Everywhere se ejecutará automáticamente al encender el equipo.</value>
     </data>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
@@ -3967,5 +3946,8 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluida</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere utiliza procesos independientes para alojar las siguientes funciones, lo que proporciona mayor seguridad y flexibilidad.</value>
     </data>
 </root>

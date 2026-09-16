@@ -241,7 +241,7 @@ This coordination must be bounded. It must not add production-only test hooks to
 
 ### 6.1 Mock Backend
 
-The current Mock fixture uses Context-owned `Everywhere.Automation.VisualElement` subclasses with the same bounded element and Enumerator contracts as production platforms. It deliberately remains a fixture-scoped Context/Backend aggregate for simple scenario tests rather than pretending to be the process-singleton production `IVisualElementBackend`; Backend root-acquisition conformance can be split out when those tests are designed. Its former temporary `Everywhere.Interop.IVisualElement` surface and the legacy Builder tests have been removed; Snapshotter and prompt-projection tests consume the canonical element model directly.
+The current Mock fixture uses Context-owned `Everywhere.Automation.VisualElement` subclasses with the same bounded element and Enumerator contracts as production platforms. It deliberately remains a fixture-scoped Context/Backend aggregate for simple scenario tests rather than pretending to be the Automation Host session's shared production `IVisualElementBackend`; Backend root-acquisition conformance can be split out when those tests are designed. Its former temporary `Everywhere.Interop.IVisualElement` surface and the legacy Builder tests have been removed; Snapshotter and prompt-projection tests consume the canonical element model directly.
 
 The Mock backend must support:
 
@@ -260,7 +260,7 @@ Mock failure injection does not sleep to imitate a timeout. It returns or throws
 
 It must not call the real Capturer, merged PromptNode builder, or `VisualContext` publication logic to calculate expected results.
 
-The shared Backend fixture verifies root acquisition into independent caller Contexts, fixed native timeout policy, and shared-resource disposal without retaining Contexts or Elements. Mock provider failures deliberately do not claim thread or process containment. Real UIA or AX processes remain required to characterize native timeout behavior, while only a future isolated query-host process can prove kill-and-restart containment for a call that ignores the platform boundary.
+The shared Backend fixture verifies root acquisition into independent caller Contexts, fixed native timeout policy, and shared-resource disposal without retaining Contexts or Elements. Mock provider failures deliberately do not claim thread or process containment. Real UIA or AX processes remain required to characterize native timeout behavior. A dedicated integration test must terminate and replace the current Automation Host to prove containment for a call that ignores the platform boundary.
 
 ### 6.2 Windows Forms TestApp
 
@@ -330,7 +330,7 @@ dotnet run --project tests/Everywhere.Automation.WebView.Probe -- https://exampl
 
 `query_visual` and `read_visual_text` accept `shouldStartNewTurn=false`. Passing true completes the preceding persistent turn and begins another, matching Everywhere's delayed conversation-turn completion. Subsequent calls, including navigation between reads, share that turn. Without a persistent turn, each call owns a temporary turn that completes on success and is abandoned on failure. A failed operation inside a persistent turn does not discard earlier published targets. Session disposal releases all turns. Publication statistics count the individual build, not accumulated turn membership.
 
-Against a freshly started Windows server, run `pwsh -File tests/Everywhere.Automation.WebView.Probe/Verify-Retrieval.ps1 -Endpoint http://127.0.0.1:5197/mcp` to exercise temporary calls, a persistent turn spanning more than eight queries, text retrieval by an early ID, and the next-turn transition. The Windows-only `diagnose_topology` tool saves `topology.json` and compares native edges before canonicalization. The macOS-only `diagnose_ax_target` tool queries one retained AX target field by field and preserves native failure details. Native IDs and pointers are diagnostic data, never Agent target IDs. See [the recorded Windows parent conflict](Investigations/2026-09-07-WebView-Parent-Conflict.md) and [the macOS WKWebView composition result](Investigations/2026-09-10-Mac-Native-WebView.md).
+Against a freshly started Windows server, run `pwsh -File tests/Everywhere.Automation.WebView.Probe/Verify-Retrieval.ps1 -Endpoint http://127.0.0.1:5197/mcp` to exercise temporary calls, a persistent turn spanning more than eight queries, text retrieval by an early ID, and the next-turn transition. The Windows-only `diagnose_topology` tool saves `topology.json` and compares native edges before canonicalization. The macOS-only `diagnose_ax_target` tool queries one retained AX target field by field and preserves native failure details. Native IDs and pointers are diagnostic data, never Agent target IDs. See [the recorded Windows parent conflict](Investigations/2026-09-07-WebView-Parent-Conflict.md) and the macOS WKWebView evidence summarized in [VisualQuery verification](08-Verification.md#14-visualquery).
 
 In PowerShell, pass `-Addresses @('https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference', 'https://github.com/microsoft/terminal', 'https://en.wikipedia.org/wiki/Accessibility')` to add live structural/text journeys after the smoke check. Each URL gets a persistent turn. Dot-source the script with `-ConnectOnly` to initialize the connection and use `Invoke-Probe` for adaptive follow-up calls without restarting the smoke check. Full tool outputs and timings are written by the server; script summaries are observations, not golden assertions about third-party pages.
 
@@ -564,7 +564,7 @@ dotnet test tests/Everywhere.Automation.Windows.Tests/Everywhere.Automation.Wind
 
 This tier also retains an explicit two-MTA-thread Windows UIA compatibility probe. The threads are probe infrastructure, not the production Backend architecture. It obtains a retained root Element on one client/thread, then verifies scalar refresh and TreeWalker child navigation through the other for WinForms, Avalonia, and CefSharp. The probe waits for both native UIA clients to initialize before forcing the cross-client call so activation failure and retained-reference compatibility remain separate observations. It exercises the explicit unmanaged COM owners rather than relying on RCW lifetime.
 
-Temporary gaps that must be closed by later stages are tracked in the repository-root `temp.md` rather than hidden behind test-only fallbacks.
+Temporary gaps that must be closed by later stages are recorded in [07-Migration](07-Migration.md) and [08-Verification](08-Verification.md) rather than hidden behind test-only fallbacks.
 
 ## 12. Non-Goals
 

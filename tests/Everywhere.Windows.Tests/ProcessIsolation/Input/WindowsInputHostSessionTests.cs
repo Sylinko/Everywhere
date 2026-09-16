@@ -11,6 +11,7 @@ using Everywhere.ProcessIsolation.Hosts.Lifecycle;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Windows.Interop;
+using Everywhere.Windows.ProcessIsolation;
 using Everywhere.Windows.ProcessIsolation.Input;
 
 namespace Everywhere.Windows.Tests.ProcessIsolation.Input;
@@ -28,6 +29,7 @@ public sealed class WindowsInputHostSessionTests
         var runner = ProcessRoleHostRunner.RunAsync(
             ProcessRole.Input,
             new[] { "--rpc-endpoint", endpoint },
+            WindowsNamedPipePeerVerifier.Instance,
             static () => new WindowsInputHostSession(),
             runnerCancellation.Token);
 
