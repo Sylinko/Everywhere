@@ -27,11 +27,9 @@ using Everywhere.Views.Pages;
 using Everywhere.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
-#if WINDOWS
-using Microsoft.Extensions.Logging;
-#endif
 
 namespace Everywhere.Extensions;
 
