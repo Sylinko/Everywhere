@@ -21,6 +21,7 @@ public enum WebSearchEngineProviderId
     Google,
     Jina,
     SearXNG,
+    Serply,
     Tavily,
     UniFuncs,
 }
@@ -449,6 +450,15 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.SearXNG,
                 new SearXNGWebSearchEngineProvider()),
+            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
+                WebSearchEngineProviderId.Serply,
+                new ApiKeyWebSearchEngineProvider(
+                    WebSearchEngineProviderId.Serply,
+                    new DirectLocaleKey("Serply"),
+                    "avares://Everywhere.Core/Assets/Icons/serply-color.svg",
+                    "https://serply.io/docs",
+                    "https://api.serply.io/v1/search",
+                    ApiKeys)),
             new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
                 WebSearchEngineProviderId.Tavily,
                 new ApiKeyWebSearchEngineProvider(
