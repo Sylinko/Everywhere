@@ -45,13 +45,20 @@ public static class Program
         {
             case ProcessRole.Main:
             {
-                await using var entrance = Entrance.Initialize(args);
-                if (!entrance.IsPrimary)
+                var entrance = Entrance.Initialize(args);
+                try
                 {
-                    return await entrance.ForwardAsync().ConfigureAwait(false);
-                }
+                    if (!entrance.IsPrimary)
+                    {
+                        return await entrance.ForwardAsync().ConfigureAwait(false);
+                    }
 
-                return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
+                    return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
+                }
+                finally
+                {
+                    await entrance.DisposeAsync().ConfigureAwait(false);
+                }
             }
             case ProcessRole.Input:
             {
@@ -135,7 +142,7 @@ public static class Program
         CGDisplayTopology.Initialize();
         NSApplication.SharedApplication.Delegate = new AppDelegate();
 
-        await using var serviceProvider = ServiceLocator.Build(x => x
+        var serviceProvider = ServiceLocator.Build(x => x
 
                 #region Basic
 
@@ -179,13 +186,21 @@ public static class Program
 
         );
 
-        var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        if (Application.Current is App app)
+        try
         {
-            await app.WaitForShutdownAsync().ConfigureAwait(false);
-        }
+            var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+            if (Application.Current is App app)
+            {
+                await app.WaitForShutdownAsync().ConfigureAwait(false);
+            }
 
-        return exitCode;
+            return exitCode;
+        }
+        finally
+        {
+            // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
+            await serviceProvider.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>

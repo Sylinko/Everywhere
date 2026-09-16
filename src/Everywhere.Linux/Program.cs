@@ -52,13 +52,15 @@ public static class Program
 
     private static async Task<int> RunAsync(string[] args)
     {
-        await using var entrance = Entrance.Initialize(args);
-        if (!entrance.IsPrimary)
+        var entrance = Entrance.Initialize(args);
+        try
         {
-            return await entrance.ForwardAsync().ConfigureAwait(false);
-        }
+            if (!entrance.IsPrimary)
+            {
+                return await entrance.ForwardAsync().ConfigureAwait(false);
+            }
 
-        await using var serviceProvider = ServiceLocator.Build(x => x
+            var serviceProvider = ServiceLocator.Build(x => x
 
                 #region Basic
 
@@ -108,13 +110,26 @@ public static class Program
 
         );
 
-        var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-        if (Application.Current is App app)
-        {
-            await app.WaitForShutdownAsync().ConfigureAwait(false);
-        }
+            try
+            {
+                var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+                if (Application.Current is App app)
+                {
+                    await app.WaitForShutdownAsync().ConfigureAwait(false);
+                }
 
-        return exitCode;
+                return exitCode;
+            }
+            finally
+            {
+                // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
+                await serviceProvider.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await entrance.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
