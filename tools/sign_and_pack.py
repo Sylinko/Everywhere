@@ -84,8 +84,9 @@ def compile_installer(iss_path: str, fingerprint: str, signtool_exe: str) -> str
     if not iscc_path:
         raise RuntimeError("Inno Setup 7 compiler not found. Set INNO_SETUP_COMPILER to the ISCC.exe path.")
     
+    # Inno expands $q after parsing its command line; embedded quotes are not CRT-escaped.
     sign_command = (
-        f'"{signtool_exe}" sign /sha1 {fingerprint} '
+        f'$q{signtool_exe}$q sign /sha1 {fingerprint} '
         '/tr http://time.certum.pl /td sha256 /fd sha256 /v $f'
     )
     result = subprocess.run(
