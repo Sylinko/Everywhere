@@ -63,7 +63,7 @@
               x:Name="PART_ChatAttachmentItemsControl"
               ItemsSource="{TemplateBinding ChatAttachmentItemsSource}"
               RemoveCommand="{TemplateBinding RemoveAttachmentCommand}"
-              SupportedModalities="{Binding SelectedCustomAssistant?.InputModalities, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:Static aai:Modalities.None}}"/>
+              SupportedModalities="{Binding SelectedCustomAssistant?.Configuration.InputModalities, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:Static aai:Modalities.None}}"/>
           </ScrollViewer>
 
           <StackPanel

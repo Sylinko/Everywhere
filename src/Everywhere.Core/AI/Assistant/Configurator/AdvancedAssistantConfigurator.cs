@@ -17,20 +17,18 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [CustomValidation(typeof(AdvancedAssistantConfigurator), nameof(ValidateEndpoint))]
     public string? Endpoint
     {
-        get => owner.Endpoint;
+        get => owner.Configuration.Endpoint;
         set
         {
-            if (owner.Endpoint == value) return;
+            if (owner.Configuration.Endpoint == value) return;
 
             ValidateProperty(value);
-            owner.Endpoint = value;
+            owner.Configuration.Endpoint = value;
             OnPropertyChanged();
         }
     }
 
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_Endpoint_Header,
-        LocaleKey.Assistant_Endpoint_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_Endpoint_Header, LocaleKey.Assistant_Endpoint_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<PreviewEndpointTextBox> PreviewEndpointControl => new(
         new PreviewEndpointTextBox
@@ -49,20 +47,18 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
     [SettingsItemIgnore]
     public Guid ApiKey
     {
-        get => owner.ApiKey;
+        get => owner.Configuration.ApiKey;
         set
         {
-            if (owner.ApiKey == value) return;
+            if (owner.Configuration.ApiKey == value) return;
 
-            owner.ApiKey = value;
+            owner.Configuration.ApiKey = value;
             OnPropertyChanged();
         }
     }
 
     [JsonIgnore]
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_ApiKey_Header,
-        LocaleKey.Assistant_ApiKey_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_ApiKey_Header, LocaleKey.Assistant_ApiKey_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
         serviceProvider => new ApiKeyComboBox(serviceProvider.GetRequiredService<Settings>().Model.ApiKeys)
@@ -73,116 +69,99 @@ public sealed partial class AdvancedAssistantConfigurator(Assistant owner) : Ass
                 mode: BindingMode.TwoWay)
         });
 
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_Schema_Header,
-        LocaleKey.Assistant_Schema_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_Schema_Header, LocaleKey.Assistant_Schema_Description)]
     [SettingsItem(Group = "_")]
     public ModelProviderSchema Schema
     {
-        get => owner.Schema;
+        get => owner.Configuration.Schema;
         set
         {
-            if (owner.Schema == value) return;
+            if (owner.Configuration.Schema == value) return;
 
-            owner.Schema = value;
+            owner.Configuration.Schema = value;
             OnPropertyChanged();
         }
     }
 
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_ModelId_Header,
-        LocaleKey.Assistant_ModelId_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_ModelId_Header, LocaleKey.Assistant_ModelId_Description)]
     [SettingsItem(Group = "_")]
     [Required, MinLength(1)]
     public string? ModelId
     {
-        get => owner.ModelId;
-        set => owner.ModelId = value;
+        get => owner.Configuration.ModelId;
+        set => owner.Configuration.ModelId = value;
     }
 
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_SupportsToolCall_Header,
-        LocaleKey.Assistant_SupportsToolCall_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_SupportsToolCall_Header, LocaleKey.Assistant_SupportsToolCall_Description)]
     [SettingsItem(Group = "_")]
     public bool SupportsToolCall
     {
-        get => owner.SupportsToolCall;
-        set => owner.SupportsToolCall = value;
+        get => owner.Configuration.SupportsToolCall;
+        set => owner.Configuration.SupportsToolCall = value;
     }
 
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_InputModalities_Header,
-        LocaleKey.Assistant_InputModalities_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_InputModalities_Header, LocaleKey.Assistant_InputModalities_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(
         new ModalitiesSelector
         {
             [!ModalitiesSelector.ModalitiesProperty] = CompiledBinding.Create(
-                (Assistant x) => x.InputModalities,
-                source: owner,
+                (AssistantConfiguration x) => x.InputModalities,
+                source: owner.Configuration,
                 mode: BindingMode.TwoWay)
         });
 
     /// <summary>
     /// Maximum number of tokens that the model can process in a single request.
     /// </summary>
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_ContextLimit_Header,
-        LocaleKey.Assistant_ContextLimit_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_ContextLimit_Header, LocaleKey.Assistant_ContextLimit_Description)]
     [SettingsItem(Group = "_")]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int ContextLimit
     {
-        get => owner.ContextLimit;
-        set => owner.ContextLimit = value;
+        get => owner.Configuration.ContextLimit;
+        set => owner.Configuration.ContextLimit = value;
     }
 
     /// <summary>
     /// Maximum number of tokens that the model can output in a single request.
     /// </summary>
-    [DynamicLocaleKey(
-        LocaleKey.Assistant_OutputLimit_Header,
-        LocaleKey.Assistant_OutputLimit_Description)]
+    [DynamicLocaleKey(LocaleKey.Assistant_OutputLimit_Header, LocaleKey.Assistant_OutputLimit_Description)]
     [SettingsItem(Group = "_")]
     [SettingsIntegerItem(IsSliderVisible = false)]
     public int OutputLimit
     {
-        get => owner.OutputLimit;
-        set => owner.OutputLimit = value;
+        get => owner.Configuration.OutputLimit;
+        set => owner.Configuration.OutputLimit = value;
     }
 
-    public override void Backup()
+    internal override void NotifyConfigurationChanged(AssistantConfiguration previous, AssistantConfiguration current)
     {
-        Backup(Schema);
-        Backup(Endpoint);
-        Backup(ModelId);
-        Backup(SupportsToolCall);
-        Backup(owner.InputModalities);
-        Backup(owner.OutputModalities);
-        Backup(ContextLimit);
-        Backup(OutputLimit);
+        if (previous.Endpoint != current.Endpoint) OnPropertyChanged(nameof(Endpoint));
+        if (previous.ApiKey != current.ApiKey) OnPropertyChanged(nameof(ApiKey));
+        if (previous.Schema != current.Schema) OnPropertyChanged(nameof(Schema));
+        if (previous.ModelId != current.ModelId) OnPropertyChanged(nameof(ModelId));
+        if (previous.SupportsToolCall != current.SupportsToolCall) OnPropertyChanged(nameof(SupportsToolCall));
+        if (previous.ContextLimit != current.ContextLimit) OnPropertyChanged(nameof(ContextLimit));
+        if (previous.OutputLimit != current.OutputLimit) OnPropertyChanged(nameof(OutputLimit));
     }
 
-    public override void Apply()
+    internal override void NotifyConfigurationChanged(string? propertyName)
     {
-        owner.ModelProviderTemplateId = null;
-        owner.ModelDefinitionTemplateId = null;
-
-        Schema = Restore(Schema);
-        Endpoint = Restore(Endpoint);
-        ModelId = Restore(ModelId);
-        SupportsToolCall = Restore(SupportsToolCall);
-        owner.InputModalities = Restore(owner.InputModalities);
-        owner.OutputModalities = Restore(owner.OutputModalities);
-        ContextLimit = Restore(ContextLimit);
-        OutputLimit = Restore(OutputLimit);
+        var exposedProperty = propertyName switch
+        {
+            nameof(AssistantConfiguration.Endpoint) => nameof(Endpoint),
+            nameof(AssistantConfiguration.ApiKey) => nameof(ApiKey),
+            nameof(AssistantConfiguration.Schema) => nameof(Schema),
+            nameof(AssistantConfiguration.ModelId) => nameof(ModelId),
+            nameof(AssistantConfiguration.SupportsToolCall) => nameof(SupportsToolCall),
+            nameof(AssistantConfiguration.ContextLimit) => nameof(ContextLimit),
+            nameof(AssistantConfiguration.OutputLimit) => nameof(OutputLimit),
+            _ => null
+        };
+        if (exposedProperty is not null) OnPropertyChanged(exposedProperty);
     }
 
-    /// <summary>
-    /// For advanced configurator, we will directly use the owner as the assistant, and the specialization is determined by the user input. So we can just return the owner here.
-    /// </summary>
-    /// <param name="specialization"></param>
-    /// <returns></returns>
     public override Assistant ResolveAssistant(ModelSpecializations specialization) => owner;
 
     public static ValidationResult? ValidateEndpoint(string? endpoint)

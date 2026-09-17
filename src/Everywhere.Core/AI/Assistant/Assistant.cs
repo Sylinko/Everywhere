@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI.Configurator;
@@ -7,68 +7,50 @@ using Everywhere.Views;
 
 namespace Everywhere.AI;
 
-public abstract partial class Assistant : ObservableValidator, IModelDefinition
+public abstract partial class Assistant : ObservableValidator
 {
-    [ObservableProperty]
     [SettingsItemIgnore]
-    public partial string? Endpoint { get; set; }
+    public AssistantConfiguration Configuration
+    {
+        get => _configuration;
+        set
+        {
+            // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+            value ??= new OfficialAssistantConfiguration();
+            if (ReferenceEquals(_configuration, value)) return;
 
-    /// <summary>
-    /// The GUID of the API key to use for this custom assistant.
-    /// </summary>
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial Guid ApiKey { get; set; }
+            var previous = _configuration;
+            previous.PropertyChanged -= HandleConfigurationPropertyChanged;
+            _configuration = value;
+            value.PropertyChanged += HandleConfigurationPropertyChanged;
+            OnPropertyChanged();
 
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic), nameof(IsMistral))]
-    public partial ModelProviderSchema Schema { get; set; }
+            if (previous.GetType() != value.GetType())
+            {
+                OnPropertyChanged(nameof(ConfiguratorType));
+                OnPropertyChanged(nameof(Configurator));
+            }
+            if (previous.Schema != value.Schema) NotifySchemaChanged();
 
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial string? ModelId { get; set; }
+            _officialConfigurator.NotifyConfigurationChanged(previous, value);
+            _presetBasedConfigurator.NotifyConfigurationChanged(previous, value);
+            _advancedConfigurator.NotifyConfigurationChanged(previous, value);
+            OnConfigurationPropertyChanged(null);
+        }
+    }
 
-    [ObservableProperty]
+    [JsonIgnore]
     [SettingsItemIgnore]
-    public partial bool SupportsToolCall { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial Modalities InputModalities { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial Modalities OutputModalities { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial int ContextLimit { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial int OutputLimit { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial ModelSpecializations Specializations { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial DateOnly? DeprecationDate { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    [NotifyPropertyChangedFor(nameof(Configurator))]
-    public partial AssistantConfiguratorType ConfiguratorType { get; set; } = AssistantConfiguratorType.Official;
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial string? ModelProviderTemplateId { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial string? ModelDefinitionTemplateId { get; set; }
+    public AssistantConfiguratorType ConfiguratorType
+    {
+        get => Configuration switch
+        {
+            OfficialAssistantConfiguration => AssistantConfiguratorType.Official,
+            PresetAssistantConfiguration => AssistantConfiguratorType.PresetBased,
+            _ => AssistantConfiguratorType.Advanced
+        };
+        set => SwitchConfiguration(value);
+    }
 
     [JsonIgnore]
     [SettingsItemIgnore]
@@ -98,7 +80,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
     [JsonIgnore]
-    public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
+    public bool IsOpenAI => Configuration.Schema == ModelProviderSchema.OpenAI;
 
     [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIOptions_Header,
@@ -108,7 +90,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     public OpenAIOptions OpenAIOptions { get; } = new();
 
     [JsonIgnore]
-    public bool IsOpenAIResponses => Schema == ModelProviderSchema.OpenAIResponses;
+    public bool IsOpenAIResponses => Configuration.Schema == ModelProviderSchema.OpenAIResponses;
 
     [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIResponsesOptions_Header,
@@ -118,7 +100,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     public OpenAIResponsesOptions OpenAIResponsesOptions { get; } = new();
 
     [JsonIgnore]
-    public bool IsAnthropic => Schema == ModelProviderSchema.Anthropic;
+    public bool IsAnthropic => Configuration.Schema == ModelProviderSchema.Anthropic;
 
     [DynamicLocaleKey(
         LocaleKey.Assistant_AnthropicOptions_Header,
@@ -128,7 +110,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     public AnthropicOptions AnthropicOptions { get; } = new();
 
     [JsonIgnore]
-    public bool IsGoogle => Schema == ModelProviderSchema.Google;
+    public bool IsGoogle => Configuration.Schema == ModelProviderSchema.Google;
 
     [DynamicLocaleKey(
         LocaleKey.Assistant_GoogleOptions_Header,
@@ -137,15 +119,9 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public GoogleOptions GoogleOptions { get; } = new();
 
-    /// <summary>
-    /// Gets a value indicating whether this assistant uses the Mistral provider schema.
-    /// </summary>
     [JsonIgnore]
-    public bool IsMistral => Schema == ModelProviderSchema.Mistral;
+    public bool IsMistral => Configuration.Schema == ModelProviderSchema.Mistral;
 
-    /// <summary>
-    /// Gets the Mistral-specific options for this assistant.
-    /// </summary>
     [DynamicLocaleKey(
         LocaleKey.Assistant_MistralOptions_Header,
         LocaleKey.Assistant_MistralOptions_Description)]
@@ -153,56 +129,71 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public MistralOptions MistralOptions { get; } = new();
 
+    private readonly Dictionary<AssistantConfiguratorType, AssistantConfiguration> _modeConfigurations = [];
     private readonly OfficialAssistantConfigurator _officialConfigurator;
     private readonly PresetBasedAssistantConfigurator _presetBasedConfigurator;
     private readonly AdvancedAssistantConfigurator _advancedConfigurator;
+    private AssistantConfiguration _configuration = new OfficialAssistantConfiguration();
 
     protected Assistant()
     {
+        _configuration.PropertyChanged += HandleConfigurationPropertyChanged;
         _officialConfigurator = new OfficialAssistantConfigurator(this);
         _presetBasedConfigurator = new PresetBasedAssistantConfigurator(this);
         _advancedConfigurator = new AdvancedAssistantConfigurator(this);
     }
 
-    public void ApplyTemplate(ModelProviderTemplate? modelProviderTemplate)
+    protected virtual void OnConfigurationPropertyChanged(string? propertyName) { }
+
+    private void HandleConfigurationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (modelProviderTemplate is not null)
-        {
-            Endpoint = modelProviderTemplate.Endpoint;
-            Schema = modelProviderTemplate.Schema;
-            RequestTimeoutSeconds = modelProviderTemplate.RequestTimeoutSeconds;
-        }
-        else
-        {
-            Endpoint = string.Empty;
-            Schema = ModelProviderSchema.OpenAI;
-            RequestTimeoutSeconds = 20;
-        }
+        if (e.PropertyName == nameof(AssistantConfiguration.Schema)) NotifySchemaChanged();
+        _officialConfigurator.NotifyConfigurationChanged(e.PropertyName);
+        _presetBasedConfigurator.NotifyConfigurationChanged(e.PropertyName);
+        _advancedConfigurator.NotifyConfigurationChanged(e.PropertyName);
+        OnConfigurationPropertyChanged(e.PropertyName);
     }
 
-    public void ApplyTemplate(ModelDefinitionTemplate? modelDefinitionTemplate)
+    private void NotifySchemaChanged()
     {
-        if (modelDefinitionTemplate is not null)
+        OnPropertyChanged(nameof(IsOpenAI));
+        OnPropertyChanged(nameof(IsOpenAIResponses));
+        OnPropertyChanged(nameof(IsAnthropic));
+        OnPropertyChanged(nameof(IsGoogle));
+        OnPropertyChanged(nameof(IsMistral));
+    }
+
+    /// <summary>
+    /// Mode switching retains typed drafts for this assistant's editing lifetime.
+    /// </summary>
+    private void SwitchConfiguration(AssistantConfiguratorType type)
+    {
+        if (type == ConfiguratorType) return;
+        _modeConfigurations[ConfiguratorType] = Configuration;
+        if (_modeConfigurations.TryGetValue(type, out var previous))
         {
-            ModelId = modelDefinitionTemplate.ModelId;
-            SupportsToolCall = modelDefinitionTemplate.SupportsToolCall;
-            InputModalities = modelDefinitionTemplate.InputModalities;
-            OutputModalities = modelDefinitionTemplate.OutputModalities;
-            ContextLimit = modelDefinitionTemplate.ContextLimit;
-            OutputLimit = modelDefinitionTemplate.OutputLimit;
-            Specializations = modelDefinitionTemplate.Specializations;
-            DeprecationDate = modelDefinitionTemplate.DeprecationDate;
+            Configuration = previous;
+            return;
         }
-        else
+
+        Configuration = type switch
         {
-            ModelId = string.Empty;
-            SupportsToolCall = false;
-            InputModalities = default;
-            OutputModalities = default;
-            ContextLimit = 0;
-            OutputLimit = 0;
-            Specializations = default;
-            DeprecationDate = null;
-        }
+            AssistantConfiguratorType.Official => AssistantSnapshotMapper.ToOfficial(Configuration),
+            AssistantConfiguratorType.PresetBased => AssistantSnapshotMapper.ToPreset(Configuration),
+            _ => AssistantSnapshotMapper.ToAdvanced(Configuration)
+        };
+    }
+
+    public void ApplyTemplate(ModelProviderTemplate? template)
+    {
+        if (template is null) return;
+        Configuration.Endpoint = template.Endpoint;
+        Configuration.Schema = template.Schema;
+        RequestTimeoutSeconds = template.RequestTimeoutSeconds;
+    }
+
+    public void ApplyTemplate(ModelDefinitionTemplate? template)
+    {
+        if (template is not null) Configuration.Apply(template);
     }
 }

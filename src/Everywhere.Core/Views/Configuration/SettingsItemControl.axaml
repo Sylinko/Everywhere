@@ -186,6 +186,12 @@
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
                             ItemsSource="{Binding ItemsSource}"
                             SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                            <ComboBox.Styles>
+                              <Style Selector="ComboBox.PresetModelProvider">
+                                <Setter Property="shadui:ControlAssist.MinHeight" Value="40"/>
+                                <Setter Property="MaxDropDownHeight" Value="480"/>
+                              </Style>
+                            </ComboBox.Styles>
                             <ComboBox.ItemTemplate>
                               <DataTemplate DataType="c:SettingsSelectionItem+Item">
                                 <ContentControl

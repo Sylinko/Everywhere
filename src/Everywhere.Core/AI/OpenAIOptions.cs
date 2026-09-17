@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
@@ -42,6 +42,7 @@ public sealed partial class OpenAIOptions : ObservableObject
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20temperature%20%3E%20(schema)")]
     public string? Temperature { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
@@ -49,8 +50,9 @@ public sealed partial class OpenAIOptions : ObservableObject
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20top_p%20%3E%20(schema)")]
-    public string? TopP { get; set; }
+    public partial string? TopP { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_PresencePenalty_Header,
         LocaleKey.Assistant_PresencePenalty_Description)]
@@ -58,8 +60,9 @@ public sealed partial class OpenAIOptions : ObservableObject
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20presence_penalty%20%3E%20(schema)")]
-    public string? PresencePenalty { get; set; }
+    public partial string? PresencePenalty { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_FrequencyPenalty_Header,
         LocaleKey.Assistant_FrequencyPenalty_Description)]
@@ -67,5 +70,5 @@ public sealed partial class OpenAIOptions : ObservableObject
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20frequency_penalty%20%3E%20(schema)")]
-    public string? FrequencyPenalty { get; set; }
+    public partial string? FrequencyPenalty { get; set; }
 }

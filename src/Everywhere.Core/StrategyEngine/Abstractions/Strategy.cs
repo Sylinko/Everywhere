@@ -23,7 +23,11 @@ public sealed partial record Strategy
     /// <summary>
     /// Optional description shown as tooltip or subtitle.
     /// </summary>
-    public IDynamicLocaleKey? DescriptionKey { get; init; }
+    public IDynamicLocaleKey DescriptionKey
+    {
+        get => field ??= DirectLocaleKey.Empty;
+        init;
+    }
 
     /// <summary>
     /// Icon for UI display.

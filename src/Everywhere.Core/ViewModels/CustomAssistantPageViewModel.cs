@@ -156,8 +156,8 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
             Log.Logger.ForContext<CustomAssistantPageViewModel>().Error(
                 ex,
                 "Failed to check connectivity key for endpoint {ProviderId} and model {ModelId}",
-                customAssistant.Endpoint,
-                customAssistant.ModelId);
+                customAssistant.Configuration.Endpoint,
+                customAssistant.Configuration.ModelId);
             ToastHost
                 .CreateToast(LocaleResolver.CustomAssistantPageViewModel_CheckConnectivity_FailedToast_Title)
                 .WithContent(ex.GetFriendlyMessage().ToTextBlock())

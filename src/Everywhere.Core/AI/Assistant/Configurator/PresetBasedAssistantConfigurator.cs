@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
-using ZLinq;
 
 namespace Everywhere.AI.Configurator;
 
@@ -14,6 +14,12 @@ namespace Everywhere.AI.Configurator;
 [GeneratedSettingsItems]
 public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : AssistantConfigurator
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public static IReadOnlyList<ModelProviderTemplate> ModelProviderTemplates => PresetModelTemplates.Providers;
+
+    private static IPresetModelProvider Catalog => ServiceLocator.Resolve<IPresetModelProvider>();
+
     /// <summary>
     /// The ID of the model provider to use for this custom assistant.
     /// This ID should correspond to one of the available model providers in the application.
@@ -21,18 +27,27 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [SettingsItemIgnore]
     public string? ModelProviderTemplateId
     {
-        get => owner.ModelProviderTemplateId;
+        get => (owner.Configuration as PresetAssistantConfiguration)?.ProviderId;
         set
         {
-            if (value == owner.ModelProviderTemplateId) return;
-            owner.ModelProviderTemplateId = value;
+            if (value == ModelProviderTemplateId) return;
 
-            owner.ApplyTemplate(ModelProviderTemplate);
-            ModelDefinitionTemplate = ModelDefinitionTemplates.AsValueEnumerable().FirstOrDefault(m => m.IsDefault);
+            var provider = PresetModelTemplates.Providers.AsValueEnumerable().FirstOrDefault(p => p.Id == value);
+            if (provider is null) return;
 
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ModelProviderTemplate));
-            OnPropertyChanged(nameof(ModelDefinitionTemplates));
+            var models = Catalog.GetModelDefinitions(value);
+            var model = models.FirstOrDefault(m => m.IsDefault) ?? models.FirstOrDefault();
+            var configuration = new PresetAssistantConfiguration
+            {
+                ProviderId = value,
+                Endpoint = provider.Endpoint,
+                Schema = provider.Schema,
+                ApiKey = owner.Configuration.ApiKey
+            };
+
+            if (model is not null) configuration.Apply(model);
+            owner.RequestTimeoutSeconds = provider.RequestTimeoutSeconds;
+            owner.Configuration = configuration;
         }
     }
 
@@ -41,7 +56,7 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [DynamicLocaleKey(
         LocaleKey.CustomAssistant_ModelProviderTemplate_Header,
         LocaleKey.CustomAssistant_ModelProviderTemplate_Description)]
-    [SettingsItem(Group = "_")]
+    [SettingsItem(Group = "_", Classes = ["PresetModelProvider"])]
     [SettingsSelectionItem(nameof(ModelProviderTemplates), DataTemplateKey = typeof(ModelProviderTemplate))]
     public ModelProviderTemplate? ModelProviderTemplate
     {
@@ -52,12 +67,12 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
     [SettingsItemIgnore]
     public Guid ApiKey
     {
-        get => owner.ApiKey;
+        get => owner.Configuration.ApiKey;
         set
         {
-            if (owner.ApiKey == value) return;
+            if (owner.Configuration.ApiKey == value) return;
 
-            owner.ApiKey = value;
+            owner.Configuration.ApiKey = value;
             OnPropertyChanged();
         }
     }
@@ -74,79 +89,87 @@ public sealed partial class PresetBasedAssistantConfigurator(Assistant owner) : 
                 (PresetBasedAssistantConfigurator x) => x.ApiKey,
                 source: this,
                 mode: BindingMode.TwoWay),
-            [!ApiKeyComboBox.DefaultNameProperty] = CompiledBinding.Create(
-                (PresetBasedAssistantConfigurator x) => x.ModelProviderTemplate!.DisplayName,
-                source: this,
-                targetNullValue: string.Empty,
-                fallbackValue: string.Empty)
+            [!ApiKeyComboBox.DefaultNameProperty] = new Binding("ModelProviderTemplate.DisplayNameKey^")
+            {
+                Source = this,
+                Mode = BindingMode.OneWay,
+                TargetNullValue = string.Empty,
+                FallbackValue = string.Empty
+            }
         });
 
+    [Required]
     [JsonIgnore]
     [SettingsItemIgnore]
-    private IEnumerable<ModelDefinitionTemplate> ModelDefinitionTemplates => ModelProviderTemplate?.ModelDefinitions ?? [];
-
-    [SettingsItemIgnore]
-    public string? ModelDefinitionTemplateId
+    public ModelDefinitionTemplate? ModelDefinitionTemplate
     {
-        get => owner.ModelDefinitionTemplateId;
+        get => string.IsNullOrWhiteSpace(owner.Configuration.ModelId) ? null : owner.Configuration.ToTemplate();
         set
         {
-            if (value == owner.ModelDefinitionTemplateId) return;
-            owner.ModelDefinitionTemplateId = value;
-
-            owner.ApplyTemplate(ModelDefinitionTemplate);
-
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ModelDefinitionTemplate));
+            if (value is not null) owner.ApplyTemplate(value);
         }
     }
 
-    [Required]
     [JsonIgnore]
     [DynamicLocaleKey(
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Header,
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Description)]
     [SettingsItem(Group = "_")]
-    [SettingsSelectionItem(nameof(ModelDefinitionTemplates), DataTemplateKey = typeof(ModelDefinitionTemplate))]
-    public ModelDefinitionTemplate? ModelDefinitionTemplate
+    public SettingsControl<PresetModelDefinitionSelector> ModelDefinitionSelector =>
+        new(sp => new PresetModelDefinitionSelector(sp.GetRequiredService<IPresetModelProvider>(), this), false);
+
+    internal override void NotifyConfigurationChanged(AssistantConfiguration previous, AssistantConfiguration current)
     {
-        get => ModelProviderTemplates.FirstOrDefault(t => t.Id == ModelProviderTemplateId)?
-            .ModelDefinitions.FirstOrDefault(m => m.ModelId == ModelDefinitionTemplateId);
-        set => ModelDefinitionTemplateId = value?.ModelId;
+        // TODO: this is shit
+        if ((previous as PresetAssistantConfiguration)?.ProviderId != (current as PresetAssistantConfiguration)?.ProviderId)
+        {
+            OnPropertyChanged(nameof(ModelProviderTemplateId));
+            OnPropertyChanged(nameof(ModelProviderTemplate));
+        }
+        if (previous.ApiKey != current.ApiKey) OnPropertyChanged(nameof(ApiKey));
+        if (previous.ModelId != current.ModelId || previous.ContextLimit != current.ContextLimit ||
+            previous.OutputLimit != current.OutputLimit || previous.SupportsToolCall != current.SupportsToolCall ||
+            previous.Name != current.Name || previous.InputModalities != current.InputModalities ||
+            previous.OutputModalities != current.OutputModalities)
+            OnPropertyChanged(nameof(ModelDefinitionTemplate));
     }
 
-    public override void Backup()
+    internal override void NotifyConfigurationChanged(string? propertyName)
     {
-        Backup(owner.ApiKey);
-        Backup(owner.ModelProviderTemplateId);
-        Backup(owner.ModelDefinitionTemplateId);
-    }
-
-    public override void Apply()
-    {
-        owner.ApiKey = Restore(owner.ApiKey);
-        owner.ModelProviderTemplateId = Restore(owner.ModelProviderTemplateId);
-        owner.ModelDefinitionTemplateId = Restore(owner.ModelDefinitionTemplateId);
-
-        owner.ApplyTemplate(ModelProviderTemplate);
-        owner.ApplyTemplate(ModelDefinitionTemplate);
+        // TODO: this is shit
+        if (propertyName == nameof(PresetAssistantConfiguration.ProviderId))
+        {
+            OnPropertyChanged(nameof(ModelProviderTemplateId));
+            OnPropertyChanged(nameof(ModelProviderTemplate));
+        }
+        else if (propertyName == nameof(AssistantConfiguration.ApiKey)) OnPropertyChanged(nameof(ApiKey));
+        else if (propertyName is nameof(AssistantConfiguration.ModelId) or nameof(AssistantConfiguration.Name) or
+                 nameof(AssistantConfiguration.SupportsToolCall) or nameof(AssistantConfiguration.InputModalities) or
+                 nameof(AssistantConfiguration.OutputModalities) or nameof(AssistantConfiguration.ContextLimit) or
+                 nameof(AssistantConfiguration.OutputLimit) or nameof(AssistantConfiguration.Specializations) or
+                 nameof(AssistantConfiguration.DeprecationDate) or nameof(AssistantConfiguration.ReleaseDate) or
+                 nameof(AssistantConfiguration.KnowledgeCutoff))
+            OnPropertyChanged(nameof(ModelDefinitionTemplate));
     }
 
     public override Assistant ResolveAssistant(ModelSpecializations specialization)
     {
-        if (specialization == ModelSpecializations.Default || owner.Specializations.HasFlag(specialization))
+        if (specialization == ModelSpecializations.Default || owner.Configuration.Specializations.HasFlag(specialization))
         {
             // If the current assistant already has the specialization, return it directly.
             return owner;
         }
 
         if (ModelProviderTemplate is { } modelProviderTemplate &&
-            modelProviderTemplate.ModelDefinitions.FirstOrDefault(m => m.Specializations.HasFlag(specialization)) is { } modelDefinitionTemplate)
+            Catalog.GetModelDefinitions(modelProviderTemplate.Id).FirstOrDefault(m => m.Specializations.HasFlag(specialization)) is { } modelDefinitionTemplate)
         {
             var systemAssistant = new SystemAssistant(specialization)
             {
-                ApiKey = owner.ApiKey,
-                ConfiguratorType = AssistantConfiguratorType.PresetBased
+                Configuration = new PresetAssistantConfiguration
+                {
+                    ProviderId = modelProviderTemplate.Id,
+                    ApiKey = owner.Configuration.ApiKey
+                }
             };
             systemAssistant.ApplyTemplate(modelProviderTemplate);
             systemAssistant.ApplyTemplate(modelDefinitionTemplate);

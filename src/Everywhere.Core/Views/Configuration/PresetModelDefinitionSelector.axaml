@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:v="using:Everywhere.Views"
+                    xmlns:ai="using:Everywhere.AI"
+                    xmlns:shadui="using:ShadUI">
+  <ControlTheme x:Key="{x:Type v:PresetModelDefinitionSelector}" TargetType="v:PresetModelDefinitionSelector">
+    <Setter Property="MinWidth" Value="280"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="4">
+          <DockPanel LastChildFill="True">
+            <Button DockPanel.Dock="Right" Classes="Ghost" Width="40" Margin="8,0,0,0"
+                    Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                    IsEnabled="{Binding !Provider.IsBusy, RelativeSource={RelativeSource TemplatedParent}}"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
+              <LucideIcon Kind="RefreshCcw" Size="{DynamicResource FontSizeL}"/>
+            </Button>
+            <ComboBox ItemsSource="{TemplateBinding Items}" HorizontalAlignment="Stretch"
+                      MaxDropDownHeight="480" shadui:ControlAssist.MinHeight="40"
+                      SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="ai:ModelDefinitionTemplate">
+                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </DockPanel>
+          <Panel Height="2">
+            <ProgressBar IsIndeterminate="True" Height="2"
+                         IsVisible="{Binding Provider.IsBusy, RelativeSource={RelativeSource TemplatedParent}}"/>
+            <ProgressBar IsIndeterminate="True" Height="2"
+                         IsVisible="{Binding RefreshCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
+          </Panel>
+          <TextBlock FontSize="12" TextWrapping="Wrap"
+                     IsVisible="{TemplateBinding IsUnlisted}"
+                     Text="{I18N {x:Static LocaleKey.PresetModelSelector_Unlisted}}"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

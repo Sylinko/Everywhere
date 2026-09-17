@@ -3983,4 +3983,50 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluid</value>
     </data>
+    <data name="PresetModelSelector_Unlisted" xml:space="preserve"><value>This model is not listed in the current catalog. Its saved configuration is retained.</value></data>
+    <data name="PresetModelProvider_OpenAI" xml:space="preserve">
+        <value>OpenAI</value>
+    </data>
+    <data name="PresetModelProvider_Anthropic" xml:space="preserve">
+        <value>Anthropic</value>
+    </data>
+    <data name="PresetModelProvider_Google" xml:space="preserve">
+        <value>Google</value>
+    </data>
+    <data name="PresetModelProvider_Mistral" xml:space="preserve">
+        <value>Mistral AI</value>
+    </data>
+    <data name="PresetModelProvider_DeepSeek" xml:space="preserve">
+        <value>DeepSeek</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotChina" xml:space="preserve">
+        <value>Moonshot AI (China)</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxChina" xml:space="preserve">
+        <value>MiniMax (China)</value>
+    </data>
+    <data name="PresetModelProvider_OpenRouter" xml:space="preserve">
+        <value>OpenRouter</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowChina" xml:space="preserve">
+        <value>SiliconFlow (China)</value>
+    </data>
+    <data name="PresetModelProvider_Ollama" xml:space="preserve">
+        <value>Ollama</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotInternational" xml:space="preserve">
+        <value>Moonshot AI</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxInternational" xml:space="preserve">
+        <value>MiniMax</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowInternational" xml:space="preserve">
+        <value>SiliconFlow</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuChina" xml:space="preserve">
+        <value>Zhipu AI (China)</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuInternational" xml:space="preserve">
+        <value>Z.AI</value>
+    </data>
 </root>

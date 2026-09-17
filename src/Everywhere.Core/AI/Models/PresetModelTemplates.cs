@@ -1,21 +1,21 @@
 using System.Text.Json.Serialization;
 using Everywhere.Configuration;
 
-namespace Everywhere.AI.Configurator;
+namespace Everywhere.AI;
 
-partial class PresetBasedAssistantConfigurator
+public static class PresetModelTemplates
 {
     /// <summary>
     /// Helper property to get all supported model provider templates.
     /// </summary>
     [JsonIgnore]
     [SettingsItemIgnore]
-    public static ModelProviderTemplate[] ModelProviderTemplates { get; } =
+    public static ModelProviderTemplate[] Providers { get; } =
     [
         new()
         {
             Id = "openai",
-            DisplayName = "OpenAI",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_OpenAI),
             Endpoint = "https://api.openai.com/v1",
             OfficialWebsiteUrl = "https://openai.com",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/openai-dark.svg",
@@ -137,8 +137,7 @@ partial class PresetBasedAssistantConfigurator
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_047_576,
-                    OutputLimit = 32_768,
-                    Specializations = ModelSpecializations.ContextCompression
+                    OutputLimit = 32_768
                 },
                 new ModelDefinitionTemplate
                 {
@@ -165,7 +164,7 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "anthropic",
-            DisplayName = "Anthropic (Claude)",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_Anthropic),
             Endpoint = "https://api.anthropic.com",
             OfficialWebsiteUrl = "https://www.anthropic.com",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/anthropic-dark.svg",
@@ -232,8 +231,7 @@ partial class PresetBasedAssistantConfigurator
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 64_000,
-                    IsDefault = true,
-                    Specializations = ModelSpecializations.ContextCompression
+                    IsDefault = true
                 },
                 new ModelDefinitionTemplate
                 {
@@ -293,7 +291,7 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "google",
-            DisplayName = "Google (Gemini)",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_Google),
             OfficialWebsiteUrl = "https://gemini.google.com",
             Endpoint = "https://generativelanguage.googleapis.com/v1beta",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/google-color.svg",
@@ -330,8 +328,7 @@ partial class PresetBasedAssistantConfigurator
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Audio | Modalities.Video | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
-                    OutputLimit = 65_536,
-                    Specializations = ModelSpecializations.ContextCompression
+                    OutputLimit = 65_536
                 },
                 new ModelDefinitionTemplate
                 {
@@ -379,7 +376,7 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "mistral",
-            DisplayName = "Mistral AI",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_Mistral),
             OfficialWebsiteUrl = "https://mistral.ai",
             Endpoint = "https://api.mistral.ai/v1",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/mistral-color.svg",
@@ -423,7 +420,7 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "deepseek",
-            DisplayName = "DeepSeek",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_DeepSeek),
             Endpoint = "https://api.deepseek.com",
             OfficialWebsiteUrl = "https://www.deepseek.com",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/deepseek-color.svg",
@@ -457,8 +454,56 @@ partial class PresetBasedAssistantConfigurator
         },
         new()
         {
-            Id = "moonshot",
-            DisplayName = "Moonshot (Kimi)",
+            Id = "moonshotai",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_MoonshotInternational),
+            Endpoint = "https://api.moonshot.ai/v1",
+            Schema = ModelProviderSchema.OpenAI,
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/moonshot-dark.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/moonshot-light.svg",
+            DocumentationUrl = "https://platform.moonshot.ai/docs/api/chat",
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "kimi-k2.6",
+                    Name = "Kimi K2.6",
+                    SupportsToolCall = true,
+                    IsDefault = true,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 262144,
+                    OutputLimit = 262144
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "kimi-k2.7-code",
+                    Name = "Kimi K2.7 Code",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 262144,
+                    OutputLimit = 262144,
+                    Specializations = ModelSpecializations.TitleGeneration
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "kimi-k2.7-code-highspeed",
+                    Name = "Kimi K2.7 Code HighSpeed",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 262144,
+                    OutputLimit = 262144,
+                    Specializations = ModelSpecializations.ImageUnderstanding
+                },
+            ]
+        },
+        new()
+        {
+            Id = "moonshotai-cn",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_MoonshotChina),
             Endpoint = "https://api.moonshot.cn/v1",
             OfficialWebsiteUrl = "https://www.moonshot.cn",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/moonshot-dark.svg",
@@ -492,7 +537,55 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "minimax",
-            DisplayName = "MiniMax",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_MiniMaxInternational),
+            Endpoint = "https://api.minimax.io/anthropic",
+            Schema = ModelProviderSchema.Anthropic,
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/minimax-color.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/minimax-color.svg",
+            DocumentationUrl = "https://platform.minimax.io/docs/guides/quickstart",
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "MiniMax-M2.7",
+                    Name = "MiniMax-M2.7",
+                    SupportsToolCall = true,
+                    IsDefault = true,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 204800,
+                    OutputLimit = 131072
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "MiniMax-M2.5",
+                    Name = "MiniMax-M2.5",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 204800,
+                    OutputLimit = 131072,
+                    Specializations = ModelSpecializations.TitleGeneration
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "MiniMax-M2.1",
+                    Name = "MiniMax-M2.1",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 204800,
+                    OutputLimit = 131072,
+                    Specializations = ModelSpecializations.Default
+                },
+            ]
+        },
+        new()
+        {
+            Id = "minimax-cn",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_MiniMaxChina),
             Endpoint = "https://api.minimaxi.com/anthropic",
             OfficialWebsiteUrl = "https://minimaxi.com",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/minimax-color.svg",
@@ -505,7 +598,7 @@ partial class PresetBasedAssistantConfigurator
                     ModelId = "MiniMax-M3",
                     Name = "MiniMax-M3",
                     SupportsToolCall = true,
-                    InputModalities = Modalities.Text |  Modalities.Image | Modalities.Video,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 128_000,
@@ -587,7 +680,7 @@ partial class PresetBasedAssistantConfigurator
         new()
         {
             Id = "openrouter",
-            DisplayName = "OpenRouter",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_OpenRouter),
             OfficialWebsiteUrl = "https://openrouter.ai",
             Endpoint = "https://openrouter.ai/api/v1",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/openrouter-dark.svg",
@@ -742,8 +835,56 @@ partial class PresetBasedAssistantConfigurator
         },
         new()
         {
-            Id = "siliconcloud",
-            DisplayName = "SiliconCloud (SiliconFlow)",
+            Id = "siliconflow",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_SiliconFlowInternational),
+            Endpoint = "https://api.siliconflow.com/v1",
+            Schema = ModelProviderSchema.OpenAI,
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/siliconcloud-color.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/siliconcloud-color.svg",
+            DocumentationUrl = "https://cloud.siliconflow.com/models",
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "Qwen/Qwen3-8B",
+                    Name = "Qwen/Qwen3-8B",
+                    SupportsToolCall = true,
+                    IsDefault = true,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 131000,
+                    OutputLimit = 131000
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "Qwen/Qwen3.5-35B-A3B",
+                    Name = "Qwen3.5 35B-A3B",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 262144,
+                    OutputLimit = 262144,
+                    Specializations = ModelSpecializations.TitleGeneration
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "Qwen/Qwen3.5-397B-A17B",
+                    Name = "Qwen3.5 397B-A17B",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 262144,
+                    OutputLimit = 262144,
+                    Specializations = ModelSpecializations.Default
+                },
+            ]
+        },
+        new()
+        {
+            Id = "siliconflow-cn",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_SiliconFlowChina),
             OfficialWebsiteUrl = "https://www.siliconflow.cn",
             Endpoint = "https://api.siliconflow.cn/v1",
             DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/siliconcloud-color.svg",
@@ -780,8 +921,7 @@ partial class PresetBasedAssistantConfigurator
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 262_000,
-                    OutputLimit = 262_000,
-                    Specializations = ModelSpecializations.ContextCompression
+                    OutputLimit = 262_000
                 },
                 new ModelDefinitionTemplate
                 {
@@ -859,48 +999,98 @@ partial class PresetBasedAssistantConfigurator
         },
         new()
         {
-            Id = "ollama",
-            DisplayName = "Ollama",
-            OfficialWebsiteUrl = "https://ollama.com",
-            Endpoint = "http://127.0.0.1:11434",
-            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/ollama-dark.svg",
-            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/ollama-light.svg",
-            Schema = ModelProviderSchema.Ollama,
-            RequestTimeoutSeconds = 120, // Local models may take longer time.
+            Id = "zai",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_ZhipuInternational),
+            Endpoint = "https://api.z.ai/api/paas/v4",
+            Schema = ModelProviderSchema.OpenAI,
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/zai-dark.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/zai-light.svg",
+            DocumentationUrl = "https://docs.z.ai/guides/overview/pricing",
             ModelDefinitions =
             [
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "gpt-oss:20b",
-                    Name = "GPT-OSS 20B",
+                    ModelId = "glm-4.7",
+                    Name = "GLM-4.7",
                     SupportsToolCall = true,
+                    IsDefault = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 64_000,
-                    OutputLimit = 4_096,
-                    Specializations = ModelSpecializations.TitleGeneration | ModelSpecializations.ContextCompression
+                    ContextLimit = 204800,
+                    OutputLimit = 131072
                 },
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "deepseek-r1:8b",
-                    Name = "DeepSeek R1 8B",
-                    SupportsToolCall = false,
+                    ModelId = "glm-4.7-flash",
+                    Name = "GLM-4.7-Flash",
+                    SupportsToolCall = true,
+                    IsDefault = false,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 64_000,
-                    OutputLimit = 4_096,
-                    IsDefault = true
+                    ContextLimit = 200000,
+                    OutputLimit = 131072,
+                    Specializations = ModelSpecializations.TitleGeneration
                 },
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "qwen3:8b",
-                    Name = "Qwen 3 8B",
+                    ModelId = "glm-4.6v",
+                    Name = "GLM-4.6V",
                     SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 128000,
+                    OutputLimit = 32768,
+                    Specializations = ModelSpecializations.ImageUnderstanding
+                },
+            ]
+        },
+        new()
+        {
+            Id = "zhipuai",
+            DisplayNameKey = new DynamicLocaleKey(LocaleKey.PresetModelProvider_ZhipuChina),
+            Endpoint = "https://open.bigmodel.cn/api/paas/v4",
+            Schema = ModelProviderSchema.OpenAI,
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/zai-dark.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/zai-light.svg",
+            DocumentationUrl = "https://docs.z.ai/guides/overview/pricing",
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "glm-4.7",
+                    Name = "GLM-4.7",
+                    SupportsToolCall = true,
+                    IsDefault = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 64_000,
-                    OutputLimit = 4_096,
-                }
+                    ContextLimit = 204800,
+                    OutputLimit = 131072
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "glm-4.7-flash",
+                    Name = "GLM-4.7-Flash",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 200000,
+                    OutputLimit = 131072,
+                    Specializations = ModelSpecializations.TitleGeneration
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "glm-4.6v",
+                    Name = "GLM-4.6V",
+                    SupportsToolCall = true,
+                    IsDefault = false,
+                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 128000,
+                    OutputLimit = 32768,
+                    Specializations = ModelSpecializations.ImageUnderstanding
+                },
             ]
         }
     ];

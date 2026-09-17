@@ -88,7 +88,7 @@ public partial class OfficialModelDefinitionSelector(IServiceProvider servicePro
 
     private ModelDefinitionTemplate? _selectedItem;
     private ItemWrapper? _selectedItemWrapper;
-    private string? _selectedModelId = assistant.ModelId;
+    private string? _selectedModelId = assistant.Configuration.ModelId;
     private ModelDefinitionTemplate? _selectedSnapshot;
     private bool _isSynchronizingItems;
 
@@ -271,7 +271,7 @@ public partial class OfficialModelDefinitionSelector(IServiceProvider servicePro
         IReadOnlyCollection<ModelDefinitionTemplate> cloudItems)
     {
         var finalItems = cloudItems.ToList();
-        var desiredModelId = FirstNonEmpty(targetModelId, selectedSnapshot?.ModelId, assistant.ModelId);
+        var desiredModelId = FirstNonEmpty(targetModelId, selectedSnapshot?.ModelId, assistant.Configuration.ModelId);
         if (desiredModelId.IsNullOrWhiteSpace())
         {
             return new ReconcileResult(finalItems, null, null, false);
@@ -302,13 +302,13 @@ public partial class OfficialModelDefinitionSelector(IServiceProvider servicePro
         {
             ModelId = modelId,
             Name = modelId,
-            SupportsToolCall = assistant.SupportsToolCall,
-            InputModalities = assistant.InputModalities,
-            OutputModalities = assistant.OutputModalities,
-            ContextLimit = assistant.ContextLimit,
-            OutputLimit = assistant.OutputLimit,
-            Specializations = assistant.Specializations,
-            DeprecationDate = assistant.DeprecationDate
+            SupportsToolCall = assistant.Configuration.SupportsToolCall,
+            InputModalities = assistant.Configuration.InputModalities,
+            OutputModalities = assistant.Configuration.OutputModalities,
+            ContextLimit = assistant.Configuration.ContextLimit,
+            OutputLimit = assistant.Configuration.OutputLimit,
+            Specializations = assistant.Configuration.Specializations,
+            DeprecationDate = assistant.Configuration.DeprecationDate
         };
     }
 

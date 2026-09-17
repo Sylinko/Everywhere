@@ -53,6 +53,7 @@
     <PackageReference Include="PuppeteerSharp"/>
     <PackageReference Include="PdfPig"/>
     <PackageReference Include="ReverseMarkdown"/>
+    <PackageReference Include="Riok.Mapperly" PrivateAssets="all"/>
     <PackageReference Include="Sentry"/>
     <PackageReference Include="Sentry.OpenTelemetry"/>
     <PackageReference Include="Sentry.Serilog"/>

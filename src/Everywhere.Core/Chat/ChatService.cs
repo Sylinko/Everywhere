@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
 using Avalonia.Platform.Storage;
@@ -441,7 +441,7 @@ public sealed partial class ChatService : IChatService
             _serviceProvider.GetService<ChatWindow>()?.StorageProvider ?? App.StorageProvider); // TODO: maybe we need a ITopLevelService
 
         var customAssistant = assistant as CustomAssistant;
-        if (kernelMixin.SupportsToolCall && (customAssistant?.IsToolCallEnabled ?? true))
+        if (kernelMixin.Configuration.SupportsToolCall && (customAssistant?.IsToolCallEnabled ?? true))
         {
             var userMessage = chatContext.Read(list => list.AsValueEnumerable().Select(n => n.Message).OfType<UserChatMessage>().LastOrDefault());
             var strategyToolRulesets = userMessage?.As<UserStrategyChatMessage>()?.Strategy.ToolPatternRulesets;
@@ -490,8 +490,8 @@ public sealed partial class ChatService : IChatService
             cancellationToken.ThrowIfCancellationRequested();
 
             var customAssistant = assistant as CustomAssistant;
-            var toolCallStatus = customAssistant?.ToolCallStatus ??
-                (kernelMixin.SupportsToolCall ? ToolCallStatus.Enabled : ToolCallStatus.NotSupported);
+            var toolCallStatus = !kernelMixin.Configuration.SupportsToolCall ? ToolCallStatus.NotSupported :
+                customAssistant?.IsToolCallEnabled == false ? ToolCallStatus.Disabled : ToolCallStatus.Enabled;
             var promptRenderer = new ScopedPromptRenderer(
                 SystemPromptPlaceholderSource.Instance,
                 new PromptPlaceholderContext(
@@ -515,7 +515,7 @@ public sealed partial class ChatService : IChatService
                 kernelMixin,
                 promptRenderer,
                 promptRenderer.RenderSystemPrompt(systemPromptTemplate),
-                assistant.InputModalities,
+                kernelMixin.Configuration.InputModalities,
                 customAssistant is not null ?
                     ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold) :
                     ContextUsageSnapshot.DefaultCompressionThresholdPercentage);
@@ -546,7 +546,7 @@ public sealed partial class ChatService : IChatService
         StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _activitySource.StartChatActivity("chat", assistant);
+        using var activity = _activitySource.StartChatActivity("chat", assistant.Configuration);
         activity?.SetTag("id", chatContext.Metadata.Id);
 
         GenerationContext? environment = null;
@@ -589,8 +589,8 @@ public sealed partial class ChatService : IChatService
                     systemPrompt,
                     chatContext.Items,
                     _persistentState.MaxContextRounds,
-                    assistant.InputModalities,
-                    kernelMixin.ContextLimit,
+                    kernelMixin.Configuration.InputModalities,
+                    kernelMixin.Configuration.ContextLimit,
                     cancellationToken);
 
                 if (_settings.ChatWindow.AutomaticallyGenerateTitle &&
@@ -641,8 +641,8 @@ public sealed partial class ChatService : IChatService
                 }
                 await chatContext.ReportContextUsageAsync(
                     invocationResult.Usage,
-                    kernelMixin.ModelId,
-                    kernelMixin.ContextLimit);
+                    kernelMixin.Configuration.ModelId!,
+                    kernelMixin.Configuration.ContextLimit);
 
                 if (invocationResult.FunctionCalls.Count > 0)
                 {
@@ -700,8 +700,8 @@ public sealed partial class ChatService : IChatService
         {
             _currentModelInvocationEventId.Value = previousModelInvocationEventId;
             activity.SetChatUsageTags(assistantChatMessage.UsageDetails);
-            RecordChatUsageMetrics(assistantChatMessage.UsageDetails, assistant.ModelId);
-            _chatRequestsCounter.Add(1, GetModelTag(assistant.ModelId));
+            RecordChatUsageMetrics(assistantChatMessage.UsageDetails, environment?.KernelMixin.Configuration.ModelId);
+            _chatRequestsCounter.Add(1, GetModelTag(environment?.KernelMixin.Configuration.ModelId));
 
             assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
             assistantChatMessage.IsBusy = false;
@@ -720,10 +720,10 @@ public sealed partial class ChatService : IChatService
         var usageBefore = chatContext.ContextUsage.Snapshot;
         var compressionMessage = new ContextCompressionChatMessage(
             coveredThroughNodeId,
-            context.KernelMixin.ModelId,
+            context.KernelMixin.Configuration.ModelId,
             trigger,
             usageBefore.TotalTokenCount,
-            context.KernelMixin.ContextLimit > 0 ? context.KernelMixin.ContextLimit : null);
+            context.KernelMixin.Configuration.ContextLimit > 0 ? context.KernelMixin.Configuration.ContextLimit : null);
 
         await using var compactionScope = await chatContext.BeginContextCompactionAsync();
         chatContext.Add(compressionMessage);
@@ -739,7 +739,7 @@ public sealed partial class ChatService : IChatService
             }
 
             var messages = ChatHistoryBuilder
-                .SelectContextMessages(sourceNodes, _persistentState.MaxContextRounds, context.KernelMixin.ContextLimit)
+                .SelectContextMessages(sourceNodes, _persistentState.MaxContextRounds, context.KernelMixin.Configuration.ContextLimit)
                 .ToList();
             var wasSourceHistoryTrimmed = false;
             string summary;
@@ -777,8 +777,8 @@ public sealed partial class ChatService : IChatService
 
             compressionMessage.Complete(summary, wasSourceHistoryTrimmed, DateTimeOffset.UtcNow);
             await chatContext.MarkContextCompactedAsync(
-                context.KernelMixin.ModelId,
-                context.KernelMixin.ContextLimit);
+                context.KernelMixin.Configuration.ModelId!,
+                context.KernelMixin.Configuration.ContextLimit);
             return true;
         }
         catch (OperationCanceledException ex)
@@ -817,7 +817,7 @@ public sealed partial class ChatService : IChatService
             cancellationToken);
         chatHistory.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
 
-        using var activity = _activitySource.StartChatActivity("compact_context", context.KernelMixin);
+        using var activity = _activitySource.StartChatActivity("compact_context", context.KernelMixin.Configuration);
         activity?.SetTag("gen_ai.messages.count", chatHistory.Count);
         var promptExecutionSettings = context.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None());
         var summaryBuilder = new StringBuilder();
@@ -835,18 +835,19 @@ public sealed partial class ChatService : IChatService
                 chatContext.Metadata.Id,
                 compressionMessageNodeId,
                 StatisticsModelInvocationPurpose.ContextCompression,
-                context.KernelMixin.ModelId,
+                context.KernelMixin.Configuration.ModelId,
                 startedAt),
             cancellationToken);
         _currentModelInvocationEventId.Value = invocationId;
 
         try
         {
-            await foreach (var content in context.KernelMixin.ChatCompletionService.GetStreamingChatMessageContentsAsync(
-                               chatHistory,
-                               promptExecutionSettings,
-                               context.Kernel,
-                               cancellationToken))
+            var contents = context.KernelMixin.ChatCompletionService.GetStreamingChatMessageContentsAsync(
+                chatHistory,
+                promptExecutionSettings,
+                context.Kernel,
+                cancellationToken);
+            await foreach (var content in contents)
             {
                 usage.Update(content);
                 if (functionCallBuilder.Append(content))
@@ -890,8 +891,8 @@ public sealed partial class ChatService : IChatService
         {
             var finishedAt = DateTimeOffset.UtcNow;
             activity.SetChatUsageTags(usage);
-            RecordChatUsageMetrics(usage, context.KernelMixin.ModelId);
-            _chatRequestsCounter.Add(1, GetModelTag(context.KernelMixin.ModelId));
+            RecordChatUsageMetrics(usage, context.KernelMixin.Configuration.ModelId);
+            _chatRequestsCounter.Add(1, GetModelTag(context.KernelMixin.Configuration.ModelId));
             _currentModelInvocationEventId.Value = previousModelInvocationEventId;
             await _statisticsRecorder.CompleteModelInvocationAsync(
                 invocationId,
@@ -1074,7 +1075,7 @@ public sealed partial class ChatService : IChatService
         StatisticsModelInvocationPurpose purpose,
         CancellationToken cancellationToken)
     {
-        using var activity = _activitySource.StartChatActivity("invoke_agent", kernelMixin);
+        using var activity = _activitySource.StartChatActivity("invoke_agent", kernelMixin.Configuration);
         activity?.SetTag("gen_ai.messages.count", chatHistory.Count);
 
         AuthorRole? authorRole = null;
@@ -1087,7 +1088,7 @@ public sealed partial class ChatService : IChatService
         DateTimeOffset? firstTokenAt = null;
         var isFirstToken = true;
         var promptExecutionSettings = kernelMixin.GetPromptExecutionSettings(
-            kernelMixin.SupportsToolCall && kernel.Plugins.Count > 0 ?
+            kernelMixin.Configuration.SupportsToolCall && kernel.Plugins.Count > 0 ?
                 FunctionChoiceBehavior.Auto(autoInvoke: false) :
                 null);
 
@@ -1099,7 +1100,7 @@ public sealed partial class ChatService : IChatService
                 chatContext.Metadata.Id,
                 FindMessageNode(chatContext, assistantChatMessage)?.Id,
                 purpose,
-                kernelMixin.ModelId,
+                kernelMixin.Configuration.ModelId,
                 startTime),
             cancellationToken);
         _currentModelInvocationEventId.Value = invocationId;
@@ -1122,7 +1123,7 @@ public sealed partial class ChatService : IChatService
                     firstTokenAt = DateTimeOffset.UtcNow;
                     var ttftSeconds = (firstTokenAt.Value - startTime).TotalSeconds;
                     activity?.SetTag("gen_ai.request.ttft", ttftSeconds);
-                    _timeToFirstTokenHistogram.Record(ttftSeconds, GetModelTag(kernelMixin.ModelId));
+                    _timeToFirstTokenHistogram.Record(ttftSeconds, GetModelTag(kernelMixin.Configuration.ModelId));
                 }
 
                 // Add persistent message-level metadata to the assistant chat message.
@@ -1219,7 +1220,7 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.UsageDetails.Accumulate(usage, generationSeconds); // Accumulate usage details.
 
             activity.SetChatUsageTags(usage);
-            RecordChatUsageMetrics(usage, kernelMixin.ModelId);
+            RecordChatUsageMetrics(usage, kernelMixin.Configuration.ModelId);
 
             if (assistantChatMessage.Spans is { Count: > 0 } spans)
                 spans[^1].FinishedAt ??= generationEndTime;
@@ -1501,7 +1502,7 @@ public sealed partial class ChatService : IChatService
         ChatPluginDisplayBlock? displayBlock,
         CancellationToken cancellationToken)
     {
-        using var activity = _activitySource.StartChatActivity("execute_tool", kernelMixin);
+        using var activity = _activitySource.StartChatActivity("execute_tool", kernelMixin.Configuration);
         activity?.SetTag("gen_ai.tool.plugin", content.PluginName);
         activity?.SetTag("gen_ai.tool.name", content.FunctionName);
         activity?.SetTag("gen_ai.tool.input", content.Arguments?.ToString());
@@ -1660,8 +1661,7 @@ public sealed partial class ChatService : IChatService
         KernelMixin kernelMixin;
         try
         {
-            var systemAssistant = _settings.SystemAssistant.TitleGeneration.Resolve(assistant);
-            kernelMixin = _kernelMixinFactory.Create(systemAssistant);
+            kernelMixin = _kernelMixinFactory.Create(_settings.SystemAssistant.TitleGeneration.Resolve(assistant));
         }
         catch (Exception ex)
         {
@@ -1670,8 +1670,8 @@ public sealed partial class ChatService : IChatService
             return;
         }
 
-        _chatTopicsCounter.Add(1, GetModelTag(kernelMixin.ModelId));
-        using var activity = _activitySource.StartChatActivity("generate_topic", kernelMixin);
+        _chatTopicsCounter.Add(1, GetModelTag(kernelMixin.Configuration.ModelId));
+        using var activity = _activitySource.StartChatActivity("generate_topic", kernelMixin.Configuration);
         var startedAt = DateTimeOffset.UtcNow;
         var invocationId = Guid.CreateVersion7();
         var usage = new ChatUsageDetails();
@@ -1683,7 +1683,7 @@ public sealed partial class ChatService : IChatService
                 metadata.Id,
                 null,
                 StatisticsModelInvocationPurpose.TopicGeneration,
-                kernelMixin.ModelId,
+                kernelMixin.Configuration.ModelId,
                 startedAt),
             cancellationToken);
         try
@@ -1728,13 +1728,17 @@ public sealed partial class ChatService : IChatService
             }
 
             activity.SetChatUsageTags(usage);
-            RecordChatUsageMetrics(usage, kernelMixin.ModelId);
+            RecordChatUsageMetrics(usage, kernelMixin.Configuration.ModelId);
 
             ReadOnlySpan<char> punctuationChars = ['.', ',', '!', '?', '。', '，', '！', '？'];
             titleBuilder.Length = Math.Min(100, titleBuilder.Length); // Limit the title length to 100 characters to avoid excessively long titles.
             for (var i = titleBuilder.Length - 1; i >= 0; i--)
             {
                 if (char.IsWhiteSpace(titleBuilder[i]) || punctuationChars.Contains(titleBuilder[i])) continue;
+                if (i > 0 && char.IsHighSurrogate(titleBuilder[i - 1]) && char.IsLowSurrogate(titleBuilder[i]))
+                {
+                    i--; // If the last character is a surrogate pair, include the high surrogate as well.
+                }
 
                 // Truncate the title at the last non-whitespace and non-punctuation character to avoid ending with incomplete words or punctuation.
                 titleBuilder.Length = i + 1;

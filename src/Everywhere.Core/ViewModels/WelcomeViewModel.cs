@@ -48,6 +48,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
 
     private readonly IReadOnlyList<WelcomeViewModelStep> _steps;
     private int _currentStepIndex;
+    private readonly IDisposable _assistantRegistration;
 
     public WelcomeViewModel(IServiceProvider serviceProvider)
     {
@@ -61,6 +62,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
             ConfiguratorType = AssistantConfiguratorType.Official
         };
         Assistant.PropertyChanged += HandleAssistantPropertyChanged;
+        _assistantRegistration = serviceProvider.GetRequiredService<AssistantConfigurationSynchronizer>().TrackDraft(Assistant);
 
         _steps =
         [
@@ -120,6 +122,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
             Settings.Model.SelectedCustomAssistant = Assistant;
         }
 
+        _assistantRegistration.Dispose();
         CurrentStep?.CancellationTokenSource.Cancel();
         DialogHost.CloseAll();
     }

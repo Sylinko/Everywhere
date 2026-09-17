@@ -36,7 +36,7 @@
 
       <TextBlock
         VerticalAlignment="Center"
-        Text="{Binding DisplayName}"/>
+        Text="{Binding DisplayNameKey^}"/>
     </StackPanel>
   </DataTemplate>
 
@@ -148,13 +148,13 @@
 
         <shadui:Badge
           Background="Chocolate"
-          IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
+          IsVisible="{Binding Configuration.InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
           <LucideIcon Kind="Eye"/>
         </shadui:Badge>
         <shadui:Badge
           Background="CadetBlue"
-          IsVisible="{Binding SupportsToolCall}"
+          IsVisible="{Binding Configuration.SupportsToolCall}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
           <LucideIcon Kind="Hammer"/>
         </shadui:Badge>
@@ -163,17 +163,17 @@
           <ToolTip.Tip>
             <TextBlock>
               <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
-              <Run Text="{Binding ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+              <Run Text="{Binding Configuration.ContextLimit, StringFormat=' {0:N0}'}"/>
               <LineBreak/>
               <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
-              <Run Text="{Binding OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
+              <Run Text="{Binding Configuration.OutputLimit, StringFormat=' {0:N0}'}"/>
             </TextBlock>
           </ToolTip.Tip>
 
           <TextBlock
             FontSize="{DynamicResource FontSizeS}"
             Foreground="{DynamicResource BadgeForegroundColor}"
-            Text="{Binding ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
+            Text="{Binding Configuration.ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
         </shadui:Badge>
       </StackPanel>
     </Grid>
