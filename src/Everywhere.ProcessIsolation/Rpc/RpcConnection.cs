@@ -325,7 +325,7 @@ public sealed class RpcConnection : IAsyncDisposable
         switch (frame.Header.Kind)
         {
             case RpcFrameKind.Request:
-                _router.Track(DispatchRequestAsync(frame, cancellationToken), FailDispatch);
+                DispatchRequest(frame, cancellationToken);
                 break;
             case RpcFrameKind.Response:
                 DispatchResponse(frame);
@@ -348,25 +348,30 @@ public sealed class RpcConnection : IAsyncDisposable
         }
     }
 
-    private async ValueTask DispatchRequestAsync(RpcFrame frame, CancellationToken cancellationToken)
+    private void DispatchRequest(RpcFrame frame, CancellationToken connectionCancellationToken)
     {
         if (_options.RequireHandshake
             && !IsHandshakeCompleted
             && frame.Header.OperationId != RpcProtocolConstants.HandshakeOperationId)
         {
-            await SendErrorAsync(
-                frame.Header.OperationId,
-                frame.Header.CorrelationId,
-                "handshake_required",
-                "The RPC handshake must complete before other operations.",
-                null,
-                cancellationToken).ConfigureAwait(false);
+            _router.Dispatch(
+                () => SendErrorAsync(
+                    frame.Header.OperationId,
+                    frame.Header.CorrelationId,
+                    "handshake_required",
+                    "The RPC handshake must complete before other operations.",
+                    null,
+                    connectionCancellationToken),
+                FailDispatch);
             return;
         }
 
         if (_router.TryGetStream(frame.Header.OperationId, out var streamHandler))
         {
-            await DispatchStreamRequestAsync(frame, streamHandler, cancellationToken).ConfigureAwait(false);
+            DispatchIncoming(
+                frame,
+                requestCancellationToken => DispatchStreamRequestAsync(frame, streamHandler, requestCancellationToken, connectionCancellationToken),
+                connectionCancellationToken);
             return;
         }
 
@@ -375,15 +380,51 @@ public sealed class RpcConnection : IAsyncDisposable
             throw new RpcProtocolException("The RPC request operation is not registered.");
         }
 
-        using var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        DispatchIncoming(
+            frame,
+            requestCancellationToken => DispatchRequestAsync(frame, handler, requestCancellationToken, connectionCancellationToken),
+            connectionCancellationToken);
+    }
+
+    private void DispatchIncoming(
+        RpcFrame frame,
+        Func<CancellationToken, ValueTask> dispatch,
+        CancellationToken connectionCancellationToken)
+    {
+        var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(connectionCancellationToken);
+        // Register before scheduling the handler so a following Cancel frame cannot
+        // overtake the request and miss its cancellation source.
         if (!_operations.AddIncoming(frame.Header.CorrelationId, requestCancellation))
         {
+            requestCancellation.Dispose();
             throw new RpcProtocolException("The RPC peer reused an active incoming correlation ID.");
         }
 
+        _router.Dispatch(
+            async () =>
+            {
+                try
+                {
+                    await dispatch(requestCancellation.Token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _operations.RemoveIncoming(frame.Header.CorrelationId, requestCancellation);
+                    requestCancellation.Dispose();
+                }
+            },
+            FailDispatch);
+    }
+
+    private async ValueTask DispatchRequestAsync(
+        RpcFrame frame,
+        RpcRequestHandler handler,
+        CancellationToken requestCancellationToken,
+        CancellationToken connectionCancellationToken)
+    {
         try
         {
-            var response = await handler(frame.Payload, requestCancellation.Token).ConfigureAwait(false);
+            var response = await handler(frame.Payload, requestCancellationToken).ConfigureAwait(false);
             if (frame.Header.OperationId == RpcProtocolConstants.HandshakeOperationId)
             {
                 MarkHandshakeFromResponse(response);
@@ -396,10 +437,10 @@ public sealed class RpcConnection : IAsyncDisposable
                     frame.Header.CorrelationId,
                     0,
                     response.ToArray()),
-                cancellationToken).ConfigureAwait(false);
+                connectionCancellationToken).ConfigureAwait(false);
             CompleteGracefulShutdownIfRequested();
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (!connectionCancellationToken.IsCancellationRequested)
         {
             await SendErrorAsync(
                 frame.Header.OperationId,
@@ -407,9 +448,9 @@ public sealed class RpcConnection : IAsyncDisposable
                 "cancelled",
                 "The RPC operation was cancelled.",
                 null,
-                cancellationToken).ConfigureAwait(false);
+                connectionCancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (connectionCancellationToken.IsCancellationRequested)
         {
             // The connection is already closing, so there is no peer left to notify.
         }
@@ -421,12 +462,8 @@ public sealed class RpcConnection : IAsyncDisposable
                 "handler_error",
                 exception.Message,
                 exception,
-                cancellationToken).ConfigureAwait(false);
+                connectionCancellationToken).ConfigureAwait(false);
             CompleteGracefulShutdownIfRequested();
-        }
-        finally
-        {
-            _operations.RemoveIncoming(frame.Header.CorrelationId, requestCancellation);
         }
     }
 
@@ -463,22 +500,20 @@ public sealed class RpcConnection : IAsyncDisposable
             throw new RpcProtocolException("The RPC notification operation is not registered.");
         }
 
-        _router.Track(handler(frame.Payload, cancellationToken), FailDispatch);
+        _router.Dispatch(() => handler(frame.Payload, cancellationToken), FailDispatch);
     }
 
-    private async ValueTask DispatchStreamRequestAsync(RpcFrame frame, RpcStreamHandler handler, CancellationToken cancellationToken)
+    private async ValueTask DispatchStreamRequestAsync(
+        RpcFrame frame,
+        RpcStreamHandler handler,
+        CancellationToken requestCancellationToken,
+        CancellationToken connectionCancellationToken)
     {
-        using var requestCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (!_operations.AddIncoming(frame.Header.CorrelationId, requestCancellation))
-        {
-            throw new RpcProtocolException("The RPC peer reused an active incoming correlation ID.");
-        }
-
         var sequence = 0u;
         var sentChunk = false;
         try
         {
-            await foreach (var payload in handler(frame.Payload, requestCancellation.Token).ConfigureAwait(false))
+            await foreach (var payload in handler(frame.Payload, requestCancellationToken).ConfigureAwait(false))
             {
                 await _transport.EnqueueAsync(
                     new OutboundFrame(
@@ -487,7 +522,7 @@ public sealed class RpcConnection : IAsyncDisposable
                         frame.Header.CorrelationId,
                         sequence,
                         payload.ToArray()),
-                    cancellationToken).ConfigureAwait(false);
+                    connectionCancellationToken).ConfigureAwait(false);
                 sequence++;
                 sentChunk = true;
             }
@@ -497,9 +532,9 @@ public sealed class RpcConnection : IAsyncDisposable
                 frame.Header.CorrelationId,
                 sequence,
                 new RpcStreamEndPayload { Status = RpcStreamEndStatus.Completed },
-                cancellationToken).ConfigureAwait(false);
+                connectionCancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (!connectionCancellationToken.IsCancellationRequested)
         {
             if (sentChunk)
             {
@@ -513,7 +548,7 @@ public sealed class RpcConnection : IAsyncDisposable
                         ErrorCode = "cancelled",
                         ErrorMessage = "The RPC stream was cancelled.",
                     },
-                    cancellationToken).ConfigureAwait(false);
+                    connectionCancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -523,10 +558,10 @@ public sealed class RpcConnection : IAsyncDisposable
                     "cancelled",
                     "The RPC stream was cancelled.",
                     null,
-                    cancellationToken).ConfigureAwait(false);
+                    connectionCancellationToken).ConfigureAwait(false);
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (connectionCancellationToken.IsCancellationRequested)
         {
             // The connection is already closing, so there is no peer left to notify.
         }
@@ -545,7 +580,7 @@ public sealed class RpcConnection : IAsyncDisposable
                         ErrorMessage = CreateRemoteErrorMessage(exception, "The remote RPC stream failed.", out var mappedException),
                         MappedException = mappedException,
                     },
-                    cancellationToken).ConfigureAwait(false);
+                    connectionCancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -555,12 +590,8 @@ public sealed class RpcConnection : IAsyncDisposable
                     "stream_error",
                     exception.Message,
                     exception,
-                    cancellationToken).ConfigureAwait(false);
+                    connectionCancellationToken).ConfigureAwait(false);
             }
-        }
-        finally
-        {
-            _operations.RemoveIncoming(frame.Header.CorrelationId, requestCancellation);
         }
     }
 
@@ -622,12 +653,13 @@ public sealed class RpcConnection : IAsyncDisposable
                 operationId,
                 correlationId,
                 0,
-                _codec.Serialize(new RpcErrorPayload
-                {
-                    Code = code,
-                    Message = mappedException is null ? message : "The remote RPC handler returned a mapped failure.",
-                    MappedException = mappedException,
-                })),
+                _codec.Serialize(
+                    new RpcErrorPayload
+                    {
+                        Code = code,
+                        Message = mappedException is null ? message : "The remote RPC handler returned a mapped failure.",
+                        MappedException = mappedException,
+                    })),
             cancellationToken);
     }
 
@@ -1102,13 +1134,15 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        public void Track(ValueTask dispatch, Action<Exception> failed)
+        public void Dispatch(Func<ValueTask> dispatch, Action<Exception> failed)
         {
-            // Handlers run outside the reader so a slow operation cannot prevent its
-            // cancellation frame from being consumed.
-            var tracked = ObserveAsync(dispatch.AsTask(), failed);
+            Task tracked;
             lock (_dispatchGate)
             {
+                // Invoke handlers on the default thread pool so their synchronous
+                // prefix cannot block the transport reader. Do not pass the connection
+                // token to Task.Run: accepted work still owns its cancellation cleanup.
+                tracked = Task.Run(() => ObserveAsync(dispatch, failed));
                 _dispatches.Add(tracked);
             }
 
@@ -1135,11 +1169,11 @@ public sealed class RpcConnection : IAsyncDisposable
             }
         }
 
-        private async static Task ObserveAsync(Task dispatch, Action<Exception> failed)
+        private async static Task ObserveAsync(Func<ValueTask> dispatch, Action<Exception> failed)
         {
             try
             {
-                await dispatch.ConfigureAwait(false);
+                await dispatch().ConfigureAwait(false);
             }
             catch (Exception exception)
             {
