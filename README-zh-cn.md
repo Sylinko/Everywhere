@@ -1,4 +1,4 @@
-<a id="readme-top"></a>
+﻿<a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere">Go to English Version »</a>
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-ja-jp.md">日本語バージョン »</a>
@@ -201,7 +201,7 @@
 
 ## 🤝 贡献方式
 
-热爱开源，欢迎提供您的奇思妙想和代码修改 (Pull Requests)！请参考 [CONTRIBUTING.md](CONTRIBUTING.md) 查看具体的代码贡献规范与本地编译向导。
+热爱开源，欢迎提供您的奇思妙想和代码修改 (Pull Requests)！请参考 [CONTRIBUTING.md](.github/CONTRIBUTING.md) 查看具体的代码贡献规范与本地编译向导。
 
 可以查看我们的 [Build Guide](docs/build.md) 获取关于如何设置开发环境和本地构建项目的详细说明。
 
