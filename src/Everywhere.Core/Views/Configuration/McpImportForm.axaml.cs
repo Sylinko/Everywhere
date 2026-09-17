@@ -55,7 +55,9 @@ public partial class McpImportForm : TemplatedControl
     {
         try
         {
-            var files = await App.StorageProvider.OpenFilePickerAsync(
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null) return;
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(
                 new FilePickerOpenOptions
                 {
                     FileTypeFilter =
