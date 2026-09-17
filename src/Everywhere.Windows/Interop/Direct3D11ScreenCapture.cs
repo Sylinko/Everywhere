@@ -1,23 +1,18 @@
 ﻿using System.ComponentModel;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
 using Windows.Graphics.DirectX.Direct3D11;
-using Windows.System;
 using Windows.UI.Composition;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
-using Windows.Win32.System.WinRT;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Avalonia.Platform;
-using Avalonia.Threading;
 using Everywhere.Automation;
-using ShadUI.Extensions;
 using SharpGen.Runtime;
 using Vortice;
 using Vortice.Direct2D1;
@@ -50,10 +45,8 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     private readonly GraphicsCaptureSession? _session;
 
     private ID3D11Texture2D? _stagingTexture;
-    private bool _disposed;
+    private int _isDisposed;
     private int _frameReceived;
-
-    private static DispatcherQueueController? _dispatcherQueueController;
 
     // https://blog.adeltax.com/dwm-thumbnails-but-with-idcompositionvisual/
     // https://gist.github.com/ADeltaX/aea6aac248604d0cb7d423a61b06e247
@@ -61,18 +54,6 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     {
         try
         {
-            if (_dispatcherQueueController is null)
-            {
-                PInvoke.CreateDispatcherQueueController(
-                    new DispatcherQueueOptions
-                    {
-                        apartmentType = DISPATCHERQUEUE_THREAD_APARTMENTTYPE.DQTAT_COM_STA,
-                        threadType = DISPATCHERQUEUE_THREAD_TYPE.DQTYPE_THREAD_CURRENT,
-                        dwSize = (uint)Unsafe.SizeOf<DispatcherQueueOptions>()
-                    },
-                    out _dispatcherQueueController).ThrowOnFailure();
-            }
-
             DwmpQueryWindowThumbnailSourceSize((HWND)sourceHWnd, false, out var srcSize).ThrowOnFailure();
             if (srcSize.Width == 0 || srcSize.Height == 0)
             {
@@ -158,9 +139,6 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
             var item = GraphicsCaptureItem.CreateFromVisual(visual);
             _session = _framePool.CreateCaptureSession(item);
             _session.IsCursorCaptureEnabled = false;
-
-            // Do nothing but keep the DispatcherQueueController alive
-            GC.KeepAlive(_dispatcherQueueController);
         }
         catch
         {
@@ -174,12 +152,12 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         if (_framePool is null || _d3D11Device is null || _session is null || _dCompositionDesktopDevice is null)
             throw new InvalidOperationException("Capture session is not properly initialized.");
 
-        var tcs = new TaskCompletionSource();
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
 
         _framePool.FrameArrived += (f, _) =>
         {
-            if (_disposed || Interlocked.Exchange(ref _frameReceived, 1) != 0) return;
+            if (Volatile.Read(ref _isDisposed) != 0 || Interlocked.Exchange(ref _frameReceived, 1) != 0) return;
 
             using var frame = f.TryGetNextFrame();
             if (frame is null) return;
@@ -216,7 +194,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
                 if (mapBox.DataPointer == 0)
                     throw new InvalidOperationException("Failed to map staging texture.");
 
-                if (_disposed)
+                if (Volatile.Read(ref _isDisposed) != 0)
                 {
                     immediateContext.Unmap(_stagingTexture, 0);
                     return;
@@ -234,17 +212,24 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
             }
         };
 
-        _session.StartCapture();
-        _dCompositionDesktopDevice.Commit();
+        await MessageWindow.Shared.InvokeAsync(() =>
+        {
+            _session.StartCapture();
+            _dCompositionDesktopDevice.Commit();
+            return true;
+        }).ConfigureAwait(false);
 
         await tcs.Task.WaitAsync(TimeSpan.FromSeconds(3), cancellationToken);
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
+        if (Interlocked.Exchange(ref _isDisposed, 1) != 0) return;
+        MessageWindow.Shared.Invoke(DisposeCore);
+    }
 
+    private void DisposeCore()
+    {
         if (Data != 0 && _d3D11Device is not null && _stagingTexture is not null)
         {
             _d3D11Device.ImmediateContext.Unmap(_stagingTexture, 0);
@@ -260,14 +245,10 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         _direct3DDevice?.Dispose();
         _d3D11Device?.Dispose();
 
-        Dispatcher.UIThread.Invoke(() =>
-        {
-            _session?.Dispose();
-            _framePool?.Dispose();
-            _dCompositionVisual?.Dispose();
-            _hostWindow?.Dispose();
-            // _dCompositionDevice2?.Dispose();
-        });
+        _session?.Dispose();
+        _framePool?.Dispose();
+        _dCompositionVisual?.Dispose();
+        _hostWindow?.Dispose();
     }
 
     /// <summary>Captures the available part of a window-local region, scaling composition output before readback.</summary>
@@ -281,7 +262,9 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         PixelRect relativeRect,
         CancellationToken cancellationToken = default)
     {
-        var screenCapture = await Dispatcher.UIThread.InvokeOnDemandAsync(() => new Direct3D11ScreenCapture(sourceHWnd, sourceOrigin, relativeRect));
+        cancellationToken.ThrowIfCancellationRequested();
+        var screenCapture = await MessageWindow.Shared.InvokeAsync(
+            () => new Direct3D11ScreenCapture(sourceHWnd, sourceOrigin, relativeRect)).ConfigureAwait(false);
 
         try
         {
