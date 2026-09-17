@@ -95,6 +95,8 @@ public sealed class WebPlugin : BuiltInChatPlugin
             // ReSharper disable once InconsistentNaming
             SearXNGWebSearchEngineProvider searXNG =>
                 new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.ActualEndPoint)),
+            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Serply } serply =>
+                new SerplyConnector(EnsureApiKey(serply.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(serply.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Tavily } tavily =>
                 new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.ActualEndPoint)),
             // ReSharper disable once IdentifierTypo
