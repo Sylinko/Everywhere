@@ -56,7 +56,7 @@ public sealed partial class CustomAssistant : Assistant
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public ToolCallStatus ToolCallStatus => SupportsToolCall switch
+    public ToolCallStatus ToolCallStatus => Configuration.SupportsToolCall switch
     {
         true when IsToolCallEnabled => ToolCallStatus.Enabled,
         true => ToolCallStatus.Disabled,
@@ -113,4 +113,10 @@ public sealed partial class CustomAssistant : Assistant
     [Range(5, 95)]
     [DefaultValue(80)]
     public partial int ContextCompressionThreshold { get; set; } = 80;
+
+    protected override void OnConfigurationPropertyChanged(string? propertyName)
+    {
+        if (propertyName is null or nameof(AssistantConfiguration.SupportsToolCall))
+            OnPropertyChanged(nameof(ToolCallStatus));
+    }
 }

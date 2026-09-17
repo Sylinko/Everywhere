@@ -19,12 +19,13 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
     private readonly OpenAIResponsesOptions _options;
 
     public OpenAIResponsesKernelMixin(
-        Assistant assistant,
+        AssistantConfiguration configuration,
+        OpenAIResponsesOptions options,
         ModelConnection connection,
         ILoggerFactory loggerFactory
-    ) : base(assistant, connection)
+    ) : base(configuration, connection)
     {
-        _options = assistant.OpenAIResponsesOptions;
+        _options = options;
 
         ChatCompletionService = new OptimizedChatClient(
             new ResponsesClient(
@@ -34,7 +35,7 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
                     Endpoint = new Uri(Endpoint, UriKind.Absolute),
                     Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
                 }
-            ).AsIChatClient(ModelId),
+            ).AsIChatClient(Configuration.ModelId ?? string.Empty),
             this
         ).AsChatCompletionService();
     }

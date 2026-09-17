@@ -1,7 +1,6 @@
 using System.ClientModel;
 using System.Text.Json;
 using Anthropic.Exceptions;
-using Everywhere.AI.Configurator;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -23,27 +22,42 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
     /// <exception cref="HandledChatException">Thrown if the model provider or definition is not found or not supported.</exception>
     public KernelMixin Create(Assistant assistant)
     {
-        if (assistant.ModelId.IsNullOrWhiteSpace())
+        var configuration = AssistantSnapshotMapper.Copy(assistant.Configuration);
+        if (configuration.ModelId.IsNullOrWhiteSpace())
         {
             throw new HandledChatException(
                 new InvalidOperationException("Model ID cannot be empty."),
                 HandledChatExceptionType.InvalidConfiguration);
         }
 
-        var connection = ResolveConnection(assistant);
-        return connection.Schema switch
+        var timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60));
+        var connection = ResolveConnection(configuration, timeout);
+        try
         {
-            ModelProviderSchema.OpenAI => new OpenAIKernelMixin(assistant, connection, loggerFactory),
-            ModelProviderSchema.OpenAIResponses => new OpenAIResponsesKernelMixin(assistant, connection, loggerFactory),
-            ModelProviderSchema.Anthropic => new AnthropicKernelMixin(assistant, connection),
-            ModelProviderSchema.Google => new GoogleKernelMixin(assistant, connection, loggerFactory),
-            ModelProviderSchema.Ollama => new OllamaKernelMixin(assistant, connection),
-            ModelProviderSchema.Mistral => new MistralKernelMixin(assistant, connection, loggerFactory),
-            _ => throw new HandledChatException(
-                new NotSupportedException($"Model provider schema '{connection.Schema}' is not supported."),
-                HandledChatExceptionType.InvalidConfiguration,
-                new DynamicLocaleKey(LocaleKey.KernelMixinFactory_UnsupportedModelProviderSchema))
-        };
+            return connection.Schema switch
+            {
+                ModelProviderSchema.OpenAI => new OpenAIKernelMixin(
+                    configuration, AssistantSnapshotMapper.Copy(assistant.OpenAIOptions), connection, loggerFactory),
+                ModelProviderSchema.OpenAIResponses => new OpenAIResponsesKernelMixin(
+                    configuration, AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions), connection, loggerFactory),
+                ModelProviderSchema.Anthropic => new AnthropicKernelMixin(
+                    configuration, AssistantSnapshotMapper.Copy(assistant.AnthropicOptions), connection),
+                ModelProviderSchema.Google => new GoogleKernelMixin(
+                    configuration, AssistantSnapshotMapper.Copy(assistant.GoogleOptions), connection, loggerFactory),
+                ModelProviderSchema.Ollama => new OllamaKernelMixin(configuration, connection),
+                ModelProviderSchema.Mistral => new MistralKernelMixin(
+                    configuration, AssistantSnapshotMapper.Copy(assistant.MistralOptions), connection, loggerFactory),
+                _ => throw new HandledChatException(
+                    new NotSupportedException($"Model provider schema '{connection.Schema}' is not supported."),
+                    HandledChatExceptionType.InvalidConfiguration,
+                    new DynamicLocaleKey(LocaleKey.KernelMixinFactory_UnsupportedModelProviderSchema))
+            };
+        }
+        catch
+        {
+            connection.HttpClient.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -52,17 +66,18 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
     /// and the API key is null (OAuth is handled by the named HttpClient).
     /// For user-configured modes, endpoint/apiKey are read from the assistant configuration.
     /// </summary>
-    private ModelConnection ResolveConnection(Assistant assistant) =>
-        assistant.ConfiguratorType == AssistantConfiguratorType.Official ? ResolveOfficialConnection(assistant) : ResolveUserConnection(assistant);
+    private ModelConnection ResolveConnection(AssistantConfiguration configuration, TimeSpan timeout) =>
+        configuration is OfficialAssistantConfiguration ?
+            ResolveOfficialConnection(configuration, timeout) :
+            ResolveUserConnection(configuration, timeout);
 
     /// <summary>
     /// Resolves connection for Official (cloud gateway) mode.
     /// The actual provider schema is inferred from the model ID prefix (e.g. "openai/gpt-4o" → OpenAIResponses).
     /// </summary>
-    private ModelConnection ResolveOfficialConnection(Assistant assistant)
+    private ModelConnection ResolveOfficialConnection(AssistantConfiguration configuration, TimeSpan timeout)
     {
-        var schema = InferSchemaFromModelId(assistant.ModelId);
-
+        var schema = InferSchemaFromModelId(configuration.ModelId);
         var endpoint = schema.NormalizeEndpoint(CloudConstants.AIGatewayBaseUrl) ??
             throw new HandledChatException(
                 new InvalidOperationException("AI Gateway base URL is not configured."),
@@ -72,6 +87,7 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
         // Some SDKs require a non-null credential, so we pass null and let each mixin handle it
         // (e.g. OpenAIKernelMixin uses NoneAuthenticationPolicy, others use "official" placeholder).
         var httpClient = httpClientFactory.CreateClient(nameof(ICloudClient));
+        httpClient.Timeout = timeout;
 
         return new ModelConnection(schema, endpoint, ApiKey: null, httpClient, TransformOfficialException);
     }
@@ -79,28 +95,28 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
     /// <summary>
     /// Resolves connection for user-configured (non-Official) modes.
     /// </summary>
-    private ModelConnection ResolveUserConnection(Assistant assistant)
+    private ModelConnection ResolveUserConnection(AssistantConfiguration configuration, TimeSpan timeout)
     {
-        if (!Uri.TryCreate(assistant.Endpoint, UriKind.Absolute, out _))
+        if (!Uri.TryCreate(configuration.Endpoint, UriKind.Absolute, out _))
         {
             throw new HandledChatException(
                 new InvalidOperationException("Invalid endpoint URL."),
                 HandledChatExceptionType.InvalidEndpoint);
         }
 
-        var endpoint = assistant.Schema.NormalizeEndpoint(assistant.Endpoint) ??
+        var endpoint = configuration.Schema.NormalizeEndpoint(configuration.Endpoint) ??
             throw new HandledChatException(
                 new InvalidOperationException("Endpoint cannot be empty."),
                 HandledChatExceptionType.InvalidEndpoint);
 
-        var apiKey = ApiKey.GetKey(assistant.ApiKey);
+        var apiKey = ApiKey.GetKey(configuration.ApiKey);
 
         // Create an HttpClient instance using the factory.
         // It will have the configured settings (timeout and proxy).
         var httpClient = httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60)); // maximum 24 hours
+        httpClient.Timeout = timeout;
 
-        return new ModelConnection(assistant.Schema, endpoint, apiKey, httpClient, null);
+        return new ModelConnection(configuration.Schema, endpoint, apiKey, httpClient, null);
     }
 
     /// <summary>

@@ -12,19 +12,6 @@ namespace Everywhere.Core.Tests.AI;
 /// </summary>
 public class PresetModelProviderTemplatesTest
 {
-    private static readonly Dictionary<string, string> ProviderMapping = new()
-    {
-        ["openai"] = "openai",
-        ["anthropic"] = "anthropic",
-        ["google"] = "google",
-        ["deepseek"] = "deepseek",
-        ["moonshot"] = "moonshotai-cn",
-        ["minimax"] = "minimax-cn",
-        ["openrouter"] = "openrouter",
-        ["siliconcloud"] = "siliconflow-cn",
-        // ollama is not included
-    };
-
     private static HttpClient? _httpClient;
     private static Dictionary<string, ApiProvider>? _apiData;
 
@@ -57,11 +44,8 @@ public class PresetModelProviderTemplatesTest
 
         foreach (var provider in PresetBasedAssistantConfigurator.ModelProviderTemplates)
         {
-            if (!ProviderMapping.TryGetValue(provider.Id, out var apiProviderKey))
-                continue; // Skip providers not tracked
-
-            if (apiProviderKey.Contains(':'))
-                apiProviderKey = apiProviderKey.Split(':')[0]; // stepfun/step-3.5-flash:free -> stepfun/step-3.5-flash
+            if (provider.Id == "ollama") continue;
+            var apiProviderKey = provider.Id;
 
             if (!_apiData!.TryGetValue(apiProviderKey, out var apiProvider))
             {

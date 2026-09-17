@@ -19,7 +19,7 @@ public class MistralIntegrationTests
     {
         var assistant = new CustomAssistant
         {
-            Schema = ModelProviderSchema.Mistral
+            Configuration = new AdvancedAssistantConfiguration { Schema = ModelProviderSchema.Mistral }
         };
 
         var json = JsonSerializer.Serialize(assistant);
@@ -36,11 +36,7 @@ public class MistralIntegrationTests
         try
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
-            var assistant = new CustomAssistant
-            {
-                Schema = ModelProviderSchema.Mistral,
-                ModelId = "mistral-small-latest"
-            };
+            var assistant = CreateMistralAssistant("mistral-small-latest");
             assistant.MistralOptions.Temperature = "0.25";
             assistant.MistralOptions.TopP = "0.75";
             using var httpClient = new HttpClient();
@@ -50,7 +46,7 @@ public class MistralIntegrationTests
                 "test-key",
                 httpClient,
                 null);
-            using var mixin = new MistralKernelMixin(assistant, connection, NullLoggerFactory.Instance);
+            using var mixin = CreateMixin(assistant, connection);
 
             var settings = (MistralAIPromptExecutionSettings)mixin.GetPromptExecutionSettings();
 
@@ -69,11 +65,7 @@ public class MistralIntegrationTests
     [Test]
     public void GetPromptExecutionSettings_WithDefaultReasoningOptions_OmitsReasoningEffort()
     {
-        var assistant = new CustomAssistant
-        {
-            Schema = ModelProviderSchema.Mistral,
-            ModelId = "mistral-large-latest"
-        };
+        var assistant = CreateMistralAssistant("mistral-large-latest");
         using var httpClient = new HttpClient();
         var connection = new ModelConnection(
             ModelProviderSchema.Mistral,
@@ -81,7 +73,7 @@ public class MistralIntegrationTests
             "test-key",
             httpClient,
             null);
-        using var mixin = new MistralKernelMixin(assistant, connection, NullLoggerFactory.Instance);
+        using var mixin = CreateMixin(assistant, connection);
 
         var settings = (MistralAIPromptExecutionSettings)mixin.GetPromptExecutionSettings();
 
@@ -91,11 +83,7 @@ public class MistralIntegrationTests
     [Test]
     public void GetPromptExecutionSettings_WithCustomReasoningEffort_TrimsAndPassesThroughValue()
     {
-        var assistant = new CustomAssistant
-        {
-            Schema = ModelProviderSchema.Mistral,
-            ModelId = "mistral-small-latest"
-        };
+        var assistant = CreateMistralAssistant("mistral-small-latest");
         assistant.MistralOptions.ReasoningEffort = " future-level ";
         using var httpClient = new HttpClient();
         var connection = new ModelConnection(
@@ -104,7 +92,7 @@ public class MistralIntegrationTests
             "test-key",
             httpClient,
             null);
-        using var mixin = new MistralKernelMixin(assistant, connection, NullLoggerFactory.Instance);
+        using var mixin = CreateMixin(assistant, connection);
 
         var settings = (MistralAIPromptExecutionSettings)mixin.GetPromptExecutionSettings();
 
@@ -114,11 +102,7 @@ public class MistralIntegrationTests
     [Test]
     public void GetPromptExecutionSettings_WhenReasoningIsDisabled_SendsNone()
     {
-        var assistant = new CustomAssistant
-        {
-            Schema = ModelProviderSchema.Mistral,
-            ModelId = "mistral-small-latest"
-        };
+        var assistant = CreateMistralAssistant("mistral-small-latest");
         assistant.MistralOptions.IncludeReasoningContent = false;
         assistant.MistralOptions.ReasoningEffort = "high";
         using var httpClient = new HttpClient();
@@ -128,7 +112,7 @@ public class MistralIntegrationTests
             "test-key",
             httpClient,
             null);
-        using var mixin = new MistralKernelMixin(assistant, connection, NullLoggerFactory.Instance);
+        using var mixin = CreateMixin(assistant, connection);
 
         var settings = (MistralAIPromptExecutionSettings)mixin.GetPromptExecutionSettings();
 
@@ -274,18 +258,14 @@ public class MistralIntegrationTests
     {
         var handler = new StreamingUsageMistralHandler();
         using var httpClient = new HttpClient(handler);
-        var assistant = new CustomAssistant
-        {
-            Schema = ModelProviderSchema.Mistral,
-            ModelId = "mistral-small-latest"
-        };
+        var assistant = CreateMistralAssistant("mistral-small-latest");
         var connection = new ModelConnection(
             ModelProviderSchema.Mistral,
             "https://example.com/v1",
             "test-key",
             httpClient,
             null);
-        using var mixin = new MistralKernelMixin(assistant, connection, NullLoggerFactory.Instance);
+        using var mixin = CreateMixin(assistant, connection);
         var chatHistory = new ChatHistory
         {
             new ChatMessageContent(AuthorRole.User, "Hello")
@@ -330,6 +310,21 @@ public class MistralIntegrationTests
             Assert.That(text.GetProperty("text").GetString(), Is.EqualTo(expectedText));
         });
     }
+
+    private static CustomAssistant CreateMistralAssistant(string modelId) => new()
+    {
+        Configuration = new AdvancedAssistantConfiguration
+        {
+            Schema = ModelProviderSchema.Mistral,
+            ModelId = modelId
+        }
+    };
+
+    private static MistralKernelMixin CreateMixin(CustomAssistant assistant, ModelConnection connection) => new(
+        AssistantSnapshotMapper.Copy(assistant.Configuration),
+        AssistantSnapshotMapper.Copy(assistant.MistralOptions),
+        connection,
+        NullLoggerFactory.Instance);
 
     private static async Task<JsonDocument> SendRequestWithReasoningEffortAsync(object reasoningEffort)
     {

@@ -15,23 +15,9 @@ public sealed partial class OfficialAssistantConfigurator(Assistant owner) : Ass
     public SettingsControl<OfficialModelDefinitionSelector> ModelDefinitionSelector =>
         new(x => new OfficialModelDefinitionSelector(x, owner), false);
 
-    public override void Backup()
-    {
-        Backup(owner.ModelId);
-    }
-
-    public override void Apply()
-    {
-        owner.ModelProviderTemplateId = null;
-        owner.Endpoint = null;
-        owner.RequestTimeoutSeconds = 20;
-
-        owner.ModelId = Restore(owner.ModelId);
-    }
-
     public override Assistant ResolveAssistant(ModelSpecializations specialization)
     {
-        if (specialization == ModelSpecializations.Default || owner.Specializations.HasFlag(specialization))
+        if (specialization == ModelSpecializations.Default || owner.Configuration.Specializations.HasFlag(specialization))
         {
             // If the current assistant already has the specialization, return it directly.
             return owner;

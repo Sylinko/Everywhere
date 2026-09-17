@@ -9,6 +9,11 @@ public interface IModelDefinition
     string? ModelId { get; }
 
     /// <summary>
+    /// Human-readable name of the model definition.
+    /// </summary>
+    string? Name { get; }
+
+    /// <summary>
     /// Whether the model supports function/tool calling.
     /// </summary>
     bool SupportsToolCall { get; }

@@ -96,7 +96,7 @@ public sealed partial class ChatWindowViewModel :
     /// Can be set to one of greetings or instructions based on the chat context, or a default value.
     /// </summary>
     [ObservableProperty]
-    public partial IDynamicLocaleKey? ChatInputAreaWatermarkKey { get; private set; }
+    public partial IDynamicLocaleKey ChatInputAreaWatermarkKey { get; private set; }
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -179,7 +179,8 @@ public sealed partial class ChatWindowViewModel :
             Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
                 .Select(assistant => assistant is null ?
                     Observable.Return(0) :
-                    assistant.WhenValueChanged(x => x.ModelId).Select(_ => 0).Merge(assistant.WhenValueChanged(x => x.ContextLimit).Select(_ => 0)))
+                    assistant.WhenValueChanged(x => x.Configuration.ModelId).Select(_ => 0)
+                        .Merge(assistant.WhenValueChanged(x => x.Configuration.ContextLimit).Select(_ => 0)))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
@@ -791,7 +792,9 @@ public sealed partial class ChatWindowViewModel :
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
-        ChatContextManager.Current.ContextUsage.UpdateModel(assistant?.ModelId, assistant?.ContextLimit ?? 0);
+        ChatContextManager.Current.ContextUsage.UpdateModel(
+            assistant?.Configuration.ModelId,
+            assistant?.Configuration.ContextLimit ?? 0);
     }
 
     partial void OnIsBusyChanged(bool value)
@@ -820,7 +823,7 @@ public sealed partial class ChatWindowViewModel :
         else if (selectedStrategy is not null)
         {
             ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
-                selectedStrategy.DescriptionKey :
+                selectedStrategy.DescriptionKey ?? DirectLocaleKey.Empty :
                 new FormattedDynamicLocaleKey(
                     LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);
