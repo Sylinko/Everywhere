@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
@@ -40,6 +41,7 @@ public sealed partial class ChatService : IChatService
     private readonly IPromptService _promptService;
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ChatService> _logger;
     private readonly AsyncLocal<Guid?> _currentTurnEventId = new();
     private readonly AsyncLocal<Guid?> _currentModelInvocationEventId = new();
@@ -65,6 +67,7 @@ public sealed partial class ChatService : IChatService
         IPromptService promptService,
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
+        IServiceProvider serviceProvider,
         ILogger<ChatService> logger)
     {
         _chatContextManager = chatContextManager;
@@ -76,6 +79,7 @@ public sealed partial class ChatService : IChatService
         _promptService = promptService;
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
+        _serviceProvider = serviceProvider;
         _logger = logger;
 
         _chatRequestsCounter = _meter.CreateCounter<int>("gen_ai.chat.requests");
@@ -433,6 +437,8 @@ public sealed partial class ChatService : IChatService
         builder.Services.AddTransient<IChatPluginUserInterface>(static x =>
             x.GetRequiredService<ChatContext>().FunctionCallContext.Value ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
+        builder.Services.AddTransient<IStorageProvider>(_ =>
+            _serviceProvider.GetService<ChatWindow>()?.StorageProvider ?? App.StorageProvider); // TODO: maybe we need a ITopLevelService
 
         var customAssistant = assistant as CustomAssistant;
         if (kernelMixin.SupportsToolCall && (customAssistant?.IsToolCallEnabled ?? true))

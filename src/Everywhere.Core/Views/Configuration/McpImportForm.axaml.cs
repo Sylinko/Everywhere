@@ -55,7 +55,10 @@ public partial class McpImportForm : TemplatedControl
     {
         try
         {
-            var files = await App.StorageProvider.OpenFilePickerAsync(
+            // Use the StorageProvider from the TopLevel if available, otherwise fallback to the global App.StorageProvider
+            // Thanks to https://github.com/xionglongztz for this fix
+            var storageProvider = TopLevel.GetTopLevel(this)?.StorageProvider ?? App.StorageProvider;
+            var files = await storageProvider.OpenFilePickerAsync(
                 new FilePickerOpenOptions
                 {
                     FileTypeFilter =
