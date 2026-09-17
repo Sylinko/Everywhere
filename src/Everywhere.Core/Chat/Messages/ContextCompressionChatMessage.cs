@@ -157,7 +157,7 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     /// <param name="declaredContextLimitBefore">The declared model context limit before compression, if known.</param>
     public ContextCompressionChatMessage(
         Guid coveredThroughNodeId,
-        string sourceModelId,
+        string? sourceModelId,
         ContextCompressionTrigger trigger,
         long? reportedTotalTokensBefore,
         int? declaredContextLimitBefore)

@@ -12,7 +12,6 @@ using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Database;
-using Everywhere.Initialization;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -58,8 +57,7 @@ public static class ServiceExtensions
                 .AddSingleton<PersistentKeyValueStorage>()
                 .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
                 .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
-                .AddSingleton<PersistentState>()
-                .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
+                .AddSingleton<PersistentState>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services
@@ -126,6 +124,11 @@ public static class ServiceExtensions
 
         public IServiceCollection AddChatEssentials() =>
             services
+                .AddSingleton<ModelsDevPresetModelProvider>()
+                .AddSingleton<IPresetModelProvider>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
+                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
+                .AddSingleton<AssistantConfigurationSynchronizer>()
+                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<AssistantConfigurationSynchronizer>())
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SkillSource>()

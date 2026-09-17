@@ -1,4 +1,4 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.ComponentModel;
 using System.Net;
 using System.Net.Sockets;
@@ -836,7 +836,7 @@ public class HandledChatException(
         {
             StatusCode = context.StatusCode,
             SocketError = context.SocketError,
-            ModelId = kernelMixin?.ModelId,
+            ModelId = kernelMixin?.Configuration.ModelId,
         };
     }
 

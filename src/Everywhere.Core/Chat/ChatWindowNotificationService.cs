@@ -45,8 +45,8 @@ public sealed class ChatWindowNotificationService : IChatWindowNotificationServi
         var assistantChanges = _settings.Model.CustomAssistants
             .ToObservableChangeSet()
             .AutoRefresh(static x => x.ConfiguratorType)
-            .AutoRefresh(static x => x.ModelId)
-            .AutoRefresh(static x => x.DeprecationDate)
+            .AutoRefresh(static x => x.Configuration.ModelId)
+            .AutoRefresh(static x => x.Configuration.DeprecationDate)
             .ToCollection()
             .Select(static _ => 0);
 
@@ -75,7 +75,7 @@ public sealed class ChatWindowNotificationService : IChatWindowNotificationServi
 
         var today = DateOnly.FromDateTime(DateTime.Now);
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             _officialModelProvider.ModelDefinitions,
             today);
         if (!availability.ShouldShowChatNotification)

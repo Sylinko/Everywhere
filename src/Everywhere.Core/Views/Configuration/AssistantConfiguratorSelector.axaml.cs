@@ -53,9 +53,7 @@ public class AssistantConfiguratorSelector : TemplatedControl
             if (Assistant is not { } assistant) return;
             if (value is null) return;
 
-            assistant.Configurator.Backup();
             assistant.ConfiguratorType = value.Type;
-            assistant.Configurator.Apply();
         }
     }
 

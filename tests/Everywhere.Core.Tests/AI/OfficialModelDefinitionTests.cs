@@ -11,10 +11,10 @@ public class OfficialModelDefinitionTests
     public void Reconcile_EmptyCloudList_KeepsCurrentSelectionSnapshot()
     {
         var assistant = CreateAssistant("old-model");
-        assistant.ContextLimit = 4096;
-        assistant.DeprecationDate = new DateOnly(2026, 6, 1);
+        assistant.Configuration.ContextLimit = 4096;
+        assistant.Configuration.DeprecationDate = new DateOnly(2026, 6, 1);
 
-        var result = OfficialModelDefinitionSelector.Reconcile(assistant, assistant.ModelId, null, []);
+        var result = OfficialModelDefinitionSelector.Reconcile(assistant, assistant.Configuration.ModelId, null, []);
 
         using (Assert.EnterMultipleScope())
         {
@@ -29,13 +29,13 @@ public class OfficialModelDefinitionTests
     public void Reconcile_CurrentModelInCloudList_UsesLatestCloudDefinition()
     {
         var assistant = CreateAssistant("model-a");
-        assistant.ContextLimit = 1000;
-        assistant.SupportsToolCall = false;
+        assistant.Configuration.ContextLimit = 1000;
+        assistant.Configuration.SupportsToolCall = false;
         var latestModel = CreateModel("model-a", contextLimit: 2000, supportsToolCall: true);
 
         var result = OfficialModelDefinitionSelector.Reconcile(
             assistant,
-            assistant.ModelId,
+            assistant.Configuration.ModelId,
             null,
             [latestModel]);
 
@@ -56,7 +56,7 @@ public class OfficialModelDefinitionTests
 
         var result = OfficialModelDefinitionSelector.Reconcile(
             assistant,
-            assistant.ModelId,
+            assistant.Configuration.ModelId,
             null,
             [replacement]);
 
@@ -103,12 +103,12 @@ public class OfficialModelDefinitionTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(assistant.ModelId, Is.EqualTo("model-a"));
-            Assert.That(assistant.SupportsToolCall, Is.True);
-            Assert.That(assistant.ContextLimit, Is.EqualTo(1234));
-            Assert.That(assistant.OutputLimit, Is.EqualTo(567));
-            Assert.That(assistant.Specializations, Is.EqualTo(ModelSpecializations.TitleGeneration));
-            Assert.That(assistant.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
+            Assert.That(assistant.Configuration.ModelId, Is.EqualTo("model-a"));
+            Assert.That(assistant.Configuration.SupportsToolCall, Is.True);
+            Assert.That(assistant.Configuration.ContextLimit, Is.EqualTo(1234));
+            Assert.That(assistant.Configuration.OutputLimit, Is.EqualTo(567));
+            Assert.That(assistant.Configuration.Specializations, Is.EqualTo(ModelSpecializations.TitleGeneration));
+            Assert.That(assistant.Configuration.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
         }
     }
 
@@ -119,7 +119,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             [],
             today);
 
@@ -137,7 +137,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("missing-model");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             [CreateModel("other-model")],
             today);
 
@@ -155,7 +155,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             [CreateModel("model-a", deprecationDate: today.AddDays(8))],
             today);
 
@@ -173,7 +173,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             [CreateModel("model-a", deprecationDate: today.AddDays(7))],
             today);
 
@@ -191,7 +191,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
+            assistant.Configuration,
             [CreateModel("model-a", deprecationDate: today)],
             today);
 
@@ -208,7 +208,7 @@ public class OfficialModelDefinitionTests
         var today = new DateOnly(2026, 5, 20);
 
         var availability = ModelAvailability.Evaluate(
-            CreateAssistant("preset-model", today.AddDays(7)),
+            CreateAssistant("preset-model", today.AddDays(7)).Configuration,
             [],
             today);
 
@@ -256,15 +256,17 @@ public class OfficialModelDefinitionTests
     private static CustomAssistant CreateAssistant(string modelId, DateOnly? deprecationDate = null) =>
         new()
         {
-            ConfiguratorType = AssistantConfiguratorType.Official,
-            ModelId = modelId,
-            SupportsToolCall = false,
-            InputModalities = Modalities.Text,
-            OutputModalities = Modalities.Text,
-            ContextLimit = 1000,
-            OutputLimit = 100,
-            Specializations = ModelSpecializations.Default,
-            DeprecationDate = deprecationDate
+            Configuration = new OfficialAssistantConfiguration
+            {
+                ModelId = modelId,
+                SupportsToolCall = false,
+                InputModalities = Modalities.Text,
+                OutputModalities = Modalities.Text,
+                ContextLimit = 1000,
+                OutputLimit = 100,
+                Specializations = ModelSpecializations.Default,
+                DeprecationDate = deprecationDate
+            }
         };
 
     private static ModelDefinitionTemplate CreateModel(

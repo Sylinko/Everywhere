@@ -1,12 +1,16 @@
 ﻿using Everywhere.AI.Prompts;
-using Everywhere.Common;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Everywhere.AI;
 
-public abstract class KernelMixin(Assistant assistant, ModelConnection connection) : IModelDefinition, IDisposable
+public abstract class KernelMixin(AssistantConfiguration configuration, ModelConnection connection) : IDisposable
 {
+    /// <summary>
+    /// Gets the model configuration snapshot used for this mixin's complete lifetime.
+    /// </summary>
+    public AssistantConfiguration Configuration { get; } = configuration;
+
     /// <summary>
     /// Convenience accessor for the resolved endpoint (already normalized, never null).
     /// </summary>
@@ -16,25 +20,6 @@ public abstract class KernelMixin(Assistant assistant, ModelConnection connectio
     /// Convenience accessor for the resolved API key (null means no key needed / handled by HttpClient).
     /// </summary>
     protected string? ApiKey { get; } = connection.ApiKey;
-
-    public string ModelId { get; } = assistant.ModelId ??
-        throw new HandledChatException(
-            new InvalidOperationException("Model ID cannot be empty."),
-            HandledChatExceptionType.InvalidConfiguration);
-
-    public bool SupportsToolCall { get; } = assistant.SupportsToolCall;
-
-    public Modalities InputModalities { get; } = assistant.InputModalities;
-
-    public Modalities OutputModalities { get; } = assistant.OutputModalities;
-
-    public int ContextLimit { get; } = assistant.ContextLimit;
-
-    public int OutputLimit { get; } = assistant.OutputLimit;
-
-    public ModelSpecializations Specializations { get; } = assistant.Specializations;
-
-    public DateOnly? DeprecationDate { get; } = assistant.DeprecationDate;
 
     public abstract IChatCompletionService ChatCompletionService { get; }
 
@@ -62,12 +47,12 @@ public abstract class KernelMixin(Assistant assistant, ModelConnection connectio
             innerCancellationTokenSource.Token);
 
         await foreach (var _ in ChatCompletionService.GetStreamingChatMessageContentsAsync(
-                           [
-                               new ChatMessageContent(AuthorRole.System, "You're a helpful assistant."),
-                               new ChatMessageContent(AuthorRole.User, DefaultPrompts.TestPrompt)
-                           ],
-                           GetPromptExecutionSettings(),
-                           cancellationToken: linkedCancellationTokenSource.Token))
+            [
+                new ChatMessageContent(AuthorRole.System, "You're a helpful assistant."),
+                new ChatMessageContent(AuthorRole.User, DefaultPrompts.TestPrompt)
+            ],
+            GetPromptExecutionSettings(),
+            cancellationToken: linkedCancellationTokenSource.Token))
         {
             // if we can get any response without exception, we consider the connectivity check passed, then we can cancel the request to avoid unnecessary cost.
             await innerCancellationTokenSource.CancelAsync();

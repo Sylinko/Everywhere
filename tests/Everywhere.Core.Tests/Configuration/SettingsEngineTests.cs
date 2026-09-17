@@ -52,15 +52,15 @@ public sealed class SettingsEngineTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.1-canary.20260721.14"));
-            Assert.That(titleGeneration["Specializations"]!.GetValue<string>(), Is.EqualTo("TitleGeneration"));
+            Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.2-canary.20260908.22"));
+            Assert.That(titleGeneration["Configuration"]!["Specializations"]!.GetValue<string>(), Is.EqualTo("TitleGeneration"));
             Assert.That(plugins, Has.Count.EqualTo(2));
             Assert.That(plugins["11111111-1111-1111-1111-111111111111"]!["$type"]!.GetValue<string>(), Is.EqualTo("stdio"));
             Assert.That(plugins["11111111-1111-1111-1111-111111111111"]!["Name"]!.GetValue<string>(), Is.EqualTo("overridden"));
             Assert.That(plugins["22222222-2222-2222-2222-222222222222"]!["$type"]!.GetValue<string>(), Is.EqualTo("sse"));
             Assert.That(plugins.ContainsKey("33333333-3333-3333-3333-333333333333"), Is.False);
             Assert.That(officialSettings["Depth"]!.GetValue<string>(), Is.EqualTo("UltraFast"));
-            Assert.That(engine.Settings.SystemAssistant.TitleGeneration.Specializations,
+            Assert.That(engine.Settings.SystemAssistant.TitleGeneration.Configuration.Specializations,
                 Is.EqualTo(global::Everywhere.AI.ModelSpecializations.TitleGeneration));
             Assert.That(engine.Settings.Plugin.McpChatPlugins, Has.Count.EqualTo(2));
             Assert.That(engine.Settings.Plugin.McpChatPlugins[Guid.Parse("11111111-1111-1111-1111-111111111111")],
@@ -149,7 +149,7 @@ public sealed class SettingsEngineTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.1-canary.20260721.14"));
+            Assert.That(root["Version"]!.GetValue<string>(), Is.EqualTo("0.8.2-canary.20260908.22"));
             Assert.That(Require(main["Key"]).GetValue<string>(), Is.EqualTo("K"));
             Assert.That(Require(main["Modifiers"]).GetValue<string>(), Is.EqualTo("Control, Shift"));
             Assert.That(chatWindow.ContainsKey("Key"), Is.False);

@@ -23,9 +23,14 @@ public class OpenAIKernelMixin : KernelMixin
 
     private readonly OpenAIOptions _options;
 
-    public OpenAIKernelMixin(Assistant assistant, ModelConnection connection, ILoggerFactory loggerFactory) : base(assistant, connection)
+    public OpenAIKernelMixin(
+        AssistantConfiguration configuration,
+        OpenAIOptions options,
+        ModelConnection connection,
+        ILoggerFactory loggerFactory
+    ) : base(configuration, connection)
     {
-        _options = assistant.OpenAIOptions;
+        _options = options;
 
         // Some models don't need API key (e.g. LM Studio, Official mode)
         AuthenticationPolicy authenticationPolicy = ApiKey.IsNullOrWhiteSpace() ?
@@ -34,7 +39,7 @@ public class OpenAIKernelMixin : KernelMixin
 
         ChatCompletionService = new OptimizedOpenAIApiClient(
             new ChatClient(
-                ModelId,
+                Configuration.ModelId ?? string.Empty,
                 authenticationPolicy,
                 new OpenAIClientOptions
                 {
