@@ -155,6 +155,23 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
         set => SetValue(ShowStatisticsProperty, value);
     }
 
+    /// <summary>
+    /// Defines the user turn at the center of the current message viewport.
+    /// </summary>
+    public static readonly DirectProperty<ChatMessageItemsControl, ChatMessageNode?> ReadingTurnNodeProperty =
+        AvaloniaProperty.RegisterDirect<ChatMessageItemsControl, ChatMessageNode?>(nameof(ReadingTurnNode), control => control.ReadingTurnNode);
+
+    /// <summary>
+    /// Gets the user turn at the center of the current message viewport.
+    /// </summary>
+    public ChatMessageNode? ReadingTurnNode
+    {
+        get => _readingTurnNode;
+        private set => SetAndRaise(ReadingTurnNodeProperty, ref _readingTurnNode, value);
+    }
+
+    private ChatMessageNode? _readingTurnNode;
+    private int _turnNavigationRevision;
     private ScrollViewer? _observedScrollViewer;
     private PendingViewportAnchor? _pendingViewportAnchor;
     private bool _edgeLoadingEnabled;
@@ -177,6 +194,8 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
 
     private void ResetItemsSource()
     {
+        _turnNavigationRevision++;
+        ReadingTurnNode = null;
         // ChatContext owns the windowed projection companion. Detaching a view releases only its
         // binding; another view receives the same current window and its stable row instances.
         _pendingViewportAnchor = null;
@@ -221,10 +240,10 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
 
         var wasEdgeLoadingEnabled = _edgeLoadingEnabled;
         _edgeLoadingEnabled = false;
+        _pendingViewportAnchor = new PendingViewportAnchor(rows[snapshot.AnchorIndex], snapshot.OffsetWithinAnchor);
 
         if (context.Presentation.CompactAround(rows[snapshot.FirstIndex], rows[snapshot.LastIndex]))
         {
-            _pendingViewportAnchor = new PendingViewportAnchor(rows[snapshot.AnchorIndex], snapshot.OffsetWithinAnchor);
             return;
         }
 
@@ -234,6 +253,7 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
 
     private void HandleLayoutUpdated(object? sender, EventArgs e)
     {
+        UpdateReadingTurn();
         if (_pendingViewportAnchor is not { } anchor ||
             !IsEffectivelyVisible ||
             ItemsPanelRoot is not VariableHeightVirtualizingStackPanel panel)
@@ -269,6 +289,7 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        _turnNavigationRevision++;
         if (_observedScrollViewer is not null)
         {
             _observedScrollViewer.ScrollChanged -= HandleScrollViewerScrollChanged;
@@ -332,6 +353,53 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
             RequestScrollToEnd();
 
         RequestEdgeCheck();
+    }
+
+    private void UpdateReadingTurn()
+    {
+        if (!IsEffectivelyVisible || ChatContext is not { } context ||
+            ItemsPanelRoot is not VariableHeightVirtualizingStackPanel panel ||
+            !panel.TryGetViewportSnapshot(out var snapshot) ||
+            (uint)snapshot.AnchorIndex >= (uint)context.Presentation.Rows.Count) return;
+        ReadingTurnNode = context.Presentation.GetUserTurnNode(context.Presentation.Rows[snapshot.AnchorIndex]);
+    }
+
+    /// <summary>
+    /// Reveals a user turn without tail following or edge prefetch competing with the explicit jump.
+    /// A newer request, context switch, or detach invalidates any older asynchronous completion.
+    /// </summary>
+    public async Task RevealTurnAsync(ChatMessageNode node)
+    {
+        if (ChatContext is not { } context || VisualRoot is null) return;
+        var revision = ++_turnNavigationRevision;
+        _isTailPinned = false;
+        _edgeLoadingEnabled = false;
+        _pendingViewportAnchor = null;
+        try
+        {
+            var row = await context.Presentation.RevealAsync(node, null);
+            if (row is null || revision != _turnNavigationRevision || !ReferenceEquals(ChatContext, context) || VisualRoot is null) return;
+            ScrollIntoView(row);
+            TopLevel.GetTopLevel(this)?.UpdateLayout();
+            if (_observedScrollViewer is { } scrollViewer && ContainerFromIndex(ItemsView.IndexOf(row)) is { } container &&
+                container.TranslatePoint(default, scrollViewer) is { } point)
+            {
+                var maximum = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+                scrollViewer.Offset = scrollViewer.Offset.WithY(Math.Clamp(scrollViewer.Offset.Y + point.Y - 12, 0, maximum));
+            }
+            _isTailPinned = false;
+            _verticalScrollDirection = 0;
+            UpdateReadingTurn();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception exception)
+        {
+            Log.Error(exception, "Failed to navigate to a chat turn.");
+        }
+        finally
+        {
+            if (revision == _turnNavigationRevision) _edgeLoadingEnabled = VisualRoot is not null;
+        }
     }
 
     private void RequestScrollToEnd()

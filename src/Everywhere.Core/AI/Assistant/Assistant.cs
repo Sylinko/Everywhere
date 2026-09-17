@@ -22,7 +22,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     [ObservableProperty]
     [SettingsItemIgnore]
-    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic))]
+    [NotifyPropertyChangedFor(nameof(IsOpenAI), nameof(IsOpenAIResponses), nameof(IsGoogle), nameof(IsAnthropic), nameof(IsMistral))]
     public partial ModelProviderSchema Schema { get; set; }
 
     [ObservableProperty]
@@ -136,6 +136,22 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
     [SettingsItems(IsExpanded = false)]
     public GoogleOptions GoogleOptions { get; } = new();
+
+    /// <summary>
+    /// Gets a value indicating whether this assistant uses the Mistral provider schema.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsMistral => Schema == ModelProviderSchema.Mistral;
+
+    /// <summary>
+    /// Gets the Mistral-specific options for this assistant.
+    /// </summary>
+    [DynamicLocaleKey(
+        LocaleKey.Assistant_MistralOptions_Header,
+        LocaleKey.Assistant_MistralOptions_Description)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsMistral), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
+    [SettingsItems(IsExpanded = false)]
+    public MistralOptions MistralOptions { get; } = new();
 
     private readonly OfficialAssistantConfigurator _officialConfigurator;
     private readonly PresetBasedAssistantConfigurator _presetBasedConfigurator;

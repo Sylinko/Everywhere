@@ -13,16 +13,16 @@ public abstract class LocalFileHandler : FileHandler
         string workingDirectory,
         CancellationToken cancellationToken)
     {
-        if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        if (PathUtilities.HasExplicitUriScheme(path))
         {
-            if (!uri.IsFile) return null;
+            if (!Uri.TryCreate(path, UriKind.Absolute, out var uri) || !uri.IsFile) return null;
             path = uri.LocalPath;
         }
 
         try
         {
-            // Resolve before format probing so every local handler sees the same canonical identity.
-            path = FileSystemPlugin.ExpandFullPath(workingDirectory, path);
+            // Normalize local input before format probing so every handler sees the same path syntax.
+            path = PathUtilities.ExpandFullPath(path, workingDirectory);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
@@ -151,6 +151,7 @@ public abstract class LocalFileHandler : FileHandler
         FileShare share) =>
         new(context.Path, mode, access, share);
 
+    // TODO: follow .gitignore pattern
     private static bool ShouldIgnoreDirectory(string name, FileAttributes attributes) =>
         (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0 ||
         name.Equals("node_modules", StringComparison.OrdinalIgnoreCase) ||

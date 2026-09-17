@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,7 +19,7 @@ namespace Everywhere.Chat;
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAttachments, IDisposable
 {
-    [Key(0)]
+    [IgnoreMember]
     public override AuthorRole Role => AuthorRole.Tool;
 
     [Key(1)]
@@ -29,11 +30,11 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Obsolete: Use HeaderKey instead.
     /// </summary>
     [Key(2)]
-    private DynamicLocaleKey? ObsoleteHeaderKey
-    {
-        get => null; // for forward compatibility
-        init => HeaderKey = value;
-    }
+#pragma warning disable CA1822
+    // ReSharper disable once MemberCanBeMadeStatic.Local
+    // for forward compatibility
+    private DynamicLocaleKey? LegacyHeaderKey => null;
+#pragma warning restore CA1822
 
     [Key(3)]
     public string? Content { get; set; }
@@ -43,23 +44,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
     [Key(5)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public override DateTimeOffset CreatedAt { get; }
 
     [Key(6)]
-    public IReadOnlyList<FunctionCallContent> Calls
-    {
-        get => _calls;
-        private init => _calls = value as List<FunctionCallContent> ?? [.. value];
-    }
+    public ImmutableArray<FunctionCallContent> Calls => _calls;
 
     [Key(7)]
-    public IReadOnlyList<FunctionResultContent> Results
-    {
-        get => _results;
-        private init => _results = value as List<FunctionResultContent> ?? [.. value];
-    }
+    public ImmutableArray<FunctionResultContent> Results => _results;
 
     [Key(8)]
     [ObservableProperty]
@@ -76,11 +67,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public partial IDynamicLocaleKey? HeaderKey { get; set; }
 
     [Key(10)]
-    private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks
-    {
-        get => _displaySink.Items;
-        init => _displaySink.Reset(value);
-    }
+    private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks => _displaySink.Items;
 
     /// <summary>
     /// The display blocks that make up the content of this function call message,
@@ -146,26 +133,51 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     [IgnoreMember]
     public IEnumerable<ChatAttachment> Attachments => Results.Select(r => r.Result).OfType<ChatAttachment>();
 
-    [IgnoreMember] private readonly List<FunctionCallContent> _calls = [];
-    [IgnoreMember] private readonly List<FunctionResultContent> _results = [];
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
     [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
     [IgnoreMember] private readonly CompositeDisposable _disposables = new(2);
     [IgnoreMember] private readonly IDisposable _displayPersistenceConnection;
+
+    [IgnoreMember] private ImmutableArray<FunctionCallContent> _calls = [];
+    [IgnoreMember] private ImmutableArray<FunctionResultContent> _results = [];
     [IgnoreMember] private long _activityPreviewRevision;
 
     [SerializationConstructor]
-    private FunctionCallChatMessage() : this(default, null)
+    private FunctionCallChatMessage(
+        LucideIconKind icon,
+        DynamicLocaleKey? legacyHeaderKey,
+        string? content,
+        IDynamicLocaleKey? errorMessageKey,
+        DateTimeOffset createdAt,
+        ImmutableArray<FunctionCallContent> calls,
+        ImmutableArray<FunctionResultContent> results,
+        DateTimeOffset finishedAt,
+        IDynamicLocaleKey? headerKey,
+        IEnumerable<ChatPluginDisplayBlock>? displayBlocks
+    ) : this()
     {
-        // This constructor is for the deserializer.
-        // The pipeline is set up in the primary constructor.
+        Icon = icon;
+        HeaderKey = headerKey ?? legacyHeaderKey;
+        Content = content;
+        ErrorMessageKey = errorMessageKey;
+        CreatedAt = createdAt;
+        _calls = calls;
+        _results = results;
+        FinishedAt = finishedAt;
+
+        // Populate the display sink with the deserialized blocks
+        if (displayBlocks is not null) _displaySink.Reset(displayBlocks);
     }
 
-    public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey)
+    public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey) : this()
     {
         Icon = icon;
         HeaderKey = headerKey;
+        CreatedAt = DateTimeOffset.UtcNow;
+    }
 
+    private FunctionCallChatMessage()
+    {
         // Set up the DynamicData pipeline
         DisplayBlocks = _displaySink
             .Connect()
@@ -190,7 +202,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddCall(FunctionCallContent call)
     {
-        _calls.Add(call);
+        ImmutableInterlocked.Update(ref _calls, static (calls, item) => calls.Add(item), call);
         OnPropertyChanged(nameof(Calls));
     }
 
@@ -199,7 +211,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// </summary>
     public void AddResult(FunctionResultContent result)
     {
-        _results.Add(result);
+        ImmutableInterlocked.Update(ref _results, static (results, item) => results.Add(item), result);
         OnPropertyChanged(nameof(Results));
     }
 

@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DynamicData;
 using MessagePack;
 
 namespace Everywhere.Chat;

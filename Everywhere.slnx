@@ -38,6 +38,7 @@
   <Folder Name="/3rd/SemanticKernel/">
     <File Path="3rd/semantic-kernel-patch/README.md" />
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
+    <Project Path="3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />

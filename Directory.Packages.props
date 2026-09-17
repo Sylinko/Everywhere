@@ -1,34 +1,31 @@
 <Project>
   <PropertyGroup>
-    <MicrosoftPackageVersion>10.0.10</MicrosoftPackageVersion>
-    <MEAIVersion>10.5.2</MEAIVersion>
+    <MicrosoftPackageVersion>10.0.11</MicrosoftPackageVersion>
+    <MEAIVersion>10.9.0</MEAIVersion>
     <EntityFrameworkVersion>10.0.9</EntityFrameworkVersion>
     <SemanticKernelVersion>1.75.0</SemanticKernelVersion>
-    <OpenTelemetryVersion>1.17.0</OpenTelemetryVersion>
-    <SentryVersion>6.6.0</SentryVersion>
-    <AvaloniaVersion>12.1.0</AvaloniaVersion>
+    <OpenTelemetryVersion>1.18.0</OpenTelemetryVersion>
+    <SentryVersion>6.10.0</SentryVersion>
+    <AvaloniaVersion>12.1.2</AvaloniaVersion>
     <AvaloniaEditVersion>12.0.0</AvaloniaEditVersion>
     <LiveMarkdownVersion>2.4.0</LiveMarkdownVersion>
-    <SkiaSharpVersion>3.119.4</SkiaSharpVersion>
-    <XamlBehaviorsVersion>12.0.0.1</XamlBehaviorsVersion>
+    <SkiaSharpVersion>4.148.0</SkiaSharpVersion>
+    <XamlBehaviorsVersion>12.0.7</XamlBehaviorsVersion>
     <TikTokenVersion>6.0.0</TikTokenVersion>
   </PropertyGroup>
   <ItemGroup Label="Common">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
-    <PackageVersion Include="DynamicData" Version="9.4.31" />
+    <PackageVersion Include="DynamicData" Version="9.4.33" />
     <PackageVersion Include="FuzzySharp" Version="2.0.2" />
     <PackageVersion Include="GnomeStack.Os.Secrets" Version="0.1.3" />
     <PackageVersion Include="Google.Protobuf" Version="3.30.2" />
     <PackageVersion Include="Grpc.Core.Api" Version="2.71.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.71.0" />
-    <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="0.8.0" />
+    <PackageVersion Include="IgnoresAccessChecksToGenerator" Version="1.0.0" />
     <PackageVersion Include="JetBrains.Profiler.Api" Version="1.4.13" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.7.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkVersion)" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(MicrosoftPackageVersion)" />
@@ -43,23 +40,23 @@
     <PackageVersion Include="OpenTelemetry" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="PolySharp" Version="1.16.0" />
-    <PackageVersion Include="PdfPig" Version="0.1.15" />
+    <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="ReverseMarkdown" Version="5.4.0" />
     <PackageVersion Include="Sentry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Extensions.AI" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.OpenTelemetry" Version="$(SentryVersion)" />
     <PackageVersion Include="Sentry.Serilog" Version="$(SentryVersion)" />
-    <PackageVersion Include="Serilog" Version="4.3.1" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="SharpYaml" Version="3.11.0" />
+    <PackageVersion Include="SharpYaml" Version="3.13.1" />
     <PackageVersion Include="System.Drawing.Common" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="System.Text.Json" Version="$(MicrosoftPackageVersion)" />
     <PackageVersion Include="ZLinq" Version="1.5.6" />
   </ItemGroup>
   <ItemGroup Label="AI">
-    <PackageVersion Include="Anthropic" Version="12.31.0" />
+    <PackageVersion Include="Anthropic" Version="12.45.0" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="$(MEAIVersion)" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="$(MEAIVersion)" />
@@ -69,7 +66,7 @@
     <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="$(SemanticKernelVersion)" />
     <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="$(SemanticKernelVersion)" />
     <PackageVersion Include="ModelContextProtocol" Version="1.2.0" />
-    <PackageVersion Include="OllamaSharp" Version="5.4.25" />
+    <PackageVersion Include="OllamaSharp" Version="5.4.30" />
     <PackageVersion Include="PuppeteerSharp" Version="25.3.1" />
   </ItemGroup>
   <ItemGroup Label="Avalonia">
@@ -94,15 +91,21 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="$(SkiaSharpVersion)" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="$(SkiaSharpVersion)" />
-    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.13" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
     <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="12.0.0" />
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
     <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="$(XamlBehaviorsVersion)" />
   </ItemGroup>
+  <ItemGroup Label="Database">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EntityFrameworkVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkVersion)" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+  </ItemGroup>
   <ItemGroup Label="Windows">
     <PackageVersion Include="Interop.UIAutomationClient" Version="10.19041.0" />
     <PackageVersion Include="Microsoft.PowerShell.SDK" Version="7.6.0" />
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298">
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.330">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
@@ -118,10 +121,10 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.1" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageVersion Include="NSubstitute" Version="6.1.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.14.0" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.3.0" />
   </ItemGroup>
   <ItemGroup Label="ShadUI">
     <PackageVersion Include="Jab" Version="0.11.0" />

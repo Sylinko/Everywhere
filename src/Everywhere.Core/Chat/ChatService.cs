@@ -715,7 +715,6 @@ public sealed partial class ChatService : IChatService
         var compressionMessage = new ContextCompressionChatMessage(
             coveredThroughNodeId,
             context.KernelMixin.ModelId,
-            DateTimeOffset.UtcNow,
             trigger,
             usageBefore.TotalTokenCount,
             context.KernelMixin.ContextLimit > 0 ? context.KernelMixin.ContextLimit : null);
@@ -1127,8 +1126,7 @@ public sealed partial class ChatService : IChatService
                                  .AsValueEnumerable()
                                  .Where(kv => kernelMixin.IsPersistentMessageMetadataKey(kv.Key)))
                     {
-                        assistantChatMessage.Metadata ??= new MetadataDictionary();
-                        assistantChatMessage.Metadata[key] = value;
+                        assistantChatMessage.Metadata = assistantChatMessage.Metadata.SetItem(key, value);
                     }
                 }
 
@@ -1173,8 +1171,7 @@ public sealed partial class ChatService : IChatService
                                      .AsValueEnumerable()
                                      .Where(kv => kernelMixin.IsPersistentSpanMetadataKey(kv.Key)))
                         {
-                            span.Metadata ??= new MetadataDictionary();
-                            span.Metadata[key] = value;
+                            span.Metadata = span.Metadata.SetItem(key, value);
                         }
                     }
 

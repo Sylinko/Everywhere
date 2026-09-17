@@ -213,9 +213,7 @@
 
 ## 📄 许可证协议
 
-Copyright © 2026 Sylinko Inc. 保留所有权利。
-
-本项目根据商业源代码许可证 1.1 版本发布。更多信息请参见 [LICENSE](LICENSE) 文件。
+本项目依据 [LICENSE](LICENSE) 文件发布。
 *第三方依赖与开源组件许可证请参阅 [ThirdPartyNotices.txt](ThirdPartyNotices.txt)。*
 
 ## 💖 赞助我们
@@ -227,7 +225,6 @@ Copyright © 2026 Sylinko Inc. 保留所有权利。
 ## 🤩 特别鸣谢
 
 感谢 [Certum中国](https://www.certumcodesign.cn/) 赞助本项目的代码签名证书（Code Signing Certificate），感谢其持续为开源社区贡献一份力量。
-
 
 感谢 [pasical](https://github.com/pasical) 设计 banner 中的 kawaii logo。
 

@@ -61,6 +61,7 @@
     <PackageReference Include="Serilog.Sinks.Console"/>
     <PackageReference Include="Serilog.Sinks.File"/>
     <PackageReference Include="SharpYaml"/>
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="Svg.Controls.Skia.Avalonia"/>
     <PackageReference Include="Sylinko.CSharpMath.Avalonia"/>
     <PackageReference Include="System.Drawing.Common"/>
@@ -71,6 +72,7 @@
     <ProjectReference Include="..\..\3rd\ClassicDiagnostics.Avalonia\src\ClassicDiagnostics.Avalonia.csproj"/>
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.Google\Connectors.Google.csproj"/>
+    <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.MistralAI\Connectors.MistralAI.csproj"/>
     <ProjectReference Include="..\..\3rd\Motion.Avalonia\src\Motion.Avalonia\Motion.Avalonia.csproj"/>
     <ProjectReference Include="..\..\3rd\shad-ui\src\ShadUI\ShadUI.csproj"/>
     <ProjectReference Include="..\Everywhere.Abstractions\Everywhere.Abstractions.csproj"/>

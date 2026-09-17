@@ -11,7 +11,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <param name="MaxOutputBytes">Maximum encoded output size for one file.</param>
 /// <param name="MaxGrowthRatio">Maximum output-to-input character ratio for existing files.</param>
 /// <param name="MaxChangedLines">Maximum estimated changed logical lines.</param>
-internal readonly record struct PatchLimits(
+public readonly record struct PatchLimits(
     int MaxFiles,
     int MaxHunks,
     long MaxFileBytes,
@@ -32,7 +32,7 @@ internal readonly record struct PatchLimits(
 /// <summary>
 /// Contains immutable per-file patch plans produced from one parsed document.
 /// </summary>
-internal sealed class PatchPlan(IReadOnlyList<PatchPlanFile> files)
+public sealed class PatchPlan(IReadOnlyList<PatchPlanFile> files)
 {
     public IReadOnlyList<PatchPlanFile> Files { get; } = files;
 }
@@ -40,14 +40,18 @@ internal sealed class PatchPlan(IReadOnlyList<PatchPlanFile> files)
 /// <summary>
 /// Describes one hunk that required tolerant text matching while building a patch plan.
 /// </summary>
-internal sealed record PatchMatchDiagnostic(int HunkNumber, int HeaderLineNumber, PatchMatchKind Kind);
+public sealed record PatchMatchDiagnostic(int HunkNumber, int HeaderLineNumber, PatchMatchKind Kind);
 
 /// <summary>
 /// Contains the original snapshot and proposed logical content for one planned operation.
 /// </summary>
-internal abstract class PatchPlanFile
+public abstract class PatchPlanFile
 {
+    public required string RequestedSourcePath { get; init; }
+
     public required string SourcePath { get; init; }
+
+    public required PathResolutionResult SourceResolution { get; init; }
 
     public required PatchTextFileSnapshot Original { get; init; }
 
@@ -68,7 +72,7 @@ internal abstract class PatchPlanFile
 /// <summary>
 /// Contains a planned new-file operation and its encoded content.
 /// </summary>
-internal sealed class PatchAddPlanFile : PatchPlanFile
+public sealed class PatchAddPlanFile : PatchPlanFile
 {
     public required byte[] ProposedBytes { get; init; }
 
@@ -89,8 +93,12 @@ internal sealed class PatchAddPlanFile : PatchPlanFile
 /// <summary>
 /// Contains a planned update operation and its encoded content.
 /// </summary>
-internal sealed class PatchUpdatePlanFile : PatchPlanFile
+public sealed class PatchUpdatePlanFile : PatchPlanFile
 {
+    public required string SourceEntryPath { get; init; }
+
+    public required PathResolutionResult SourceEntryResolution { get; init; }
+
     public required byte[] ProposedBytes { get; init; }
 
     public override string ReviewPath => SourcePath;
@@ -106,8 +114,10 @@ internal sealed class PatchUpdatePlanFile : PatchPlanFile
 /// <summary>
 /// Contains a planned delete operation.
 /// </summary>
-internal sealed class PatchDeletePlanFile : PatchPlanFile
+public sealed class PatchDeletePlanFile : PatchPlanFile
 {
+    public PatchLinkSnapshot? SourceLink { get; init; }
+
     public override string ReviewPath => SourcePath;
 
     public override TextDifference CreateDifference()
@@ -125,9 +135,19 @@ internal sealed class PatchDeletePlanFile : PatchPlanFile
 /// <summary>
 /// Contains a planned move operation and its encoded destination content.
 /// </summary>
-internal sealed class PatchMovePlanFile : PatchPlanFile
+public sealed class PatchMovePlanFile : PatchPlanFile
 {
+    public required string RequestedDestinationPath { get; init; }
+
+    public required string ContentPath { get; init; }
+
+    public required PathResolutionResult ContentResolution { get; init; }
+
     public required string DestinationPath { get; init; }
+
+    public required PathResolutionResult DestinationResolution { get; init; }
+
+    public PatchLinkSnapshot? SourceLink { get; init; }
 
     public required byte[] ProposedBytes { get; init; }
 
@@ -146,9 +166,15 @@ internal sealed class PatchMovePlanFile : PatchPlanFile
 }
 
 /// <summary>
+/// Captures the identity of a final link entry without reading its referent content.
+/// </summary>
+/// <param name="Target">The raw link target stored in the directory entry.</param>
+public sealed record PatchLinkSnapshot(string Target);
+
+/// <summary>
 /// Resolves all paths, snapshots all sources, locates hunks, and builds a mutation-free plan.
 /// </summary>
-internal static class PatchPlanBuilder
+public static class PatchPlanBuilder
 {
     /// <summary>
     /// Builds a complete multi-file plan before any target is written.
@@ -188,49 +214,130 @@ internal static class PatchPlanBuilder
             throw new PatchPlanException($"The patch contains {totalHunks} hunks; the maximum is {limits.MaxHunks}.");
         }
 
-        var paths = new HashSet<string>(PathContainment.SystemPathComparer);
+        // Planning intentionally snapshots every source before commit, so a later operation that
+        // reads a path written by an earlier operation observes the initial state. TODO: Define and
+        // validate cross-operation read/write dependencies before changing this to ordered semantics
+        // or rejecting all such overlaps.
+        var paths = new HashSet<string>(PathUtilities.SystemPathComparer);
         var plannedFiles = new List<PatchPlanFile>(document.Operations.Count);
 
         foreach (var operation in document.Operations)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var sourcePath = ResolvePath(workingDirectory, operation.Path);
-            EnsureNoReparseComponents(sourcePath);
-            AddPath(sourcePath, paths);
-
-            switch (operation)
+            try
             {
-                case PatchFileOperation.Add add:
-                    EnsureParentDirectory(sourcePath, sourcePath);
-                    EnsureMissingFile(sourcePath);
-                    plannedFiles.Add(PlanAdd(add, sourcePath, limits));
-                    break;
-                case PatchFileOperation.Update update:
-                    EnsureParentDirectory(sourcePath, sourcePath);
-                    plannedFiles.Add(await PlanUpdateAsync(update, sourcePath, limits, cancellationToken));
-                    break;
-                case PatchFileOperation.Delete:
-                    EnsureParentDirectory(sourcePath, sourcePath);
-                    plannedFiles.Add(await PlanDeleteAsync(sourcePath, limits, cancellationToken));
-                    break;
-                case PatchFileOperation.Move move:
-                    var destinationPath = ResolvePath(workingDirectory, move.DestinationPath);
-                    EnsureNoReparseComponents(destinationPath);
-                    AddPath(destinationPath, paths);
-                    EnsureParentDirectory(sourcePath, destinationPath);
-                    EnsureMissingFile(destinationPath);
-                    plannedFiles.Add(await PlanMoveAsync(move, sourcePath, destinationPath, limits, cancellationToken));
-                    break;
-                default:
-                    throw new PatchPlanException($"The patch operation type '{operation.GetType().Name}' is not supported.");
+                switch (operation)
+                {
+                    case PatchFileOperation.Add add:
+                    {
+                        var sourceResolution = ResolveOperationPath(
+                            workingDirectory,
+                            add,
+                            add.Path,
+                            PathResolutionMode.PreserveFinalComponent,
+                            "destination");
+                        var sourcePath = GetResolvedPath(sourceResolution);
+                        AddPath(sourcePath, paths);
+                        EnsureParentDirectory(sourcePath);
+                        EnsureMissingFile(sourcePath);
+                        plannedFiles.Add(PlanAdd(add, sourceResolution, limits));
+                        break;
+                    }
+                    case PatchFileOperation.Update update:
+                    {
+                        var sourceEntryResolution = ResolveOperationPath(
+                            workingDirectory,
+                            update,
+                            update.Path,
+                            PathResolutionMode.PreserveFinalComponent,
+                            "source entry");
+                        var sourceResolution = ResolveOperationPath(
+                            workingDirectory,
+                            update,
+                            update.Path,
+                            PathResolutionMode.FollowFinalComponent,
+                            "source");
+                        var sourcePath = GetResolvedPath(sourceResolution);
+                        AddPath(sourcePath, paths);
+                        EnsureParentDirectory(sourcePath);
+                        plannedFiles.Add(await PlanUpdateAsync(
+                            update,
+                            sourceEntryResolution,
+                            sourceResolution,
+                            limits,
+                            cancellationToken));
+                        break;
+                    }
+                    case PatchFileOperation.Delete delete:
+                    {
+                        var sourceResolution = ResolveOperationPath(
+                            workingDirectory,
+                            delete,
+                            delete.Path,
+                            PathResolutionMode.PreserveFinalComponent,
+                            "source entry");
+                        var sourcePath = GetResolvedPath(sourceResolution);
+                        AddPath(sourcePath, paths);
+                        EnsureParentDirectory(sourcePath);
+                        plannedFiles.Add(await PlanDeleteAsync(delete, sourceResolution, limits, cancellationToken));
+                        break;
+                    }
+                    case PatchFileOperation.Move move:
+                    {
+                        var sourceResolution = ResolveOperationPath(
+                            workingDirectory,
+                            move,
+                            move.Path,
+                            PathResolutionMode.PreserveFinalComponent,
+                            "source entry");
+                        var contentResolution = ResolveOperationPath(
+                            workingDirectory,
+                            move,
+                            move.Path,
+                            PathResolutionMode.FollowFinalComponent,
+                            "content source");
+                        var destinationResolution = ResolveOperationPath(
+                            workingDirectory,
+                            move,
+                            move.DestinationPath,
+                            PathResolutionMode.PreserveFinalComponent,
+                            "destination");
+                        var sourcePath = GetResolvedPath(sourceResolution);
+                        var destinationPath = GetResolvedPath(destinationResolution);
+                        AddPath(sourcePath, paths);
+                        AddPath(destinationPath, paths);
+                        EnsureParentDirectory(sourcePath);
+                        EnsureParentDirectory(destinationPath);
+                        EnsureMissingFile(destinationPath);
+                        plannedFiles.Add(
+                            await PlanMoveAsync(
+                                move,
+                                sourceResolution,
+                                contentResolution,
+                                destinationResolution,
+                                limits,
+                                cancellationToken));
+                        break;
+                    }
+                    default:
+                        throw new PatchPlanException($"The patch operation type '{operation.GetType().Name}' is not supported.");
+                }
+            }
+            catch (PatchPlanException ex) when (!ex.HasOperationContext)
+            {
+                throw CreateOperationException(operation, ex);
             }
         }
 
         return new PatchPlan(plannedFiles);
     }
 
-    private static PatchAddPlanFile PlanAdd(PatchFileOperation.Add operation, string path, PatchLimits limits)
+    private static PatchAddPlanFile PlanAdd(
+        PatchFileOperation.Add operation,
+        PathResolutionResult sourceResolution,
+        PatchLimits limits)
     {
+        var path = GetResolvedPath(sourceResolution);
         var original = PatchTextFileSnapshot.CreateNew(path);
         var lines = operation.Hunks.Count == 0 ?
             Array.Empty<PatchSourceLine>() :
@@ -242,7 +349,9 @@ internal static class PatchPlanBuilder
 
         return new PatchAddPlanFile
         {
+            RequestedSourcePath = operation.Path,
             SourcePath = path,
+            SourceResolution = sourceResolution,
             Original = original,
             ProposedContent = proposedContent,
             ProposedBytes = proposedBytes
@@ -251,18 +360,24 @@ internal static class PatchPlanBuilder
 
     private static async ValueTask<PatchUpdatePlanFile> PlanUpdateAsync(
         PatchFileOperation.Update operation,
-        string sourcePath,
+        PathResolutionResult sourceEntryResolution,
+        PathResolutionResult sourceResolution,
         PatchLimits limits,
         CancellationToken cancellationToken)
     {
-        var original = await PatchTextFileSnapshot.ReadAsync(sourcePath, limits.MaxFileBytes, cancellationToken);
+        var sourcePath = GetResolvedPath(sourceResolution);
+        var original = await ReadSnapshotAsync(operation, sourceResolution, "source", limits.MaxFileBytes, cancellationToken);
         var application = operation.Hunks.Count == 0 ? new PatchHunkApplication(original.Content, []) : ApplyHunks(original, operation.Hunks);
         var proposedBytes = original.Encode(application.Content);
         EnsureOutputBudget(sourcePath, original.Content, application.Content, proposedBytes.Length, limits);
 
         return new PatchUpdatePlanFile
         {
+            RequestedSourcePath = operation.Path,
             SourcePath = sourcePath,
+            SourceResolution = sourceResolution,
+            SourceEntryPath = GetResolvedPath(sourceEntryResolution),
+            SourceEntryResolution = sourceEntryResolution,
             Original = original,
             ProposedContent = application.Content,
             ProposedBytes = proposedBytes,
@@ -272,20 +387,32 @@ internal static class PatchPlanBuilder
 
     private static async ValueTask<PatchMovePlanFile> PlanMoveAsync(
         PatchFileOperation.Move operation,
-        string sourcePath,
-        string destinationPath,
+        PathResolutionResult sourceResolution,
+        PathResolutionResult contentResolution,
+        PathResolutionResult destinationResolution,
         PatchLimits limits,
         CancellationToken cancellationToken)
     {
-        var original = await PatchTextFileSnapshot.ReadAsync(sourcePath, limits.MaxFileBytes, cancellationToken);
+        var sourcePath = GetResolvedPath(sourceResolution);
+        var contentPath = GetResolvedPath(contentResolution);
+        var destinationPath = GetResolvedPath(destinationResolution);
+        var sourceLink = ReadFinalLinkSnapshot(sourcePath);
+        var original = await ReadSnapshotAsync(operation, contentResolution, "content source", limits.MaxFileBytes, cancellationToken);
         var application = operation.Hunks.Count == 0 ? new PatchHunkApplication(original.Content, []) : ApplyHunks(original, operation.Hunks);
         var proposedBytes = original.Encode(application.Content);
-        EnsureOutputBudget(sourcePath, original.Content, application.Content, proposedBytes.Length, limits);
+        EnsureOutputBudget(contentPath, original.Content, application.Content, proposedBytes.Length, limits);
 
         return new PatchMovePlanFile
         {
+            RequestedSourcePath = operation.Path,
             SourcePath = sourcePath,
+            SourceResolution = sourceResolution,
+            RequestedDestinationPath = operation.DestinationPath,
+            ContentPath = contentPath,
+            ContentResolution = contentResolution,
             DestinationPath = destinationPath,
+            DestinationResolution = destinationResolution,
+            SourceLink = sourceLink,
             Original = original,
             ProposedContent = application.Content,
             ProposedBytes = proposedBytes,
@@ -293,12 +420,23 @@ internal static class PatchPlanBuilder
         };
     }
 
-    private static async ValueTask<PatchDeletePlanFile> PlanDeleteAsync(string path, PatchLimits limits, CancellationToken cancellationToken)
+    private static async ValueTask<PatchDeletePlanFile> PlanDeleteAsync(
+        PatchFileOperation.Delete operation,
+        PathResolutionResult sourceResolution,
+        PatchLimits limits,
+        CancellationToken cancellationToken)
     {
-        var original = await PatchTextFileSnapshot.ReadAsync(path, limits.MaxFileBytes, cancellationToken);
+        var path = GetResolvedPath(sourceResolution);
+        var sourceLink = ReadFinalLinkSnapshot(path);
+        var original = sourceLink is null ?
+            await ReadSnapshotAsync(operation, sourceResolution, "source entry", limits.MaxFileBytes, cancellationToken) :
+            PatchTextFileSnapshot.CreateNew(path);
         return new PatchDeletePlanFile
         {
+            RequestedSourcePath = operation.Path,
             SourcePath = path,
+            SourceResolution = sourceResolution,
+            SourceLink = sourceLink,
             Original = original,
             ProposedContent = string.Empty,
         };
@@ -478,10 +616,20 @@ internal static class PatchPlanBuilder
         }
     }
 
-    private static string ResolvePath(string workingDirectory, string path)
+    private static PathResolutionResult ResolveOperationPath(
+        string workingDirectory,
+        PatchFileOperation operation,
+        string path,
+        PathResolutionMode mode,
+        string role)
     {
-        if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        if (PathUtilities.HasExplicitUriScheme(path))
         {
+            if (!Uri.TryCreate(path, UriKind.Absolute, out var uri))
+            {
+                throw new PatchPlanException($"The patch path '{path}' is not a valid absolute URI.");
+            }
+
             if (!uri.IsFile)
             {
                 throw new PatchPlanException($"The patch path '{path}' uses an unsupported URI scheme.");
@@ -490,14 +638,33 @@ internal static class PatchPlanBuilder
             path = uri.LocalPath;
         }
 
+        string requestedPath;
         try
         {
-            return Path.GetFullPath(Environment.ExpandEnvironmentVariables(path), workingDirectory);
+            requestedPath = PathUtilities.ExpandFullPath(path, workingDirectory);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            throw new PatchPlanException($"The patch path '{path}' is invalid: {ex.Message}");
+            throw new PatchPlanException(
+                $"{DescribeOperation(operation)} has an invalid {role} path '{path}': {ex.Message}",
+                ex,
+                hasOperationContext: true);
         }
+
+        var result = PathUtilities.ResolvePath(requestedPath, mode);
+        if (result.IsSuccess) return result;
+
+        if (result.Failure is not { } failure)
+        {
+            throw new PatchPlanException(
+                $"{DescribeOperation(operation)} could not resolve its {role} path '{path}', but no failure detail was provided.",
+                hasOperationContext: true);
+        }
+        var transitions = FormatLinkTransitions(result.LinkTransitions);
+        throw new PatchPlanException(
+            $"{DescribeOperation(operation)} could not resolve its {role} path '{path}'. " +
+            $"Failed at '{failure.Path}' ({failure.Kind}): {failure.Message}{transitions}",
+            hasOperationContext: true);
     }
 
     private static void AddPath(string path, HashSet<string> paths)
@@ -508,51 +675,130 @@ internal static class PatchPlanBuilder
         }
     }
 
-    private static void EnsureParentDirectory(string sourcePath, string targetPath)
+    private static void EnsureParentDirectory(string path)
     {
-        var parent = Path.GetDirectoryName(targetPath) ?? Path.GetDirectoryName(sourcePath);
+        var parent = Path.GetDirectoryName(path);
         if (parent is null || !Directory.Exists(parent))
         {
-            throw new PatchPlanException($"The parent directory for '{targetPath}' does not exist.");
+            throw new PatchPlanException($"The parent directory for '{path}' does not exist.");
         }
     }
 
     private static void EnsureMissingFile(string path)
     {
-        if (File.Exists(path) || Directory.Exists(path))
-        {
-            throw new PatchPlanException($"The patch destination '{path}' already exists.");
-        }
-
         try
         {
-            var attributes = File.GetAttributes(path);
-            if (attributes.HasFlag(FileAttributes.ReparsePoint) || attributes != (FileAttributes)(-1))
+            var entry = PathUtilities.InspectEntry(path);
+            switch (entry.Kind)
             {
-                throw new PatchPlanException($"The patch destination '{path}' already exists or is a reparse point.");
+                case PathUtilities.EntryKind.Missing:
+                    return;
+                case PathUtilities.EntryKind.Regular:
+                    throw new PatchPlanException($"The patch destination '{path}' already exists.");
+                case PathUtilities.EntryKind.Link:
+                    throw new PatchPlanException(
+                        $"The patch destination '{path}' is occupied by a link whose raw target is '{entry.RawLinkTarget}'.");
+                case PathUtilities.EntryKind.UnsupportedReparsePoint:
+                    throw new PatchPlanException(
+                        $"The patch destination '{path}' is occupied by a reparse point whose target cannot be inspected on this platform.");
+                default:
+                    throw new InvalidOperationException($"The path entry kind '{entry.Kind}' is not supported.");
             }
         }
-        catch (FileNotFoundException)
+        catch (UnauthorizedAccessException ex)
         {
+            throw new PatchPlanException($"Access to patch destination '{path}' was denied while checking whether it exists: {ex.Message}", ex);
         }
-        catch (DirectoryNotFoundException)
+        catch (IOException ex)
         {
+            throw new PatchPlanException($"The patch destination '{path}' could not be inspected: {ex.Message}", ex);
         }
     }
 
-    private static void EnsureNoReparseComponents(string path)
+    private static PatchLinkSnapshot? ReadFinalLinkSnapshot(string path)
     {
-        if (!PathContainment.TryResolvePath(path, out var resolvedPath) ||
-            !string.Equals(path, resolvedPath, PathContainment.SystemPathComparison))
+        try
         {
-            throw new PatchPlanException($"The patch path '{path}' contains a symbolic link, junction, or other reparse point.");
+            var entry = PathUtilities.InspectEntry(path);
+            return entry.Kind switch
+            {
+                PathUtilities.EntryKind.Regular => null,
+                PathUtilities.EntryKind.Link => new PatchLinkSnapshot(entry.RawLinkTarget ??
+                    throw new PatchPlanException($"The patch source link '{path}' did not expose its raw target.")),
+                PathUtilities.EntryKind.Missing => throw new PatchPlanException($"The patch source entry '{path}' does not exist."),
+                PathUtilities.EntryKind.UnsupportedReparsePoint => throw new PatchPlanException(
+                    $"The patch source entry '{path}' is a reparse point whose target cannot be inspected on this platform."),
+                _ => throw new InvalidOperationException($"The path entry kind '{entry.Kind}' is not supported.")
+            };
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new PatchPlanException($"Access to patch source entry '{path}' was denied while inspecting its link target: {ex.Message}", ex);
+        }
+        catch (IOException ex)
+        {
+            throw new PatchPlanException($"The patch source entry '{path}' could not be inspected: {ex.Message}", ex);
         }
     }
+
+    private static PatchPlanException CreateOperationException(PatchFileOperation operation, PatchPlanException exception) =>
+        new($"{DescribeOperation(operation)} could not be planned. {exception.Message}", exception, hasOperationContext: true);
+
+    private static async ValueTask<PatchTextFileSnapshot> ReadSnapshotAsync(
+        PatchFileOperation operation,
+        PathResolutionResult resolution,
+        string role,
+        long maxBytes,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await PatchTextFileSnapshot.ReadAsync(GetResolvedPath(resolution), maxBytes, cancellationToken);
+        }
+        catch (PatchPlanException ex)
+        {
+            throw new PatchPlanException(
+                $"{DescribeOperation(operation)} resolved its {role} path to '{resolution.ResolvedPath}', but it could not be read. " +
+                $"{ex.Message}{FormatLinkTransitions(resolution.LinkTransitions)}",
+                ex,
+                hasOperationContext: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new PatchPlanException(
+                $"{DescribeOperation(operation)} resolved its {role} path to '{resolution.ResolvedPath}', but it could not be read: {ex.Message}" +
+                FormatLinkTransitions(resolution.LinkTransitions),
+                ex,
+                hasOperationContext: true);
+        }
+    }
+
+    private static string DescribeOperation(PatchFileOperation operation)
+    {
+        var kind = operation switch
+        {
+            PatchFileOperation.Add => "Add File",
+            PatchFileOperation.Update => "Update File",
+            PatchFileOperation.Delete => "Delete File",
+            PatchFileOperation.Move => "Move File",
+            _ => "File operation"
+        };
+        return $"{kind} '{operation.Path}' (patch header line {operation.HeaderLineNumber})";
+    }
+
+    private static string FormatLinkTransitions(IReadOnlyList<PathLinkTransition> transitions) => transitions.Count == 0 ?
+        string.Empty :
+        " Links followed: " + string.Join(", ", transitions.Select(static transition =>
+            $"'{transition.Path}' -> '{transition.LinkTarget}' (expanded to '{transition.ExpandedTargetPath}')")) + ".";
+
+    private static string GetResolvedPath(PathResolutionResult resolution) =>
+        resolution.ResolvedPath ?? throw new PatchPlanException(
+            $"Path resolution for '{resolution.RequestedPath}' did not produce a final path.");
 
     /// <summary>
     /// Validates the encoded size, growth ratio, and estimated line changes of proposed content.
     /// </summary>
-    internal static void EnsureOutputBudget(
+    public static void EnsureOutputBudget(
         string path,
         string originalContent,
         string proposedContent,
@@ -593,4 +839,11 @@ internal static class PatchPlanBuilder
 /// <summary>
 /// Reports a patch that cannot be safely planned from the requested paths or contents.
 /// </summary>
-internal sealed class PatchPlanException(string message) : InvalidOperationException(message);
+public sealed class PatchPlanException(
+    string message,
+    Exception? innerException = null,
+    bool hasOperationContext = false
+) : InvalidOperationException(message, innerException)
+{
+    public bool HasOperationContext { get; } = hasOperationContext;
+}

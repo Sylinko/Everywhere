@@ -8,7 +8,7 @@ namespace Everywhere.Serialization;
 /// <summary>
 /// MessagePack formatter for serializing and deserializing metadata dictionaries with heterogeneous value types.
 /// </summary>
-public class MetadataDictionaryMessagePackFormatter : IMessagePackFormatter<MetadataDictionary?>
+public sealed class MetadataDictionaryMessagePackFormatter : IMessagePackFormatter<MetadataDictionary>
 {
     private static readonly Dictionary<Type, int> TypeCodes = new(8)
     {
@@ -34,42 +34,39 @@ public class MetadataDictionaryMessagePackFormatter : IMessagePackFormatter<Meta
 
         foreach (var (key, val) in value)
         {
-            writer.Write(key);
-
-            if (val is null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                var type = val.GetType();
-                if (!TypeCodes.TryGetValue(type, out var typeCode))
-                {
-                    throw new MessagePackSerializationException($"Unsupported dictionary value type: {type.FullName}");
-                }
-
-                writer.WriteArrayHeader(2);
-                writer.Write(typeCode);
-                MessagePackSerializer.Serialize(type, ref writer, val, options);
-            }
+            SerializeEntry(ref writer, key, val, options);
         }
     }
 
-    public static MetadataDictionary? Deserialize(
+    public static void Serialize(
+        ref MessagePackWriter writer,
+        MetadataDictionary value,
+        MessagePackSerializerOptions options)
+    {
+        writer.WriteMapHeader(value.Count);
+        foreach (var (key, val) in value)
+        {
+            SerializeEntry(ref writer, key, val, options);
+        }
+    }
+
+    public static Dictionary<string, object?>? Deserialize(
         ref MessagePackReader reader,
         MessagePackSerializerOptions options)
     {
+        if (reader.TryReadNil()) return null;
+
         var count = reader.ReadMapHeader();
         if (count == 0) return null;
 
-        var dict = new MetadataDictionary(count);
+        var dictionary = new Dictionary<string, object?>(count);
         for (var i = 0; i < count; i++)
         {
             var key = reader.ReadString() ?? throw new MessagePackSerializationException("Dictionary key cannot be null.");
 
             if (reader.TryReadNil())
             {
-                dict[key] = null;
+                dictionary[key] = null;
                 continue;
             }
 
@@ -81,24 +78,49 @@ public class MetadataDictionaryMessagePackFormatter : IMessagePackFormatter<Meta
             }
 
             var val = MessagePackSerializer.Deserialize(targetType, ref reader, options);
-            dict[key] = val;
+            dictionary[key] = val;
         }
 
-        return dict;
+        return dictionary;
     }
 
-    void IMessagePackFormatter<MetadataDictionary?>.Serialize(
+    private static void SerializeEntry(
         ref MessagePackWriter writer,
-        MetadataDictionary? value,
+        string key,
+        object? value,
+        MessagePackSerializerOptions options)
+    {
+        writer.Write(key);
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        var type = value.GetType();
+        if (!TypeCodes.TryGetValue(type, out var typeCode))
+        {
+            throw new MessagePackSerializationException($"Unsupported dictionary value type: {type.FullName}");
+        }
+
+        writer.WriteArrayHeader(2);
+        writer.Write(typeCode);
+        MessagePackSerializer.Serialize(type, ref writer, value, options);
+    }
+
+    void IMessagePackFormatter<MetadataDictionary>.Serialize(
+        ref MessagePackWriter writer,
+        MetadataDictionary value,
         MessagePackSerializerOptions options)
     {
         Serialize(ref writer, value, options);
     }
 
-    MetadataDictionary? IMessagePackFormatter<MetadataDictionary?>.Deserialize(
+    MetadataDictionary IMessagePackFormatter<MetadataDictionary>.Deserialize(
         ref MessagePackReader reader,
         MessagePackSerializerOptions options)
     {
-        return Deserialize(ref reader, options);
+        var dictionary = Deserialize(ref reader, options);
+        return dictionary is null ? MetadataDictionary.Empty : MetadataDictionary.FromDictionary(dictionary);
     }
 }

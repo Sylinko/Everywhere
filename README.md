@@ -213,9 +213,7 @@ Check our [Build Guide](docs/build.md) for detailed instructions on how to set u
 
 ## 📄 License
 
-Copyright © 2026 Sylinko Inc. All rights reserved.
-
-This project is released under the Business Source License 1.1. See the [LICENSE](LICENSE) file for more information.
+This project is released under the [LICENSE](LICENSE) file.
 *For Third-Party dependencies and open-source component licenses, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).*
 
 ## 💖 Sponsor

@@ -1,14 +1,13 @@
 using Everywhere.Chat;
-using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.I18N;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
+using MessagePack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using MessagePack;
 using Microsoft.SemanticKernel;
 
 namespace Everywhere.Core.Tests.Statistics;
@@ -26,15 +25,13 @@ public sealed class StatisticsBackfillerTests
 
         var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("read_file"))
         {
-            CreatedAt = now,
             FinishedAt = now.AddMilliseconds(25)
         };
-        var call = new FunctionCallContent("get_file_content_1", null, "call-1", null);
+        var call = new FunctionCallContent("get_file_content_1", null, "call-1");
         toolMessage.AddCall(call);
         toolMessage.AddResult(new FunctionResultContent(call, "ok"));
         var assistantMessage = new AssistantChatMessage
         {
-            CreatedAt = now,
             FinishedAt = now.AddMilliseconds(30)
         };
         assistantMessage.AddSpan(new AssistantChatMessageFunctionCallSpan(toolMessage));

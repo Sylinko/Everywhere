@@ -15,9 +15,9 @@ namespace Avalonia.Win32.DComposition;
 internal interface IDCompositionDevice2 : IUnknown;
 
 [MonoModIgnore]
-internal interface IDCompositionVisual : IUnknown
+internal unsafe interface IDCompositionVisual : IUnknown
 {
-    void SetClip_IDCompositionClip(IntPtr clip);
+    void SetClip_IDCompositionClip(void* clip);
 }
 
 [MonoModPatch("Avalonia.Win32.DComposition.DirectCompositedWindow")]
@@ -71,7 +71,7 @@ internal class patch_DirectCompositedWindow : IDisposable
         }
     }
 
-    private void UpdateEverywhereCornerClip()
+    private unsafe void UpdateEverywhereCornerClip()
     {
         if (!TryGetCornerRadius(WindowInfo, out var logicalRadius))
             return;
@@ -118,7 +118,7 @@ internal class patch_DirectCompositedWindow : IDisposable
         }
 
         if (needsCreation)
-            _container.SetClip_IDCompositionClip(clip.NativePointer);
+            _container.SetClip_IDCompositionClip((void*)clip.NativePointer);
 
         _everywhereCornerSize = size;
         _everywhereCornerScaling = scaling;
@@ -128,13 +128,13 @@ internal class patch_DirectCompositedWindow : IDisposable
     // Keep Avalonia's original disposal path so its DirectComposition objects are released.
     public extern void orig_Dispose();
 
-    public void Dispose()
+    public unsafe void Dispose()
     {
         lock (_shared.SyncRoot)
         {
             if (_everywhereCornerClip is not null)
             {
-                _container.SetClip_IDCompositionClip(IntPtr.Zero);
+                _container.SetClip_IDCompositionClip(null);
                 _everywhereCornerClip.Dispose();
                 _everywhereCornerClip = null;
             }

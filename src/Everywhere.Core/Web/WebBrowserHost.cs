@@ -18,6 +18,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
     private readonly IWatchdogManager _watchdogManager;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly BuiltInBrowserCache _builtInBrowserCache;
     private readonly ILogger<WebBrowserHost> _logger;
     private readonly DebounceExecutor<WebBrowserHost, ThreadingTimerImpl> _browserDisposer;
 
@@ -47,6 +48,7 @@ public sealed class WebBrowserHost : IWebBrowserHost
         _watchdogManager = watchdogManager;
         _httpClientFactory = httpClientFactory;
         _loggerFactory = loggerFactory;
+        _builtInBrowserCache = new BuiltInBrowserCache(RuntimeConstants.EnsureCacheFolderPath("plugins", "puppeteer"), loggerFactory);
         _logger = loggerFactory.CreateLogger<WebBrowserHost>();
 
         _browserDisposer = new DebounceExecutor<WebBrowserHost, ThreadingTimerImpl>(
@@ -111,25 +113,34 @@ public sealed class WebBrowserHost : IWebBrowserHost
         browser = await TryLaunchBrowserAsync("chrome", BrowserHelper.GetChromePath(), SupportedBrowser.Chrome);
         if (browser is not null) return browser;
 
-        // Finally download and launch Puppeteer browser
-        var cachePath = RuntimeConstants.EnsureCacheFolderPath("plugins", "puppeteer");
-        var browserFetcher = new BrowserFetcher(
+        // Finally initialize and launch the pinned built-in browser.
+        var installedBrowser = await _builtInBrowserCache.GetInstalledBrowserAsync(cancellationToken);
+        var executablePath = installedBrowser?.GetExecutablePath();
+
+        // Reuse the pinned browser without checking the network for a newer version.
+        browser = await TryLaunchBrowserAsync("cached-puppeteer", executablePath, SupportedBrowser.Chromium);
+        if (browser is not null)
+        {
+            _builtInBrowserCache.ConfirmLaunch(installedBrowser.NotNull());
+            return browser;
+        }
+
+        // An installed pinned version must not silently move to Latest after a launch failure.
+        if (installedBrowser is not null)
+        {
+            throw new HandledException(
+                new InvalidOperationException(CreateBrowserLaunchFailureMessage(launchFailures)),
+                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage),
+                showDetails: true);
+        }
+
+        // We use two different URLs to download the browser for better reliability
+        _logger.LogDebug("Downloading Puppeteer browser to cache directory: {CachePath}", _builtInBrowserCache.CachePath);
+        var browserFetcher = _builtInBrowserCache.CreateFetcher(
             new BrowserFetcherOptions
             {
                 CustomFileDownload = DownloadFileAsync
-            })
-        {
-            CacheDir = cachePath,
-            Browser = SupportedBrowser.Chromium,
-        };
-        var executablePath = browserFetcher.GetInstalledBrowsers().FirstOrDefault()?.GetExecutablePath();
-
-        // Try to launch again in case the browser was downloaded previously
-        browser = await TryLaunchBrowserAsync("cached-puppeteer", executablePath, SupportedBrowser.Chromium);
-        if (browser is not null) return browser;
-
-        // We use two different URLs to download the browser for better reliability
-        _logger.LogDebug("Downloading Puppeteer browser to cache directory: {CachePath}", cachePath);
+            });
         using var httpClient = _httpClientFactory.CreateClient();
         httpClient.Timeout = TimeSpan.FromSeconds(10); // Set a reasonable timeout for the test connection
         browserFetcher.BaseUrl =
@@ -143,7 +154,12 @@ public sealed class WebBrowserHost : IWebBrowserHost
 
         try
         {
-            await browserFetcher.DownloadAsync(BrowserTag.Latest);
+            installedBrowser = await browserFetcher.DownloadAsync(BrowserTag.Latest);
+            await _builtInBrowserCache.PinAsync(installedBrowser, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -155,10 +171,14 @@ public sealed class WebBrowserHost : IWebBrowserHost
                 showDetails: true);
         }
 
-        // Try to launch again after download
-        executablePath = browserFetcher.GetInstalledBrowsers().FirstOrDefault()?.GetExecutablePath();
+        // Launch the exact version returned by this download instead of relying on cache enumeration order.
+        executablePath = installedBrowser.GetExecutablePath();
         browser = await TryLaunchBrowserAsync("downloaded-puppeteer", executablePath, SupportedBrowser.Chromium);
-        if (browser is not null) return browser;
+        if (browser is not null)
+        {
+            _builtInBrowserCache.ConfirmLaunch(installedBrowser);
+            return browser;
+        }
 
         throw new HandledException(
             new InvalidOperationException(CreateBrowserLaunchFailureMessage(launchFailures)),

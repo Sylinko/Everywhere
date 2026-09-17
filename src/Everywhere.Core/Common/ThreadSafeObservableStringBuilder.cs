@@ -63,4 +63,16 @@ public sealed class ThreadSafeObservableStringBuilder : ObservableStringBuilder
         using var _ = _lock.EnterScope();
         return _source.ToString();
     }
+
+    /// <summary>
+    /// Copies a bounded prefix for lightweight previews without allocating the full stream.
+    /// </summary>
+    public string GetPrefix(int maximumLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(maximumLength);
+        using var scope = _lock.EnterScope();
+        var length = Math.Min(maximumLength, _source.Length);
+        if (length > 0 && length < _source.Length && char.IsHighSurrogate(_source[length - 1])) length--;
+        return _source.ToString(0, length);
+    }
 }

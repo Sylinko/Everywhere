@@ -223,6 +223,15 @@
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
         <value>Close search (Esc)</value>
     </data>
+    <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
+        <value>Search all messages</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_User_ToolTip" xml:space="preserve">
+        <value>Search only user messages</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_Assistant_ToolTip" xml:space="preserve">
+        <value>Search only assistant messages</value>
+    </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>Create New Chat (Ctrl+N)</value>
     </data>
@@ -603,7 +612,7 @@
         <value>Image Input Support</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>Maximum context length for the conversation (context_limit). This will affect the strategy for building visual context, so please set it to a realistic value.</value>
+        <value>Maximum context length of the conversation (context_limit). This affects many strategies, so please set it to a realistic value whenever possible.</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Context Length</value>
@@ -696,7 +705,7 @@
         <value>Tools</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>The chat tools include built-in tools and MCP servers, leveraging large language models to utilize these tools (like web search, local file access, etc.) at appropriate times for enhanced capabilities.</value>
+        <value>The assistant will use these tools at the appropriate time (such as searching the web, accessing local files, etc.) to gain more powerful capabilities.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Search Engine Provider</value>
@@ -717,22 +726,22 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Provides the ability to browse the web, allowing the assistant to access web content in real-time to enhance its capabilities.</value>
+        <value>Provides the ability to browse the web.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>File System</value>
+        <value>File Operations</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>Provides the ability to access files, such as enumerating, creating, deleting, renaming, reading, or writing.</value>
+        <value>Provides the ability to work with files, such as listing, creating, modifying, deleting, and renaming files.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>Approved paths</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>File-system operations matching these absolute glob patterns are approved without another path prompt. Use ** for arbitrary directory depth, for example C:\** or D:\**\3rd.</value>
+        <value>File-system operations whose final resolved paths match these absolute glob patterns are approved without another path prompt. Rules are not resolved through symbolic links or junctions. Use / as the separator and ** for arbitrary directory depth, for example C:/** or D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Absolute glob path, for example C:\Source\Everywhere\**</value>
+        <value>Absolute final-path glob, for example C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Invalid operation.</value>
@@ -750,7 +759,7 @@
         <value>Tools</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>Visual Context</value>
+        <value>Screen Awareness</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>Provides the ability to perceive and interact with screen content.</value>
@@ -988,7 +997,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Settings</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>Visual Context Length Budget</value>
+        <value>Screen Awareness Budget</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>Deep thinking</value>
@@ -1057,7 +1066,8 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Warning</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Are you sure you want to delete the &quot;{0}&quot;?</value>
+        <value>Are you sure you want to delete the current assistant?
+“{0}” will disappear permanently! (A really long time!)</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Yes</value>
@@ -1303,10 +1313,31 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Move to</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>Create folder {0}?</value>
+        <value>Allow creating the folder “{0}”?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Allow this file operation?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Requested: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Link entry preserved: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Content target updated: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Link entry removed: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Referent preserved; stored link target: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Content source read without modification: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Regular destination written: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Create {0}?</value>
@@ -1384,7 +1415,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Create Directory</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>Apply Patch</value>
+        <value>Modify File</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1408,7 +1439,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>{0} Links</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>Capture UI Element</value>
+        <value>Screenshot</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>Automate Actions</value>
@@ -1462,7 +1493,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Get information about a file or directory at the specified path.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>Search for a specific text within file(s) and return matching lines.</value>
+        <value>Search for the specified text in files.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>Read the content of a file at the specified path.</value>
@@ -1474,13 +1505,13 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Copy or move a file or directory without changing its contents.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>Delete explicitly listed files or directories. Non-empty directories require recursive=true.</value>
+        <value>Delete files or folders.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>Create a new directory at the specified path.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>Apply a Codex-style patch to add, update, delete, or move local text files.</value>
+        <value>Add, modify, delete, or move text files.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>File size exceeds {0} MB; read operation is not supported.</value>
@@ -1504,7 +1535,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>The model provided an invalid value for the parameter '{0}', likely due to hallucination.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>The patch could not be applied. Review the patch and try again.</value>
+        <value>The changes could not be applied. This is usually caused by a mistake made by the assistant.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>Specified path is a file, not a directory.</value>
@@ -1522,7 +1553,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Specified path does not exist.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>Capture a screenshot of a visual element.</value>
+        <value>Take a screenshot of a specific area of the screen.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>Execute a set of automated actions, such as clicks, inputs, or sending shortcuts.</value>
@@ -1531,7 +1562,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Perform a web search.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>Extracts the main content of a webpage. This runs a hidden web browser in the background using Puppeteer to access the webpage. For compatibility, the first launch may automatically download the web browser, which may take some time depending on network conditions.</value>
+        <value>Allows the assistant to browse web pages and obtain the main content.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>No web search engine selected. Please configure a search engine in the web browser settings.</value>
@@ -1889,7 +1920,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Manage To-do List</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>Allowing the assistant to maintain a concise to-do list, which proves highly useful when handling complex tasks. Note that this list is temporary and will disappear upon switching conversations or exiting Everywhere.</value>
+        <value>Allows the assistant to maintain a concise to-do list, which is very useful when handling complex tasks.</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>Essential</value>
@@ -1907,10 +1938,10 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>{0} input · {1} output · {2} total</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>Ask User Question</value>
+        <value>Ask a Question</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>Allowing the assistant to ask questions and gather input from the user through interactive dialogs.</value>
+        <value>Allow the assistant to ask questions through single-choice, multiple-choice, or free-form input, so it can better understand the current task.</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>Next</value>
@@ -2100,7 +2131,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Deep Thinking</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>The maximum length limit for capturing visual context, measured in tokens. This is an estimate and cannot guarantee precise limits. For simple contexts, the token consumption is often less than this number; for complex contexts, the excess will be truncated.</value>
+        <value>Estimated upper limit of Tokens consumed per screen perception.</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>Enable Tool Call</value>
@@ -3387,6 +3418,24 @@ Release date: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Initial statistics are derived from historical chat data analysis and may contain inaccuracies.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Mistral Options</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Configuration options for Mistral AI models</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Include Reasoning</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Include reasoning/thinking content in the response</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Reasoning effort</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Optional model-specific reasoning intensity. Mistral currently documents high and none for supported models; other non-empty values are passed through. Leave blank to use the model default. Turning off “Include Reasoning” sends none.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>Failed to write settings path '{0}'.</value>
     </data>
@@ -3909,5 +3958,29 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>Click to expand</value>
+    </data>
+    <data name="ModelProviderSchema_Mistral" xml:space="preserve">
+        <value>Mistral</value>
+    </data>
+    <data name="ChatTurnPreview_Waiting" xml:space="preserve">
+        <value>Waiting for a response…</value>
+    </data>
+    <data name="ChatTurnPreview_ToolActivity" xml:space="preserve">
+        <value>Tool activity</value>
+    </data>
+    <data name="ChatWindowSettings_TurnNavigationMode_Header" xml:space="preserve">
+        <value>Conversation turn navigation</value>
+    </data>
+    <data name="ChatWindowSettings_TurnNavigationMode_Description" xml:space="preserve">
+        <value>Show a turn navigation bar on the left of conversations. Choose simple vertical motion, fluid motion with scaling, or turn it off.</value>
+    </data>
+    <data name="ChatTurnNavigationMode_None" xml:space="preserve">
+        <value>Off</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Simple" xml:space="preserve">
+        <value>Simple</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
+        <value>Fluid</value>
     </data>
 </root>

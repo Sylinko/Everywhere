@@ -133,12 +133,13 @@ public sealed class ChatPluginDisplaySinkFormatter : IMessagePackFormatter<ChatP
         else
         {
             var formatter = options.Resolver.GetFormatterWithVerify<ChatPluginDisplayBlock>();
-            var count = value.Count;
+            var items = value.Items;
+            var count = items.Count;
             writer.WriteArrayHeader(count);
             for (var i = 0; i < count; i++)
             {
                 writer.CancellationToken.ThrowIfCancellationRequested();
-                formatter.Serialize(ref writer, value[i], options);
+                formatter.Serialize(ref writer, items[i], options);
             }
         }
     }
@@ -152,6 +153,7 @@ public sealed class ChatPluginDisplaySinkFormatter : IMessagePackFormatter<ChatP
 
         var formatter = options.Resolver.GetFormatterWithVerify<ChatPluginDisplayBlock?>();
         var count = reader.ReadArrayHeader();
+        var items = new List<ChatPluginDisplayBlock>(count);
         var result = new ChatPluginDisplaySink();
         options.Security.DepthStep(ref reader);
         try
@@ -160,8 +162,10 @@ public sealed class ChatPluginDisplaySinkFormatter : IMessagePackFormatter<ChatP
             {
                 reader.CancellationToken.ThrowIfCancellationRequested();
                 if (formatter.Deserialize(ref reader, options) is not { } item) continue;
-                result.AppendBlock(item);
+                items.Add(item);
             }
+
+            result.AppendBlocks(items);
         }
         finally
         {

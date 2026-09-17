@@ -218,7 +218,7 @@ public sealed class ChatTextSearchSurfaceBehavior : Behavior<Control>, IChatText
         ClearCurrentHighlight();
         _plainMatches = [];
 
-        var pattern = Coordinator?.ActivePattern;
+        var pattern = Coordinator is { } coordinator && Row is { } row && coordinator.IsRowIncluded(row) ? coordinator.ActivePattern : null;
         switch (AssociatedObject)
         {
             case MarkdownRenderer renderer:

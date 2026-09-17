@@ -178,39 +178,42 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
 
         var resultLength = text.Length <= MaxLength ? text.Length : MaxLength;
 
-        var result = string.Create(resultLength, text, (span, state) =>
-        {
-            if (state.Length <= MaxLength)
+        var result = string.Create(
+            resultLength,
+            text,
+            (span, state) =>
             {
-                for (var i = 0; i < state.Length; i++)
+                if (state.Length <= MaxLength)
                 {
-                    var c = state[i];
-                    span[i] = c is '\r' or '\n' or '\t' ? ' ' : c;
+                    for (var i = 0; i < state.Length; i++)
+                    {
+                        var c = state[i];
+                        span[i] = c is '\r' or '\n' or '\t' ? ' ' : c;
+                    }
                 }
-            }
-            else
-            {
-                var prefixLength = (MaxLength - MiddlePart.Length) / 2;
-                var suffixLength = MaxLength - MiddlePart.Length - prefixLength;
-
-                for (var i = 0; i < prefixLength; i++)
+                else
                 {
-                    var c = state[i];
-                    span[i] = c is '\r' or '\n' or '\t' ? ' ' : c;
+                    var prefixLength = (MaxLength - MiddlePart.Length) / 2;
+                    var suffixLength = MaxLength - MiddlePart.Length - prefixLength;
+
+                    for (var i = 0; i < prefixLength; i++)
+                    {
+                        var c = state[i];
+                        span[i] = c is '\r' or '\n' or '\t' ? ' ' : c;
+                    }
+
+                    MiddlePart.AsSpan().CopyTo(span.Slice(prefixLength, MiddlePart.Length));
+
+                    var suffixStart = state.Length - suffixLength;
+                    var destStart = prefixLength + MiddlePart.Length;
+
+                    for (var i = 0; i < suffixLength; i++)
+                    {
+                        var c = state[suffixStart + i];
+                        span[destStart + i] = c is '\r' or '\n' or '\t' ? ' ' : c;
+                    }
                 }
-
-                MiddlePart.AsSpan().CopyTo(span.Slice(prefixLength, MiddlePart.Length));
-
-                var suffixStart = state.Length - suffixLength;
-                var destStart = prefixLength + MiddlePart.Length;
-
-                for (var i = 0; i < suffixLength; i++)
-                {
-                    var c = state[suffixStart + i];
-                    span[destStart + i] = c is '\r' or '\n' or '\t' ? ' ' : c;
-                }
-            }
-        });
+            });
 
         return new DirectLocaleKey(result);
     }
@@ -242,6 +245,11 @@ public sealed partial class FileAttachment(
     string? description = null
 ) : ChatAttachment(headerKey)
 {
+    /// <summary>
+    /// The maximum size of the file content that can be inlined in the chat message. Default is 25 MiB.
+    /// </summary>
+    public const long MaximumInlineContentSizeInBytes = 25L * 1024 * 1024;
+
     public override LucideIconKind Icon => LucideIconKind.File;
 
     [Key(1)]
@@ -342,36 +350,19 @@ public sealed partial class FileAttachment(
     /// <param name="filePath"></param>
     /// <param name="mimeType">null for auto-detection</param>
     /// <param name="description"></param>
-    /// <param name="maxBytesSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="FileNotFoundException">
     /// Thrown if the file does not exist.
     /// </exception>
-    /// <exception cref="OverflowException">
-    /// Thrown if the file size exceeds the maximum allowed size.
-    /// </exception>
     public static Task<FileAttachment> CreateAsync(
         string filePath,
         string? mimeType = null,
         string? description = null,
-        long maxBytesSize = 25L * 1024 * 1024,
         CancellationToken cancellationToken = default) => Task.Run(
         async () =>
         {
             await using var stream = File.OpenRead(filePath);
-            if (stream.Length > maxBytesSize)
-            {
-                throw new HandledException(
-                    new NotSupportedException(
-                        $"The file '{filePath}' is too large to attach. Its size exceeds the maximum allowed size of {Humanizer.HumanizeBytes(maxBytesSize)}."),
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.FileAttachment_Create_FileTooLarge,
-                        new DirectLocaleKey(Humanizer.HumanizeBytes(stream.Length)),
-                        new DirectLocaleKey(Humanizer.HumanizeBytes(maxBytesSize))),
-                    showDetails: false);
-            }
-
             mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
             var sha256 = await SHA256.HashDataAsync(stream, cancellationToken);
             var sha256String = Convert.ToHexString(sha256).ToLowerInvariant();

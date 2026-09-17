@@ -444,6 +444,11 @@
                     <Binding
                       Converter="{x:Static ObjectConverters.IsNotNull}"
                       Path="#PART_ChatTextEditor.LeadingContent"/>
+                    <Binding
+                      Converter="{x:Static vc:Int32Converters.GreaterThan}"
+                      ConverterParameter="0"
+                      FallbackValue="{x:False}"
+                      Path="$parent[v:ChatInputArea].ChatAttachmentItemsSource.Count"/>
                   </MultiBinding>
                 </MultiBinding>
               </Button.IsEnabled>

@@ -4,7 +4,6 @@ using Everywhere.Common;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
-using OpenAI;
 using OpenAI.Responses;
 using FunctionCallContent = Microsoft.Extensions.AI.FunctionCallContent;
 
@@ -30,7 +29,7 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
         ChatCompletionService = new OptimizedChatClient(
             new ResponsesClient(
                 new ApiKeyCredential(ApiKey ?? "NO_API_KEY"),
-                new OpenAIClientOptions
+                new ResponsesClientOptions
                 {
                     Endpoint = new Uri(Endpoint, UriKind.Absolute),
                     Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)

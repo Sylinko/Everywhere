@@ -42,6 +42,18 @@ public static class StringExtensions
 
             return match;
         }
+
+        /// <summary>Returns a prefix within a hard UTF-16 limit, backing off rather than splitting a surrogate pair.</summary>
+        /// <remarks>This preserves code-point boundaries at the cut; it does not normalize arbitrary text or segment graphemes.</remarks>
+        [return: NotNullIfNotNull(nameof(str))]
+        public string? TruncateUtf16(int maximumCharacters)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(maximumCharacters);
+            if (str is null || str.Length <= maximumCharacters) return str;
+            var end = maximumCharacters;
+            if (end > 0 && char.IsHighSurrogate(str[end - 1]) && char.IsLowSurrogate(str[end])) end--;
+            return str[..end];
+        }
     }
 
     public static StringBuilder TrimEnd(this StringBuilder sb)

@@ -1,0 +1,42 @@
+<UserControl
+  x:Class="Everywhere.Views.ChatTurnPreview" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Name="Self"
+  ClipToBounds="False" IsHitTestVisible="False">
+  <Border
+    x:Name="Surface" Padding="12,10"
+    Background="{DynamicResource DialogBackgroundColor}"
+    BorderBrush="{DynamicResource BorderColor}"
+    BorderThickness="1"
+    CornerRadius="{DynamicResource XlCornerRadius}">
+    <StackPanel Spacing="6">
+      <TextBlock
+        x:Name="Question"
+        FontSize="{DynamicResource FontSizeM}"
+        FontWeight="SemiBold" MaxLines="2"
+        TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+      <StackPanel
+        x:Name="Response" Spacing="3">
+        <StackPanel.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
+            <Setter Property="MaxLines" Value="2"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+          </Style>
+          <Style Selector="Border.error">
+            <Setter Property="Background" Value="{DynamicResource ErrorColor20}"/>
+            <Setter Property="Padding" Value="4,2"/>
+          </Style>
+        </StackPanel.Styles>
+        <TextBlock
+          x:Name="Answer" Classes="Muted"
+          MaxLines="3"/>
+        <Border
+          x:Name="StatusRegion"
+          CornerRadius="{DynamicResource SmCornerRadius}">
+          <TextBlock x:Name="Status"/>
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

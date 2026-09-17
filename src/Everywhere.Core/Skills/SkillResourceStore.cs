@@ -23,7 +23,7 @@ public abstract class SkillResourceStore
             $"skill://{skillId}/{string.Join('/', relativePath.Split('/').Select(Uri.EscapeDataString))}";
 
     protected static bool IsPathInsideDirectory(string path, string directory)
-        => PathContainment.IsInsideDirectory(path, directory);
+        => PathUtilities.IsInsideDirectory(path, directory);
 }
 
 /// <summary>
@@ -72,7 +72,7 @@ public sealed class LocalSkillResourceStore(string skillDirectory) : SkillResour
         var physicalPath = relativePath.Length == 0 ?
             _skillDirectory :
             Path.GetFullPath(Path.Combine(_skillDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar)));
-        if (!PathContainment.TryResolvePathInsideDirectory(physicalPath, _skillDirectory, out var resolvedPath))
+        if (!PathUtilities.TryResolvePathInsideDirectory(physicalPath, _skillDirectory, out var resolvedPath))
         {
             throw new UnauthorizedAccessException("Skill resource path escapes the skill directory.");
         }

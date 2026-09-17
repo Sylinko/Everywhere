@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Everywhere.Common;
 using Everywhere.Views;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -58,8 +59,15 @@ public sealed partial class FileSystemSettings : ObservableObject
         var compiledPaths = Volatile.Read(ref _compiledApprovalPaths);
         if (compiledPaths.Length == 0) return false;
 
-        var candidates = paths.AsValueEnumerable().Where(static path => !string.IsNullOrWhiteSpace(path)).ToArray();
-        return candidates.Length > 0 && candidates.AsValueEnumerable().All(path => compiledPaths.AsValueEnumerable().Any(rule => rule.IsMatch(path)));
+        var candidates = new List<string>();
+        foreach (var path in paths.Where(static path => !string.IsNullOrWhiteSpace(path)))
+        {
+            if (!FileSystemApprovalGlob.TryNormalizeCandidatePath(path, out var candidate)) return false;
+            candidates.Add(candidate);
+        }
+
+        return candidates.Count > 0 &&
+            candidates.AsValueEnumerable().All(path => compiledPaths.AsValueEnumerable().Any(rule => rule.IsNormalizedPathMatch(path)));
     }
 
     /// <summary>
@@ -127,6 +135,9 @@ public sealed class FileSystemApprovalPath : ObservableValidator
     /// </summary>
     public static string Normalize(string? pattern)
     {
+        // TODO: Approval patterns use '/' as their portable separator and trim surrounding whitespace,
+        // so literal Unix names containing backslashes or leading/trailing spaces cannot be represented
+        // losslessly. Keep this compatibility behavior until literal paths and globs have distinct models.
         var normalized = pattern?.Trim().Replace('\\', '/') ?? string.Empty;
         if (normalized.Length == 0) return normalized;
 
@@ -213,7 +224,7 @@ public sealed class FileSystemApprovalPathCollection : ObservableCollection<File
         ArgumentNullException.ThrowIfNull(item);
         var oldItem = this[index];
         if (!string.IsNullOrWhiteSpace(item.Pattern) && this.Any(other => !ReferenceEquals(other, oldItem) &&
-                string.Equals(other.Pattern, item.Pattern, StringComparison.OrdinalIgnoreCase)))
+                string.Equals(other.Pattern, item.Pattern, PathUtilities.SystemPathComparison)))
         {
             return;
         }
@@ -225,14 +236,14 @@ public sealed class FileSystemApprovalPathCollection : ObservableCollection<File
     }
 
     private bool ContainsPattern(string pattern) =>
-        this.Any(item => string.Equals(item.Pattern, pattern, StringComparison.OrdinalIgnoreCase));
+        this.Any(item => string.Equals(item.Pattern, pattern, PathUtilities.SystemPathComparison));
 
     private void HandleItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(FileSystemApprovalPath.Pattern) || sender is not FileSystemApprovalPath item) return;
 
         if (!string.IsNullOrWhiteSpace(item.Pattern) && this.Any(other => !ReferenceEquals(other, item) &&
-                string.Equals(other.Pattern, item.Pattern, StringComparison.OrdinalIgnoreCase)))
+                string.Equals(other.Pattern, item.Pattern, PathUtilities.SystemPathComparison)))
         {
             Remove(item);
             return;
@@ -284,15 +295,7 @@ public sealed class FileSystemApprovalGlob
 
     public bool IsMatch(string path)
     {
-        try
-        {
-            var normalizedPath = FileSystemApprovalPath.Normalize(Path.GetFullPath(path));
-            return _matcher.Match(Root, normalizedPath).HasMatches;
-        }
-        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException)
-        {
-            return false;
-        }
+        return TryNormalizeCandidatePath(path, out var normalizedPath) && IsNormalizedPathMatch(normalizedPath);
     }
 
     public static bool TryCreate(string pattern, out FileSystemApprovalGlob? glob)
@@ -310,13 +313,30 @@ public sealed class FileSystemApprovalGlob
             var relativePattern = normalizedPattern[root.Length..].TrimStart('/');
             if (relativePattern.IsNullOrEmpty()) relativePattern = "**";
 
-            var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+            var matcher = new Matcher(PathUtilities.SystemPathComparison);
             matcher.AddInclude(relativePattern);
             glob = new FileSystemApprovalGlob(normalizedPattern, root, matcher);
             return true;
         }
         catch (ArgumentException)
         {
+            return false;
+        }
+    }
+
+    internal bool IsNormalizedPathMatch(string normalizedPath) => _matcher.Match(Root, normalizedPath).HasMatches;
+
+    internal static bool TryNormalizeCandidatePath(string path, out string normalizedPath)
+    {
+        try
+        {
+            normalizedPath = Path.GetFullPath(path);
+            if (Path.DirectorySeparatorChar != '/') normalizedPath = normalizedPath.Replace(Path.DirectorySeparatorChar, '/');
+            return true;
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException)
+        {
+            normalizedPath = string.Empty;
             return false;
         }
     }

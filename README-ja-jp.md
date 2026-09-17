@@ -213,9 +213,7 @@
 
 ## 📄 ライセンス
 
-Copyright © 2026 Sylinko Inc. All rights reserved.
-
-本プロジェクトは Business Source License 1.1 のもとで公開されています。詳細は [LICENSE](LICENSE) ファイルをご覧ください。
+本プロジェクトは、[LICENSE](LICENSE) ファイルに基づき公開されています。
 *サードパーティ依存関係とオープンソースコンポーネントのライセンスについては、[ThirdPartyNotices.txt](ThirdPartyNotices.txt) を参照してください。*
 
 ## 💖 スポンサー

@@ -44,8 +44,8 @@
                       <Interaction.Behaviors>
                         <ButtonClickEventTriggerBehavior>
                           <ButtonClickEventTriggerBehavior.Actions>
-                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                             <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].CreatePromptCommand}"/>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                           </ButtonClickEventTriggerBehavior.Actions>
                         </ButtonClickEventTriggerBehavior>
                       </Interaction.Behaviors>
@@ -60,8 +60,8 @@
                       <Interaction.Behaviors>
                         <ButtonClickEventTriggerBehavior>
                           <ButtonClickEventTriggerBehavior.Actions>
-                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                             <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].ManagePromptsCommand}"/>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                           </ButtonClickEventTriggerBehavior.Actions>
                         </ButtonClickEventTriggerBehavior>
                       </Interaction.Behaviors>

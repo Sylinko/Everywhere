@@ -1,4 +1,4 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.Text.Json;
 using Anthropic.Exceptions;
 using Everywhere.AI.Configurator;
@@ -38,6 +38,7 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
             ModelProviderSchema.Anthropic => new AnthropicKernelMixin(assistant, connection),
             ModelProviderSchema.Google => new GoogleKernelMixin(assistant, connection, loggerFactory),
             ModelProviderSchema.Ollama => new OllamaKernelMixin(assistant, connection),
+            ModelProviderSchema.Mistral => new MistralKernelMixin(assistant, connection, loggerFactory),
             _ => throw new HandledChatException(
                 new NotSupportedException($"Model provider schema '{connection.Schema}' is not supported."),
                 HandledChatExceptionType.InvalidConfiguration,
@@ -114,6 +115,7 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
             "openai" => ModelProviderSchema.OpenAIResponses,
             "google" => ModelProviderSchema.Google,
             "anthropic" or "minimax" => ModelProviderSchema.Anthropic,
+            "mistral" => ModelProviderSchema.Mistral,
             _ => ModelProviderSchema.OpenAI
         };
     }

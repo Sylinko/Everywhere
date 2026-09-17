@@ -473,14 +473,17 @@ public sealed partial class ChatWindowViewModel :
                 IsPickingFiles = false;
             }
 
-            if (files.Count <= 0) return;
-            if (files[0].TryGetLocalPath() is not { } filePath)
+            foreach (var file in files)
             {
-                _logger.LogWarning("File path is not available.");
-                return;
-            }
+                if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
+                if (file.TryGetLocalPath() is not { } filePath)
+                {
+                    _logger.LogWarning("File path is not available for {File}.", file.Name);
+                    continue;
+                }
 
-            await AddFileUncheckAsync(filePath, cancellationToken: cancellationToken);
+                await AddFileUncheckAsync(filePath, cancellationToken: cancellationToken);
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -551,6 +554,16 @@ public sealed partial class ChatWindowViewModel :
     {
         using var memoryStream = new MemoryStream();
         bitmap.Save(memoryStream, PngBitmapEncoderOptions.Default);
+        if (memoryStream.Length > FileAttachment.MaximumInlineContentSizeInBytes)
+        {
+            throw new HandledException(
+                new NotSupportedException("The image is too large to store as a chat attachment."),
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.FileAttachment_Create_FileTooLarge,
+                    new DirectLocaleKey(Humanizer.HumanizeBytes(memoryStream.Length)),
+                    new DirectLocaleKey(Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes))),
+                showDetails: false);
+        }
 
         var blob = await _blobStorage.StorageBlobAsync(memoryStream, "image/png", cancellationToken: cancellationToken);
         return new FileAttachment(
@@ -569,10 +582,9 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void SendMessage(string? message)
     {
-        if (message is null) return;
-        message = message.Trim();
+        message = message?.Trim() ?? string.Empty;
 
-        if (message.Length == 0 && SelectedStrategy is null) return;
+        if (message.Length == 0 && SelectedStrategy is null && _chatAttachmentsSource.Count == 0) return;
 
         ChatAttachment[]? attachments = null;
         _chatAttachmentsSource.Edit(list =>

@@ -223,6 +223,15 @@
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
         <value>Закрыть поиск (Esc)</value>
     </data>
+    <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
+        <value>Искать все сообщения</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_User_ToolTip" xml:space="preserve">
+        <value>Искать только сообщения пользователя</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_Assistant_ToolTip" xml:space="preserve">
+        <value>Искать только сообщения помощника</value>
+    </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>Создать новый чат (Ctrl+N)</value>
     </data>
@@ -603,7 +612,7 @@
         <value>Поддержка Ввода Изображения</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>Максимальная длина контекста диалога (context_limit). Это повлияет на стратегию построения визуального контекста, постарайтесь установить реальное значение.</value>
+        <value>Максимальная длина контекста диалога (context_limit). Это влияет на многие стратегии, поэтому постарайтесь указать реальное значение.</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>Максимальный Контекст</value>
@@ -696,7 +705,7 @@
         <value>Плагины</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Чат-плагины включают встроенные инструменты и серверы MCP, которые используют большие языковые модели для вызова инструментов в подходящий момент (например, для поиска в интернете, доступа к локальным файлам и т.д.) для повышения функциональности.</value>
+        <value>Ассистент будет использовать эти инструменты в подходящий момент (например, для поиска в интернете, доступа к локальным файлам и т. д.), чтобы получить более широкие возможности.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Поставщик поисковой системы</value>
@@ -717,22 +726,22 @@
         <value>Веб</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Предоставляет возможность просмотра веб-страниц, позволяя помощнику в реальном времени просматривать содержимое веб-страниц и тем самым повышать его возможности.</value>
+        <value>Предоставляет возможность просмотра веб-страниц.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>Файловая система</value>
+        <value>Операции с файлами</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>Предоставляет возможность доступа к файлам, таким как перечисление, создание, удаление, переименование, чтение или запись.</value>
+        <value>Предоставляет возможность работы с файлами, например перечисление, создание, изменение, удаление и переименование файлов.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>Одобренные пути</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>Файловые операции с этими абсолютными путями glob не требуют повторного запроса на одобрение пути. Используйте ** для обозначения директорий любой глубины, например C:\** или D:\**\3rd.</value>
+        <value>Операции с файловой системой, чьи окончательно разрешённые пути соответствуют этим абсолютным glob-шаблонам, выполняются без повторного запроса пути. Правила не разрешаются через символические ссылки или точки соединения. Используйте / как разделитель, а ** — для любой глубины каталогов, например C:/** или D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>Абсолютный glob путь, например C:\Source\Everywhere\**</value>
+        <value>Абсолютный glob-шаблон окончательного пути, например C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Недопустимая операция.</value>
@@ -750,7 +759,7 @@
         <value>Инструменты</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>Визуальный Контекст</value>
+        <value>Осведомлённость об Экране</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>Обеспечивает восприятие и взаимодействие с содержимым экрана.</value>
@@ -988,7 +997,7 @@
         <value>Настройки</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>Бюджет Длины Визуального Контекста</value>
+        <value>Бюджет распознавания экрана</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>Глубокое размышление</value>
@@ -1057,7 +1066,8 @@
         <value>Предупреждение</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>Вы уверены, что хотите удалить &quot;{0}&quot;?</value>
+        <value>Вы уверены, что хотите удалить текущего ассистента?
+“{0}” исчезнет навсегда! (Очень надолго!)</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>Да</value>
@@ -1258,7 +1268,7 @@
         <value>Не удалось загрузить подробный предварительный просмотр различий.</value>
     </data>
     <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value>Добавлено {0} строк</value>
+        <value> Добавлено {0} строк</value>
     </data>
     <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
         <value>Удалено {0} строк</value>
@@ -1303,10 +1313,31 @@
         <value>Переместить в</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>Allow directory creation?</value>
+        <value>Разрешить создание папки «{0}»?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>Разрешить выполнение этой операции с файлом?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>Запрошенный путь: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>Сохраняемая запись ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>Обновляемая цель содержимого: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>Удаляемая запись ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>Объект ссылки сохраняется; записанная цель ссылки: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>Источник содержимого читается без изменений: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>Записываемый обычный файл назначения: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>Создать {0}?</value>
@@ -1384,7 +1415,7 @@
         <value>Создать каталог</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>Применить патч</value>
+        <value>Изменить файл</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1408,7 +1439,7 @@
         <value>{0} Ссылки</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>Захват элемента интерфейса</value>
+        <value>Снимок экрана</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>Автоматизация Действий</value>
@@ -1462,7 +1493,7 @@
         <value>Получить информацию о файле или директории по указанному пути.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>Искать конкретный текст в файле(ах) и вернуть соответствующие строки.</value>
+        <value>Поиск указанного текста в файлах.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>Читать содержимое файла по указанному пути.</value>
@@ -1474,13 +1505,13 @@
         <value>Копировать или перемещать файлы или папки, не изменяя их содержимое.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>Удалить явно указанные файлы или папки. Непустые папки требуют recursive=true.</value>
+        <value>Удалить файлы или папки.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>Создать новую директорию по указанному пути.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>Использовать патч в стиле Codex для добавления, обновления, удаления или перемещения локальных текстовых файлов.</value>
+        <value>Добавлять, изменять, удалять или перемещать текстовые файлы.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>Размер файла превышает {0} МБ; операция чтения не поддерживается.</value>
@@ -1504,7 +1535,7 @@
         <value>Модель предоставила недопустимое значение для параметра '{0}', вероятно, из-за галлюцинации.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>Не удалось применить патч. Пожалуйста, проверьте патч и попробуйте снова.</value>
+        <value>Не удалось применить изменения. Обычно это вызвано ошибкой ассистента.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>Указанный путь является файлом, а не каталогом.</value>
@@ -1522,7 +1553,7 @@
         <value>Указанный путь не существует.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>Сделать скриншот визуального элемента.</value>
+        <value>Сделайте скриншот определённой области экрана.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>Выполняет набор автоматизированных действий, таких как клик, ввод или отправка горячих клавиш.</value>
@@ -1531,7 +1562,7 @@
         <value>Выполнить веб-поиск.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>Извлекает основное содержимое веб-страницы. Это будет выполняться в фоновом режиме с помощью Puppeteer, который запускает скрытый веб-браузер и получает доступ к веб-странице. Для совместимости при первом открытии может потребоваться автоматическая загрузка веб-браузера, в зависимости от сети это может занять продолжительное время.</value>
+        <value>Позволяет помощнику просматривать веб-страницы и получать основное содержимое.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>Не выбран веб-поисковый движок, пожалуйста, настройте поисковый движок в конфигурации веб-браузера в настройках инструментов.</value>
@@ -1889,7 +1920,7 @@
         <value>Управление списком дел</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>Позволяя помощнику поддерживать краткий список дел, что оказывается очень полезным при выполнении сложных задач. Обратите внимание, что этот список временный и исчезнет при смене разговоров или выходе из Everywhere.</value>
+        <value>Позволяет помощнику вести краткий список дел, что очень полезно при работе со сложными задачами.</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>Основные функции</value>
@@ -1907,10 +1938,10 @@
         <value>{0} ввод · {1} вывод · {2} всего</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>Спросить Пользователя</value>
+        <value>Задать вопрос</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>Позволяет ассистенту задавать вопросы пользователю через интерактивный диалог и собирать ввод.</value>
+        <value>Позволяет ассистенту задавать вопросы в виде одиночного выбора, множественного выбора или свободного ввода, чтобы лучше понимать текущую задачу.</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>Далее</value>
@@ -2100,7 +2131,7 @@
         <value>Глубокое мышление</value>
     </data>
     <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>Длина предельного визуального контекста в токенах. Это оценка, точное ограничение не гарантируется. Для простого контекста потребление токенов обычно меньше этого числа; для сложного контекста избыточная часть будет обрезана.</value>
+        <value>Оценочный верхний предел потребления токенов за одно восприятие экрана.</value>
     </data>
     <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
         <value>Включить Вызов Инструментов</value>
@@ -3387,6 +3418,24 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Первичные статистические данные получены из анализа исторических чатов и могут содержать погрешности.</value>
     </data>
+    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
+        <value>Настройки Mistral</value>
+    </data>
+    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
+        <value>Настройки конфигурации модели AI Mistral</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
+        <value>Включить рассуждения</value>
+    </data>
+    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
+        <value>Включить рассуждения/мысли в ответах</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Интенсивность рассуждений</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Опциональная интенсивность рассуждений для конкретной модели. Для Mistral явно указаны high и none; другие ненулевые значения будут переданы без изменений. При отсутствии значения используется поведение по умолчанию модели. Отключение «Включить рассуждения» отправит none.</value>
+    </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>Не удалось записать путь настроек «{0}».</value>
     </data>
@@ -3909,5 +3958,29 @@
     </data>
     <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
         <value>Нажмите, чтобы развернуть</value>
+    </data>
+    <data name="ModelProviderSchema_Mistral" xml:space="preserve">
+        <value>Mistral</value>
+    </data>
+    <data name="ChatTurnPreview_Waiting" xml:space="preserve">
+        <value>Ожидание ответа…</value>
+    </data>
+    <data name="ChatTurnPreview_ToolActivity" xml:space="preserve">
+        <value>Вызов инструмента</value>
+    </data>
+    <data name="ChatWindowSettings_TurnNavigationMode_Header" xml:space="preserve">
+        <value>Навигация по репликам</value>
+    </data>
+    <data name="ChatWindowSettings_TurnNavigationMode_Description" xml:space="preserve">
+        <value>Показывает панель навигации по репликам слева от диалога. Выберите простое вертикальное движение, плавную анимацию с масштабированием или отключите навигацию.</value>
+    </data>
+    <data name="ChatTurnNavigationMode_None" xml:space="preserve">
+        <value>Выключено</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Simple" xml:space="preserve">
+        <value>Простая</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
+        <value>Плавная</value>
     </data>
 </root>

@@ -5,7 +5,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <summary>
 /// Describes one reviewed text change, its line impact, and its optional user comment.
 /// </summary>
-internal sealed record PatchChangeDecision(
+public sealed record PatchChangeDecision(
     string Id,
     bool Accepted,
     int AddedLineCount,
@@ -16,12 +16,12 @@ internal sealed record PatchChangeDecision(
 /// <summary>
 /// Carries one explicit review outcome for a planned file.
 /// </summary>
-internal abstract record PatchFileDecision(string SourcePath, IReadOnlyList<PatchChangeDecision> Changes);
+public abstract record PatchFileDecision(string SourcePath, IReadOnlyList<PatchChangeDecision> Changes);
 
 /// <summary>
 /// Accepts a content-bearing add, update, or move operation.
 /// </summary>
-internal sealed record PatchContentFileDecision(
+public sealed record PatchContentFileDecision(
     string SourcePath,
     string Content,
     IReadOnlyList<PatchChangeDecision> Changes
@@ -30,7 +30,7 @@ internal sealed record PatchContentFileDecision(
 /// <summary>
 /// Accepts a delete operation.
 /// </summary>
-internal sealed record PatchDeleteFileDecision(
+public sealed record PatchDeleteFileDecision(
     string SourcePath,
     IReadOnlyList<PatchChangeDecision> Changes
 ) : PatchFileDecision(SourcePath, Changes);
@@ -38,7 +38,7 @@ internal sealed record PatchDeleteFileDecision(
 /// <summary>
 /// Records an operation rejected by the user, including an optional reason.
 /// </summary>
-internal sealed record PatchRejectedFileDecision(
+public sealed record PatchRejectedFileDecision(
     string SourcePath,
     string? Reason,
     IReadOnlyList<PatchChangeDecision> Changes
@@ -47,12 +47,12 @@ internal sealed record PatchRejectedFileDecision(
 /// <summary>
 /// Records a planned update whose proposed content already matches the source.
 /// </summary>
-internal sealed record PatchNoChangesFileDecision(string SourcePath) : PatchFileDecision(SourcePath, []);
+public sealed record PatchNoChangesFileDecision(string SourcePath) : PatchFileDecision(SourcePath, []);
 
 /// <summary>
 /// Describes the outcome for one planned file operation.
 /// </summary>
-internal enum PatchCommitStatus
+public enum PatchCommitStatus
 {
     Committed,
     NoChanges,
@@ -65,7 +65,7 @@ internal enum PatchCommitStatus
 /// <summary>
 /// Reports the outcome for one planned path.
 /// </summary>
-internal sealed record PatchCommitFileResult(
+public sealed record PatchCommitFileResult(
     string Path,
     PatchCommitStatus Status,
     PatchFileDecision Decision,
@@ -75,7 +75,7 @@ internal sealed record PatchCommitFileResult(
 /// <summary>
 /// Reports the result of applying reviewed patch operations.
 /// </summary>
-internal sealed record PatchCommitResult(
+public sealed record PatchCommitResult(
     bool Succeeded,
     IReadOnlyList<PatchCommitFileResult> Files,
     string? Error = null
@@ -90,7 +90,7 @@ internal sealed record PatchCommitResult(
 /// fails after an earlier operation committed, the result reports the committed, failed, and
 /// not-attempted operations so the caller can explain the partial outcome accurately.
 /// </remarks>
-internal static class PatchCommitter
+public static class PatchCommitter
 {
     /// <summary>
     /// Applies accepted decisions after rechecking every source snapshot.
@@ -106,7 +106,7 @@ internal static class PatchCommitter
         PatchLimits limits,
         CancellationToken cancellationToken)
     {
-        var decisionMap = new Dictionary<string, PatchFileDecision>(PathContainment.SystemPathComparer);
+        var decisionMap = new Dictionary<string, PatchFileDecision>(PathUtilities.SystemPathComparer);
         foreach (var decision in decisions)
         {
             if (!decisionMap.TryAdd(decision.SourcePath, decision))
@@ -171,8 +171,7 @@ internal static class PatchCommitter
                         new MoveCommitItem(
                             move,
                             contentDecision,
-                            EncodeAcceptedContent(move, contentDecision.Content, limits),
-                            !string.Equals(contentDecision.Content, move.Original.Content, StringComparison.Ordinal)));
+                            EncodeAcceptedContent(move, contentDecision.Content, limits)));
                     break;
                 case PatchAddPlanFile or PatchUpdatePlanFile or PatchMovePlanFile:
                     throw new PatchCommitException(
@@ -236,7 +235,7 @@ internal static class PatchCommitter
     {
         var order = plan.Files
             .Select((file, index) => (file.ReviewPath, Index: index))
-            .ToDictionary(static item => item.ReviewPath, static item => item.Index, PathContainment.SystemPathComparer);
+            .ToDictionary(static item => item.ReviewPath, static item => item.Index, PathUtilities.SystemPathComparer);
         return results
             .AsValueEnumerable()
             .OrderBy(result => order.TryGetValue(result.Path, out var index) ? index : int.MaxValue)
@@ -265,73 +264,169 @@ internal static class PatchCommitter
             cancellationToken.ThrowIfCancellationRequested();
             if (item is AddCommitItem add)
             {
-                if (!IsStablePath(add.Add.SourcePath))
-                {
-                    return $"The patch destination '{add.Add.SourcePath}' became a symbolic link or reparse point while awaiting approval.";
-                }
+                var addConflict = VerifyResolution(add.Add.SourceResolution, PathResolutionMode.PreserveFinalComponent, "destination");
+                if (addConflict is not null) return addConflict;
+                if (EntryExists(add.Add.SourcePath)) return $"The patch destination '{add.Add.SourcePath}' was created while awaiting approval.";
+                continue;
+            }
 
-                if (File.Exists(add.Add.SourcePath) || Directory.Exists(add.Add.SourcePath))
+            if (item is UpdateCommitItem update)
+            {
+                var updateConflict = VerifyResolution(update.Update.SourceResolution, PathResolutionMode.FollowFinalComponent, "source");
+                if (updateConflict is not null) return updateConflict;
+                var fingerprintConflict = await VerifyFingerprintAsync(update.Update.SourcePath, update.Update.Original, limits, cancellationToken);
+                if (fingerprintConflict is not null) return fingerprintConflict;
+                continue;
+            }
+
+            if (item is DeleteCommitItem delete)
+            {
+                var deleteConflict = VerifyResolution(delete.Delete.SourceResolution, PathResolutionMode.PreserveFinalComponent, "source entry");
+                if (deleteConflict is not null) return deleteConflict;
+                var entryConflict = VerifySourceEntry(delete.Delete.SourcePath, delete.Delete.SourceLink);
+                if (entryConflict is not null) return entryConflict;
+                if (delete.Delete.SourceLink is null)
                 {
-                    return $"The patch destination '{add.Add.SourcePath}' was created or changed while awaiting approval.";
+                    var fingerprintConflict = await VerifyFingerprintAsync(delete.Delete.SourcePath, delete.Delete.Original, limits, cancellationToken);
+                    if (fingerprintConflict is not null) return fingerprintConflict;
                 }
 
                 continue;
             }
 
-            var sourcePath = item.Plan.SourcePath;
-            if (!IsStablePath(sourcePath))
-            {
-                return $"The patch source '{sourcePath}' became a symbolic link or reparse point while awaiting approval.";
-            }
-
-            if (!File.Exists(sourcePath))
-            {
-                return $"The patch source '{sourcePath}' was removed or changed while awaiting approval.";
-            }
-
-            try
-            {
-                if (File.GetAttributes(sourcePath).HasFlag(FileAttributes.ReparsePoint))
-                {
-                    return $"The patch source '{sourcePath}' became a symbolic link or reparse point while awaiting approval.";
-                }
-
-                var currentBytes = await ReadRawBytesAsync(sourcePath, limits.MaxFileBytes, cancellationToken);
-                if (!item.Plan.Original.HasSameFingerprint(currentBytes))
-                {
-                    return $"The patch source '{sourcePath}' changed while awaiting approval. No changes were written.";
-                }
-            }
-            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
-            {
-                return $"The patch source '{sourcePath}' was removed or changed while awaiting approval.";
-            }
-            catch (IOException ex)
-            {
-                return $"The patch source '{sourcePath}' could not be verified: {ex.Message}";
-            }
-
             if (item is MoveCommitItem move)
             {
-                var destination = move.Move.DestinationPath;
-                if (!IsStablePath(destination))
-                {
-                    return $"The patch destination '{destination}' became a symbolic link or reparse point while awaiting approval.";
-                }
+                var sourceConflict = VerifyResolution(move.Move.SourceResolution, PathResolutionMode.PreserveFinalComponent, "source entry");
+                if (sourceConflict is not null) return sourceConflict;
+                var sourceEntryConflict = VerifySourceEntry(move.Move.SourcePath, move.Move.SourceLink);
+                if (sourceEntryConflict is not null) return sourceEntryConflict;
 
-                if (File.Exists(destination) || Directory.Exists(destination))
-                {
-                    return $"The patch destination '{destination}' was created while awaiting approval. No changes were written.";
-                }
+                var contentConflict = VerifyResolution(move.Move.ContentResolution, PathResolutionMode.FollowFinalComponent, "content source");
+                if (contentConflict is not null) return contentConflict;
+                var fingerprintConflict = await VerifyFingerprintAsync(move.Move.ContentPath, move.Move.Original, limits, cancellationToken);
+                if (fingerprintConflict is not null) return fingerprintConflict;
+
+                var destinationConflict = VerifyResolution(move.Move.DestinationResolution, PathResolutionMode.PreserveFinalComponent, "destination");
+                if (destinationConflict is not null) return destinationConflict;
+                if (EntryExists(move.Move.DestinationPath)) return $"The patch destination '{move.Move.DestinationPath}' was created while awaiting approval.";
+                continue;
             }
+
+            return $"The patch commit type '{item.GetType().Name}' cannot be verified.";
         }
 
         return null;
     }
 
-    private static bool IsStablePath(string path) =>
-        PathContainment.TryResolvePath(path, out var resolvedPath) &&
-        string.Equals(path, resolvedPath, PathContainment.SystemPathComparison);
+    private static string? VerifyResolution(PathResolutionResult planned, PathResolutionMode mode, string role)
+    {
+        var current = PathUtilities.ResolvePath(planned.RequestedPath, mode);
+        if (!current.IsSuccess)
+        {
+            var failure = current.Failure;
+            return failure is null ?
+                $"The patch {role} '{planned.RequestedPath}' could not be resolved while awaiting approval." :
+                $"The patch {role} '{planned.RequestedPath}' could not be resolved at '{failure.Path}' ({failure.Kind}): {failure.Message}";
+        }
+
+        if (!string.Equals(current.ResolvedPath, planned.ResolvedPath, PathUtilities.SystemPathComparison) ||
+            !HaveSameLinkTransitions(current.LinkTransitions, planned.LinkTransitions))
+        {
+            return $"The patch {role} '{planned.RequestedPath}' resolves differently than it did during review. " +
+                $"Planned path: '{planned.ResolvedPath}'. Current path: '{current.ResolvedPath}'. No changes were written.";
+        }
+
+        return null;
+    }
+
+    private static string? VerifySourceEntry(string path, PatchLinkSnapshot? plannedLink)
+    {
+        try
+        {
+            var entry = PathUtilities.InspectEntry(path);
+            if (plannedLink is not null)
+            {
+                return entry is { Kind: PathUtilities.EntryKind.Link, RawLinkTarget: { } currentTarget } &&
+                    string.Equals(currentTarget, plannedLink.Target, StringComparison.Ordinal) ?
+                    null :
+                    $"The patch source link '{path}' changed while awaiting approval. Planned target: '{plannedLink.Target}'. " +
+                    $"Current entry: '{DescribeEntry(entry)}'.";
+            }
+
+            return entry.Kind switch
+            {
+                PathUtilities.EntryKind.Regular => null,
+                PathUtilities.EntryKind.Missing => $"The patch source entry '{path}' was removed while awaiting approval.",
+                PathUtilities.EntryKind.Link => $"The patch source entry '{path}' became a link to '{entry.RawLinkTarget}' while awaiting approval.",
+                PathUtilities.EntryKind.UnsupportedReparsePoint =>
+                    $"The patch source entry '{path}' became an unsupported reparse point while awaiting approval.",
+                _ => $"The patch source entry '{path}' has an unsupported entry kind '{entry.Kind}'."
+            };
+        }
+        catch (IOException ex)
+        {
+            return $"The patch source entry '{path}' could not be verified: {ex.Message}";
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return $"Access to patch source entry '{path}' was denied during verification: {ex.Message}";
+        }
+    }
+
+    private static async ValueTask<string?> VerifyFingerprintAsync(
+        string path,
+        PatchTextFileSnapshot original,
+        PatchLimits limits,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var entry = PathUtilities.InspectEntry(path);
+            if (entry.Kind is PathUtilities.EntryKind.Missing)
+            {
+                return $"The patch content source '{path}' was removed while awaiting approval.";
+            }
+
+            if (entry.Kind is PathUtilities.EntryKind.Link)
+            {
+                return $"The resolved patch content source '{path}' became a link to '{entry.RawLinkTarget}' while awaiting approval.";
+            }
+
+            if (entry.Kind is PathUtilities.EntryKind.UnsupportedReparsePoint)
+            {
+                return $"The resolved patch content source '{path}' became an unsupported reparse point while awaiting approval.";
+            }
+
+            var currentBytes = await ReadRawBytesAsync(path, limits.MaxFileBytes, cancellationToken);
+            return original.HasSameFingerprint(currentBytes) ?
+                null :
+                $"The patch content source '{path}' changed while awaiting approval. No changes were written.";
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return $"The patch content source '{path}' was removed while awaiting approval.";
+        }
+        catch (IOException ex)
+        {
+            return $"The patch content source '{path}' could not be verified: {ex.Message}";
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return $"Access to patch content source '{path}' was denied during verification: {ex.Message}";
+        }
+    }
+
+    private static bool EntryExists(string path)
+    {
+        try
+        {
+            return PathUtilities.InspectEntry(path).Kind is not PathUtilities.EntryKind.Missing;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
+    }
 
     private static async ValueTask ApplyCommitItemAsync(CommitItem item, CancellationToken cancellationToken)
     {
@@ -348,15 +443,7 @@ internal static class PatchCommitter
                 File.Delete(delete.Delete.SourcePath);
                 break;
             case MoveCommitItem move:
-                if (!move.ContentChanged)
-                {
-                    File.Move(move.Move.SourcePath, move.Move.DestinationPath);
-                    break;
-                }
-
-                await OverwriteExistingFileAsync(move.Move.SourcePath, move.ContentBytes, cancellationToken);
-                File.SetAttributes(move.Move.SourcePath, move.Move.Original.Attributes);
-                File.Move(move.Move.SourcePath, move.Move.DestinationPath);
+                await ApplyMoveAsync(move, cancellationToken);
                 break;
             default:
                 throw new PatchCommitException($"The patch commit type '{item.GetType().Name}' is not supported.");
@@ -389,6 +476,64 @@ internal static class PatchCommitter
         await stream.WriteAsync(bytes, cancellationToken);
         await stream.FlushAsync(cancellationToken);
     }
+
+    private static async ValueTask ApplyMoveAsync(MoveCommitItem move, CancellationToken cancellationToken)
+    {
+        var isDestinationCreated = false;
+        try
+        {
+            {
+                await using var stream = new FileStream(
+                    move.Move.DestinationPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 64 * 1024,
+                    options: FileOptions.Asynchronous);
+                isDestinationCreated = true;
+                await stream.WriteAsync(move.ContentBytes, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+            }
+
+            File.SetAttributes(move.Move.DestinationPath, move.Move.Original.Attributes);
+            File.Delete(move.Move.SourcePath);
+        }
+        catch (Exception ex) when (isDestinationCreated)
+        {
+            throw new IOException(
+                $"The destination '{move.Move.DestinationPath}' was created, but the move could not finish and the source entry " +
+                $"'{move.Move.SourcePath}' was not removed. " +
+                "The move is partially applied and requires manual cleanup.",
+                ex);
+        }
+    }
+
+    private static bool HaveSameLinkTransitions(
+        IReadOnlyList<PathLinkTransition> current,
+        IReadOnlyList<PathLinkTransition> planned)
+    {
+        if (current.Count != planned.Count) return false;
+        for (var index = 0; index < current.Count; index++)
+        {
+            if (!string.Equals(current[index].Path, planned[index].Path, PathUtilities.SystemPathComparison) ||
+                !string.Equals(current[index].LinkTarget, planned[index].LinkTarget, StringComparison.Ordinal) ||
+                !string.Equals(current[index].ExpandedTargetPath, planned[index].ExpandedTargetPath, PathUtilities.SystemPathComparison))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string DescribeEntry(PathUtilities.EntryInspection entry) => entry.Kind switch
+    {
+        PathUtilities.EntryKind.Missing => "missing",
+        PathUtilities.EntryKind.Regular => "regular file-system entry",
+        PathUtilities.EntryKind.Link => $"link to '{entry.RawLinkTarget}'",
+        PathUtilities.EntryKind.UnsupportedReparsePoint => "unsupported reparse point",
+        _ => entry.Kind.ToString()
+    };
 
     private static async ValueTask<byte[]> ReadRawBytesAsync(string path, long maxBytes, CancellationToken cancellationToken)
     {
@@ -457,19 +602,16 @@ internal static class PatchCommitter
     private sealed class MoveCommitItem(
         PatchMovePlanFile move,
         PatchContentFileDecision decision,
-        byte[] contentBytes,
-        bool contentChanged
+        byte[] contentBytes
     ) : CommitItem(move, decision)
     {
         public PatchMovePlanFile Move { get; } = move;
 
         public byte[] ContentBytes { get; } = contentBytes;
-
-        public bool ContentChanged { get; } = contentChanged;
     }
 }
 
 /// <summary>
 /// Reports an invalid or incomplete commit decision set.
 /// </summary>
-internal sealed class PatchCommitException(string message) : InvalidOperationException(message);
+public sealed class PatchCommitException(string message) : InvalidOperationException(message);

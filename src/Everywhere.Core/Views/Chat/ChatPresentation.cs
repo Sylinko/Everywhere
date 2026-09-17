@@ -558,6 +558,18 @@ public sealed class ChatPresentation : ObservableObject, IDisposable
         return -1;
     }
 
+    /// <summary>
+    /// Resolves a materialized row to its preceding user turn for viewport navigation.
+    /// </summary>
+    public ChatMessageNode? GetUserTurnNode(ChatPresentationRow row)
+    {
+        for (var i = FindTurnIndex(row); i >= 0; i--)
+        {
+            if (_descriptors[i].Nodes.FirstOrDefault() is { Message.Role.Label: "user" } node) return node;
+        }
+        return null;
+    }
+
     private int FindTurnIndex(ChatPresentationRow row)
     {
         for (var index = _windowStart; index < _windowEnd; index++)

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Avalonia.Automation.Peers;
+﻿using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -429,55 +428,23 @@ public partial class ChatWindow :
             return;
         }
 
-        // Check file support
         if (hasFiles)
         {
             var files = e.DataTransfer.TryGetFiles();
-            if (files != null)
+            if (files?.AsValueEnumerable().Any(TryGetLocalFilePath) is true)
             {
-                var hasSupportedFile = false;
-                var hasUnsupportedFile = false;
-                string? firstMimeType = null;
-
-                foreach (var item in files)
-                {
-                    if (IsSupportedFile(item, out _, out var mimeType))
-                    {
-                        hasSupportedFile = true;
-                        firstMimeType ??= mimeType;
-                    }
-                    else
-                    {
-                        hasUnsupportedFile = true;
-                    }
-                }
-
-                if (hasUnsupportedFile)
+                if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount)
                 {
                     e.DragEffects = DragDropEffects.None;
-                    DragDropIcon.Kind = LucideIconKind.FileX;
-                    DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_Unsupported;
-                    DragDropOverlay.IsVisible = true;
+                    DragDropOverlay.IsVisible = false;
                     return;
                 }
 
-                if (hasSupportedFile)
-                {
-                    if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount)
-                    {
-                        e.DragEffects = DragDropEffects.None;
-                        DragDropOverlay.IsVisible = false;
-                        return;
-                    }
-
-                    e.DragEffects = DragDropEffects.Copy;
-                    DragDropIcon.Kind = firstMimeType != null && FileUtilities.IsOfCategory(firstMimeType, FileTypeCategory.Image) ?
-                        LucideIconKind.Image :
-                        LucideIconKind.FileUp;
-                    DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_DropFilesHere;
-                    DragDropOverlay.IsVisible = true;
-                    return;
-                }
+                e.DragEffects = DragDropEffects.Copy;
+                DragDropIcon.Kind = LucideIconKind.FileUp;
+                DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_DropFilesHere;
+                DragDropOverlay.IsVisible = true;
+                return;
             }
         }
 
@@ -518,8 +485,7 @@ public partial class ChatWindow :
 
                 foreach (var item in files)
                 {
-                    if (!IsSupportedFile(item, out var localPath, out _))
-                        continue;
+                    if (!TryGetLocalFilePath(item, out var localPath)) continue;
 
                     try
                     {
@@ -546,25 +512,18 @@ public partial class ChatWindow :
         }
     }
 
-    private static bool IsSupportedFile(IStorageItem storageItem, [NotNullWhen(true)] out string? localPath, [NotNullWhen(true)] out string? mimeType)
+    private static bool TryGetLocalFilePath(IStorageItem storageItem) => TryGetLocalFilePath(storageItem, out _);
+
+    private static bool TryGetLocalFilePath(IStorageItem storageItem, out string localPath)
     {
-        localPath = null;
-        mimeType = null;
-
         if (!storageItem.Path.IsFile || storageItem.TryGetLocalPath() is not { } path)
-            return false;
-
-        localPath = path;
-        var extension = Path.GetExtension(path).ToLowerInvariant();
-        if (FileUtilities.KnownMimeTypes.TryGetValue(extension, out var mime) &&
-            FileUtilities.KnownFileTypes.TryGetValue(mime, out var fileType) &&
-            fileType is FileTypeCategory.Image or FileTypeCategory.Audio or FileTypeCategory.Document or FileTypeCategory.Script)
         {
-            mimeType = mime;
-            return true;
+            localPath = string.Empty;
+            return false;
         }
 
-        return false;
+        localPath = path;
+        return true;
     }
 
     public bool TryGetAttachmentCenterOnScreen(ChatAttachment attachment, out PixelPoint center)
