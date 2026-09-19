@@ -49,6 +49,22 @@ public interface IWindowHelper
     void RequestUserAttention(Window window);
 
     /// <summary>
+    /// Makes the window the foreground window, so it can receive keyboard input.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Window.Activate"/> is not sufficient when the request originates from a
+    /// non-activating overlay: the application never became the foreground process, and Windows refuses
+    /// a foreground change from a process that neither owns the foreground window nor received the last
+    /// activating input. This performs whatever platform-specific escalation is required.
+    /// </remarks>
+    /// <param name="window"></param>
+    /// <returns>
+    /// True if the window is the foreground window afterwards. The platform may refuse the change, and a
+    /// caller that has just hidden or is about to hide another window needs to know rather than assume.
+    /// </returns>
+    bool BringToForeground(Window window);
+
+    /// <summary>
     /// Sets the requested native window corner radius in Avalonia logical pixels.
     /// </summary>
     /// <param name="window">The target window.</param>

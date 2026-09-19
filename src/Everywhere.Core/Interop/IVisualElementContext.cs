@@ -60,6 +60,11 @@ public interface IVisualElementContext : IObservable<TextSelectionData>
     IVisualElement? FocusedElement { get; }
 
     /// <summary>
+    /// Get the current mouse pointer position in screen pixels, or null if it cannot be determined.
+    /// </summary>
+    PixelPoint? PointerPosition { get; }
+
+    /// <summary>
     /// Get all screens available in the system.
     /// </summary>
     IEnumerable<IVisualElement> Screens { get; }

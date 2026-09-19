@@ -7,6 +7,11 @@ namespace Everywhere.StrategyEngine;
 public interface IStrategyProvider
 {
     /// <summary>
+    /// Stable identity within the namespace, used to configure context-specific variants independently.
+    /// </summary>
+    string Id { get; }
+
+    /// <summary>
     /// The namespace this provider contributes to (e.g., "builtin", "user").
     /// </summary>
     string Namespace { get; }

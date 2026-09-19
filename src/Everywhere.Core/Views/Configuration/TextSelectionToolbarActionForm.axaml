@@ -1,0 +1,53 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:TextSelectionToolbarActionForm}"
+    TargetType="v:TextSelectionToolbarActionForm">
+    <Setter Property="MinWidth" Value="320"/>
+    <Setter Property="Width" Value="560"/>
+    <Setter Property="MaxWidth" Value="640"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:TextSelectionToolbarActionForm">
+        <ScrollViewer
+          MaxHeight="560" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="16">
+            <DockPanel HorizontalSpacing="12">
+              <Button
+                DockPanel.Dock="Left" Width="48" Height="48"
+                VerticalAlignment="Bottom" Padding="4"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_ChooseIcon}}">
+                <v:IconPresenter
+                  Width="32" Height="32" IconSize="24"
+                  Icon="{Binding Editor.Icon, RelativeSource={RelativeSource TemplatedParent}}"/>
+                <Button.Flyout>
+                  <Flyout>
+                    <v:IconEditor
+                      Width="360" Height="440"
+                      Icon="{Binding Editor.Icon, RelativeSource={RelativeSource TemplatedParent}}"/>
+                  </Flyout>
+                </Button.Flyout>
+              </Button>
+              <TextBox
+                shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Name}}"
+                Text="{Binding Editor.Name, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <Interaction.Behaviors>
+                  <FocusOnAttachedBehavior/>
+                </Interaction.Behaviors>
+              </TextBox>
+            </DockPanel>
+            <TextBox
+              MinHeight="200" MaxHeight="360"
+              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Prompt}}"
+              AcceptsReturn="True" TextWrapping="Wrap"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              Text="{Binding Editor.Prompt, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBlock
+              Classes="Muted" TextWrapping="Wrap"
+              Text="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_PromptHint}}"/>
+          </StackPanel>
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
