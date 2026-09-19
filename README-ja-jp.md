@@ -1,4 +1,4 @@
-<a id="readme-top"></a>
+﻿<a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README.md">English version »</a>
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">简体中文版本 »</a>
@@ -201,7 +201,7 @@
 
 ## 🤝 コントリビューション
 
-私たちはオープンソースを愛しており、皆さんの素晴らしいアイデアやコードの貢献（プルリクエスト）を歓迎します！コードスタイルのガイドラインとローカルでのコンパイル手順については [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+私たちはオープンソースを愛しており、皆さんの素晴らしいアイデアやコードの貢献（プルリクエスト）を歓迎します！コードスタイルのガイドラインとローカルでのコンパイル手順については [CONTRIBUTING.md](.github/CONTRIBUTING.md) をご覧ください。
 
 開発環境のセットアップとプロジェクトのローカルビルドの詳細な手順については、[ビルドガイド](docs/build.md)をご確認ください。
 
