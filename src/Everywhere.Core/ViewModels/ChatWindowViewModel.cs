@@ -384,21 +384,22 @@ public sealed partial class ChatWindowViewModel :
                 return;
             }
 
+            var addedFiles = false;
             if (formats.Contains(DataFormat.File))
             {
-                var files = await Clipboard.TryGetFilesAsync();
-                if (files != null)
+                foreach (var storageItem in await Clipboard.TryGetFilesAsync() ?? [])
                 {
-                    foreach (var storageItem in files)
-                    {
-                        var uri = storageItem.Path;
-                        if (!uri.IsFile) break;
-                        await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
-                        if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
-                    }
+                    var uri = storageItem.Path;
+                    if (!uri.IsFile) continue;
+                    await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
+                    addedFiles = true;
+                    if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
                 }
             }
-            else if (formats.Contains(DataFormat.Bitmap) && await Clipboard.TryGetBitmapAsync() is { } bitmap)
+
+            // A copied image file offers a file URL, while a screenshot or an image copied from an app
+            // usually offers bitmap data only. Use the bitmap when no file could be added.
+            if (!addedFiles && formats.Contains(DataFormat.Bitmap) && await Clipboard.TryGetBitmapAsync() is { } bitmap)
             {
                 _chatAttachmentsSource.Add(await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
             }

@@ -11,6 +11,7 @@ using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Rendering;
+using Everywhere.Extensions;
 using Everywhere.Patches.Contracts.Views;
 using Everywhere.Utilities;
 using LiveMarkdown.Avalonia;
@@ -263,6 +264,14 @@ public class ChatTextEditor : TemplatedControl
             RaiseEvent(pastingEvent);
             if (pastingEvent.Handled) return;
 
+            // Images and files are taken by the PastingFromClipboard handler as chat attachments, so their
+            // textual representation must not be inserted: macOS, for example, also offers the path of a
+            // copied file as plain text. Rich payloads that carry meaningful text next to a thumbnail, like
+            // a copy from Office, keep inserting that text.
+            var formats = await clipboard.GetDataFormatsAsync();
+            if (formats.Contains(DataFormat.File) ||
+                formats.Contains(DataFormat.Bitmap) && !formats.Contains(DataFormat.Text)) return;
+
             document.BeginUpdate();
             try
             {
@@ -295,19 +304,19 @@ public class ChatTextEditor : TemplatedControl
 
         switch (e.Key)
         {
-            case Key.V when e.KeyModifiers.HasFlag(KeyModifiers.Control) && textEditor.CanPaste:
+            case Key.V when e.KeyModifiers.HasApplicationShortcutModifier() && textEditor.CanPaste:
             {
                 textEditor.Paste();
                 e.Handled = true;
                 break;
             }
-            case Key.C when e.KeyModifiers.HasFlag(KeyModifiers.Control) && textEditor.CanCopy:
+            case Key.C when e.KeyModifiers.HasApplicationShortcutModifier() && textEditor.CanCopy:
             {
                 textEditor.Copy();
                 e.Handled = true;
                 break;
             }
-            case Key.X when e.KeyModifiers.HasFlag(KeyModifiers.Control) && textEditor.CanCut:
+            case Key.X when e.KeyModifiers.HasApplicationShortcutModifier() && textEditor.CanCut:
             {
                 textEditor.Cut();
                 e.Handled = true;
