@@ -316,6 +316,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileTransferRenderer))]
     private async Task TransferPathAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("The existing local file or directory to copy or move.")] string source,
         [Description("The destination path, including the final file or directory name.")] string destination,
@@ -410,6 +411,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 operation is FileTransferOperation.Copy ?
@@ -444,6 +446,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Header, LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Description)]
     private async Task<string> DeletePathsAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("Explicit local file or directory paths to delete.")] IReadOnlyList<string> paths,
         [Description("Whether non-empty directories may be deleted recursively.")] bool recursive = false,
@@ -479,6 +482,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var requiresExplicitApproval = recursive && targets.AsValueEnumerable().Any(static target => target is DirectoryInfo);
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header,
@@ -583,6 +587,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectoryAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         string path,
         CancellationToken cancellationToken = default)
@@ -604,6 +609,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header,
@@ -717,6 +723,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Description)]
     private async Task<PromptNode> ApplyPatchAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("The complete patch document, including the *** Begin Patch and *** End Patch markers.")]
         string? patch,
@@ -757,7 +764,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         try
         {
             decisions = await review.ReviewAsync(
-                (item, token) => RequestPatchFileDecisionAsync(userInterface, chatContext, item, token),
+                (item, token) => RequestPatchFileDecisionAsync(userInterface, storageProvider, chatContext, item, token),
                 userInterface.DisplaySink,
                 cancellationToken);
         }
@@ -812,6 +819,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private Task<RequestConsentResult> RequestPatchFileDecisionAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         PatchReviewItem item,
         CancellationToken cancellationToken)
@@ -819,6 +827,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var paths = item.File is PatchMovePlanFile move ? new[] { move.SourcePath, move.DestinationPath } : new[] { item.File.ReviewPath };
         return RequestFileOperationConsentResultAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header),
             paths,
@@ -1364,6 +1373,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         IDynamicLocaleKey headerKey,
         string[] paths,
@@ -1373,6 +1383,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         var consent = await RequestFileOperationConsentResultAsync(
             userInterface,
+            storageProvider,
             chatContext,
             headerKey,
             paths,
@@ -1395,6 +1406,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     /// </summary>
     private async Task<RequestConsentResult> RequestFileOperationConsentResultAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         IDynamicLocaleKey headerKey,
         string[] paths,
@@ -1490,11 +1502,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                         var options = new FolderPickerOpenOptions { AllowMultiple = false };
                         if (!commonParentDirectory.IsNullOrWhiteSpace())
                         {
-                            options.SuggestedStartLocation = await App.StorageProvider.TryGetFolderFromPathAsync(commonParentDirectory);
+                            options.SuggestedStartLocation = await storageProvider.TryGetFolderFromPathAsync(commonParentDirectory);
                         }
 
                         cancellationToken.ThrowIfCancellationRequested();
-                        return await App.StorageProvider.OpenFolderPickerAsync(options);
+                        return await storageProvider.OpenFolderPickerAsync(options);
                     });
                     selectedDirectory = folders.FirstOrDefault()?.Path.LocalPath;
                 }
@@ -1564,7 +1576,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             try
             {
-                return App.StorageProvider.CanPickFolder;
+                return storageProvider.CanPickFolder;
             }
             catch (InvalidOperationException ex)
             {
