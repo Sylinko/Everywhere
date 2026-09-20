@@ -1,10 +1,11 @@
 ﻿<a id="readme-top"></a>
 
-<a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">前往中文版本 »</a>
-<a href="https://github.com/Sylinko/Everywhere/blob/main/README-ja-jp.md">日本語バージョン »</a>
+<a href="README-zh-cn.md">前往中文版本 »</a>
+<a href="README-ja-jp.md">日本語バージョン »</a>
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/fdc68ffd-9660-4185-a236-6ec985c00e88" alt="Banner"/>
+
+  <img src="img/Everywhere.png" alt="Everywhere" width="120" height="120">
 
   <h1>Every moment, Every place. Your AI - <code>Everywhere</code></h1>
 
@@ -34,19 +35,19 @@
 <details>
 <summary>📖 <b>Table of Contents</b></summary>
 
-- [🦄 About Everywhere](#-about-everywhere)
-  - [🌟 Experience Examples](#-experience-examples)
-  - [🛠️ Technical Features](#️-technical-features)
-- [⚙️ Core Technology \& Architecture](#️-core-technology--architecture)
-- [📋 System Requirements](#-system-requirements)
-- [🚀 Getting Started](#-getting-started)
+- [About Everywhere](#-about-everywhere)
+  - [Experience Examples](#-experience-examples)
+  - [Technical Features](#️-technical-features)
+- [Core Technology \& Architecture](#️-core-technology--architecture)
+- [System Requirements](#-system-requirements)
+- [Getting Started](#-getting-started)
   - [Acquisition \& Installation](#acquisition--installation)
   - [Help \& Community](#help--community)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
-- [💖 Sponsor](#-sponsor)
-- [🤩 Special Thanks](#-special-thanks)
-- [📈 Star History](#-star-history)
+- [Contributing](#-contributing)
+- [Sponsor](#-sponsor)
+- [Special Thanks](#-special-thanks)
+- [Star History](#-star-history)
+- [License](#-license)
 
 </details>
 
@@ -94,21 +95,22 @@
   </thead>
   <tbody>
     <tr>
-      <td><b>🤖 Rich Model Ecosystem</b></td>
+      <td><b>Rich Model Ecosystem</b></td>
       <td>
-        • Everywhere Cloud Service<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="OpenAI" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/openai.svg"> OpenAI<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="Anthropic" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/anthropic.svg"> Anthropic (Claude)<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="Google" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/gemini-color.svg"> Google (Gemini)<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="DeepSeek" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/deepseek-color.svg"> DeepSeek<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="Moonshot" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/moonshot.svg"> Moonshot (Kimi)<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="MiniMax" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/minimax-color.svg"> MiniMax<br>
-        • <img style="margin-top:3px;margin-bottom:-3px;" alt="Ollama" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/ollama.svg"> Local Deployment (Ollama)<br>
+        • <img style="margin-top:3px;margin-bottom:-3px" alt="Everywhere Cloud Service" src="https://everywhere.sylinko.com/favicon.ico" width="20" height="20" > Everywhere Cloud Service<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="OpenAI" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/openai.svg"> OpenAI (ChatGPT)<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="Anthropic" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/anthropic.svg"> Anthropic (Claude)<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="Google" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/gemini-color.svg"> Google (Gemini)<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="DeepSeek" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/deepseek-color.svg"> DeepSeek<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="Moonshot" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/moonshot.svg"> Moonshot (Kimi)<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="MiniMax" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/minimax-color.svg"> MiniMax<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="Mistral AI" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/1.95.0/files/icons/mistral-color.svg"> Mistral AI<br>
+        • <img style="margin-top:3px;margin-bottom:-3px;background-color:#fff;border-radius:4px;padding:2px;box-sizing:border-box;" alt="Ollama" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/ollama.svg"> Local Deployment (Ollama)<br>
         • Compatible with custom API endpoints<br>
       </td>
     </tr>
     <tr>
-      <td><b>⚙️ Powerful Agent System</b></td>
+      <td><b>Powerful Agent System</b></td>
       <td>
         • Web Browser<br>
         • Dispatch Sub-agents<br>
@@ -123,7 +125,7 @@
       </td>
     </tr>
     <tr>
-      <td><b>🫧 Seamless Interaction</b></td>
+      <td><b>Seamless Interaction</b></td>
       <td>
         • Ultimate Modern Frosted Glass UI<br>
         • Intelligent Context Awareness<br>
@@ -137,7 +139,7 @@
       </td>
     </tr>
     <tr>
-      <td><b>🖥️ Multi-Platform</b></td>
+      <td><b>Multi-Platform</b></td>
       <td>
         • 🪟 Windows<br>
         • 🍎 macOS
@@ -147,9 +149,9 @@
       </td>
     </tr>
     <tr>
-      <td><b>🌐 i18n Support</b></td>
+      <td><b>i18n Support</b></td>
       <td>
-        • Simplified/Traditional Chinese<br>
+        • 简体中文/繁體中文<br>
         • English, Deutsch, Español<br>
         • Français, Italiano, 日本語<br>
         • 한국어, Русский, Türkçe<br>
@@ -180,7 +182,7 @@
 ### Acquisition & Installation
 
 > [!TIP]
-> We recommend visiting our [official website](https://everywhere.sylinko.com/download) to directly download the appropriate version for your system.
+> We recommend visiting our [official website](https://everywhere.sylinko.com/download) to directly download the appropriate version for your system, or download it from the [release page](https://github.com/Sylinko/Everywhere/releases/latest).
 
 **Windows**
 - `Everywhere-Windows-x64-Setup-vx.x.x.exe`: Full wizard installer package *(Recommended)*.
@@ -195,9 +197,9 @@
 > [!NOTE]
 > New here? Or looking for deep integration features like MCP? We highly recommend checking out our official guide first!
 
-- **📖 Official Documentation**: [https://everywhere.sylinko.com](https://everywhere.sylinko.com)
-- **👾 Discord Community**: [Join our channel for support](https://discord.gg/5fyg6nE3yn)
-- **💬 Chinese User Group**: [Click to join our QQ group](https://qm.qq.com/cgi-bin/qm/qr?k=wp9aDBBnLc7pYATqT99tB-N2ZP2ETmJC&jump_from=webapi&authKey=97qUJfsQoI70dUNcgBZ0C3HCZeiEn8inLT7pzg8x+KinbQwfIrHFu3dB2+aHMbRD)
+- **Official Documentation**: [https://everywhere.sylinko.com](https://everywhere.sylinko.com)
+- **Discord Community**: [Join our channel for support](https://discord.gg/5fyg6nE3yn)
+- **Chinese User Group**: [Click to join our QQ group](https://qm.qq.com/cgi-bin/qm/qr?k=wp9aDBBnLc7pYATqT99tB-N2ZP2ETmJC&jump_from=webapi&authKey=97qUJfsQoI70dUNcgBZ0C3HCZeiEn8inLT7pzg8x+KinbQwfIrHFu3dB2+aHMbRD)
 
 ## 🤝 Contributing
 
@@ -207,14 +209,9 @@ Check our [Build Guide](docs/build.md) for detailed instructions on how to set u
 
 **A massive thanks to all of the outstanding contributors during our inception and growth phases:**
 
-<a href="https://github.com/Sylinko/Everywhere/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Sylinko/Everywhere" alt="Everywhere Contributors Image" />
+<a href="https://openomy.com/Sylinko/Everywhere" target="_blank" style="display: block; width: 100%;" align="center">
+  <img src="https://openomy.com/svg?repo=Sylinko/Everywhere&chart=bubble&latestMonth=12" target="_blank" alt="Contribution Leaderboard" style="display: block; width: 100%;" />
 </a>
-
-## 📄 License
-
-This project is released under the [LICENSE](LICENSE) file.
-*For Third-Party dependencies and open-source component licenses, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).*
 
 ## 💖 Sponsor
 
@@ -223,6 +220,9 @@ This project is released under the [LICENSE](LICENSE) file.
 [302.AI](https://share.302.ai/5rzmPr) is a pay-as-you-go enterprise AI resource hub that offers the latest and most comprehensive AI models and APIs on the market, along with a variety of ready-to-use online AI applications.
 
 ## 🤩 Special Thanks
+
+<a href="https://www.certumcodesign.cn"><img src="img/Sponsors/certum-cn.svg" width="300" alt="Certum China" style=";background-color:#fff;"/></a><br/>
+
 
 The Code Signing Certificate for this project is generously sponsored by [Certum China](https://www.certumcodesign.cn/), continuing their great contribution to the open-source community.
 
@@ -241,6 +241,12 @@ Thanks [pasical](https://github.com/pasical) for the banner kawaii logo design.
 </a>
 
 <br/>
+
+
+## 📄 License
+
+This project is released under the [LICENSE](LICENSE) file.
+*For Third-Party dependencies and open-source component licenses, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).*
 
 <p align="right"><a href="#readme-top">⬆️ Back to top</a></p>
 
