@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Everywhere.Chat.Plugins;
+using Everywhere.Extensions;
 using Everywhere.Utilities;
 using LiveMarkdown.Avalonia;
 using Serilog;
@@ -152,6 +153,7 @@ public sealed class TerminalView : TemplatedControl
         {
             if (DisplayBlock is not { } block) return;
 
+            // Control+C must stay Control-only: it sends SIGINT, while Command+C copies on macOS.
             if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.C)
             {
                 e.Handled = true;
@@ -159,7 +161,7 @@ public sealed class TerminalView : TemplatedControl
                 return;
             }
 
-            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.V ||
+            if (e.KeyModifiers.HasApplicationShortcutModifier() && e.Key == Key.V ||
                 e.KeyModifiers.HasFlag(KeyModifiers.Shift) && e.Key == Key.Insert)
             {
                 e.Handled = true;

@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Common;
+using Everywhere.Extensions;
 using Everywhere.Utilities;
 
 namespace Everywhere.Views;
@@ -436,7 +437,7 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     private void HandleKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.KeyModifiers == KeyModifiers.Control)
+        if (e.KeyModifiers.IsApplicationShortcutModifierOnly())
         {
             var index = e.Key switch
             {
@@ -468,8 +469,12 @@ public sealed partial class ChatInputArea : TemplatedControl
         {
             case Key.Enter:
             {
-                if ((!PressCtrlEnterToSend || e.KeyModifiers != KeyModifiers.Control) &&
-                    (PressCtrlEnterToSend || e.KeyModifiers != KeyModifiers.None)) return;
+                if (PressCtrlEnterToSend)
+                {
+                    // Accept Ctrl+Enter, and Command+Enter on macOS where Command is the native shortcut modifier.
+                    if (!e.KeyModifiers.IsApplicationShortcutModifierOnly()) return;
+                }
+                else if (e.KeyModifiers != KeyModifiers.None) return;
 
                 if (Command?.CanExecute(Text) is not true) break;
 

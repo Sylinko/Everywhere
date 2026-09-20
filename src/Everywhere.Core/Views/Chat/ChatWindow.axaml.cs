@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
 using Everywhere.Configuration;
+using Everywhere.Extensions;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
@@ -136,19 +137,19 @@ public partial class ChatWindow :
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.F, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.F } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 ViewModel.TextSearch.OpenSearchCommand.Execute(null);
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.H, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.H } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 _persistentState.IsChatWindowHistoryOpened = !_persistentState.IsChatWindowHistoryOpened;
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.T, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.T } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 if (ViewModel.Settings.Model.SelectedCustomAssistant is { } assistant)
                 {
