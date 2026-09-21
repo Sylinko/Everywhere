@@ -391,8 +391,7 @@ public sealed partial class ChatWindowViewModel :
                 {
                     var uri = storageItem.Path;
                     if (!uri.IsFile) continue;
-                    await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
-                    addedFiles = true;
+                    addedFiles |= await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
                     if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
                 }
             }
@@ -500,9 +499,9 @@ public sealed partial class ChatWindowViewModel :
     /// <param name="filePath"></param>
     /// <param name="description"></param>
     /// <param name="cancellationToken"></param>
-    private async ValueTask AddFileUncheckAsync(string filePath, string? description = null, CancellationToken cancellationToken = default)
+    private async ValueTask<bool> AddFileUncheckAsync(string filePath, string? description = null, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(filePath)) return;
+        if (string.IsNullOrWhiteSpace(filePath)) return false;
 
         FileAttachment attachment;
         try
@@ -523,10 +522,11 @@ public sealed partial class ChatWindowViewModel :
                 .DismissOnClick()
                 .OnBottomRight()
                 .ShowError();
-            return;
+            return false;
         }
 
         _chatAttachmentsSource.Add(attachment);
+        return true;
     }
 
     /// <summary>
