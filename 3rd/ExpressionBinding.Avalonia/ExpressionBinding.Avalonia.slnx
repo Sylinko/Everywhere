@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="NuGet.config" />
+    <File Path="README.md" />
+    <File Path="THIRD-PARTY-NOTICES.md" />
+  </Folder>
+  <Project Path="src/ExpressionBinding.Avalonia/ExpressionBinding.Avalonia.csproj" />
+  <Project Path="tests/ExpressionBinding.Avalonia.AotSmoke/ExpressionBinding.Avalonia.AotSmoke.csproj" />
+  <Project Path="tests/ExpressionBinding.Avalonia.Tests/ExpressionBinding.Avalonia.Tests.csproj" />
+</Solution>
