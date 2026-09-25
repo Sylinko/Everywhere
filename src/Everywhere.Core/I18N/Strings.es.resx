@@ -1964,6 +1964,9 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Gestionar Palabras Clave</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Cambiar el prompt después de iniciar una conversación puede reducir la tasa de aciertos de la caché de prompts.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>¿Estás seguro de que deseas eliminar {0} claves API? ¡Esta acción no se puede deshacer!</value>
     </data>

@@ -1964,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Управление подсказками</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Изменение промпта после начала диалога может снизить долю попаданий в кэш промптов.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Вы уверены, что хотите удалить {0} API ключей? Это действие нельзя отменить!</value>
     </data>

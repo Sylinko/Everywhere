@@ -28,7 +28,7 @@ public sealed partial class ReasoningEffortSlider
         set => SetValue(EdgeStretchProperty, value);
     }
 
-    private const double MaximumEdgeStretch = 12;
+    private const double MaximumEdgeStretch = 10;
     private static readonly TimeSpan SelectionDuration = TimeSpan.FromMilliseconds(120);
     private static readonly TimeSpan ReboundDuration = TimeSpan.FromMilliseconds(220);
 
@@ -38,7 +38,7 @@ public sealed partial class ReasoningEffortSlider
     };
     private readonly DoubleTransition _reboundTransition = new()
     {
-        Property = EdgeStretchProperty, Duration = ReboundDuration, Easing = EaseOutBack.Soft
+        Property = EdgeStretchProperty, Duration = ReboundDuration, Easing = EaseOutBack.Normal
     };
 
     private readonly TranslateTransform _indicatorTranslation = new();

@@ -4,6 +4,9 @@ namespace Everywhere.Messages;
 /// Requests navigation in the main window.
 /// </summary>
 /// <remarks>
+/// This message only navigates an existing main view; it does not create, show, or activate its window.
+/// Callers outside the main window should send a <see cref="ShowWindowMessage"/> with a route instead.
+///
 /// String routes intentionally behave like browser paths. The first path segments
 /// match main navigation items by route key; remaining segments are passed to the
 /// target view model through <c>ReactiveViewModelBase.OnNavigatedTo</c>.

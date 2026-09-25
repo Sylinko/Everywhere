@@ -1964,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>프롬프트 관리</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>대화가 시작된 후 프롬프트를 변경하면 프롬프트 캐시 적중률이 낮아질 수 있습니다.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 개의 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
     </data>

@@ -1964,6 +1964,9 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Gerenciar Prompts</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Alterar o prompt após o início de uma conversa pode reduzir a taxa de acertos do cache de prompts.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Você tem certeza de que deseja excluir {0} chaves de API? Esta ação não pode ser desfeita!</value>
     </data>

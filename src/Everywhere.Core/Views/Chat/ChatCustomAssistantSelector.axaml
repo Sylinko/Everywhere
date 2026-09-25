@@ -49,7 +49,8 @@
               </Interaction.Behaviors>
             </TextBlock>
             <TextBlock
-              Classes="Muted Caption" VerticalAlignment="Bottom"
+              Classes="Muted Caption" Margin="-2,0,0,0"
+              VerticalAlignment="Bottom"
               Text="{Binding SelectedItem?.EffectiveReasoningOptions?.EffectiveReasoningEffort, RelativeSource={RelativeSource TemplatedParent}}"
               TextTrimming="CharacterEllipsis">
               <TextBlock.MaxWidth>
@@ -193,7 +194,7 @@
 
                                     <DockPanel
                                       Grid.Row="1" Grid.Column="1"
-                                      HorizontalSpacing="2">
+                                      HorizontalSpacing="4">
                                       <TextBlock
                                         Classes="Muted Caption" DockPanel.Dock="Left"
                                         VerticalAlignment="Center" TextTrimming="LeadingCharacterEllipsis">
@@ -250,43 +251,45 @@
                 <v:ConditionalContentControl.TrueContent>
                   <DataTemplate x:DataType="ai:CustomAssistant">
                     <StackPanel
-                      Width="300" Margin="10,6"
+                      Width="300" Margin="4,6"
                       Grid.IsSharedSizeScope="True" Spacing="8">
                       <Grid
                         Margin="6,0" ColumnSpacing="12"
                         RowDefinitions="Auto,12,Auto,Auto">
                         <Grid.ColumnDefinitions>
-                          <ColumnDefinition
-                            Width="Auto" SharedSizeGroup="Icon"/>
+                          <ColumnDefinition Width="Auto"/>
                           <ColumnDefinition Width="*"/>
                           <ColumnDefinition
                             Width="Auto" SharedSizeGroup="Chevron"/>
                         </Grid.ColumnDefinitions>
 
-                        <Button
-                          Classes="Ghost Compact NoPadding" Grid.Row="0"
-                          Grid.Column="0" Margin="-2"
-                          Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
-                          CommandParameter="{x:Null}">
-                          <LucideIcon
-                            Margin="3,4,5,4" Kind="ChevronLeft"
-                            Size="{DynamicResource FontSize2Xl}"/>
-                        </Button>
+                        <DockPanel
+                          Grid.Row="0" Grid.Column="0"
+                          Grid.ColumnSpan="2" HorizontalSpacing="4">
+                          <Button
+                            Classes="Ghost Compact NoPadding" DockPanel.Dock="Left"
+                            Margin="-6,-2,-2,-2"
+                            Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
+                            CommandParameter="{x:Null}">
+                            <LucideIcon
+                              Margin="3,4,5,4" Kind="ChevronLeft"
+                              Size="{DynamicResource FontSize2Xl}"/>
+                          </Button>
 
-                        <TextBlock
-                          Grid.Row="0" Grid.Column="1"
-                          VerticalAlignment="Center"
-                          Text="{Binding Name}"
-                          TextTrimming="CharacterEllipsis">
-                          <Interaction.Behaviors>
-                            <shadui:TextTrimmedToolTipBehavior/>
-                          </Interaction.Behaviors>
-                        </TextBlock>
+                          <TextBlock
+                            VerticalAlignment="Center"
+                            Text="{Binding Name}"
+                            TextTrimming="CharacterEllipsis">
+                            <Interaction.Behaviors>
+                              <shadui:TextTrimmedToolTipBehavior/>
+                            </Interaction.Behaviors>
+                          </TextBlock>
+                        </DockPanel>
 
                         <v:IconPresenter
                           Grid.Row="2" Grid.RowSpan="2"
                           Grid.Column="0" DockPanel.Dock="Left"
-                          Margin="-999" VerticalAlignment="Center"
+                          VerticalAlignment="Center"
                           FontSize="{DynamicResource FontSize2Xl}"
                           Icon="{Binding Icon}"
                           IconSize="{DynamicResource FontSize2Xl}"
@@ -405,9 +408,10 @@
                         <v:ReasoningEffortSlider
                           x:Name="ReasoningSlider" Grid.Row="1"
                           Grid.Column="0" Grid.ColumnSpan="3"
+                          ClipToBounds="False"
                           Options="{Binding EffectiveReasoningOptions}">
                           <v:ReasoningEffortSlider.Margin>
-                            <exp:ExpressionBinding Expression="thickness(A / 2 - 7, 0, 0, 0)">
+                            <exp:ExpressionBinding Expression="thickness(A / 2 - 12, 0, 0, 0)">
                               <DynamicResource ResourceKey="FontSizeXl"/>
                             </exp:ExpressionBinding>
                           </v:ReasoningEffortSlider.Margin>
@@ -419,51 +423,7 @@
                           Background="{DynamicResource BorderColor60}"/>
                       </Grid>
 
-                      <Button
-                        Classes="Ghost NoPadding" Margin="-6,-4"
-                        HorizontalContentAlignment="Stretch">
-                        <Grid
-                          Margin="12,4,6,4" ColumnSpacing="12"
-                          RowDefinitions="Auto,Auto">
-                          <Grid.ColumnDefinitions>
-                            <ColumnDefinition
-                              Width="Auto" SharedSizeGroup="Icon"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition
-                              Width="Auto" SharedSizeGroup="Chevron"/>
-                          </Grid.ColumnDefinitions>
-
-                          <LucideIcon
-                            Grid.Row="0" Grid.RowSpan="2"
-                            Grid.Column="0" VerticalAlignment="Center"
-                            Kind="BookText"
-                            Size="{DynamicResource FontSizeXl}"/>
-
-                          <TextBlock
-                            Grid.Row="0" Grid.Column="1"
-                            VerticalAlignment="Center"
-                            Text="{I18N {x:Static LocaleKey.PromptPage_Title}}"/>
-                          <TextBlock
-                            Classes="Muted Caption" Grid.Row="1"
-                            Grid.Column="1" VerticalAlignment="Center"
-                            Text="{Binding SystemPromptId}"/>
-
-                          <LucideIcon
-                            Grid.Row="0" Grid.RowSpan="2"
-                            Grid.Column="2" Margin="6"
-                            VerticalAlignment="Center" Kind="ChevronRight"
-                            Size="{DynamicResource FontSizeL}"/>
-                        </Grid>
-
-                        <Button.Flyout>
-                          <Flyout Placement="Right">
-                            <DockPanel>
-                              <shadui:Toast
-                                Title="对话开始后切换提示词可能导致缓存命中率下降" Notification="Info"/>
-                            </DockPanel>
-                          </Flyout>
-                        </Button.Flyout>
-                      </Button>
+                      <v:ChatAssistantPromptSelector Assistant="{Binding}"/>
 
                       <!--  <Border  -->
                       <!--  Height="0.5"  -->
@@ -483,7 +443,7 @@
 
                         <LucideIcon
                           Grid.Column="0" VerticalAlignment="Center"
-                          Kind="Globe"
+                          Kind="Hammer"
                           Size="{DynamicResource FontSizeXl}"/>
 
                         <TextBlock
@@ -503,7 +463,7 @@
 
                         <Button
                           Classes="Ghost Compact NoPadding" Grid.Column="4"
-                          Margin="4" VerticalAlignment="Center"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
                           HorizontalContentAlignment="Stretch">
                           <LucideIcon
                             Margin="6" Kind="ChevronRight"
@@ -524,10 +484,10 @@
                       <!--  Background="{DynamicResource BorderColor60}"/>  -->
 
                       <Button
-                        Classes="Ghost NoPadding" Margin="-6,-4"
+                        Classes="Ghost NoPadding" Margin="-2,-4"
                         HorizontalContentAlignment="Stretch">
                         <Grid
-                          Margin="12,4,6,4" ColumnSpacing="12">
+                          Margin="8,4,2,4" ColumnSpacing="12">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition
                               Width="Auto" SharedSizeGroup="Icon"/>
@@ -546,8 +506,9 @@
                             Text="{I18N {x:Static LocaleKey.Assistant_AdvancedSettings}}"/>
 
                           <LucideIcon
-                            Grid.Column="2" Margin="6"
-                            VerticalAlignment="Center" Kind="ChevronRight"
+                            Grid.Column="2" Margin="0,6"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Kind="ChevronRight"
                             Size="{DynamicResource FontSizeL}"/>
                         </Grid>
 
