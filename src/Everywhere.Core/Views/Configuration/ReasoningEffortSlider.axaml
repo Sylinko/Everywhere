@@ -1,0 +1,103 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="ReasoningSliderInputButton" TargetType="RepeatButton">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="Transparent"/>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme
+    x:Key="{x:Type v:ReasoningEffortSlider}"
+    TargetType="v:ReasoningEffortSlider">
+    <Setter Property="Height" Value="36"/>
+    <Setter Property="MinWidth" Value="160"/>
+    <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel
+          Background="Transparent" UseLayoutRounding="True">
+          <Panel IsHitTestVisible="False">
+            <Decorator
+              x:Name="PART_Line" Height="16"
+              HorizontalAlignment="Left" VerticalAlignment="Center"
+              RenderTransformOrigin="0%,0%">
+              <Border
+                Margin="-8,0"
+                Background="{TemplateBinding BorderBrush}"
+                CornerRadius="8"/>
+            </Decorator>
+            <Canvas x:Name="PART_Nodes"/>
+            <Panel
+              x:Name="PART_Indicator" Width="0"
+              HorizontalAlignment="Left">
+              <Border
+                x:Name="PART_IndicatorThumb" Width="24"
+                Height="24" Margin="-12,0"
+                VerticalAlignment="Center"
+                Background="{TemplateBinding Foreground}"
+                CornerRadius="12">
+                <Border.Transitions>
+                  <Transitions>
+                    <TransformOperationsTransition
+                      Property="RenderTransform" Duration="0:0:0.10"/>
+                    <BrushTransition
+                      Property="Background" Duration="0:0:0.15"/>
+                  </Transitions>
+                </Border.Transitions>
+
+                <Border.Styles>
+                  <Style Selector="Border:pointerover">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryColor75}"/>
+                  </Style>
+                  <Style Selector="Border:pressed">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryColor75}"/>
+                    <Setter Property="RenderTransform" Value="scale(0.9, 0.9)"/>
+                  </Style>
+                </Border.Styles>
+              </Border>
+            </Panel>
+          </Panel>
+          <Track
+            x:Name="PART_Track"
+            IsDirectionReversed="{TemplateBinding IsDirectionReversed}"
+            Maximum="{TemplateBinding Maximum}"
+            Minimum="{TemplateBinding Minimum}"
+            Orientation="Horizontal"
+            Value="{TemplateBinding Value, Mode=TwoWay}">
+            <Track.DecreaseButton>
+              <RepeatButton
+                x:Name="PART_DecreaseButton"
+                Theme="{StaticResource ReasoningSliderInputButton}"/>
+            </Track.DecreaseButton>
+            <Track.IncreaseButton>
+              <RepeatButton
+                x:Name="PART_IncreaseButton"
+                Theme="{StaticResource ReasoningSliderInputButton}"/>
+            </Track.IncreaseButton>
+
+            <Thumb
+              x:Name="PART_Thumb" Width="24"
+              Height="24">
+              <Thumb.Template>
+                <ControlTemplate>
+                  <Border Background="Transparent"/>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

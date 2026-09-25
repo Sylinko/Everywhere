@@ -31,7 +31,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_050_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -42,6 +43,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_050_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"],
                     IsDefault = true
                 },
                 new ModelDefinitionTemplate
@@ -52,7 +54,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 400_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -63,6 +66,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 400_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"],
                     Specializations = ModelSpecializations.TitleGeneration
                 },
                 new ModelDefinitionTemplate
@@ -73,7 +77,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 400_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high", "xhigh"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -85,6 +90,7 @@ public static class PresetModelTemplates
                     ContextLimit = 400_000,
                     // InputLimit = 272_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["none", "low", "medium", "high"],
                 },
                 new ModelDefinitionTemplate
                 {
@@ -96,6 +102,7 @@ public static class PresetModelTemplates
                     ContextLimit = 400_000,
                     // InputLimit = 272_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"],
                 },
                 new ModelDefinitionTemplate
                 {
@@ -106,7 +113,8 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 400_000,
                     // InputLimit = 272_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -117,7 +125,8 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 400_000,
                     // InputLimit = 272_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -127,7 +136,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 200_000,
-                    OutputLimit = 100_000
+                    OutputLimit = 100_000,
+                    ReasoningEffortValues = ["low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -180,7 +190,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "xhigh", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -190,7 +201,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "xhigh", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -200,7 +212,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "xhigh", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -210,7 +223,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -220,7 +234,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 200_000,
-                    OutputLimit = 64_000
+                    OutputLimit = 64_000,
+                    ReasoningEffortValues = ["low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -230,7 +245,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 64_000,
+                    OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "max"],
                     IsDefault = true
                 },
                 new ModelDefinitionTemplate
@@ -240,7 +256,7 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 200_000,
+                    ContextLimit = 1_000_000,
                     OutputLimit = 64_000
                 },
                 new ModelDefinitionTemplate
@@ -253,38 +269,6 @@ public static class PresetModelTemplates
                     ContextLimit = 200_000,
                     OutputLimit = 64_000,
                     Specializations = ModelSpecializations.TitleGeneration
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "claude-opus-4-1",
-                    Name = "Claude Opus 4.1",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 200_000,
-                    OutputLimit = 32_000
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "claude-opus-4-0",
-                    Name = "Claude Opus 4",
-                    SupportsToolCall = true,
-                    DeprecationDate = new DateOnly(2026, 6, 15),
-                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 200_000,
-                    OutputLimit = 32_000
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "claude-sonnet-4-0",
-                    Name = "Claude Sonnet 4",
-                    SupportsToolCall = true,
-                    DeprecationDate = new DateOnly(2026, 6, 15),
-                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Pdf,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 200_000,
-                    OutputLimit = 64_000
                 }
             ]
         },
@@ -308,6 +292,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
                     OutputLimit = 65_536,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"],
                     IsDefault = true
                 },
                 new ModelDefinitionTemplate
@@ -318,7 +303,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Audio | Modalities.Video | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
-                    OutputLimit = 65_536
+                    OutputLimit = 65_536,
+                    ReasoningEffortValues = ["low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -328,7 +314,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Audio | Modalities.Video | Modalities.Pdf,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
-                    OutputLimit = 65_536
+                    OutputLimit = 65_536,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -359,6 +346,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
                     OutputLimit = 65_536,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"],
                     Specializations = ModelSpecializations.TitleGeneration
                 },
                 new ModelDefinitionTemplate
@@ -391,8 +379,9 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 256_000,
-                    OutputLimit = 128_000,
+                    ContextLimit = 262_144,
+                    OutputLimit = 262_144,
+                    ReasoningEffortValues = ["none", "high"],
                     IsDefault = true
                 },
                 new ModelDefinitionTemplate
@@ -403,7 +392,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 256_000,
-                    OutputLimit = 128_000
+                    OutputLimit = 256_000,
+                    ReasoningEffortValues = ["none", "high"]
                 },
                 new ModelDefinitionTemplate
                 {
@@ -412,8 +402,8 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 256_000,
-                    OutputLimit = 128_000
+                    ContextLimit = 262_144,
+                    OutputLimit = 262_144
                 }
             ]
         },
@@ -436,17 +426,19 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
-                    OutputLimit = 384_000
+                    OutputLimit = 384_000,
+                    ReasoningEffortValues = ["low", "high", "max"]
                 },
                 new ModelDefinitionTemplate
                 {
                     ModelId = "deepseek-v4-flash",
                     Name = "DeepSeek V4 Flash",
                     SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
+                    InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 384_000,
+                    ReasoningEffortValues = ["low", "high", "max"],
                     IsDefault = true,
                     Specializations = ModelSpecializations.TitleGeneration | ModelSpecializations.ContextCompression
                 }
@@ -521,16 +513,6 @@ public static class PresetModelTemplates
                     ContextLimit = 262_144,
                     OutputLimit = 262_144,
                     IsDefault = true
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "kimi-k2.5",
-                    Name = "Kimi K2.5",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 262_144,
-                    OutputLimit = 262_144
                 }
             ]
         },
@@ -600,8 +582,8 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image | Modalities.Video,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 1_000_000,
-                    OutputLimit = 128_000,
+                    ContextLimit = 1_048_576,
+                    OutputLimit = 512_000,
                     IsDefault = true
                 },
                 new ModelDefinitionTemplate
@@ -657,23 +639,13 @@ public static class PresetModelTemplates
                 },
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "MiniMax-M2.1-highspeed",
-                    Name = "MiniMax-M2.1-highspeed",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 204_800,
-                    OutputLimit = 131_072
-                },
-                new ModelDefinitionTemplate
-                {
                     ModelId = "MiniMax-M2",
                     Name = "MiniMax-M2",
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 196_608,
-                    OutputLimit = 128_000
+                    ContextLimit = 204_800,
+                    OutputLimit = 131_072
                 },
             ]
         },
@@ -691,35 +663,15 @@ public static class PresetModelTemplates
                 // According to 2026/03/31 Rankings
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "xiaomi/mimo-v2-pro",
-                    Name = "Xiaomi: MiMo-V2-Pro",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 1_048_576,
-                    OutputLimit = 131_072,
-                    IsDefault = true,
-                    Specializations = ModelSpecializations.TitleGeneration | ModelSpecializations.ContextCompression
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "stepfun/step-3.5-flash:free",
-                    Name = "StepFun: Step 3.5 Flash (free)",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 256_000,
-                    OutputLimit = 256_000,
-                },
-                new ModelDefinitionTemplate
-                {
                     ModelId = "minimax/minimax-m2.7",
                     Name = "MiniMax: MiniMax M2.7",
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 196_608,
+                    ContextLimit = 204_800,
                     OutputLimit = 131_072,
+                    IsDefault = true,
+                    Specializations = ModelSpecializations.TitleGeneration | ModelSpecializations.ContextCompression
                 },
                 new ModelDefinitionTemplate
                 {
@@ -728,7 +680,7 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 131_072,
+                    ContextLimit = 163_840,
                     OutputLimit = 65_536,
                 },
                 new ModelDefinitionTemplate
@@ -740,6 +692,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "max"],
                 },
                 new ModelDefinitionTemplate
                 {
@@ -750,6 +703,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_000_000,
                     OutputLimit = 128_000,
+                    ReasoningEffortValues = ["low", "medium", "high", "max"],
                 },
                 new ModelDefinitionTemplate
                 {
@@ -760,6 +714,7 @@ public static class PresetModelTemplates
                     OutputModalities = Modalities.Text,
                     ContextLimit = 1_048_576,
                     OutputLimit = 65_536,
+                    ReasoningEffortValues = ["minimal", "low", "medium", "high"],
                 },
                 new ModelDefinitionTemplate
                 {
@@ -778,18 +733,8 @@ public static class PresetModelTemplates
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 196_608,
-                    OutputLimit = 196_608,
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "x-ai/grok-4.1-fast",
-                    Name = "X-AI: Grok 4.1 Fast",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text | Modalities.Image,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 2_000_000,
-                    OutputLimit = 30_000
+                    ContextLimit = 204_800,
+                    OutputLimit = 128_000,
                 },
                 new ModelDefinitionTemplate
                 {
@@ -829,7 +774,8 @@ public static class PresetModelTemplates
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 131_072,
-                    OutputLimit = 32_768,
+                    OutputLimit = 65_536,
+                    ReasoningEffortValues = ["low", "medium", "high"],
                 }
             ]
         },
@@ -925,16 +871,6 @@ public static class PresetModelTemplates
                 },
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "Pro/zai-org/GLM-4.7",
-                    Name = "GLM-4.7 (Pro)",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 205_000,
-                    OutputLimit = 205_000,
-                },
-                new ModelDefinitionTemplate
-                {
                     ModelId = "deepseek-ai/DeepSeek-V3.2",
                     Name = "DeepSeek-V3.2",
                     SupportsToolCall = true,
@@ -964,36 +900,6 @@ public static class PresetModelTemplates
                     OutputLimit = 131_000,
                     IsDefault = true,
                     Specializations = ModelSpecializations.TitleGeneration
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "zai-org/GLM-4.6V",
-                    Name = "GLM 4.6V",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text | Modalities.Image,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 131_000,
-                    OutputLimit = 131_000,
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "moonshotai/Kimi-K2-Thinking",
-                    Name = "Kimi K2 Thinking",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 262_000,
-                    OutputLimit = 262_000,
-                },
-                new ModelDefinitionTemplate
-                {
-                    ModelId = "MiniMaxAI/MiniMax-M2.1",
-                    Name = "MiniMax M2.1",
-                    SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
-                    OutputModalities = Modalities.Text,
-                    ContextLimit = 197_000,
-                    OutputLimit = 131_000,
                 }
             ]
         },

@@ -24,7 +24,7 @@
                   Spacing="2">
                   <TextBlock
                     Classes="p"
-                    Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>
+                    Text="{I18N {x:Static LocaleKey.ChatPluginPage_Title}}"/>
                   <TextBlock
                     Classes="Muted Caption"
                     Text="{I18N {x:Static LocaleKey.ChatPluginPage_Description}}"
@@ -165,13 +165,13 @@
           <Grid
             Margin="8,0" ColumnDefinitions="*,Auto"
             ColumnSpacing="12" RowDefinitions="Auto,Auto">
-            <TextBlock
-              Grid.Row="0" Grid.Column="0"
-              VerticalAlignment="Center"
-              Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>
-            <ToggleSwitch
-              Grid.Row="0" Grid.Column="1"
-              IsChecked="{Binding Assistant?.IsToolCallEnabled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"/>
+            <!--  <TextBlock  -->
+            <!--  Grid.Row="0" Grid.Column="0"  -->
+            <!--  VerticalAlignment="Center"  -->
+            <!--  Text="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_Header}}"/>  -->
+            <!--  <ToggleSwitch  -->
+            <!--  Grid.Row="0" Grid.Column="1"  -->
+            <!--  IsChecked="{Binding Assistant?.IsToolCallEnabled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"/>  -->
             <TextBlock
               Grid.Row="1" Grid.Column="0"
               VerticalAlignment="Center"
@@ -183,22 +183,15 @@
 
           <ScrollViewer
             Grid.Row="1" MaxHeight="430"
-            Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+            Margin="6,0,-6,0" HorizontalScrollBarVisibility="Disabled"
             IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
             <ItemsControl
               Margin="0,0,12,0"
               ItemsSource="{Binding ToolSettings?.Plugins, RelativeSource={RelativeSource TemplatedParent}}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <shadui:ControlGroup/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="v:ToolPluginPresentation">
                   <Expander
-                    Padding="6,4"
-                    Background="{DynamicResource LightCardBackgroundColor}">
+                    Padding="6,4" BorderThickness="0">
                     <Expander.Header>
                       <DockPanel HorizontalSpacing="4">
                         <LucideIcon
@@ -228,7 +221,7 @@
                               Grid.Column="0" MaxWidth="300"
                               VerticalAlignment="Center"
                               Text="{Binding Function.HeaderKey^}"
-                              TextTrimming="CharacterEllipsis"
+                              TextTrimming="CharacterEllipsis" ToolTip.Placement="Left"
                               ToolTip.Tip="{Binding Function.DescriptionKey^}"/>
                             <ToggleSwitch
                               Grid.Column="1" VerticalAlignment="Center"

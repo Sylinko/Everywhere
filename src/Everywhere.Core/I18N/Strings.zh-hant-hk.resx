@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>圖片</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>使用工具增強助手功能 (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>工具</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>此項目類型不受支持</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>選擇視覺元素</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>從剪貼簿貼上</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>附加檔案</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -556,12 +556,6 @@
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>指定聊天視窗開啟時的固定模式。當視窗未固定時，失去焦點會自動隱藏。</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>視覺上下文詳細程度</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>如果添加了視覺元素附件，發送給助手前 Everywhere 會將它和周圍的元素採集為結構化文本。此選項控制了採集的豐富程度和信息量。</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>客戶端錯誤。</value>
@@ -996,7 +990,7 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>設定</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>螢幕感知預算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>請求超時持續時間</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>當已報告的上下文用量達到模型聲明上下文長度的此百分比時，自動壓縮對話上下文。</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>上下文壓縮閾值</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@
         <value>編輯訊息中...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>當前助手的模型已不受支持，請求可能會失敗</value>
+        <value>當前助手的模型未出現在最新目錄中，請求可能會失敗</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>當前助手的模型已於 {0} 下架，建議儘快切換到較新的模型</value>
@@ -2088,7 +2082,7 @@
         <value>按住左鍵框選，右鍵或 Esc 退出
 滾輪或數字鍵切換選擇模式</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>捕獲屏幕截圖</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2112,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>更多設定</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>解析數據時出錯。</value>
     </data>
@@ -2130,11 +2121,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>深度思考</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>單次螢幕感知消耗的 Token 估算上限。</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>開啟工具調用</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡你可以使用 Ctrl + 數字鍵 快速切換助手</value>
@@ -2163,11 +2151,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>推理強度 (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>最大上下文輪次</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>限制保留到上下文中的最近用戶消息輪次。一問一答視為一個輪次。</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>限制保留到上下文中的最近用戶消息輪次。一問一答視為一個輪次。設定為 -1 表示不限制。</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>僅當前消息</value>
@@ -3032,13 +3020,13 @@
         <value>推理強度 (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>推理模型的可選強度級別。支持值取決於模型，默認請留空。</value>
+        <value>推理模型的可選強度級別。支持值取決於模型，默認請留空。 用 | 分隔多個值，例如 low|medium|high。聊天時可按填寫順序切換。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>推理強度 (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>指導 Responses 推理模型投入多少思考。支持值取決於模型，默認請留空。</value>
+        <value>指導 Responses 推理模型投入多少思考。支持值取決於模型，默認請留空。 用 | 分隔多個值，例如 low|medium|high。聊天時可按填寫順序切換。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>推理摘要 (reasoning.summary)</value>
@@ -3071,7 +3059,7 @@
         <value>思考強度</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic 自適應思考深度的軟引導，例如低、中、高、極高或最大。默認請留空。</value>
+        <value>Anthropic 自適應思考深度的軟引導，例如低、中、高、極高或最大。默認請留空。 用 | 分隔多個值，例如 low|medium|high。聊天時可按填寫順序切換。</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>提示緩存</value>
@@ -3101,7 +3089,7 @@
         <value>思考級別</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 模型的思考深度，例如最小、低、中或高。</value>
+        <value>Gemini 3 模型的思考深度，例如最小、低、中或高。 用 | 分隔多個值，例如 low|medium|high。聊天時可按填寫順序切換。</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>更新通道</value>
@@ -3434,7 +3422,7 @@
         <value>思考強度</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>可選的模型特定推理強度。Mistral 目前為支持的模型明確說明了 high 和 none；其他非空值會原樣透傳。留空時使用模型默認行為。關閉「包含推理」會發送 none。</value>
+        <value>可選的模型特定推理強度。Mistral 目前為支持的模型明確說明了 high 和 none；其他非空值會原樣透傳。留空時使用模型默認行為。關閉「包含推理」會發送 none。 用 | 分隔多個值，例如 low|medium|high。聊天時可按填寫順序切換。</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>寫入設置路徑「{0}」失敗。</value>
@@ -3982,5 +3970,26 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>靈動</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>管理助手</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>不支援</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>支援 PDF 輸入</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>支援音訊輸入</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>支援影片輸入</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>選擇助手</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>思考深度</value>
     </data>
 </root>

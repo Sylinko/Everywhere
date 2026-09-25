@@ -12,11 +12,26 @@ public class ModelsDevPresetModelProviderTests
 {
     private const string Catalog = """
     {"deepseek":{"models":{
-      "new-model":{"id":"new-model","name":"New model","tool_call":true,"modalities":{"input":["text","image"],"output":["text"]},"limit":{"context":128000,"output":8192},"knowledge":"2025-05","cost":{"input":1,"output":2}},
+      "new-model":{"id":"new-model","name":"New model","tool_call":true,"modalities":{"input":["text","image"],"output":["text"]},"limit":{"context":128000,"output":8192},"knowledge":"2025-05","reasoning_options":[{"type":"toggle"},{"type":"effort","values":["low","medium","low"," high "]},{"type":"budget_tokens","min":1024}],"cost":{"input":1,"output":2}},
       "image-only":{"id":"image-only","name":"Image","modalities":{"input":["text"],"output":["image"]},"limit":{"context":128000,"output":8192}},
       "invalid":{"id":"invalid","modalities":{"input":["text"],"output":["text"]},"limit":{"context":0,"output":8192}}
     }}}
     """;
+
+    [AvaloniaTest]
+    public async Task Refresh_WhenProviderExplicitlyHasNoModels_MarksItAuthoritativeAndEmpty()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+        using var handler = new DelegateHandler((_, _) => Task.FromResult(Response("""{"deepseek":{"models":{}}}""")));
+        using var provider = Create(handler, path);
+        try
+        {
+            await provider.RefreshAsync();
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Available));
+            Assert.That(provider.Catalog.GetModels("deepseek"), Is.Empty);
+        }
+        finally { File.Delete(path); }
+    }
 
     [AvaloniaTest]
     public async Task Refresh_WhenValid_FiltersNonChatAndKeepsOtherProviders()
@@ -26,13 +41,18 @@ public class ModelsDevPresetModelProviderTests
         using var provider = Create(handler, path);
         try
         {
-            var originalOpenAI = provider.GetModelDefinitions("openai");
             await provider.RefreshAsync();
-            Assert.That(provider.IsValidated, Is.True);
-            Assert.That(provider.GetModelDefinitions("deepseek").Select(m => m.ModelId), Is.EqualTo(new[] { "new-model" }));
-            Assert.That(provider.GetModelDefinitions("openai"), Is.SameAs(originalOpenAI));
-            Assert.That(provider.GetValidatedModel("openai", "gpt-5.4"), Is.Null);
-            Assert.That(provider.GetValidatedModel("deepseek", "new-model")?.KnowledgeCutoff, Is.EqualTo(new DateOnly(2025, 5, 1)));
+            Assert.That(provider.Catalog.IsValidated, Is.True);
+            Assert.That(provider.Catalog.GetModels("deepseek").Select(m => m.ModelId), Is.EqualTo(new[] { "new-model" }));
+            Assert.That(provider.Catalog.GetModels("openai"), Is.Empty);
+            Assert.That(provider.Catalog.GetProvider("openai")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Missing));
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Available));
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceModelIds, Does.Contain("invalid"));
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceModelIds, Does.Contain("image-only"));
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceModelIds, Does.Not.Contain("removed"));
+            Assert.That(provider.Catalog.GetModels("deepseek").Single().KnowledgeCutoff, Is.EqualTo(new DateOnly(2025, 5, 1)));
+            Assert.That(provider.Catalog.GetModels("deepseek").Single().ReasoningEffortValues.ToArray(),
+                Is.EqualTo(new[] { "low", "medium", "high" }));
             Assert.That(File.Exists(path), Is.True);
         }
         finally { File.Delete(path); }
@@ -58,15 +78,15 @@ public class ModelsDevPresetModelProviderTests
             });
             using var provider = Create(handler, path);
             var validated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            provider.ModelsChanged += (_, _) => { if (provider.IsValidated) validated.TrySetResult(); };
+            provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
             await provider.InitializeAsync();
             await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.That(provider.GetModelDefinitions("deepseek").Single().ModelId, Is.EqualTo("new-model"));
-            Assert.That(provider.GetValidatedModel("deepseek", "new-model"), Is.Null);
+            Assert.That(provider.Catalog.GetModels("deepseek").Single().ModelId, Is.EqualTo("new-model"));
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Unknown));
             Assert.That(etag, Is.EqualTo("\"catalog-v1\""));
             releaseResponse.SetResult();
             await validated.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.That(provider.GetValidatedModel("deepseek", "new-model"), Is.Not.Null);
+            Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Available));
         }
         finally { File.Delete(path); }
     }
@@ -97,11 +117,10 @@ public class ModelsDevPresetModelProviderTests
             Assert.That(calls, Is.EqualTo(1));
             release.SetResult();
             await Task.WhenAll(refresh, joined);
-            var models = provider.GetModelDefinitions("deepseek");
-            typeof(ModelsDevPresetModelProvider).GetField("_nextFetchAt", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(provider, DateTimeOffset.MinValue);
+            var models = provider.Catalog.GetModels("deepseek");
             await provider.RefreshAsync();
-            Assert.That(provider.GetModelDefinitions("deepseek"), Is.SameAs(models));
-            Assert.That(provider.IsBusy, Is.False);
+            Assert.That(provider.Catalog.GetModels("deepseek"), Is.SameAs(models));
+            Assert.That(provider.IsRefreshing, Is.False);
         }
         finally { File.Delete(path); }
     }
@@ -115,7 +134,7 @@ public class ModelsDevPresetModelProviderTests
             new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) : Response(Catalog)));
         using var provider = Create(handler, path);
         var validated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        provider.ModelsChanged += (_, _) => { if (provider.IsValidated) validated.TrySetResult(); };
+        provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
         try
         {
             var initialization = provider.InitializeAsync();
@@ -150,7 +169,35 @@ public class ModelsDevPresetModelProviderTests
             Assert.That(original.IsCompleted, Is.False);
             release.SetResult();
             await original;
-            Assert.That(provider.IsValidated, Is.True);
+            Assert.That(provider.Catalog.IsValidated, Is.True);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [AvaloniaTest]
+    public async Task Refresh_WhenProviderModelsCannotBeMapped_RetainsPreviousDefinitionsAndMarksSourceUnmappable()
+    {
+        const string catalog = """
+        {
+          "deepseek":{"models":{"broken":{"id":"broken","modalities":{"output":["text"]},"limit":{"context":0,"output":4096}}}},
+          "openai":{"models":{"usable":{"id":"usable","modalities":{"input":["text"],"output":["text"]},"limit":{"context":32000,"output":4096}}}}
+        }
+        """;
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+        using var handler = new DelegateHandler((_, _) => Task.FromResult(Response(catalog)));
+        using var provider = Create(handler, path);
+        try
+        {
+            var previous = provider.Catalog.GetModels("deepseek");
+            await provider.RefreshAsync();
+
+            var current = provider.Catalog.GetProvider("deepseek");
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(current?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Unmappable));
+                Assert.That(current?.Models, Is.SameAs(previous));
+                Assert.That(current?.SourceModelIds, Does.Contain("broken"));
+            }
         }
         finally { File.Delete(path); }
     }
@@ -196,14 +243,15 @@ public class ModelsDevPresetModelProviderTests
         try
         {
             await provider.RefreshAsync();
-            Assert.That(provider.GetModelDefinitions("deepseek").Select(m => m.ModelId),
+            Assert.That(provider.Catalog.GetModels("deepseek").Select(m => m.ModelId),
                 Is.EqualTo(new[] { "new", "month", "tie-a", "tie-b", "deepseek-v4-flash", "unknown" }));
-            Assert.That(provider.GetValidatedModel("deepseek", "month")?.ReleaseDate, Is.EqualTo(new DateOnly(2026, 8, 1)));
-            Assert.That(provider.GetValidatedModel("deepseek", "deepseek-v4-flash")?.IsDefault, Is.True);
+            Assert.That(provider.Catalog.GetModels("deepseek").Single(model => model.ModelId == "month").ReleaseDate,
+                Is.EqualTo(new DateOnly(2026, 8, 1)));
+            Assert.That(provider.Catalog.GetModels("deepseek").Single(model => model.ModelId == "deepseek-v4-flash").IsDefault, Is.True);
             foreach (var row in rows.Skip(6))
             {
-                var included = row.Item3 != "Excluded";
-                Assert.That(provider.GetValidatedModel(row.Item1, row.Item2) is not null, Is.EqualTo(included), row.Item2);
+                var included = row.Item3 != "Excluded" && PresetModelTemplates.Providers.Any(provider => provider.Id == row.Item1);
+                Assert.That(provider.Catalog.GetModels(row.Item1).Any(model => model.ModelId == row.Item2), Is.EqualTo(included), row.Item2);
             }
         }
         finally { File.Delete(path); }
@@ -212,7 +260,11 @@ public class ModelsDevPresetModelProviderTests
     private static ModelsDevPresetModelProvider Create(HttpMessageHandler handler, string path)
     {
         var provider = new ModelsDevPresetModelProvider(new ClientFactory(handler), NullLogger<ModelsDevPresetModelProvider>.Instance);
-        typeof(ModelsDevPresetModelProvider).GetField("_cachePath", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(provider, path);
+        var cacheStoreType = typeof(IModelCatalogCacheStore<Dictionary<string, ModelsDevProvider>>);
+        typeof(ModelCatalogProvider<Dictionary<string, ModelsDevProvider>, ModelsDevPresetModelProvider.PreparedCatalog>)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single(field => cacheStoreType.IsAssignableFrom(field.FieldType))
+            .SetValue(provider, new ModelsDevCatalogCacheStore(path, 32 * 1024 * 1024));
         return provider;
     }
 

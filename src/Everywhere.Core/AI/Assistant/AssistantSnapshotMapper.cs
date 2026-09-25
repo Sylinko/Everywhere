@@ -9,17 +9,31 @@ namespace Everywhere.AI;
 [Mapper(UseDeepCloning = true, RequiredMappingStrategy = RequiredMappingStrategy.Both)]
 internal static partial class AssistantSnapshotMapper
 {
-    [MapDerivedType<OfficialAssistantConfiguration, OfficialAssistantConfiguration>]
-    [MapDerivedType<PresetAssistantConfiguration, PresetAssistantConfiguration>]
-    [MapDerivedType<AdvancedAssistantConfiguration, AdvancedAssistantConfiguration>]
-    public static partial AssistantConfiguration Copy(AssistantConfiguration source);
+    public static AssistantConfiguration Copy(AssistantConfiguration source) => source switch
+    {
+        OfficialAssistantConfiguration official => Copy(official),
+        PresetAssistantConfiguration preset => Copy(preset),
+        AdvancedAssistantConfiguration advanced => Copy(advanced),
+        _ => throw new ArgumentOutOfRangeException(nameof(source))
+    };
 
     public static partial OfficialAssistantConfiguration ToOfficial(AssistantConfiguration source);
 
     [MapperIgnoreTarget(nameof(PresetAssistantConfiguration.ProviderId))]
-    public static partial PresetAssistantConfiguration ToPreset(AssistantConfiguration source);
+    private static partial PresetAssistantConfiguration MapToPreset(AssistantConfiguration source);
+
+    public static PresetAssistantConfiguration ToPreset(AssistantConfiguration source)
+    {
+        var target = MapToPreset(source);
+        target.ProviderId = (source as PresetAssistantConfiguration)?.ProviderId;
+        return target;
+    }
 
     public static partial AdvancedAssistantConfiguration ToAdvanced(AssistantConfiguration source);
+
+    public static partial OfficialAssistantConfiguration Copy(OfficialAssistantConfiguration source);
+    public static partial PresetAssistantConfiguration Copy(PresetAssistantConfiguration source);
+    public static partial AdvancedAssistantConfiguration Copy(AdvancedAssistantConfiguration source);
 
     public static partial OpenAIOptions Copy(OpenAIOptions source);
     public static partial OpenAIResponsesOptions Copy(OpenAIResponsesOptions source);

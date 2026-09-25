@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>Imagen</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>Usar herramientas para mejorar las capacidades del asistente (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Herramientas</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>Este tipo de elemento no es compatible</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>Seleccionar Elemento Visual</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>Pegar desde el portapapeles</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>Adjuntar archivo</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -556,12 +556,6 @@
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Especifica el modo de fijación para la ventana de chat cuando se abre. Cuando la ventana no está fijada, se ocultará automáticamente al perder el foco.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Nivel De Detalle Del Contexto Visual</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Si se añaden elementos visuales adjuntos, Everywhere los recopilará junto con los elementos circundantes como texto estructurado antes de enviarlos al asistente. Esta opción controla la riqueza y cantidad de información recopilada.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Error del cliente.</value>
@@ -996,7 +990,7 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>Configuración</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>Presupuesto de reconocimiento de pantalla</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Tiempo de Espera de Solicitud</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>Cuando el uso de contexto reportado alcanza este porcentaje de la longitud de contexto declarada por el modelo, se comprime automáticamente el contexto de la conversación.</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>Umbral de Compresión del Contexto</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Editando mensaje...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>El modelo actual del asistente no está soportado, la solicitud puede fallar.</value>
+        <value>El modelo del asistente actual no figura en el catálogo más reciente. Las solicitudes pueden fallar.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>El modelo actual del asistente fue retirado el {0}, se recomienda cambiar a un modelo más nuevo lo antes posible.</value>
@@ -2088,7 +2082,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Mantén presionado el botón izquierdo del ratón para seleccionar, usa el botón derecho o Esc para salir
 Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>Capturar Pantalla</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2112,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>Más Configuraciones</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>Error al analizar los datos.</value>
     </data>
@@ -2130,11 +2121,8 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Reflexión Profunda</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>Límite superior estimado de Tokens consumidos por percepción de pantalla.</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>Activar Llamada A Herramientas</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡Puedes usar Ctrl + tecla numérica para cambiar rápidamente al asistente</value>
@@ -2163,11 +2151,11 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>Intensidad de Razonamiento (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>Máximas Rondas de Contexto</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>Limita las últimas rondas de mensajes del usuario que se mantienen en el contexto. Una pregunta y respuesta cuentan como una ronda.</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>Limita las últimas rondas de mensajes del usuario que se mantienen en el contexto. Una pregunta y respuesta cuentan como una ronda. El valor -1 significa sin límite.</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>Solo Mensaje Actual</value>
@@ -3032,13 +3020,13 @@ Fecha de lanzamiento: {2}</value>
         <value>Nivel de Esfuerzo de Razonamiento (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Nivel de intensidad opcional para el modelo de razonamiento. Los valores admitidos dependen del modelo, déjalo vacío por defecto.</value>
+        <value>Nivel de intensidad opcional para el modelo de razonamiento. Los valores admitidos dependen del modelo, déjalo vacío por defecto. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>Esfuerzo de Razonamiento (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Guía sobre cuánto pensamiento debe invertir el modelo de razonamiento de Responses. Los valores admitidos dependen del modelo, déjalo vacío por defecto.</value>
+        <value>Guía sobre cuánto pensamiento debe invertir el modelo de razonamiento de Responses. Los valores admitidos dependen del modelo, déjalo vacío por defecto. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>Resumen de Razonamiento (reasoning.summary)</value>
@@ -3071,7 +3059,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Intensidad de Pensamiento</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Guía suave de la profundidad del pensamiento adaptativo de Anthropic, como bajo, medio, alto, muy alto o máximo. Déjalo vacío para predeterminado.</value>
+        <value>Guía suave de la profundidad del pensamiento adaptativo de Anthropic, como bajo, medio, alto, muy alto o máximo. Déjalo vacío para predeterminado. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>Control de Caché</value>
@@ -3101,7 +3089,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Nivel de Pensamiento</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Profundidad de pensamiento del modelo Gemini 3, como mínimo, bajo, medio o alto.</value>
+        <value>Profundidad de pensamiento del modelo Gemini 3, como mínimo, bajo, medio o alto. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>Canal De Actualización</value>
@@ -3434,7 +3422,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Intensidad de Razonamiento</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Intensidad de razonamiento específica del modelo opcional. Mistral actualmente especifica claramente high y none para los modelos soportados; otros valores no vacíos se transmitirán tal cual. Si se deja vacío, se utilizará el comportamiento predeterminado del modelo. Desactivar 'Incluir Razonamiento' enviará none.</value>
+        <value>Intensidad de razonamiento específica del modelo opcional. Mistral actualmente especifica claramente high y none para los modelos soportados; otros valores no vacíos se transmitirán tal cual. Si se deja vacío, se utilizará el comportamiento predeterminado del modelo. Desactivar 'Incluir Razonamiento' enviará none. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>Error al escribir la ruta de configuración “{0}”.</value>
@@ -3982,5 +3970,26 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluida</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>Gestionar asistentes</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>No compatible</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>Admite entrada de PDF</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>Compatible con entrada de audio</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>Admite entrada de vídeo</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>Seleccionar asistente</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>Nivel de razonamiento</value>
     </data>
 </root>

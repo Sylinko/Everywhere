@@ -71,6 +71,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\3rd\ClassicDiagnostics.Avalonia\src\ClassicDiagnostics.Avalonia.csproj"/>
+    <ProjectReference Include="..\..\3rd\ExpressionBinding.Avalonia\src\ExpressionBinding.Avalonia\ExpressionBinding.Avalonia.csproj" />
     <ProjectReference Include="..\..\3rd\MessagePack-CSharp\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
     <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.Google\Connectors.Google.csproj"/>
     <ProjectReference Include="..\..\3rd\semantic-kernel-patch\Connectors.MistralAI\Connectors.MistralAI.csproj"/>

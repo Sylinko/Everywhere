@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.AI;
-using Everywhere.Chat;
+using Everywhere.Cloud;
 
 namespace Everywhere.Configuration;
 
@@ -75,33 +74,12 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public VisualContextDetailLevel VisualContextDetailLevel
+    /// <summary>
+    /// Complete official catalog cache revision, including its HTTP validator.
+    /// </summary>
+    public OfficialModelCatalogCache? OfficialModelCatalog
     {
-        get => Get(VisualContextDetailLevel.Compact);
-        set => Set(value);
-    }
-
-    public VisualContextLengthLimit VisualContextLengthLimit
-    {
-        get => Get(VisualContextLengthLimit.Balanced);
-        set => Set(value);
-    }
-
-    public int MaxContextRounds
-    {
-        get => Get(-1);
-        set => Set(Math.Clamp(value, -1, 30));
-    }
-
-    public IReadOnlyList<ModelDefinitionTemplate>? OfficialModelDefinitionTemplate
-    {
-        get => Get<IReadOnlyList<ModelDefinitionTemplate>>();
-        set => Set(value);
-    }
-
-    public IReadOnlyList<string>? DismissedOfficialModelWarningKeys
-    {
-        get => Get<IReadOnlyList<string>>();
+        get => Get<OfficialModelCatalogCache>();
         set => Set(value);
     }
 

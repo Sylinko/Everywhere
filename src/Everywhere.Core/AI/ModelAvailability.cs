@@ -9,6 +9,7 @@ public enum ModelAvailabilityKind
 {
     None,
     Unknown,
+    SignInRequired,
     Available,
     DeprecatingSoon,
     Deprecated,
@@ -25,29 +26,20 @@ public sealed record ModelAvailability(ModelAvailabilityKind Kind, string? Model
     private static ModelAvailability None { get; } = new(ModelAvailabilityKind.None, null, null);
 
     public bool ShouldShowChatNotification =>
-        Kind is ModelAvailabilityKind.Unavailable or ModelAvailabilityKind.DeprecatingSoon or ModelAvailabilityKind.Deprecated;
+        Kind is ModelAvailabilityKind.SignInRequired or ModelAvailabilityKind.Unavailable or
+            ModelAvailabilityKind.DeprecatingSoon or ModelAvailabilityKind.Deprecated;
 
     public static ModelAvailability Evaluate(
         IModelDefinition selectedModel,
-        IReadOnlyCollection<IModelDefinition> availableModels,
+        IModelDefinition? currentModel,
+        bool catalogIsAuthoritative,
         DateOnly today)
     {
         if (selectedModel.ModelId.IsNullOrWhiteSpace()) return None;
 
-        var deprecationDate = selectedModel.DeprecationDate;
-        if (availableModels.Count > 0)
-        {
-            var availableModel = availableModels.FirstOrDefault(m => m.ModelId == selectedModel.ModelId);
-            if (availableModel is null)
-            {
-                return new ModelAvailability(
-                    ModelAvailabilityKind.Unavailable,
-                    selectedModel.ModelId,
-                    deprecationDate);
-            }
-
-            deprecationDate = availableModel.DeprecationDate;
-        }
+        var deprecationDate = currentModel?.DeprecationDate ?? selectedModel.DeprecationDate;
+        if (catalogIsAuthoritative && currentModel is null)
+            return new ModelAvailability(ModelAvailabilityKind.Unavailable, selectedModel.ModelId, deprecationDate);
 
         if (deprecationDate is { } date)
         {
@@ -63,7 +55,7 @@ public sealed record ModelAvailability(ModelAvailabilityKind Kind, string? Model
         }
 
         return new ModelAvailability(
-            availableModels.Count == 0 ? ModelAvailabilityKind.Unknown : ModelAvailabilityKind.Available,
+            currentModel is null ? ModelAvailabilityKind.Unknown : ModelAvailabilityKind.Available,
             selectedModel.ModelId,
             deprecationDate);
     }

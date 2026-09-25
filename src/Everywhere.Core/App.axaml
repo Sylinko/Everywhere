@@ -24,6 +24,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatActionBubble.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatActivityPreviewPresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatAttachmentItemsControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatCustomAssistantSelector.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatInputArea.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatMessageControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatMessageItemsControl.axaml"/>
@@ -63,6 +64,8 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemsControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SoftwareUpdateControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/ConditionalContentControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/ReasoningEffortSlider.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/Eva.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/GlowBorder.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Controls/IconEditor.axaml"/>

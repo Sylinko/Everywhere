@@ -22,6 +22,7 @@ public static class ServiceExtension
 
             services.AddSingleton<OfficialModelProvider>();
             services.AddSingleton<IOfficialModelProvider>(x => x.GetRequiredService<OfficialModelProvider>());
+            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OfficialModelProvider>());
 
             // Register the authenticated HttpClient for API requests.
             // This client includes the CloudAuthenticationHandler which:

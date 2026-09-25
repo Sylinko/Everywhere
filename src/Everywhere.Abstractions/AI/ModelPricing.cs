@@ -15,10 +15,10 @@ public enum ModelPricingUnit
 /// Represents the pricing structure of an AI model, which may include multiple tiers based on usage thresholds.
 /// </summary>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, ModelPricingUnit unit)
+public sealed partial class ModelPricing(PricingTier[] tiers, ModelPricingUnit unit) : IEquatable<ModelPricing>
 {
     [Key(0)]
-    private readonly IReadOnlyList<PricingTier> _tiers = tiers;
+    private readonly PricingTier[] _tiers = tiers;
 
     [Key(1)]
     public ModelPricingUnit Unit { get; } = unit;
@@ -43,7 +43,7 @@ public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, Model
 
     private IDynamicLocaleKey GetDescriptionKey(Func<TokenPricing, double> selector)
     {
-        switch (_tiers.Count)
+        switch (_tiers.Length)
         {
             case 0:
             {
@@ -55,14 +55,14 @@ public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, Model
             }
             default:
             {
-                var keys = new FormattedDynamicLocaleKey[_tiers.Count];
+                var keys = new FormattedDynamicLocaleKey[_tiers.Length];
 
                 keys[0] = new FormattedDynamicLocaleKey(
                     LocaleKey.ModelPricing_NotGreaterThanTierDescription,
                     GetPricingKey(_tiers[0]),
                     GetThresholdKey(_tiers[1]));
 
-                for (var i = 1; i < _tiers.Count - 1; i++)
+                for (var i = 1; i < _tiers.Length - 1; i++)
                 {
                     keys[i] = new FormattedDynamicLocaleKey(
                         LocaleKey.ModelPricing_BetweenTiersDescription,
@@ -90,6 +90,19 @@ public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, Model
             new DirectLocaleKey(selector(tier.Pricing).ToString("N")));
 
         DirectLocaleKey GetThresholdKey(PricingTier tier) => new(tier.Threshold.ToString("N0"));
+    }
+
+    public bool Equals(ModelPricing? other) =>
+        other is not null && Unit == other.Unit && _tiers.SequenceEqual(other._tiers);
+
+    public override bool Equals(object? obj) => obj is ModelPricing other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Unit);
+        foreach (var tier in _tiers) hash.Add(tier);
+        return hash.ToHashCode();
     }
 }
 

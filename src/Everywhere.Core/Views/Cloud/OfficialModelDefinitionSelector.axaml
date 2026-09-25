@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions" xmlns:common="clr-namespace:Everywhere.Common"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:ai="clr-namespace:Everywhere.AI;assembly=Everywhere.Core" xmlns:cloud="clr-namespace:Everywhere.Cloud;assembly=Everywhere.Abstractions"
+  xmlns:common="clr-namespace:Everywhere.Common" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:OfficialModelDefinitionSelector}"
     TargetType="v:OfficialModelDefinitionSelector">
@@ -59,7 +59,7 @@
                   DockPanel.Dock="Right" Width="36"
                   Padding="0"
                   Command="{Binding RefreshCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                  IsEnabled="{Binding !OfficialModelProvider.IsBusy, RelativeSource={RelativeSource TemplatedParent}}"
+                  IsEnabled="{Binding !OfficialModelProvider.IsRefreshing, RelativeSource={RelativeSource TemplatedParent}}"
                   ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Refresh}}">
                   <LucideIcon
                     Kind="RefreshCcw"
@@ -71,7 +71,7 @@
                   shadui:ControlAssist.MinHeight="40"
                   ItemsSource="{TemplateBinding ItemsSource}"
                   MaxDropDownHeight="480"
-                  SelectedItem="{Binding SelectedItemWrapper, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                  SelectedItem="{Binding SelectedCatalogItem, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                   <ComboBox.Styles>
                     <Style Selector="ComboBoxItem">
                       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -79,7 +79,7 @@
                   </ComboBox.Styles>
 
                   <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="v:OfficialModelDefinitionSelector+ItemWrapper">
+                    <DataTemplate x:DataType="ai:AssistantCatalogItem">
                       <Grid
                         Margin="0,0,12,0" ColumnSpacing="4">
                         <Grid.ColumnDefinitions>

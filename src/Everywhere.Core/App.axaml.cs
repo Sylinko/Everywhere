@@ -8,7 +8,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -19,7 +18,6 @@ using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
-
 #if DEBUG
 using ClassicDiagnostics.Avalonia;
 #endif
@@ -230,13 +228,8 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     {
         switch (ApplicationLifetime)
         {
-            case IClassicDesktopStyleApplicationLifetime desktop:
+            case IClassicDesktopStyleApplicationLifetime:
             {
-                desktop.Exit += (_, _) =>
-                {
-                    serviceProvider.GetRequiredService<Everywhere.AI.AssistantConfigurationSynchronizer>().Dispose();
-                    serviceProvider.GetRequiredService<ModelsDevPresetModelProvider>().Dispose();
-                };
                 ShowMainWindowOnNeeded();
                 break;
             }

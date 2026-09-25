@@ -5,7 +5,6 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
-using Everywhere.AI.Configurator;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Lucide.Avalonia;
@@ -102,13 +101,13 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         var newAssistant = new CustomAssistant
         {
             Name = LocaleResolver.CustomAssistant_Name_Default,
+            Configuration = new PresetAssistantConfiguration(),
             Icon = new ColoredIcon(
                 ColoredIconType.Lucide,
                 background: RandomAssistantIconBackgrounds[Random.Shared.Next(RandomAssistantIconBackgrounds.Length)])
             {
                 Kind = LucideIconKind.Bot
-            },
-            ConfiguratorType = AssistantConfiguratorType.PresetBased
+            }
         };
         _settings.Model.CustomAssistants.Add(newAssistant);
         _settings.Model.SelectedCustomAssistant ??= newAssistant;
@@ -138,7 +137,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
     private async Task CheckConnectivityAsync(CancellationToken cancellationToken)
     {
         if (SelectedCustomAssistant is not { } customAssistant) return;
-        if (!customAssistant.Configurator.Validate()) return;
+        if (!customAssistant.Configuration.Validate()) return;
 
         KernelMixin? kernelMixin = null;
         try
