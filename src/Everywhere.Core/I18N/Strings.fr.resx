@@ -1964,6 +1964,9 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Gérer les Prompts</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Modifier le prompt après le début d’une conversation peut réduire le taux de réussite du cache des prompts.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Êtes-vous sûr de vouloir supprimer {0} clés API ? Cette action est irréversible !</value>
     </data>

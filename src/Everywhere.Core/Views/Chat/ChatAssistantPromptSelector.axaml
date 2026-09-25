@@ -1,0 +1,148 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  <ControlTheme
+    x:Key="{x:Type v:ChatAssistantPromptSelector}"
+    TargetType="v:ChatAssistantPromptSelector">
+    <Setter Property="ClipToBounds" Value="False"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Button
+          x:Name="PART_PromptButton" Classes="Ghost NoPadding"
+          Margin="-2,-4" HorizontalContentAlignment="Stretch">
+          <Grid
+            Margin="8,4,2,4" ColumnSpacing="12"
+            RowDefinitions="Auto,Auto">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition
+                Width="Auto" SharedSizeGroup="Icon"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition
+                Width="Auto" SharedSizeGroup="Chevron"/>
+            </Grid.ColumnDefinitions>
+
+            <LucideIcon
+              Grid.Row="0" Grid.RowSpan="2"
+              Grid.Column="0" VerticalAlignment="Center"
+              Kind="BookText"
+              Size="{DynamicResource FontSizeXl}"/>
+
+            <TextBlock
+              Grid.Row="0" Grid.Column="1"
+              VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.PromptPage_Title}}"/>
+            <TextBlock
+              Classes="Muted Caption" Grid.Row="1"
+              Grid.Column="1" VerticalAlignment="Center"
+              Text="{Binding SelectedPromptNameKey^, RelativeSource={RelativeSource TemplatedParent}}"
+              TextTrimming="CharacterEllipsis">
+              <Interaction.Behaviors>
+                <shadui:TextTrimmedToolTipBehavior/>
+              </Interaction.Behaviors>
+            </TextBlock>
+
+            <LucideIcon
+              Grid.Row="0" Grid.RowSpan="2"
+              Grid.Column="2" Margin="0,6"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Kind="ChevronRight"
+              Size="{DynamicResource FontSizeL}"/>
+          </Grid>
+
+          <Button.Flyout>
+            <Flyout Placement="Right">
+              <DockPanel
+                Width="320" MaxHeight="440"
+                Margin="4" VerticalSpacing="8">
+                <shadui:Toast
+                  Title="{I18N {x:Static LocaleKey.ChatAssistantPromptSelector_ChangeWarning}}"
+                  DockPanel.Dock="Top" Padding="6,4"
+                  CanDismiss="False"
+                  FontSize="{DynamicResource FontSizeS}"
+                  Notification="Info"/>
+
+                <Button
+                  Classes="Ghost" DockPanel.Dock="Bottom"
+                  HorizontalContentAlignment="Left"
+                  Command="{Binding ManagePromptsCommand, RelativeSource={RelativeSource TemplatedParent}}">
+                  <StackPanel
+                    Orientation="Horizontal" Spacing="8">
+                    <LucideIcon
+                      Kind="Settings"
+                      Size="{DynamicResource FontSizeXl}"/>
+                    <TextBlock Text="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"/>
+                  </StackPanel>
+                </Button>
+
+                <Border
+                  DockPanel.Dock="Bottom" Height="0.5"
+                  Background="{DynamicResource BorderColor}"/>
+
+                <Panel MinHeight="48">
+                  <ScrollViewer
+                    HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="v:ChatAssistantPromptSelector+Item">
+                          <Button
+                            Classes="Ghost" Margin="0,1"
+                            Padding="10,8" HorizontalContentAlignment="Stretch"
+                            Command="{Binding $parent[v:ChatAssistantPromptSelector].SelectPromptCommand}"
+                            CommandParameter="{Binding}">
+                            <Button.Styles>
+                              <Style Selector="Button.Selected">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
+                                <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor50}"/>
+                                <Setter Property="shadui:ButtonAssist.PressedBackground" Value="{DynamicResource PrimaryColor10}"/>
+                              </Style>
+                            </Button.Styles>
+
+                            <Classes.Selected>
+                              <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
+                                <Binding Path="Id"/>
+                                <Binding Path="$parent[v:ChatAssistantPromptSelector].Assistant?.SystemPromptId"/>
+                              </MultiBinding>
+                            </Classes.Selected>
+
+                            <StackPanel Spacing="2">
+                              <TextBlock
+                                Text="{Binding DisplayNameKey^}"
+                                TextTrimming="CharacterEllipsis">
+                                <Interaction.Behaviors>
+                                  <shadui:TextTrimmedToolTipBehavior/>
+                                </Interaction.Behaviors>
+                              </TextBlock>
+                              <TextBlock
+                                Classes="Muted Caption" MaxLines="2"
+                                Text="{Binding Template}"
+                                TextTrimming="CharacterEllipsis" TextWrapping="Wrap">
+                                <Interaction.Behaviors>
+                                  <shadui:TextTrimmedToolTipBehavior/>
+                                </Interaction.Behaviors>
+                              </TextBlock>
+                            </StackPanel>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+
+                  <shadui:Loading
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    IsVisible="{Binding IsLoading, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                  <TextBlock
+                    Classes="Muted Caption" Margin="8"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Text="{Binding LoadErrorKey^, RelativeSource={RelativeSource TemplatedParent}}"
+                    TextAlignment="Center" TextWrapping="Wrap"/>
+                </Panel>
+              </DockPanel>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

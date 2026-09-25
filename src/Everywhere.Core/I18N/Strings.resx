@@ -1964,6 +1964,9 @@ Scroll wheel or number keys to switch pick modes</value>
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Manage Prompts</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Changing the prompt after a conversation starts may reduce prompt cache hit rates.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Are you sure to delete {0} API key(s)? This action cannot be undone.</value>
     </data>

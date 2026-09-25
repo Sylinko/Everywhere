@@ -1964,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>管理提示词</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>对话开始后切换提示词可能会降低提示词缓存命中率。</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>你确定要删除 {0} 个 API 密钥吗？此操作无法撤销！</value>
     </data>

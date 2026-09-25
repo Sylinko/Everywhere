@@ -24,6 +24,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatActionBubble.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatActivityPreviewPresenter.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatAttachmentItemsControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatAssistantPromptSelector.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatCustomAssistantSelector.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatInputArea.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Chat/ChatMessageControl.axaml"/>

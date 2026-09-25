@@ -680,22 +680,16 @@
             </StackPanel>
           </ScrollViewer>
 
-          <Border
+          <shadui:SmoothBorder
             Grid.Row="0" Margin="8"
             Padding="6" HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Background="{DynamicResource DialogBackgroundColor}"
             BorderBrush="{DynamicResource BorderColor}"
-            BorderThickness="1"
+            BorderThickness="1" BoxShadow="0 2 11 0 #4D000000"
             CornerRadius="{DynamicResource XlCornerRadius}"
             IsVisible="{Binding TextSearch.IsOpen}"
             ZIndex="10">
-            <Border.Effect>
-              <DropShadowEffect
-                BlurRadius="11" OffsetX="0"
-                OffsetY="2" Opacity="0.3"/>
-            </Border.Effect>
-
             <Grid ColumnDefinitions="220,Auto,Auto,Auto,Auto">
               <TextBox
                 x:Name="ChatTextSearchTextBox" Grid.Column="0"
@@ -777,7 +771,7 @@
                   Size="{DynamicResource FontSizeM}"/>
               </Button>
             </Grid>
-          </Border>
+          </shadui:SmoothBorder>
 
           <Button
             Classes="Primary Rounded" Grid.Row="0"
@@ -878,7 +872,7 @@
               IsVisible="{Binding ModelAvailabilityNotifications.Count, ElementName=Self, Converter={x:Static vc:Int32Converters.IsNotZero}}"
               ItemsSource="{Binding ModelAvailabilityNotifications, ElementName=Self}">
               <ItemsControl.Styles>
-                <Style Selector="Border#Notification">
+                <Style Selector="shadui|SmoothBorder#Notification">
                   <Style Selector="^.Success">
                     <Setter Property="Background" Value="{DynamicResource SuccessColor20}"/>
                     <Style Selector="^ PathIcon#NotificationIcon">
@@ -918,7 +912,7 @@
 
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="notification:DynamicNotification">
-                  <Border
+                  <shadui:SmoothBorder
                     x:Name="Notification" Padding="6,4"
                     BorderBrush="{DynamicResource BorderColor60}"
                     Classes.Error="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static notifications:NotificationType.Error}, Mode=OneTime}"
@@ -958,7 +952,7 @@
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
                     </Grid>
-                  </Border>
+                  </shadui:SmoothBorder>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -1046,7 +1040,7 @@
                 </ItemsControl>
               </Expander>
 
-              <Border
+              <shadui:SmoothBorder
                 Padding="8,2"
                 Background="{DynamicResource WarningColor20}"
                 IsVisible="{Binding EditingMessageNode, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -1073,9 +1067,9 @@
                       Text="{I18N {x:Static LocaleKey.ChatWindow_EditingTextBlock_Text}}"/>
                   </StackPanel>
                 </DockPanel>
-              </Border>
+              </shadui:SmoothBorder>
 
-              <Border Background="{DynamicResource LightCardBackgroundColor}">
+              <shadui:SmoothBorder Background="{DynamicResource LightCardBackgroundColor}">
                 <v:ChatInputArea
                   x:Name="ChatInputArea" Margin="6"
                   CancelCommand="{Binding CancelCommand}"
@@ -1322,7 +1316,7 @@
                     </DataTemplate>
                   </v:ChatInputArea.LeadingContentTemplate>
                 </v:ChatInputArea>
-              </Border>
+              </shadui:SmoothBorder>
             </shadui:ControlGroup>
           </StackPanel>
         </Grid>

@@ -1964,6 +1964,9 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Eingabeaufforderungen verwalten</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Das Ändern des Prompts nach Beginn einer Unterhaltung kann die Trefferquote des Prompt-Caches verringern.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
     </data>

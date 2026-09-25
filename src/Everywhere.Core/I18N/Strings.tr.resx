@@ -1964,6 +1964,9 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>İpucu Metinlerini Yönet</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Sohbet başladıktan sonra istemi değiştirmek, istem önbelleği isabet oranını düşürebilir.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} adet API anahtarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
     </data>

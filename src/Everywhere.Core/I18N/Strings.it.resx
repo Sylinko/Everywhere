@@ -1964,6 +1964,9 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Gestisci Prompt</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Cambiare il prompt dopo l'inizio di una conversazione può ridurre il tasso di hit della cache dei prompt.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sei sicuro di voler eliminare {0} chiavi API? Questa operazione non può essere annullata!</value>
     </data>
