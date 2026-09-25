@@ -485,13 +485,21 @@ public sealed class SettingsTemplatedItem<TType>(IDataTemplate? dataTemplate) : 
 /// <summary>
 /// A settings item that contains a custom control.
 /// </summary>
-/// <param name="controlFactory"></param>
-public sealed class SettingsControlItem(Func<IServiceProvider, Control> controlFactory) : SettingsItem
+/// <param name="control"></param>
+public sealed class SettingsControlItem(ISettingsControl control) : SettingsItem
 {
+    public object? ControlDataContext { get; init; }
+
     /// <summary>
-    /// Use lazy control creation to avoid unnecessary instantiation and potential UI thread issues.
+    /// Creates the control when the settings item is presented. The <see cref="ISettingsControl"/> owns
+    /// the control's caching policy; this item only carries the generated settings metadata.
     /// </summary>
-    public Control CreateControl(IServiceProvider serviceProvider) => controlFactory(serviceProvider);
+    public Control CreateControl(IServiceProvider serviceProvider)
+    {
+        var result = control.CreateControl(serviceProvider);
+        result.DataContext = ControlDataContext;
+        return result;
+    }
 }
 
 /// <summary>

@@ -154,7 +154,7 @@ public class OpenAIKernelMixin : KernelMixin
                 TopP = float.TryParse(options.TopP, out var topP) ? topP : null,
                 PresencePenalty = float.TryParse(options.PresencePenalty, out var presencePenalty) ? presencePenalty : null,
                 FrequencyPenalty = float.TryParse(options.FrequencyPenalty, out var frequencyPenalty) ? frequencyPenalty : null,
-                ReasoningEffortLevel = options.ReasoningEffort switch
+                ReasoningEffortLevel = options.EffectiveReasoningEffort switch
                 {
                     { Length: > 0 } reasoningEffort => new ChatReasoningEffortLevel?(reasoningEffort),
                     _ => null

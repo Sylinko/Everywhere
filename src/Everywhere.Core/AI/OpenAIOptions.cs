@@ -1,11 +1,16 @@
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
 [GeneratedSettingsItems]
-public sealed partial class OpenAIOptions : ObservableObject
+public sealed partial class OpenAIOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.OpenAI;
+
     // OpenAI-compatible providers expose reasoning content with different field names and replay rules.
     // Keep provider-specific guidance in Everywhere docs instead of linking to one upstream vendor here.
     [ObservableProperty]
@@ -24,14 +29,17 @@ public sealed partial class OpenAIOptions : ObservableObject
     public partial string? ThinkingType { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
+    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.OpenAIOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIOptions_ReasoningEffort_Description)]
     [SettingsItem(
         Group = "_",
+        Modifier = nameof(BindReasoningEffortPlaceholder),
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20reasoning_effort%20%3E%20(schema)")]
-    public partial string? ReasoningEffort { get; set; }
+    public override partial string? ReasoningEffort { get; set; }
 
     [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,

@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>이미지</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>도구를 사용하여 보조 기능 향상 (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>도구</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>이 항목 유형은 지원되지 않습니다</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>시각 요소 선택</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>클립보드에서 붙여넣기</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>파일 첨부</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -556,12 +556,6 @@
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>채팅 창이 열릴 때 고정 모드를 지정합니다. 창이 고정되지 않은 경우, 포커스를 잃으면 자동으로 숨겨집니다.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>시각적 맥락 세부 수준</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>시각 요소 첨부가 추가된 경우, Everywhere는 이를 주변 요소와 함께 구조화된 텍스트로 수집하여 도우미에게 보냅니다. 이 옵션은 수집의 풍부함과 정보량을 제어합니다.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>클라이언트 오류입니다.</value>
@@ -996,7 +990,7 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>설정</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>화면 인식 예산</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>요청 시간 초과</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>보고된 상황 인식 사용량이 모델이 선언한 상황 길이의 이 백분율에 도달하면 대화 상황을 자동으로 압축합니다.</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>상황 인식 압축 임계값</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@
         <value>메시지 수정 중...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>현재 도우미의 모델이 지원되지 않습니다. 요청이 실패할 수 있습니다.</value>
+        <value>현재 도우미의 모델이 최신 카탈로그에 없습니다. 요청이 실패할 수 있습니다.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>현재 도우미의 모델이 {0}에 중단되었습니다. 더 최신 모델로 전환하는 것을 권장합니다.</value>
@@ -2088,7 +2082,7 @@
         <value>왼쪽 버튼을 눌러 선택하고, 오른쪽 버튼이나 Esc로 종료
 휠 또는 숫자 키로 선택 모드 전환</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>스크린샷 찍기</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2112,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>추가 설정</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>데이터를 분석하는 중 오류가 발생했습니다.</value>
     </data>
@@ -2130,11 +2121,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>심층 사고</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>화면 인식 1회당 소모되는 토큰의 추정 상한.</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>도구 호출 활성화</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>알고 계셨나요? Ctrl + 숫자 키를 사용하여 도우미를 빠르게 전환할 수 있습니다.</value>
@@ -2163,11 +2151,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>추론 강도 (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>최대 컨텍스트 라운드</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>컨텍스트에 보존할 최근 사용자 메시지 라운드를 제한합니다. 질문과 답변은 하나의 라운드로 간주됩니다.</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>컨텍스트에 보존할 최근 사용자 메시지 라운드를 제한합니다. 질문과 답변은 하나의 라운드로 간주됩니다. -1로 설정하면 제한이 없습니다.</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>현재 메시지만</value>
@@ -3032,13 +3020,13 @@
         <value>추론 강도 (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>추론 모델의 선택적 강도 수준. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+        <value>추론 모델의 선택적 강도 수준. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>추론 강도 (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Responses 추론 모델이 얼마나 많은 사고를 할지 안내합니다. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+        <value>Responses 추론 모델이 얼마나 많은 사고를 할지 안내합니다. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>추론 요약 (reasoning.summary)</value>
@@ -3071,7 +3059,7 @@
         <value>생각 강도</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic 적응형 생각 깊이에 대한 부드러운 안내로, low, medium, high, xhigh 또는 max를 사용할 수 있습니다. 기본값은 비워두세요.</value>
+        <value>Anthropic 적응형 생각 깊이에 대한 부드러운 안내로, low, medium, high, xhigh 또는 max를 사용할 수 있습니다. 기본값은 비워두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>프롬프트 캐시</value>
@@ -3101,7 +3089,7 @@
         <value>생각 수준</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다.</value>
+        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>업데이트 채널</value>
@@ -3434,7 +3422,7 @@
         <value>사고 강도</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>선택 가능한 모델 특정 추론 강도입니다. Mistral은 현재 지원되는 모델에 대해 high와 none을 명확히 설명하며, 다른 비어 있지 않은 값은 그대로 전달됩니다. 비워두면 모델 기본 동작을 사용합니다. '추론 포함'을 끄면 none이 전송됩니다.</value>
+        <value>선택 가능한 모델 특정 추론 강도입니다. Mistral은 현재 지원되는 모델에 대해 high와 none을 명확히 설명하며, 다른 비어 있지 않은 값은 그대로 전달됩니다. 비워두면 모델 기본 동작을 사용합니다. '추론 포함'을 끄면 none이 전송됩니다. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>설정 경로 &quot;{0}&quot; 쓰기 실패.</value>
@@ -3982,5 +3970,26 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>유연함</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>어시스턴트 관리</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>지원되지 않음</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>PDF 입력 지원</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>오디오 입력 지원</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>동영상 입력 지원</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>어시스턴트 선택</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>추론 수준</value>
     </data>
 </root>

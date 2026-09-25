@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
@@ -64,8 +63,6 @@ public sealed partial class ChatWindowViewModel :
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
 
-    public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
     public partial ChatMessageNode? EditingMessageNode { get; private set; }
@@ -105,7 +102,6 @@ public sealed partial class ChatWindowViewModel :
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
-    private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
@@ -120,7 +116,6 @@ public sealed partial class ChatWindowViewModel :
         Settings settings,
         PersistentState persistentState,
         IChatContextManager chatContextManager,
-        IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
         IVisualElementContext visualElementContext,
@@ -141,7 +136,6 @@ public sealed partial class ChatWindowViewModel :
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
         _greetings = greetings;
-        _notificationService = notificationService;
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
@@ -687,6 +681,12 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
+    private static void OpenAssistantsSettings()
+    {
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.MainWindow, "AssistantsPage"));
+    }
+
+    [RelayCommand]
     private static void OpenPluginSettings()
     {
         WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.MainWindow, "ChatPluginPage"));
@@ -780,6 +780,9 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
+    private Task PerformUpdateAsync() => SoftwareUpdater.PerformUpdateAsync();
+
+    [RelayCommand]
     private static void Close()
     {
         WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
@@ -824,7 +827,7 @@ public sealed partial class ChatWindowViewModel :
         else if (selectedStrategy is not null)
         {
             ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
-                selectedStrategy.DescriptionKey ?? DirectLocaleKey.Empty :
+                selectedStrategy.DescriptionKey :
                 new FormattedDynamicLocaleKey(
                     LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);

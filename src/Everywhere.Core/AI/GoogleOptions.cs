@@ -1,11 +1,16 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
 [GeneratedSettingsItems]
-public sealed partial class GoogleOptions : ObservableObject
+public sealed partial class GoogleOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.Google;
+
     [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.GoogleOptions_IncludeThoughts_Header,
@@ -14,10 +19,16 @@ public sealed partial class GoogleOptions : ObservableObject
     public partial bool IncludeThoughts { get; set; } = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffort))]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
+    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.GoogleOptions_ThinkingLevel_Header,
         LocaleKey.GoogleOptions_ThinkingLevel_Description)]
-    [SettingsItem(Group = "_", DocumentUrl = "https://ai.google.dev/gemini-api/docs/thinking#thinking-levels")]
+    [SettingsItem(
+        Group = "_",
+        Modifier = nameof(BindReasoningEffortPlaceholder),
+        DocumentUrl = "https://ai.google.dev/gemini-api/docs/thinking#thinking-levels")]
     public partial string? ThinkingLevel { get; set; }
 
     [ObservableProperty]
@@ -47,4 +58,12 @@ public sealed partial class GoogleOptions : ObservableObject
         LocaleKey.Assistant_TopK_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://ai.google.dev/api/models#Model")]
     public partial string? TopK { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override string? ReasoningEffort
+    {
+        get => ThinkingLevel;
+        set => ThinkingLevel = value;
+    }
 }

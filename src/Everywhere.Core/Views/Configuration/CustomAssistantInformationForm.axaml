@@ -21,11 +21,11 @@
               CornerRadius="{DynamicResource FullCornerRadius}"
               ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistantInformationForm_IconButton_ToolTip}}">
               <v:IconPresenter
-                Width="72" Height="72"
                 FontSize="{DynamicResource FontSize4Xl}"
                 Icon="{Binding CustomAssistant?.Icon, RelativeSource={RelativeSource TemplatedParent}}"
                 IconSize="{DynamicResource FontSize4Xl}"
-                LineHeight="{DynamicResource LineHeight4Xl}"/>
+                LineHeight="{DynamicResource LineHeight4Xl}"
+                Size="{DynamicResource LineHeight4Xl}"/>
 
               <Button.Flyout>
                 <Flyout>

@@ -104,7 +104,7 @@
             <v:SettingsItemsControl
               Margin="0,0,12,0"
               IsVisible="{TemplateBinding IsSettingsVisible}"
-              ItemsSource="{Binding Assistant?.Configurator.SettingsItems, RelativeSource={RelativeSource TemplatedParent}}"/>
+              ItemsSource="{Binding Assistant?.Configuration.SettingsItems, RelativeSource={RelativeSource TemplatedParent}}"/>
           </ScrollViewer>
         </DockPanel>
       </ControlTemplate>

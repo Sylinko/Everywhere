@@ -64,7 +64,7 @@ public sealed class GoogleKernelMixin : KernelMixin
             };
 
             if (int.TryParse(_options.ThinkingBudget, out var thinkingBudget)) thinkingConfig.ThinkingBudget = thinkingBudget;
-            thinkingConfig.ThinkingLevel = _options.ThinkingLevel;
+            thinkingConfig.ThinkingLevel = _options.EffectiveReasoningEffort;
             return thinkingConfig;
         }
     }

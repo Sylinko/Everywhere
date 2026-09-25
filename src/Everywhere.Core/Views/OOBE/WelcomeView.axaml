@@ -1,12 +1,12 @@
 <UserControl
   x:Class="Everywhere.Views.WelcomeView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:common="clr-namespace:Everywhere.Common"
-  xmlns:configurator="clr-namespace:Everywhere.AI.Configurator" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI"
+  xmlns:common="clr-namespace:Everywhere.Common" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" d:DesignHeight="450"
-  d:DesignWidth="800" x:DataType="vm:WelcomeViewModel"
-  mc:Ignorable="d">
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  d:DesignHeight="450" d:DesignWidth="800"
+  x:DataType="vm:WelcomeViewModel" mc:Ignorable="d">
   <Grid
     Width="800" MinHeight="600"
     Margin="0,0,0,16" ColumnDefinitions="Auto,*"
@@ -160,13 +160,13 @@
           <Panel>
             <ListBox
               Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.Official}}">
+              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:OfficialAssistantConfiguration}}">
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Official_Message1}}"/>
             </ListBox>
 
             <ListBox
               Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.PresetBased}}">
+              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:PresetAssistantConfiguration}}">
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message1}}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_PresetBased_Message2}}"/>
               <StackPanel
@@ -186,7 +186,7 @@
 
             <ListBox
               Classes="AssistantMessage"
-              IsVisible="{Binding ViewModel.Assistant.ConfiguratorType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static configurator:AssistantConfiguratorType.Advanced}}">
+              IsVisible="{Binding ViewModel.Assistant.Configuration, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type ai:AdvancedAssistantConfiguration}}">
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message1}}"/>
               <TextBlock Text="{I18N {x:Static LocaleKey.WelcomeView_AssistantStep_Advanced_Message2}}"/>
             </ListBox>
@@ -297,7 +297,7 @@
               Grid.ColumnSpan="2" HorizontalScrollBarVisibility="Disabled">
               <v:SettingsItemsControl
                 IsEnabled="{Binding IsNotBusy}"
-                ItemsSource="{Binding ViewModel.Assistant.Configurator.SettingsItems}"/>
+                ItemsSource="{Binding ViewModel.Assistant.Configuration.SettingsItems}"/>
             </ScrollViewer>
 
             <Button

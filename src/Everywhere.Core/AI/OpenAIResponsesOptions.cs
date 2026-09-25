@@ -1,17 +1,27 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
 [GeneratedSettingsItems]
-public sealed partial class OpenAIResponsesOptions : ObservableObject
+public sealed partial class OpenAIResponsesOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.OpenAIResponses;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
+    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Description)]
-    [SettingsItem(Group = "_", DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
-    public partial string? ReasoningEffort { get; set; }
+    [SettingsItem(
+        Group = "_",
+        Modifier = nameof(BindReasoningEffortPlaceholder),
+        DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
+    public override partial string? ReasoningEffort { get; set; }
 
     [ObservableProperty]
     [DynamicLocaleKey(

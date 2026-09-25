@@ -15,6 +15,15 @@ public class IconPresenter : TemplatedControl
         set => SetValue(IconProperty, value);
     }
 
+    public static readonly StyledProperty<double> SizeProperty =
+        AvaloniaProperty.Register<IconPresenter, double>(nameof(Size), double.NaN);
+
+    public double Size
+    {
+        get => GetValue(SizeProperty);
+        set => SetValue(SizeProperty, value);
+    }
+
     public static readonly StyledProperty<double> IconSizeProperty = AvaloniaProperty.Register<IconPresenter, double>(nameof(IconSize));
 
     public double IconSize
@@ -29,5 +38,11 @@ public class IconPresenter : TemplatedControl
     {
         get => GetValue(LineHeightProperty);
         set => SetValue(LineHeightProperty, value);
+    }
+
+    public IconPresenter()
+    {
+        this[!WidthProperty] = this[!SizeProperty];
+        this[!HeightProperty] = this[!SizeProperty];
     }
 }

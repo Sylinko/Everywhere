@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -52,6 +53,7 @@ public sealed partial class CustomAssistant : Assistant
 
     [ObservableProperty]
     [SettingsItemIgnore]
+    [NotifyPropertyChangedFor(nameof(ToolCallStatus))]
     public partial bool IsToolCallEnabled { get; set; } = true;
 
     [JsonIgnore]
@@ -100,23 +102,42 @@ public sealed partial class CustomAssistant : Assistant
             Assistant = this
         });
 
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.CustomAssistant_VisualContextLengthLimit_Header,
+        LocaleKey.CustomAssistant_VisualContextLengthLimit_Description)]
+    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 1)]
+    public partial VisualContextLengthLimit VisualContextLengthLimit { get; set; } = VisualContextLengthLimit.Balanced;
+
     /// <summary>
     /// Gets or sets the percentage of the declared context limit at which automatic context
     /// compression starts.
     /// </summary>
     [ObservableProperty]
     [DynamicLocaleKey(
-        LocaleKey.Assistant_ContextCompressionThreshold_Header,
-        LocaleKey.Assistant_ContextCompressionThreshold_Description)]
-    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 1)]
+        LocaleKey.CustomAssistant_ContextCompressionThreshold_Header,
+        LocaleKey.CustomAssistant_ContextCompressionThreshold_Description)]
+    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 2)]
     [SettingsIntegerItem(Min = 5, Max = 95)]
     [Range(5, 95)]
     [DefaultValue(80)]
     public partial int ContextCompressionThreshold { get; set; } = 80;
 
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.CustomAssistant_MaxContextRounds_Header,
+        LocaleKey.CustomAssistant_MaxContextRounds_Description)]
+    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 3)]
+    [SettingsIntegerItem(Min = -1, Max = 30)]
+    [Range(-1, 30)]
+    [DefaultValue(-1)]
+    public partial int MaxContextRounds { get; set; } = -1;
+
     protected override void OnConfigurationPropertyChanged(string? propertyName)
     {
-        if (propertyName is null or nameof(AssistantConfiguration.SupportsToolCall))
+        if (propertyName is nameof(AssistantConfiguration.SupportsToolCall))
+        {
             OnPropertyChanged(nameof(ToolCallStatus));
+        }
     }
 }

@@ -35,6 +35,7 @@ public sealed partial class ChatService : IChatService
     private readonly IChatContextManager _chatContextManager;
     private readonly IChatPluginManager _chatPluginManager;
     private readonly IKernelMixinFactory _kernelMixinFactory;
+    private readonly AssistantSpecializationResolver _assistantSpecializationResolver;
     private readonly IBlobStorage _blobStorage;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
@@ -61,6 +62,7 @@ public sealed partial class ChatService : IChatService
         IChatContextManager chatContextManager,
         IChatPluginManager chatPluginManager,
         IKernelMixinFactory kernelMixinFactory,
+        AssistantSpecializationResolver assistantSpecializationResolver,
         IBlobStorage blobStorage,
         Settings settings,
         PersistentState persistentState,
@@ -73,6 +75,7 @@ public sealed partial class ChatService : IChatService
         _chatContextManager = chatContextManager;
         _chatPluginManager = chatPluginManager;
         _kernelMixinFactory = kernelMixinFactory;
+        _assistantSpecializationResolver = assistantSpecializationResolver;
         _blobStorage = blobStorage;
         _settings = settings;
         _persistentState = persistentState;
@@ -117,7 +120,7 @@ public sealed partial class ChatService : IChatService
                     return;
                 }
 
-                ProcessUserChatMessage(chatContext, message, cancellationToken);
+                ProcessUserChatMessage(chatContext, customAssistant, message, cancellationToken);
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
@@ -163,7 +166,7 @@ public sealed partial class ChatService : IChatService
                     return;
                 }
 
-                ProcessUserChatMessage(chatContext, newMessage, cancellationToken);
+                ProcessUserChatMessage(chatContext, customAssistant, newMessage, cancellationToken);
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
                 chatContext.Add(assistantChatMessage);
@@ -288,7 +291,7 @@ public sealed partial class ChatService : IChatService
                 GenerationContext? environment = null;
                 try
                 {
-                    environment = await CreateGenerationEnvironmentAsync(chatContext, assistant, null, cancellationToken);
+                    environment = await CreateGenerationContextAsync(chatContext, assistant, null, cancellationToken);
                     await CompactContextAsync(
                         chatContext,
                         environment,
@@ -320,10 +323,12 @@ public sealed partial class ChatService : IChatService
     /// Process UserChatMessage
     /// </summary>
     /// <param name="chatContext"></param>
+    /// <param name="customAssistant"></param>
     /// <param name="userChatMessage"></param>
     /// <param name="cancellationToken"></param>
     private void ProcessUserChatMessage(
         ChatContext chatContext,
+        CustomAssistant customAssistant,
         UserChatMessage userChatMessage,
         CancellationToken cancellationToken)
     {
@@ -356,8 +361,8 @@ public sealed partial class ChatService : IChatService
             // 2. Group the visual elements and build the XML in separate tasks.
             // 3. Populate result into VisualElementAttachment.Xml
 
-            var approximateTokenLimit = _persistentState.VisualContextLengthLimit.ToTokenLimit();
-            var detailLevel = _persistentState.VisualContextDetailLevel;
+            var approximateTokenLimit = customAssistant.VisualContextLengthLimit.ToTokenLimit();
+            var detailLevel = VisualContextDetailLevel.Compact;
 
             var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
                 ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(cancellationToken) :
@@ -477,7 +482,7 @@ public sealed partial class ChatService : IChatService
         return builder.Build();
     }
 
-    private async Task<GenerationContext> CreateGenerationEnvironmentAsync(
+    private async Task<GenerationContext> CreateGenerationContextAsync(
         ChatContext chatContext,
         Assistant assistant,
         string? systemPromptOverride,
@@ -518,7 +523,8 @@ public sealed partial class ChatService : IChatService
                 kernelMixin.Configuration.InputModalities,
                 customAssistant is not null ?
                     ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold) :
-                    ContextUsageSnapshot.DefaultCompressionThresholdPercentage);
+                    ContextUsageSnapshot.DefaultCompressionThresholdPercentage,
+                customAssistant?.MaxContextRounds ?? -1);
         }
         catch
         {
@@ -549,30 +555,26 @@ public sealed partial class ChatService : IChatService
         using var activity = _activitySource.StartChatActivity("chat", assistant.Configuration);
         activity?.SetTag("id", chatContext.Metadata.Id);
 
-        GenerationContext? environment = null;
+        GenerationContext? context = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
         try
         {
-            environment = await CreateGenerationEnvironmentAsync(
-                chatContext,
-                assistant,
-                systemPromptOverride,
-                cancellationToken);
-            var kernel = environment.Kernel;
-            var kernelMixin = environment.KernelMixin;
-            var promptRenderer = environment.PromptRenderer;
-            var systemPrompt = environment.SystemPrompt;
+            context = await CreateGenerationContextAsync(chatContext, assistant, systemPromptOverride, cancellationToken);
+            var kernel = context.Kernel;
+            var kernelMixin = context.KernelMixin;
+            var promptRenderer = context.PromptRenderer;
+            var systemPrompt = context.SystemPrompt;
             var hasAttemptedAutomaticCompaction = false;
             var hasAttemptedContextLengthRecovery = false;
 
             if (ResolvePendingAutomaticCompressionTrigger(
                     chatContext,
-                    environment.ContextCompressionThreshold) is { } pendingCompressionTrigger)
+                    context.ContextCompressionThreshold) is { } pendingCompressionTrigger)
             {
                 hasAttemptedAutomaticCompaction = true;
                 var compacted = await CompactContextAsync(
                     chatContext,
-                    environment,
+                    context,
                     pendingCompressionTrigger,
                     ResolveCompressionBoundary(chatContext, assistantChatMessage),
                     cancellationToken);
@@ -588,9 +590,9 @@ public sealed partial class ChatService : IChatService
                     promptRenderer,
                     systemPrompt,
                     chatContext.Items,
-                    _persistentState.MaxContextRounds,
-                    kernelMixin.Configuration.InputModalities,
-                    kernelMixin.Configuration.ContextLimit,
+                    context.MaxContextRounds,
+                    context.KernelMixin.Configuration.InputModalities,
+                    context.KernelMixin.Configuration.ContextLimit,
                     cancellationToken);
 
                 if (_settings.ChatWindow.AutomaticallyGenerateTitle &&
@@ -627,7 +629,7 @@ public sealed partial class ChatService : IChatService
                     hasAttemptedContextLengthRecovery = true;
                     var compacted = await CompactContextAsync(
                         chatContext,
-                        environment,
+                        context,
                         ContextCompressionTrigger.ContextLengthRecovery,
                         ResolveCompressionBoundary(chatContext, assistantChatMessage),
                         cancellationToken);
@@ -657,13 +659,13 @@ public sealed partial class ChatService : IChatService
 
                 var shouldCompact = !hasAttemptedAutomaticCompaction &&
                     chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(
-                        environment.ContextCompressionThreshold);
+                        context.ContextCompressionThreshold);
                 if (shouldCompact)
                 {
                     hasAttemptedAutomaticCompaction = true;
                     var compacted = await CompactContextAsync(
                         chatContext,
-                        environment,
+                        context,
                         ContextCompressionTrigger.Automatic,
                         ResolveCompressionBoundary(chatContext, assistantChatMessage),
                         cancellationToken);
@@ -687,7 +689,7 @@ public sealed partial class ChatService : IChatService
         }
         catch (Exception ex)
         {
-            ex = HandledChatException.Handle(ex, environment?.KernelMixin);
+            ex = HandledChatException.Handle(ex, context?.KernelMixin);
             _logger.LogError(ex, "Error generating chat response");
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message.Trim());
 
@@ -700,13 +702,13 @@ public sealed partial class ChatService : IChatService
         {
             _currentModelInvocationEventId.Value = previousModelInvocationEventId;
             activity.SetChatUsageTags(assistantChatMessage.UsageDetails);
-            RecordChatUsageMetrics(assistantChatMessage.UsageDetails, environment?.KernelMixin.Configuration.ModelId);
-            _chatRequestsCounter.Add(1, GetModelTag(environment?.KernelMixin.Configuration.ModelId));
+            RecordChatUsageMetrics(assistantChatMessage.UsageDetails, context?.KernelMixin.Configuration.ModelId);
+            _chatRequestsCounter.Add(1, GetModelTag(context?.KernelMixin.Configuration.ModelId));
 
             assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
             assistantChatMessage.IsBusy = false;
 
-            environment?.KernelMixin.Dispose();
+            context?.KernelMixin.Dispose();
         }
     }
 
@@ -739,7 +741,7 @@ public sealed partial class ChatService : IChatService
             }
 
             var messages = ChatHistoryBuilder
-                .SelectContextMessages(sourceNodes, _persistentState.MaxContextRounds, context.KernelMixin.Configuration.ContextLimit)
+                .SelectContextMessages(sourceNodes, context.MaxContextRounds, context.KernelMixin.Configuration.ContextLimit)
                 .ToList();
             var wasSourceHistoryTrimmed = false;
             string summary;
@@ -1661,7 +1663,8 @@ public sealed partial class ChatService : IChatService
         KernelMixin kernelMixin;
         try
         {
-            kernelMixin = _kernelMixinFactory.Create(_settings.SystemAssistant.TitleGeneration.Resolve(assistant));
+            var titleAssistant = _assistantSpecializationResolver.Resolve(_settings.SystemAssistant.TitleGeneration, assistant);
+            kernelMixin = _kernelMixinFactory.Create(titleAssistant);
         }
         catch (Exception ex)
         {
@@ -1850,7 +1853,8 @@ public sealed partial class ChatService : IChatService
         ScopedPromptRenderer PromptRenderer,
         string SystemPrompt,
         Modalities InputModalities,
-        int ContextCompressionThreshold
+        int ContextCompressionThreshold,
+        int MaxContextRounds
     );
 
     private sealed record ModelInvocationResult(

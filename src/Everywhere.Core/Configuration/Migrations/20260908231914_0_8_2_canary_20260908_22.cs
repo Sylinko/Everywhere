@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Everywhere.AI;
+using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration.Engine;
 using PresetModelTemplates = Everywhere.AI.PresetModelTemplates;
@@ -58,7 +59,7 @@ public sealed class _20260908231914_0_8_2_canary_20260908_22 : SettingsMigration
     {
         if (assistant["Configuration"] is JsonObject existing)
         {
-            return FlattenIntermediateConfiguration(assistant, existing);
+            return FlattenIntermediateConfiguration(assistant, existing) | NormalizeConfiguration(existing);
         }
 
         var mode = assistant["ConfiguratorType"]?.ToString().ToLowerInvariant();
@@ -77,18 +78,16 @@ public sealed class _20260908231914_0_8_2_canary_20260908_22 : SettingsMigration
         };
         var modelId = assistant["ModelId"]?.ToString();
         if (string.IsNullOrWhiteSpace(modelId)) modelId = assistant["ModelDefinitionTemplateId"]?.ToString();
-        var provider = type == "preset" ? PresetModelTemplates.Providers.AsValueEnumerable().FirstOrDefault(p => p.Id == modelId) : null;
+        var provider = type == "preset" ? PresetModelTemplates.Providers.AsValueEnumerable().FirstOrDefault(p => p.Id == providerId) : null;
         var fallback = provider?.ModelDefinitions.FirstOrDefault(m => m.ModelId == modelId);
         var configuration = new JsonObject { ["$type"] = type };
         if (fallback is not null)
         {
-            AssistantConfiguration fallbackConfiguration = type switch
+            AssistantConfiguration fallbackConfiguration = new AdvancedAssistantConfiguration();
+            lock (fallbackConfiguration)
             {
-                "preset" => new PresetAssistantConfiguration(),
-                "official" => new OfficialAssistantConfiguration(),
-                _ => new AdvancedAssistantConfiguration()
-            };
-            fallbackConfiguration.Apply(fallback);
+                fallbackConfiguration.Apply(fallback);
+            }
             var fallbackNode = SettingsEngineJson.SerializeToNode(fallbackConfiguration, typeof(AssistantConfiguration))?.AsObject();
             if (fallbackNode is not null)
             {
@@ -136,7 +135,46 @@ public sealed class _20260908231914_0_8_2_canary_20260908_22 : SettingsMigration
             assistant.Remove(name);
         }
 
+        NormalizeConfiguration(configuration);
+
         return true;
+    }
+
+    private static bool NormalizeConfiguration(JsonObject configuration)
+    {
+        var type = configuration["$type"]?.ToString();
+        if (type is not ("official" or "preset")) return false;
+
+        var changed = false;
+        if (configuration["LastKnownModel"] is JsonObject snapshot)
+        {
+            foreach (var name in SnapshotModelFields)
+            {
+                if (configuration.ContainsKey(name) || !snapshot.TryGetPropertyValue(name, out var value)) continue;
+                configuration[name] = value?.DeepClone();
+                changed = true;
+            }
+
+            configuration.Remove("LastKnownModel");
+            changed = true;
+        }
+
+        changed |= configuration.Remove("CurrentModel");
+        changed |= configuration.Remove("CatalogState");
+
+        if (type == "official")
+        {
+            changed |= configuration.Remove("Endpoint");
+            changed |= configuration.Remove("ApiKey");
+            var schema = OfficialModelDefinition.InferLegacySchemaFromModelId(configuration["ModelId"]?.ToString()).ToString();
+            if (configuration["Schema"]?.ToString() != schema)
+            {
+                configuration["Schema"] = schema;
+                changed = true;
+            }
+        }
+
+        return changed;
     }
 
     private static bool FlattenIntermediateConfiguration(JsonObject assistant, JsonObject configuration)

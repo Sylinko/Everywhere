@@ -49,8 +49,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             return;
         }
 
-        // Collect metadata for all relevant properties of the class
-        var members = type.GetAllMembers()
+        var generatedSettingsItemsAttribute = type.GetAttribute(KnownAttributes.GeneratedSettingsItems);
+        var includeInheritedMembers = generatedSettingsItemsAttribute?.GetNamedArgument("IncludeInheritedMembers") switch
+        {
+            { IsNull: false, Value: bool value } => value,
+            _ => true
+        };
+
+        // Concrete settings models can opt out of inherited presentation metadata while still
+        // inheriting the underlying data model.
+        var candidateMembers = includeInheritedMembers ? type.GetAllMembers() : type.GetMembers();
+        var members = candidateMembers
             .OfType<IPropertySymbol>()
             .Where(p => p is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
             .Where(p => !p.IsHiddenItem())
@@ -307,11 +316,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             }
             case ItemKind.SettingsControl:
             {
-                // In this case, we need to call the property itself to get the ISettingsControl instance
-                // Then cast it to ISettingsControl and call CreateControl(serviceProvider)
-                // Next, set the DataContext of the created control to 'this'
-                // Finally, assign it to a new SettingsControlItem
-
                 // If the property is nullable, Report diagnostic
                 if (metadata.Type.NullableAnnotation == NullableAnnotation.Annotated)
                 {
@@ -323,16 +327,11 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     return;
                 }
 
-                sb.AppendLine($"global::System.Func<global::System.IServiceProvider, global::Avalonia.Controls.Control> control_{itemName}_factory = serviceProvider =>").AppendLine("{");
-                using (sb.Indent())
-                {
-                    sb.AppendLine(
-                        $"var control_{itemName} = ((global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name}).CreateControl(serviceProvider);");
-                    sb.AppendLine($"control_{itemName}.DataContext = this;");
-                    sb.AppendLine($"return control_{itemName};");
-                }
+                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsControlItem(");
+                using (sb.Indent()) sb.AppendLine($"(global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name})");
+                sb.AppendLine("{");
+                using (sb.Indent()) sb.AppendLine("ControlDataContext = this,");
                 sb.AppendLine("};");
-                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsControlItem(control_{itemName}_factory);");
                 break;
             }
             case ItemKind.Templated:
@@ -407,8 +406,13 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         // Handle nested items via [SettingsItems]
         ApplySettingsItems(ctx, sb, itemName, metadata, bindingPath);
 
-        sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
-        EmitBinding(sb, bindingPath, BindingMode.TwoWay).AppendLine(";");
+        // A SettingsControl property is a control factory, not an editable settings value. Reading it again
+        // through Value would create a second wrapper and could eagerly construct the control it contains.
+        if (metadata.Kind != ItemKind.SettingsControl)
+        {
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
+            EmitBinding(sb, bindingPath, BindingMode.TwoWay).AppendLine(";");
+        }
 
         // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsDefaultValueItem to enable the Reset button.
         if (metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })

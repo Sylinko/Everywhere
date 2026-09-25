@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>Fotoğraf</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>Araçları kullanarak asistan yeteneklerini geliştirin (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Araçlar</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>Bu öğe türü desteklenmiyor</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>Görsel Elemanı Seç</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>Panodan Yapıştır</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>Dosya Ekle</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -556,12 +556,6 @@
     </data>
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Sohbet penceresi açıldığında sabitleme modunu belirler. Pencere sabitlenmemişse odak kaybolduğunda otomatik olarak gizlenecektir.</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Görsel Bağlam Detay Seviyesi</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Görsel öğe eklenmişse, Everywhere asistanınıza göndermeden önce bunu ve çevresindeki öğeleri yapılandırılmış metin olarak toplar. Bu seçenek, toplanan bilgilerin zenginliğini ve miktarını kontrol eder.</value>
     </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>İstemci hatası.</value>
@@ -996,7 +990,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>Ayarlar</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>Ekran Farkındalığı Bütçesi</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>İstek Zaman Aşımı</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>Rapor edilen bağlam kullanımı modelin belirttiği bağlam uzunluğunun bu yüzdesine ulaştığında, otomatik olarak konuşma bağlamını sıkıştırır.</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>Bağlam Sıkıştırma Eşiği</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Mesaj düzenleniyor...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>Mevcut asistan modeli desteklenmiyor, istek başarısız olabilir</value>
+        <value>Geçerli asistanın modeli en son katalogda bulunmuyor. İstekler başarısız olabilir.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>Mevcut asistan modeli {0} tarihinde kaldırıldı, daha yeni bir modele geçmeniz önerilir</value>
@@ -2088,7 +2082,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Sol tuşa basılı tutarak seçim yapın, sağ tuş veya Esc ile çıkın
 Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>Ekran Görüntüsü Al</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2112,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>Daha Fazla Ayar</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>Veri ayrıştırılırken hata oluştu.</value>
     </data>
@@ -2130,11 +2121,8 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Derin Düşünme</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>Tek bir ekran algılamada tüketilen Token için tahmini üst sınır.</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>Araç Çağrısını Aç</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡Asistanı hızlıca değiştirmek için Ctrl + Sayı Tuşu kullanabilirsin</value>
@@ -2163,11 +2151,11 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>Akıl Yürütme Gücü (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>Maksimum Bağlam Turu</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>Bağlamda saklanan en son kullanıcı mesajı turlarını sınırlayın. Bir soru ve cevap bir tur olarak sayılır.</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>Bağlamda saklanan en son kullanıcı mesajı turlarını sınırlayın. Bir soru ve cevap bir tur olarak sayılır. Sınırlama olmaması için -1 olarak ayarlayın.</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>Sadece Geçerli Mesaj</value>
@@ -3032,13 +3020,13 @@ Yayın tarihi: {2}</value>
         <value>Çıkarım Gücü (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Çıkarım modelinin isteğe bağlı güç seviyesi. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın.</value>
+        <value>Çıkarım modelinin isteğe bağlı güç seviyesi. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın. Birden fazla değeri | ile ayırın, örneğin low|medium|high. Sohbette girilen sırayla aralarında geçiş yapabilirsiniz.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>Çıkarım Gücü (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Yanıt çıkarım modelinin ne kadar düşünce harcaması gerektiğini yönlendirin. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın.</value>
+        <value>Yanıt çıkarım modelinin ne kadar düşünce harcaması gerektiğini yönlendirin. Desteklenen değerler modele bağlıdır, varsayılan olarak boş bırakın. Birden fazla değeri | ile ayırın, örneğin low|medium|high. Sohbette girilen sırayla aralarında geçiş yapabilirsiniz.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>Çıkarım Özeti (reasoning.summary)</value>
@@ -3071,7 +3059,7 @@ Yayın tarihi: {2}</value>
         <value>Düşünme Yoğunluğu</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic adaptif düşünme derinliğinin yumuşak rehberliği, örneğin düşük, orta, yüksek, çok yüksek veya maksimum. Varsayılan olarak boş bırakın.</value>
+        <value>Anthropic adaptif düşünme derinliğinin yumuşak rehberliği, örneğin düşük, orta, yüksek, çok yüksek veya maksimum. Varsayılan olarak boş bırakın. Birden fazla değeri | ile ayırın, örneğin low|medium|high. Sohbette girilen sırayla aralarında geçiş yapabilirsiniz.</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>İpucu Önbelleği</value>
@@ -3101,7 +3089,7 @@ Yayın tarihi: {2}</value>
         <value>Düşünme Seviyesi</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 modelinin düşünme derinliği, örneğin minimal, düşük, orta veya yüksek.</value>
+        <value>Gemini 3 modelinin düşünme derinliği, örneğin minimal, düşük, orta veya yüksek. Birden fazla değeri | ile ayırın, örneğin low|medium|high. Sohbette girilen sırayla aralarında geçiş yapabilirsiniz.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>Güncelleme Kanalı</value>
@@ -3434,7 +3422,7 @@ Yayın tarihi: {2}</value>
         <value>Düşünme Yoğunluğu</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Seçime bağlı model spesifik akıl yürütme yoğunluğu. Mistral, desteklenen modeller için yüksek ve yok olarak açıkça belirtilmiştir; diğer boş olmayan değerler olduğu gibi iletilecektir. Boş bırakıldığında modelin varsayılan davranışı kullanılır. 'Akıl Yürütmeyi Dahil Et' kapatıldığında yok gönderilecektir.</value>
+        <value>Seçime bağlı model spesifik akıl yürütme yoğunluğu. Mistral, desteklenen modeller için yüksek ve yok olarak açıkça belirtilmiştir; diğer boş olmayan değerler olduğu gibi iletilecektir. Boş bırakıldığında modelin varsayılan davranışı kullanılır. 'Akıl Yürütmeyi Dahil Et' kapatıldığında yok gönderilecektir. Birden fazla değeri | ile ayırın, örneğin low|medium|high. Sohbette girilen sırayla aralarında geçiş yapabilirsiniz.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>Ayar yolu &quot;{0}&quot; yazılamadı.</value>
@@ -3982,5 +3970,26 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Akıcı</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>Asistanları yönet</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>Desteklenmiyor</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>PDF girişini destekler</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>Ses girişini destekler</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>Video girişini destekler</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>Asistan seç</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>Akıl yürütme düzeyi</value>
     </data>
 </root>

@@ -13,12 +13,11 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Interop;
-using Everywhere.Storage;
 using Everywhere.Statistics;
+using Everywhere.Storage;
 using Everywhere.Views;
 using Lucide.Avalonia;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -31,20 +30,18 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
     private readonly IBlobStorage _blobStorage;
     private readonly IVisualElementContext _visualElementContext;
-    private readonly PersistentState _persistentState;
     private readonly Settings _settings;
     private readonly IStatisticsRecorder _statisticsRecorder;
 
     public VisualContextPlugin(
         IBlobStorage blobStorage,
         IVisualElementContext visualElementContext,
-        PersistentState persistentState,
         Settings settings,
-        IStatisticsRecorder statisticsRecorder) : base("visual_context")
+        IStatisticsRecorder statisticsRecorder
+    ) : base("visual_context")
     {
         _blobStorage = blobStorage;
         _visualElementContext = visualElementContext;
-        _persistentState = persistentState;
         _settings = settings;
         _statisticsRecorder = statisticsRecorder;
 
@@ -233,7 +230,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
         // Use a generous token limit so the expanded result is not truncated again
         var tokenLimit = VisualContextLengthLimit.Detailed.ToTokenLimit();
-        var detailLevel = _persistentState.VisualContextDetailLevel;
+        var detailLevel = VisualContextDetailLevel.Compact;
         var nextId = chatContext.VisualElements.Count + 1;
 
         var effectScope = _settings.ChatWindow.EnableVisualContextAnimation ?
@@ -277,7 +274,8 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private async Task<string> ExecuteVisualActionsAsync(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginUserInterface userInterface,
-        [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")] string description,
+        [Description("Since user can only see abstract actions and target IDs, concisely summarize what are you doing")]
+        string description,
         IReadOnlyList<VisualElementAction> actions,
         CancellationToken cancellationToken = default)
     {

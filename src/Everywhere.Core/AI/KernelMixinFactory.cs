@@ -12,7 +12,10 @@ namespace Everywhere.AI;
 /// <summary>
 /// A factory for creating instances of <see cref="KernelMixin"/>.
 /// </summary>
-public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory) : IKernelMixinFactory
+public sealed class KernelMixinFactory(
+    IHttpClientFactory httpClientFactory,
+    ILoggerFactory loggerFactory
+) : IKernelMixinFactory
 {
     /// <summary>
     /// Creates a new instance of <see cref="KernelMixin"/>.
@@ -22,7 +25,12 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
     /// <exception cref="HandledChatException">Thrown if the model provider or definition is not found or not supported.</exception>
     public KernelMixin Create(Assistant assistant)
     {
-        var configuration = AssistantSnapshotMapper.Copy(assistant.Configuration);
+        var sourceConfiguration = assistant.Configuration;
+        AssistantConfiguration configuration;
+        lock (sourceConfiguration)
+        {
+            configuration = AssistantSnapshotMapper.Copy(sourceConfiguration);
+        }
         if (configuration.ModelId.IsNullOrWhiteSpace())
         {
             throw new HandledChatException(
@@ -37,16 +45,32 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
             return connection.Schema switch
             {
                 ModelProviderSchema.OpenAI => new OpenAIKernelMixin(
-                    configuration, AssistantSnapshotMapper.Copy(assistant.OpenAIOptions), connection, loggerFactory),
+                    configuration,
+                    AssistantSnapshotMapper.Copy(assistant.OpenAIOptions),
+                    connection,
+                    loggerFactory),
                 ModelProviderSchema.OpenAIResponses => new OpenAIResponsesKernelMixin(
-                    configuration, AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions), connection, loggerFactory),
+                    configuration,
+                    AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions),
+                    connection,
+                    loggerFactory),
                 ModelProviderSchema.Anthropic => new AnthropicKernelMixin(
-                    configuration, AssistantSnapshotMapper.Copy(assistant.AnthropicOptions), connection),
+                    configuration,
+                    AssistantSnapshotMapper.Copy(assistant.AnthropicOptions),
+                    connection),
                 ModelProviderSchema.Google => new GoogleKernelMixin(
-                    configuration, AssistantSnapshotMapper.Copy(assistant.GoogleOptions), connection, loggerFactory),
-                ModelProviderSchema.Ollama => new OllamaKernelMixin(configuration, connection),
+                    configuration,
+                    AssistantSnapshotMapper.Copy(assistant.GoogleOptions),
+                    connection,
+                    loggerFactory),
                 ModelProviderSchema.Mistral => new MistralKernelMixin(
-                    configuration, AssistantSnapshotMapper.Copy(assistant.MistralOptions), connection, loggerFactory),
+                    configuration,
+                    AssistantSnapshotMapper.Copy(assistant.MistralOptions),
+                    connection,
+                    loggerFactory),
+                ModelProviderSchema.Ollama => new OllamaKernelMixin(
+                    configuration,
+                    connection),
                 _ => throw new HandledChatException(
                     new NotSupportedException($"Model provider schema '{connection.Schema}' is not supported."),
                     HandledChatExceptionType.InvalidConfiguration,
@@ -62,7 +86,7 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
 
     /// <summary>
     /// Resolves the <see cref="ModelConnection"/> and <see cref="HttpClient"/> for the given <see cref="CustomAssistant"/>.
-    /// For Official mode, the schema is inferred from the ModelId prefix, endpoint comes from the AI gateway,
+    /// For Official mode, the endpoint comes from the AI gateway,
     /// and the API key is null (OAuth is handled by the named HttpClient).
     /// For user-configured modes, endpoint/apiKey are read from the assistant configuration.
     /// </summary>
@@ -73,11 +97,10 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
 
     /// <summary>
     /// Resolves connection for Official (cloud gateway) mode.
-    /// The actual provider schema is inferred from the model ID prefix (e.g. "openai/gpt-4o" → OpenAIResponses).
     /// </summary>
     private ModelConnection ResolveOfficialConnection(AssistantConfiguration configuration, TimeSpan timeout)
     {
-        var schema = InferSchemaFromModelId(configuration.ModelId);
+        var schema = configuration.Schema;
         var endpoint = schema.NormalizeEndpoint(CloudConstants.AIGatewayBaseUrl) ??
             throw new HandledChatException(
                 new InvalidOperationException("AI Gateway base URL is not configured."),
@@ -117,23 +140,6 @@ public sealed class KernelMixinFactory(IHttpClientFactory httpClientFactory, ILo
         httpClient.Timeout = timeout;
 
         return new ModelConnection(configuration.Schema, endpoint, apiKey, httpClient, null);
-    }
-
-    /// <summary>
-    /// Infers the actual <see cref="ModelProviderSchema"/> from an Official model ID.
-    /// Official model IDs follow the format "provider/model-name" (e.g. "openai/gpt-4o", "google/gemini-2.5-flash").
-    /// </summary>
-    private static ModelProviderSchema InferSchemaFromModelId(string? modelId)
-    {
-        var provider = modelId?.Split('/').FirstOrDefault()?.ToLowerInvariant();
-        return provider switch
-        {
-            "openai" => ModelProviderSchema.OpenAIResponses,
-            "google" => ModelProviderSchema.Google,
-            "anthropic" or "minimax" => ModelProviderSchema.Anthropic,
-            "mistral" => ModelProviderSchema.Mistral,
-            _ => ModelProviderSchema.OpenAI
-        };
     }
 
     private Exception TransformOfficialException(Exception exception)
