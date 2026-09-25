@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(ExpressionBindingTargetFrameworks)</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <PackageId>ExpressionBinding.Avalonia</PackageId>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Sylinko</Authors>
+    <Description>Runtime-bound expressions for Avalonia bindings.</Description>
+    <PackageTags>avalonia;binding;expression;xaml;converter</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/Sylinko/ExpressionBinding.Avalonia</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Sylinko/ExpressionBinding.Avalonia</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Parlot.SourceGenerator" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ExpressionBinding.Avalonia.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Parsing\ExpressionParser.parlot.cs" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
