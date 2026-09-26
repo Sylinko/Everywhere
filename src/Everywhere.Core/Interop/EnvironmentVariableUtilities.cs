@@ -1,4 +1,4 @@
-﻿#if IsMacOS || IsLinux
+#if IsMacOS || IsLinux
 using System.Diagnostics;
 #endif
 
@@ -77,11 +77,35 @@ public static class EnvironmentVariableUtilities
 
             try
             {
-                var shell = Environment.GetEnvironmentVariable("SHELL");
-                if (string.IsNullOrEmpty(shell))
+                // ── SHELL INJECTION GUARD ────────────────────────────────────────────
+                // The $SHELL environment variable is controlled by the user (or an attacker).
+                // Blindly spawning it as a process risks arbitrary code execution (CWE-78).
+                // Only allow well-known shell binaries; fall back to a safe platform default
+                // if $SHELL contains an unexpected value.
+                var shellFromEnv = Environment.GetEnvironmentVariable("SHELL");
+                var allowedShells = new HashSet<string>(StringComparer.Ordinal)
                 {
-                    shell = OperatingSystem.IsMacOS() ? "/bin/zsh" : "/bin/bash";
+                    "/bin/sh", "/bin/bash", "/bin/zsh", "/bin/fish",
+                    "/usr/bin/bash", "/usr/bin/zsh", "/usr/bin/fish",
+                    "/usr/local/bin/bash", "/usr/local/bin/zsh", "/usr/local/bin/fish"
+                };
+
+                string shell;
+                if (!string.IsNullOrEmpty(shellFromEnv) && allowedShells.Contains(shellFromEnv))
+                {
+                    shell = shellFromEnv;
                 }
+                else
+                {
+                    // Unsafe or empty $SHELL — silently fall back to platform default.
+                    shell = OperatingSystem.IsMacOS() ? "/bin/zsh" : "/bin/bash";
+                    if (!string.IsNullOrEmpty(shellFromEnv))
+                    {
+                        Log.ForContext(typeof(EnvironmentVariableUtilities))
+                           .Warning("$SHELL value '{Shell}' is not in the allowed list and will be ignored.", shellFromEnv);
+                    }
+                }
+                // ─────────────────────────────────────────────────────────────────────
 
                 using var process = Process.Start(
                     new ProcessStartInfo
