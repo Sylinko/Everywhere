@@ -32,7 +32,7 @@ public sealed partial class PromptEditorViewModel(
 ) : BusyViewModelBase
 {
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
-    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Instance;
+    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     public IReadOnlyBindableList<PromptDiagnosticItem> Diagnostics => _diagnostics;
 

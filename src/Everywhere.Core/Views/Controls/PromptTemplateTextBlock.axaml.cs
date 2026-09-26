@@ -80,7 +80,7 @@ internal sealed class PromptTemplateInlineSynchronizer(IReadOnlySet<string> know
     private readonly List<InlineState> _states = [];
 
     public PromptTemplateInlineSynchronizer() : this(
-        SystemPromptPlaceholderSource.Instance.Definitions
+        SystemPromptPlaceholderSource.Shared.Definitions
             .Select(static definition => definition.Name)
             .ToHashSet(StringComparer.Ordinal))
     {

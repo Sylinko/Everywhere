@@ -32,7 +32,7 @@ public sealed partial class PromptPageViewModel(
 ) : BusyViewModelBase
 {
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
-    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Instance;
+    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     /// <summary>
     /// Prompts matching the current search text. The built-in default prompt remains a normal item

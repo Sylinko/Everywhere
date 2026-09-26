@@ -155,8 +155,7 @@ public sealed partial class ChatAssistantPromptSelector(IPromptService promptSer
 
         // ChatWindow can be open while the main window is hidden or has not been created yet.
         // Show it before navigating; a MainViewNavigateMessage alone does not open the window.
-        WeakReferenceMessenger.Default.Send<ApplicationMessage>(
-            new ShowWindowMessage(ShowWindowMessage.MainWindow, route));
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.MainWindow, route));
     }
 
     private void BindAssistant(CustomAssistant? assistant)
@@ -268,6 +267,9 @@ public sealed partial class ChatAssistantPromptSelector(IPromptService promptSer
     public sealed record Item(Guid Id, IDynamicLocaleKey DisplayNameKey, string Template)
     {
         public static Item FromPrompt(PromptDefinition prompt) =>
-            new(prompt.Id, PromptDisplayNameProvider.GetDisplayNameKey(prompt), prompt.Template);
+            new(
+                prompt.Id,
+                PromptDisplayNameProvider.GetDisplayNameKey(prompt),
+                PromptTemplateRenderer.Render(prompt.Template, SystemPromptPlaceholderSource.Shared, PromptPlaceholderContext.Preview));
     }
 }

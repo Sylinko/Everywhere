@@ -30,7 +30,7 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
 {
     private const string ComboBoxPartName = "PART_ComboBox";
     private static readonly TimeSpan PreviewRefreshInterval = TimeSpan.FromSeconds(1);
-    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Instance;
+    private static readonly SystemPromptPlaceholderSource PlaceholderSource = SystemPromptPlaceholderSource.Shared;
 
     public static readonly StyledProperty<Guid> SelectedIdProperty =
         AvaloniaProperty.Register<CustomAssistantPromptSelector, Guid>(nameof(SelectedId), enableDataValidation: true);

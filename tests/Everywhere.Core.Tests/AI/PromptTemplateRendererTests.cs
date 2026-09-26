@@ -153,7 +153,7 @@ public class PromptTemplateRendererTests
         var source = new CompositePromptPlaceholderSource(
             [
                 StrategyPromptPlaceholderSource.Instance,
-                SystemPromptPlaceholderSource.Instance
+                SystemPromptPlaceholderSource.Shared
             ]);
         var context = new PromptPlaceholderContext(
             SkillsPromptResolver: () => "Skill prompt",
