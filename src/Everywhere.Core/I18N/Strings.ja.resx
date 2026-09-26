@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>ウェブ検索エンジンのサービスプロバイダーを選択します。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>画像</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>ツールを使用してアシスタントの機能を強化 (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>ツール</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>このアイテムタイプはサポートされていません</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>ビジュアル要素を選択</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>クリップボードから貼り付け</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>ファイルを添付</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -557,12 +557,6 @@
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>チャットウィンドウを開いたときの固定モードを指定します。ウィンドウが固定されていない場合、フォーカスを失うと自動的に隠れます。</value>
     </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>視覚コンテキスト詳細レベル</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>視覚要素の添付が追加された場合、Everywhereはそれを周囲の要素と共に構造化テキストとして収集します。このオプションは収集の豊かさと情報量を制御します。</value>
-    </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>クライアントエラー。</value>
     </data>
@@ -707,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>アシスタントは適切なタイミングでこれらのツール（Web検索、ローカルファイルへのアクセスなど）を使用し、より強力な機能を実現します。</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>ウェブ検索エンジンプロバイダー</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>ウェブ検索エンジン</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>APIキー</value>
@@ -723,10 +717,10 @@
         <value>プログラム可能な検索エンジンIDを提供します。詳細はドキュメントを参照してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>ウェブ</value>
+        <value>ウェブブラウジング</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>ウェブページを閲覧する能力を提供します。</value>
+        <value>ウェブを閲覧する能力を提供します。検索やウェブコンテンツの取得などが含まれます。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>ファイル操作</value>
@@ -996,7 +990,7 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>設定</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>画面認識の予算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>リクエストタイムアウト</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>報告されたコンテキスト使用量がモデルが宣言したコンテキスト長のこの割合に達したとき、自動的に対話コンテキストを圧縮します。</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>コンテキスト圧縮閾値</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@
         <value>メッセージを編集中...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>現在のアシスタントのモデルはサポートされていません。リクエストが失敗する可能性があります。</value>
+        <value>現在のアシスタントのモデルは最新のカタログに見つかりません。リクエストが失敗する可能性があります。</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>現在のアシスタントのモデルは {0} に廃止されました。新しいモデルに切り替えることをお勧めします。</value>
@@ -1970,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>プロンプトを管理</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>会話中にプロンプトを切り替えると、プロンプトキャッシュのヒット率が低下し、LLM のコストが増加するおそれがあります。</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 個のAPIキーを削除してもよろしいですか？この操作は元に戻せません！</value>
     </data>
@@ -2088,7 +2085,7 @@
         <value>左クリックを押しながら選択し、右クリックまたは Esc で終了
 ホイールまたは数字キーで選択モードを切り替え</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>スクリーンショットを撮る</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2115,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>さらに設定</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>データの解析中にエラーが発生しました。</value>
     </data>
@@ -2130,11 +2124,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>深い思考</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>1回の画面認識で消費されるトークンの推定上限。</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>ツール呼び出しを有効にする</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡Ctrl + 数字キーでアシスタントを素早く切り替えられます。</value>
@@ -2163,11 +2154,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>推論強度 (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>最大コンテキストラウンド</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>コンテキストに保持する最近のユーザーメッセージのラウンド数を制限します。一問一答は1ラウンドと見なされます。</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>コンテキストに保持する最近のユーザーメッセージのラウンド数を制限します。一問一答は1ラウンドと見なされます。-1 に設定すると無制限になります。</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>現在のメッセージのみ</value>
@@ -2773,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>以下の自動化操作を実行してもよろしいですか？</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>ウェブ検索</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>ドキュメントを見る</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>デフォルト</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>デフォルトに設定</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>既にデフォルト</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>APIキーは空にできません。</value>
@@ -3032,13 +3011,13 @@
         <value>推論強度 (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>推論モデルのオプションの強度レベル。サポートされる値はモデルによって異なり、デフォルトは空白のままにしてください。</value>
+        <value>推論モデルのオプションの強度レベル。サポートされる値はモデルによって異なり、デフォルトは空白のままにしてください。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>推論強度 (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Responses 推論モデルにどれだけ思考を投入するかを指示します。サポートされる値はモデルによって異なり、デフォルトは空白のままにしてください。</value>
+        <value>Responses 推論モデルにどれだけ思考を投入するかを指示します。サポートされる値はモデルによって異なり、デフォルトは空白のままにしてください。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>推論概要 (reasoning.summary)</value>
@@ -3071,7 +3050,7 @@
         <value>思考強度</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic 自適応思考の深さをソフトにガイドします。例：low、medium、high、xhigh または max。デフォルトは空白のままにしてください。</value>
+        <value>Anthropic 自適応思考の深さをソフトにガイドします。例：low、medium、high、xhigh または max。デフォルトは空白のままにしてください。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>プロンプトキャッシュ</value>
@@ -3101,7 +3080,7 @@
         <value>思考レベル</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 モデルの思考の深さ。例：minimal、low、medium または high。</value>
+        <value>Gemini 3 モデルの思考の深さ。例：minimal、low、medium または high。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>更新チャネル</value>
@@ -3434,7 +3413,7 @@
         <value>思考の強度</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>モデル特有の推論強度のオプション。Mistralは現在サポートされているモデルに対してhighとnoneを明示しています。他の非空値はそのまま透過されます。空白の場合はモデルのデフォルト動作を使用します。「推論を含める」をオフにするとnoneが送信されます。</value>
+        <value>モデル特有の推論強度のオプション。Mistralは現在サポートされているモデルに対してhighとnoneを明示しています。他の非空値はそのまま透過されます。空白の場合はモデルのデフォルト動作を使用します。「推論を含める」をオフにするとnoneが送信されます。 low|medium|high のように、複数の値を | で区切って入力します。チャットでは入力した順序で切り替えられます。</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>設定パス「{0}」の書き込みに失敗しました。</value>
@@ -3982,5 +3961,32 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>滑らか</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>アシスタントの管理</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value></value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>PDF 入力に対応</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>音声入力に対応</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>動画入力に対応</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>アシスタントを選択</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>思考の深さ</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>その他の設定</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>ドキュメントを表示</value>
     </data>
 </root>

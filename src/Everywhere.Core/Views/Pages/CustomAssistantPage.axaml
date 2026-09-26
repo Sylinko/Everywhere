@@ -56,13 +56,13 @@
                 Size="{DynamicResource FontSizeXl}"/>
 
               <v:IconPresenter
-                DockPanel.Dock="Left" Width="40"
-                Height="40"
+                DockPanel.Dock="Left"
                 CornerRadius="{DynamicResource FullCornerRadius}"
                 FontSize="{DynamicResource FontSize2Xl}"
                 Icon="{Binding Icon}"
                 IconSize="{DynamicResource FontSize2Xl}"
-                LineHeight="{DynamicResource LineHeight2Xl}"/>
+                LineHeight="{DynamicResource LineHeight2Xl}"
+                Size="{DynamicResource LineHeight2Xl}"/>
 
               <StackPanel VerticalAlignment="Center">
                 <TextBlock

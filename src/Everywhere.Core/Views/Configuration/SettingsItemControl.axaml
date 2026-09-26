@@ -186,6 +186,12 @@
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
                             ItemsSource="{Binding ItemsSource}"
                             SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                            <ComboBox.Styles>
+                              <Style Selector="ComboBox.PresetModelProvider">
+                                <Setter Property="shadui:ControlAssist.MinHeight" Value="40"/>
+                                <Setter Property="MaxDropDownHeight" Value="480"/>
+                              </Style>
+                            </ComboBox.Styles>
                             <ComboBox.ItemTemplate>
                               <DataTemplate DataType="c:SettingsSelectionItem+Item">
                                 <ContentControl
@@ -214,22 +220,32 @@
 
                     <StackPanel
                       VerticalAlignment="Center" Spacing="4">
-                      <StackPanel
-                        Orientation="Horizontal" Spacing="6">
+                      <DockPanel
+                        HorizontalAlignment="Left" HorizontalSpacing="6">
+                        <shadui:Badge
+                          DockPanel.Dock="Right" VerticalAlignment="Center"
+                          Background="{DynamicResource WarningColor60}"
+                          Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
+                          Foreground="{DynamicResource BadgeForegroundColor}"
+                          IsVisible="{Binding Item?.IsExperimental, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
+                        <HyperlinkButton
+                          DockPanel.Dock="Right" VerticalAlignment="Center"
+                          IsVisible="{Binding Item?.DocumentUrl, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          NavigateUri="{Binding Item?.DocumentUrl, RelativeSource={RelativeSource TemplatedParent}}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.SettingsItemControl_OpenDocumentHyperlinkButton_Content}}">
+                          <LucideIcon
+                            VerticalAlignment="Center" Kind="ExternalLink"
+                            Size="{DynamicResource FontSizeL}"/>
+                        </HyperlinkButton>
+
                         <TextBlock
                           x:Name="HeaderTextBlock" VerticalAlignment="Center"
                           IsHitTestVisible="False"
                           IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                           Text="{Binding Item?.HeaderKey^, RelativeSource={RelativeSource TemplatedParent}}"
                           TextWrapping="Wrap"/>
-                        <shadui:Badge
-                          HorizontalAlignment="Left" VerticalAlignment="Center"
-                          Background="{DynamicResource WarningColor60}"
-                          Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
-                          Foreground="{DynamicResource BadgeForegroundColor}"
-                          IsVisible="{Binding Item?.IsExperimental, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
-                          ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
-                      </StackPanel>
+                      </DockPanel>
                       <TextBlock
                         x:Name="DescriptionTextBlock" Classes="Muted Caption"
                         IsHitTestVisible="False"

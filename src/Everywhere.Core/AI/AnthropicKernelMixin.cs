@@ -20,9 +20,13 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
     /// <summary>
     /// Initializes a new instance of the <see cref="AnthropicKernelMixin"/> class.
     /// </summary>
-    public AnthropicKernelMixin(Assistant assistant, ModelConnection connection) : base(assistant, connection)
+    public AnthropicKernelMixin(
+        AssistantConfiguration configuration,
+        AnthropicOptions options,
+        ModelConnection connection
+    ) : base(configuration, connection)
     {
-        _options = assistant.AnthropicOptions;
+        _options = options;
 
         _client = new OptimizedChatClient(
             new AnthropicClient(
@@ -31,7 +35,7 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
                     ApiKey = ApiKey,
                     HttpClient = connection.HttpClient,
                     BaseUrl = Endpoint,
-                    Timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60))
+                    Timeout = connection.HttpClient.Timeout
                 }).AsIChatClient(),
             this);
         ChatCompletionService = _client.AsChatCompletionService();
@@ -53,8 +57,8 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
         public OptimizedChatClient(IChatClient originalClient, AnthropicKernelMixin owner) : base(originalClient)
         {
             _owner = owner;
-            _isClaude = owner.ModelId.Contains("claude", StringComparison.OrdinalIgnoreCase);
-            _isAdaptiveReasoningSupported = IsAdaptiveReasoningSupported(_isClaude, owner.ModelId);
+            _isClaude = owner.Configuration.ModelId!.Contains("claude", StringComparison.OrdinalIgnoreCase);
+            _isAdaptiveReasoningSupported = IsAdaptiveReasoningSupported(_isClaude, owner.Configuration.ModelId);
         }
 
         private void BuildOptions(ref ChatOptions? options)
@@ -89,7 +93,7 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
             }
 
             OutputConfig? outputConfig = null;
-            if (options.ThinkingEffort is { Length: > 0 } effort)
+            if (options.EffectiveReasoningEffort is { Length: > 0 } effort)
             {
                 outputConfig = new OutputConfig
                 {
@@ -99,13 +103,13 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
 
             return new MessageCreateParams
             {
-                MaxTokens = _owner.OutputLimit switch
+                MaxTokens = _owner.Configuration.OutputLimit switch
                 {
-                    > 0 => _owner.OutputLimit,
+                    > 0 => _owner.Configuration.OutputLimit,
                     _ => 4096,
                 },
                 Messages = [], // Leave empty and underlying implementation will handle it
-                Model = _owner.ModelId,
+                Model = _owner.Configuration.ModelId!,
                 Thinking = thinkingConfigParam,
                 OutputConfig = outputConfig,
                 CacheControl = options.CacheControl is AnthropicRequestCacheControl.Ephemeral ? new CacheControlEphemeral() : null
@@ -163,7 +167,9 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
             return major > 4 || major == 4 && minor >= 6;
         }
 
-        [GeneratedRegex(@"claude-(?:(?:fable|opus|sonnet|haiku)-)?(?<major>\d+)(?:[.-](?<minor>\d)(?=$|[@\-:.]))?(?:-(?:fable|opus|sonnet|haiku))?", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(
+            @"claude-(?:(?:fable|opus|sonnet|haiku)-)?(?<major>\d+)(?:[.-](?<minor>\d)(?=$|[@\-:.]))?(?:-(?:fable|opus|sonnet|haiku))?",
+            RegexOptions.IgnoreCase)]
         private static partial Regex ClaudeVersionRegex();
     }
 }

@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
@@ -64,8 +63,6 @@ public sealed partial class ChatWindowViewModel :
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
 
-    public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
     public partial ChatMessageNode? EditingMessageNode { get; private set; }
@@ -96,7 +93,7 @@ public sealed partial class ChatWindowViewModel :
     /// Can be set to one of greetings or instructions based on the chat context, or a default value.
     /// </summary>
     [ObservableProperty]
-    public partial IDynamicLocaleKey? ChatInputAreaWatermarkKey { get; private set; }
+    public partial IDynamicLocaleKey ChatInputAreaWatermarkKey { get; private set; }
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -105,7 +102,6 @@ public sealed partial class ChatWindowViewModel :
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
-    private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
@@ -120,7 +116,6 @@ public sealed partial class ChatWindowViewModel :
         Settings settings,
         PersistentState persistentState,
         IChatContextManager chatContextManager,
-        IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
         IVisualElementContext visualElementContext,
@@ -141,7 +136,6 @@ public sealed partial class ChatWindowViewModel :
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
         _greetings = greetings;
-        _notificationService = notificationService;
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
@@ -179,7 +173,8 @@ public sealed partial class ChatWindowViewModel :
             Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
                 .Select(assistant => assistant is null ?
                     Observable.Return(0) :
-                    assistant.WhenValueChanged(x => x.ModelId).Select(_ => 0).Merge(assistant.WhenValueChanged(x => x.ContextLimit).Select(_ => 0)))
+                    assistant.WhenValueChanged(x => x.Configuration.ModelId).Select(_ => 0)
+                        .Merge(assistant.WhenValueChanged(x => x.Configuration.ContextLimit).Select(_ => 0)))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
@@ -779,6 +774,9 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
+    private Task PerformUpdateAsync() => SoftwareUpdater.PerformUpdateAsync();
+
+    [RelayCommand]
     private static void Close()
     {
         WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
@@ -792,7 +790,9 @@ public sealed partial class ChatWindowViewModel :
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
-        ChatContextManager.Current.ContextUsage.UpdateModel(assistant?.ModelId, assistant?.ContextLimit ?? 0);
+        ChatContextManager.Current.ContextUsage.UpdateModel(
+            assistant?.Configuration.ModelId,
+            assistant?.Configuration.ContextLimit ?? 0);
     }
 
     partial void OnIsBusyChanged(bool value)

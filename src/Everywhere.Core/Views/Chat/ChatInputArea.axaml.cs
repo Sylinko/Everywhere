@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
@@ -11,8 +10,6 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
-using Everywhere.Common;
-using Everywhere.Extensions;
 using Everywhere.Utilities;
 
 namespace Everywhere.Views;
@@ -20,8 +17,7 @@ namespace Everywhere.Views;
 [TemplatePart("PART_ChatTextEditor", typeof(ChatTextEditor), IsRequired = true)]
 [TemplatePart("PART_SendButton", typeof(Button), IsRequired = true)]
 [TemplatePart("PART_ChatAttachmentItemsControl", typeof(ChatAttachmentItemsControl), IsRequired = true)]
-[TemplatePart("PART_AssistantSelectionMenuItem", typeof(MenuItem), IsRequired = true)]
-public sealed partial class ChatInputArea : TemplatedControl
+public sealed class ChatInputArea : TemplatedControl
 {
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<ChatInputArea, string?>(nameof(Text));
@@ -31,6 +27,12 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<string?> PlaceholderTextProperty =
         ChatTextEditor.PlaceholderTextProperty.AddOwner<ChatInputArea>();
+
+    public static readonly StyledProperty<CustomAssistant?> SelectedCustomAssistantProperty =
+        AvaloniaProperty.Register<ChatInputArea, CustomAssistant?>(nameof(SelectedCustomAssistant));
+
+    public static readonly StyledProperty<object?> ToolBarContentProperty =
+        AvaloniaProperty.Register<ChatInputArea, object?>(nameof(ToolBarContent));
 
     public static readonly StyledProperty<bool> PressCtrlEnterToSendProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(PressCtrlEnterToSend));
@@ -58,40 +60,6 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<IRelayCommand<ChatAttachment>?> RemoveAttachmentCommandProperty =
         AvaloniaProperty.Register<ChatInputArea, IRelayCommand<ChatAttachment>?>(nameof(RemoveAttachmentCommand));
-
-    public static readonly StyledProperty<int> MaxChatAttachmentCountProperty =
-        AvaloniaProperty.Register<ChatInputArea, int>(nameof(MaxChatAttachmentCount));
-
-    public static readonly StyledProperty<IEnumerable<CustomAssistant>?> CustomAssistantItemsSourceProperty =
-        AvaloniaProperty.Register<ChatInputArea, IEnumerable<CustomAssistant>?>(nameof(CustomAssistantItemsSource));
-
-    public static readonly StyledProperty<CustomAssistant?> SelectedCustomAssistantProperty =
-        AvaloniaProperty.Register<ChatInputArea, CustomAssistant?>(nameof(SelectedCustomAssistant));
-
-    public static readonly DirectProperty<ChatInputArea, IEnumerable?> AddChatAttachmentMenuItemsProperty =
-        AvaloniaProperty.RegisterDirect<ChatInputArea, IEnumerable?>(
-            nameof(AddChatAttachmentMenuItems),
-            o => o.AddChatAttachmentMenuItems);
-
-    public static readonly StyledProperty<bool> IsToolCallSupportedProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsToolCallSupported));
-
-    public static readonly StyledProperty<bool> IsToolCallEnabledProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsToolCallEnabled));
-
-    public static readonly StyledProperty<bool> IsWebSearchEnabledProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsWebSearchEnabled));
-
-    public static readonly StyledProperty<Flyout?> ToolCallButtonFlyoutProperty =
-        AvaloniaProperty.Register<ChatInputArea, Flyout?>(nameof(ToolCallButtonFlyout));
-
-    public static readonly DirectProperty<ChatInputArea, IEnumerable?> SettingsMenuItemsSourceProperty =
-        AvaloniaProperty.RegisterDirect<ChatInputArea, IEnumerable?>(
-            nameof(SettingsMenuItemsSource),
-            o => o.SettingsMenuItemsSource);
-
-    public static readonly StyledProperty<ISoftwareUpdater?> SoftwareUpdaterProperty =
-        AvaloniaProperty.Register<ChatInputArea, ISoftwareUpdater?>(nameof(SoftwareUpdater));
 
     public static readonly StyledProperty<bool> IsSendButtonEnabledProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsSendButtonEnabled), true);
@@ -123,6 +91,18 @@ public sealed partial class ChatInputArea : TemplatedControl
     {
         get => GetValue(PlaceholderTextProperty);
         set => SetValue(PlaceholderTextProperty, value);
+    }
+
+    public CustomAssistant? SelectedCustomAssistant
+    {
+        get => GetValue(SelectedCustomAssistantProperty);
+        set => SetValue(SelectedCustomAssistantProperty, value);
+    }
+
+    public object? ToolBarContent
+    {
+        get => GetValue(ToolBarContentProperty);
+        set => SetValue(ToolBarContentProperty, value);
     }
 
     /// <summary>
@@ -185,66 +165,6 @@ public sealed partial class ChatInputArea : TemplatedControl
         set => SetValue(RemoveAttachmentCommandProperty, value);
     }
 
-    public int MaxChatAttachmentCount
-    {
-        get => GetValue(MaxChatAttachmentCountProperty);
-        set => SetValue(MaxChatAttachmentCountProperty, value);
-    }
-
-    public CustomAssistant? SelectedCustomAssistant
-    {
-        get => GetValue(SelectedCustomAssistantProperty);
-        set => SetValue(SelectedCustomAssistantProperty, value);
-    }
-
-    public IEnumerable<CustomAssistant>? CustomAssistantItemsSource
-    {
-        get => GetValue(CustomAssistantItemsSourceProperty);
-        set => SetValue(CustomAssistantItemsSourceProperty, value);
-    }
-
-    public IEnumerable? AddChatAttachmentMenuItems
-    {
-        get;
-        set => SetAndRaise(AddChatAttachmentMenuItemsProperty, ref field, value);
-    } = new AvaloniaList<MenuItem>();
-
-    public bool IsToolCallSupported
-    {
-        get => GetValue(IsToolCallSupportedProperty);
-        set => SetValue(IsToolCallSupportedProperty, value);
-    }
-
-    public bool IsToolCallEnabled
-    {
-        get => GetValue(IsToolCallEnabledProperty);
-        set => SetValue(IsToolCallEnabledProperty, value);
-    }
-
-    public bool IsWebSearchEnabled
-    {
-        get => GetValue(IsWebSearchEnabledProperty);
-        set => SetValue(IsWebSearchEnabledProperty, value);
-    }
-
-    public Flyout? ToolCallButtonFlyout
-    {
-        get => GetValue(ToolCallButtonFlyoutProperty);
-        set => SetValue(ToolCallButtonFlyoutProperty, value);
-    }
-
-    public IEnumerable? SettingsMenuItemsSource
-    {
-        get;
-        set => SetAndRaise(SettingsMenuItemsSourceProperty, ref field, value);
-    } = new AvaloniaList<object>();
-
-    public ISoftwareUpdater? SoftwareUpdater
-    {
-        get => GetValue(SoftwareUpdaterProperty);
-        set => SetValue(SoftwareUpdaterProperty, value);
-    }
-
     public bool IsSendButtonEnabled
     {
         get => GetValue(IsSendButtonEnabledProperty);
@@ -268,7 +188,7 @@ public sealed partial class ChatInputArea : TemplatedControl
     private IDisposable? _textPresenterSizeChangedSubscription;
     private IDisposable? _chatAttachmentItemsControlPointerMovedSubscription;
     private IDisposable? _chatAttachmentItemsControlPointerExitedSubscription;
-    private IDisposable? _assistantSelectionMenuItemPointerWheelChangedSubscription;
+    private IDisposable? _assistantSelectionButtonPointerWheelChangedSubscription;
     private ChatAttachmentItemsControl? _chatAttachmentItemsControl;
 
     private readonly VisualElementOverlayWindow _visualElementAttachmentOverlayWindow = new()
@@ -309,7 +229,7 @@ public sealed partial class ChatInputArea : TemplatedControl
         DisposeHelper.DisposeToDefault(ref _textPresenterSizeChangedSubscription);
         DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerMovedSubscription);
         DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerExitedSubscription);
-        DisposeHelper.DisposeToDefault(ref _assistantSelectionMenuItemPointerWheelChangedSubscription);
+        DisposeHelper.DisposeToDefault(ref _assistantSelectionButtonPointerWheelChangedSubscription);
 
         _chatTextEditor = e.NameScope.Find<ChatTextEditor>("PART_ChatTextEditor").NotNull();
 
@@ -347,16 +267,6 @@ public sealed partial class ChatInputArea : TemplatedControl
             PointerExitedEvent,
             (_, _) => _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null),
             handledEventsToo: true);
-
-        var assistantSelectionMenuItem = e.NameScope.Find<MenuItem>("PART_AssistantSelectionMenuItem");
-        if (assistantSelectionMenuItem != null)
-        {
-            _assistantSelectionMenuItemPointerWheelChangedSubscription = assistantSelectionMenuItem.AddDisposableHandler(
-                PointerWheelChangedEvent,
-                HandleAssistantSelectionPointerWheelChanged,
-                RoutingStrategies.Bubble,
-                handledEventsToo: true);
-        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -402,60 +312,28 @@ public sealed partial class ChatInputArea : TemplatedControl
         base.OnPointerPressed(e);
     }
 
-    [RelayCommand]
-    private void SetSelectedCustomAssistant(MenuItem? sender)
-    {
-        SelectedCustomAssistant = sender?.DataContext as CustomAssistant;
-    }
-
-    private void HandleAssistantSelectionPointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        var assistants = CustomAssistantItemsSource?.ToArray();
-        if (assistants is null || assistants.Length <= 1) return;
-
-        var currentIndex = SelectedCustomAssistant is not null ? assistants.IndexOf(SelectedCustomAssistant) : -1;
-        if (currentIndex == -1)
-        {
-            SelectedCustomAssistant = assistants[0];
-            e.Handled = true;
-            return;
-        }
-
-        currentIndex = e.Delta.Y switch
-        {
-            > 0 => Math.Max(currentIndex - 1, 0),
-            < 0 => Math.Min(currentIndex + 1, assistants.Length - 1),
-            _ => currentIndex
-        };
-
-        SelectedCustomAssistant = assistants[currentIndex];
-        e.Handled = true;
-    }
-
-    [RelayCommand]
-    private Task PerformUpdateAsync() => SoftwareUpdater?.PerformUpdateAsync() ?? Task.CompletedTask;
-
     private void HandleKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyModifiers.IsApplicationShortcutModifierOnly())
         {
-            var index = e.Key switch
-            {
-                >= Key.D1 and <= Key.D9 => e.Key - Key.D1,
-                Key.D0 => 9,
-                _ => -1
-            };
-
-            if (index >= 0 && CustomAssistantItemsSource != null)
-            {
-                var assistant = CustomAssistantItemsSource.ElementAtOrDefault(index);
-                if (assistant != null)
-                {
-                    SelectedCustomAssistant = assistant;
-                    e.Handled = true;
-                    return;
-                }
-            }
+            // TODO
+            // var index = e.Key switch
+            // {
+            //     >= Key.D1 and <= Key.D9 => e.Key - Key.D1,
+            //     Key.D0 => 9,
+            //     _ => -1
+            // };
+            //
+            // if (index >= 0 && CustomAssistantItemsSource != null)
+            // {
+            //     var assistant = CustomAssistantItemsSource.ElementAtOrDefault(index);
+            //     if (assistant != null)
+            //     {
+            //         SelectedCustomAssistant = assistant;
+            //         e.Handled = true;
+            //         return;
+            //     }
+            // }
 
             if (e.Key == Key.V)
             {

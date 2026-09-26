@@ -4,7 +4,13 @@
 /// Marks a settings category class for which the source generator will create SettingsItems property.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public sealed class GeneratedSettingsItemsAttribute : Attribute;
+public sealed class GeneratedSettingsItemsAttribute : Attribute
+{
+    /// <summary>
+    /// Gets or sets whether settings metadata declared by base types is included.
+    /// </summary>
+    public bool IncludeInheritedMembers { get; set; } = true;
+}
 
 /// <summary>
 /// This attribute is used to mark properties that should not be serialized or displayed in the UI.
@@ -42,6 +48,11 @@ public class SettingsItemAttribute : Attribute
     /// Optional documentation URL for this settings item.
     /// </summary>
     public string? DocumentUrl { get; set; }
+
+    /// <summary>
+    /// Sets a binding path that will be used to determine the documentation URL for this item in the UI.
+    /// </summary>
+    public string? DocumentUrlBindingPath { get; set; }
 
     /// <summary>
     /// An optional method name used to modify or replace the generated settings item before it is added to the UI.

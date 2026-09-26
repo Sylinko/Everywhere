@@ -19,6 +19,7 @@
     <File Path="3rd/Directory.Packages.props" />
     <Project Path="3rd/ClassicDiagnostics.Avalonia/src/ClassicDiagnostics.Avalonia.csproj" />
     <Project Path="3rd/EverythingNetCore/EverythingNet/EverythingNet.csproj" />
+    <Project Path="3rd/ExpressionBinding.Avalonia/src/ExpressionBinding.Avalonia/ExpressionBinding.Avalonia.csproj" />
     <Project Path="3rd/Motion.Avalonia/src/Motion.Avalonia/Motion.Avalonia.csproj" />
     <Project Path="3rd/OfficeCLI/src/officecli/officecli.csproj" />
     <Project Path="3rd/shad-ui/src/ShadUI/ShadUI.csproj" />

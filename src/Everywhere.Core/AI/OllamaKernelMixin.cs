@@ -15,10 +15,10 @@ public sealed class OllamaKernelMixin : KernelMixin
     /// <summary>
     /// Initializes a new instance of the <see cref="OllamaKernelMixin"/> class.
     /// </summary>
-    public OllamaKernelMixin(Assistant assistant, ModelConnection connection) : base(assistant, connection)
+    public OllamaKernelMixin(AssistantConfiguration configuration, ModelConnection connection) : base(configuration, connection)
     {
         connection.HttpClient.BaseAddress = new Uri(Endpoint, UriKind.Absolute);
-        _client = new OllamaApiClient(connection.HttpClient, ModelId);
+        _client = new OllamaApiClient(connection.HttpClient, Configuration.ModelId ?? string.Empty);
         ChatCompletionService = _client.AsChatCompletionService();
     }
 

@@ -1,0 +1,11 @@
+# Refactoring decisions and deviations
+
+- Assistant has no connection/model forwarding properties. Its polymorphic Configuration property implements IModelDefinition and is the sole persisted connection/model state; no legacy startup reconstruction remains.
+- Protocol-specific user options remain assistant-owned, as before. Mode drafts retain typed connection/model configurations in memory; KernelMixinFactory uses Mapperly to copy the active configuration and selected protocol options when a generation starts.
+- The new Alibaba presets use the traditional endpoints still listed by models.dev. Current Alibaba documentation recommends workspace-specific endpoints; users needing those can use advanced configuration. No workspace identifier is inferred or transmitted.
+- Selected model persistence stores identity, display name, capabilities, limits and dates. Pricing remains catalog information, rather than multiplying pricing tables in every assistant's settings.
+- The migration checkpoint is `0.8.2-canary.20260908.22`, following the current 0.8.x migration line.
+- During implementation, the `0.8.2-canary.20260908.22` migration briefly reused the model snapshot field list for legacy root-field cleanup. Because `CustomAssistant.Name` and `AssistantConfiguration.Name` occupy different ownership levels, this removed custom assistant names. Before commit, the migration was corrected by separating the frozen legacy field set from the current snapshot field set; no additional migration version is needed.
+- Manual refresh joins a pending startup retry rather than interrupting its wait. Server Retry-After is always respected, and command progress remains visible while waiting.
+- The agreed model capability filter requires output modalities to include text; mixed outputs are allowed. Input modalities, model names and provider-specific heuristics do not exclude models. Model ID and positive context/output limits remain data validity requirements. This does not claim endpoint compatibility or account access.
+- Catalog order is release date descending, then name and model ID. Month-only dates denote the first day of that month (midnight conceptually; storage uses DateOnly). Default selection remains independent of display order.

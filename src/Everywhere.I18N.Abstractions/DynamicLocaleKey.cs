@@ -303,6 +303,29 @@ public sealed partial class JsonDynamicLocaleKey : Dictionary<string, string>, I
 
     public JsonDynamicLocaleKey(IEnumerable<KeyValuePair<string, string>> init) : base(init) { }
 
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj is not JsonDynamicLocaleKey other || Count != other.Count) return false;
+        foreach (var (key, value) in this)
+        {
+            if (!other.TryGetValue(key, out var otherValue) ||
+                !StringComparer.Ordinal.Equals(value, otherValue)) return false;
+        }
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        foreach (var pair in this.OrderBy(pair => pair.Key, StringComparer.Ordinal))
+        {
+            hash.Add(pair.Key, StringComparer.Ordinal);
+            hash.Add(pair.Value, StringComparer.Ordinal);
+        }
+        return hash.ToHashCode();
+    }
+
     /// <summary>
     /// Subscribes an observer to receive updates when the locale changes.
     /// </summary>

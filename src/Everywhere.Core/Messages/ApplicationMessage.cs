@@ -13,6 +13,11 @@ public abstract partial class ApplicationMessage;
 /// <summary>
 /// Message to show the main application window.
 /// </summary>
+/// <remarks>
+/// When sending through WeakReferenceMessenger, use Send&lt;ApplicationMessage&gt; explicitly.
+/// Receivers subscribe to ApplicationMessage; sending as ShowWindowMessage does not notify them.
+/// For the main window, Route is forwarded after the window has been shown or activated.
+/// </remarks>
 /// <param name="name">
 /// The name of the ViewModel to be shown.
 /// </param>

@@ -22,19 +22,21 @@ public sealed class MistralKernelMixin : KernelMixin
     /// <summary>
     /// Initializes a new instance of the <see cref="MistralKernelMixin"/> class.
     /// </summary>
-    /// <param name="assistant">The assistant that owns the Mistral configuration.</param>
+    /// <param name="configuration">The model configuration snapshot.</param>
+    /// <param name="options">The Mistral options snapshot.</param>
     /// <param name="connection">The model connection used to access the Mistral API.</param>
     /// <param name="loggerFactory">The logger factory used by the Mistral connector.</param>
     public MistralKernelMixin(
-        Assistant assistant,
+        AssistantConfiguration configuration,
+        MistralOptions options,
         ModelConnection connection,
         ILoggerFactory loggerFactory
-    ) : base(assistant, connection)
+    ) : base(configuration, connection)
     {
-        _options = assistant.MistralOptions;
+        _options = options;
 
         var service = new MistralAIChatCompletionService(
-            modelId: ModelId,
+            modelId: Configuration.ModelId!,
             apiKey: ApiKey ?? "NO_API_KEY",
             endpoint: new Uri(Endpoint, UriKind.Absolute),
             httpClient: connection.HttpClient,
@@ -55,13 +57,15 @@ public sealed class MistralKernelMixin : KernelMixin
 
         var settings = new MistralAIPromptExecutionSettings
         {
-            Temperature = double.TryParse(_options.Temperature, NumberStyles.Float, CultureInfo.InvariantCulture, out var temperature) ? temperature : 0.7,
+            Temperature = double.TryParse(_options.Temperature, NumberStyles.Float, CultureInfo.InvariantCulture, out var temperature) ?
+                temperature :
+                0.7,
             TopP = double.TryParse(_options.TopP, NumberStyles.Float, CultureInfo.InvariantCulture, out var topP) ? topP : 1,
             ToolCallBehavior = toolCallBehavior,
         };
 
         // https://docs.mistral.ai/capabilities/reasoning/
-        var reasoningEffort = _options.IncludeReasoningContent ? _options.ReasoningEffort : "none";
+        var reasoningEffort = _options.IncludeReasoningContent ? _options.EffectiveReasoningEffort : "none";
         if (!string.IsNullOrWhiteSpace(reasoningEffort))
         {
             settings.ExtensionData = new Dictionary<string, object>
@@ -98,11 +102,8 @@ public sealed class MistralKernelMixin : KernelMixin
             Kernel? kernel = null,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await foreach (var content in innerService.GetStreamingChatMessageContentsAsync(
-                               chatHistory,
-                               executionSettings,
-                               kernel,
-                               cancellationToken))
+            var contents = innerService.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+            await foreach (var content in contents)
             {
                 yield return ConvertUsageMetadata(content);
             }

@@ -1,6 +1,6 @@
 using Everywhere.AI;
-using Everywhere.AI.Configurator;
-using Everywhere.Views;
+using Everywhere.Cloud;
+using NSubstitute;
 
 namespace Everywhere.Core.Tests.AI;
 
@@ -11,17 +11,17 @@ public class OfficialModelDefinitionTests
     public void Reconcile_EmptyCloudList_KeepsCurrentSelectionSnapshot()
     {
         var assistant = CreateAssistant("old-model");
-        assistant.ContextLimit = 4096;
-        assistant.DeprecationDate = new DateOnly(2026, 6, 1);
+        assistant.Configuration.ContextLimit = 4096;
+        assistant.Configuration.DeprecationDate = new DateOnly(2026, 6, 1);
 
-        var result = OfficialModelDefinitionSelector.Reconcile(assistant, assistant.ModelId, null, []);
+        var result = Resolve((OfficialAssistantConfiguration)assistant.Configuration, false);
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSelectedModelUnavailable, Is.False);
             Assert.That(result.SelectedItem?.ModelId, Is.EqualTo("old-model"));
-            Assert.That(result.SelectedItem?.ContextLimit, Is.EqualTo(4096));
-            Assert.That(result.SelectedItem?.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
+            Assert.That(result.SelectedItem?.Model.ContextLimit, Is.EqualTo(4096));
+            Assert.That(result.SelectedItem?.Model.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
         }
     }
 
@@ -29,22 +29,21 @@ public class OfficialModelDefinitionTests
     public void Reconcile_CurrentModelInCloudList_UsesLatestCloudDefinition()
     {
         var assistant = CreateAssistant("model-a");
-        assistant.ContextLimit = 1000;
-        assistant.SupportsToolCall = false;
+        assistant.Configuration.ContextLimit = 1000;
+        assistant.Configuration.SupportsToolCall = false;
         var latestModel = CreateModel("model-a", contextLimit: 2000, supportsToolCall: true);
 
-        var result = OfficialModelDefinitionSelector.Reconcile(
-            assistant,
-            assistant.ModelId,
-            null,
-            [latestModel]);
+        var result = Resolve(
+            (OfficialAssistantConfiguration)assistant.Configuration,
+            false,
+            CreateDefinition(latestModel));
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSelectedModelUnavailable, Is.False);
-            Assert.That(result.SelectedItem, Is.SameAs(latestModel));
-            Assert.That(result.SelectedItem?.ContextLimit, Is.EqualTo(2000));
-            Assert.That(result.SelectedItem?.SupportsToolCall, Is.True);
+            Assert.That(result.SelectedItem?.Model, Is.SameAs(latestModel));
+            Assert.That(result.SelectedItem?.Model.ContextLimit, Is.EqualTo(2000));
+            Assert.That(result.SelectedItem?.Model.SupportsToolCall, Is.True);
         }
     }
 
@@ -54,17 +53,16 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("old-model");
         var replacement = CreateModel("new-model");
 
-        var result = OfficialModelDefinitionSelector.Reconcile(
-            assistant,
-            assistant.ModelId,
-            null,
-            [replacement]);
+        var result = Resolve(
+            (OfficialAssistantConfiguration)assistant.Configuration,
+            true,
+            CreateDefinition(replacement));
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.IsSelectedModelUnavailable, Is.True);
             Assert.That(result.SelectedItem?.ModelId, Is.EqualTo("old-model"));
-            Assert.That(result.Items.Select(x => x.ModelId), Is.EqualTo(["old-model", "new-model"]));
+            Assert.That(result.Items.Select(static item => item.ModelId), Is.EqualTo(["old-model", "new-model"]));
         }
     }
 
@@ -74,16 +72,15 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
         var latestModel = CreateModel("model-a", contextLimit: 3000);
 
-        var result = OfficialModelDefinitionSelector.Reconcile(
-            assistant,
-            "model-a",
-            null,
-            [latestModel]);
+        var result = Resolve(
+            (OfficialAssistantConfiguration)assistant.Configuration,
+            false,
+            CreateDefinition(latestModel));
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(result.TargetModelId, Is.EqualTo("model-a"));
-            Assert.That(result.SelectedItem, Is.SameAs(latestModel));
+            Assert.That(result.SelectedItem?.ModelId, Is.EqualTo("model-a"));
+            Assert.That(result.SelectedItem?.Model, Is.SameAs(latestModel));
         }
     }
 
@@ -99,16 +96,16 @@ public class OfficialModelDefinitionTests
             specializations: ModelSpecializations.TitleGeneration,
             deprecationDate: new DateOnly(2026, 6, 1));
 
-        assistant.ApplyTemplate(template);
+        assistant.Configuration.Apply(template);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(assistant.ModelId, Is.EqualTo("model-a"));
-            Assert.That(assistant.SupportsToolCall, Is.True);
-            Assert.That(assistant.ContextLimit, Is.EqualTo(1234));
-            Assert.That(assistant.OutputLimit, Is.EqualTo(567));
-            Assert.That(assistant.Specializations, Is.EqualTo(ModelSpecializations.TitleGeneration));
-            Assert.That(assistant.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
+            Assert.That(assistant.Configuration.ModelId, Is.EqualTo("model-a"));
+            Assert.That(assistant.Configuration.SupportsToolCall, Is.True);
+            Assert.That(assistant.Configuration.ContextLimit, Is.EqualTo(1234));
+            Assert.That(assistant.Configuration.OutputLimit, Is.EqualTo(567));
+            Assert.That(assistant.Configuration.Specializations, Is.EqualTo(ModelSpecializations.TitleGeneration));
+            Assert.That(assistant.Configuration.DeprecationDate, Is.EqualTo(new DateOnly(2026, 6, 1)));
         }
     }
 
@@ -119,8 +116,9 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
-            [],
+            assistant.Configuration,
+            null,
+            false,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -137,8 +135,9 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("missing-model");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
-            [CreateModel("other-model")],
+            assistant.Configuration,
+            null,
+            true,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -155,8 +154,9 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
-            [CreateModel("model-a", deprecationDate: today.AddDays(8))],
+            assistant.Configuration,
+            CreateModel("model-a", deprecationDate: today.AddDays(8)),
+            true,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -173,8 +173,9 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
-            [CreateModel("model-a", deprecationDate: today.AddDays(7))],
+            assistant.Configuration,
+            CreateModel("model-a", deprecationDate: today.AddDays(7)),
+            true,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -191,8 +192,9 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
 
         var availability = ModelAvailability.Evaluate(
-            assistant,
-            [CreateModel("model-a", deprecationDate: today)],
+            assistant.Configuration,
+            CreateModel("model-a", deprecationDate: today),
+            true,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -208,8 +210,9 @@ public class OfficialModelDefinitionTests
         var today = new DateOnly(2026, 5, 20);
 
         var availability = ModelAvailability.Evaluate(
-            CreateAssistant("preset-model", today.AddDays(7)),
-            [],
+            CreateAssistant("preset-model", today.AddDays(7)).Configuration,
+            null,
+            false,
             today);
 
         using (Assert.EnterMultipleScope())
@@ -256,15 +259,17 @@ public class OfficialModelDefinitionTests
     private static CustomAssistant CreateAssistant(string modelId, DateOnly? deprecationDate = null) =>
         new()
         {
-            ConfiguratorType = AssistantConfiguratorType.Official,
-            ModelId = modelId,
-            SupportsToolCall = false,
-            InputModalities = Modalities.Text,
-            OutputModalities = Modalities.Text,
-            ContextLimit = 1000,
-            OutputLimit = 100,
-            Specializations = ModelSpecializations.Default,
-            DeprecationDate = deprecationDate
+            Configuration = new OfficialAssistantConfiguration
+            {
+                ModelId = modelId,
+                SupportsToolCall = false,
+                InputModalities = Modalities.Text,
+                OutputModalities = Modalities.Text,
+                ContextLimit = 1000,
+                OutputLimit = 100,
+                Specializations = ModelSpecializations.Default,
+                DeprecationDate = deprecationDate
+            }
         };
 
     private static ModelDefinitionTemplate CreateModel(
@@ -286,4 +291,24 @@ public class OfficialModelDefinitionTests
             Specializations = specializations,
             DeprecationDate = deprecationDate
         };
+
+    private static OfficialModelDefinition CreateDefinition(ModelDefinitionTemplate model) =>
+        new(model, ModelProviderSchema.OpenAI);
+
+    private static AssistantCatalogSelection Resolve(
+        OfficialAssistantConfiguration configuration,
+        bool isAuthoritative,
+        params OfficialModelDefinition[] definitions)
+    {
+        var preset = Substitute.For<IPresetModelProvider>();
+        preset.Catalog.Returns(PresetModelCatalog.Empty);
+        var official = Substitute.For<IOfficialModelProvider>();
+        official.Catalog.Returns(new OfficialModelCatalog(
+            ModelCatalogSnapshot<OfficialModelDefinition, string>.Create(
+                definitions.Select(static definition =>
+                    KeyValuePair.Create(definition.Model.ModelId, definition))),
+            isAuthoritative));
+        official.AccessStatus.Returns(OfficialModelCatalogAccessStatus.Available);
+        return new AssistantCatalog(preset, official).Resolve(configuration);
+    }
 }

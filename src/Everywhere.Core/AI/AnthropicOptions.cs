@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
@@ -22,8 +23,12 @@ public enum AnthropicRequestCacheControl
 }
 
 [GeneratedSettingsItems]
-public sealed partial class AnthropicOptions : ObservableObject
+public sealed partial class AnthropicOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.Anthropic;
+
     [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.AnthropicOptions_ThinkingConfig_Header,
@@ -39,10 +44,16 @@ public sealed partial class AnthropicOptions : ObservableObject
     public partial int BudgetTokens { get; set; } = 2048;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffort))]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
+    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.AnthropicOptions_ThinkingEffort_Header,
         LocaleKey.AnthropicOptions_ThinkingEffort_Description)]
-    [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking")]
+    [SettingsItem(
+        Group = "_",
+        Modifier = nameof(BindReasoningEffortPlaceholder),
+        DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking")]
     public partial string? ThinkingEffort { get; set; }
 
     [ObservableProperty]
@@ -52,21 +63,32 @@ public sealed partial class AnthropicOptions : ObservableObject
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/prompt-caching")]
     public partial AnthropicRequestCacheControl CacheControl { get; set; } = AnthropicRequestCacheControl.Ephemeral;
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.temperature")]
-    public string? Temperature { get; set; }
+    public partial string? Temperature { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.top_p")]
-    public string? TopP { get; set; }
+    public partial string? TopP { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_TopK_Header,
         LocaleKey.Assistant_TopK_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.top_k")]
-    public string? TopK { get; set; }
+    public partial string? TopK { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override string? ReasoningEffort
+    {
+        get => ThinkingEffort;
+        set => ThinkingEffort = value;
+    }
 }

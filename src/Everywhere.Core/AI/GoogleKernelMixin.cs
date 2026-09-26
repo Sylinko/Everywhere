@@ -15,12 +15,17 @@ public sealed class GoogleKernelMixin : KernelMixin
 
     private readonly GoogleOptions _options;
 
-    public GoogleKernelMixin(Assistant assistant, ModelConnection connection, ILoggerFactory loggerFactory) : base(assistant, connection)
+    public GoogleKernelMixin(
+        AssistantConfiguration configuration,
+        GoogleOptions options,
+        ModelConnection connection,
+        ILoggerFactory loggerFactory
+    ) : base(configuration, connection)
     {
-        _options = assistant.GoogleOptions;
+        _options = options;
 
         var service = new GoogleAIGeminiChatCompletionService(
-            ModelId,
+            Configuration.ModelId!,
             ApiKey ?? "NO_API_KEY",
             httpClient: connection.HttpClient,
             loggerFactory: loggerFactory,
@@ -59,7 +64,7 @@ public sealed class GoogleKernelMixin : KernelMixin
             };
 
             if (int.TryParse(_options.ThinkingBudget, out var thinkingBudget)) thinkingConfig.ThinkingBudget = thinkingBudget;
-            thinkingConfig.ThinkingLevel = _options.ThinkingLevel;
+            thinkingConfig.ThinkingLevel = _options.EffectiveReasoningEffort;
             return thinkingConfig;
         }
     }
@@ -87,11 +92,8 @@ public sealed class GoogleKernelMixin : KernelMixin
             Kernel? kernel = null,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await foreach (var content in innerService.GetStreamingChatMessageContentsAsync(
-                               chatHistory,
-                               executionSettings,
-                               kernel,
-                               cancellationToken))
+            var contents = innerService.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+            await foreach (var content in contents)
             {
                 // inject GeminiMetadata into "Usage" key for consistent handling in ChatService
                 if (content.Metadata is GeminiMetadata geminiMetadata)

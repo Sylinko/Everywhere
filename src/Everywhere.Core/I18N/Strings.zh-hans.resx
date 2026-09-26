@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>选择用于网络搜索引擎的服务提供商。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>图像</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>使用工具强化助手能力 (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>工具</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>不支持此类型的项目</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>选择视觉元素</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>从剪贴板粘贴</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>附加文件</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -557,12 +557,6 @@
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>指定聊天窗口打开时的固定模式，当窗口没有固定时，失去焦点会自动隐藏。</value>
     </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>视觉上下文详细程度</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>如果添加了视觉元素附件，发送给助手前 Everywhere 会将它和周围的元素采集为结构化文本。此选项控制了采集的丰富程度和信息量。</value>
-    </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>客户端错误。</value>
     </data>
@@ -707,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>助手会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的能力。</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>网络搜索引擎提供方</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>网络搜索引擎</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API 密钥</value>
@@ -723,10 +717,10 @@
         <value>提供可编程搜索引擎 ID，详情请参考文档。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>网页</value>
+        <value>网页浏览</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供浏览网页的能力。</value>
+        <value>提供浏览网络的能力，如搜索、检索网页内容等。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>文件操作</value>
@@ -996,7 +990,7 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>设置</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>屏幕感知预算</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>请求超时时长</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>当已报告的上下文用量达到模型声明上下文长度的此百分比时，自动压缩对话上下文。</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>上下文压缩阈值</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@
         <value>正在编辑消息……</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>当前助手的模型已不受支持，请求可能会失败</value>
+        <value>当前助手的模型未出现在最新目录中，请求可能会失败</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>当前助手的模型已于 {0} 下架，建议尽快切换到较新的模型</value>
@@ -1970,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>管理提示词</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>聊天过程中切换提示词可能会降低缓存命中率，提升大模型使用成本。</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>你确定要删除 {0} 个 API 密钥吗？此操作无法撤销！</value>
     </data>
@@ -2088,7 +2085,7 @@
         <value>按住左键框选，右键或 Esc 退出
 滚轮或数字键切换选择模式</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>捕获屏幕截图</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2115,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>更多设置</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>解析数据时出错。</value>
     </data>
@@ -2130,11 +2124,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>深度思考</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>单次屏幕感知消耗的 Token 估算上限。</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>开启工具调用</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡你可以使用 Ctrl + 数字键 快速切换助手</value>
@@ -2163,11 +2154,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>推理强度 (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>最大上下文轮次</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>限制保留到上下文中的最近用户消息轮次。一问一答视为一个轮次。</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>限制保留到上下文中的最近用户消息轮次，一问一答视为一个轮次。设置为-1表示不限制。</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>仅当前消息</value>
@@ -2773,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>是否允许执行下列自动化操作？</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>网络搜索</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>博查</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere 云搜索</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>查看文档</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>默认</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>设为默认</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>已设默认</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API 密钥不能为空。</value>
@@ -3032,13 +3011,13 @@
         <value>推理强度 (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>推理模型的可选强度级别。支持值取决于模型，默认请留空。</value>
+        <value>推理模型的可选强度级别。支持值取决于模型，默认请留空。 用 | 分隔多个值，例如 low|medium|high。聊天时可按填写顺序切换。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>推理强度 (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>指导 Responses 推理模型投入多少思考。支持值取决于模型，默认请留空。</value>
+        <value>指导 Responses 推理模型投入多少思考。支持值取决于模型，默认请留空。 用 | 分隔多个值，例如 low|medium|high。聊天时可按填写顺序切换。</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>推理摘要 (reasoning.summary)</value>
@@ -3071,7 +3050,7 @@
         <value>思考强度</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic adaptive 思考深度的软引导，例如 low、medium、high、xhigh 或 max。默认请留空。</value>
+        <value>Anthropic adaptive 思考深度的软引导，例如 low、medium、high、xhigh 或 max。默认请留空。 用 | 分隔多个值，例如 low|medium|high。聊天时可按填写顺序切换。</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>提示缓存</value>
@@ -3101,7 +3080,7 @@
         <value>思考级别</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 模型的思考深度，例如 minimal、low、medium 或 high。</value>
+        <value>Gemini 3 模型的思考深度，例如 minimal、low、medium 或 high。 用 | 分隔多个值，例如 low|medium|high。聊天时可按填写顺序切换。</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>更新通道</value>
@@ -3434,7 +3413,7 @@
         <value>思考强度</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>可选的模型特定推理强度。Mistral 目前为支持的模型明确说明了 high 和 none；其他非空值会原样透传。留空时使用模型默认行为。关闭“包含推理”会发送 none。</value>
+        <value>可选的模型特定推理强度。Mistral 目前为支持的模型明确说明了 high 和 none；其他非空值会原样透传。留空时使用模型默认行为。关闭“包含推理”会发送 none。 用 | 分隔多个值，例如 low|medium|high。聊天时可按填写顺序切换。</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>写入设置路径“{0}”失败。</value>
@@ -3982,5 +3961,78 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>灵动</value>
+    </data>
+    <data name="PresetModelSelector_Unlisted" xml:space="preserve"><value>当前目录未收录此模型，已保留其保存的配置。</value></data>
+    <data name="PresetModelProvider_OpenAI" xml:space="preserve">
+        <value>OpenAI</value>
+    </data>
+    <data name="PresetModelProvider_Anthropic" xml:space="preserve">
+        <value>Anthropic</value>
+    </data>
+    <data name="PresetModelProvider_Google" xml:space="preserve">
+        <value>Google</value>
+    </data>
+    <data name="PresetModelProvider_Mistral" xml:space="preserve">
+        <value>Mistral AI</value>
+    </data>
+    <data name="PresetModelProvider_DeepSeek" xml:space="preserve">
+        <value>DeepSeek</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotChina" xml:space="preserve">
+        <value>Moonshot AI（中国站）</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxChina" xml:space="preserve">
+        <value>MiniMax（中国站）</value>
+    </data>
+    <data name="PresetModelProvider_OpenRouter" xml:space="preserve">
+        <value>OpenRouter</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowChina" xml:space="preserve">
+        <value>硅基流动（中国站）</value>
+    </data>
+    <data name="PresetModelProvider_Ollama" xml:space="preserve">
+        <value>Ollama</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotInternational" xml:space="preserve">
+        <value>Moonshot AI</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxInternational" xml:space="preserve">
+        <value>MiniMax</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowInternational" xml:space="preserve">
+        <value>硅基流动</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuChina" xml:space="preserve">
+        <value>智谱（中国站）</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuInternational" xml:space="preserve">
+        <value>Z.AI</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>管理助手</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>不支持</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>支持 PDF 输入</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>支持音频输入</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>支持视频输入</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>选择助手</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>思考深度</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>更多设置</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>查看文档</value>
     </data>
 </root>

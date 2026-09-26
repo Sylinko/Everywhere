@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Выберите поставщика услуг для поисковых систем.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>Изображение</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>Используйте инструменты для расширения возможностей ассистента (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>Инструменты</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -247,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>Этот тип элемента не поддерживается</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>Выбрать визуальный элемент</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>Вставить из буфера обмена</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>Прикрепить файл</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -557,12 +557,6 @@
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>Определяет режим закрепления окна чата при его открытии. Когда окно не закреплено, оно будет автоматически скрываться при потере фокуса.</value>
     </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>Уровень Подробности Визуального Контекста</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>Если добавлены визуальные элементы, Everywhere соберет их с окружающими элементами в структурированный текст перед отправкой помощнику. Эта опция контролирует степень богатства и объема собранной информации.</value>
-    </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>Ошибка клиента.</value>
     </data>
@@ -707,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Ассистент будет использовать эти инструменты в подходящий момент (например, для поиска в интернете, доступа к локальным файлам и т. д.), чтобы получить более широкие возможности.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>Поставщик поисковой системы</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>Поисковая система</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API ключ</value>
@@ -723,10 +717,10 @@
         <value>Предоставляет ID программируемой поисковой системы, подробности смотрите в документации.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Веб</value>
+        <value>Веб-браузинг</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Предоставляет возможность просмотра веб-страниц.</value>
+        <value>Предоставляет возможность просматривать веб-страницы, например поиск и извлечение веб-контента.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Операции с файлами</value>
@@ -996,7 +990,7 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>Настройки</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
         <value>Бюджет распознавания экрана</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
@@ -1622,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Тайм-аут запроса</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>Автоматически сжимает диалоговый контекст, когда сообщенное использование контекста достигает этого процента от заявленной длины контекста модели.</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>Порог Сжатия Контекста</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1662,7 +1656,7 @@
         <value>Редактирование сообщения...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>Модель текущего помощника больше не поддерживается, запрос может завершиться неудачей</value>
+        <value>Модель текущего помощника отсутствует в последнем каталоге. Запросы могут завершиться ошибкой.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>Модель текущего помощника была снята с поддержки {0}, рекомендуется как можно скорее перейти на более новую модель</value>
@@ -1970,6 +1964,9 @@
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>Управление подсказками</value>
     </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>Переключение промпта во время диалога может снизить долю попаданий в кэш промптов и повысить стоимость LLM.</value>
+    </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Вы уверены, что хотите удалить {0} API ключей? Это действие нельзя отменить!</value>
     </data>
@@ -2088,7 +2085,7 @@
         <value>Удерживайте левую кнопку мыши для выделения, правой кнопкой или Esc для выхода
 Прокрутка или цифровые клавиши для переключения режима выбора</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>Сделать скриншот</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2118,9 +2115,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>Больше Настроек</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>Ошибка при разборе данных.</value>
     </data>
@@ -2130,11 +2124,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>Глубокое мышление</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
         <value>Оценочный верхний предел потребления токенов за одно восприятие экрана.</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>Включить Вызов Инструментов</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>💡вы можете быстро переключать помощника, используя Ctrl + цифру</value>
@@ -2163,11 +2154,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>Интенсивность рассуждений (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>Макс. количество раундов контекста</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>Ограничивает количество последних сообщений пользователя, сохраняемых в контексте. Один вопрос и ответ считаются одним раундом.</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>Ограничивает количество последних сообщений пользователя, сохраняемых в контексте. Один вопрос и ответ считаются одним раундом. Значение -1 означает отсутствие ограничений.</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>Только текущее сообщение</value>
@@ -2773,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Разрешаете ли вы выполнение следующих автоматизированных действий?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>Веб-поиск</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>Смотреть документацию</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>По умолчанию</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>Установить по умолчанию</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>Уже по умолчанию</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API-ключ не может быть пустым.</value>
@@ -3032,13 +3011,13 @@
         <value>Уровень усилия размышлений (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Необязательный уровень силы размышлений модели. Поддерживаемые значения зависят от модели, по умолчанию оставьте пустым.</value>
+        <value>Необязательный уровень силы размышлений модели. Поддерживаемые значения зависят от модели, по умолчанию оставьте пустым. Разделите значения символом |, например low|medium|high. В чате их можно переключать в указанном порядке.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>Усилие размышлений (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Укажите, сколько усилий вложить в размышления модели Responses. Поддерживаемые значения зависят от модели, по умолчанию оставьте пустым.</value>
+        <value>Укажите, сколько усилий вложить в размышления модели Responses. Поддерживаемые значения зависят от модели, по умолчанию оставьте пустым. Разделите значения символом |, например low|medium|high. В чате их можно переключать в указанном порядке.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>Сводка размышлений (reasoning.summary)</value>
@@ -3071,7 +3050,7 @@
         <value>Интенсивность мышления</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Мягкое управление глубиной адаптивного мышления Anthropic, например low, medium, high, xhigh или max. Оставьте пустым для стандартного.</value>
+        <value>Мягкое управление глубиной адаптивного мышления Anthropic, например low, medium, high, xhigh или max. Оставьте пустым для стандартного. Разделите значения символом |, например low|medium|high. В чате их можно переключать в указанном порядке.</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>Кэш подсказок</value>
@@ -3101,7 +3080,7 @@
         <value>Уровень мышления</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Глубина мышления модели Gemini 3, например minimal, low, medium или high.</value>
+        <value>Глубина мышления модели Gemini 3, например minimal, low, medium или high. Разделите значения символом |, например low|medium|high. В чате их можно переключать в указанном порядке.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>Канал обновлений</value>
@@ -3434,7 +3413,7 @@
         <value>Интенсивность рассуждений</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Опциональная интенсивность рассуждений для конкретной модели. Для Mistral явно указаны high и none; другие ненулевые значения будут переданы без изменений. При отсутствии значения используется поведение по умолчанию модели. Отключение «Включить рассуждения» отправит none.</value>
+        <value>Опциональная интенсивность рассуждений для конкретной модели. Для Mistral явно указаны high и none; другие ненулевые значения будут переданы без изменений. При отсутствии значения используется поведение по умолчанию модели. Отключение «Включить рассуждения» отправит none. Разделите значения символом |, например low|medium|high. В чате их можно переключать в указанном порядке.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>Не удалось записать путь настроек «{0}».</value>
@@ -3982,5 +3961,32 @@
     </data>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Плавная</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>Управление ассистентами</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>Не поддерживается</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>Поддержка ввода PDF</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>Поддержка аудиовхода</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>Поддержка видеовхода</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>Выбрать помощника</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>Глубина рассуждений</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>Дополнительные параметры</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>Просмотреть документ</value>
     </data>
 </root>

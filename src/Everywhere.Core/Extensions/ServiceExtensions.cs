@@ -12,7 +12,6 @@ using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Database;
-using Everywhere.Initialization;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -58,8 +57,7 @@ public static class ServiceExtensions
                 .AddSingleton<PersistentKeyValueStorage>()
                 .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
                 .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
-                .AddSingleton<PersistentState>()
-                .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
+                .AddSingleton<PersistentState>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services
@@ -78,8 +76,6 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
                 .AddSingleton<SkillPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, SkillPage>()
-                .AddSingleton<WebSearchEnginePageViewModel>()
-                .AddSingleton<IMainViewNavigationItem, WebSearchEnginePage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
                 .AddTransient<WelcomeViewModel>()
                 .AddTransient<WelcomeView>()
@@ -126,6 +122,13 @@ public static class ServiceExtensions
 
         public IServiceCollection AddChatEssentials() =>
             services
+                .AddSingleton<ModelsDevPresetModelProvider>()
+                .AddSingleton<IPresetModelProvider>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
+                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ModelsDevPresetModelProvider>())
+                .AddSingleton<AssistantCatalog>()
+                .AddSingleton<AssistantCatalogSynchronizer>()
+                .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<AssistantCatalogSynchronizer>())
+                .AddSingleton<AssistantSpecializationResolver>()
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SkillSource>()
@@ -139,7 +142,6 @@ public static class ServiceExtensions
                 .AddSingleton<FileHandler, TextFileHandler>()
                 .AddSingleton<FileHandler, BinaryFileHandler>()
                 .AddSingleton<FileHandlerContextFactory>()
-                .AddSingleton<IChatWindowNotificationService, ChatWindowNotificationService>()
                 .AddSingleton<IChatService, ChatService>()
                 .AddSingleton<IGreetings, Greetings>()
                 .AddSingleton<IWebBrowserHost, WebBrowserHost>()

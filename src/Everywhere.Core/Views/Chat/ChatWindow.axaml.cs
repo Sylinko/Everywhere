@@ -1,4 +1,5 @@
 ﻿using Avalonia.Automation.Peers;
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -6,8 +7,11 @@ using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
+using Everywhere.Collections;
+using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Interop;
@@ -25,6 +29,9 @@ public partial class ChatWindow :
     IRecipient<ApplicationMessage>,
     IVisualElementAnimationTarget
 {
+    public IReadOnlyBindableList<DynamicNotification> ModelAvailabilityNotifications =>
+        _modelAvailabilityPresenter.Notifications;
+
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
     /// </summary>
@@ -49,6 +56,7 @@ public partial class ChatWindow :
     private readonly INativeHelper _nativeHelper;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
+    private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
     private IDisposable? _pendingHiddenCompaction;
 
     /// <summary>
@@ -66,12 +74,16 @@ public partial class ChatWindow :
         IWindowHelper windowHelper,
         INativeHelper nativeHelper,
         Settings settings,
-        PersistentState persistentState) : base(serviceProvider, disposeOnUnloaded: false)
+        PersistentState persistentState,
+        AssistantCatalog assistantCatalog,
+        IKeyValueStorage keyValueStorage
+    ) : base(serviceProvider, disposeOnUnloaded: false)
     {
         _windowHelper = windowHelper;
         _nativeHelper = nativeHelper;
         _settings = settings;
         _persistentState = persistentState;
+        _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
         InitializeComponent();
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
@@ -86,6 +98,9 @@ public partial class ChatWindow :
         WeakReferenceMessenger.Default.Register<CloakChatWindowMessage>(this);
         WeakReferenceMessenger.Default.Register<FlashChatWindowMessage>(this);
         WeakReferenceMessenger.Default.Register<ApplicationMessage>(this);
+
+        settings.Model.PropertyChanged += HandleModelSettingsChanged;
+        _modelAvailabilityPresenter.SetAssistant(settings.Model.SelectedCustomAssistant);
     }
 
     private void SetupDragDropHandlers()
@@ -180,6 +195,7 @@ public partial class ChatWindow :
         {
             var isVisible = change.NewValue is true;
             ViewModel.IsOpened = isVisible;
+            _modelAvailabilityPresenter.SetActive(isVisible);
 
             DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
             if (!isVisible)
@@ -200,6 +216,12 @@ public partial class ChatWindow :
             Topmost = value is not null; // false: topmost, null: normal, true: topmost
             _windowHelper.SetCloaked(this, false); // Uncloak when pinned state changes to ensure visibility
         }
+    }
+
+    private void HandleModelSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ModelSettings.SelectedCustomAssistant))
+            Dispatcher.UIThread.PostOnDemand(() => _modelAvailabilityPresenter.SetAssistant(_settings.Model.SelectedCustomAssistant));
     }
 
     protected override void OnResized(WindowResizedEventArgs e)
@@ -401,6 +423,8 @@ public partial class ChatWindow :
             Log.ForContext<ChatWindow>().Error("Chat window was closed unexpectedly. This should not happen.");
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
+        _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        _modelAvailabilityPresenter.Dispose();
 
         base.OnClosed(e);
     }

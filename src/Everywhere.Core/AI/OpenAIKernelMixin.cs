@@ -23,9 +23,14 @@ public class OpenAIKernelMixin : KernelMixin
 
     private readonly OpenAIOptions _options;
 
-    public OpenAIKernelMixin(Assistant assistant, ModelConnection connection, ILoggerFactory loggerFactory) : base(assistant, connection)
+    public OpenAIKernelMixin(
+        AssistantConfiguration configuration,
+        OpenAIOptions options,
+        ModelConnection connection,
+        ILoggerFactory loggerFactory
+    ) : base(configuration, connection)
     {
-        _options = assistant.OpenAIOptions;
+        _options = options;
 
         // Some models don't need API key (e.g. LM Studio, Official mode)
         AuthenticationPolicy authenticationPolicy = ApiKey.IsNullOrWhiteSpace() ?
@@ -34,7 +39,7 @@ public class OpenAIKernelMixin : KernelMixin
 
         ChatCompletionService = new OptimizedOpenAIApiClient(
             new ChatClient(
-                ModelId,
+                Configuration.ModelId ?? string.Empty,
                 authenticationPolicy,
                 new OpenAIClientOptions
                 {
@@ -149,7 +154,7 @@ public class OpenAIKernelMixin : KernelMixin
                 TopP = float.TryParse(options.TopP, out var topP) ? topP : null,
                 PresencePenalty = float.TryParse(options.PresencePenalty, out var presencePenalty) ? presencePenalty : null,
                 FrequencyPenalty = float.TryParse(options.FrequencyPenalty, out var frequencyPenalty) ? frequencyPenalty : null,
-                ReasoningEffortLevel = options.ReasoningEffort switch
+                ReasoningEffortLevel = options.EffectiveReasoningEffort switch
                 {
                     { Length: > 0 } reasoningEffort => new ChatReasoningEffortLevel?(reasoningEffort),
                     _ => null

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
@@ -7,8 +8,12 @@ namespace Everywhere.AI;
 /// Provides configurable options for Mistral AI chat completion models.
 /// </summary>
 [GeneratedSettingsItems]
-public sealed partial class MistralOptions : ObservableObject
+public sealed partial class MistralOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.Mistral;
+
     /// <summary>
     /// Gets or sets a value indicating whether reasoning content is included in responses.
     /// </summary>
@@ -23,14 +28,17 @@ public sealed partial class MistralOptions : ObservableObject
     /// Gets or sets the amount of reasoning effort requested from the model.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
+    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.MistralOptions_ReasoningEffort_Header,
         LocaleKey.MistralOptions_ReasoningEffort_Description)]
     [SettingsItem(
         Group = "_",
+        Modifier = nameof(BindReasoningEffortPlaceholder),
         IsEnabledBindingPath = nameof(IncludeReasoningContent),
         DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
-    public partial string? ReasoningEffort { get; set; }
+    public override partial string? ReasoningEffort { get; set; }
 
     /// <summary>
     /// Gets or sets the sampling temperature passed to the model.

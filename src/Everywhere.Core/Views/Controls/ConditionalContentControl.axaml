@@ -1,0 +1,39 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:ConditionalContentControl}"
+    TargetType="v:ConditionalContentControl">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <v:ContentSizeTransitionPanel
+          AnimateContentSize="{TemplateBinding AnimateContentSize}"
+          ClipToBounds="{TemplateBinding AnimateContentSize}"
+          ContentSizeTransitionDuration="{TemplateBinding ContentSizeTransitionDuration}"
+          ContentSizeTransitionEasing="{TemplateBinding ContentSizeTransitionEasing}"
+          TargetContent="{TemplateBinding Content}">
+          <ContentPresenter
+            x:Name="PART_ContentPresenter"
+            Padding="{TemplateBinding Padding}"
+            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            CornerRadius="{TemplateBinding CornerRadius}"/>
+          <ContentPresenter
+            x:Name="PART_ContentPresenter2"
+            Padding="{TemplateBinding Padding}"
+            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"
+            CornerRadius="{TemplateBinding CornerRadius}"/>
+        </v:ContentSizeTransitionPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

@@ -4,6 +4,9 @@ namespace Everywhere.Messages;
 /// Requests navigation in the main window.
 /// </summary>
 /// <remarks>
+/// This message only navigates an existing main view; it does not create, show, or activate its window.
+/// Callers outside the main window should send a <see cref="ShowWindowMessage"/> with a route instead.
+///
 /// String routes intentionally behave like browser paths. The first path segments
 /// match main navigation items by route key; remaining segments are passed to the
 /// target view model through <c>ReactiveViewModelBase.OnNavigatedTo</c>.
@@ -26,7 +29,7 @@ public sealed record MainViewNavigateMessage(object Route)
     public const string ChatPluginPageRoute = "ChatPluginPage";
 
     /// <summary>
-    /// Route key reserved for the future Prompt Manager page.
+    /// Route key for the prompt page. Kept as the class-name key for compatibility.
     /// </summary>
     public const string PromptPageRoute = "PromptPage";
 
@@ -34,6 +37,11 @@ public sealed record MainViewNavigateMessage(object Route)
     /// Route key for the skill page. Kept as the class-name key for compatibility.
     /// </summary>
     public const string SkillPageRoute = "SkillPage";
+
+    /// <summary>
+    /// Route key for the settings page. Kept as the class-name key for compatibility.
+    /// </summary>
+    public const string SettingsPageRoute = "SettingsPage";
 
     /// <summary>
     /// Builds a route that opens the custom assistant page and selects the assistant.
