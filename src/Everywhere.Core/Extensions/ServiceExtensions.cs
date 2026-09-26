@@ -76,8 +76,6 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
                 .AddSingleton<SkillPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, SkillPage>()
-                .AddSingleton<WebSearchEnginePageViewModel>()
-                .AddSingleton<IMainViewNavigationItem, WebSearchEnginePage>()
                 .AddTransient<IMainViewNavigationItem, SettingsPage>()
                 .AddTransient<WelcomeViewModel>()
                 .AddTransient<WelcomeView>()

@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Wählen Sie den Dienstleister für Web-Suchmaschinen aus.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Der Assistent verwendet diese Werkzeuge zum passenden Zeitpunkt (z. B. Websuche, Zugriff auf lokale Dateien usw.), um leistungsfähigere Funktionen zu erhalten.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>Web-Suchmaschinenanbieter</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>Web-Suchmaschine</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API-Schlüssel</value>
@@ -717,10 +717,10 @@
         <value>Bietet eine programmierbare Suchmaschinen-ID. Weitere Informationen finden Sie in der Dokumentation.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Webseite</value>
+        <value>Webbrowsing</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Bietet die Möglichkeit, im Web zu surfen.</value>
+        <value>Bietet die Möglichkeit, im Web zu surfen, z. B. zu suchen und Webinhalte abzurufen.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dateioperationen</value>
@@ -1965,7 +1965,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Eingabeaufforderungen verwalten</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>Das Ändern des Prompts nach Beginn einer Unterhaltung kann die Trefferquote des Prompt-Caches verringern.</value>
+        <value>Das Wechseln des Prompts während einer Unterhaltung kann die Trefferquote des Prompt-Caches verringern und die Kosten für LLM erhöhen.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
@@ -2764,26 +2764,14 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Darf ich die folgenden Automatisierungsaktionen ausführen?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>Websuche</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>Dokumentation anzeigen</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>Standard</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>Als Standard festlegen</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>Bereits als Standard festgelegt</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API-Schlüssel darf nicht leer sein.</value>
@@ -3994,5 +3982,11 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>Denktiefe</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>Weitere Einstellungen</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>Dokument anzeigen</value>
     </data>
 </root>

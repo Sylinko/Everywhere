@@ -50,6 +50,11 @@ public class SettingsItemAttribute : Attribute
     public string? DocumentUrl { get; set; }
 
     /// <summary>
+    /// Sets a binding path that will be used to determine the documentation URL for this item in the UI.
+    /// </summary>
+    public string? DocumentUrlBindingPath { get; set; }
+
+    /// <summary>
     /// An optional method name used to modify or replace the generated settings item before it is added to the UI.
     /// </summary>
     public string? Modifier { get; set; }

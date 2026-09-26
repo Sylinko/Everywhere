@@ -26,12 +26,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public bool IsWebSearchEnabled
-    {
-        get => Get(false);
-        set => Set(value);
-    }
-
     public int MaxChatAttachmentCount
     {
         get => Get(50);

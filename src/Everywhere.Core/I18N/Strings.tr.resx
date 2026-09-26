@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Web arama motorları için servis sağlayıcısını seçin.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Asistan, bu araçları uygun zamanlarda (örneğin web'de arama, yerel dosyalara erişim vb.) kullanarak daha güçlü yetenekler elde eder.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>Web Arama Motoru Sağlayıcısı</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>Web Arama Motoru</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API Anahtarı</value>
@@ -717,10 +717,10 @@
         <value>Programlanabilir arama motoru ID'si sağlayın, ayrıntılar için belgeleri kontrol edin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Web</value>
+        <value>Web'de gezinme</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Web'de gezinme yeteneği sağlar.</value>
+        <value>Web'de gezinme yeteneği sağlar; arama, web içeriği alma vb.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dosya İşlemleri</value>
@@ -1965,7 +1965,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>İpucu Metinlerini Yönet</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>Sohbet başladıktan sonra istemi değiştirmek, istem önbelleği isabet oranını düşürebilir.</value>
+        <value>Sohbet sırasında istemi değiştirmek, istem önbelleği isabet oranını düşürebilir ve LLM maliyetini artırabilir.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} adet API anahtarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
@@ -2764,26 +2764,14 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Aşağıdaki otomatik işlemleri gerçekleştirmeye izin veriyor musunuz?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>Web Arama</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>Belgeleri Görüntüle</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>Varsayılan</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>Varsayılan Olarak Ayarla</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>Zaten varsayılan</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API anahtarı boş olamaz.</value>
@@ -3994,5 +3982,11 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>Akıl yürütme düzeyi</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>Diğer ayarlar</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>Belgeyi görüntüle</value>
     </data>
 </root>

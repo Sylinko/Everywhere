@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Выберите поставщика услуг для поисковых систем.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>Ассистент будет использовать эти инструменты в подходящий момент (например, для поиска в интернете, доступа к локальным файлам и т. д.), чтобы получить более широкие возможности.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>Поставщик поисковой системы</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>Поисковая система</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API ключ</value>
@@ -717,10 +717,10 @@
         <value>Предоставляет ID программируемой поисковой системы, подробности смотрите в документации.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Веб</value>
+        <value>Веб-браузинг</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Предоставляет возможность просмотра веб-страниц.</value>
+        <value>Предоставляет возможность просматривать веб-страницы, например поиск и извлечение веб-контента.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Операции с файлами</value>
@@ -1965,7 +1965,7 @@
         <value>Управление подсказками</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>Изменение промпта после начала диалога может снизить долю попаданий в кэш промптов.</value>
+        <value>Переключение промпта во время диалога может снизить долю попаданий в кэш промптов и повысить стоимость LLM.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Вы уверены, что хотите удалить {0} API ключей? Это действие нельзя отменить!</value>
@@ -2764,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>Разрешаете ли вы выполнение следующих автоматизированных действий?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>Веб-поиск</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>Смотреть документацию</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>По умолчанию</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>Установить по умолчанию</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>Уже по умолчанию</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API-ключ не может быть пустым.</value>
@@ -3994,5 +3982,11 @@
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>Глубина рассуждений</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>Дополнительные параметры</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>Просмотреть документ</value>
     </data>
 </root>

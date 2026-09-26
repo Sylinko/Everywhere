@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>Seleccione el proveedor de servicios para los motores de búsqueda web.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>El asistente utilizará estas herramientas en el momento adecuado (como buscar en la web, acceder a archivos locales, etc.) para obtener capacidades más potentes.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>Proveedor del Motor de Búsqueda Web</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>Motor de búsqueda web</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>Clave API</value>
@@ -717,10 +717,10 @@
         <value>Proporciona un ID de motor de búsqueda programable, consulte la documentación para más detalles.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Web</value>
+        <value>Navegación web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Proporciona la capacidad de navegar por la web.</value>
+        <value>Proporciona la capacidad de navegar por la web, como buscar y recuperar contenido web.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Operaciones de archivos</value>
@@ -1965,7 +1965,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Gestionar Palabras Clave</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>Cambiar el prompt después de iniciar una conversación puede reducir la tasa de aciertos de la caché de prompts.</value>
+        <value>Cambiar el prompt durante una conversación puede reducir la tasa de aciertos de la caché de prompts y aumentar el coste de los LLM.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>¿Estás seguro de que deseas eliminar {0} claves API? ¡Esta acción no se puede deshacer!</value>
@@ -2764,26 +2764,14 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>¿Permitir ejecutar las siguientes acciones automatizadas?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>Búsqueda en la Web</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>Ver Documentación</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>Predeterminado</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>Establecer como Predeterminado</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>Ya es Predeterminado</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>La clave API no puede estar vacía.</value>
@@ -3994,5 +3982,11 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>Nivel de razonamiento</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>Más ajustes</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>Ver documento</value>
     </data>
 </root>

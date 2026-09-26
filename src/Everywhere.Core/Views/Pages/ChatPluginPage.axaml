@@ -35,15 +35,23 @@
               Grid.Column="1" VerticalAlignment="Center"
               Spacing="4">
               <TextBlock
-                Classes="p" IsHitTestVisible="False"
+                Classes="p"
                 Text="{Binding Plugin.HeaderKey^}"
-                TextTrimming="CharacterEllipsis"/>
+                TextTrimming="CharacterEllipsis">
+                <Interaction.Behaviors>
+                  <shadui:TextTrimmedToolTipBehavior/>
+                </Interaction.Behaviors>
+              </TextBlock>
               <TextBlock
-                Classes="Muted" IsHitTestVisible="False"
+                Classes="Muted"
                 IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 MaxLines="2"
                 Text="{Binding Plugin.DescriptionKey^}"
-                TextTrimming="CharacterEllipsis"/>
+                TextTrimming="CharacterEllipsis">
+                <Interaction.Behaviors>
+                  <shadui:TextTrimmedToolTipBehavior/>
+                </Interaction.Behaviors>
+              </TextBlock>
             </StackPanel>
 
             <LucideIcon
