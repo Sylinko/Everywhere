@@ -31,7 +31,14 @@ public abstract class SettingsItem : AvaloniaObject, INotifyDataErrorInfo
 
     public bool IsExperimental { get; set; }
 
-    public string? DocumentUrl { get; set; }
+    public static readonly StyledProperty<string?> DocumentUrlProperty =
+        AvaloniaProperty.Register<SettingsItem, string?>(nameof(DocumentUrl));
+
+    public string? DocumentUrl
+    {
+        get => GetValue(DocumentUrlProperty);
+        set => SetValue(DocumentUrlProperty, value);
+    }
 
     public static readonly StyledProperty<object?> ValueProperty =
         AvaloniaProperty.Register<SettingsItem, object?>(nameof(Value), enableDataValidation: true);

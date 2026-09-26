@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>选择用于网络搜索引擎的服务提供商。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>助手会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的能力。</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>网络搜索引擎提供方</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>网络搜索引擎</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API 密钥</value>
@@ -717,10 +717,10 @@
         <value>提供可编程搜索引擎 ID，详情请参考文档。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>网页</value>
+        <value>网页浏览</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供浏览网页的能力。</value>
+        <value>提供浏览网络的能力，如搜索、检索网页内容等。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>文件操作</value>
@@ -1965,7 +1965,7 @@
         <value>管理提示词</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>对话开始后切换提示词可能会降低提示词缓存命中率。</value>
+        <value>聊天过程中切换提示词可能会降低缓存命中率，提升大模型使用成本。</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>你确定要删除 {0} 个 API 密钥吗？此操作无法撤销！</value>
@@ -2764,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>是否允许执行下列自动化操作？</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>网络搜索</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>博查</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere 云搜索</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>查看文档</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>默认</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>设为默认</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>已设默认</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API 密钥不能为空。</value>
@@ -4040,5 +4028,11 @@
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>思考深度</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>更多设置</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>查看文档</value>
     </data>
 </root>

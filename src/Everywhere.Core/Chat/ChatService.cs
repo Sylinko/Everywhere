@@ -38,7 +38,6 @@ public sealed partial class ChatService : IChatService
     private readonly AssistantSpecializationResolver _assistantSpecializationResolver;
     private readonly IBlobStorage _blobStorage;
     private readonly Settings _settings;
-    private readonly PersistentState _persistentState;
     private readonly IPromptService _promptService;
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
@@ -65,7 +64,6 @@ public sealed partial class ChatService : IChatService
         AssistantSpecializationResolver assistantSpecializationResolver,
         IBlobStorage blobStorage,
         Settings settings,
-        PersistentState persistentState,
         IPromptService promptService,
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
@@ -78,7 +76,6 @@ public sealed partial class ChatService : IChatService
         _assistantSpecializationResolver = assistantSpecializationResolver;
         _blobStorage = blobStorage;
         _settings = settings;
-        _persistentState = persistentState;
         _promptService = promptService;
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
@@ -450,17 +447,9 @@ public sealed partial class ChatService : IChatService
         {
             var userMessage = chatContext.Read(list => list.AsValueEnumerable().Select(n => n.Message).OfType<UserChatMessage>().LastOrDefault());
             var strategyToolRulesets = userMessage?.As<UserStrategyChatMessage>()?.Strategy.ToolPatternRulesets;
-            var webSearchRulesets = new ToolPatternRulesets(1)
-            {
-                {
-                    "builtin.web",
-                    new ToolFunctionPatternRulesets { { "web_search", _persistentState.IsWebSearchEnabled } }
-                }
-            };
             var toolRulesets = new ToolRulesetsPipeline(
             [
                 customAssistant?.ToolEnablementRulesets,
-                webSearchRulesets,
                 strategyToolRulesets,
                 chatContext.ToolPatternRulesets
             ]);
@@ -498,7 +487,7 @@ public sealed partial class ChatService : IChatService
             var toolCallStatus = !kernelMixin.Configuration.SupportsToolCall ? ToolCallStatus.NotSupported :
                 customAssistant?.IsToolCallEnabled == false ? ToolCallStatus.Disabled : ToolCallStatus.Enabled;
             var promptRenderer = new ScopedPromptRenderer(
-                SystemPromptPlaceholderSource.Instance,
+                SystemPromptPlaceholderSource.Shared,
                 new PromptPlaceholderContext(
                     SkillsPromptResolver: () => _skillPromptProvider.GetPrompt(toolCallStatus),
                     WorkingDirectoryResolver: chatContext.EnsureWorkingDirectory));
@@ -1872,12 +1861,14 @@ public sealed partial class ChatService : IChatService
         PromptPlaceholderContext promptPlaceholderContext
     ) : IPromptRenderer
     {
-        public static string RenderPrompt(string prompt, Func<string, string?> resolver) =>
-            PromptTemplateRenderer.Render(prompt, resolver);
+        public static string RenderPrompt(string prompt, Func<string, string?> resolver)
+        {
+            return PromptTemplateRenderer.Render(prompt, resolver);
+        }
 
         public string RenderSystemPrompt(string prompt)
         {
-            return RenderPrompt(prompt, ResolveSharedPlaceholder);
+            return PromptTemplateRenderer.Render(prompt, promptPlaceholderSource, promptPlaceholderContext);
         }
 
         public string RenderStrategyUserPrompt(string strategyBody, string? userInput, PreprocessorResult? preprocessorResult)
@@ -1907,8 +1898,5 @@ public sealed partial class ChatService : IChatService
                 .Append(userInput)
                 .ToString();
         }
-
-        private string? ResolveSharedPlaceholder(string key) =>
-            promptPlaceholderSource.TryResolve(key, promptPlaceholderContext, out var value) ? value : null;
     }
 }

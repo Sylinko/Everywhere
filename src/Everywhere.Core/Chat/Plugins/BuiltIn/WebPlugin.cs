@@ -20,7 +20,7 @@ public sealed class WebPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Description);
     public override LucideIconKind? Icon => LucideIconKind.Globe;
     public override bool IsDefaultEnabled => true;
-    public override IReadOnlyList<SettingsItem> SettingsItems => _webBrowserSettings.SettingsItems;
+    public override IReadOnlyList<SettingsItem> SettingsItems => [.._webSearchEngineSettings.SettingsItems, .._webBrowserSettings.SettingsItems];
 
     private readonly WebSearchEngineSettings _webSearchEngineSettings;
     private readonly WebBrowserSettings _webBrowserSettings;
@@ -32,7 +32,8 @@ public sealed class WebPlugin : BuiltInChatPlugin
         Settings settings,
         IWebBrowserHost webBrowserHost,
         IHttpClientFactory httpClientFactory,
-        ILogger<WebPlugin> logger) : base("web")
+        ILogger<WebPlugin> logger
+    ) : base("web")
     {
         _webSearchEngineSettings = settings.Plugin.WebSearchEngine;
         _webBrowserSettings = settings.Plugin.WebBrowser;
@@ -46,8 +47,6 @@ public sealed class WebPlugin : BuiltInChatPlugin
                 new BuiltInChatFunction(
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
-                    isVisible: false,
-                    isDefaultEnabled: false,
                     onPermissionConsent: _ => true)); // always allow
             list.Add(
                 new BuiltInChatFunction(

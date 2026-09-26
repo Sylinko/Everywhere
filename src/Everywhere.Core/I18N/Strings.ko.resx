@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>웹 검색 엔진의 서비스 제공자를 선택하세요.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>어시스턴트는 적절한 시점에 이러한 도구(웹 검색, 로컬 파일 접근 등)를 사용하여 더 강력한 기능을 제공합니다.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>웹 검색 엔진 제공자</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>웹 검색 엔진</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API 키</value>
@@ -717,10 +717,10 @@
         <value>프로그래머블 검색 엔진 ID를 제공합니다. 자세한 내용은 문서를 참조하세요.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>웹</value>
+        <value>웹 브라우징</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>웹을 탐색할 수 있는 기능을 제공합니다.</value>
+        <value>웹을 탐색할 수 있는 기능을 제공합니다. 검색, 웹 콘텐츠 가져오기 등을 포함합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>파일 작업</value>
@@ -1965,7 +1965,7 @@
         <value>프롬프트 관리</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>대화가 시작된 후 프롬프트를 변경하면 프롬프트 캐시 적중률이 낮아질 수 있습니다.</value>
+        <value>대화 중에 프롬프트를 전환하면 프롬프트 캐시 적중률이 낮아지고 LLM 비용이 증가할 수 있습니다.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 개의 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
@@ -2764,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>다음 자동화 작업을 실행해도 괜찮습니까?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>웹 검색</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>문서 보기</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>기본</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>기본으로 설정</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>기본으로 설정됨</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API 키는 비어 있을 수 없습니다.</value>
@@ -3994,5 +3982,11 @@
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>추론 수준</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>추가 설정</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>문서 보기</value>
     </data>
 </root>

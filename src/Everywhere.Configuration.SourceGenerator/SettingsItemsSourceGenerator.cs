@@ -624,7 +624,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine($"{itemName}.IsExperimental = {isExperimental.ToString().ToLowerInvariant()};");
         }
 
-        if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string documentUrl })
+        if (settingsItemAttribute.GetNamedArgument("DocumentUrlBindingPath") is { IsNull: false, Value: string documentUrlBindingPath })
+        {
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.DocumentUrlProperty] = ");
+            EmitBinding(sb, documentUrlBindingPath, BindingMode.OneWay).AppendLine(";");
+        }
+        else if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string documentUrl })
         {
             sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
         }

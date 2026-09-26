@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>ウェブ検索エンジンのサービスプロバイダーを選択します。</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -701,8 +701,8 @@
     <data name="ChatPluginPage_Description" xml:space="preserve">
         <value>アシスタントは適切なタイミングでこれらのツール（Web検索、ローカルファイルへのアクセスなど）を使用し、より強力な機能を実現します。</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>ウェブ検索エンジンプロバイダー</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>ウェブ検索エンジン</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>APIキー</value>
@@ -717,10 +717,10 @@
         <value>プログラム可能な検索エンジンIDを提供します。詳細はドキュメントを参照してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>ウェブ</value>
+        <value>ウェブブラウジング</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>ウェブページを閲覧する能力を提供します。</value>
+        <value>ウェブを閲覧する能力を提供します。検索やウェブコンテンツの取得などが含まれます。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>ファイル操作</value>
@@ -1965,7 +1965,7 @@
         <value>プロンプトを管理</value>
     </data>
     <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
-        <value>会話の開始後にプロンプトを切り替えると、プロンプトキャッシュのヒット率が低下する場合があります。</value>
+        <value>会話中にプロンプトを切り替えると、プロンプトキャッシュのヒット率が低下し、LLM のコストが増加するおそれがあります。</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 個のAPIキーを削除してもよろしいですか？この操作は元に戻せません！</value>
@@ -2764,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>以下の自動化操作を実行してもよろしいですか？</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>ウェブ検索</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>ドキュメントを見る</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>デフォルト</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>デフォルトに設定</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>既にデフォルト</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>APIキーは空にできません。</value>
@@ -3994,5 +3982,11 @@
     </data>
     <data name="ReasoningEffortSlider_Header" xml:space="preserve">
         <value>思考の深さ</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>その他の設定</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>ドキュメントを表示</value>
     </data>
 </root>
