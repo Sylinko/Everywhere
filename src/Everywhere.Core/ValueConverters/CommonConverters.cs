@@ -4,13 +4,16 @@ using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Everywhere.Common;
-using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
 public static class CommonConverters
 {
     public static IValueConverter ObjectToString { get; } = new FuncValueConverter<object?, string?>(convert: x => x?.ToString());
+
+    public static IValueConverter JoinStrings { get; } = new FuncValueConverter<IReadOnlyList<string>?, string?, string?>(
+        convert: (values, parameter) => values is { Count: > 0 } ? string.Join(parameter?.ToString() ?? string.Empty, values) : null
+    );
 
     public static IValueConverter TypeEquals { get; } = new FuncValueConverter<object?, object?, bool>(
         convert: (x, parameter) => x?.GetType() == parameter as Type
@@ -122,7 +125,7 @@ public static class CommonConverters
                 .OfType<object>()
                 .FirstOrDefault(value =>
                     value != AvaloniaProperty.UnsetValue &&
-                    value is string str && !string.IsNullOrWhiteSpace(str) || value is not string);
+                    (value is not string str || !string.IsNullOrWhiteSpace(str)));
         }
     }
 }

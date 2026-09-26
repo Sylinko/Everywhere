@@ -28,14 +28,12 @@ public sealed partial class MistralOptions : ReasoningModelSchemaOptions
     /// Gets or sets the amount of reasoning effort requested from the model.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.MistralOptions_ReasoningEffort_Header,
         LocaleKey.MistralOptions_ReasoningEffort_Description)]
     [SettingsItem(
         Group = "_",
-        Modifier = nameof(BindReasoningEffortPlaceholder),
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
         IsEnabledBindingPath = nameof(IncludeReasoningContent),
         DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
     public override partial string? ReasoningEffort { get; set; }

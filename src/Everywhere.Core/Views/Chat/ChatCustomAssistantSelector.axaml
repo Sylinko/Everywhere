@@ -50,9 +50,20 @@
             </TextBlock>
             <TextBlock
               Classes="Muted Caption" Margin="-2,0,0,0"
-              VerticalAlignment="Center"
-              Text="{Binding SelectedItem?.EffectiveReasoningOptions?.EffectiveReasoningEffort, RelativeSource={RelativeSource TemplatedParent}}"
-              TextTrimming="CharacterEllipsis">
+              VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+              <TextBlock.Text>
+                <MultiBinding Converter="{x:Static vc:ReasoningEffortConverters.EffectiveValue}">
+                  <Binding
+                    Path="SelectedItem?.EffectiveReasoningOptions?.ReasoningEffort"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="SelectedItem?.EffectiveReasoningOptions?.SelectedReasoningEffort"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="SelectedItem?.Configuration.DefaultReasoningEffortValues"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                </MultiBinding>
+              </TextBlock.Text>
               <TextBlock.MaxWidth>
                 <exp:ExpressionBinding Expression="3 * A">
                   <DynamicResource ResourceKey="FontSize3Xl"/>
@@ -222,10 +233,18 @@
                                         VerticalAlignment="Center"
                                         Background="{DynamicResource MutedColor}"
                                         CornerRadius="2"
-                                        IsVisible="{Binding EffectiveReasoningOptions?.EffectiveReasoningEffort, Converter={x:Static StringConverters.IsNotNullOrEmpty}, TargetNullValue={x:False}}"/>
+                                        IsVisible="{Binding #ReasoningEffortText.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}, TargetNullValue={x:False}}"/>
                                       <TextBlock
-                                        Classes="Muted Caption" VerticalAlignment="Center"
-                                        Text="{Binding EffectiveReasoningOptions?.EffectiveReasoningEffort}"/>
+                                        x:Name="ReasoningEffortText" Classes="Muted Caption"
+                                        VerticalAlignment="Center">
+                                        <TextBlock.Text>
+                                          <MultiBinding Converter="{x:Static vc:ReasoningEffortConverters.EffectiveValue}">
+                                            <Binding Path="EffectiveReasoningOptions?.ReasoningEffort"/>
+                                            <Binding Path="EffectiveReasoningOptions?.SelectedReasoningEffort"/>
+                                            <Binding Path="Configuration.DefaultReasoningEffortValues"/>
+                                          </MultiBinding>
+                                        </TextBlock.Text>
+                                      </TextBlock>
                                     </DockPanel>
                                   </Grid>
                                 </Button>
@@ -405,11 +424,12 @@
                           Grid.Row="0" Grid.Column="2"
                           VerticalAlignment="Center"
                           Foreground="{DynamicResource PrimaryColor}"
-                          Text="{Binding EffectiveReasoningOptions?.EffectiveReasoningEffort}"/>
+                          Text="{Binding #ReasoningSlider.EffectiveReasoningEffort}"/>
                         <v:ReasoningEffortSlider
                           x:Name="ReasoningSlider" Grid.Row="1"
                           Grid.Column="0" Grid.ColumnSpan="3"
                           ClipToBounds="False"
+                          DefaultReasoningEffortValues="{Binding Configuration.DefaultReasoningEffortValues}"
                           Options="{Binding EffectiveReasoningOptions}">
                           <v:ReasoningEffortSlider.Margin>
                             <exp:ExpressionBinding Expression="thickness(A / 2 - 12, 0, 0, 0)">

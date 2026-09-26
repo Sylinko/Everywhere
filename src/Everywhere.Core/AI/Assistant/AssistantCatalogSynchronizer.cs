@@ -21,7 +21,6 @@ public sealed class AssistantCatalogSynchronizer(
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 2;
 
     private readonly HashSet<CustomAssistant> _assistants = [];
-    private readonly Dictionary<CustomAssistant, AssistantConfiguration> _configurations = [];
     private readonly Lock _assistantsLock = new();
     private INotifyCollectionChanged? _collection;
     private int _disposeState;
@@ -58,9 +57,6 @@ public sealed class AssistantCatalogSynchronizer(
         {
             if (_disposeState != 0 || !_assistants.Add(assistant)) return;
             assistant.PropertyChanged += HandleAssistantChanged;
-            var configuration = assistant.Configuration;
-            _configurations.Add(assistant, configuration);
-            configuration.PropertyChanged += HandleConfigurationChanged;
         }
     }
 
@@ -70,10 +66,6 @@ public sealed class AssistantCatalogSynchronizer(
         {
             if (!_assistants.Remove(assistant)) return;
             assistant.PropertyChanged -= HandleAssistantChanged;
-            if (_configurations.Remove(assistant, out var configuration))
-            {
-                configuration.PropertyChanged -= HandleConfigurationChanged;
-            }
         }
     }
 
@@ -86,6 +78,8 @@ public sealed class AssistantCatalogSynchronizer(
 
     private void HandleAssistantsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (Volatile.Read(ref _disposeState) != 0) return;
+
         if (e.Action == NotifyCollectionChangedAction.Reset)
         {
             BindCollection();
@@ -113,38 +107,13 @@ public sealed class AssistantCatalogSynchronizer(
 
     private void HandleAssistantChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Assistant.Configuration) && sender is CustomAssistant assistant)
-        {
-            RebindConfiguration(assistant);
-            Synchronize(assistant);
-        }
+        if (e.PropertyName != nameof(Assistant.Configuration) || sender is not CustomAssistant assistant) return;
+        Synchronize(assistant);
     }
 
-    private void HandleConfigurationChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is
-            not nameof(AssistantConfiguration.ModelId) and
-            not nameof(AssistantConfiguration.Schema) and
-            not nameof(PresetAssistantConfiguration.ProviderId)) return;
+    private void HandleCatalogChanged(object? sender, EventArgs e) => SynchronizeAll(sender);
 
-        CustomAssistant? assistant = null;
-        lock (_assistantsLock)
-        {
-            if (_disposeState != 0) return;
-            foreach (var pair in _configurations)
-            {
-                if (!ReferenceEquals(pair.Value, sender)) continue;
-                assistant = pair.Key;
-                break;
-            }
-        }
-
-        if (assistant is not null) UpdateReasoningEffortDefaults(assistant);
-    }
-
-    private void HandleCatalogChanged(object? sender, EventArgs e) => SynchronizeAll();
-
-    private void SynchronizeAll()
+    private void SynchronizeAll(object? source = null)
     {
         CustomAssistant[] assistants;
         lock (_assistantsLock)
@@ -153,49 +122,18 @@ public sealed class AssistantCatalogSynchronizer(
             assistants = [.. _assistants];
         }
 
-        foreach (var assistant in assistants) Synchronize(assistant);
+        foreach (var assistant in assistants)
+        {
+            if (source == presetModels && assistant.Configuration is not PresetAssistantConfiguration) continue;
+            if (source == officialModels && assistant.Configuration is not OfficialAssistantConfiguration) continue;
+            Synchronize(assistant);
+        }
     }
 
     private void Synchronize(CustomAssistant assistant)
     {
         if (Volatile.Read(ref _disposeState) != 0) return;
-
         catalog.Synchronize(assistant.Configuration);
-        UpdateReasoningEffortDefaults(assistant);
-    }
-
-    private void RebindConfiguration(CustomAssistant assistant)
-    {
-        lock (_assistantsLock)
-        {
-            if (_disposeState != 0 || !_assistants.Contains(assistant)) return;
-
-            var current = assistant.Configuration;
-            if (_configurations.TryGetValue(assistant, out var previous))
-            {
-                if (ReferenceEquals(previous, current)) return;
-                previous.PropertyChanged -= HandleConfigurationChanged;
-            }
-
-            _configurations[assistant] = current;
-            current.PropertyChanged += HandleConfigurationChanged;
-        }
-    }
-
-    private void UpdateReasoningEffortDefaults(CustomAssistant assistant)
-    {
-        var configuration = assistant.Configuration;
-        IReadOnlyList<string>? defaults = null;
-        if (configuration is not AdvancedAssistantConfiguration &&
-            catalog.ResolveModel(configuration).Model is { ReasoningEffortValues.Count: > 0 } model)
-        {
-            defaults = model.ReasoningEffortValues;
-        }
-
-        if (ReferenceEquals(configuration, assistant.Configuration))
-        {
-            assistant.EffectiveReasoningOptions?.DefaultReasoningEffortValues = defaults;
-        }
     }
 
     public void Dispose()
@@ -212,11 +150,8 @@ public sealed class AssistantCatalogSynchronizer(
             foreach (var assistant in _assistants)
             {
                 assistant.PropertyChanged -= HandleAssistantChanged;
-                if (_configurations.TryGetValue(assistant, out var configuration))
-                    configuration.PropertyChanged -= HandleConfigurationChanged;
             }
             _assistants.Clear();
-            _configurations.Clear();
         }
     }
 }

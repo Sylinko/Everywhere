@@ -4,14 +4,13 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Everywhere.AI;
 using Everywhere.Utilities;
 
 namespace Everywhere.Views;
 
 /// <summary>
-/// Binds a discrete Slider to protocol options containing user-ordered reasoning values.
+/// Binds a discrete Slider to protocol options and the active model's catalog reasoning values.
 /// The template keeps native input separate from animated decoration; motion is implemented in the companion partial.
 /// </summary>
 public sealed partial class ReasoningEffortSlider : Slider
@@ -25,6 +24,15 @@ public sealed partial class ReasoningEffortSlider : Slider
         set => SetValue(OptionsProperty, value);
     }
 
+    public static readonly StyledProperty<IReadOnlyList<string>?> DefaultReasoningEffortValuesProperty =
+        AvaloniaProperty.Register<ReasoningEffortSlider, IReadOnlyList<string>?>(nameof(DefaultReasoningEffortValues));
+
+    public IReadOnlyList<string>? DefaultReasoningEffortValues
+    {
+        get => GetValue(DefaultReasoningEffortValuesProperty);
+        set => SetValue(DefaultReasoningEffortValuesProperty, value);
+    }
+
     public static readonly DirectProperty<ReasoningEffortSlider, bool> HasMultipleValuesProperty =
         AvaloniaProperty.RegisterDirect<ReasoningEffortSlider, bool>(nameof(HasMultipleValues), x => x.HasMultipleValues);
 
@@ -32,6 +40,17 @@ public sealed partial class ReasoningEffortSlider : Slider
     {
         get;
         private set => SetAndRaise(HasMultipleValuesProperty, ref field, value);
+    }
+
+    public static readonly DirectProperty<ReasoningEffortSlider, string?> EffectiveReasoningEffortProperty =
+        AvaloniaProperty.RegisterDirect<ReasoningEffortSlider, string?>(
+            nameof(EffectiveReasoningEffort),
+            x => x.EffectiveReasoningEffort);
+
+    public string? EffectiveReasoningEffort
+    {
+        get;
+        private set => SetAndRaise(EffectiveReasoningEffortProperty, ref field, value);
     }
 
     protected override Type StyleKeyOverride => typeof(ReasoningEffortSlider);
@@ -125,6 +144,10 @@ public sealed partial class ReasoningEffortSlider : Slider
             ResetMotion();
             Subscribe();
         }
+        else if (change.Property == DefaultReasoningEffortValuesProperty)
+        {
+            RefreshChoices();
+        }
         else if (change.Property == ValueProperty && !_isSynchronizing)
         {
             if (Options is { } options && _choices.Length > 0)
@@ -173,21 +196,19 @@ public sealed partial class ReasoningEffortSlider : Slider
     private void HandleModelChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is
-            nameof(ReasoningModelSchemaOptions.ReasoningEffortValues) or
-            nameof(ReasoningModelSchemaOptions.EffectiveReasoningEffort))
+            nameof(ReasoningModelSchemaOptions.ReasoningEffort) or
+            nameof(ReasoningModelSchemaOptions.SelectedReasoningEffort))
         {
-            // Model notifications are the only background ingress. All gesture and animation state is UI-owned.
-            Dispatcher.UIThread.PostOnDemand(() =>
-            {
-                if (_isAttached && !_isSynchronizing) RefreshChoices();
-            });
+            if (_isAttached && !_isSynchronizing) RefreshChoices();
         }
     }
 
     private void RefreshChoices()
     {
-        var options = Options;
-        var choices = options?.ReasoningEffortValues.ToArray() ?? [];
+        if (Options is not { } options) return;
+
+        var resolution = ReasoningEffortResolver.Resolve(options.ReasoningEffort, options.SelectedReasoningEffort, DefaultReasoningEffortValues);
+        var choices = resolution.Values.ToArray();
         var changed = !_choices.SequenceEqual(choices);
         _isSynchronizing = true;
         try
@@ -195,7 +216,8 @@ public sealed partial class ReasoningEffortSlider : Slider
             _choices = choices;
             HasMultipleValues = choices.Length > 1;
             Maximum = Math.Max(0, choices.Length - 1);
-            SetCurrentValue(ValueProperty, Math.Max(0, Array.IndexOf(choices, options?.EffectiveReasoningEffort)));
+            EffectiveReasoningEffort = resolution.EffectiveValue;
+            SetCurrentValue(ValueProperty, Math.Max(0, Array.IndexOf(choices, resolution.EffectiveValue)));
             if (changed)
             {
                 ResetMotion();

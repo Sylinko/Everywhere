@@ -3080,7 +3080,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Nivel de Pensamiento</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Profundidad de pensamiento del modelo Gemini 3, como mínimo, bajo, medio o alto. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
+        <value>Profundidad de pensamiento del modelo Gemini 3, por ejemplo, bajo, medio o alto. Separa varios valores con |, por ejemplo low|medium|high. Puedes alternarlos en el chat en el orden indicado.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>Canal De Actualización</value>

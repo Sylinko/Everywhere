@@ -153,7 +153,7 @@ Parlot runtime dependency for package consumers.
 ## Build
 
 The parser generator currently comes from Parlot's official preview feed, pinned in `Directory.Packages.props`. The
-repository's `NuGet.config` contains that feed and NuGet.org. Building requires .NET SDK 10.0.400 or newer.
+repository's `NuGet.config` contains that feed and NuGet.org. Building requires .NET SDK 10.0.401 or a later 10.0.4xx patch.
 
 ```shell
 dotnet restore ExpressionBinding.Avalonia.slnx --configfile NuGet.config

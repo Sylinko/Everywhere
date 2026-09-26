@@ -26,7 +26,6 @@ public abstract partial class Assistant : ObservableValidator
             OnPropertyChanged();
             OnPropertyChanged(nameof(EffectiveSchemaOptions));
             OnPropertyChanged(nameof(EffectiveReasoningOptions));
-            EffectiveReasoningOptions?.DefaultReasoningEffortValues = null;
             OnConfigurationPropertyChanged(null);
         }
     }
@@ -91,6 +90,12 @@ public abstract partial class Assistant : ObservableValidator
             source: this,
             converter: ObjectConverters.Equal,
             converterParameter: item.Value.As<ModelSchemaOptions>()?.Schema);
+
+        if (item.Value is ReasoningModelSchemaOptions reasoningOptions)
+        {
+            reasoningOptions.BindReasoningEffortPlaceholder(this);
+        }
+
         return item;
     }
 
@@ -126,7 +131,6 @@ public abstract partial class Assistant : ObservableValidator
         {
             OnPropertyChanged(nameof(EffectiveSchemaOptions));
             OnPropertyChanged(nameof(EffectiveReasoningOptions));
-            EffectiveReasoningOptions?.DefaultReasoningEffortValues = null;
         }
 
         OnConfigurationPropertyChanged(e.PropertyName);

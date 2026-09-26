@@ -48,8 +48,8 @@ public class AssistantCatalogTests
             Assert.That(assistant.Configuration.Schema, Is.EqualTo(ModelProviderSchema.Anthropic));
             Assert.That(assistant.Configuration.ApiKey, Is.EqualTo(apiKey));
             Assert.That(assistant.OpenAIOptions.SelectedReasoningEffort, Is.EqualTo("high"));
-            Assert.That(assistant.AnthropicOptions.DefaultReasoningEffortValues, Is.EqualTo(new[] { "low", "high" }));
-            Assert.That(assistant.AnthropicOptions.EffectiveReasoningEffort, Is.EqualTo("high"));
+            Assert.That(assistant.Configuration.DefaultReasoningEffortValues, Is.EqualTo(new[] { "low", "high" }));
+            Assert.That(assistant.AnthropicOptions.ResolveReasoningEffort(assistant.Configuration), Is.EqualTo("high"));
             Assert.That(assistant.OpenAIOptions.Temperature, Is.EqualTo("0.4"));
             Assert.That(requestSnapshot.ContextLimit, Is.EqualTo(200));
             Assert.That(requestSnapshot.Schema, Is.EqualTo(ModelProviderSchema.OpenAIResponses));
@@ -92,6 +92,41 @@ public class AssistantCatalogTests
             Assert.That(assistant.Configuration.Schema, Is.EqualTo(provider.Schema));
             Assert.That(assistant.Configuration.Endpoint, Is.EqualTo(provider.Endpoint));
             Assert.That(assistant.Configuration.ApiKey, Is.EqualTo(apiKey));
+            Assert.That(assistant.Configuration.DefaultReasoningEffortValues, Is.EqualTo(new[] { "low", "high" }));
+        }
+    }
+
+    [Test]
+    public async Task Synchronizer_WhenCatalogChangesInBackground_AppliesConfigurationWithoutUiDispatch()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var settings = new Settings(services);
+        var assistant = new CustomAssistant
+        {
+            Configuration = new OfficialAssistantConfiguration { ModelId = "model" }
+        };
+        settings.Model.CustomAssistants.Add(assistant);
+
+        var preset = Substitute.For<IPresetModelProvider>();
+        preset.Catalog.Returns(PresetModelCatalog.Empty);
+        var official = Substitute.For<IOfficialModelProvider>();
+        var officialCatalog = CreateOfficialCatalog(CreateOfficialDefinition(200, ModelProviderSchema.OpenAI));
+        official.Catalog.Returns(_ => officialCatalog);
+        using var synchronizer = new AssistantCatalogSynchronizer(
+            settings,
+            new AssistantCatalog(preset, official),
+            preset,
+            official);
+        await synchronizer.InitializeAsync();
+
+        officialCatalog = CreateOfficialCatalog(CreateOfficialDefinition(300, ModelProviderSchema.Anthropic));
+        await Task.Run(() => official.CatalogChanged += Raise.Event<EventHandler>(official, EventArgs.Empty));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(assistant.Configuration.ContextLimit, Is.EqualTo(300));
+            Assert.That(assistant.Configuration.Schema, Is.EqualTo(ModelProviderSchema.Anthropic));
+            Assert.That(assistant.Configuration.DefaultReasoningEffortValues, Is.EqualTo(new[] { "low", "high" }));
         }
     }
 

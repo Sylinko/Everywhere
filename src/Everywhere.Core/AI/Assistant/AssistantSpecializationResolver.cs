@@ -13,27 +13,28 @@ public sealed class AssistantSpecializationResolver(AssistantCatalog catalog)
         var specialization = systemAssistant.RequiredSpecializations;
         if (specialization == ModelSpecializations.Default) return currentAssistant;
 
-        var currentModel = catalog.ResolveModel(currentAssistant.Configuration);
-        var selectedSpecializations = currentModel.Model?.Specializations ??
-            currentAssistant.Configuration.Specializations;
-        if (selectedSpecializations.HasFlag(specialization)) return currentAssistant;
-
-        var candidate = catalog.ResolveSpecializedModel(currentAssistant.Configuration, specialization);
-        if (candidate.Model is not { } model || candidate.Schema is not { } schema) return currentAssistant;
-
-        var configuration = CreateConfiguration(currentAssistant.Configuration);
-        if (configuration is null) return currentAssistant;
-
-        lock (configuration)
+        var sourceConfiguration = currentAssistant.Configuration;
+        lock (sourceConfiguration)
         {
-            configuration.Schema = schema;
-            configuration.Apply(model);
-            if (configuration is PresetAssistantConfiguration preset) preset.Endpoint = candidate.Endpoint;
-        }
+            var currentModel = catalog.ResolveModel(sourceConfiguration);
+            var selectedSpecializations = currentModel.Model?.Specializations ?? sourceConfiguration.Specializations;
+            if (selectedSpecializations.HasFlag(specialization)) return currentAssistant;
 
-        var resolved = new SystemAssistant(specialization) { Configuration = configuration };
-        resolved.EffectiveReasoningOptions?.DefaultReasoningEffortValues = model.ReasoningEffortValues;
-        return resolved;
+            var candidate = catalog.ResolveSpecializedModel(sourceConfiguration, specialization);
+            if (candidate.Model is not { } model || candidate.Schema is not { } schema) return currentAssistant;
+
+            var configuration = CreateConfiguration(sourceConfiguration);
+            if (configuration is null) return currentAssistant;
+
+            lock (configuration)
+            {
+                configuration.Schema = schema;
+                configuration.Apply(model);
+                if (configuration is PresetAssistantConfiguration preset) preset.Endpoint = candidate.Endpoint;
+            }
+
+            return new SystemAssistant(specialization) { Configuration = configuration };
+        }
     }
 
     private static AssistantConfiguration? CreateConfiguration(AssistantConfiguration source) => source switch

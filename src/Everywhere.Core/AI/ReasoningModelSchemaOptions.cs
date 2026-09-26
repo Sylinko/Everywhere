@@ -2,14 +2,15 @@ using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
+using Everywhere.ValueConverters;
 using Riok.Mapperly.Abstractions;
 
 namespace Everywhere.AI;
 
 /// <summary>
 /// Base class for protocol options that expose a provider-specific reasoning effort value.
-/// It owns the user-defined choices, the selected choice, and transient defaults advertised by
-/// the active catalog model so every consumer resolves the same effective value.
+/// It owns the user-defined choices and the selected choice. Catalog choices belong to the model
+/// configuration and are supplied when an effective value is resolved.
 /// </summary>
 public abstract partial class ReasoningModelSchemaOptions : ModelSchemaOptions
 {
@@ -19,94 +20,43 @@ public abstract partial class ReasoningModelSchemaOptions : ModelSchemaOptions
     public abstract string? ReasoningEffort { get; set; }
 
     /// <summary>
-    /// Gets or sets the user's selection within <see cref="ReasoningEffortValues"/>.
+    /// Gets or sets the user's selection within the resolved choices.
     /// An unavailable selection is retained and falls back only when resolving the effective value.
     /// </summary>
     [ObservableProperty]
     [SettingsItemIgnore]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     public partial string? SelectedReasoningEffort { get; set; }
 
-    /// <summary>
-    /// Gets catalog-provided choices for the active model. These values are runtime metadata and are
-    /// copied into request snapshots, but are never persisted with assistant options.
-    /// </summary>
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public IReadOnlyList<string>? DefaultReasoningEffortValues
-    {
-        get;
-        set
-        {
-            var normalized = value is { Count: > 0 } ? value.ToArray() : null;
-            if (HaveSameValues(field, normalized)) return;
-
-            field = normalized;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ReasoningEffortValues));
-            OnPropertyChanged(nameof(EffectiveReasoningEffort));
-            OnPropertyChanged(nameof(ReasoningEffortPlaceholder));
-        }
-    }
-
-    /// <summary>
-    /// Gets the active ordered choices. User input overrides catalog defaults when it contains at
-    /// least one valid entry.
-    /// </summary>
     [JsonIgnore]
     [SettingsItemIgnore]
     [MapperIgnore]
-    public IReadOnlyList<string> ReasoningEffortValues
-    {
-        get
-        {
-            var userValues = ReasoningEffort?.Split(['|', '｜'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            return userValues?.Length > 0 ? userValues : DefaultReasoningEffortValues ?? [];
-        }
-    }
+    public abstract SettingsItems SettingsItems { get; }
+
+    private SettingsStringItem? _reasoningEffortSettingsItem;
 
     /// <summary>
-    /// Gets the single value sent to the provider. When the saved selection is absent or unavailable,
-    /// the middle value is used; an even-sized list chooses the value immediately right of center.
+    /// Resolves the effective reasoning effort value based on the user's input and the default values.
     /// </summary>
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    [MapperIgnore]
-    public string? EffectiveReasoningEffort
-    {
-        get
-        {
-            var values = ReasoningEffortValues;
-            if (SelectedReasoningEffort is { } selected && values.Contains(selected, StringComparer.Ordinal))
-                return selected;
-
-            return values.Count == 0 ? null : values[values.Count / 2];
-        }
-    }
+    public string? ResolveReasoningEffort(AssistantConfiguration configuration) =>
+        ReasoningEffortResolver.Resolve(ReasoningEffort, SelectedReasoningEffort, configuration.DefaultReasoningEffortValues).EffectiveValue;
 
     /// <summary>
-    /// Gets the catalog defaults displayed as the input placeholder.
+    /// Records the generated input so its catalog placeholder can be bound by the owning assistant.
     /// </summary>
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    [MapperIgnore]
-    public string? ReasoningEffortPlaceholder => Join(DefaultReasoningEffortValues);
-
-    /// <summary>
-    /// Binds the catalog default to the generated settings input without storing presentation state.
-    /// </summary>
-    protected SettingsStringItem BindReasoningEffortPlaceholder(SettingsStringItem item)
+    protected SettingsStringItem RegisterReasoningEffortSettingsItem(SettingsStringItem item)
     {
-        item[!SettingsStringItem.PlaceholderTextProperty] = CompiledBinding.Create(
-            (ReasoningModelSchemaOptions source) => source.ReasoningEffortPlaceholder,
-            source: this);
+        _reasoningEffortSettingsItem = item;
         return item;
     }
 
-    private static string? Join(IReadOnlyList<string>? values) =>
-        values is { Count: > 0 } ? string.Join('|', values) : null;
+    internal void BindReasoningEffortPlaceholder(Assistant assistant)
+    {
+        if (SettingsItems.Count == 0 || _reasoningEffortSettingsItem is not { } item) return;
 
-    private static bool HaveSameValues(IReadOnlyList<string>? current, IReadOnlyList<string>? next) =>
-        ReferenceEquals(current, next) ||
-        current is not null && next is not null && current.SequenceEqual(next, StringComparer.Ordinal);
+        item[!SettingsStringItem.PlaceholderTextProperty] = CompiledBinding.Create(
+            (Assistant source) => source.Configuration.DefaultReasoningEffortValues,
+            source: assistant,
+            converter: CommonConverters.JoinStrings,
+            converterParameter: "|");
+    }
 }

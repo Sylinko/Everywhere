@@ -116,9 +116,8 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
             _serverRetryAfter = DateTimeOffset.MinValue;
             IsRefreshing = false;
             invalidation = _cacheInvalidationTask = Task.Run(
-                () =>
-                    InvalidateCacheCoreAsync(previousInvalidation, pendingCacheLoad, revision, _lifetime.Token),
-                cancellationToken);
+                () => InvalidateCacheCoreAsync(previousInvalidation, pendingCacheLoad, revision, _lifetime.Token),
+                CancellationToken.None);
         }
 
         await obsoleteRevision.CancelAsync();

@@ -81,7 +81,7 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
         private CreateResponseOptions RawRepresentationFactory(IChatClient _)
         {
             var options = owner._options;
-            var reasoningEffortLevel = options.EffectiveReasoningEffort switch
+            var reasoningEffortLevel = options.ResolveReasoningEffort(owner.Configuration)switch
             {
                 { Length: > 0 } reasoningEffort => new ResponseReasoningEffortLevel(reasoningEffort),
                 _ => (ResponseReasoningEffortLevel?)null

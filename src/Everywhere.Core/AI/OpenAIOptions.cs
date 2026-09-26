@@ -29,18 +29,17 @@ public sealed partial class OpenAIOptions : ReasoningModelSchemaOptions
     public partial string? ThinkingType { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.OpenAIOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIOptions_ReasoningEffort_Description)]
     [SettingsItem(
         Group = "_",
-        Modifier = nameof(BindReasoningEffortPlaceholder),
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20reasoning_effort%20%3E%20(schema)")]
     public override partial string? ReasoningEffort { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
@@ -48,7 +47,7 @@ public sealed partial class OpenAIOptions : ReasoningModelSchemaOptions
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create#(resource)%20chat.completions%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20temperature%20%3E%20(schema)")]
-    public string? Temperature { get; set; }
+    public partial string? Temperature { get; set; }
 
     [ObservableProperty]
     [DynamicLocaleKey(

@@ -495,7 +495,7 @@ public sealed class SettingsTemplatedItem<TType>(IDataTemplate? dataTemplate) : 
 /// <param name="control"></param>
 public sealed class SettingsControlItem(ISettingsControl control) : SettingsItem
 {
-    public object? ControlDataContext { get; init; }
+    public required object? ControlDataContext { get; init; }
 
     /// <summary>
     /// Creates the control when the settings item is presented. The <see cref="ISettingsControl"/> owns

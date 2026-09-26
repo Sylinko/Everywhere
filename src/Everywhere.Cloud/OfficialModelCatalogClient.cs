@@ -16,18 +16,36 @@ internal sealed partial class OfficialModelCatalogClient(IHttpClientFactory http
         // TODO: Verify and standardize the official catalog server's ETag generation, conditional
         // request behavior, Retry-After format, and retryable error contract before relying on
         // source-specific retry timing here.
-        var payload = JsonSerializer.Deserialize<ApiPayload<IReadOnlyList<CloudModelDefinition>>>(
-                content,
-                ModelsResponseJsonSerializerContext.Default.Options) ??
-            throw new HttpRequestException(HttpRequestError.InvalidResponse, statusCode: response.StatusCode);
-        if (!payload.Success)
+        ApiPayload<IReadOnlyList<CloudModelDefinition>>? payload;
+        try
         {
-            var retryAfter = response.Headers.RetryAfter?.Date ??
-                (response.Headers.RetryAfter?.Delta is { } delta ? DateTimeOffset.UtcNow + delta : null);
-            throw new ModelCatalogHttpException(response.StatusCode, retryAfter, payload.ToString());
+            payload = JsonSerializer.Deserialize<ApiPayload<IReadOnlyList<CloudModelDefinition>>>(
+                content,
+                ModelsResponseJsonSerializerContext.Default.Options);
+        }
+        catch (JsonException) when (!response.IsSuccessStatusCode)
+        {
+            throw CreateHttpException(response);
+        }
+
+        if (!response.IsSuccessStatusCode || payload?.Success == false)
+        {
+            throw CreateHttpException(response, payload?.ToString());
+        }
+
+        if (payload is null)
+        {
+            throw new HttpRequestException(HttpRequestError.InvalidResponse, statusCode: response.StatusCode);
         }
 
         return payload.EnsureData().AsValueEnumerable().Select(model => model.ToOfficialModelDefinition()).ToArray();
+    }
+
+    private static ModelCatalogHttpException CreateHttpException(HttpResponseMessage response, string? message = null)
+    {
+        var retryAfter = response.Headers.RetryAfter?.Date ??
+            (response.Headers.RetryAfter?.Delta is { } delta ? DateTimeOffset.UtcNow + delta : null);
+        return new ModelCatalogHttpException(response.StatusCode, retryAfter, message);
     }
 
     /// <summary>

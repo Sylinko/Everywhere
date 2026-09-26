@@ -45,14 +45,12 @@ public sealed partial class AnthropicOptions : ReasoningModelSchemaOptions
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReasoningEffort))]
-    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.AnthropicOptions_ThinkingEffort_Header,
         LocaleKey.AnthropicOptions_ThinkingEffort_Description)]
     [SettingsItem(
         Group = "_",
-        Modifier = nameof(BindReasoningEffortPlaceholder),
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
         DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking")]
     public partial string? ThinkingEffort { get; set; }
 

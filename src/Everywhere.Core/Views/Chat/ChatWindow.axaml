@@ -1078,6 +1078,7 @@
                   CompactContextCommand="{Binding CompactContextCommand}"
                   ContextCompaction="{Binding ChatContextManager.Current.ContextCompaction}"
                   ContextUsage="{Binding ChatContextManager.Current.ContextUsage}"
+                  CustomAssistantItemsSource="{Binding Settings.Model.CustomAssistants}"
                   IsContextUsageRingVisible="{Binding ChatContextManager.Current.DisplayItems.Count, Converter={x:Static vc:Int32Converters.GreaterThan}, ConverterParameter=0}"
                   IsSendButtonEnabled="{Binding !IsBusy}"
                   LeadingContent="{Binding SelectedStrategy, Mode=TwoWay}"

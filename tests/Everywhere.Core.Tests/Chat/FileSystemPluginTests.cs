@@ -1,4 +1,5 @@
 using System.Reflection;
+using Avalonia.Platform.Storage;
 using Everywhere.Chat;
 using Everywhere.Chat.Documents;
 using Everywhere.Chat.Plugins;
@@ -731,6 +732,7 @@ public class FileSystemPluginTests
             plugin,
             [
                 userInterface,
+                Substitute.For<IStorageProvider>(),
                 new ChatContext(),
                 source,
                 destination,
@@ -752,7 +754,13 @@ public class FileSystemPluginTests
         var applyPatchMethod = method ?? throw new AssertionException("ApplyPatchAsync was not found.");
         var invocation = applyPatchMethod.Invoke(
             plugin,
-            [userInterface, chatContext ?? new ChatContext(), patch, CancellationToken.None]);
+            [
+                userInterface,
+                Substitute.For<IStorageProvider>(),
+                chatContext ?? new ChatContext(),
+                patch,
+                CancellationToken.None
+            ]);
         if (invocation is not Task<PromptNode> task)
             throw new AssertionException("ApplyPatchAsync did not return Task<PromptNode>.");
 
@@ -772,7 +780,14 @@ public class FileSystemPluginTests
 
         var task = (Task<string>)method!.Invoke(
             plugin,
-            [userInterface, new ChatContext(), paths, recursive, CancellationToken.None])!;
+            [
+                userInterface,
+                Substitute.For<IStorageProvider>(),
+                new ChatContext(),
+                paths,
+                recursive,
+                CancellationToken.None
+            ])!;
         await task;
     }
 

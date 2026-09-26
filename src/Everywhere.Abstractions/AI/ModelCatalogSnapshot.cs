@@ -36,6 +36,8 @@ public sealed class ModelCatalogSnapshot<TDefinition, TKey>
         var byKey = new Dictionary<TKey, TDefinition>();
         foreach (var (key, candidate) in definitions)
         {
+            if (byKey.ContainsKey(key)) continue;
+
             var definition = previous is not null &&
                 previous.TryGetDefinition(key, out var current) &&
                 EqualityComparer<TDefinition>.Default.Equals(current, candidate) ?

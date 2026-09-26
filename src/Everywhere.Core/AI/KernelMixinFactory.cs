@@ -27,10 +27,23 @@ public sealed class KernelMixinFactory(
     {
         var sourceConfiguration = assistant.Configuration;
         AssistantConfiguration configuration;
+        ModelSchemaOptions? schemaOptions;
+        TimeSpan timeout;
         lock (sourceConfiguration)
         {
             configuration = AssistantSnapshotMapper.Copy(sourceConfiguration);
+            timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60));
+            schemaOptions = configuration.Schema switch
+            {
+                ModelProviderSchema.OpenAI => AssistantSnapshotMapper.Copy(assistant.OpenAIOptions),
+                ModelProviderSchema.OpenAIResponses => AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions),
+                ModelProviderSchema.Anthropic => AssistantSnapshotMapper.Copy(assistant.AnthropicOptions),
+                ModelProviderSchema.Google => AssistantSnapshotMapper.Copy(assistant.GoogleOptions),
+                ModelProviderSchema.Mistral => AssistantSnapshotMapper.Copy(assistant.MistralOptions),
+                _ => null
+            };
         }
+
         if (configuration.ModelId.IsNullOrWhiteSpace())
         {
             throw new HandledChatException(
@@ -38,37 +51,36 @@ public sealed class KernelMixinFactory(
                 HandledChatExceptionType.InvalidConfiguration);
         }
 
-        var timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60));
         var connection = ResolveConnection(configuration, timeout);
         try
         {
-            return connection.Schema switch
+            return (connection.Schema, schemaOptions) switch
             {
-                ModelProviderSchema.OpenAI => new OpenAIKernelMixin(
+                (ModelProviderSchema.OpenAI, OpenAIOptions options) => new OpenAIKernelMixin(
                     configuration,
-                    AssistantSnapshotMapper.Copy(assistant.OpenAIOptions),
+                    options,
                     connection,
                     loggerFactory),
-                ModelProviderSchema.OpenAIResponses => new OpenAIResponsesKernelMixin(
+                (ModelProviderSchema.OpenAIResponses, OpenAIResponsesOptions options) => new OpenAIResponsesKernelMixin(
                     configuration,
-                    AssistantSnapshotMapper.Copy(assistant.OpenAIResponsesOptions),
+                    options,
                     connection,
                     loggerFactory),
-                ModelProviderSchema.Anthropic => new AnthropicKernelMixin(
+                (ModelProviderSchema.Anthropic, AnthropicOptions options) => new AnthropicKernelMixin(
                     configuration,
-                    AssistantSnapshotMapper.Copy(assistant.AnthropicOptions),
+                    options,
                     connection),
-                ModelProviderSchema.Google => new GoogleKernelMixin(
+                (ModelProviderSchema.Google, GoogleOptions options) => new GoogleKernelMixin(
                     configuration,
-                    AssistantSnapshotMapper.Copy(assistant.GoogleOptions),
+                    options,
                     connection,
                     loggerFactory),
-                ModelProviderSchema.Mistral => new MistralKernelMixin(
+                (ModelProviderSchema.Mistral, MistralOptions options) => new MistralKernelMixin(
                     configuration,
-                    AssistantSnapshotMapper.Copy(assistant.MistralOptions),
+                    options,
                     connection,
                     loggerFactory),
-                ModelProviderSchema.Ollama => new OllamaKernelMixin(
+                (ModelProviderSchema.Ollama, _) => new OllamaKernelMixin(
                     configuration,
                     connection),
                 _ => throw new HandledChatException(

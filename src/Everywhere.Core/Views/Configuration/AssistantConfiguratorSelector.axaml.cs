@@ -83,13 +83,11 @@ public class AssistantConfiguratorSelector : TemplatedControl
                 SetAndRaise(AssistantProperty, ref field, value);
                 if (value is not null)
                 {
-                    value.PropertyChanged += HandleAssistantPropertyChanged;
+                    if (_isAttached) value.PropertyChanged += HandleAssistantPropertyChanged;
                     _drafts[GetMode(value.Configuration)] = value.Configuration;
                 }
 
-                SelectedConfiguratorModel = ConfiguratorModels
-                    .AsValueEnumerable()
-                    .FirstOrDefault(model => model.Mode == GetMode(value?.Configuration));
+                SynchronizeSelectedMode();
             }
             finally
             {
@@ -109,6 +107,27 @@ public class AssistantConfiguratorSelector : TemplatedControl
 
     private readonly Dictionary<ConfigurationMode, AssistantConfiguration> _drafts = [];
     private bool _isSynchronizing;
+    private bool _isAttached;
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        _isAttached = true;
+        if (Assistant is { } assistant)
+        {
+            assistant.PropertyChanged += HandleAssistantPropertyChanged;
+            SynchronizeSelectedMode();
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _isAttached = false;
+        if (Assistant is { } assistant) assistant.PropertyChanged -= HandleAssistantPropertyChanged;
+
+        base.OnDetachedFromVisualTree(e);
+    }
 
     private void SwitchConfiguration(Assistant assistant, ConfigurationMode mode)
     {
@@ -132,10 +151,17 @@ public class AssistantConfiguratorSelector : TemplatedControl
 
     private void HandleAssistantPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(Assistant.Configuration) || Assistant is not { } assistant) return;
+        if (e.PropertyName != nameof(Assistant.Configuration) || Assistant is null) return;
 
-        var mode = GetMode(assistant.Configuration);
-        _drafts[mode] = assistant.Configuration;
+        SynchronizeSelectedMode();
+    }
+
+    private void SynchronizeSelectedMode()
+    {
+        var configuration = Assistant?.Configuration;
+        var mode = GetMode(configuration);
+        if (configuration is not null) _drafts[mode] = configuration;
+
         var selected = ConfiguratorModels.AsValueEnumerable().First(model => model.Mode == mode);
         if (ReferenceEquals(SelectedConfiguratorModel, selected)) return;
 

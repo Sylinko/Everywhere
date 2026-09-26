@@ -17,9 +17,15 @@ internal static partial class AssistantSnapshotMapper
         _ => throw new ArgumentOutOfRangeException(nameof(source))
     };
 
-    public static partial OfficialAssistantConfiguration ToOfficial(AssistantConfiguration source);
+    [MapperIgnoreSource(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
+    [MapperIgnoreTarget(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
+    private static partial OfficialAssistantConfiguration MapToOfficial(AssistantConfiguration source);
+
+    public static OfficialAssistantConfiguration ToOfficial(AssistantConfiguration source) => MapToOfficial(source);
 
     [MapperIgnoreTarget(nameof(PresetAssistantConfiguration.ProviderId))]
+    [MapperIgnoreSource(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
+    [MapperIgnoreTarget(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
     private static partial PresetAssistantConfiguration MapToPreset(AssistantConfiguration source);
 
     public static PresetAssistantConfiguration ToPreset(AssistantConfiguration source)
@@ -29,7 +35,11 @@ internal static partial class AssistantSnapshotMapper
         return target;
     }
 
-    public static partial AdvancedAssistantConfiguration ToAdvanced(AssistantConfiguration source);
+    [MapperIgnoreSource(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
+    [MapperIgnoreTarget(nameof(AssistantConfiguration.DefaultReasoningEffortValues))]
+    private static partial AdvancedAssistantConfiguration MapToAdvanced(AssistantConfiguration source);
+
+    public static AdvancedAssistantConfiguration ToAdvanced(AssistantConfiguration source) => MapToAdvanced(source);
 
     public static partial OfficialAssistantConfiguration Copy(OfficialAssistantConfiguration source);
     public static partial PresetAssistantConfiguration Copy(PresetAssistantConfiguration source);

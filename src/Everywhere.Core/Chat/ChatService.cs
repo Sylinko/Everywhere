@@ -541,14 +541,14 @@ public sealed partial class ChatService : IChatService
         StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _activitySource.StartChatActivity("chat", assistant.Configuration);
-        activity?.SetTag("id", chatContext.Metadata.Id);
-
+        Activity? activity = null;
         GenerationContext? context = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
         try
         {
             context = await CreateGenerationContextAsync(chatContext, assistant, systemPromptOverride, cancellationToken);
+            activity = _activitySource.StartChatActivity("chat", context.KernelMixin.Configuration);
+            activity?.SetTag("id", chatContext.Metadata.Id);
             var kernel = context.Kernel;
             var kernelMixin = context.KernelMixin;
             var promptRenderer = context.PromptRenderer;
@@ -698,6 +698,7 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.IsBusy = false;
 
             context?.KernelMixin.Dispose();
+            activity?.Dispose();
         }
     }
 

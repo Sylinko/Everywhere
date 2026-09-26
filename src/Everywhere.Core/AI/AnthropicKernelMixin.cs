@@ -93,11 +93,12 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
             }
 
             OutputConfig? outputConfig = null;
-            if (options.EffectiveReasoningEffort is { Length: > 0 } effort)
+            var reasoningEffort = options.ResolveReasoningEffort(_owner.Configuration);
+            if (!reasoningEffort.IsNullOrWhiteSpace())
             {
                 outputConfig = new OutputConfig
                 {
-                    Effort = effort
+                    Effort = reasoningEffort
                 };
             }
 

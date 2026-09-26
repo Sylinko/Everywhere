@@ -31,6 +31,9 @@ public sealed class ChatInputArea : TemplatedControl
     public static readonly StyledProperty<CustomAssistant?> SelectedCustomAssistantProperty =
         AvaloniaProperty.Register<ChatInputArea, CustomAssistant?>(nameof(SelectedCustomAssistant));
 
+    public static readonly StyledProperty<IReadOnlyList<CustomAssistant>?> CustomAssistantItemsSourceProperty =
+        AvaloniaProperty.Register<ChatInputArea, IReadOnlyList<CustomAssistant>?>(nameof(CustomAssistantItemsSource));
+
     public static readonly StyledProperty<object?> ToolBarContentProperty =
         AvaloniaProperty.Register<ChatInputArea, object?>(nameof(ToolBarContent));
 
@@ -97,6 +100,12 @@ public sealed class ChatInputArea : TemplatedControl
     {
         get => GetValue(SelectedCustomAssistantProperty);
         set => SetValue(SelectedCustomAssistantProperty, value);
+    }
+
+    public IReadOnlyList<CustomAssistant>? CustomAssistantItemsSource
+    {
+        get => GetValue(CustomAssistantItemsSourceProperty);
+        set => SetValue(CustomAssistantItemsSourceProperty, value);
     }
 
     public object? ToolBarContent
@@ -316,24 +325,19 @@ public sealed class ChatInputArea : TemplatedControl
     {
         if (e.KeyModifiers.IsApplicationShortcutModifierOnly())
         {
-            // TODO
-            // var index = e.Key switch
-            // {
-            //     >= Key.D1 and <= Key.D9 => e.Key - Key.D1,
-            //     Key.D0 => 9,
-            //     _ => -1
-            // };
-            //
-            // if (index >= 0 && CustomAssistantItemsSource != null)
-            // {
-            //     var assistant = CustomAssistantItemsSource.ElementAtOrDefault(index);
-            //     if (assistant != null)
-            //     {
-            //         SelectedCustomAssistant = assistant;
-            //         e.Handled = true;
-            //         return;
-            //     }
-            // }
+            var index = e.Key switch
+            {
+                >= Key.D1 and <= Key.D9 => e.Key - Key.D1,
+                Key.D0 => 9,
+                _ => -1
+            };
+
+            if (index >= 0 && CustomAssistantItemsSource is { } assistants && index < assistants.Count)
+            {
+                SelectedCustomAssistant = assistants[index];
+                e.Handled = true;
+                return;
+            }
 
             if (e.Key == Key.V)
             {

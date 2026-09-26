@@ -20,14 +20,12 @@ public sealed partial class GoogleOptions : ReasoningModelSchemaOptions
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReasoningEffort))]
-    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.GoogleOptions_ThinkingLevel_Header,
         LocaleKey.GoogleOptions_ThinkingLevel_Description)]
     [SettingsItem(
         Group = "_",
-        Modifier = nameof(BindReasoningEffortPlaceholder),
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
         DocumentUrl = "https://ai.google.dev/gemini-api/docs/thinking#thinking-levels")]
     public partial string? ThinkingLevel { get; set; }
 

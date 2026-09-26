@@ -12,14 +12,12 @@ public sealed partial class OpenAIResponsesOptions : ReasoningModelSchemaOptions
     public override ModelProviderSchema Schema => ModelProviderSchema.OpenAIResponses;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ReasoningEffortValues))]
-    [NotifyPropertyChangedFor(nameof(EffectiveReasoningEffort))]
     [DynamicLocaleKey(
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Description)]
     [SettingsItem(
         Group = "_",
-        Modifier = nameof(BindReasoningEffortPlaceholder),
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
         DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
     public override partial string? ReasoningEffort { get; set; }
 

@@ -84,6 +84,25 @@ public abstract partial class AssistantConfiguration : ObservableValidator, IMod
     [SettingsItemIgnore]
     public partial DateOnly? KnowledgeCutoff { get; set; }
 
+    /// <summary>
+    /// Gets catalog-provided reasoning choices for the selected model. This runtime metadata is
+    /// copied into request snapshots but is not persisted with assistant configuration.
+    /// </summary>
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public IReadOnlyList<string>? DefaultReasoningEffortValues
+    {
+        get;
+        set
+        {
+            var normalized = value is { Count: > 0 } ? value.ToArray() : null;
+            if (HaveSameReasoningEffortValues(field, normalized)) return;
+
+            field = normalized;
+            OnPropertyChanged();
+        }
+    }
+
     [JsonIgnore]
     [SettingsItemIgnore]
     [MapperIgnore]
@@ -104,6 +123,7 @@ public abstract partial class AssistantConfiguration : ObservableValidator, IMod
         DeprecationDate = model?.DeprecationDate;
         ReleaseDate = model?.ReleaseDate;
         KnowledgeCutoff = model?.KnowledgeCutoff;
+        DefaultReasoningEffortValues = model?.ReasoningEffortValues;
     }
 
     public ModelDefinitionTemplate ToTemplate() => new()
@@ -118,7 +138,8 @@ public abstract partial class AssistantConfiguration : ObservableValidator, IMod
         Specializations = Specializations,
         DeprecationDate = DeprecationDate,
         ReleaseDate = ReleaseDate,
-        KnowledgeCutoff = KnowledgeCutoff
+        KnowledgeCutoff = KnowledgeCutoff,
+        ReasoningEffortValues = DefaultReasoningEffortValues is { } values ? [.. values] : []
     };
 
     /// <summary>Applies all configuration fields owned by a catalog item.</summary>
@@ -147,6 +168,10 @@ public abstract partial class AssistantConfiguration : ObservableValidator, IMod
 
         return ValidationResult.Success;
     }
+
+    private static bool HaveSameReasoningEffortValues(IReadOnlyList<string>? current, IReadOnlyList<string>? next) =>
+        ReferenceEquals(current, next) ||
+        current is not null && next is not null && current.SequenceEqual(next, StringComparer.Ordinal);
 }
 
 [GeneratedSettingsItems(IncludeInheritedMembers = false)]

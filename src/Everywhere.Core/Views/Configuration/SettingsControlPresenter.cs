@@ -4,7 +4,7 @@ using Everywhere.Configuration;
 
 namespace Everywhere.Views;
 
-public sealed class SettingsControlPresenter : Control
+public sealed class SettingsControlPresenter : Decorator
 {
     public static readonly StyledProperty<SettingsControlItem?> ItemProperty =
         AvaloniaProperty.Register<SettingsControlPresenter, SettingsControlItem?>(nameof(Item));
@@ -15,7 +15,6 @@ public sealed class SettingsControlPresenter : Control
         set => SetValue(ItemProperty, value);
     }
 
-    private Control? _content;
     private bool _isAttached;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -24,10 +23,7 @@ public sealed class SettingsControlPresenter : Control
 
         if (change.Property == ItemProperty)
         {
-            _content = change.NewValue is SettingsControlItem item ?
-                item.CreateControl(ServiceLocator.Resolve<IServiceProvider>()) :
-                null;
-            ApplyContent();
+            ApplyItem();
         }
     }
 
@@ -36,21 +32,19 @@ public sealed class SettingsControlPresenter : Control
         base.OnAttachedToVisualTree(e);
 
         _isAttached = true;
-        ApplyContent();
+        ApplyItem();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        base.OnDetachedFromVisualTree(e);
-
         _isAttached = false;
-        _content = null;
-        ApplyContent();
+        Child = null;
+
+        base.OnDetachedFromVisualTree(e);
     }
 
-    private void ApplyContent()
+    private void ApplyItem()
     {
-        while (LogicalChildren.Count > 0) LogicalChildren.RemoveAt(LogicalChildren.Count - 1);
-        if (_isAttached && _content != null) LogicalChildren.Add(_content);
+        Child = _isAttached && Item is { } item ? item.CreateControl(ServiceLocator.Resolve<IServiceProvider>()) : null;
     }
 }
