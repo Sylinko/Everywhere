@@ -54,7 +54,7 @@
             <Flyout Placement="Right">
               <DockPanel
                 Width="320" MaxHeight="440"
-                Margin="4" VerticalSpacing="8">
+                Margin="2" VerticalSpacing="8">
                 <shadui:Toast
                   Title="{I18N {x:Static LocaleKey.ChatAssistantPromptSelector_ChangeWarning}}"
                   DockPanel.Dock="Top" Padding="6,4"
@@ -63,17 +63,11 @@
                   Notification="Info"/>
 
                 <Button
-                  Classes="Ghost" DockPanel.Dock="Bottom"
-                  HorizontalContentAlignment="Left"
-                  Command="{Binding ManagePromptsCommand, RelativeSource={RelativeSource TemplatedParent}}">
-                  <StackPanel
-                    Orientation="Horizontal" Spacing="8">
-                    <LucideIcon
-                      Kind="Settings"
-                      Size="{DynamicResource FontSizeXl}"/>
-                    <TextBlock Text="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"/>
-                  </StackPanel>
-                </Button>
+                  Classes="Ghost LargeIcon" DockPanel.Dock="Bottom"
+                  Padding="8" HorizontalContentAlignment="Left"
+                  shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                  Command="{Binding ManagePromptsCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                  Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"/>
 
                 <Border
                   DockPanel.Dock="Bottom" Height="0.5"

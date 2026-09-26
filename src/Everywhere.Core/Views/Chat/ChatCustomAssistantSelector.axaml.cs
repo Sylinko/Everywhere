@@ -1,8 +1,9 @@
-﻿using System.Windows.Input;
-using Avalonia.Controls.Primitives;
+﻿using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
+using Everywhere.Messages;
 
 namespace Everywhere.Views;
 
@@ -37,15 +38,6 @@ public sealed partial class ChatCustomAssistantSelector : TemplatedControl
         private set => SetAndRaise(SelectedSettingsItemProperty, ref field, value);
     }
 
-    public static readonly StyledProperty<ICommand?> OpenAssistantsSettingsCommandProperty =
-        AvaloniaProperty.Register<ChatCustomAssistantSelector, ICommand?>(nameof(OpenAssistantsSettingsCommand));
-
-    public ICommand? OpenAssistantsSettingsCommand
-    {
-        get => GetValue(OpenAssistantsSettingsCommandProperty);
-        set => SetValue(OpenAssistantsSettingsCommandProperty, value);
-    }
-
     [RelayCommand]
     private void SetSelectedItem(CustomAssistant item)
     {
@@ -63,6 +55,20 @@ public sealed partial class ChatCustomAssistantSelector : TemplatedControl
     private void SetSelectedSettingsItem(CustomAssistant? item)
     {
         SelectedSettingsItem = item;
+    }
+
+    [RelayCommand]
+    private static void OpenAssistantsSettings()
+    {
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(
+            new ShowWindowMessage(ShowWindowMessage.MainWindow, MainViewNavigateMessage.CustomAssistantPageRoute));
+    }
+
+    [RelayCommand]
+    private static void OpenSettings()
+    {
+        WeakReferenceMessenger.Default.Send<ApplicationMessage>(
+            new ShowWindowMessage(ShowWindowMessage.MainWindow, MainViewNavigateMessage.SettingsPageRoute));
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)

@@ -29,7 +29,7 @@ public sealed record MainViewNavigateMessage(object Route)
     public const string ChatPluginPageRoute = "ChatPluginPage";
 
     /// <summary>
-    /// Route key reserved for the future Prompt Manager page.
+    /// Route key for the prompt page. Kept as the class-name key for compatibility.
     /// </summary>
     public const string PromptPageRoute = "PromptPage";
 
@@ -37,6 +37,11 @@ public sealed record MainViewNavigateMessage(object Route)
     /// Route key for the skill page. Kept as the class-name key for compatibility.
     /// </summary>
     public const string SkillPageRoute = "SkillPage";
+
+    /// <summary>
+    /// Route key for the settings page. Kept as the class-name key for compatibility.
+    /// </summary>
+    public const string SettingsPageRoute = "SettingsPage";
 
     /// <summary>
     /// Builds a route that opens the custom assistant page and selects the assistant.

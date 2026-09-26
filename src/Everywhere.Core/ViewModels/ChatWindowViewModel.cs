@@ -681,13 +681,6 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private static void OpenAssistantsSettings()
-    {
-        WeakReferenceMessenger.Default.Send<ApplicationMessage>(
-            new ShowWindowMessage(ShowWindowMessage.MainWindow, MainViewNavigateMessage.CustomAssistantPageRoute));
-    }
-
-    [RelayCommand]
     private static void OpenPluginSettings()
     {
         WeakReferenceMessenger.Default.Send<ApplicationMessage>(new ShowWindowMessage(ShowWindowMessage.MainWindow, "ChatPluginPage"));

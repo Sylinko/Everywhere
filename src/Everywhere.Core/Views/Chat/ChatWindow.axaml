@@ -1186,94 +1186,9 @@
 
                       <v:ChatCustomAssistantSelector
                         ItemsSource="{Binding Settings.Model.CustomAssistants}"
-                        OpenAssistantsSettingsCommand="{Binding OpenAssistantsSettingsCommand}"
                         SelectedItem="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
                         ToolTip.Placement="Top"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CustomAssistantSelector_ToolTip}}"/>
-
-                      <!--  <Button  -->
-                      <!--  Classes="Ghost Rounded"  -->
-                      <!--  Classes.Primary="{TemplateBinding IsToolCallEnabled, Mode=TwoWay}"  -->
-                      <!--  Flyout="{TemplateBinding ToolCallButtonFlyout}"  -->
-                      <!--  Focusable="False"  -->
-                      <!--  IsEnabled="{Binding SelectedCustomAssistant, Converter={x:Static ObjectConverters.IsNotNull}, RelativeSource={RelativeSource TemplatedParent}}"  -->
-                      <!--  IsVisible="{TemplateBinding IsToolCallSupported}"  -->
-                      <!--  ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_ToolCallButton_ToolTip}}">  -->
-                      <!--  <LucideIcon  -->
-                      <!--  Margin="1,0,0,0" Kind="Hammer"  -->
-                      <!--  Size="{DynamicResource FontSizeL}"/>  -->
-                      <!-- </Button> -->
-                      <!--    -->
-                      <!--  <ToggleButton  -->
-                      <!--  Classes="Ghost Rounded"  -->
-                      <!--  shadui:ButtonAssist.CheckedBackground="{DynamicResource PrimaryColor}"  -->
-                      <!--  Focusable="False"  -->
-                      <!--  IsChecked="{TemplateBinding IsWebSearchEnabled, Mode=TwoWay}"  -->
-                      <!--  ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_WebSearchButton_ToolTip}}">  -->
-                      <!--   <ToggleButton.IsVisible> -->
-                      <!--     <MultiBinding Converter="{x:Static BoolConverters.And}"> -->
-                      <!--       <TemplateBinding Property="IsToolCallSupported"/> -->
-                      <!--       <TemplateBinding Property="IsToolCallEnabled"/> -->
-                      <!--     </MultiBinding> -->
-                      <!--   </ToggleButton.IsVisible> -->
-                      <!--    -->
-                      <!--  <LucideIcon  -->
-                      <!--  Margin="1,0,0,0" Kind="Search"  -->
-                      <!--  Size="{DynamicResource FontSizeL}"/>  -->
-                      <!-- </ToggleButton> -->
-                      <!--    -->
-                      <!--  <Button  -->
-                      <!--  Classes="Ghost Rounded" Focusable="False"  -->
-                      <!--  ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_SettingsButton_ToolTip}}">  -->
-                      <!--   <Button.Flyout> -->
-                      <!--  <Flyout  -->
-                      <!--  Placement="Top">  -->
-                      <!--  <LayoutTransformControl  -->
-                      <!--  Margin="6" RenderTransformOrigin="50%,0%">  -->
-                      <!--         <LayoutTransformControl.Transitions> -->
-                      <!--           <Transitions> -->
-                      <!--  <TransformOperationsTransition  -->
-                      <!--  Property="RenderTransform" Duration="0:0:0.10"/>  -->
-                      <!--           </Transitions> -->
-                      <!--         </LayoutTransformControl.Transitions> -->
-                      <!--    -->
-                      <!--         <ItemsControl ItemsSource="{TemplateBinding SettingsMenuItemsSource}"/> -->
-                      <!--       </LayoutTransformControl> -->
-                      <!--     </Flyout> -->
-                      <!--   </Button.Flyout> -->
-                      <!--    -->
-                      <!--   <Button.Styles> -->
-                      <!--     <Style Selector="Button:flyout-open LayoutTransformControl"> -->
-                      <!--       <Style.Animations> -->
-                      <!--  <Animation  -->
-                      <!--  Easing="SineEaseInOut" FillMode="Forward"  -->
-                      <!--  Duration="0:0:0.10">  -->
-                      <!--           <KeyFrame Cue="0%"> -->
-                      <!--             <Setter Property="ScaleTransform.ScaleY" Value="0.90"/> -->
-                      <!--             <Setter Property="ScaleTransform.ScaleX" Value="0.90"/> -->
-                      <!--             <Setter Property="Opacity" Value="0"/> -->
-                      <!--           </KeyFrame> -->
-                      <!--           <KeyFrame Cue="100%"> -->
-                      <!--             <Setter Property="ScaleTransform.ScaleY" Value="1"/> -->
-                      <!--             <Setter Property="ScaleTransform.ScaleX" Value="1"/> -->
-                      <!--             <Setter Property="Opacity" Value="1"/> -->
-                      <!--           </KeyFrame> -->
-                      <!--         </Animation> -->
-                      <!--       </Style.Animations> -->
-                      <!--     </Style> -->
-                      <!--   </Button.Styles> -->
-                      <!--    -->
-                      <!--  <LucideIcon  -->
-                      <!--  Kind="Settings"  -->
-                      <!--  Size="{DynamicResource FontSizeL}"/>  -->
-                      <!-- </Button> -->
-
-                      <!--  <v:UserProfilePresenter  -->
-                      <!--  BorderBrush="{DynamicResource BorderColor}"  -->
-                      <!--  BorderThickness="1" Focusable="False"  -->
-                      <!--  ShowActionsButton="False"  -->
-                      <!--  Size="{DynamicResource FontSize3Xl}"  -->
-                      <!--  ToolTip.Placement="Top"/>  -->
 
                       <Button
                         Classes="Ghost Rounded Update"

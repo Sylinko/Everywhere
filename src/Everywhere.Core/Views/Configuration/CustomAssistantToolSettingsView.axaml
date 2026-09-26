@@ -163,7 +163,7 @@
           MinWidth="240" MaxWidth="360"
           RowDefinitions="Auto,Auto,*" RowSpacing="4">
           <DockPanel
-            Margin="12,4,8,0" HorizontalSpacing="12">
+            Margin="8,4,4,0" HorizontalSpacing="12">
             <ToggleSwitch
               DockPanel.Dock="Right" VerticalAlignment="Center"
               IsChecked="{Binding IsFollowingGlobal, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
@@ -179,17 +179,19 @@
 
           <ScrollViewer
             Grid.Row="2" MaxHeight="430"
-            Margin="6,0,-6,0" HorizontalScrollBarVisibility="Disabled"
+            Margin="6,0,-6,0" ClipToBounds="False"
+            HorizontalScrollBarVisibility="Disabled"
             IsVisible="{Binding Assistant?.IsToolCallEnabled, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
             <ItemsControl
-              Margin="0,0,12,0"
+              Margin="0,0,12,0" ClipToBounds="False"
               ItemsSource="{Binding ToolSettings?.Plugins, RelativeSource={RelativeSource TemplatedParent}}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="v:ToolPluginPresentation">
                   <Expander
-                    Padding="6,4" BorderThickness="0">
+                    Margin="-6,0" Padding="12,4"
+                    BorderThickness="0">
                     <Expander.Header>
-                      <DockPanel HorizontalSpacing="8">
+                      <DockPanel HorizontalSpacing="12">
                         <LucideIcon
                           DockPanel.Dock="Left" VerticalAlignment="Center"
                           Kind="{Binding Plugin?.Icon, TargetNullValue=Hammer}"

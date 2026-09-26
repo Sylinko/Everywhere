@@ -50,7 +50,7 @@
             </TextBlock>
             <TextBlock
               Classes="Muted Caption" Margin="-2,0,0,0"
-              VerticalAlignment="Bottom"
+              VerticalAlignment="Center"
               Text="{Binding SelectedItem?.EffectiveReasoningOptions?.EffectiveReasoningEffort, RelativeSource={RelativeSource TemplatedParent}}"
               TextTrimming="CharacterEllipsis">
               <TextBlock.MaxWidth>
@@ -95,7 +95,7 @@
                       <Button
                         Classes="Ghost Uniform" DockPanel.Dock="Bottom"
                         HorizontalContentAlignment="Left"
-                        Command="{TemplateBinding OpenAssistantsSettingsCommand}"
+                        Command="{Binding OpenAssistantsSettingsCommand, RelativeSource={RelativeSource TemplatedParent}}"
                         CornerRadius="12">
                         <DockPanel>
                           <Border
@@ -251,8 +251,9 @@
                 <v:ConditionalContentControl.TrueContent>
                   <DataTemplate x:DataType="ai:CustomAssistant">
                     <StackPanel
-                      Width="300" Margin="4,6"
-                      Grid.IsSharedSizeScope="True" Spacing="8">
+                      MinWidth="240" MaxWidth="300"
+                      Margin="2,4" Grid.IsSharedSizeScope="True"
+                      Spacing="8">
                       <Grid
                         Margin="6,0" ColumnSpacing="12"
                         RowDefinitions="Auto,12,Auto,Auto">
@@ -470,7 +471,8 @@
                             Size="{DynamicResource FontSizeL}"/>
 
                           <Button.Flyout>
-                            <Flyout Placement="Right">
+                            <Flyout
+                              HorizontalOffset="2" Placement="Right">
                               <v:CustomAssistantToolSettingsView
                                 Assistant="{Binding}"
                                 Theme="{StaticResource AssistantToolSettingsCompactTheme}"/>
@@ -514,26 +516,24 @@
 
                         <Button.Flyout>
                           <Flyout Placement="Right">
-                            <StackPanel>
+                            <StackPanel
+                              Margin="8" Spacing="8">
                               <StackPanel
-                                Margin="0,0,0,4" Orientation="Vertical"
-                                Spacing="4">
-                                <StackPanel
-                                  Orientation="Horizontal" Spacing="4">
+                                Orientation="Vertical" Spacing="4">
+                                <DockPanel HorizontalSpacing="6">
                                   <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{DynamicResource FontSizeS}"
+                                    DockPanel.Dock="Left" VerticalAlignment="Center"
                                     Text="{I18N {x:Static LocaleKey.CustomAssistant_VisualContextLengthLimit_Header}}"/>
                                   <LucideIcon
+                                    HorizontalAlignment="Left" VerticalAlignment="Center"
                                     Kind="CircleQuestionMark"
                                     Size="{DynamicResource FontSizeS}"
                                     ToolTip.Placement="Right"
                                     ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_VisualContextLengthLimit_Description}}"/>
-                                </StackPanel>
+                                </DockPanel>
 
                                 <TextBlock
-                                  Classes="Muted" VerticalAlignment="Center"
-                                  FontSize="{DynamicResource FontSizeS}">
+                                  Classes="Muted Caption" VerticalAlignment="Center">
                                   <TextBlock.Text>
                                     <I18N Key="{Binding VisualContextLengthLimit, Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
                                   </TextBlock.Text>
@@ -547,25 +547,22 @@
                               </StackPanel>
 
                               <StackPanel
-                                Margin="0,4,0,4" Orientation="Vertical"
-                                Spacing="4">
-                                <StackPanel
-                                  Orientation="Horizontal" Spacing="4">
+                                Orientation="Vertical" Spacing="4">
+                                <DockPanel HorizontalSpacing="6">
                                   <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{DynamicResource FontSizeS}"
+                                    DockPanel.Dock="Left" VerticalAlignment="Center"
                                     Text="{I18N {x:Static LocaleKey.CustomAssistant_MaxContextRounds_Header}}"/>
                                   <LucideIcon
+                                    HorizontalAlignment="Left" VerticalAlignment="Center"
                                     Kind="CircleQuestionMark"
                                     Size="{DynamicResource FontSizeS}"
                                     ToolTip.Placement="Right"
                                     ToolTip.Tip="{I18N {x:Static LocaleKey.CustomAssistant_MaxContextRounds_Description}}"/>
-                                </StackPanel>
+                                </DockPanel>
 
                                 <TextBlock
-                                  Classes="Muted" Height="16"
-                                  VerticalAlignment="Center"
-                                  FontSize="{DynamicResource FontSizeS}">
+                                  Classes="Muted Caption" Height="16"
+                                  VerticalAlignment="Center">
                                   <TextBlock.Text>
                                     <I18N Key="{Binding MaxContextRounds, Converter={x:Static vc:MaxContextRoundsConverters.ToDisplayKey}}"/>
                                   </TextBlock.Text>
@@ -578,11 +575,12 @@
                                   Value="{Binding MaxContextRounds, Mode=TwoWay}"/>
                               </StackPanel>
 
-                              <!--  <Button  -->
-                              <!--  Classes="Secondary Compact Uniform" Margin="0,4,0,0"  -->
-                              <!--  shadui:ButtonAssist.Icon="{LucideIconContent Settings2}"  -->
-                              <!--  Command="{Binding OpenSettingsCommand}"  -->
-                              <!--  Content="{I18N {x:Static LocaleKey.ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings}}"/>  -->
+                              <Button
+                                Classes="Ghost LargeIcon" Margin="-6,0,-6,-4"
+                                Padding="6,4" HorizontalContentAlignment="Stretch"
+                                shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                                Command="{Binding $parent[v:ChatCustomAssistantSelector].OpenSettingsCommand}"
+                                Content="{I18N {x:Static LocaleKey.ChatCustomAssistantSelector_MoreSettingsButton_Content}}"/>
                             </StackPanel>
                           </Flyout>
                         </Button.Flyout>
