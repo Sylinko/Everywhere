@@ -8,7 +8,7 @@ namespace Everywhere.StrategyEngine.BuiltIn;
 /// Strategy for text selection contexts.
 /// Provides commands when user has selected text.
 /// </summary>
-public sealed class TextSelectionStrategyProvider : BuiltInStrategyProvider
+public sealed class TextSelectionStrategyProvider() : BuiltInStrategyProvider("text-selection")
 {
     private static readonly IStrategyCondition BaseCondition =
         new TextCondition
