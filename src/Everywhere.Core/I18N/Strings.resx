@@ -3962,7 +3962,9 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
         <value>Fluid</value>
     </data>
-    <data name="PresetModelSelector_Unlisted" xml:space="preserve"><value>This model is not listed in the current catalog. Its saved configuration is retained.</value></data>
+    <data name="PresetModelSelector_Unlisted" xml:space="preserve">
+        <value>This model is not listed in the current catalog. Its saved configuration is retained.</value>
+    </data>
     <data name="PresetModelProvider_OpenAI" xml:space="preserve">
         <value>OpenAI</value>
     </data>
