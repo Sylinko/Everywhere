@@ -113,7 +113,9 @@ public sealed class ScreenVisualElement : VisualElement
     /// <inheritdoc />
     protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var topology = WindowsDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
@@ -134,11 +136,15 @@ public sealed class ScreenVisualElement : VisualElement
                 HWND.Null,
                 true,
                 GET_WINDOW_CMD.GW_HWNDNEXT,
-                request),
+                request,
+                offset,
+                cancellationToken),
             VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling => CreateSiblingEnumerator(
                 topology,
                 relation,
-                request),
+                request,
+                offset,
+                cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(relation), relation, null),
         };
     }
@@ -167,7 +173,8 @@ public sealed class ScreenVisualElement : VisualElement
                 "The display topology changed after this Screen element was observed.");
         }
 
-        return Task.FromResult(GDIScreenCapture.Capture(Bounds) ??
+        return Task.FromResult(
+            GDIScreenCapture.Capture(Bounds) ??
             throw new InvalidOperationException("The display does not intersect the Windows virtual screen."));
     }
 
@@ -194,7 +201,9 @@ public sealed class ScreenVisualElement : VisualElement
     private IVisualElementCursor CreateSiblingEnumerator(
         WindowsDisplayTopology topology,
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var originIndex = -1;
         for (var index = 0; index < topology.Displays.Count; index++)
@@ -204,9 +213,11 @@ public sealed class ScreenVisualElement : VisualElement
             break;
         }
         var direction = relation == VisualElementRelation.PreviousSibling ? -1 : 1;
-        return originIndex < 0 ?
+        var nextMonitorIndex = originIndex + direction * ((long)offset + 1);
+        var count = direction < 0 ? originIndex : topology.Displays.Count - originIndex - 1;
+        return originIndex < 0 || nextMonitorIndex is < int.MinValue or > int.MaxValue ?
             EmptyVisualElementEnumerator.Shared :
-            new ScreenSiblingEnumerator(Context, Backend, topology, originIndex + direction, direction, request);
+            new ScreenSiblingEnumerator(Context, Backend, topology, (int)nextMonitorIndex, direction, request, offset, count, cancellationToken);
     }
 
     [DoesNotReturn]
@@ -219,16 +230,19 @@ public sealed class ScreenVisualElement : VisualElement
         WindowsDisplayTopology topology,
         int nextMonitorIndex,
         int direction,
-        VisualElementQueryRequest queryRequest
+        VisualElementQueryRequest queryRequest,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
     ) : IVisualElementCursor
     {
         public VisualElementQueryResult Current => _current ?? throw new InvalidOperationException("The Enumerator has no current item.");
 
         object IEnumerator.Current => Current;
 
-        public int Count { get; } = direction < 0 ? Math.Max(0, nextMonitorIndex + 1) : Math.Max(0, topology.Displays.Count - nextMonitorIndex);
+        public int Count { get; } = count;
 
-        public int Index { get; private set; } = -1;
+        public int Index { get; private set; } = offset - 1;
 
         private VisualElementQueryResult? _current;
         private readonly VisualElementRetention _retention = context.CreateRetention();
@@ -238,6 +252,7 @@ public sealed class ScreenVisualElement : VisualElement
         public bool MoveNext()
         {
             ThrowIfUnavailable();
+            cancellationToken.ThrowIfCancellationRequested();
             if (_nextMonitorIndex < 0 || _nextMonitorIndex >= topology.Displays.Count)
             {
                 _current = null;

@@ -115,6 +115,22 @@ public sealed partial class AcquireAutomationAnchorResponse
     /// <summary>Normalized provider-wide failure classification.</summary>
     [Key(16)]
     public required VisualElementQueryFailureKind? FailureKind { get; init; }
+
+    /// <summary>Confidence of the complete logical text-stream length.</summary>
+    [Key(17)]
+    public required VisualTextLengthKind? TotalTextLengthKind { get; init; }
+
+    /// <summary>Measured complete logical text-stream length, when numeric.</summary>
+    [Key(18)]
+    public required int? TotalTextLength { get; init; }
+
+    /// <summary>Optional localized user-facing failure message.</summary>
+    [Key(19)]
+    public required IDynamicLocaleKey? FailureMessage { get; init; }
+
+    /// <summary>Optional bounded English Agent-facing failure detail.</summary>
+    [Key(20)]
+    public required string? FailureAgentMessage { get; init; }
 }
 
 /// <summary>Requests a fresh bounded scalar observation of one Context-owned visual anchor.</summary>

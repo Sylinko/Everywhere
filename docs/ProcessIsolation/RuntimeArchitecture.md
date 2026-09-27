@@ -13,7 +13,7 @@ On Windows and macOS, Everywhere uses the same executable for three long-lived r
 
 Role and controller dispatch occurs before Entrance, dependency injection, Avalonia, databases, or the ordinary application graph. Host processes use `ProcessRoleHostRunner` and construct only their platform session. The controller receives a small platform implementation directly from the platform entry point.
 
-Main is intentionally ordinary privilege. On Windows, service mode elevates only the Input and Automation Hosts. Starting Main as administrator is allowed but produces a user warning because drag-and-drop interoperability may fail and Agent actions inherit broader authority.
+Main uses the caller's token and requests neither elevation nor UIAccess in its manifest. On Windows, service mode elevates only the Input and Automation Hosts through the registered scheduled task. Starting Main as administrator is allowed but produces a user warning because drag-and-drop interoperability may fail and Agent actions inherit broader authority.
 
 ## Startup sequence
 

@@ -36,6 +36,8 @@ public sealed class VisualContextSnapshotter
         IReadOnlyList<VisualElement> coreElements,
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
+        Action<VisualElementQueryResult>? onTopLevelObserved = null,
+        int relationOffset = 0,
         CancellationToken cancellationToken = default);
 }
 ```
@@ -49,7 +51,7 @@ Snapshot:
 - preserves the existing traversal order and records its metadata;
 - returns a bounded, partial observation forest;
 - records facts and status without choosing serialization syntax;
-- checks cancellation and aggregate risk between direct platform operations, retaining every admitted Element before any transient Enumerator owner is released.
+- checks cancellation and aggregate risk between direct platform operations and within platform cursor loops, retaining every admitted Element before any transient Enumerator owner is released.
 
 A backend transition is not a new Snapshot root or a new risk domain by itself. A Screen-to-UIA edge participates in the same traversal priority, deadline, operation accounting, identity deduplication, and status flow as any other relation. The identity map uses the Context-wide, backend-qualified Element identity. Element snapshot type and observed fields describe the logical Element; they are not inferred from a concrete CLR class name.
 
@@ -92,9 +94,9 @@ All risk measures are monotonic. Snapshot is bounded by at least:
 - per-provider or per-root failure count;
 - optional depth or edge limits only where real providers justify them.
 
-Caller cancellation remains `OperationCanceledException`. A provider timeout normally degrades or closes only the affected branch. Aggregate deadline returns the safely observed partial snapshot with status describing incompleteness.
+Caller cancellation remains `OperationCanceledException`. Snapshot creates one operation-local deadline source linked to the caller token and passes that combined token into relation Enumerators. Cursor loops observe it between native calls. Expiration caused only by the Snapshot deadline is consumed by Snapshot and returns the safely observed partial forest with status; it does not cancel the caller token or become RPC cancellation. A provider timeout normally degrades or closes only the affected branch. A synchronous native call that does not return still relies on the platform timeout and the Automation Host process boundary.
 
-All Enumerators are disposed on success, duplicate detection, limit exhaustion, timeout, cancellation, and unexpected failure. Snapshot owns every Element that must outlive those Enumerators.
+The method currently advancing an Enumerator owns it until the Enumerator is either disposed or transferred into exactly one queued traversal work item. This single-owner rule covers success, duplicate detection, limit exhaustion, timeout, caller cancellation, and unexpected failure. Snapshot owns every Element that must outlive those Enumerators.
 
 ### 2.4 One Element with Huge Text
 
@@ -103,7 +105,7 @@ Snapshot handles an enormous text element as follows:
 1. query lightweight identity, type, state, and bounds before text;
 2. read the provider's ordinary scalar Value under the native timeout, or use a ranged API for document-style content when available;
 3. retain only a bounded preview;
-4. preserve `VisualElementSnapshot.HasMoreText`, expose the `moreText` fact, and offer bounded continuation through the separate `read_visual_text` capability when more content may exist;
+4. preserve whether the preview is incomplete together with an exact UTF-16 total or a proven numeric lower bound, and offer bounded continuation through the separate `read_visual_text` capability;
 5. avoid tokenizing or structurally expanding a complete Value when local slicing is sufficient;
 6. retain a skeleton when the provider call times out or otherwise fails.
 
@@ -205,7 +207,7 @@ Candidates include:
 
 Measurable policy may use member count, estimated structural overhead, or content-to-structure ratio. Mandatory rules are:
 
-- source members remain queryable through the Composite target;
+- source members remain retained so the Composite text stream can be read without exposing an internal member protocol;
 - normalized logical order is preserved;
 - core Elements are never silently absorbed without an exposed anchor;
 - selected interactive descendants receive independent Element targets;
@@ -224,15 +226,15 @@ The final-text contract and allocation policy are specified in [09-FinalTextAllo
 
 The first implementation uses capped progressive filling over divisible prefixes rather than packet queues and deficit counters. Full fragment-cost DRR is an alternative if future work requires indivisible packets. No new importance weighting or additional offscreen penalty is introduced.
 
-The configured Composite limit and an intentionally short allocated prefix produce moreText without failure status. Structural budget omission remains explicit. Candidate size stays bounded by Snapshot's existing character limits and Composite/scalar bounds. UTF-16 prefix cuts preserve surrogate pairs but do not require word boundaries.
+The configured Composite limit and an intentionally short allocated prefix produce `textLength=shown/total` without failure status. Structural budget omission remains explicit. Candidate size stays bounded by Snapshot's existing character limits and Composite/scalar bounds. UTF-16 prefix cuts preserve surrogate pairs but do not require word boundaries.
 
 The same Prompting estimator accounts for escaped body demand. The Builder renders the complete candidate without priority pruning after allocation, validates the total estimate, and monotonically decreases the body budget if correction is needed. Final budget means compliance with that estimator, not every model tokenizer. Full output cost includes names, IDs, markup, states, and continuation.
 
-### 3.8 Status and Expansion
+### 3.8 Status and Follow-up
 
 Prompt projection preserves Snapshot status and may add bounded status for projection or prompt-budget limits. A non-platform omission remains visible even when no exception occurred.
 
-Expandable missing content resolves through a visual element ID. Raw platform IDs never appear as pretend Agent IDs. Status tells the Agent that information may exist; `observedMembers` and continuation tell it how to request more without exposing the internal target kind.
+Missing structure is followed through returned visual element IDs and another relation query. Raw platform IDs never appear as pretend Agent IDs. Structured text length directs content reads; Composite members do not create a separate structural continuation protocol.
 
 ## 4. Projection Output and Publication
 
@@ -248,7 +250,7 @@ The same builder that normalizes and admits the Snapshot owns final syntax and p
 2. request monotonic new IDs only after normalization, Composite creation, and coarse admission;
 3. build a bounded draft with provisional IDs and validate it through the actual Prompt renderer;
 4. use one stable semantic schema for every Agent-visible visual element;
-5. expose observed member count, independently exposed children, bounded preview, exceptional status, and continuation;
+5. expose independently useful children, bounded preview, structured text length, and exceptional status;
 6. use Prompting primitives for invariant formatting and escaping;
 7. stabilize skeleton admission before allocating bodies, then validate final text without deleting allocated body nodes;
 8. commit the exact final text's publication batch before exposing the result;
@@ -258,7 +260,7 @@ The same builder that normalizes and admits the Snapshot owns final syntax and p
 
 Internally the Builder uses a tree of `PromptCompactElement` nodes and returns its final rendered string. It renders familiar XML-like tags, compact scalar attributes, and valueless Boolean flags, but is deliberately not valid XML. A typical target is `<TextEdit id=7 name="Draft message" focused disabled/>`.
 
-Visual element type is the tag name. A projected logical aggregation uses `Composite` as its element type rather than becoming a second tool-level target category. `id`, bounded `name`, optional bounds, exceptional `status`, and `observedMembers` where applicable are attributes. Safe nonempty values without whitespace, control characters, or markup delimiters omit quotes; all other values remain quoted and escaped. Sparse non-default facts such as `focused`, `disabled`, `selected`, `readOnly`, `password`, `offscreen`, and `moreText` are bare flags. The builder does not emit speculative action capabilities, implementation priority, or a normal `complete` field. Absence of `status` means that no relevant problem was observed; it does not claim an exhaustive or immutable read. `observedMembers` is the number retained in the Composite projection, not a count of every live descendant.
+Visual element type is the tag name. A projected logical aggregation uses `Composite` as its element type rather than becoming a second tool-level target category. `id`, bounded `name`, optional bounds, exceptional `status`, and `textLength` for an incomplete body are attributes. Safe nonempty values without whitespace, control characters, or markup delimiters omit quotes; all other values remain quoted and escaped. Sparse non-default facts such as `focused`, `disabled`, `selected`, `readOnly`, `password`, and `offscreen` are bare flags. The builder does not emit speculative action capabilities, implementation priority, a retained-member count, or a normal `complete` field. Absence of `status` means that no relevant problem was observed; it does not claim an exhaustive or immutable read.
 
 The builder does not hand-assemble markup. It renders Prompting primitives once the final allocation is known. Untrusted attribute values and child text stay inside Prompting nodes so the renderer owns escaping.
 

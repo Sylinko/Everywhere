@@ -315,7 +315,7 @@ Verify:
 - shared roots coalesce deterministically;
 - transparent containers preserve child order;
 - fragmented text can compress into Composite without losing independently interactive descendants;
-- Composite exposes multi-member semantics, bounded preview, observed member count, continuation, and exceptional status;
+- Composite exposes a bounded preview, structured text length, readable logical text, and exceptional status without exposing internal member paging;
 - Composite never aliases a source element ID or becomes actionable;
 - the same Prompt renderer owns structural cost, escaping, attributes, status, and pruning evidence;
 - allocation is progressive and cannot be consumed entirely by one huge region before root fairness policy applies;
@@ -326,7 +326,8 @@ Verify:
 - required attribute-only compact elements remain present as self-closing nodes without placeholder content;
 - compact attributes and child text are escaped, only delimiter-free nonempty values omit quotes, and ordered sparse state flags remain valueless;
 - normal results omit `complete`, capabilities, implementation priority, and empty status;
-- `observedMembers` describes retained Composite parts rather than every live descendant;
+- Composite text continuation is discoverable through `read_visual_text` without exposing retained source members;
+- incomplete bodies report `textLength=shown/total` with an exact UTF-16 total or a proven numeric lower bound;
 - omitted known visual information is status, while renderer omission remains Prompting metadata;
 - validation rendering converges monotonically and publication commits only targets present in the final prompt;
 - construction failure consumes no ID.
@@ -336,9 +337,9 @@ Verify:
 Verify:
 
 - tool description states bounded, incomplete, mutable-tree semantics;
-- one structural query handles Element and Composite targets without requiring the Agent to choose Inspect versus Expand;
+- one structural query accepts every published target ID and reports unsupported relations without exposing internal target categories;
 - every query enforces request/result limits;
-- structural offsets are 1-based and root `next` identifies the following selected retained-member range; current observation failures remain explicit, allowing overlap or retry;
+- structural offsets are zero-based, apply independently to each requested initial direction, and reset to zero for recursively opened relations; platform offset limits remain explicit failures that allow overlap or retry;
 - relation/provider failure preserves partial items and does not report definitive exhaustion;
 - unavailable IDs fail without heuristic re-anchoring;
 - historical IDs promote into the active turn on successful lookup;
@@ -348,7 +349,7 @@ Verify:
 - any later search contract never claims exhaustive absence from an unbounded live tree;
 - output remains PromptNode before rendering.
 
-Current automated coverage includes Element queries, Composite member paging, invalid Element offsets, and the shared Snapshot/PromptNode pipeline. The explicit Windows native WebView probe loads a real HTTP/HTTPS page through WebView2, requires its UIA `Document` to appear after renderer accessibility is enabled, and saves the exact compact Agent projection for manual inspection. A macOS Streamable HTTP MCP journey now composes the same TestApp with the production AX Backend: Example Domain exposed `AXWebArea` as `Document`, a retained StaticText ID remained readable after ten later queries, and beginning the next persistent turn advanced history once. That WKWebView reported zero characters on the WebArea itself, so Document-level text paging is not claimed; child StaticText retrieval is the observed capability. Linux remains platform work.
+Current automated coverage includes Element queries, zero-based live-relation offsets, unsupported Composite structural queries, and the shared Snapshot/PromptNode pipeline. The explicit Windows native WebView probe loads a real HTTP/HTTPS page through WebView2, requires its UIA `Document` to appear after renderer accessibility is enabled, and saves the exact compact Agent projection for manual inspection. A macOS Streamable HTTP MCP journey now composes the same TestApp with the production AX Backend: Example Domain exposed `AXWebArea` as `Document`, a retained StaticText ID remained readable after ten later queries, and beginning the next persistent turn advanced history once. That WKWebView reported zero characters on the WebArea itself, so Document-level text paging is not claimed; child StaticText retrieval is the observed capability. Linux remains platform work.
 
 ## 15. Scenario Coverage and Acceptance
 

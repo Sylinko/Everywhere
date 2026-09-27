@@ -23,6 +23,8 @@ Main owns `RemoteVisualContext`, `RemoteVisualAnchor`, `RemoteVisualPicker`, and
 
 Each Host-side Automation Context has a single-reader operation queue. Calls that mutate one `VisualContext` therefore execute serially, while separate Contexts remain independent. Native element methods remain synchronous inside the Host because UIA and AX are synchronous provider APIs; the RPC boundary is coarse and asynchronous from Main's perspective.
 
+Caller cancellation is transport cancellation: Main cancels its pending correlation and the Host receives the request token. An operation-local deadline is application policy instead. Snapshot traversal links its own deadline token to the request token so platform cursors can observe both between native calls, but it consumes only its own deadline and returns a partial result with status. It never cancels the request token or turns an aggregate Snapshot deadline into an RPC cancellation frame. A synchronous native provider call that does not return cannot observe either token; the Host process remains the reclaimable boundary.
+
 `ChatVisualState` attaches lazily to the current Automation connection. When the Host connection changes, `ChatVisualService` creates a replacement remote Context and invalidates previously published target IDs. Reads and queries fail with `VisualContextResetException` until the caller re-observes. An action batch is not replayed: connection loss yields `VisualActionOutcomeUnknownException` because the Host may have performed part or all of the action before disconnection.
 
 The debugger uses a separate diagnostics Context with no completed-turn retention. The shared acquisition Context holds draft anchors for pointer and text-selection flows before they move into a chat Context.

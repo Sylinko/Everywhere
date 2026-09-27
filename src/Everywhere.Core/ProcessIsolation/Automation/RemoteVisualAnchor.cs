@@ -1,4 +1,5 @@
 using Everywhere.Automation;
+using Everywhere.I18N;
 using Everywhere.ProcessIsolation.Rpc;
 
 namespace Everywhere.ProcessIsolation.Automation;
@@ -32,6 +33,12 @@ public sealed class RemoteVisualAnchor : RpcSafeHandle
     /// Gets the normalized provider-wide failure classification.
     /// </summary>
     public VisualElementQueryFailureKind? FailureKind => _observation.FailureKind;
+
+    /// <summary>Gets the optional localized user-facing failure message returned by the Host.</summary>
+    public IDynamicLocaleKey? FailureMessage => _observation.FailureMessage;
+
+    /// <summary>Gets optional bounded English failure detail suitable for an Agent-facing result.</summary>
+    public string? FailureAgentMessage => _observation.FailureAgentMessage;
 
     /// <summary>
     /// Gets the connection-scoped parent Context resource ID that owns this anchor.

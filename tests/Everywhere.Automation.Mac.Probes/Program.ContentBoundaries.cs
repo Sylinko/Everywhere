@@ -86,7 +86,7 @@ public static partial class Program
             Require(finalTextPage == VisualElementTextReadResult.FromSuccess(completeTextValue, finalTextOffset, ContentProbeTextLimit),
                 "The final production text page did not terminate at the controlled AXValue boundary.");
             var exhaustedTextPage = textElement.ReadText(completeTextValue.Length, ContentProbeTextLimit);
-            Require(exhaustedTextPage == new VisualElementTextReadResult(string.Empty, null, null),
+            Require(exhaustedTextPage == new VisualElementTextReadResult(string.Empty, null, null, VisualTextLength.Exact(completeTextValue.Length)),
                 "Reading at the controlled AX text length did not return an exhausted page.");
             var combinedText = new StringBuilder(completeTextValue.Length);
             var textPageCount = 0;

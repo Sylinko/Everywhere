@@ -42,14 +42,18 @@ public sealed class AXSystemWideVisualElement(
     }
 
     /// <inheritdoc />
-    protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+    protected override IVisualElementCursor CreateEnumeratorCore(
+        VisualElementRelation relation,
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         ValidateRelation(relation);
         return EmptyVisualElementEnumerator.Shared;
     }
 
     /// <inheritdoc />
-    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) =>
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters) =>
         VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null));
 
     /// <inheritdoc />

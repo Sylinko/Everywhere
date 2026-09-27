@@ -119,7 +119,7 @@ public sealed class ChatVisualService : IDisposable
         ChatVisualState state,
         int targetId,
         VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int offset = 1,
+        int offset = 0,
         int limit = VisualQueryRequest.DefaultLimit,
         int targetTokenBudget = 4096,
         CancellationToken cancellationToken = default) =>

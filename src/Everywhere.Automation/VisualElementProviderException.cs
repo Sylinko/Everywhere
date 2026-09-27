@@ -19,7 +19,10 @@ public sealed class VisualElementProviderException : InvalidOperationException
         Exception? innerException = null
     ) : base(message, innerException)
     {
-        if (kind is not (VisualElementQueryFailureKind.ElementUnavailable or VisualElementQueryFailureKind.ProviderFailure))
+        if (kind is not (
+            VisualElementQueryFailureKind.ElementUnavailable or
+            VisualElementQueryFailureKind.ProviderFailure or
+            VisualElementQueryFailureKind.LimitReached))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(kind),

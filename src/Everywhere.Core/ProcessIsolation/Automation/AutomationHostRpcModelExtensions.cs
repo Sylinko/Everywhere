@@ -1,10 +1,24 @@
 using Avalonia.Platform;
 using Everywhere.Automation;
+using Everywhere.Common;
 
 namespace Everywhere.ProcessIsolation.Automation;
 
 internal static class AutomationHostRpcModelExtensions
 {
+    public static void ThrowIfFailed(this AcquireAutomationAnchorResponse response)
+    {
+        if (response.FailureKind is not { } failureKind) return;
+
+        var originalException = AutomationRpcExceptionMapping.CreateException(
+            new VisualElementQueryRpcError { Kind = failureKind },
+            response.FailureAgentMessage);
+
+        throw new HandledException(
+            originalException,
+            response.FailureMessage ?? new DynamicLocaleKey(LocaleKey.Common_Error));
+    }
+
     public static AcquireAutomationAnchorRequest ToAcquireRequest(
         this VisualElementLocator locator,
         long contextId,
@@ -57,6 +71,10 @@ internal static class AutomationHostRpcModelExtensions
                 AvailableFields = VisualElementFields.None,
                 MissingFields = VisualElementFields.None,
                 FailureKind = null,
+                TotalTextLengthKind = null,
+                TotalTextLength = null,
+                FailureMessage = null,
+                FailureAgentMessage = null,
             };
         }
 
@@ -81,6 +99,10 @@ internal static class AutomationHostRpcModelExtensions
             AvailableFields = result.AvailableFields,
             MissingFields = result.MissingFields,
             FailureKind = result.Failure?.Kind,
+            TotalTextLengthKind = snapshot.TotalTextLength?.Kind,
+            TotalTextLength = snapshot.TotalTextLength?.Value,
+            FailureMessage = result.Failure?.Message,
+            FailureAgentMessage = result.Failure?.AgentMessage,
         };
     }
 
@@ -103,6 +125,10 @@ internal static class AutomationHostRpcModelExtensions
         AvailableFields = VisualElementFields.None,
         MissingFields = VisualElementFields.None,
         FailureKind = failureKind,
+        TotalTextLengthKind = null,
+        TotalTextLength = null,
+        FailureMessage = null,
+        FailureAgentMessage = null,
     };
 
     public static AcquireAutomationAnchorResponse ToResponse(this VisualContextSnapshotNode node)
@@ -128,6 +154,10 @@ internal static class AutomationHostRpcModelExtensions
             AvailableFields = node.AvailableFields,
             MissingFields = node.MissingFields,
             FailureKind = null,
+            TotalTextLengthKind = snapshot.TotalTextLength?.Kind,
+            TotalTextLength = snapshot.TotalTextLength?.Value,
+            FailureMessage = null,
+            FailureAgentMessage = null,
         };
     }
 
@@ -141,7 +171,10 @@ internal static class AutomationHostRpcModelExtensions
             response.HasMoreText,
             response.HasBounds ? new PixelRect(response.BoundsX, response.BoundsY, response.BoundsWidth, response.BoundsHeight) : null,
             response.ProcessId,
-            response.NativeWindowHandle is { } handle ? (nint)handle : null);
+            response.NativeWindowHandle is { } handle ? (nint)handle : null)
+        {
+            TotalTextLength = response is { TotalTextLengthKind: { } kind, TotalTextLength: { } value } ? VisualTextLength.Create(kind, value) : null,
+        };
 
     public static AutomationCaptureHeader ToHeader(this IVisualElementCapture capture) =>
         new()

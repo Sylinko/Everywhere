@@ -23,7 +23,7 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
 
     public int Count => -1;
 
-    public int Index { get; private set; } = -1;
+    public int Index { get; private set; }
 
     private readonly WindowsVisualElementBackend _backend;
     private readonly WindowsDisplayTopology _topology;
@@ -31,9 +31,11 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
     private readonly GET_WINDOW_CMD _direction;
     private readonly VisualElementQueryRequest _queryRequest;
     private readonly VisualElementRetention _retention;
+    private readonly CancellationToken _cancellationToken;
     private HWND _lastWindow;
     private VisualElementQueryResult? _lookahead;
     private VisualElementQueryResult? _current;
+    private int _remainingOffset;
     private bool _shouldStartAtTop;
     private bool _isLookaheadResolved;
     private bool _isCompleted;
@@ -47,7 +49,9 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
         HWND initialWindow,
         bool shouldStartAtTop,
         GET_WINDOW_CMD direction,
-        VisualElementQueryRequest queryRequest)
+        VisualElementQueryRequest queryRequest,
+        int offset,
+        CancellationToken cancellationToken)
     {
         _backend = backend;
         _topology = topology;
@@ -56,6 +60,9 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
         _shouldStartAtTop = shouldStartAtTop;
         _direction = direction;
         _queryRequest = queryRequest;
+        _remainingOffset = offset;
+        _cancellationToken = cancellationToken;
+        Index = offset - 1;
         _retention = context.CreateRetention();
     }
 
@@ -119,6 +126,7 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
     {
         while (true)
         {
+            _cancellationToken.ThrowIfCancellationRequested();
             var windowHandle = FindNextTopLevelWindow();
             if (windowHandle == HWND.Null) return null;
             _lastWindow = windowHandle;
@@ -130,8 +138,17 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
                 using var cachedElement = _backend.Automation.ElementFromHandleBuildCache(windowHandle, cacheRequest);
                 if (!cachedElement.HasValue) continue;
 
-                var element = _backend.GetOrCreateUIAutomationElement(_retention, in cachedElement);
-                return cachedElement.CreateQueryResult(element, _queryRequest);
+                using var candidateRetention = _retention.Context.CreateRetention();
+                var element = _backend.GetOrCreateUIAutomationElement(candidateRetention, in cachedElement);
+                var result = cachedElement.CreateQueryResult(element, _queryRequest);
+                if (_remainingOffset > 0)
+                {
+                    _remainingOffset--;
+                    continue;
+                }
+
+                _retention.Retain(element);
+                return result;
             }
             catch (Exception exception) when (WindowsUIAutomationFailure.IsElementUnavailable(exception))
             {
@@ -149,6 +166,7 @@ internal sealed class TopLevelWindowEnumerator : IVisualElementCursor
         var candidate = _shouldStartAtTop ? PInvoke.GetTopWindow(HWND.Null) : PInvoke.GetWindow(_lastWindow, _direction);
         while (candidate != HWND.Null)
         {
+            _cancellationToken.ThrowIfCancellationRequested();
             if (_topology.FindTopLevelWindowDisplay(candidate)?.MonitorHandle == _monitorHandle)
             {
                 return candidate;

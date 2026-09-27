@@ -62,6 +62,7 @@ internal static class UIAutomationQueryExtensions
         var name = default(string);
         var text = default(string);
         var hasMoreText = false;
+        var totalTextLength = default(VisualTextLength?);
         var bounds = default(PixelRect?);
         var processId = default(int?);
         var nativeWindowHandle = default(nint?);
@@ -145,20 +146,27 @@ internal static class UIAutomationQueryExtensions
         {
             try
             {
-                text = cachedElement.GetCachedValue();
-                if (text is not null && text.Length > request.MaxTextCharacters)
+                var rangedText = cachedElement.ReadCachedText(
+                    0,
+                    Math.Max(1, request.MaxTextCharacters),
+                    VisualTextReadLimits.MaximumPreviewProbeCharacters);
+                if (rangedText is { } textRead)
                 {
-                    hasMoreText = true;
-                    text = text[..request.MaxTextCharacters];
+                    text = request.MaxTextCharacters == 0 ? string.Empty : textRead.Text;
+                    totalTextLength = textRead.IsComplete ?
+                        VisualTextLength.Exact(textRead.ProbedLength) :
+                        VisualTextLength.LowerBound(textRead.ProbedLength);
+                    hasMoreText = textRead.NextOffset is not null || !textRead.IsComplete;
                 }
-                else if (text is null)
+                else
                 {
-                    var probeLength = request.MaxTextCharacters == int.MaxValue ? int.MaxValue : request.MaxTextCharacters + 1;
-                    text = cachedElement.GetCachedText(probeLength);
-                    if (text is not null && text.Length > request.MaxTextCharacters)
+                    var value = cachedElement.GetCachedValue();
+                    if (value is not null)
                     {
-                        hasMoreText = true;
-                        text = text[..request.MaxTextCharacters];
+                        var valueRead = VisualElementTextReadResult.FromSuccess(value, 0, Math.Max(1, request.MaxTextCharacters));
+                        text = request.MaxTextCharacters == 0 ? string.Empty : valueRead.Text;
+                        totalTextLength = valueRead.TotalLength;
+                        hasMoreText = value.Length > request.MaxTextCharacters;
                     }
                 }
 
@@ -184,7 +192,10 @@ internal static class UIAutomationQueryExtensions
             availableFields |= VisualElementFields.Id;
         }
 
-        var snapshot = new VisualElementSnapshot(elementId, type, states, name, text, hasMoreText, bounds, processId, nativeWindowHandle);
+        var snapshot = new VisualElementSnapshot(elementId, type, states, name, text, hasMoreText, bounds, processId, nativeWindowHandle)
+        {
+            TotalTextLength = totalTextLength,
+        };
         return new VisualElementQueryResult(element, snapshot, availableFields, requestedFields & ~availableFields, failure);
     }
 

@@ -147,7 +147,7 @@ public static partial class Program
             Require(baselineResult.Snapshot.TextPreview == "probe-value", $"The responsive batch decoded an unexpected value: {baselineResult.Snapshot.TextPreview ?? "no value"}.");
             Require(baselineResult.Snapshot.Bounds is { Width: > 0, Height: > 0 }, $"The responsive batch decoded invalid bounds: {baselineResult.Snapshot.Bounds}.");
             var baselineTextRead = element.ReadText(0, 256);
-            Require(baselineTextRead == new VisualElementTextReadResult("probe-value", null, null),
+            Require(baselineTextRead == new VisualElementTextReadResult("probe-value", null, null, VisualTextLength.Exact("probe-value".Length)),
                 "The responsive VisualElement text reader returned an unexpected page.");
 
             SendProviderCommand(provider, "block");

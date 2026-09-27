@@ -15,17 +15,19 @@ internal static class VisualElementFailure
             return false;
         }
 
+        var kind = exception switch
+        {
+            UnauthorizedAccessException => VisualElementQueryFailureKind.PermissionDenied,
+            TimeoutException => VisualElementQueryFailureKind.Timeout,
+            NotSupportedException => VisualElementQueryFailureKind.Unsupported,
+            VisualElementProviderException providerException => providerException.Kind,
+            _ => VisualElementQueryFailureKind.ProviderFailure,
+        };
         failure = new VisualElementQueryFailure(
-            exception switch
-            {
-                UnauthorizedAccessException => VisualElementQueryFailureKind.PermissionDenied,
-                TimeoutException => VisualElementQueryFailureKind.Timeout,
-                NotSupportedException => VisualElementQueryFailureKind.Unsupported,
-                VisualElementProviderException providerException => providerException.Kind,
-                _ => VisualElementQueryFailureKind.ProviderFailure,
-            },
+            kind,
             null,
-            exception);
+            exception,
+            kind == VisualElementQueryFailureKind.LimitReached ? exception.Message : null);
         return true;
     }
 }

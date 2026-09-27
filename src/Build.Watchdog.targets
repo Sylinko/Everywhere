@@ -43,6 +43,7 @@
     is missing or out-of-date and rebuilds it if necessary.
   -->
   <Target Name="BuildWatchdog"
+          Condition="'$(DesignTimeBuild)' != 'true'"
           BeforeTargets="BeforeResolveReferences"
           Inputs="@(WatchdogBuildInput)"
           Outputs="$(WatchdogExecutable)">

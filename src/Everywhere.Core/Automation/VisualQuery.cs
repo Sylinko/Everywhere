@@ -1,6 +1,6 @@
 using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Roles;
-using Everywhere.Prompting.Documents;
+using Serilog;
 
 namespace Everywhere.Automation;
 
@@ -25,9 +25,9 @@ public sealed record VisualQueryRequest
     public VisualContextTraverseDirections Directions { get; init; } = VisualContextTraverseDirections.All;
 
     /// <summary>
-    /// Gets the 1-based offset into retained members when the target exposes observed members. Other targets support only offset 1.
+    /// Gets the zero-based offset applied independently to each requested initial relation.
     /// </summary>
-    public int Offset { get; init; } = 1;
+    public int Offset { get; init; }
 
     /// <summary>
     /// Gets the requested maximum observed node count. Values above <see cref="MaximumLimit" /> are clamped.
@@ -36,7 +36,7 @@ public sealed record VisualQueryRequest
 
     internal int GetNormalizedLimit()
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(Offset);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Limit);
         return Math.Min(Limit, MaximumLimit);
     }
@@ -79,11 +79,11 @@ public sealed partial class VisualQuery
         CancellationToken cancellationToken = default)
     {
         var limit = request.GetNormalizedLimit();
-        var status = new List<string>();
-        var coreElements = GetCoreElements(target, request.Offset, limit, status, out var nextOffset);
+        var coreElement = target is ElementTarget elementTarget ?
+            elementTarget.Element :
+            throw new NotSupportedException("This visual element does not expose structural relations.");
         promptOptions.Validate();
         cancellationToken.ThrowIfCancellationRequested();
-        if (coreElements.Length == 0) return new VisualQueryResult(CreateStatusResult(promptOptions, status), 0);
 
         var defaultLimits = VisualContextSnapshotLimits.Default;
         var snapshotLimits = defaultLimits with
@@ -91,7 +91,7 @@ public sealed partial class VisualQuery
             MaximumNodes = limit,
             MaximumChildrenPerNode = Math.Min(defaultLimits.MaximumChildrenPerNode, limit),
         };
-        return await BuildAsync(coreElements, promptOptions, snapshotLimits, request.Directions, nextOffset, cancellationToken);
+        return await BuildAsync([coreElement], promptOptions, snapshotLimits, request.Directions, request.Offset, cancellationToken);
     }
 
     /// <summary>Observes host-owned attachment/debugger anchors, optionally captures observed TopLevels, and publishes final text.</summary>
@@ -101,14 +101,14 @@ public sealed partial class VisualQuery
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
         CancellationToken cancellationToken = default) =>
-        BuildAsync(coreElements, promptOptions, limits, directions, null, cancellationToken);
+        BuildAsync(coreElements, promptOptions, limits, directions, 0, cancellationToken);
 
     private async Task<VisualQueryResult> BuildAsync(
         IReadOnlyList<VisualElement> coreElements,
         VisualContextPromptOptions promptOptions,
         VisualContextSnapshotLimits? limits,
         VisualContextTraverseDirections directions,
-        int? nextOffset,
+        int relationOffset,
         CancellationToken cancellationToken)
     {
         promptOptions.Validate();
@@ -121,6 +121,7 @@ public sealed partial class VisualQuery
             limits,
             directions,
             onTopLevelObserved,
+            relationOffset,
             cancellationToken);
 
         // Snapshot retains these elements throughout serial capture. No effect or background worker
@@ -145,7 +146,7 @@ public sealed partial class VisualQuery
                 }
                 catch (Exception exception)
                 {
-                    Serilog.Log.Warning(exception, "Failed to deliver scan capture for {ElementId}", topLevel.Element.Id);
+                    Log.Warning(exception, "Failed to deliver scan capture for {ElementId}", topLevel.Element.Id);
                 }
                 finally
                 {
@@ -154,7 +155,7 @@ public sealed partial class VisualQuery
             }
         }
 
-        var result = VisualContextPromptBuilder.BuildWithOutcome(_context, snapshot, promptOptions, nextOffset, cancellationToken);
+        var result = VisualContextPromptBuilder.BuildWithOutcome(_context, snapshot, promptOptions, cancellationToken);
         return new VisualQueryResult(result.Content, result.RepresentedTargetCount);
     }
 
@@ -164,41 +165,6 @@ public sealed partial class VisualQuery
         return _context.TryGetTarget(targetId, out var target) ?
             target :
             throw new InvalidOperationException($"Visual target {targetId} is no longer available.");
-    }
-
-    private static VisualElement[] GetCoreElements(VisualTarget target, int offset, int limit, List<string> status, out int? nextOffset)
-    {
-        nextOffset = null;
-        if (target is ElementTarget elementTarget)
-        {
-            if (offset == 1) return [elementTarget.Element];
-            status.Add("The requested offset is beyond this visual element's single anchor. Query a returned child ID instead");
-            return [];
-        }
-
-        if (target is not CompositeTarget composite)
-            throw new NotSupportedException($"Visual target type '{target.GetType().Name}' does not support structural querying.");
-        var startIndex = offset - 1;
-        if (startIndex >= composite.Parts.Count)
-        {
-            status.Add($"Offset {offset} is beyond this visual element's {composite.Parts.Count} retained observed members");
-            return [];
-        }
-
-        var count = Math.Min(limit, composite.Parts.Count - startIndex);
-        var result = new VisualElement[count];
-        for (var index = 0; index < count; index++) result[index] = composite.Parts[startIndex + index].Element;
-        if (count < composite.Parts.Count - startIndex) nextOffset = offset + count;
-
-        return result;
-    }
-
-    private static string CreateStatusResult(VisualContextPromptOptions options, IReadOnlyList<string> items)
-    {
-        var status = string.Join("; ", items);
-        if (status.Length > options.MaximumScalarCharacters) status = status[..options.MaximumScalarCharacters];
-        return new PromptTokenLimit(options.TargetTokenBudget, new PromptCompactElement("visual-context").AttributeNotNullOrEmpty("status", status))
-            .ToString();
     }
 }
 

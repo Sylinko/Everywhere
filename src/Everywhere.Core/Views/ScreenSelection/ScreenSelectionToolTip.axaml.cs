@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using Avalonia.Controls.Primitives;
 using Everywhere.Interop;
-
 using Everywhere.Automation;
 
 namespace Everywhere.Views;
@@ -30,8 +29,8 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
     public static readonly DirectProperty<ScreenSelectionToolTip, IDynamicLocaleKey> TipTextProperty =
         AvaloniaProperty.RegisterDirect<ScreenSelectionToolTip, IDynamicLocaleKey>(
-        nameof(TipText),
-        o => o.TipText);
+            nameof(TipText),
+            o => o.TipText);
 
     public IDynamicLocaleKey TipText => GetTipText(Mode);
 
@@ -48,7 +47,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     public VisualElementSnapshot? Snapshot
     {
         get => _snapshot;
-        set => SetObservation(value, null);
+        set => SetObservation(value, null, null);
     }
 
     private readonly Dictionary<int, string> _processNameCache = new();
@@ -71,10 +70,13 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     }
 
     /// <summary>Updates the current picker observation and its provider failure as one UI state.</summary>
-    public void SetObservation(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
+    public void SetObservation(
+        VisualElementSnapshot? snapshot,
+        VisualElementQueryFailureKind? failureKind,
+        IDynamicLocaleKey? failureMessage)
     {
         _snapshot = snapshot;
-        Header = GetElementDescription(snapshot, failureKind);
+        Header = failureMessage ?? GetElementDescription(snapshot, failureKind);
     }
 
     private DynamicLocaleKey GetElementDescription(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)

@@ -342,6 +342,18 @@ internal sealed class CefSharpScenarioApplicationContext : ApplicationContext
                 case TestAppCommandKind.Navigate:
                     Publish(TestAppStatusKind.Error, "Navigate is supported only by the real-web WebView TestApp.");
                     break;
+                case TestAppCommandKind.SetText:
+                    if (command.Text is null) throw new InvalidOperationException("SetText requires a text value.");
+                    var textJson = JsonSerializer.Serialize(command.Text);
+                    var response = await _browsers[0].EvaluateScriptAsync($"globalThis.everywhere.setProbeText({textJson});").ConfigureAwait(true);
+                    if (!response.Success || response.Result is not true)
+                    {
+                        throw new InvalidOperationException($"CefSharp text probe update failed: {response.Message}");
+                    }
+
+                    _revision++;
+                    Publish(TestAppStatusKind.TextChanged);
+                    break;
                 case TestAppCommandKind.Stop:
                     foreach (var form in _forms)
                     {

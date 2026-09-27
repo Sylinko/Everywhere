@@ -17,7 +17,7 @@ public interface IVisualElementCursor : IEnumerator<VisualElementQueryResult>
     int Count { get; }
 
     /// <summary>
-    /// Gets the zero-based index of the current element, or negative one when there is no current element.
+    /// Gets the zero-based relation index of the current element, including elements skipped by the requested offset, or negative one when there is no current element.
     /// </summary>
     int Index { get; }
 }

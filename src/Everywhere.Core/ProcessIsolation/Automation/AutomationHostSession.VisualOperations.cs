@@ -286,6 +286,7 @@ public sealed partial class AutomationHostSession
             CancellationToken cancellationToken)
         {
             using var retention = Context.CreateRetention();
+            // TODO: CompositeTarget capture may eventually combine member bounds and stitch their captures heuristically.
             var element = request.ReferenceKind switch
             {
                 AutomationVisualReferenceKind.Anchor => RetainAnchor(request.ReferenceId, retention),
@@ -418,7 +419,7 @@ public sealed partial class AutomationHostSession
             }
             if (target is not ElementTarget elementTarget)
             {
-                throw new InvalidOperationException($"Visual target {targetId} does not represent one actionable platform element.");
+                throw new NotSupportedException($"Visual target {targetId} does not support this platform operation.");
             }
 
             retention.Retain(elementTarget.Element);

@@ -4,7 +4,7 @@ This document describes the implemented Windows service-mode and installer behav
 
 ## Product policy
 
-- Main normally runs with the user's ordinary token. Service mode elevates only Input Host and Automation Host.
+- Main uses `asInvoker` with `uiAccess=false`. Service mode elevates only Input Host and Automation Host; Main does not attempt to acquire UIAccess dynamically.
 - Service mode is an explicit installed capability. A configured task remains the launch route even when UAC is disabled or Main already has a full administrative token.
 - Inno Setup 7.1 x64 remains the installer. It elevates explicitly and registers an all-users installation.
 - Setup EXE and portable ZIP remain supported release forms. Portable and Scoop copies launch ordinary Hosts until the user explicitly enables service mode.

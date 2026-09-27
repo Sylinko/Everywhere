@@ -14,13 +14,13 @@ For divisible in-memory text prefixes, capped progressive filling is the initial
 
 Candidates and final prefixes use the same estimator as Prompting, including escaped text. Whole-output validation accounts for markup, names, IDs, status, and continuation. Correct estimation overshoot by decreasing the allocation budget monotonically and recomputing shares, never by silently deleting one body's entire allocation. The final output must fit the configured estimator budget, not every model's tokenizer.
 
-Every body is a continuous prefix. Safe UTF-16 cuts are allowed even in a long line without word boundaries. Planned short previews use moreText without failure status. Structural budget omissions retain explicit status. An ancestor is not excluded by role; unused capacity can legitimately go to one long Document. Remove the covered-ancestor experiment rather than layering its restoration dependencies onto allocation.
+Every body is a continuous prefix. Safe UTF-16 cuts are allowed even in a long line without word boundaries. Planned short previews use `textLength=shown/total` without failure status. A Composite stops at its first incomplete member so later fragments never appear after an unknown textual gap. Structural budget omissions retain explicit status. An ancestor is not excluded by role; unused capacity can legitimately go to one long Document. Remove the covered-ancestor experiment rather than layering its restoration dependencies onto allocation.
 
 ## Separate Boundaries
 
 Snapshot's existing per-node and total character caps bound observed candidates. Final strings avoid persisting a deferred tree carrying hidden full previews. Missing Snapshot text cannot be recovered by allocation and must not trigger new platform reads in the Builder. If skeletons consume all budget, body fairness cannot manufacture space; changing structure/content admission is a separate evidence-gated decision.
 
-read_visual_text finalizes its page and next offset together. Chat must not implicitly truncate a page while retaining its original continuation. Native IDs, retention, turns, and action semantics do not change.
+read_visual_text finalizes its page, resolved nonnegative offset, total, and next offset together. Negative requests resolve from the currently observed end. Chat must not implicitly truncate a page while retaining its original continuation. Native IDs, retention, turns, and action semantics do not change.
 
 ## Verification
 
@@ -44,7 +44,7 @@ The bounded Windows retrieval chain, conversation-turn retention, independent te
 - **Optional utilization improvement:** redistribute small unused prefix allowances only if measurements show meaningful waste. The budget is a ceiling, not a requirement to fill every remaining token.
 - **Evidence-gated admission changes:** distinguish skeletons consuming the output budget from Snapshot failing to collect later bodies. Changing structural admission affects discoverability; changing native text collection may add RPCs and transfer costs. Neither is part of the current body allocator.
 - **Independent implementation gap:** provider/PID-local failure suppression remains unfinished. Current aggregate failure accounting bounds traversal but can stop unrelated roots too. Complete attribution and local suppression separately; Screen and other non-provider elements must not be assigned artificial PID semantics.
-- **Optional structural compression:** broader Composite regions are not required merely because earlier specifications listed them. Revisit only for measured structural overhead, with retained-member lookup and independent interactive targets preserved.
+- **Optional structural compression:** broader Composite regions are not required merely because earlier specifications listed them. Revisit only for measured structural overhead, with published target lookup and independent interactive targets preserved.
 - **Separate workstreams:** native macOS/Linux migration, Computer Use/input guards, and prototype visual QA retain their own platform and interaction boundaries.
 
 Recommended order after this commit: retain a stable comparison baseline, gather effectiveness evidence, and separately address provider-local failure isolation. More complex allocation or compression is not an automatic next milestone.

@@ -13,7 +13,9 @@ public sealed class CGDisplayEnumerator(
     MacVisualElementBackend backend,
     CGDisplayTopology topology,
     uint windowId,
-    VisualElementQueryRequest queryRequest
+    VisualElementQueryRequest queryRequest,
+    int offset,
+    CancellationToken cancellationToken
 ) : IVisualElementCursor
 {
     public VisualElementQueryResult Current
@@ -34,12 +36,13 @@ public sealed class CGDisplayEnumerator(
     private readonly CGDisplay? _display = CGWindowZOrder.Capture(topology).Find(windowId)?.Display;
     private readonly VisualElementRetention _retention = context.CreateRetention();
     private VisualElementQueryResult? _current;
-    private bool _isCompleted;
+    private bool _isCompleted = offset > 0;
     private bool _isDisposed;
 
     public bool MoveNext()
     {
         ThrowIfUnavailable();
+        cancellationToken.ThrowIfCancellationRequested();
         if (_isCompleted || _display is null)
         {
             _current = null;

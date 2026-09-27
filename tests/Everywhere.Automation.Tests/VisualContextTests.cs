@@ -130,9 +130,9 @@ public sealed class VisualContextTests
             {
                 Parts =
                 [
-                    new CompositePart { Element = first, Snapshot = default },
-                    new CompositePart { Element = second, Snapshot = default },
-                    new CompositePart { Element = first, Snapshot = default },
+                    new CompositePart { Element = first, ContentSource = CompositePartContentSource.Text },
+                    new CompositePart { Element = second, ContentSource = CompositePartContentSource.Text },
+                    new CompositePart { Element = first, ContentSource = CompositePartContentSource.Text },
                 ],
             });
             batch.Commit();
@@ -323,7 +323,11 @@ public sealed class VisualContextTests
 
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => throw new NotSupportedException();
 
-        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+        protected override IVisualElementCursor CreateEnumeratorCore(
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken)
         {
             EnumerationAttemptCount++;
             throw EnumerationException;

@@ -26,6 +26,11 @@ public enum TestAppStatusKind
     Navigated,
 
     /// <summary>
+    /// A requested text-probe value was applied to the target accessibility surface.
+    /// </summary>
+    TextChanged,
+
+    /// <summary>
     /// The target UI thread entered the controlled unresponsive state.
     /// </summary>
     UiThreadSuspended,
@@ -67,6 +72,11 @@ public enum TestAppCommandKind
     Navigate,
 
     /// <summary>
+    /// Replaces the controlled TestApp's text-probe value with <see cref="TestAppCommand.Text" />.
+    /// </summary>
+    SetText,
+
+    /// <summary>
     /// Requests an orderly target-process shutdown.
     /// </summary>
     Stop,
@@ -100,7 +110,7 @@ public sealed record TestAppStatus(
 /// <summary>
 /// Carries one controller request as a JSON line on standard input.
 /// </summary>
-public sealed record TestAppCommand(TestAppCommandKind Kind, string? Address = null);
+public sealed record TestAppCommand(TestAppCommandKind Kind, string? Address = null, string? Text = null);
 
 /// <summary>
 /// Serializes the revision protocol shared by all controlled TestApps and their process controller.
@@ -258,6 +268,21 @@ public sealed class TestAppProcessController : IAsyncDisposable
         if (status.Kind != TestAppStatusKind.Navigated)
         {
             throw new InvalidOperationException($"TestApp returned {status.Kind} while navigating to '{address}': {status.Error}");
+        }
+
+        return status;
+    }
+
+    /// <summary>
+    /// Replaces the target's controlled text-probe value and waits until its accessibility surface has been updated.
+    /// </summary>
+    public async Task<TestAppStatus> SetTextAsync(string text, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(new TestAppCommand(TestAppCommandKind.SetText, Text: text), cancellationToken).ConfigureAwait(false);
+        var status = await ReadStatusAsync(cancellationToken).ConfigureAwait(false);
+        if (status.Kind != TestAppStatusKind.TextChanged)
+        {
+            throw new InvalidOperationException($"TestApp returned {status.Kind} while replacing its text-probe value: {status.Error}");
         }
 
         return status;

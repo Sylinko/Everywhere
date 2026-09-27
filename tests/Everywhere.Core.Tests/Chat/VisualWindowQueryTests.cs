@@ -81,7 +81,11 @@ public sealed class VisualWindowQueryTests
                 VisualElementFields.None,
                 null);
 
-        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) =>
+        protected override IVisualElementCursor CreateEnumeratorCore(
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken) =>
             type == VisualElementType.Screen && relation == VisualElementRelation.Child ?
                 new WindowEnumerator(Context, request, shouldFailAfterWindow) :
                 EmptyVisualElementEnumerator.Shared;

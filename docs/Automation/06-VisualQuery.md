@@ -10,10 +10,12 @@ The implemented tool name is `query_visual`. Its kernel request contains:
 
 - one published integer visual element ID;
 - traversal directions appropriate to the requested neighborhood;
-- a 1-based offset for bounded structural member continuation when the element exposes `observedMembers`;
+- a zero-based offset into each requested initial relation;
 - a clamped result limit.
 
-The current defaults are `directions=all`, `offset=1`, and `limit=128`; limits above 256 are clamped. An element without `observedMembers` has one query anchor and therefore accepts only offset 1. Otherwise offset pages its retained observed members, not an assumed immutable live-child collection. Tree continuation follows a returned child ID with another query.
+The current defaults are `directions=all`, `offset=0`, and `limit=128`; limits above 256 are clamped. Offset zero begins with the first child or the immediately adjacent sibling. A positive offset skips that many results before the first returned relation item. When several directions are requested, the same offset is applied independently to each relation originating at the target. Relations recursively opened from returned nodes begin at zero. Tree continuation follows returned IDs and issues another query with the relation and offset needed by that call.
+
+Offset is a logical request, not a portable implementation ceiling. macOS can seek into indexed AX child collections directly. Windows UI Automation tree walking is sequential and may stop at a platform work limit before reaching a large offset. Such a boundary is returned as a typed `LimitReached` failure with Agent-facing detail; it is not advertised as a universal tool argument restriction.
 
 The Agent does not select different operations for platform-backed and projected elements. Every published ID addresses a visual element through the same structural query; the implementation dispatches internally according to its real target kind.
 
@@ -28,7 +30,7 @@ An Agent reading only the tool description must understand that:
 - the visual tree can be very large and changes frequently;
 - every result is bounded and may be incomplete;
 - every integer ID addresses one visual element through the same tool operation;
-- `observedMembers`, when present, indicates that structural offset can page retained members;
+- offset is zero-based and applies to each requested initial relation;
 - status describes only relevant unexpected conditions such as timeouts, limits, unavailable data, or provider degradation;
 - absence of status means no known problem was observed, not that the result is exhaustive or immutable;
 - continuation is best effort and another call may observe different state;
@@ -44,7 +46,7 @@ The visual result uses a small XML-like protocol optimized for model retrieval:
 
 ```text
 <TextEdit id=7 name="Draft message" focused disabled/>
-<Composite id=12 observedMembers=18 moreText>bounded preview</Composite>
+<Composite id=12 textLength=800/≥1048576>bounded preview</Composite>
 ```
 
 The syntax is deliberately not valid XML:
@@ -59,7 +61,12 @@ The syntax is deliberately not valid XML:
 
 Only retrieval-relevant information is emitted. Normal `query_visual` output does not include a `complete` field, speculative action capabilities, implementation priority, PID, native handles, or a full state bitmask. The dedicated `list_windows` discovery result may include PID and process name, but still exposes only the published target ID as an address. Salient non-default states may appear as flags such as `focused`, `disabled`, `selected`, `readOnly`, `password`, or `offscreen`.
 
-`status` remains an attribute because it contains bounded diagnostic information rather than a Boolean fact. `observedMembers` states how many source parts were retained by an aggregate projection; it is not a count of every current descendant. `moreText` means that additional text may exist, not that a specific next call is guaranteed to recover all of it.
+`status` remains an attribute because it contains bounded diagnostic information rather than a Boolean fact. An incomplete body uses one structured `textLength=shown/total` attribute. Both numbers describe UTF-16 code units:
+
+- `textLength=800/12000` means the exact total is 12,000;
+- `textLength=800/≥4098` means at least 4,098 UTF-16 code units are proven;
+
+The numerator is always the decoded UTF-16 length of the emitted body. `textLength` is omitted when that body is complete. A Composite body is one continuous logical prefix: projection stops at the first incomplete member instead of appending later fragments after a gap.
 
 The tool description must explain this grammar directly. It must not tell the Agent to parse the result as strict XML.
 
@@ -74,7 +81,7 @@ Visual element ID
        -> bounded platform observation
     or CompositeTarget
        -> retain/promote into current Agent turn
-       -> bounded projection of observed ordered parts
+       -> readable logical text; structural queries report unsupported
 ```
 
 The branch is internal. Agent tools do not expose an Element-versus-Composite union. A Composite never becomes a fake platform `VisualElement`, and an Element is not wrapped as a one-member Composite merely to unify implementation code.
@@ -91,60 +98,51 @@ For an Element target, the handler may:
 4. normalize and project the partial observation;
 5. atomically publish exactly the Element and Composite targets visible in the completed result.
 
-For a Composite target, the handler starts from its retained ordered parts and returns a bounded slice or a new bounded projection. It does not pretend that the Composite is a platform Document or that its retained parts describe the complete current subtree.
+If a target does not expose the requested relation, the operation reports an ordinary unsupported result. The tool description does not teach internal target categories or list special prohibitions. Composite text remains available through `read_visual_text`; structural inspection does not expose its retained source members.
 
 Element scalar query, relation enumeration, image Snapshot, and actions remain receiver-centered platform operations. High-level orchestration belongs to the VisualQuery handler, Snapshotter, merged prompt builder, and any optional UI/input guard.
 
-## 6. Structural Continuation
+## 6. Structural Offset
 
-Normal retained-member paging emits `next` on the `visual-context` root, never a continuation sentence in `status`. Pass that 1-based offset back with the same target ID. The root attribute participates in the builder's local budget validation before target publication. It advances over the selected anchors; if observation stops before completing that range, status reports the incomplete observation and callers may overlap or retry it.
+`query_visual` offset applies to live relations rather than to a retained Composite member list. It follows the useful parts of directory browsing without claiming an immutable cursor:
 
-`query_visual` continuation applies only to structure. It follows the useful parts of directory browsing without claiming an immutable cursor:
-
-- offsets are 1-based logical units;
-- limits are clamped to safe bounds;
-- every returned unit has its own hard content and serialization bound;
-- a next offset, when emitted, is based on units actually returned;
+- offsets are zero-based relation positions;
+- each requested initial direction receives the offset independently;
+- recursively traversed relations restart at zero;
+- limits bound admitted result nodes rather than defining a universal maximum offset;
+- an indexed platform may seek directly, while a sequential platform may spend bounded work reaching the requested position;
+- an unavailable target or a platform limit reached before the requested position is reported explicitly;
+- relation failure preserves safely returned items and does not imply definitive exhaustion;
 - overlapping offsets are allowed so the Agent can reassess a changing boundary;
-- an unavailable target fails explicitly;
-- relation failure preserves safely returned items and status;
-- failure never becomes a definitive `hasMore=false`;
 - no fingerprint matching or automatic re-anchoring occurs.
 
-Long scalar content is intentionally not overloaded onto this offset.
+Long scalar content is intentionally not overloaded onto this offset. Use `read_visual_text` and its returned `next` value for text continuation.
 
 ## 7. Text Continuation
 
-`read_visual_text(target, offset, limit)` is the content counterpart to the structural query. It accepts a retained integer visual element ID and a zero-based UTF-16 offset, then returns one final compact text page:
+`read_visual_text(target, offset, limit)` is the content counterpart to the structural query. It accepts a retained integer visual element ID and a UTF-16 offset, then returns one final compact text page:
 
 ```text
-<visual-text target=7 offset=0 next=4096>bounded content</visual-text>
+<visual-text target=7 offset=0 next=4096 total=≥10485760>bounded content</visual-text>
 ```
 
-The returned `next` value is the next numeric offset and may be supplied unchanged as the following call's `offset`. Offsets count UTF-16 code units, matching ordinary .NET string indexing; they deliberately do not claim grapheme, scalar-value, word, or model-token semantics. Generated page boundaries do not split a surrogate pair, so a page may exceed `limit` by one UTF-16 code unit. Callers may request overlapping offsets, and an arbitrary caller-supplied offset is not normalized to a linguistic boundary.
+The returned `next` value is the next numeric offset and may be supplied unchanged as the following call's `offset`. It is emitted only for a successful advancing continuation; a failed read retains the requested `offset` for an explicit retry and does not emit `next=offset`. Nonnegative offsets address the stream from its start. A negative offset is resolved from the current end, a successful result returns that resolved nonnegative position, and the page remains in forward order. Offsets count UTF-16 code units, matching ordinary .NET string indexing; they deliberately do not claim grapheme, scalar-value, word, or model-token semantics. Generated page boundaries do not split a surrogate pair, so a page may exceed `limit` by one UTF-16 code unit.
 
-`moreText` and `next` describe different observations. Structural `moreText` says that the earlier bounded preview did not exhaust its source and invites a content query. `next` says that the current text read observed another page and is the authoritative continuation for that call. Expected continuation is not a `status`. Text-query status is page-local and reports only failures or safety limits observed by that read; it does not replay status from an earlier structural observation.
+`textLength` and `next` describe different observations. Structural `textLength` says how much of a body was emitted and characterizes the best available total. `next` says that the current text read observed another page and is the authoritative continuation for that call. The text page's `total` uses the same exact or `≥` lower-bound notation without a shown-length numerator. Expected continuation is not a `status`. Text-query status is page-local and reports only failures or safety limits observed by that read; it does not replay status from an earlier structural observation.
 
-For an Element, Windows prefers TextPattern and requests only the prefix required to cover `offset + limit` plus a small boundary probe; ValuePattern falls back to one timeout-bounded complete string read. Both paths then use the same local UTF-16 slicing rule. For a Composite, the reader exposes retained nonempty member text as one stream separated by `Environment.NewLine`. It walks members from the beginning but materializes only the prefix required for the requested page. A member that has no native text capability may use its complete retained observation; incomplete observed prefixes are never presented as complete fallback content.
+For an Element, Windows prefers TextPattern and issues one bounded `DocumentRange.GetText(maxLength)` call from the beginning. The adapter slices the returned BSTR through `ReadOnlySpan<char>` before freeing it, so only the final page becomes a managed string. A prefix shorter than the bound proves an exact UTF-16 total; a filled bound proves `≥bound`. ValuePattern remains a timeout-bounded complete-string fallback. The usable structural-preview prefix is at most 1,048,576 UTF-16 code units. One explicit text read uses at most 10,485,760 usable code units, corresponding to a 20 MiB UTF-16 payload before provider and object overhead. The native request reserves one additional code unit as lookahead so a filled prefix cannot silently split a surrogate pair.
 
-This first implementation intentionally favors a small, inspectable, stateless contract over asymptotically optimal deep paging. Reading successive pages from the beginning can repeat work and may approach quadratic total work for a long document, while ValuePattern may still return the complete provider value. A coarse maximum accepted offset prevents an accidental unbounded replay request. Real native calls remain protected by their platform timeout, and the Snapshotter's first-page read remains independently bounded.
+For macOS, `AXNumberOfCharacters` provides the total and `AXStringForRange` reads the requested range directly; AXValue is the complete-string fallback. These paths use the same UTF-16 page contract without inheriting the Windows prefix probe.
+
+For a Composite, the reader exposes current member content as one stream separated by `Environment.NewLine`. Projection selects Text for a member with a non-whitespace text preview and Name otherwise; the target retains that source choice rather than the projection-time Snapshot. Later paging reads the selected live field, so preview and pagination do not silently switch between text and accessibility name. Every call reads members serially under one shared 10,485,760-code-unit probe budget and derives the total from those reads. The reader stops at the first unreadable member, lower-bound member, or exhausted shared budget and never appends later content across that gap. Negative offsets retain only the bounded suffix needed for the requested page. Member suffix reads reserve one extra output code unit so moving their start backward over a surrogate pair does not omit the member's final character. Composite observation is not transactional; an earlier member may change while a later member is being read.
+
+If a Windows prefix fills its bound, a positive read can still return any requested page contained in that prefix with `total=≥bound`. A negative read is necessarily relative to the end of the observed prefix rather than the unknown actual end; it returns that prefix-tail page with explicit status. There is no deeper Windows read beyond this capability boundary. A coarse maximum accepted absolute offset keeps every requested page inside the explicit-read probe limit. Real native calls remain protected by their platform timeout.
 
 The tool uses character limits as a conservative transport bound, not as a model-specific tokenizer promise. A page is emitted atomically. If its fully escaped representation does not fit the local prompt budget, the result asks the Agent to retry the same offset with a smaller limit and does not expose the page-end offset. A provider failure from the current read is expressed through `status`; no retry is hidden inside the tool.
 
-### 7.1 Alternative: Native Range Pagination
+### 7.1 Why Windows Does Not Use TextUnit Movement
 
-A more elaborate Windows implementation was designed and prototyped before the numeric-offset contract was selected. It remains a valid future optimization when evidence shows that repeated prefix reads dominate real workloads:
-
-1. Preserve a provider-native position expressed in UIA `TextUnit.Character` units rather than deriving it from returned `string.Length`.
-2. Obtain a fresh `DocumentRange` for each call and replay the saved start position with `MoveEndpointByUnit`.
-3. Clone the remaining range, collapse its end to the page start with `MoveEndpointByRange`, and extend the end by a candidate number of native units.
-4. Read the candidate range with `GetText(maxLength + 1)` and binary-search for the largest complete native-unit range that fits the UTF-16 transport limit.
-5. Advance continuation by the number of units actually moved, then probe one more unit to distinguish an exact page boundary from the end of the document.
-6. For a Composite, retain both the member index and that member's provider-native continuation so later pages can resume without replaying earlier members.
-
-This algorithm must not equate UIA `TextUnit.Character` with one UTF-16 code unit. UIA defines it as a provider-controlled linguistic unit, and a provider may substitute a larger supported unit. Consequently, one native unit can exceed the requested transport page and make lossless bounded advancement impossible without another fallback. Live mutation can also change the meaning of a replayed native-unit count.
-
-Do not restore this path solely because it is theoretically more efficient. First benchmark Win32, Avalonia, Chromium/Electron-like, multiline edit, rich-document, Unicode, mutation, and timeout cases. Reintroduction should preferably preserve the public numeric-offset contract by using internal checkpoints or another measured mapping strategy; an opaque public continuation is justified only if numeric positions demonstrably cannot provide acceptable behavior. Relevant UIA contracts are [`GetText`](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/nf-uiautomationclient-iuiautomationtextrange-gettext), [`MoveEndpointByUnit`](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/nf-uiautomationclient-iuiautomationtextrange-moveendpointbyunit), and [UI Automation Text Units](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-uiautomationtextunits).
+UIA `TextUnit.Character` is provider-controlled and a provider may promote it to a larger supported unit. Controlled WinForms, Avalonia, and Chromium probes also showed large `Move` calls to be much slower and less consistent than bounded `GetText`. The implementation therefore does not use `Move` to estimate UTF-16 length or to create public continuation positions. Reintroducing native-unit movement requires new evidence across providers and must preserve the public UTF-16 contract. The relevant native contract is [`GetText`](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/nf-uiautomationclient-iuiautomationtextrange-gettext).
 
 ## 8. Mutation and Retry Semantics
 
@@ -162,7 +160,7 @@ These semantics intentionally resemble file and terminal tools: the underlying s
 
 ## 9. Status as Agent Control Information
 
-Status belongs to the operation that observed it and is not retained as target state. A later structural query or text read reports only its own current status. Projection-only budget omissions remain in the prompt where they occurred. Composite members retain the bounded scalar snapshot required for text fallback, not historical node status.
+Status belongs to the operation that observed it and is not retained as target state. A later structural query or text read reports only its own current status. Projection-only budget omissions remain in the prompt where they occurred. Composite targets retain their ordered live member elements; later text reads query those elements again rather than treating projection-time scalar snapshots as target state.
 
 Compact status is emitted only when it should influence what the Agent does next. It may lead the Agent to:
 

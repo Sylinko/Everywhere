@@ -1,5 +1,4 @@
 using Avalonia;
-using Everywhere.Automation.I18N;
 using Everywhere.I18N;
 
 namespace Everywhere.Automation;
@@ -215,6 +214,7 @@ public enum VisualElementQueryFailureKind
     Timeout,
     ProviderFailure,
     PermissionDenied,
+    LimitReached,
 }
 
 /// <summary>
@@ -273,7 +273,11 @@ public readonly record struct VisualElementSnapshot(
     PixelRect? Bounds,
     int? ProcessId,
     nint? NativeWindowHandle
-);
+)
+{
+    /// <summary>Gets the best available measurement of the complete logical text stream.</summary>
+    public VisualTextLength? TotalTextLength { get; init; }
+}
 
 /// <summary>
 /// Describes a normalized provider failure without discarding its platform exception.
@@ -285,12 +289,18 @@ public sealed record VisualElementQueryFailure
     /// </summary>
     /// <param name="kind">The platform-independent failure classification.</param>
     /// <param name="message">The localized dynamic failure message.</param>
-    /// <param name="exception">The original or normalized platform exception.</param>
-    public VisualElementQueryFailure(VisualElementQueryFailureKind kind, IDynamicLocaleKey? message, Exception? exception = null)
+    /// <param name="exception">The original or normalized platform exception, retained only in the observing process.</param>
+    /// <param name="agentMessage">Optional bounded English diagnostic text that may be returned directly to an Agent.</param>
+    public VisualElementQueryFailure(
+        VisualElementQueryFailureKind kind,
+        IDynamicLocaleKey? message,
+        Exception? exception = null,
+        string? agentMessage = null)
     {
         Kind = kind;
-        Message = message ?? GetDefaultMessage(kind);
+        Message = message;
         Exception = exception;
+        AgentMessage = agentMessage;
     }
 
     /// <summary>The platform-independent failure classification.</summary>
@@ -299,17 +309,11 @@ public sealed record VisualElementQueryFailure
     /// <summary>The localized dynamic failure message.</summary>
     public IDynamicLocaleKey? Message { get; init; }
 
-    /// <summary>The original or normalized platform exception.</summary>
-    public Exception? Exception { get; init; }
+    /// <summary>Gets optional bounded English diagnostic text suitable for an Agent-facing result.</summary>
+    public string? AgentMessage { get; init; }
 
-    private static DynamicLocaleKey GetDefaultMessage(VisualElementQueryFailureKind kind) =>
-        kind switch
-        {
-            VisualElementQueryFailureKind.Timeout => new DynamicLocaleKey(LocaleKey.VisualContext_QueryFailure_Timeout),
-            VisualElementQueryFailureKind.ElementUnavailable => new DynamicLocaleKey(LocaleKey.VisualContext_QueryFailure_ElementUnavailable),
-            VisualElementQueryFailureKind.Unsupported => new DynamicLocaleKey(LocaleKey.VisualContext_QueryFailure_Unsupported),
-            _ => new DynamicLocaleKey(LocaleKey.VisualContext_QueryFailure_ProviderFailure),
-        };
+    /// <summary>Gets the original or normalized platform exception, which must not cross a process boundary.</summary>
+    public Exception? Exception { get; init; }
 }
 
 /// <summary>

@@ -46,7 +46,8 @@ public abstract class VisualElement
 
     public IVisualElementEnumerator CreateEnumerator(
         VisualElementRelation relation,
-        VisualElementQueryRequest request);
+        VisualElementQueryRequest request,
+        int offset = 0);
 
     public void Invoke();
     public void SetText(string text);
@@ -120,6 +121,8 @@ Relation semantics are:
 - `Parent` yields zero or one item;
 - `Child` yields immediate children in platform-composed order;
 - `PreviousSibling` and `NextSibling` begin at the adjacent sibling and continue outward;
+- `offset` is a zero-based number of relation items to skip before the first yielded result;
+- the concrete platform cursor owns offset advancement, so indexed providers can seek directly while sequential providers perform bounded traversal;
 - results remain lazy; a large child collection is not eagerly materialized merely to discover Count;
 - each yielded element uses the supplied `VisualElementQueryRequest`, while the Traverser budget bounds how many results are advanced and admitted.
 
@@ -135,10 +138,13 @@ Normalized failure kinds distinguish at least:
 - unavailable or stale element;
 - native timeout;
 - permission failure;
+- a platform traversal or observation limit reached before the requested result;
 - provider or transport failure;
 - platform failure whose exact category is unknown.
 
-Windows converts `UIA_E_TIMEOUT` to `TimeoutException` while preserving the original `COMException` as Host-side evidence. Other provider exceptions retain their normalized platform detail inside the Host. Selected failures cross RPC as `VisualElementQueryFailureKind` and become new neutral Main-side exceptions; HRESULTs and native exception objects do not cross the process boundary. The implementation does not collapse all native failures into `null`, empty text, or enumeration completion.
+`VisualElementQueryFailure` carries four deliberately separate facts. `Kind` is the stable programmatic classification. `Message` is an optional `IDynamicLocaleKey` for user-facing presentation. `AgentMessage` is optional bounded English diagnostic text that may be placed directly in a tool result. `Exception` preserves the original or normalized platform exception only inside the process that observed it. Consumers use `AgentMessage` before a generic Kind-derived Agent status and use `Message` before a context-appropriate common localized message when raising a user-visible `HandledException`. They never substitute a raw provider `Exception.Message` into Agent output.
+
+Windows converts `UIA_E_TIMEOUT` to `TimeoutException` while preserving the original `COMException` as Host-side evidence. Other provider exceptions retain their normalized platform detail inside the Host. A normal query-result RPC projection may transport `Kind`, `Message`, and `AgentMessage`; HRESULTs and native exception objects never cross the process boundary. This result projection is independent from the generic RPC exception frame. The implementation does not collapse native failures into `null`, empty text, or enumeration completion.
 
 A known element with incomplete scalar data remains a skeleton node with status. A relation or root failure that has no representable child contributes bounded status to the nearest retained parent or observation root.
 
@@ -163,9 +169,9 @@ public sealed class CompositeTarget : VisualTarget
 
 An `ElementTarget` retains the exact canonical element represented in the output. Its Agent-visible integer ID is a `VisualContext` publication ID, not UIA RuntimeId, HWND, object pointer, array position, traversal order, or native handle.
 
-A `CompositeTarget` is a real logical target. It does not borrow the first source element's ID and is not actionable as though it were one native accessibility element. It can expose bounded member inspection, fragment expansion, and content paging according to `VisualQuery`.
+A `CompositeTarget` is a real logical target. It does not borrow the first source element's ID and is not actionable as though it were one native accessibility element. It exposes its logical text stream through `read_visual_text`; its internal members are not a structural paging surface.
 
-At the Agent boundary, both target implementations are visual elements addressed by the same integer-ID tools. `Composite` is the logical element's Prompt tag, like `Button` or `Document`, rather than a second tool-level target category. `observedMembers` communicates the member-oriented continuation behavior when it exists. The internal distinction remains necessary because a `CompositeTarget` owns retained parts and cannot be passed to a platform operation as a `VisualElement`.
+At the Agent boundary, both target implementations are visual elements addressed by integer IDs. `Composite` is the logical element's Prompt tag, like `Button` or `Document`, rather than a second tool-level target category. Tools describe how to use their operation without explaining this internal distinction. Unsupported structure, action, or capture is reported by the attempted operation in the same way as any other unsupported element capability.
 
 ## 9. Composite Semantics
 
@@ -180,7 +186,7 @@ A Composite may contain:
 - explicit evidence that it contains multiple underlying members;
 - continuation metadata when its full content or member list is not included.
 
-Planning may merge adjacent fragments, collapse transparent containers, and group a large logical region without reading the platform again. Interactive controls are not silently flattened into text. `read_visual_text` pages content independently from structural queries through a zero-based UTF-16 offset. A Composite defines one logical text stream by joining its retained nonempty member texts with line separators; each call reconstructs only the bounded prefix needed to reach the requested offset and page, never the complete Composite merely to return one page. There is no promise that a later live observation is identical.
+Planning may merge adjacent fragments, collapse transparent containers, and group a large logical region without reading the platform again. Interactive controls are not silently flattened into text. `read_visual_text` pages content independently from structural queries through a UTF-16 offset; a negative offset is resolved from the current end. A Composite fixes each member's contributing field to Text or Name when projected, then joins the current values of those fields with line separators. One call observes members serially under a shared text-probe budget, stops at the first unreadable or bounded member, and does not promise that a later live observation is identical.
 
 The Agent-facing type name `Composite` intentionally describes structure rather than application semantics. It does not claim the region is a Document, chat message, article, card, or list unless the provider exposed that fact.
 

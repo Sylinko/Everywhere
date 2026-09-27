@@ -72,17 +72,21 @@ public abstract class VisualElement
     /// Offsets address the UTF-16 text exposed by this element. The operation is best effort over a live tree and does not promise cross-call immutability.
     /// A page may exceed <paramref name="maxCharacters" /> by one UTF-16 code unit rather than split a surrogate pair.
     /// </remarks>
-    /// <param name="offset">The non-negative UTF-16 offset in the text exposed to the caller.</param>
+    /// <param name="offset">The UTF-16 offset in the text exposed to the caller. A negative value is resolved from the current end.</param>
     /// <param name="maxCharacters">The positive target maximum number of UTF-16 code units requested for this page.</param>
-    public VisualElementTextReadResult ReadText(int offset = 0, int maxCharacters = 4096)
+    /// <param name="maximumProbeCharacters">The positive maximum number of source UTF-16 code units that may be inspected to answer this read.</param>
+    public VisualElementTextReadResult ReadText(
+        int offset = 0,
+        int maxCharacters = 4096,
+        int maximumProbeCharacters = VisualTextReadLimits.MaximumTextReadProbeCharacters)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCharacters);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumProbeCharacters);
 
         EnsureUsable();
         try
         {
-            return ReadTextCore(offset, maxCharacters);
+            return ReadTextCore(offset, maxCharacters, maximumProbeCharacters);
         }
         catch (Exception exception) when (TryConvertPlatformException(exception, out var convertedException))
         {
@@ -100,11 +104,18 @@ public abstract class VisualElement
     /// </summary>
     /// <param name="relation">The topological relation to enumerate.</param>
     /// <param name="request">The bounded scalar query applied to each yielded element.</param>
+    /// <param name="offset">The zero-based relation position at which enumeration begins.</param>
+    /// <param name="cancellationToken">Stops platform work performed while locating or enumerating relation items.</param>
     /// <remarks>Recoverable provider failures are yielded once as terminal relation items. Creating the Enumerator performs no platform relation work.</remarks>
-    public IVisualElementEnumerator CreateEnumerator(VisualElementRelation relation, VisualElementQueryRequest request)
+    public IVisualElementEnumerator CreateEnumerator(
+        VisualElementRelation relation,
+        VisualElementQueryRequest request,
+        int offset = 0,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
         EnsureUsable();
-        return new RelationEnumerator(this, relation, request);
+        return new RelationEnumerator(this, relation, request, offset, cancellationToken);
     }
 
     /// <summary>
@@ -125,7 +136,8 @@ public abstract class VisualElement
     /// <summary>
     /// Sends one keyboard gesture to this element.
     /// </summary>
-    public virtual void SendKeyGesture(KeyGesture keyGesture) => ExecuteAction(keyGesture, static (element, value) => element.SendKeyGestureCore(value));
+    public virtual void SendKeyGesture(KeyGesture keyGesture) =>
+        ExecuteAction(keyGesture, static (element, value) => element.SendKeyGestureCore(value));
 
     /// <summary>
     /// Gets a bounded textual representation of this element's current selection.
@@ -208,7 +220,7 @@ public abstract class VisualElement
     /// <summary>
     /// Reads one bounded text page through the concrete platform implementation.
     /// </summary>
-    protected virtual VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) =>
+    protected virtual VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters) =>
         new(null, null, new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null));
 
     /// <summary>
@@ -216,7 +228,13 @@ public abstract class VisualElement
     /// </summary>
     /// <param name="relation">The topological relation to enumerate.</param>
     /// <param name="request">The bounded scalar query applied to each yielded element.</param>
-    protected abstract IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request);
+    /// <param name="offset">The zero-based relation position at which enumeration begins.</param>
+    /// <param name="cancellationToken">Stops platform work performed while locating or enumerating relation items.</param>
+    protected abstract IVisualElementCursor CreateEnumeratorCore(
+        VisualElementRelation relation,
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Invokes the concrete element's semantic default action.
@@ -342,17 +360,26 @@ public abstract class VisualElement
         private readonly VisualElementRetention _retention;
         private readonly VisualElementRelation _relation;
         private readonly VisualElementQueryRequest _request;
+        private readonly int _offset;
+        private readonly CancellationToken _cancellationToken;
         private IVisualElementCursor? _cursor;
         private VisualElementEnumerationResult _current;
         private bool _hasCurrent;
         private bool _isCompleted;
         private bool _isDisposed;
 
-        public RelationEnumerator(VisualElement origin, VisualElementRelation relation, VisualElementQueryRequest request)
+        public RelationEnumerator(
+            VisualElement origin,
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken)
         {
             _origin = origin;
             _relation = relation;
             _request = request;
+            _offset = offset;
+            _cancellationToken = cancellationToken;
             _retention = origin.Context.CreateRetention();
             _retention.Retain(origin);
         }
@@ -369,10 +396,11 @@ public abstract class VisualElement
 
             try
             {
+                _cancellationToken.ThrowIfCancellationRequested();
                 var origin = _origin ?? throw new ObjectDisposedException(nameof(RelationEnumerator));
                 if (_cursor is null)
                 {
-                    _cursor = origin.CreateEnumeratorCore(_relation, _request);
+                    _cursor = origin.CreateEnumeratorCore(_relation, _request, _offset, _cancellationToken);
                     Count = _cursor.Count;
                 }
 

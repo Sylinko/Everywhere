@@ -124,7 +124,7 @@ public sealed partial class WindowsScreenSelectionService
         private void HandleObservationReceived(VisualPickerObservation observation) =>
             Dispatcher.UIThread.Post(() =>
             {
-                if (IsVisible) ApplyPickingSnapshot(observation.Snapshot, observation.FailureKind);
+                if (IsVisible) ApplyPickingSnapshot(observation.Snapshot, observation.FailureKind, observation.FailureMessage);
             });
 
         private void HandleUpdateFailed(Exception exception)

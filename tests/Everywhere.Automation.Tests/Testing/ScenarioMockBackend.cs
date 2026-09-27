@@ -193,7 +193,8 @@ internal sealed class ScenarioMockOperations
 internal sealed class ScenarioMockQueryEnumerator(
     ScenarioVisualElement origin,
     VisualElementRelation relation,
-    VisualElementQueryRequest queryRequest
+    VisualElementQueryRequest queryRequest,
+    int offset
 ) : IVisualElementCursor
 {
     /// <inheritdoc />
@@ -207,7 +208,7 @@ internal sealed class ScenarioMockQueryEnumerator(
     /// <inheritdoc />
     public int Index => _navigator.Index;
 
-    private readonly ScenarioRelationNavigator _navigator = new(origin, relation);
+    private readonly ScenarioRelationNavigator _navigator = new(origin, relation, offset);
     private readonly VisualElementQueryRequest _queryRequest = queryRequest;
     private VisualElementQueryResult? _current;
     private bool _isDisposed;
@@ -262,11 +263,12 @@ internal sealed class ScenarioRelationNavigator : IEnumerator<ScenarioVisualElem
     private bool _isCompleted;
     private bool _isDisposed;
 
-    public ScenarioRelationNavigator(ScenarioVisualElement origin, VisualElementRelation relation)
+    public ScenarioRelationNavigator(ScenarioVisualElement origin, VisualElementRelation relation, int offset)
     {
         _origin = origin;
         _relation = relation;
         _initialCount = GetCount();
+        _nextOrdinal = offset;
         origin.Backend.Operations.EnumeratorCreated();
     }
 
@@ -388,7 +390,7 @@ internal sealed class ScenarioVisualElement(
     protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => QueryDirect(request);
 
     /// <inheritdoc />
-    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters)
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters)
     {
         Backend.Operations.ScalarQuery();
         var providerFailure = Backend.GetFailure(this);
@@ -457,8 +459,10 @@ internal sealed class ScenarioVisualElement(
     /// <inheritdoc />
     protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
-        => new ScenarioMockQueryEnumerator(this, relation, request);
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
+        => new ScenarioMockQueryEnumerator(this, relation, request, offset);
 
     /// <inheritdoc />
     protected override void InvokeCore()

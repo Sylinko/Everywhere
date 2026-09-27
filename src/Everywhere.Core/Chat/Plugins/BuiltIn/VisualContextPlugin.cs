@@ -142,7 +142,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         The tree may be extremely large and can change between calls. A result can be incomplete; status reports known timeouts, provider failures, traversal limits, or prompt-budget omissions. Absence of status does not promise an exhaustive or immutable result, and this tool never retries automatically.
         Every integer ID addresses a visual element and uses this same operation. Unavailable IDs fail instead of being reconstructed.
         Directions may contain parent, child, previous, next, siblings, all, or none. The result uses compact XML-like markup but is not strict XML: target IDs and delimiter-free attributes can be unquoted, and states such as focused or disabled are bare flags.
-        Offset is 1-based. When an element exposes observedMembers, offset selects its retained observed members; pass the root's next value back with the same target to continue. Otherwise use 1 and follow returned child IDs for narrower queries. Limit bounds admitted nodes and is clamped to the tool maximum.
+        An incomplete body carries textLength=shown/total in UTF-16 code units. A plain total is exact and ≥ marks a proven lower bound.
         """)]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Header,
@@ -150,11 +150,11 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private async Task<VisualTextFunctionResult> QueryVisual(
         [FromKernelServices] ChatContext chatContext,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [Description("Integer visual element ID returned by visual context")] int target,
+        [Description("Integer visual element ID returned by visual-context")] int target,
         [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, or none")]
         string directions = "all",
-        [Description("1-based retained-member offset when the element exposes observedMembers; otherwise use 1")]
-        int offset = 1,
+        [Description("Number of results to skip independently in each requested initial direction")]
+        int offset = 0,
         [Description("Maximum admitted nodes; values above 256 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
         CancellationToken cancellationToken = default)
     {
@@ -187,9 +187,10 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     [KernelFunction("read_visual_text")]
     [Description(
         """
-        Read one bounded page of textual content from an integer visual element ID returned by visual context. Use this when a structural result has moreText or its preview is insufficient; use query_visual for structure and navigation.
-        Pass the numeric next offset back unchanged to read the following page. Offsets address the current logical UTF-16 text stream and do not freeze the live UI, so concurrent content changes may cause overlap or omission. Known timeouts, unavailable elements, unsupported text providers, and other degraded results are reported in status. This tool never retries automatically.
-        Offset defaults to zero and is bounded to 16777216. Limit is an approximate UTF-16 code-unit bound, defaults to 4096, and is clamped to 16384. If a complete page cannot fit the tool's local prompt budget, no offset is advanced; retry the same position with a smaller limit.
+        Read one bounded page of textual content from an integer visual element ID returned by visual context. Use this when textLength shows an incomplete preview or the preview is insufficient; use query_visual for structure and navigation.
+        total uses the same exact or ≥ lower-bound notation as textLength. Pass an advancing numeric next offset back unchanged to read the following page; failures omit next so the current offset can be retried explicitly.
+        Offsets address the current logical UTF-16 text stream and do not freeze the live UI, so concurrent content changes may cause overlap or omission. Known timeouts, unavailable elements, unsupported text providers, and other degraded results are reported in status. This tool never retries automatically.
+        Offset defaults to zero and is bounded from -10469376 to 10469376. A negative offset reads from the current end; a successful result returns the resolved nonnegative position, while a failed read retains the requested offset for retry. Limit is an approximate UTF-16 code-unit bound, defaults to 4096, and is clamped to 16384. If a complete page cannot fit the tool's local prompt budget, no offset is advanced; retry the same position with a smaller limit.
         """)]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ReadVisualText_Header,
@@ -197,7 +198,8 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private async Task<VisualTextFunctionResult> ReadVisualTextAsync(
         [FromKernelServices] ChatContext chatContext,
         [Description("Integer visual element ID returned by visual context")] int target,
-        [Description("Zero-based UTF-16 offset; pass the preceding result's next value, or zero for the first page")]
+        [Description(
+            "UTF-16 offset; pass the preceding next value, use zero for the first page, or use a negative value to read from the current end")]
         int offset = 0,
         [Description("Approximate maximum UTF-16 code units requested; values above 16384 are clamped")]
         int limit = VisualQuery.DefaultTextLimit,

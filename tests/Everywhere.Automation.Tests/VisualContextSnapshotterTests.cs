@@ -58,6 +58,35 @@ public sealed class VisualContextSnapshotterTests
     }
 
     [Test]
+    public void CreateSnapshot_WhenChildRelationHasOffset_AppliesLimitToReturnedItems()
+    {
+        var scenario = Scenario.Define(
+            "offset-limit",
+            context => new VirtualList(context, "items", 20, (_, index) => new Text($"item-{index}")));
+        using var backend = new ScenarioMockBackend(new VisualScenarioGenerator().Generate(scenario, 42));
+        var limits = new VisualContextSnapshotLimits
+        {
+            MaximumChildrenPerNode = 4,
+            MaximumNodes = 16,
+            MaximumPlatformOperations = 64,
+        };
+
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(
+            backend.Context,
+            [backend.RootElement],
+            limits,
+            VisualContextTraverseDirections.Child,
+            relationOffset: 7);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(snapshot.Roots[0].Children.Select(static child => child.Snapshot.TextPreview),
+                Is.EqualTo(new[] { "item-7", "item-8", "item-9", "item-10" }));
+            Assert.That(snapshot.Roots[0].Status, Does.Contain("Child enumeration reached the per-node limit"));
+        });
+    }
+
+    [Test]
     public void CreateSnapshot_WhenTextHasContinuation_PreservesSuccessfulBoundedObservation()
     {
         using var backend = CreateBackend(new Text(new string('x', 100)));

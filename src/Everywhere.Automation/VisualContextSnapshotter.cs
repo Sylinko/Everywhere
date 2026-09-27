@@ -19,8 +19,9 @@ public static class VisualContextSnapshotter
     /// <param name="coreElements">The ordered high-priority Elements that anchor traversal.</param>
     /// <param name="limits">The monotonic risk limits, or <see langword="null" /> to use <see cref="VisualContextSnapshotLimits.Default" />.</param>
     /// <param name="allowedTraverseDirections">The relations that traversal may observe.</param>
-    /// <param name="cancellationToken">The caller cancellation token.</param>
     /// <param name="onTopLevelObserved">Optional synchronous notification for each newly admitted TopLevel. The Snapshot retains the borrowed element; the callback must not perform platform work.</param>
+    /// <param name="relationOffset">The zero-based offset applied independently to each initial requested relation.</param>
+    /// <param name="cancellationToken">The caller cancellation token.</param>
     /// <returns>A disposable Snapshot that owns every admitted Element until publication or disposal.</returns>
     public static VisualContextSnapshot CreateSnapshot(
         VisualContext context,
@@ -28,8 +29,10 @@ public static class VisualContextSnapshotter
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
         Action<VisualElementQueryResult>? onTopLevelObserved = null,
+        int relationOffset = 0,
         CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(relationOffset);
         var effectiveLimits = limits ?? VisualContextSnapshotLimits.Default;
         effectiveLimits.Validate();
         return new Traversal(
@@ -37,6 +40,7 @@ public static class VisualContextSnapshotter
             coreElements,
             effectiveLimits,
             allowedTraverseDirections,
+            relationOffset,
             onTopLevelObserved,
             cancellationToken).CreateSnapshot();
     }
@@ -46,6 +50,7 @@ public static class VisualContextSnapshotter
         IReadOnlyList<VisualElement> coreElements,
         VisualContextSnapshotLimits limits,
         VisualContextTraverseDirections allowedTraverseDirections,
+        int relationOffset,
         Action<VisualElementQueryResult>? onTopLevelObserved,
         CancellationToken cancellationToken
     )
@@ -74,7 +79,7 @@ public static class VisualContextSnapshotter
                 result.AvailableFields,
                 result.MissingFields,
                 result.Failure?.Kind,
-                GetFailureStatus(result.Failure?.Kind));
+                GetFailureStatus(result.Failure));
 
             public static Observation FromTextResult(VisualElement element, VisualElementTextReadResult result)
             {
@@ -82,39 +87,46 @@ public static class VisualContextSnapshotter
                 var failureKind = result.Failure?.Kind == VisualElementQueryFailureKind.Unsupported ? null : result.Failure?.Kind;
                 return new Observation(
                     element,
-                    new VisualElementSnapshot(null, null, null, null, result.Text, result.HasMoreText, null, null, null),
+                    new VisualElementSnapshot(null, null, null, null, result.Text, result.HasMoreText, null, null, null)
+                    {
+                        TotalTextLength = result.TotalLength,
+                    },
                     availableFields,
                     VisualElementFields.Text & ~availableFields,
                     failureKind,
-                    GetFailureStatus(failureKind));
+                    failureKind is null ? null : GetFailureStatus(result.Failure));
             }
 
-            public static Observation FromException(VisualElement element, Exception exception, VisualElementFields requestedFields) => new(
-                element,
-                default,
-                VisualElementFields.None,
-                requestedFields,
-                GetFailureKind(exception),
-                GetFailureStatus(GetFailureKind(exception)));
-
-            private static VisualElementQueryFailureKind GetFailureKind(Exception exception) => exception switch
+            public static Observation FromException(VisualElement element, Exception exception, VisualElementFields requestedFields)
             {
-                UnauthorizedAccessException => VisualElementQueryFailureKind.PermissionDenied,
-                TimeoutException => VisualElementQueryFailureKind.Timeout,
-                NotSupportedException => VisualElementQueryFailureKind.Unsupported,
-                VisualElementProviderException providerException => providerException.Kind,
-                _ => VisualElementQueryFailureKind.ProviderFailure,
-            };
+                if (!VisualElementFailure.TryCreate(exception, out var failure))
+                {
+                    throw new InvalidOperationException("The exception is not a recoverable visual-element failure.", exception);
+                }
 
-            private static string? GetFailureStatus(VisualElementQueryFailureKind? kind) => kind switch
+                return new Observation(
+                    element,
+                    default,
+                    VisualElementFields.None,
+                    requestedFields,
+                    failure.Kind,
+                    GetFailureStatus(failure));
+            }
+
+            private static string? GetFailureStatus(VisualElementQueryFailure? failure)
             {
-                VisualElementQueryFailureKind.PermissionDenied => "Element query was denied by platform security",
-                VisualElementQueryFailureKind.Timeout => "Element query timed out",
-                VisualElementQueryFailureKind.ElementUnavailable => "Element became unavailable during query",
-                VisualElementQueryFailureKind.Unsupported => "Element query is unsupported",
-                VisualElementQueryFailureKind.ProviderFailure => "Element query failed in the platform provider",
-                _ => null,
-            };
+                if (!string.IsNullOrWhiteSpace(failure?.AgentMessage)) return failure.AgentMessage;
+                return failure?.Kind switch
+                {
+                    VisualElementQueryFailureKind.PermissionDenied => "Element query was denied by platform security",
+                    VisualElementQueryFailureKind.Timeout => "Element query timed out",
+                    VisualElementQueryFailureKind.ElementUnavailable => "Element became unavailable during query",
+                    VisualElementQueryFailureKind.Unsupported => "Element query is unsupported",
+                    VisualElementQueryFailureKind.LimitReached => "Element query reached a platform limit",
+                    VisualElementQueryFailureKind.ProviderFailure => "Element query failed in the platform provider",
+                    _ => null,
+                };
+            }
         }
 
         private sealed class TraversalWork : IDisposable
@@ -130,6 +142,8 @@ public static class VisualContextSnapshotter
             public VisualElementRelation? Relation { get; }
 
             public int SiblingIndex { get; }
+
+            public int RelationItemCount { get; }
 
             public string OriginElementId { get; }
 
@@ -148,6 +162,7 @@ public static class VisualContextSnapshotter
                 VisualContextTraverseDirections direction,
                 VisualElementRelation? relation,
                 int siblingIndex,
+                int relationItemCount,
                 IVisualElementEnumerator? enumerator,
                 string originElementId,
                 string? directParentId,
@@ -159,6 +174,7 @@ public static class VisualContextSnapshotter
                 Direction = direction;
                 Relation = relation;
                 SiblingIndex = siblingIndex;
+                RelationItemCount = relationItemCount;
                 _enumerator = enumerator;
                 OriginElementId = originElementId;
                 DirectParentId = directParentId;
@@ -219,6 +235,7 @@ public static class VisualContextSnapshotter
         private readonly VisualElementQueryRequest _structuralQueryRequest = new(VisualElementFields.All & ~VisualElementFields.Text, 0);
         private readonly VisualElementRetention _retention = context.CreateRetention();
         private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+        private readonly CancellationTokenSource _traversalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         private readonly PriorityQueue<TraversalWork, (float Priority, long Sequence)> _queue = new();
         private readonly Dictionary<string, VisualContextSnapshotNode> _nodes = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _resolvedParentAnchors = new(StringComparer.Ordinal);
@@ -237,6 +254,7 @@ public static class VisualContextSnapshotter
         {
             try
             {
+                _traversalCancellation.CancelAfter(limits.MaximumElapsed);
                 EnqueueCoreElements();
                 ProcessQueue();
                 var roots = _nodes.Values.AsValueEnumerable().Where(static node => node.Parent is null).OrderBy(static node => node.TraversalOrdinal)
@@ -248,6 +266,7 @@ public static class VisualContextSnapshotter
             finally
             {
                 DisposeQueue();
+                _traversalCancellation.Dispose();
                 if (!_isRetentionTransferred)
                 {
                     _retention.Dispose();
@@ -284,6 +303,7 @@ public static class VisualContextSnapshotter
                         VisualContextTraverseDirections.Core,
                         null,
                         index,
+                        0,
                         null,
                         observation.Element.Id,
                         null,
@@ -379,7 +399,10 @@ public static class VisualContextSnapshotter
             {
                 textObservation = Observation.FromTextResult(
                     structuralObservation.Element,
-                    structuralObservation.Element.ReadText(0, maximumTextCharacters));
+                    structuralObservation.Element.ReadText(
+                        0,
+                        maximumTextCharacters,
+                        VisualTextReadLimits.MaximumPreviewProbeCharacters));
             }
             catch (Exception exception) when (VisualElementFailure.IsRecoverable(exception))
             {
@@ -391,7 +414,9 @@ public static class VisualContextSnapshotter
                 structuralObservation.Element,
                 structuralObservation.Snapshot with
                 {
-                    TextPreview = textObservation.Snapshot.TextPreview, HasMoreText = textObservation.Snapshot.HasMoreText
+                    TextPreview = textObservation.Snapshot.TextPreview,
+                    HasMoreText = textObservation.Snapshot.HasMoreText,
+                    TotalTextLength = textObservation.Snapshot.TotalTextLength,
                 },
                 availableFields,
                 VisualElementFields.All & ~availableFields,
@@ -410,7 +435,12 @@ public static class VisualContextSnapshotter
                     Math.Max(0, limits.MaximumTotalTextCharacters - _totalTextCharacters));
                 if (text.Length > maximumLength)
                 {
-                    snapshot = snapshot with { TextPreview = text.TruncateUtf16(maximumLength), HasMoreText = true };
+                    snapshot = snapshot with
+                    {
+                        TextPreview = text.TruncateUtf16(maximumLength),
+                        HasMoreText = true,
+                        TotalTextLength = snapshot.TotalTextLength ?? VisualTextLength.Exact(text.Length),
+                    };
                     status = "Text preview was truncated by the Snapshot content limit";
                 }
 
@@ -526,7 +556,7 @@ public static class VisualContextSnapshotter
                 return;
             }
 
-            if (work.Relation == VisualElementRelation.Child && enumerator.Index + 1 >= limits.MaximumChildrenPerNode)
+            if (work.Relation == VisualElementRelation.Child && work.RelationItemCount >= limits.MaximumChildrenPerNode)
             {
                 enumerator.Dispose();
                 AddRelationStatus(work.OriginElementId, "Child enumeration reached the per-node limit");
@@ -593,7 +623,12 @@ public static class VisualContextSnapshotter
                 return;
             }
 
-            var enumerator = previous.Observation.Element.CreateEnumerator(relation, _structuralQueryRequest);
+            var offset = previous.Direction == VisualContextTraverseDirections.Core ? relationOffset : 0;
+            var enumerator = previous.Observation.Element.CreateEnumerator(
+                relation,
+                _structuralQueryRequest,
+                offset,
+                _traversalCancellation.Token);
             TryAdvanceAndEnqueue(enumerator, previous, relation, distance, direction);
         }
 
@@ -604,91 +639,110 @@ public static class VisualContextSnapshotter
             TraverseDistance? distance = null,
             VisualContextTraverseDirections? direction = null)
         {
-            if (_shouldStop || !TryBeginPlatformOperation())
+            var isOwnershipTransferred = false;
+            try
             {
-                enumerator.Dispose();
-                return;
-            }
+                if (_shouldStop || !TryBeginPlatformOperation()) return;
 
-            if (!enumerator.MoveNext())
-            {
-                enumerator.Dispose();
-                return;
-            }
-
-            var item = enumerator.Current;
-            if (!item.IsSuccess)
-            {
-                enumerator.Dispose();
-                var originElementId = relation.HasValue ? previous.Observation.Element.Id : previous.OriginElementId;
-                var failure = item.Failure ?? throw new InvalidOperationException("A visual relation item must contain either a result or a failure.");
-                RecordRelationFailure(
-                    originElementId,
-                    relation ?? previous.Relation ?? throw new InvalidOperationException("Relation work must identify its native relation."),
-                    failure);
-                return;
-            }
-
-            var effectiveRelation =
-                relation ?? previous.Relation ?? throw new InvalidOperationException("Relation work must identify its native relation.");
-            var effectiveDirection = direction ?? (effectiveRelation == VisualElementRelation.Child ?
-                VisualContextTraverseDirections.NextSibling :
-                previous.Direction);
-            var observation = Observation.FromResult(item.Result);
-            _retention.Retain(observation.Element);
-            var isInitialRelationItem = relation.HasValue;
-            var directParentId = (effectiveDirection, isInitialRelationItem) switch
-            {
-                (VisualContextTraverseDirections.Child, true) => previous.Observation.Element.Id,
-                (VisualContextTraverseDirections.Child, false) => previous.DirectParentId,
-                (VisualContextTraverseDirections.PreviousSibling or VisualContextTraverseDirections.NextSibling, _) => previous.DirectParentId,
-                _ => null,
-            };
-            var pendingParentAnchorId = (effectiveDirection, isInitialRelationItem) switch
-            {
-                (VisualContextTraverseDirections.Parent, _) => observation.Element.Id,
-                (VisualContextTraverseDirections.PreviousSibling or
-                    VisualContextTraverseDirections.NextSibling, true) when directParentId is null =>
-                    previous.PendingParentAnchorId ?? previous.Observation.Element.Id,
-                (VisualContextTraverseDirections.PreviousSibling or
-                    VisualContextTraverseDirections.NextSibling, false) => previous.PendingParentAnchorId,
-                _ => null,
-            };
-            var siblingIndex = effectiveRelation == VisualElementRelation.Child ?
-                enumerator.Index :
-                effectiveDirection switch
+                bool hasNext;
+                try
                 {
-                    VisualContextTraverseDirections.PreviousSibling => previous.SiblingIndex - 1,
-                    VisualContextTraverseDirections.NextSibling => previous.SiblingIndex + 1,
-                    _ => enumerator.Index,
+                    hasNext = enumerator.MoveNext();
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && _traversalCancellation.IsCancellationRequested)
+                {
+                    Stop("Snapshot elapsed-time limit reached");
+                    return;
+                }
+
+                if (!hasNext) return;
+
+                var item = enumerator.Current;
+                if (!item.IsSuccess)
+                {
+                    var originElementId = relation.HasValue ? previous.Observation.Element.Id : previous.OriginElementId;
+                    var failure = item.Failure ??
+                        throw new InvalidOperationException("A visual relation item must contain either a result or a failure.");
+                    RecordRelationFailure(
+                        originElementId,
+                        relation ?? previous.Relation ?? throw new InvalidOperationException("Relation work must identify its native relation."),
+                        failure);
+                    return;
+                }
+
+                var effectiveRelation =
+                    relation ?? previous.Relation ?? throw new InvalidOperationException("Relation work must identify its native relation.");
+                var effectiveDirection = direction ?? (effectiveRelation == VisualElementRelation.Child ?
+                    VisualContextTraverseDirections.NextSibling :
+                    previous.Direction);
+                var observation = Observation.FromResult(item.Result);
+                _retention.Retain(observation.Element);
+                var isInitialRelationItem = relation.HasValue;
+                var directParentId = (effectiveDirection, isInitialRelationItem) switch
+                {
+                    (VisualContextTraverseDirections.Child, true) => previous.Observation.Element.Id,
+                    (VisualContextTraverseDirections.Child, false) => previous.DirectParentId,
+                    (VisualContextTraverseDirections.PreviousSibling or VisualContextTraverseDirections.NextSibling, _) => previous.DirectParentId,
+                    _ => null,
                 };
-            var relationOriginId = isInitialRelationItem ? previous.Observation.Element.Id : previous.OriginElementId;
-            var relationOrigin = isInitialRelationItem ? previous.Observation : previous.Previous;
-            Enqueue(
-                new TraversalWork(
-                    observation,
-                    relationOrigin,
-                    distance ?? previous.Distance.Step(),
-                    effectiveDirection,
-                    effectiveRelation,
-                    siblingIndex,
-                    enumerator,
-                    relationOriginId,
-                    directParentId,
-                    pendingParentAnchorId));
+                var pendingParentAnchorId = (effectiveDirection, isInitialRelationItem) switch
+                {
+                    (VisualContextTraverseDirections.Parent, _) => observation.Element.Id,
+                    (VisualContextTraverseDirections.PreviousSibling or
+                        VisualContextTraverseDirections.NextSibling, true) when directParentId is null =>
+                        previous.PendingParentAnchorId ?? previous.Observation.Element.Id,
+                    (VisualContextTraverseDirections.PreviousSibling or
+                        VisualContextTraverseDirections.NextSibling, false) => previous.PendingParentAnchorId,
+                    _ => null,
+                };
+                var siblingIndex = effectiveRelation == VisualElementRelation.Child ?
+                    enumerator.Index :
+                    effectiveDirection switch
+                    {
+                        VisualContextTraverseDirections.PreviousSibling when isInitialRelationItem => previous.SiblingIndex - enumerator.Index - 1,
+                        VisualContextTraverseDirections.NextSibling when isInitialRelationItem => previous.SiblingIndex + enumerator.Index + 1,
+                        VisualContextTraverseDirections.PreviousSibling => previous.SiblingIndex - 1,
+                        VisualContextTraverseDirections.NextSibling => previous.SiblingIndex + 1,
+                        _ => enumerator.Index,
+                    };
+                var relationOriginId = isInitialRelationItem ? previous.Observation.Element.Id : previous.OriginElementId;
+                var relationOrigin = isInitialRelationItem ? previous.Observation : previous.Previous;
+                var relationItemCount = isInitialRelationItem ? 1 : previous.RelationItemCount + 1;
+                Enqueue(
+                    new TraversalWork(
+                        observation,
+                        relationOrigin,
+                        distance ?? previous.Distance.Step(),
+                        effectiveDirection,
+                        effectiveRelation,
+                        siblingIndex,
+                        relationItemCount,
+                        enumerator,
+                        relationOriginId,
+                        directParentId,
+                        pendingParentAnchorId));
+                isOwnershipTransferred = true;
+            }
+            finally
+            {
+                if (!isOwnershipTransferred) enumerator.Dispose();
+            }
         }
 
         private void RecordRelationFailure(string originElementId, VisualElementRelation relation, VisualElementQueryFailure failure)
         {
             var failureKind = failure.Kind;
-            var status = failureKind switch
-            {
-                VisualElementQueryFailureKind.PermissionDenied => $"{relation} enumeration was denied by platform security",
-                VisualElementQueryFailureKind.Timeout => $"{relation} enumeration timed out",
-                VisualElementQueryFailureKind.Unsupported => $"{relation} enumeration is unsupported",
-                VisualElementQueryFailureKind.ElementUnavailable => $"{relation} enumeration became unavailable",
-                _ => $"{relation} enumeration failed in the platform provider",
-            };
+            var status = !string.IsNullOrWhiteSpace(failure.AgentMessage) ?
+                failure.AgentMessage :
+                failureKind switch
+                {
+                    VisualElementQueryFailureKind.PermissionDenied => $"{relation} enumeration was denied by platform security",
+                    VisualElementQueryFailureKind.Timeout => $"{relation} enumeration timed out",
+                    VisualElementQueryFailureKind.Unsupported => $"{relation} enumeration is unsupported",
+                    VisualElementQueryFailureKind.ElementUnavailable => $"{relation} enumeration became unavailable",
+                    VisualElementQueryFailureKind.LimitReached => $"{relation} enumeration reached a platform limit",
+                    _ => $"{relation} enumeration failed in the platform provider",
+                };
             AddRelationStatus(originElementId, status);
             RecordProviderHealthFailure(failureKind);
         }
@@ -742,6 +796,12 @@ public static class VisualContextSnapshotter
         private bool CheckBoundary()
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (_traversalCancellation.IsCancellationRequested)
+            {
+                Stop("Snapshot elapsed-time limit reached");
+                return false;
+            }
+
             if (_stopwatch.Elapsed < limits.MaximumElapsed)
             {
                 return true;

@@ -5,6 +5,8 @@ using Avalonia;
 using Avalonia.Input;
 using Avalonia.Platform;
 using Everywhere.Automation;
+using Everywhere.Common;
+using Everywhere.I18N;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
@@ -17,6 +19,47 @@ namespace Everywhere.Core.Tests.ProcessIsolation;
 [TestFixture]
 public sealed class AutomationHostSessionTests
 {
+    [Test]
+    public async Task RemoteAnchor_WhenQueryReturnsStructuredFailure_PreservesMessagesAcrossRpc()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend
+        {
+            ElementQueryFailure = new VisualElementQueryFailure(
+                VisualElementQueryFailureKind.LimitReached,
+                new DynamicLocaleKey("test.visual.limit"),
+                new InvalidOperationException("host-only detail"),
+                "The visual relation reached its test limit."),
+        };
+        await using var session = new AutomationHostSession(backend);
+        session.Bind(pair.Server);
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var client = new AutomationHostClient(pair.Client);
+        using var context = await client.CreateContextAsync();
+        using var anchor = await context.AcquireAnchorAsync(VisualElementLocator.Default) ??
+                           throw new InvalidOperationException("The test Backend did not return its default element.");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(anchor.FailureKind, Is.EqualTo(VisualElementQueryFailureKind.LimitReached));
+            Assert.That(anchor.FailureMessage, Is.TypeOf<DynamicLocaleKey>());
+            Assert.That(((DynamicLocaleKey)anchor.FailureMessage!).Key, Is.EqualTo("test.visual.limit"));
+            Assert.That(anchor.FailureAgentMessage, Is.EqualTo("The visual relation reached its test limit."));
+        });
+
+        var exception = Assert.ThrowsAsync<HandledException>(async () =>
+            await context.GetElementSnapshotAsync(anchor, VisualElementFields.Bounds));
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception!.Message, Is.EqualTo("The visual relation reached its test limit."));
+            Assert.That(exception.InnerException, Is.TypeOf<VisualElementProviderException>());
+            Assert.That(exception.FriendlyMessageKey, Is.TypeOf<DynamicLocaleKey>());
+            Assert.That(((DynamicLocaleKey)exception.FriendlyMessageKey).Key, Is.EqualTo("test.visual.limit"));
+        });
+    }
+
     [Test]
     public async Task RemoteContext_WhenQueriedAndReleased_PreservesAutomationIdentityAndLifetime()
     {
@@ -593,6 +636,7 @@ public sealed class AutomationHostSessionTests
         public VisualElementResolution LastResolution { get; private set; }
         public Exception? AcquisitionException { get; set; }
         public Exception? ElementQueryException { get; set; }
+        public VisualElementQueryFailure? ElementQueryFailure { get; set; }
         public bool ShouldFailAdoption { get; set; }
 
         public VisualElementQueryResult Query(
@@ -636,7 +680,7 @@ public sealed class AutomationHostSessionTests
 
         public void RecordKeyGesture(KeyGesture keyGesture) => LastKeyGesture = keyGesture;
 
-        public void RecordQuery(VisualElementQueryRequest request)
+        public VisualElementQueryFailure? RecordQuery(VisualElementQueryRequest request)
         {
             LastRequestedFields = request.RequestedFields;
             LastMaxTextCharacters = request.MaxTextCharacters;
@@ -645,6 +689,8 @@ public sealed class AutomationHostSessionTests
                 ElementQueryException = null;
                 throw elementQueryException;
             }
+
+            return ElementQueryFailure;
         }
     }
 
@@ -654,7 +700,12 @@ public sealed class AutomationHostSessionTests
 
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request)
         {
-            backend.RecordQuery(request);
+            var failure = backend.RecordQuery(request);
+            if (failure is not null)
+            {
+                return new VisualElementQueryResult(this, default, VisualElementFields.None, request.RequestedFields, failure);
+            }
+
             return new(
                 this,
                 new VisualElementSnapshot(Id, VisualElementType.Label, VisualElementStates.None, "Root", Text, false, new PixelRect(0, 0, 100, 20), null, null),
@@ -663,10 +714,14 @@ public sealed class AutomationHostSessionTests
                 null);
         }
 
-        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) =>
+        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters) =>
             VisualElementTextReadResult.FromSuccess(Text, offset, maxCharacters);
 
-        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) =>
+        protected override IVisualElementCursor CreateEnumeratorCore(
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken) =>
             EmptyVisualElementEnumerator.Shared;
 
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) =>

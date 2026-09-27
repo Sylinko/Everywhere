@@ -35,7 +35,7 @@ public sealed class VisualContextPromptBuilderTests
         var rendered = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 200 });
         Assert.Multiple(() =>
         {
-            Assert.That(rendered, Does.Contain("moreText>fragment"));
+            Assert.That(rendered, Does.Contain("textLength=").And.Contain(">fragment"));
             Assert.That(System.Text.RegularExpressions.Regex.IsMatch(rendered, @"<Composite\b[^>]*>fragment"), Is.True);
             Assert.That(System.Text.RegularExpressions.Regex.IsMatch(rendered, @"<TextEdit\b[^>]*>fragment"), Is.True);
             Assert.That(Everywhere.Prompting.TokenHelper.EstimateTokenCount(rendered), Is.LessThanOrEqualTo(200));
@@ -63,7 +63,7 @@ public sealed class VisualContextPromptBuilderTests
                 Assert.That(char.IsHighSurrogate(decoded[^1]), Is.False);
             }
             Assert.That(Everywhere.Prompting.TokenHelper.EstimateTokenCount(rendered), Is.LessThanOrEqualTo(300));
-            Assert.That(rendered, Does.Contain("moreText").And.Not.Contain("status="));
+            Assert.That(rendered, Does.Contain("textLength=").And.Not.Contain("status="));
             Assert.That(backend.Operations.ScalarQueryCount, Is.EqualTo(queryCount));
             Assert.That(VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { TargetTokenBudget = 300 }), Is.EqualTo(rendered));
         });
@@ -99,7 +99,7 @@ public sealed class VisualContextPromptBuilderTests
         var rendered = VisualContextPromptBuilder.Build(backend.Context, snapshot, new VisualContextPromptOptions { MaximumCompositePreviewCharacters = 2 }).ToString();
         Assert.Multiple(() =>
         {
-            Assert.That(rendered, Does.Contain("moreText>A</Composite>"));
+            Assert.That(rendered, Does.Contain("textLength=").And.Contain(">A</Composite>"));
             Assert.That(rendered, Does.Not.Contain("status="));
             Assert.That(snapshot.Status, Is.Empty);
         });
@@ -123,7 +123,7 @@ public sealed class VisualContextPromptBuilderTests
             Assert.That(rendered, Does.Contain("<Composite"));
             Assert.That(rendered, Does.Contain("first fragment"));
             Assert.That(rendered, Does.Contain("second fragment"));
-            Assert.That(rendered, Does.Contain("observedMembers=2"));
+            Assert.That(rendered, Does.Not.Contain("observedMembers="));
             Assert.That(composite.Parts, Has.Count.EqualTo(2));
             Assert.That(rendered, Does.Not.Contain("capabilities="));
             Assert.That(backend.Operations.ScalarQueryCount, Is.EqualTo(scalarQueryCount));

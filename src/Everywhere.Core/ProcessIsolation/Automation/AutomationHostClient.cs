@@ -141,7 +141,7 @@ public class RemoteVisualContext : RpcSafeHandle
     public async ValueTask<AutomationVisualQueryResponse> QueryTargetAsync(
         int targetId,
         VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int offset = 1,
+        int offset = 0,
         int limit = VisualQueryRequest.DefaultLimit,
         int targetTokenBudget = 4096,
         CancellationToken cancellationToken = default)
@@ -428,6 +428,7 @@ public class RemoteVisualContext : RpcSafeHandle
             },
             cancellationToken).ConfigureAwait(false);
 
+        response.ThrowIfFailed();
         if (!response.IsAvailable)
         {
             throw new InvalidOperationException("The remote visual anchor is no longer available.");

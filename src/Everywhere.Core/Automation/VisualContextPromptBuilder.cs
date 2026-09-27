@@ -36,19 +36,16 @@ public static class VisualContextPromptBuilder
     /// <param name="context">The target and lifetime domain that owns the active Agent turn.</param>
     /// <param name="snapshot">The bounded platform observation retained until target publication completes.</param>
     /// <param name="options">The projection options, or <see langword="null" /> to use <see cref="VisualContextPromptOptions.Default" />.</param>
-    /// <param name="nextOffset">The next retained-member offset emitted on the result root, or <see langword="null" /> when the current query has no continuation.</param>
     /// <param name="cancellationToken">The caller cancellation token.</param>
     /// <returns>The final bounded text and operation-local publication count.</returns>
     internal static VisualContextPromptBuildResult BuildWithOutcome(
         VisualContext context,
         VisualContextSnapshot snapshot,
         VisualContextPromptOptions? options = null,
-        int? nextOffset = null,
         CancellationToken cancellationToken = default)
     {
         var effectiveOptions = options ?? VisualContextPromptOptions.Default;
         effectiveOptions.Validate();
-        if (nextOffset is { } value) ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
         cancellationToken.ThrowIfCancellationRequested();
 
         var roots = Normalize(snapshot.Roots, effectiveOptions);
@@ -63,7 +60,7 @@ public static class VisualContextPromptBuilder
         for (var attemptIndex = 0; attemptIndex < maximumAttempts; attemptIndex++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, effectiveOptions, nextOffset);
+            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, effectiveOptions);
             var document = new PromptDocument { new PromptTokenLimit(effectiveOptions.TargetTokenBudget, attempt.ContextElement) };
             var rendered = document.Render(int.MaxValue);
             var includedNodes = new HashSet<PromptNode>(rendered.IncludedNodes, ReferenceEqualityComparer.Instance);
@@ -92,7 +89,6 @@ public static class VisualContextPromptBuilder
                     hasBudgetOmission,
                     effectiveOptions,
                     rendered.TokenCount,
-                    nextOffset,
                     cancellationToken);
             }
 
@@ -142,7 +138,6 @@ public static class VisualContextPromptBuilder
         bool hasBudgetOmission,
         VisualContextPromptOptions options,
         int skeletonTokens,
-        int? nextOffset,
         CancellationToken cancellationToken)
     {
         var bodiesByRoot = roots.AsValueEnumerable().Select(root => EnumerateNodes([root])
@@ -168,7 +163,7 @@ public static class VisualContextPromptBuilder
             }
 
             // Render without pruning: generic priority removal must not undo fair body allocation.
-            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, options, nextOffset);
+            var attempt = CreateAttempt(context, snapshot, roots, selectedNodes, hasBudgetOmission, options);
             var content = attempt.ContextElement.ToString();
             var tokenCount = TokenHelper.EstimateTokenCount(content);
             if (tokenCount <= options.TargetTokenBudget)
@@ -332,6 +327,11 @@ public static class VisualContextPromptBuilder
             if (content.Length <= remaining)
             {
                 builder.Append(content);
+                if (source.Snapshot.HasMoreText)
+                {
+                    isTruncated = true;
+                    break;
+                }
                 continue;
             }
 
@@ -349,14 +349,12 @@ public static class VisualContextPromptBuilder
         IReadOnlyList<ProjectionNode> roots,
         HashSet<ProjectionNode> selectedNodes,
         bool hasBudgetOmission,
-        VisualContextPromptOptions options,
-        int? nextOffset)
+        VisualContextPromptOptions options)
     {
         var publication = context.BeginPublication();
         var targetElements = new Dictionary<PromptCompactElement, ProjectionNode>(ReferenceEqualityComparer.Instance);
         var contextStatus = GetContextStatus(snapshot, hasBudgetOmission, options.MaximumScalarCharacters);
-        var contextElement = new PromptCompactElement("visual-context").AttributeNotNull("next", nextOffset)
-            .AttributeNotNullOrEmpty("status", contextStatus);
+        var contextElement = new PromptCompactElement("visual-context").AttributeNotNullOrEmpty("status", contextStatus);
         AppendProjectedChildren(contextElement, roots, selectedNodes, publication, targetElements, options);
         return new BuildAttempt(contextElement, publication, targetElements);
     }
@@ -408,7 +406,7 @@ public static class VisualContextPromptBuilder
             Parts = node.Sources.AsValueEnumerable().Select(static source => new CompositePart
             {
                 Element = source.Element,
-                Snapshot = source.Snapshot,
+                ContentSource = GetPreferredContentSource(source.Snapshot),
             }).ToArray(),
         };
     }
@@ -428,9 +426,21 @@ public static class VisualContextPromptBuilder
             .AttributeNotNullOrEmpty("name", node.IsComposite ? null : Bound(snapshot.Name, options.MaximumScalarCharacters))
             .AttributeNotNullOrEmpty("status", Bound(string.Join("; ", status), options.MaximumScalarCharacters));
         AppendStateFlags(element, snapshot.States);
-        if (node.IsComposite) element.Attribute("observedMembers", node.Sources.Count);
-        if (node.AllocatedContent.Length < (node.Content?.Length ?? 0) || node.IsPreviewTruncated ||
-            node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText)) element.Flag("moreText");
+        var isContentIncomplete = node.AllocatedContent.Length < (node.Content?.Length ?? 0) || node.IsPreviewTruncated ||
+            node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText);
+        if (isContentIncomplete)
+        {
+            var knownPrefixLength = node.Content?.Length ?? node.AllocatedContent.Length;
+            var lowerBound = Math.Max(
+                VisualTextLengthFormatting.SaturatingIncrement(node.AllocatedContent.Length),
+                node.IsPreviewTruncated || node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText) ?
+                    VisualTextLengthFormatting.SaturatingIncrement(knownPrefixLength) :
+                    knownPrefixLength);
+            var totalLength = VisualTextLengthFormatting.EnsureLowerBound(GetTotalTextLength(node), lowerBound);
+            element.Attribute(
+                "textLength",
+                FormattableString.Invariant($"{node.AllocatedContent.Length}/{VisualTextLengthFormatting.Format(totalLength)}"));
+        }
         if (ShouldIncludeBounds(node.Type) && GetBounds(node) is { } bounds)
         {
             element.Attribute("box", $"{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}");
@@ -439,6 +449,46 @@ public static class VisualContextPromptBuilder
         if (node.AllocatedContent.Length > 0) element.Add(new PromptText(node.AllocatedContent));
 
         return element;
+    }
+
+    private static VisualTextLength GetTotalTextLength(ProjectionNode node)
+    {
+        if (!node.IsComposite)
+        {
+            return GetSourceTextLength(node.PrimarySource.Snapshot);
+        }
+
+        var total = 0L;
+        var kind = VisualTextLengthKind.Exact;
+        var hasText = false;
+        foreach (var source in node.Sources)
+        {
+            var content = GetPreferredContent(source.Snapshot);
+            if (string.IsNullOrWhiteSpace(content)) continue;
+
+            if (hasText) total += Environment.NewLine.Length;
+            hasText = true;
+            var measurement = GetSourceTextLength(source.Snapshot);
+            total += measurement.Value;
+            kind = VisualTextLengthFormatting.Combine(kind, measurement.Kind);
+        }
+
+        if (total > int.MaxValue) return VisualTextLength.LowerBound(int.MaxValue);
+        var value = (int)total;
+        return kind == VisualTextLengthKind.Exact ? VisualTextLength.Exact(value) : VisualTextLength.LowerBound(value);
+    }
+
+    private static VisualTextLength GetSourceTextLength(VisualElementSnapshot snapshot)
+    {
+        if (!string.IsNullOrWhiteSpace(snapshot.TextPreview))
+        {
+            return snapshot.TotalTextLength ?? (snapshot.HasMoreText ?
+                VisualTextLength.LowerBound(VisualTextLengthFormatting.SaturatingIncrement(snapshot.TextPreview.Length)) :
+                VisualTextLength.Exact(snapshot.TextPreview.Length));
+        }
+
+        if (!string.IsNullOrWhiteSpace(snapshot.Name)) return VisualTextLength.Exact(snapshot.Name.Length);
+        return snapshot.TotalTextLength ?? VisualTextLength.Exact(0);
     }
 
     private static void AppendStateFlags(PromptCompactElement element, VisualElementStates? states)
@@ -501,8 +551,11 @@ public static class VisualContextPromptBuilder
         return ApproximatelyEquals(snapshot.Name, snapshot.TextPreview) ? null : snapshot.TextPreview;
     }
 
+    private static CompositePartContentSource GetPreferredContentSource(VisualElementSnapshot snapshot) =>
+        !string.IsNullOrWhiteSpace(snapshot.TextPreview) ? CompositePartContentSource.Text : CompositePartContentSource.Name;
+
     private static string? GetPreferredContent(VisualElementSnapshot snapshot) =>
-        !string.IsNullOrWhiteSpace(snapshot.TextPreview) ? snapshot.TextPreview : snapshot.Name;
+        GetPreferredContentSource(snapshot) == CompositePartContentSource.Text ? snapshot.TextPreview : snapshot.Name;
 
     private static bool ApproximatelyEquals(string? first, string? second)
     {

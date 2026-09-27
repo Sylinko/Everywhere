@@ -199,6 +199,10 @@
       element.querySelector(":scope > .virtual-summary").textContent =
         `${childCount} logical items; ${children.length} currently realized from ${start}`;
       return true;
+    },
+    setProbeText(text) {
+      rootHost.replaceChildren(document.createTextNode(text));
+      return true;
     }
   };
 })();

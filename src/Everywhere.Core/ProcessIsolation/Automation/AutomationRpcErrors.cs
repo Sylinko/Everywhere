@@ -38,15 +38,30 @@ public static class AutomationRpcExceptionMapping
         return mappedKind.HasValue;
     }
 
-    internal static Exception CreateException(VisualElementQueryRpcError error) => error.Kind switch
+    internal static Exception CreateException(VisualElementQueryRpcError error, string? agentMessage = null)
     {
-        VisualElementQueryFailureKind.PermissionDenied => new UnauthorizedAccessException("The Automation Host denied access to the visual element."),
-        VisualElementQueryFailureKind.Timeout => new TimeoutException("The Automation Host visual-element operation timed out."),
-        VisualElementQueryFailureKind.Unsupported => new NotSupportedException("The Automation Host does not support this visual-element operation."),
-        VisualElementQueryFailureKind.ElementUnavailable or VisualElementQueryFailureKind.ProviderFailure =>
-            new VisualElementProviderException(error.Kind, "The Automation Host could not complete the visual-element operation."),
-        _ => new InvalidOperationException($"The Automation Host returned an unsupported visual-query failure kind: {error.Kind}."),
-    };
+        var message = string.IsNullOrWhiteSpace(agentMessage) ? error.Kind switch
+        {
+            VisualElementQueryFailureKind.PermissionDenied => "The Automation Host denied access to the visual element.",
+            VisualElementQueryFailureKind.Timeout => "The Automation Host visual-element operation timed out.",
+            VisualElementQueryFailureKind.Unsupported => "The Automation Host does not support this visual-element operation.",
+            VisualElementQueryFailureKind.ElementUnavailable or
+                VisualElementQueryFailureKind.ProviderFailure or
+                VisualElementQueryFailureKind.LimitReached => "The Automation Host could not complete the visual-element operation.",
+            _ => $"The Automation Host returned an unsupported visual-query failure kind: {error.Kind}.",
+        } : agentMessage;
+
+        return error.Kind switch
+        {
+            VisualElementQueryFailureKind.PermissionDenied => new UnauthorizedAccessException(message),
+            VisualElementQueryFailureKind.Timeout => new TimeoutException(message),
+            VisualElementQueryFailureKind.Unsupported => new NotSupportedException(message),
+            VisualElementQueryFailureKind.ElementUnavailable or
+                VisualElementQueryFailureKind.ProviderFailure or
+                VisualElementQueryFailureKind.LimitReached => new VisualElementProviderException(error.Kind, message),
+            _ => new InvalidOperationException(message),
+        };
+    }
 }
 
 internal sealed class AutomationRpcExceptionMapper : IRpcExceptionMapper

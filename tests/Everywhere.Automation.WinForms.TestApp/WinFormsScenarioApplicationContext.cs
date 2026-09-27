@@ -436,6 +436,15 @@ internal sealed class WinFormsScenarioApplicationContext : ApplicationContext
             case TestAppCommandKind.Navigate:
                 Publish(TestAppStatusKind.Error, "Navigate is supported only by the CefSharp TestApp.");
                 break;
+            case TestAppCommandKind.SetText:
+                if (command.Text is null) throw new InvalidOperationException("SetText requires a text value.");
+                var document = _forms[0].Controls.Find("document", searchAllChildren: true).OfType<WinFormsTextBox>().Single();
+                document.Text = command.Text;
+                document.SelectionStart = 0;
+                document.SelectionLength = 0;
+                _revision++;
+                Publish(TestAppStatusKind.TextChanged);
+                break;
             case TestAppCommandKind.Stop:
                 foreach (var form in _forms)
                 {

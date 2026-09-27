@@ -22,7 +22,7 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
 
     public int Count => -1;
 
-    public int Index { get; private set; } = -1;
+    public int Index { get; private set; }
 
     private readonly MacVisualElementBackend _backend;
     private readonly CGDisplayTopology _topology;
@@ -32,9 +32,11 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
     private readonly int _direction;
     private readonly VisualElementQueryRequest _queryRequest;
     private readonly VisualElementRetention _retention;
+    private readonly CancellationToken _cancellationToken;
     private VisualElementQueryResult? _lookahead;
     private VisualElementQueryResult? _current;
     private int _nextWindowIndex;
+    private int _remainingOffset;
     private bool _isLookaheadResolved;
     private bool _isCompleted;
     private bool _isDisposed;
@@ -47,7 +49,9 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
         uint displayId,
         int nextWindowIndex,
         int direction,
-        VisualElementQueryRequest queryRequest)
+        VisualElementQueryRequest queryRequest,
+        int offset,
+        CancellationToken cancellationToken)
     {
         _backend = backend;
         _topology = topology;
@@ -57,6 +61,9 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
         _nextWindowIndex = nextWindowIndex;
         _direction = direction;
         _queryRequest = queryRequest;
+        _remainingOffset = offset;
+        _cancellationToken = cancellationToken;
+        Index = offset - 1;
         _retention = context.CreateRetention();
     }
 
@@ -65,10 +72,12 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
         MacVisualElementBackend backend,
         CGDisplayTopology topology,
         uint displayId,
-        VisualElementQueryRequest queryRequest)
+        VisualElementQueryRequest queryRequest,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var windowZOrder = CGWindowZOrder.Capture(topology);
-        return new TopLevelWindowEnumerator(context, backend, topology, windowZOrder, displayId, 0, 1, queryRequest);
+        return new TopLevelWindowEnumerator(context, backend, topology, windowZOrder, displayId, 0, 1, queryRequest, offset, cancellationToken);
     }
 
     public static IVisualElementCursor CreateSiblings(
@@ -77,7 +86,9 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
         CGDisplayTopology topology,
         uint originWindowId,
         VisualElementRelation relation,
-        VisualElementQueryRequest queryRequest)
+        VisualElementQueryRequest queryRequest,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var windowZOrder = CGWindowZOrder.Capture(topology);
         var originIndex = -1;
@@ -113,7 +124,9 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
             origin.Display.DisplayId,
             originIndex + direction,
             direction,
-            queryRequest);
+            queryRequest,
+            offset,
+            cancellationToken);
     }
 
     public bool MoveNext()
@@ -173,6 +186,7 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
     {
         while (_nextWindowIndex >= 0 && _nextWindowIndex < _windowZOrder.Windows.Count)
         {
+            _cancellationToken.ThrowIfCancellationRequested();
             var window = _windowZOrder.Windows[_nextWindowIndex];
             _nextWindowIndex += _direction;
             if (window.Display.DisplayId != _displayId)
@@ -184,7 +198,17 @@ public sealed class TopLevelWindowEnumerator : IVisualElementCursor
             {
                 using var nativeWindow = _windowResolver.Resolve(window);
                 if (nativeWindow is null) continue;
-                return _backend.GetOrCreateAXElement(_retention, nativeWindow).Query(_queryRequest);
+                using var candidateRetention = _retention.Context.CreateRetention();
+                var element = _backend.GetOrCreateAXElement(candidateRetention, nativeWindow);
+                var result = element.Query(_queryRequest);
+                if (_remainingOffset > 0)
+                {
+                    _remainingOffset--;
+                    continue;
+                }
+
+                _retention.Retain(element);
+                return result;
             }
             catch (AXException exception) when (exception.Error == AXError.InvalidUIElement)
             {

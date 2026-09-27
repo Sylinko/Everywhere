@@ -69,6 +69,14 @@ public sealed partial class VisualPickerObservation
     /// <summary>Gets the provider failure that prevented a current candidate from being observed.</summary>
     [IgnoreMember]
     public VisualElementQueryFailureKind? FailureKind => Candidate.FailureKind;
+
+    /// <summary>Gets the optional localized user-facing failure message.</summary>
+    [IgnoreMember]
+    public IDynamicLocaleKey? FailureMessage => Candidate.FailureMessage;
+
+    /// <summary>Gets optional bounded English failure detail suitable for an Agent-facing result.</summary>
+    [IgnoreMember]
+    public string? FailureAgentMessage => Candidate.FailureAgentMessage;
 }
 
 /// <summary>Confirms and transfers a picker's exact current candidate into a remote visual anchor.</summary>

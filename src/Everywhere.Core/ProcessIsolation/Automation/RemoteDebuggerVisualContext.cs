@@ -59,6 +59,7 @@ public sealed class RemoteDebuggerVisualContext : RemoteVisualContext
                 MaxTextCharacters = maxTextCharacters,
             },
             cancellationToken).ConfigureAwait(false);
+        response.ThrowIfFailed();
         if (!response.IsAvailable)
         {
             throw new InvalidOperationException($"Visual target {targetId} is no longer available.");

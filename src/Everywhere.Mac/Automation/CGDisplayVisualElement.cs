@@ -127,7 +127,9 @@ public sealed class CGDisplayVisualElement : VisualElement
     /// <inheritdoc />
     protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var topology = CGDisplayTopology.Current;
         if (TopologyGeneration != topology.Generation)
@@ -145,11 +147,15 @@ public sealed class CGDisplayVisualElement : VisualElement
                 Backend,
                 topology,
                 DisplayId,
-                request),
+                request,
+                offset,
+                cancellationToken),
             VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling => CreateSiblingEnumerator(
                 topology,
                 relation,
-                request),
+                request,
+                offset,
+                cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(relation), relation, null),
         };
     }
@@ -218,7 +224,9 @@ public sealed class CGDisplayVisualElement : VisualElement
     private IVisualElementCursor CreateSiblingEnumerator(
         CGDisplayTopology topology,
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var originIndex = -1;
         for (var index = 0; index < topology.Displays.Count; index++)
@@ -238,12 +246,22 @@ public sealed class CGDisplayVisualElement : VisualElement
         }
 
         var direction = relation == VisualElementRelation.PreviousSibling ? -1 : 1;
+        var nextDisplayIndex = originIndex + direction * ((long)offset + 1);
+        if (nextDisplayIndex is < int.MinValue or > int.MaxValue)
+        {
+            return EmptyVisualElementEnumerator.Shared;
+        }
+
+        var count = direction < 0 ? originIndex : topology.Displays.Count - originIndex - 1;
         return new CGDisplaySiblingEnumerator(
             Context,
             Backend,
             topology,
-            originIndex + direction,
+            (int)nextDisplayIndex,
             direction,
-            request);
+            request,
+            offset,
+            count,
+            cancellationToken);
     }
 }

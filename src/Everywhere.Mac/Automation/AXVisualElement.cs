@@ -63,6 +63,7 @@ public class AXVisualElement : VisualElement
         var name = default(string);
         var text = default(string);
         var hasMoreText = false;
+        var totalTextLength = default(VisualTextLength?);
         var bounds = default(PixelRect?);
         var processId = default(int?);
         var nativeWindowHandle = default(nint?);
@@ -153,7 +154,7 @@ public class AXVisualElement : VisualElement
 
                 if (requestedFields.HasFlag(VisualElementFields.Text))
                 {
-                    var error = CopyBoundedText(batch, request.MaxTextCharacters, out text, out hasMoreText);
+                    var error = CopyBoundedText(batch, request.MaxTextCharacters, out text, out hasMoreText, out totalTextLength);
                     RecordBatchSlotElementFailure(error, "read the bounded AX text preview", ref failure);
                     if (error == AXError.Success)
                     {
@@ -194,14 +195,17 @@ public class AXVisualElement : VisualElement
 
         return new VisualElementQueryResult(
             this,
-            new VisualElementSnapshot(id, type, states, name, text, hasMoreText, bounds, processId, nativeWindowHandle),
+            new VisualElementSnapshot(id, type, states, name, text, hasMoreText, bounds, processId, nativeWindowHandle)
+            {
+                TotalTextLength = totalTextLength,
+            },
             availableFields,
             requestedFields & ~availableFields,
             failure);
     }
 
     /// <inheritdoc />
-    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters)
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters)
     {
         using var batch = AXAttributeBatch.Copy(NativeElement, [AXAttributeConstants.NumberOfCharacters]);
         var countError = batch.GetInt64(AXAttributeConstants.NumberOfCharacters, out var characterCount);
@@ -212,34 +216,56 @@ public class AXVisualElement : VisualElement
                 return CreateTextReadFailure(AXError.Failure, "read a valid AX character count");
             }
 
-            if (offset >= characterCount.Value)
+            var boundedCharacterCount = Math.Min(characterCount.Value, int.MaxValue);
+            var resolvedOffset = offset >= 0 ? offset : (int)Math.Max(0L, boundedCharacterCount + offset);
+            var isEndRelativeOffsetBounded = offset < 0 && characterCount.Value > int.MaxValue;
+            if (resolvedOffset >= boundedCharacterCount)
             {
-                return new VisualElementTextReadResult(string.Empty, null, null);
+                return new VisualElementTextReadResult(
+                    string.Empty,
+                    null,
+                    null,
+                    CreateTextLength(characterCount.Value),
+                    resolvedOffset,
+                    0,
+                    isEndRelativeOffsetBounded);
             }
 
             // Request one UTF-16 code unit of lookahead so the shared page boundary rule can avoid
             // splitting a surrogate pair while still advancing offsets in the provider's native unit.
-            var remainingCharacters = characterCount.Value - offset;
-            var requestedCharacters = (nint)Math.Min(remainingCharacters, (long)maxCharacters + 1);
+            var nativeOffset = offset < 0 && resolvedOffset > 0 ? resolvedOffset - 1 : resolvedOffset;
+            var localOffset = resolvedOffset - nativeOffset;
+            var remainingCharacters = boundedCharacterCount - nativeOffset;
+            var requestedCharacters = (nint)Math.Min(remainingCharacters, (long)Math.Min(maxCharacters, maximumProbeCharacters) + localOffset + 1);
             var rangeError = NativeElement.CopyParameterizedStringAttribute(
                 AXAttributeConstants.StringForRange,
-                offset,
+                nativeOffset,
                 requestedCharacters,
                 out var rangedText);
             if (rangeError == AXError.Success && !string.IsNullOrEmpty(rangedText))
             {
-                var localPage = VisualElementTextReadResult.FromSuccess(rangedText, 0, maxCharacters);
+                if (localOffset == 1 && rangedText.Length > 1 && char.IsHighSurrogate(rangedText[0]) && char.IsLowSurrogate(rangedText[1]))
+                {
+                    resolvedOffset--;
+                    localOffset = 0;
+                }
+
+                var localPage = VisualElementTextReadResult.FromSuccess(rangedText, localOffset, maxCharacters);
                 var pageText = localPage.Text ?? string.Empty;
                 if (pageText.Length == 0)
                 {
                     return CreateTextReadFailure(AXError.Failure, "advance a valid UTF-16 AX text page");
                 }
 
-                var nextOffset = checked((long)offset + pageText.Length);
+                var nextOffset = checked((long)resolvedOffset + pageText.Length);
                 return new VisualElementTextReadResult(
                     pageText,
-                    nextOffset < characterCount.Value ? checked((int)nextOffset) : null,
-                    null);
+                    nextOffset < boundedCharacterCount ? checked((int)nextOffset) : null,
+                    null,
+                    CreateTextLength(characterCount.Value),
+                    resolvedOffset,
+                    rangedText.Length,
+                    isEndRelativeOffsetBounded);
             }
 
             // Some providers report a positive character count and successfully return an empty AXStringForRange
@@ -268,7 +294,11 @@ public class AXVisualElement : VisualElement
     }
 
     /// <inheritdoc />
-    protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+    protected override IVisualElementCursor CreateEnumeratorCore(
+        VisualElementRelation relation,
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         ValidateRelation(relation);
         var role = ReadNativeRole(NativeElement, "read the AX role before creating a relation Enumerator");
@@ -281,7 +311,7 @@ public class AXVisualElement : VisualElement
 
         if (role != AXRoleAttribute.AXWindow)
         {
-            return new NativeAXVisualElementEnumerator(this, relation, request);
+            return new NativeAXVisualElementEnumerator(this, relation, request, offset, cancellationToken);
         }
 
         var windowIdError = NativeElement.GetNativeWindowHandle(out var windowId);
@@ -289,7 +319,7 @@ public class AXVisualElement : VisualElement
         if (windowIdError != AXError.Success || windowId == 0)
         {
             return relation == VisualElementRelation.Child ?
-                new NativeAXVisualElementEnumerator(this, relation, request) :
+                new NativeAXVisualElementEnumerator(this, relation, request, offset, cancellationToken) :
                 EmptyVisualElementEnumerator.Shared;
         }
 
@@ -301,15 +331,19 @@ public class AXVisualElement : VisualElement
                 Backend,
                 topology,
                 windowId,
-                request),
-            VisualElementRelation.Child => new NativeAXVisualElementEnumerator(this, relation, request),
+                request,
+                offset,
+                cancellationToken),
+            VisualElementRelation.Child => new NativeAXVisualElementEnumerator(this, relation, request, offset, cancellationToken),
             VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling => TopLevelWindowEnumerator.CreateSiblings(
                 Context,
                 Backend,
                 topology,
                 windowId,
                 relation,
-                request),
+                request,
+                offset,
+                cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(relation), relation, null),
         };
     }
@@ -432,10 +466,16 @@ public class AXVisualElement : VisualElement
         return batch.GetBoolean(attribute, out value);
     }
 
-    private AXError CopyBoundedText(AXAttributeBatch batch, int maximumCharacters, out string? text, out bool hasMoreText)
+    private AXError CopyBoundedText(
+        AXAttributeBatch batch,
+        int maximumCharacters,
+        out string? text,
+        out bool hasMoreText,
+        out VisualTextLength? totalTextLength)
     {
         text = null;
         hasMoreText = false;
+        totalTextLength = null;
         var countError = batch.GetInt64(AXAttributeConstants.NumberOfCharacters, out var characterCount);
         if (maximumCharacters == 0)
         {
@@ -443,6 +483,7 @@ public class AXVisualElement : VisualElement
             {
                 text = string.Empty;
                 hasMoreText = characterCount > 0;
+                totalTextLength = CreateTextLength(characterCount.Value);
                 return AXError.Success;
             }
 
@@ -457,6 +498,7 @@ public class AXVisualElement : VisualElement
             }
 
             var count = characterCount.Value;
+            totalTextLength = CreateTextLength(count);
             var requestedLength = checked((nint)Math.Min(count, maximumCharacters));
             hasMoreText = count > requestedLength;
             if (requestedLength == 0)
@@ -481,10 +523,14 @@ public class AXVisualElement : VisualElement
         }
 
         var valueError = NativeElement.CopyDescriptionAttribute(AXAttributeConstants.Value, out text);
-        if (valueError == AXError.Success && text is not null && text.Length > maximumCharacters)
+        if (valueError == AXError.Success && text is not null)
         {
-            hasMoreText = true;
-            text = text[..maximumCharacters];
+            totalTextLength = VisualTextLength.Exact(text.Length);
+            if (text.Length > maximumCharacters)
+            {
+                hasMoreText = true;
+                text = text[..maximumCharacters];
+            }
         }
 
         return valueError;
@@ -495,6 +541,10 @@ public class AXVisualElement : VisualElement
         AXError.ParameterizedAttributeUnsupported or
         AXError.NotImplemented or
         AXError.NoValue;
+
+    private static VisualTextLength CreateTextLength(long value) => value <= int.MaxValue ?
+        VisualTextLength.Exact((int)value) :
+        VisualTextLength.LowerBound(int.MaxValue);
 
     private static VisualElementTextReadResult CreateTextReadFailure(AXError error, string operation) =>
         VisualElementTextReadResult.FromFailure(new AXException(error, $"Failed to {operation}. AX returned {error}.").CreateFailure());
@@ -621,6 +671,8 @@ public class AXVisualElement : VisualElement
         private readonly VisualElementRetention _retention;
         private readonly VisualElementRelation _relation;
         private readonly VisualElementQueryRequest _queryRequest;
+        private readonly int _offset;
+        private readonly CancellationToken _cancellationToken;
 
         private AXUIElement? _siblingParent;
         private NSArray? _childPage;
@@ -636,11 +688,19 @@ public class AXVisualElement : VisualElement
         private bool _isCompleted;
         private bool _isDisposed;
 
-        internal NativeAXVisualElementEnumerator(AXVisualElement origin, VisualElementRelation relation, VisualElementQueryRequest queryRequest)
+        internal NativeAXVisualElementEnumerator(
+            AXVisualElement origin,
+            VisualElementRelation relation,
+            VisualElementQueryRequest queryRequest,
+            int offset,
+            CancellationToken cancellationToken)
         {
             _origin = origin;
             _relation = relation;
             _queryRequest = queryRequest;
+            _offset = offset;
+            _cancellationToken = cancellationToken;
+            _nextResultIndex = offset;
             _retention = origin.Context.CreateRetention();
             _retention.Retain(origin);
         }
@@ -726,16 +786,19 @@ public class AXVisualElement : VisualElement
             switch (_relation)
             {
                 case VisualElementRelation.Parent:
+                    _isCompleted = _offset > 0;
                     break;
                 case VisualElementRelation.Child:
-                    _nextNativeIndex = 0;
+                    _nextNativeIndex = _offset;
                     break;
                 case VisualElementRelation.PreviousSibling:
                     _direction = -1;
                     InitializeSiblingIndex();
+                    if (!_isCompleted) _nextNativeIndex -= _offset;
                     break;
                 case VisualElementRelation.NextSibling:
                     InitializeSiblingIndex();
+                    if (!_isCompleted) _nextNativeIndex += _offset;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_relation), _relation, null);
@@ -848,6 +911,7 @@ public class AXVisualElement : VisualElement
             var searchCount = Math.Min(count, MaximumSiblingSearchCount);
             for (nint pageStart = 0; pageStart < searchCount; pageStart += ChildPageSize)
             {
+                _cancellationToken.ThrowIfCancellationRequested();
                 var pageLength = Math.Min(ChildPageSize, searchCount - pageStart);
                 var error = siblingParent.CopyAttributeValues(AXAttributeConstants.Children, pageStart, pageLength, out var values);
                 using (values)
@@ -869,6 +933,7 @@ public class AXVisualElement : VisualElement
 
                     for (nuint pageIndex = 0; pageIndex < values.Count; pageIndex++)
                     {
+                        _cancellationToken.ThrowIfCancellationRequested();
                         var candidate = values.ValueAt(pageIndex).Handle;
                         if (candidate == 0 || !CFInterop.CFEqual(origin.NativeElement.NativeHandle, candidate))
                         {
@@ -886,8 +951,8 @@ public class AXVisualElement : VisualElement
             if (count > MaximumSiblingSearchCount)
             {
                 throw new VisualElementProviderException(
-                    VisualElementQueryFailureKind.ProviderFailure,
-                    $"AX sibling lookup exceeded the {MaximumSiblingSearchCount}-element search limit.");
+                    VisualElementQueryFailureKind.LimitReached,
+                    $"macOS Accessibility could not locate the sibling origin within its {MaximumSiblingSearchCount}-element search limit.");
             }
 
             _isCompleted = true;

@@ -54,7 +54,7 @@ public sealed class UIAutomationVisualElement(
     protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => QueryCurrent(request);
 
     /// <inheritdoc />
-    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters)
+    protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters)
     {
         try
         {
@@ -66,11 +66,29 @@ public sealed class UIAutomationVisualElement(
                 throw new InvalidOperationException("UI Automation did not return an updated element cache for text reading.");
             }
 
-            var probeLength = (int)Math.Min((long)offset + maxCharacters + 2, int.MaxValue);
-            var text = cachedElement.GetCachedText(probeLength) ?? cachedElement.GetCachedValue();
-            return text is null ?
-                VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null)) :
-                VisualElementTextReadResult.FromSuccess(text, offset, maxCharacters);
+            var textRead = cachedElement.ReadCachedText(offset, maxCharacters, maximumProbeCharacters);
+            if (textRead is { } rangedText)
+            {
+                var totalLength = rangedText.IsComplete ?
+                    VisualTextLength.Exact(rangedText.ProbedLength) :
+                    VisualTextLength.LowerBound(rangedText.ProbedLength);
+                return new VisualElementTextReadResult(
+                    rangedText.Text,
+                    rangedText.NextOffset,
+                    null,
+                    totalLength,
+                    rangedText.Offset,
+                    rangedText.ProbedLength,
+                    rangedText.IsEndRelativeOffsetBounded);
+            }
+
+            var text = cachedElement.GetCachedValue();
+            if (text is null)
+            {
+                return VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(VisualElementQueryFailureKind.Unsupported, null));
+            }
+
+            return VisualElementTextReadResult.FromSuccess(text, offset, maxCharacters);
         }
         catch (Exception exception) when (WindowsUIAutomationFailure.IsProviderException(exception))
         {
@@ -105,11 +123,13 @@ public sealed class UIAutomationVisualElement(
     /// <inheritdoc />
     protected override IVisualElementCursor CreateEnumeratorCore(
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         return IsTopLevelWindow(NativeWindowHandle) && relation is VisualElementRelation.PreviousSibling or VisualElementRelation.NextSibling ?
-            CreateTopLevelWindowSiblingEnumerator(relation, request) :
-            new UIAutomationVisualElementEnumerator(this, relation, request);
+            CreateTopLevelWindowSiblingEnumerator(relation, request, offset, cancellationToken) :
+            new UIAutomationVisualElementEnumerator(this, relation, request, offset, cancellationToken);
     }
 
     private VisualElementQueryResult? QueryNext(
@@ -191,7 +211,9 @@ public sealed class UIAutomationVisualElement(
 
     private IVisualElementCursor CreateTopLevelWindowSiblingEnumerator(
         VisualElementRelation relation,
-        VisualElementQueryRequest request)
+        VisualElementQueryRequest request,
+        int offset,
+        CancellationToken cancellationToken)
     {
         var topology = WindowsDisplayTopology.Current;
         var display = topology.FindTopLevelWindowDisplay((HWND)NativeWindowHandle);
@@ -209,7 +231,9 @@ public sealed class UIAutomationVisualElement(
             (HWND)NativeWindowHandle,
             false,
             direction,
-            request);
+            request,
+            offset,
+            cancellationToken);
     }
 
     private VisualElementQueryResult? QueryParentScreen(
@@ -431,7 +455,8 @@ public sealed class UIAutomationVisualElement(
 
             using var parents = current.Element.CreateEnumerator(
                 VisualElementRelation.Parent,
-                request);
+                request,
+                cancellationToken: cancellationToken);
             if (!parents.MoveNext())
             {
                 throw new InvalidOperationException("Failed to find the top-level window for the visual element.");
@@ -484,6 +509,8 @@ public sealed class UIAutomationVisualElement(
 
     private sealed class UIAutomationVisualElementEnumerator : IVisualElementCursor
     {
+        private const int MaximumSequentialOffset = 4_096;
+
         public VisualElementQueryResult Current
         {
             get
@@ -503,10 +530,14 @@ public sealed class UIAutomationVisualElement(
         private readonly VisualElementRetention _retention;
         private readonly VisualElementRelation _relation;
         private readonly VisualElementQueryRequest _queryRequest;
+        private readonly int _offset;
+        private readonly CancellationToken _cancellationToken;
         private UIAutomationElementReference? _lastElement;
+        private UIAutomationElementReference? _ownedTraversalElement;
         private VisualElementQueryResult? _lookahead;
         private VisualElementQueryResult? _current;
         private int _nextIndex;
+        private bool _isOffsetInitialized;
         private bool _isLookaheadResolved;
         private bool _isCompleted;
         private bool _isDisposed;
@@ -514,11 +545,16 @@ public sealed class UIAutomationVisualElement(
         internal UIAutomationVisualElementEnumerator(
             UIAutomationVisualElement origin,
             VisualElementRelation relation,
-            VisualElementQueryRequest queryRequest)
+            VisualElementQueryRequest queryRequest,
+            int offset,
+            CancellationToken cancellationToken)
         {
             _origin = origin;
             _relation = relation;
             _queryRequest = queryRequest;
+            _offset = offset;
+            _cancellationToken = cancellationToken;
+            _nextIndex = offset;
             _retention = origin.Context.CreateRetention();
             _retention.Retain(origin);
         }
@@ -537,6 +573,7 @@ public sealed class UIAutomationVisualElement(
             _lookahead = null;
             _isLookaheadResolved = false;
             _current = next;
+            DisposeHelper.DisposeToDefault(ref _ownedTraversalElement);
             _lastElement = (next.Element as UIAutomationVisualElement)?.AutomationElement;
             _isCompleted = _relation == VisualElementRelation.Parent;
             Index = _nextIndex;
@@ -556,6 +593,7 @@ public sealed class UIAutomationVisualElement(
             _isDisposed = true;
             _origin = null;
             _lastElement = null;
+            DisposeHelper.DisposeToDefault(ref _ownedTraversalElement);
             _lookahead = null;
             _current = null;
             _retention.Dispose();
@@ -569,9 +607,55 @@ public sealed class UIAutomationVisualElement(
             }
 
             var currentOrigin = _origin ?? throw new ObjectDisposedException(nameof(UIAutomationVisualElementEnumerator));
-            _lookahead = currentOrigin.QueryNext(_retention, _lastElement, _relation, _queryRequest);
+            InitializeOffset(currentOrigin);
+            if (_isCompleted)
+            {
+                return;
+            }
+
+            _lookahead = currentOrigin.QueryNext(_retention, _ownedTraversalElement ?? _lastElement, _relation, _queryRequest);
             _isLookaheadResolved = true;
             _isCompleted = _lookahead is null;
+        }
+
+        private void InitializeOffset(UIAutomationVisualElement origin)
+        {
+            if (_isOffsetInitialized)
+            {
+                return;
+            }
+
+            _isOffsetInitialized = true;
+            if (_relation == VisualElementRelation.Parent)
+            {
+                _isCompleted = _offset > 0;
+                return;
+            }
+
+            if (_offset > MaximumSequentialOffset)
+            {
+                throw new VisualElementProviderException(
+                    VisualElementQueryFailureKind.LimitReached,
+                    $"Windows UI Automation cannot reach {_relation} offset {_offset} because sequential relation traversal is limited to {MaximumSequentialOffset} skipped elements per query.");
+            }
+
+            var remaining = _offset;
+            while (remaining > 0)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                using var cacheRequest = origin.Backend.Automation.CreateElementCacheRequest(VisualElementFields.None);
+                using var next = origin.GetNextElement(_ownedTraversalElement, _relation, cacheRequest);
+                if (!next.HasValue)
+                {
+                    _isCompleted = true;
+                    return;
+                }
+
+                var nextReference = next.Realize();
+                DisposeHelper.DisposeToDefault(ref _ownedTraversalElement);
+                _ownedTraversalElement = nextReference;
+                remaining--;
+            }
         }
 
         private void ThrowIfUnavailable()

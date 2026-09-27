@@ -13,6 +13,7 @@ public sealed record VisualContextSnapshotLimits
     /// <summary>
     /// Gets the aggregate elapsed-time boundary checked between platform operations.
     /// </summary>
+    /// <remarks>The value must fit the timer range supported by <see cref="CancellationTokenSource.CancelAfter(TimeSpan)" />.</remarks>
     public TimeSpan MaximumElapsed { get; init; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
@@ -48,6 +49,7 @@ public sealed record VisualContextSnapshotLimits
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(MaximumElapsed, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaximumElapsed, TimeSpan.FromMilliseconds(int.MaxValue));
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumPlatformOperations);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumNodes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumChildrenPerNode);

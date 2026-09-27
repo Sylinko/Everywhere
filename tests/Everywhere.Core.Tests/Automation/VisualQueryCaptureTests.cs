@@ -100,8 +100,13 @@ public sealed class VisualQueryCaptureTests
         public int CaptureCount { get; private set; }
         protected override VisualElementQueryResult QueryCore(VisualElementQueryRequest request) => new(this,
             new VisualElementSnapshot(Id, VisualElementType.TopLevel, VisualElementStates.None, "Window", null, false, new PixelRect(0, 0, 100, 100), null, null), VisualElementFields.All, VisualElementFields.None, null);
-        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) => new(string.Empty, null, null);
-        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request) => Substitute.For<IVisualElementCursor>();
+        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters) => new(string.Empty, null, null);
+        protected override IVisualElementCursor CreateEnumeratorCore(
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken) =>
+            Substitute.For<IVisualElementCursor>();
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken)
         {
             CaptureCount++;

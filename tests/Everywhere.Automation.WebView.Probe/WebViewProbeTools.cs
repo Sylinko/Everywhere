@@ -48,7 +48,7 @@ internal sealed class WebViewProbeTools
     public async Task<string> QueryVisualAsync(
         [Description("'root' for the current browser window, or an integer visual element ID returned by an earlier query")] string target = "root",
         [Description("Comma-separated directions: all, parent, child, previous, next, siblings, or none")] string directions = "all",
-        [Description("1-based retained-member offset; pass root next back with the same target. Without observedMembers, use 1.")] int offset = 1,
+        [Description("Zero-based number of results to skip independently in each requested initial direction")] int offset = 0,
         [Description("Optional maximum admitted nodes; values above 256 are clamped and the server default is used when omitted")] int? limit = null,
         [Description("Optional approximate prompt token budget; uses the server default when omitted")] int? targetTokenBudget = null,
         [Description("Start a persistent conversation turn, completing the previous one. Otherwise reuse it; without one, this call owns a temporary turn.")] bool shouldStartNewTurn = false,

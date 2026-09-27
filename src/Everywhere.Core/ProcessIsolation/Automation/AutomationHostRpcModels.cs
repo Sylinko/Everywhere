@@ -70,7 +70,7 @@ public sealed partial class QueryAutomationTargetRequest
     [Key(2)]
     public required VisualContextTraverseDirections Directions { get; init; }
 
-    /// <summary>One-based retained-member offset.</summary>
+    /// <summary>Zero-based offset applied independently to each requested initial relation.</summary>
     [Key(3)]
     public required int Offset { get; init; }
 

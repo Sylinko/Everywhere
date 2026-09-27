@@ -13,7 +13,10 @@ public sealed class CGDisplaySiblingEnumerator(
     CGDisplayTopology topology,
     int nextDisplayIndex,
     int direction,
-    VisualElementQueryRequest queryRequest
+    VisualElementQueryRequest queryRequest,
+    int offset,
+    int count,
+    CancellationToken cancellationToken
 ) : IVisualElementCursor
 {
     public VisualElementQueryResult Current
@@ -27,9 +30,9 @@ public sealed class CGDisplaySiblingEnumerator(
 
     object IEnumerator.Current => Current;
 
-    public int Count { get; } = direction < 0 ? Math.Max(0, nextDisplayIndex + 1) : Math.Max(0, topology.Displays.Count - nextDisplayIndex);
+    public int Count { get; } = count;
 
-    public int Index { get; private set; } = -1;
+    public int Index { get; private set; } = offset - 1;
 
     private readonly VisualElementRetention _retention = context.CreateRetention();
     private VisualElementQueryResult? _current;
@@ -39,6 +42,7 @@ public sealed class CGDisplaySiblingEnumerator(
     public bool MoveNext()
     {
         ThrowIfUnavailable();
+        cancellationToken.ThrowIfCancellationRequested();
         if (_nextDisplayIndex < 0 || _nextDisplayIndex >= topology.Displays.Count)
         {
             _current = null;

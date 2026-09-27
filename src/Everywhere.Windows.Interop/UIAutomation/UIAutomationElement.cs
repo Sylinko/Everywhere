@@ -18,6 +18,24 @@ namespace Everywhere.Windows.Interop.UIAutomation;
 public delegate TResult UIAutomationRuntimeIdReader<in TState, out TResult>(ReadOnlySpan<int> runtimeId, TState state);
 
 /// <summary>
+/// Contains one managed page sliced directly from a bounded UI Automation TextPattern BSTR.
+/// </summary>
+/// <param name="Text">The managed page copied from the native prefix.</param>
+/// <param name="Offset">The resolved nonnegative UTF-16 page offset.</param>
+/// <param name="NextOffset">The next offset observed within the native prefix.</param>
+/// <param name="ProbedLength">The usable UTF-16 length of the bounded native prefix.</param>
+/// <param name="IsComplete">Whether the native call reached the end of the document.</param>
+/// <param name="IsEndRelativeOffsetBounded">Whether a negative offset was resolved from the end of the bounded prefix rather than the document.</param>
+public readonly record struct UIAutomationTextReadResult(
+    string Text,
+    int Offset,
+    int? NextOffset,
+    int ProbedLength,
+    bool IsComplete,
+    bool IsEndRelativeOffsetBounded
+);
+
+/// <summary>
 /// Owns one operation-scoped UI Automation element reference and exposes its cached values.
 /// </summary>
 /// <remarks>
@@ -194,12 +212,17 @@ public unsafe ref struct UIAutomationElement : IDisposable
     }
 
     /// <summary>
-    /// Reads at most the requested number of characters through the cached TextPattern.
+    /// Reads one page from a bounded prefix exposed through the cached TextPattern.
     /// </summary>
-    /// <param name="maxCharacters">The maximum number of UTF-16 characters to return.</param>
-    /// <returns>The bounded text, or <see langword="null" /> when the cached pattern is absent.</returns>
-    public readonly string? GetCachedText(int maxCharacters)
+    /// <param name="offset">The UTF-16 offset to slice. A negative value is resolved from the observed end.</param>
+    /// <param name="maxCharacters">The positive target maximum page length.</param>
+    /// <param name="maximumProbeCharacters">The positive maximum usable native prefix length.</param>
+    /// <returns>The bounded read, or <see langword="null" /> when the cached pattern is absent.</returns>
+    /// <remarks>The BSTR is sliced while it is alive so an unbounded managed copy is never created.</remarks>
+    public readonly UIAutomationTextReadResult? ReadCachedText(int offset, int maxCharacters, int maximumProbeCharacters)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCharacters);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumProbeCharacters);
         var interfaceId = IUIAutomationTextPattern.IID_Guid;
         var pPattern = (IUIAutomationTextPattern*)Pointer->GetCachedPatternAs(UIA_PATTERN_ID.UIA_TextPatternId, in interfaceId);
         if (pPattern is null)
@@ -217,10 +240,48 @@ public unsafe ref struct UIAutomationElement : IDisposable
 
             try
             {
-                var value = pRange->GetText(maxCharacters);
+                // Reserve one native code unit as lookahead. Without it, a filled prefix ending in a
+                // high surrogate cannot distinguish a complete scalar from a boundary split.
+                var nativeMaximumCharacters = maximumProbeCharacters == int.MaxValue ? int.MaxValue : maximumProbeCharacters + 1;
+                var value = pRange->GetText(nativeMaximumCharacters);
                 try
                 {
-                    return value.Value is null ? null : value.ToString();
+                    if (value.Value is null)
+                    {
+                        return null;
+                    }
+
+                    var returnedText = value.AsSpan();
+                    var isComplete = returnedText.Length < nativeMaximumCharacters;
+                    var probedLength = GetSafeProbeLength(returnedText, maximumProbeCharacters, isComplete);
+                    var text = returnedText[..probedLength];
+                    var resolvedOffset = offset >= 0 ? offset : (int)Math.Max(0L, (long)probedLength + offset);
+                    if (offset < 0 && resolvedOffset > 0 && resolvedOffset < probedLength &&
+                        char.IsLowSurrogate(text[resolvedOffset]) && char.IsHighSurrogate(text[resolvedOffset - 1])) resolvedOffset--;
+                    if (resolvedOffset >= probedLength)
+                    {
+                        return new UIAutomationTextReadResult(
+                            string.Empty,
+                            resolvedOffset,
+                            null,
+                            probedLength,
+                            isComplete,
+                            offset < 0 && !isComplete);
+                    }
+
+                    var end = (int)Math.Min((long)resolvedOffset + maxCharacters, probedLength);
+                    if (end < probedLength && char.IsHighSurrogate(text[end - 1]) && char.IsLowSurrogate(text[end]))
+                    {
+                        end = end - resolvedOffset == 1 ? end + 1 : end - 1;
+                    }
+
+                    return new UIAutomationTextReadResult(
+                        new string(text[resolvedOffset..end]),
+                        resolvedOffset,
+                        end < probedLength ? end : null,
+                        probedLength,
+                        isComplete,
+                        offset < 0 && !isComplete);
                 }
                 finally
                 {
@@ -236,6 +297,19 @@ public unsafe ref struct UIAutomationElement : IDisposable
         {
             pPattern->Release();
         }
+    }
+
+    private static int GetSafeProbeLength(ReadOnlySpan<char> text, int maximumProbeCharacters, bool isComplete)
+    {
+        if (isComplete) return text.Length;
+
+        var length = Math.Min(text.Length, maximumProbeCharacters);
+        if (length > 0 && length < text.Length && char.IsHighSurrogate(text[length - 1]) && char.IsLowSurrogate(text[length]))
+        {
+            return length + 1;
+        }
+
+        return length > 0 && length == text.Length && char.IsHighSurrogate(text[length - 1]) ? length - 1 : length;
     }
 
     /// <summary>

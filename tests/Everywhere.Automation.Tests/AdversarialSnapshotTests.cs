@@ -63,6 +63,25 @@ public sealed class AdversarialSnapshotTests
         Assert.That(nodes.Select(node => node.ReleaseCount), Is.All.EqualTo(1));
     }
 
+    [Test]
+    public void Snapshot_WhenCallerCancelsDuringEnumeratorAdvance_DisposesEnumerator()
+    {
+        using var context = new VisualContext();
+        using var acquisition = context.CreateRetention();
+        using var cancellation = new CancellationTokenSource();
+        var nodes = CreateNodes(context, acquisition);
+        nodes[0].Children = [nodes[1]];
+        nodes[0].BeforeMove = cancellation.Cancel;
+
+        Assert.Throws<OperationCanceledException>(() => VisualContextSnapshotter.CreateSnapshot(
+            context,
+            [nodes[0]],
+            allowedTraverseDirections: VisualContextTraverseDirections.Child,
+            cancellationToken: cancellation.Token));
+
+        Assert.That(nodes[0].EnumeratorDisposalCount, Is.EqualTo(1));
+    }
+
     [TestCase(VisualElementQueryFailureKind.Unsupported)]
     public void Snapshot_WhenRecoverableElementFailuresRepeat_DoesNotConsumeProviderFailureBudget(VisualElementQueryFailureKind failureKind)
     {
@@ -188,6 +207,8 @@ public sealed class AdversarialSnapshotTests
         public int MoveCount { get; private set; }
         public int ReleaseCount { get; private set; }
 
+        public Action? BeforeMove { get; set; }
+
         public VisualElementQueryFailureKind? QueryFailureKind { get; set; }
 
         public VisualElementQueryFailureKind? TextFailureKind { get; set; }
@@ -209,25 +230,41 @@ public sealed class AdversarialSnapshotTests
                 new VisualElementQueryFailure(failureKind, null));
         }
 
-        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters) => TextFailureKind is { } failureKind ?
+        protected override VisualElementTextReadResult ReadTextCore(int offset, int maxCharacters, int maximumProbeCharacters) => TextFailureKind is { } failureKind ?
             VisualElementTextReadResult.FromFailure(new VisualElementQueryFailure(failureKind, null)) :
             VisualElementTextReadResult.FromSuccess(id == 3 ? "Useful content" : string.Empty, offset, maxCharacters);
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
         protected override void ReleaseCore() => ReleaseCount++;
-        protected override IVisualElementCursor CreateEnumeratorCore(VisualElementRelation relation, VisualElementQueryRequest request)
+        protected override IVisualElementCursor CreateEnumeratorCore(
+            VisualElementRelation relation,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken)
         {
             Assert.That(relation, Is.EqualTo(VisualElementRelation.Child));
             EnumerationCount++;
-            return new GraphEnumerator(this, Children.GetEnumerator(), request);
+            return new GraphEnumerator(this, Children.Skip(offset).GetEnumerator(), request, offset, cancellationToken);
         }
 
-        private sealed class GraphEnumerator(GraphElement origin, IEnumerator<GraphElement> items, VisualElementQueryRequest request) : IVisualElementCursor
+        private sealed class GraphEnumerator(
+            GraphElement origin,
+            IEnumerator<GraphElement> items,
+            VisualElementQueryRequest request,
+            int offset,
+            CancellationToken cancellationToken) : IVisualElementCursor
         {
             public VisualElementQueryResult Current => items.Current.Query(request);
             object IEnumerator.Current => Current;
             public int Count => -1;
-            public int Index { get; private set; } = -1;
-            public bool MoveNext() { origin.MoveCount++; Index++; return items.MoveNext(); }
+            public int Index { get; private set; } = offset - 1;
+            public bool MoveNext()
+            {
+                origin.BeforeMove?.Invoke();
+                cancellationToken.ThrowIfCancellationRequested();
+                origin.MoveCount++;
+                Index++;
+                return items.MoveNext();
+            }
             public void Reset() => throw new NotSupportedException();
             public void Dispose() { origin.EnumeratorDisposalCount++; items.Dispose(); }
         }
