@@ -3,6 +3,7 @@ using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
@@ -150,7 +151,8 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
         try
         {
             var prompts = await _promptService.ListPromptsAsync(cancellationToken);
-            _items.Reset(prompts.Select(static prompt => Item.FromPrompt(prompt)));
+            cancellationToken.ThrowIfCancellationRequested();
+            RefreshItems(prompts);
         }
         catch (OperationCanceledException)
         {
@@ -160,6 +162,36 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
             Log.Logger.ForContext<CustomAssistantPromptSelector>().Warning(
                 HandledSystemException.Handle(ex),
                 "Failed to load prompts for assistant prompt selector.");
+        }
+    }
+
+    private void RefreshItems(IReadOnlyList<PromptDefinition> prompts)
+    {
+        var isInitialLoad = _items.Count == 0;
+        var currentItems = _items.ToDictionary(static item => item.Id);
+        var refreshedItems = new Item[prompts.Count];
+        for (var index = 0; index < refreshedItems.Length; index++)
+        {
+            var prompt = prompts[index];
+            if (currentItems.TryGetValue(prompt.Id, out var item))
+            {
+                item.Update(prompt);
+            }
+            else
+            {
+                item = Item.FromPrompt(prompt);
+            }
+
+            refreshedItems[index] = item;
+        }
+
+        _items.Reset(refreshedItems);
+
+        // Reset restores an established selection, but it does not resolve a SelectedValue
+        // that was bound while the collection was still empty.
+        if (isInitialLoad && _comboBox is not null)
+        {
+            _comboBox.SelectedItem = _items.FirstOrDefault(item => item.Id == SelectedId);
         }
     }
 
@@ -239,8 +271,15 @@ public sealed partial class CustomAssistantPromptSelector(CustomAssistant custom
     /// <summary>
     /// Display model for a prompt option.
     /// </summary>
-    public sealed record Item(Guid Id, IDynamicLocaleKey DisplayNameKey)
+    public sealed partial class Item(Guid id, IDynamicLocaleKey displayNameKey) : ObservableObject
     {
+        public Guid Id { get; } = id;
+
+        [ObservableProperty]
+        public partial IDynamicLocaleKey DisplayNameKey { get; set; } = displayNameKey;
+
         public static Item FromPrompt(PromptDefinition prompt) => new(prompt.Id, PromptDisplayNameProvider.GetDisplayNameKey(prompt));
+
+        public void Update(PromptDefinition prompt) => DisplayNameKey = PromptDisplayNameProvider.GetDisplayNameKey(prompt);
     }
 }

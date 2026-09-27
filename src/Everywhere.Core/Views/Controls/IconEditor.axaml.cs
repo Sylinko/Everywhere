@@ -108,43 +108,18 @@ public sealed class IconEditor : TemplatedControl
                 .Select(query => Observable.FromAsync(token => PerformSearchAsync(query, token)))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
-                .Subscribe(results =>
-                {
-                    _lucideItemsSource.Clear();
-                    if (Icon?.Kind is { } kind)
-                    {
-                        _lucideItemsSource.Add(kind);
-                        foreach (var lucide in results.Lucide.Where(k => k != kind))
-                        {
-                            _lucideItemsSource.Add(lucide);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var lucide in results.Lucide)
-                        {
-                            _lucideItemsSource.Add(lucide);
-                        }
-                    }
-
-                    _emojiItemsSource.Clear();
-                    if (Icon?.Text is { } text)
-                    {
-                        _emojiItemsSource.Add(text);
-                        foreach (var emoji in results.Emoji.Where(e => !e.Equals(text, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            _emojiItemsSource.Add(emoji);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var emoji in results.Emoji)
-                        {
-                            _emojiItemsSource.Add(emoji);
-                        }
-                    }
-                });
+                .Subscribe(ApplySearchResults);
         });
+    }
+
+    private void ApplySearchResults((IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji) results)
+    {
+        _lucideItemsSource.Reset(Icon?.Kind is { } kind ?
+            [kind, .. results.Lucide.Where(item => item != kind)] :
+            [.. results.Lucide]);
+        _emojiItemsSource.Reset(Icon?.Text is { } text ?
+            [text, .. results.Emoji.Where(item => !item.Equals(text, StringComparison.OrdinalIgnoreCase))] :
+            [.. results.Emoji]);
     }
 
     private async static Task<(IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji)> PerformSearchAsync(
