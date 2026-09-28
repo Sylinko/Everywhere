@@ -7,6 +7,29 @@ namespace Everywhere.ProcessIsolation.Tests;
 public sealed class RpcRemoteResourceTests
 {
     [Test]
+    public async Task AllocateResourceId_FromBothEndpoints_UsesDisjointSignedRanges()
+    {
+        var pipeName = TestPipeNames.Create();
+        await using var serverStream = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var waitForConnection = serverStream.WaitForConnectionAsync();
+        await using var clientStream = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await clientStream.ConnectAsync(5000);
+        await waitForConnection;
+
+        var options = new RpcConnectionOptions { RequireHandshake = false };
+        await using var server = new RpcConnection(serverStream, isServer: true, options);
+        await using var client = new RpcConnection(clientStream, isServer: false, options);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(client.AllocateResourceId(), Is.EqualTo(1));
+            Assert.That(client.AllocateResourceId(), Is.EqualTo(2));
+            Assert.That(server.AllocateResourceId(), Is.EqualTo(-1));
+            Assert.That(server.AllocateResourceId(), Is.EqualTo(-2));
+        });
+    }
+
+    [Test]
     public async Task RegisterAsync_WhenReleaseArrivedFirst_DisposesWithoutPublishingResource()
     {
         await using var registry = new RpcRemoteResourceRegistry();
@@ -42,7 +65,7 @@ public sealed class RpcRemoteResourceTests
         client.Start();
         var releaseQueue = client.GetSafeHandleReleaseQueue();
         var resource = new AsyncTestResource();
-        var resourceId = releaseQueue.AllocateResourceId();
+        var resourceId = client.AllocateResourceId();
         Assert.That(await registry.RegisterAsync(resourceId, resource), Is.True);
         using var handle = new TestHandle(resourceId, releaseQueue);
         
@@ -50,6 +73,39 @@ public sealed class RpcRemoteResourceTests
         await WaitForAsync(() => resource.DisposeCount == 1);
 
         Assert.That(registry.Count, Is.Zero);
+    }
+
+    [Test]
+    public async Task RpcSafeHandle_WithServerAllocatedId_ReleasesRegisteredPeerResource()
+    {
+        var pipeName = TestPipeNames.Create();
+        await using var serverStream = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var waitForConnection = serverStream.WaitForConnectionAsync();
+        await using var clientStream = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await clientStream.ConnectAsync(5000);
+        await waitForConnection;
+
+        var options = new RpcConnectionOptions { RequireHandshake = false };
+        await using var server = new RpcConnection(serverStream, isServer: true, options);
+        await using var client = new RpcConnection(clientStream, isServer: false, options);
+        await using var registry = new RpcRemoteResourceRegistry();
+        registry.Bind(server);
+        server.Start();
+        client.Start();
+        var releaseQueue = client.GetSafeHandleReleaseQueue();
+        var resource = new AsyncTestResource();
+        var resourceId = server.AllocateResourceId();
+        Assert.That(await registry.RegisterAsync(resourceId, resource), Is.True);
+        using var handle = new TestHandle(resourceId, releaseQueue);
+
+        handle.Dispose();
+        await WaitForAsync(() => resource.DisposeCount == 1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(resourceId, Is.LessThan(0));
+            Assert.That(registry.Count, Is.Zero);
+        });
     }
 
     [Test]

@@ -59,7 +59,7 @@ public sealed class RemoteVisualPicker : RpcSafeHandle
         cancellationToken.ThrowIfCancellationRequested();
         using var pickerLease = AcquireLease();
         var contextLease = Context.AcquireLease();
-        var anchorId = _releaseQueue.AllocateResourceId();
+        var anchorId = Context.AllocateResourceId();
         try
         {
             var requestedQuery = query ?? VisualElementQueryRequest.Default;

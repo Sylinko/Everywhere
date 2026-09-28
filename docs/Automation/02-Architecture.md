@@ -6,7 +6,7 @@ The architecture separates four questions:
 
 | Type | Question | Typical lifetime |
 |---|---|---|
-| `IVisualElementBackend` | Which platform acquires roots and supplies composition-local native facilities? | Automation Host session, or Main lifetime for narrow UI-only services |
+| `IVisualElementBackend` | Which platform acquires roots and supplies composition-local native facilities? | Automation Host session |
 | `VisualContext` | Which identities, ownership batches, and Agent targets belong to this conversation? | Host resource attached to one remote Main state |
 | `VisualElementRetention` | Which real owner currently keeps a set of elements alive? | Attachment, Enumerator, Snapshot, or Agent turn |
 | `VisualTargetTurn` | Which published and looked-up targets belong to one Agent turn? | Current turn, then historical retention |
@@ -66,7 +66,9 @@ The Backend does not own conversation identities, Agent IDs, traversal state, ou
 
 The Agent-facing Backend is created once for the Automation Host session, before the Host begins serving the authenticated Main connection. Host RPC creates `VisualContext` resources lazily for chats, acquisition, and diagnostics; Contexts are not DI services. `ChatVisualState` owns only the corresponding Main-side remote handle and recreates it when the Host connection changes. Multiple Host Contexts share the native client; their complete Context operations are independently serialized. The Windows evidence supports one immutable-policy `CUIAutomation8` client shared across calls; element identity is independent of the client that returned a COM pointer.
 
-Main separately retains platform services for screenshot pixels, free-form selection, and selected-text monitoring. Screen/window/element screenshot snapping uses the same Automation Host picker observation contract as element selection, without transferring an anchor or streaming screenshot pixels over RPC. These paths never participate in chat target identity or Agent action routing.
+Main separately retains platform services for screenshot pixels and free-form selection. Screen/window/element screenshot snapping uses the same Automation Host picker observation contract as element selection, without transferring an anchor or streaming screenshot pixels over RPC.
+
+[Text-selection monitoring](11-TextSelectionMonitoring.md) belongs to the Automation Host, including gesture detection, accessibility reads, and clipboard fallback. Main owns desired monitoring state and result acceptance. Host observes text and its source together, registers the source as an acquisition-Context anchor, and directly pushes the result. The monitor owns unfinished attempts and unsent observations; enqueued anchors follow remote-resource ownership, so stopping monitoring cannot revoke them. Main's connection-level receiver releases rejected results and transfers accepted anchors to attachments. Main accesses the Backend exclusively through Automation RPC.
 
 ## 4. VisualContext
 
@@ -215,6 +217,6 @@ An optional UI overlay and input guard may still surround a user-visible read or
 
 ## 12. Process Isolation
 
-The element object model remains process-local inside the Automation Host. Main uses coarse-grained RPC operations and connection-scoped handles for Contexts, anchors, and pickers; it never receives a native `VisualElement`. `RpcSafeHandle` lifetime protects remote resources while calls are in flight, and connection teardown releases the complete registry.
+The element object model remains process-local inside the Automation Host. Main uses coarse-grained RPC operations and connection-scoped handles for Contexts, anchors, and pickers; it never receives a native `VisualElement`. Each connection endpoint allocates nonzero resource IDs: client IDs are positive and server IDs are negative. Sign identifies the allocator; resource ownership and release routing follow the original connection. Main-requested and Host-pushed anchors share `RpcSafeHandle` leases and the same release queue. Connection teardown releases the complete registry. The full allocation and delivery rules are defined in [RPC and Automation Host](../ProcessIsolation/RpcAndAutomation.md#remote-resources).
 
 Transport contracts contain copied observations, captures, status, and neutral failures. They do not become native identity or leak platform exceptions. Automation Host replacement invalidates all old handles and target IDs, so Main creates a new remote Context and callers re-observe. See [Process Isolation](../ProcessIsolation/README.md) for startup, authentication, RPC, and recovery details.

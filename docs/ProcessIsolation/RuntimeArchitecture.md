@@ -7,9 +7,11 @@ On Windows and macOS, Everywhere uses the same executable for three long-lived r
 | Role | Entry argument | Responsibility |
 | --- | --- | --- |
 | Main | no role argument, or `--process-role main` | UI, application state, Host lifecycle, Agent orchestration, and remote proxies |
-| Input Host | `--process-role input` | global shortcut and input-hook implementation |
-| Automation Host | `--process-role automation` | accessibility backend, visual Contexts, queries, picking, capture, and actions |
+| Input Host | `--process-role input` | global shortcuts and shortcut recording, including their native hooks |
+| Automation Host | `--process-role automation` | accessibility backend, visual Contexts, queries, picking, capture, actions, and text-selection monitoring |
 | Hosts controller | `--hosts-control <operation>` | fixed launch, stop, install, and uninstall operations, then immediate exit |
+
+[Text-selection monitoring](../Automation/11-TextSelectionMonitoring.md) runs entirely in Automation Host: gesture observation, debounce, accessibility reads, and clipboard fallback. Main controls enablement and consumes results over its Automation connection. Each Host owns the native hooks required by its features; reusable hook infrastructure does not determine process ownership.
 
 Role and controller dispatch occurs before Entrance, dependency injection, Avalonia, databases, or the ordinary application graph. Host processes use `ProcessRoleHostRunner` and construct only their platform session. The controller receives a small platform implementation directly from the platform entry point.
 
@@ -73,3 +75,5 @@ The platform entry point constructs early objects because Host and controller pa
 - macOS constructs `DirectHostsControlPlatform` and `MacNamedPipePeerVerifier`. Install and uninstall are no-op successes, while start requests direct launch.
 
 `AddProcessIsolation()` registers the coordinator, connection source, Main control server, chat visual service, debugger visual Context, and their initialization hooks. Platform selection is expressed by registered services rather than delegates passed through the registration method.
+
+Platform entry points supply a narrow native text-selection monitoring implementation directly to the Automation session, sharing its Backend. The Main proxy restores desired monitoring state after connection replacement. Monitoring stops before Context/Backend teardown. Native hook and application loops operate independently of Main's DI graph and Avalonia application.

@@ -1,7 +1,7 @@
 namespace Everywhere.ProcessIsolation.Rpc;
 
 /// <summary>
-/// Owns one positive remote resource identifier for the lifetime of its originating RPC connection.
+/// Owns one nonzero remote resource identifier for the lifetime of its originating RPC connection.
 /// </summary>
 /// <remarks>
 /// Explicit disposal and finalization use the same nonblocking release path. Connection teardown remains the fallback when a process exits without running finalizers or a release can no longer be delivered.
@@ -16,7 +16,7 @@ public abstract class RpcSafeHandle : SafeHandle
     /// <summary>Initializes ownership of one remote resource.</summary>
     protected RpcSafeHandle(long resourceId, IRpcSafeHandleReleaser releaser) : base(0, true)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(resourceId);
+        ArgumentOutOfRangeException.ThrowIfZero(resourceId);
         SetHandle((nint)resourceId);
         _releaser = releaser;
     }

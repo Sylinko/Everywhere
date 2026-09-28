@@ -13,8 +13,9 @@ The refactor is a clean internal replacement. Compatibility exists only long eno
 | `ChatContext.VisualElements` / `ResilientCache<int, IVisualElement>` | Main-side `ChatVisualState` plus one connection-scoped remote Context; the Automation Host owns the real `VisualContext` and its current/historical Agent turns |
 | `VisualElementStore` | expanded into `VisualContext` |
 | `VisualContextService` | replaced by `ChatVisualService` for Main-side remote operations and by the Host-side `IVisualElementBackend` for root acquisition and shared platform services |
-| Windows `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `WindowsVisualElementBackend`; interactive screen selection and text-selection monitoring are separate services |
-| macOS `IVisualElementContext` / `VisualElementContext` | root acquisition moved to `MacVisualElementBackend`; interactive selection and text-selection monitoring moved to `MacScreenSelectionService` and `MacTextSelectionWatcher` |
+| Windows `IVisualElementContext` / `VisualElementContext` | Automation Host owns `WindowsVisualElementBackend` and native text-selection monitoring; Main owns the interactive screen-selection UI |
+| macOS `IVisualElementContext` / `VisualElementContext` | Automation Host owns `MacVisualElementBackend` and native text-selection monitoring; Main owns `MacScreenSelectionService` |
+| Main-local `WindowsTextSelectionWatcher` / `MacTextSelectionWatcher` | Automation Host owns the complete native monitoring workflow; Main controls its lifetime and consumes text with the retained source |
 | Linux `IVisualElementContext` / `VisualElementContext` | retained only as a platform migration source until native Context work |
 | `WindowsVisualElementQuerySession` | removed; shared UIA services and root acquisition live in `WindowsVisualElementBackend`, while existing-element behavior lives in concrete elements |
 | worker/Dispatcher/TaskScheduler/SynchronizationContext/Scope | removed after the native-timeout and real-call-path review |
@@ -26,9 +27,9 @@ The refactor is a clean internal replacement. Compatibility exists only long eno
 | `BuiltVisualElements` | provisional/atomic `VisualContext` target publication |
 | `get_visual_tree` | `query_visual` / `VisualQuery` |
 
-## 3. Implemented Foundation
+## 3. Architecture Foundation
 
-The replacement foundation currently includes:
+The replacement architecture consists of:
 
 - `Everywhere.Prompting`, including `PromptCompactElement` support for required attribute-only/self-closing compact nodes;
 - the platform-neutral `Everywhere.Automation` assembly, including the Snapshot model, Snapshotter, monotonic Snapshot limits, and traversal directions;
@@ -47,7 +48,7 @@ The replacement foundation currently includes:
 - Windows UIA and Win32 Screen concrete elements;
 - macOS AX, AX system-wide, and NSScreen concrete elements;
 - one Backend Query with orthogonal default/focused/pointer/point/native-window Locators and Direct/TopLevel/Screen Resolution;
-- separate Windows and macOS interactive screen-selection and text-selection-monitor services;
+- Main-owned interactive screen-selection UI and Automation Host-owned text-selection monitors for Windows and macOS;
 - the unmanaged CsWin32 UIA facade and deterministic COM ownership model;
 - one process-shared immutable-policy Windows UIA client and TreeWalker;
 - `WM_DISPLAYCHANGE`-driven immutable Windows display topology;
@@ -58,9 +59,9 @@ The replacement foundation currently includes:
 
 The worker, custom scheduler, SynchronizationContext, bounded-proxy, watchdog, Scope, Direct Scope, operation lease, pin, and per-Scope client implementation has been deleted. It did not provide a real termination boundary for a synchronous RPC and added lifetime complexity unrelated to the production call path.
 
-Windows production observation, actions, attachments, debugger, interactive element picking, and screenshot snapping use the Automation Host boundary. Main retains a remote Context and copied results; the Host session owns its `WindowsVisualElementBackend`, while each remote Context resource owns one neutral `VisualContext`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the replacement Snapshotter and merged PromptNode builder. The legacy `VisualContextBuilder` and its debug recorder have been deleted. Main captures final screenshot pixels and handles free-form rectangles locally; selected-text monitoring remains a narrow Main-local platform service.
+Windows observation, actions, attachment-source acquisition, debugger queries, interactive element picking, screenshot snapping, and native text-selection monitoring use the Automation Host boundary. Main retains a remote Context and copied results; the Host session owns its `WindowsVisualElementBackend`, while each remote Context resource owns one neutral `VisualContext`. Root acquisition uses one Backend Query with an independent Locator, Resolution, optional scalar request, and caller-created retention. Automatic attachments, `query_visual`, the Visual Tree Debugger, and scenario characterization tests share the Snapshotter and merged PromptNode builder. Main captures final screenshot pixels and handles free-form rectangles locally. Text-selection enablement and attachment acceptance belong to Main; native monitoring follows [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md).
 
-macOS production root acquisition, AX identity, screen topology, Agent-visible observation, interactive element picking, and screenshot snapping use the same remote Context contract through the Automation Host's `MacVisualElementBackend`. That Backend owns one AX system-wide reference with a fixed messaging timeout, while each acquired AX reference is independently owned and canonicalized by Core Foundation equality inside the destination Context. Main captures final screenshot pixels and free-form rectangles locally; selected-text monitoring remains Main-local. The removed macOS legacy Context has not been retained as an adapter, and macOS starts its Hosts directly rather than exposing Windows service mode.
+macOS root acquisition, AX identity, screen topology, Agent-visible observation, interactive element picking, screenshot snapping, and selected-text reads use the same remote Context contract through the Automation Host's `MacVisualElementBackend`. That Backend owns one AX system-wide reference with a fixed messaging timeout, while each acquired AX reference is independently owned and canonicalized by Core Foundation equality inside the destination Context. Automation Host owns native text-selection monitoring, including event observation and clipboard fallback. Main captures final screenshot pixels and free-form rectangles locally. macOS starts its Hosts directly rather than exposing Windows service mode.
 
 ## 4. Migration Stages
 
@@ -249,6 +250,8 @@ After the core query, target, and caller migration:
 Provider quirks and input simulation remain in the high-level Windows action policy, not the native Interop ownership layer.
 
 ## 5. Cutover Invariants
+
+Text-selection monitoring follows [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md). Its platform hooks, accessibility reads, clipboard fallback, remote source ownership, and Main consumer must move together. Main has no local Backend fallback. Enabling/disabling monitoring and reconnecting preserve resource ownership; only a confirmed empty selection clears an existing automatic text-selection attachment. Clipboard fallback retains the platform's limited-format best-effort behavior and avoids overwriting detected intervening writes.
 
 The following concerns migrate together because splitting them would expose inconsistent target identity:
 

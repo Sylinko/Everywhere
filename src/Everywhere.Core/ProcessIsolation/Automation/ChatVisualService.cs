@@ -190,6 +190,11 @@ public sealed class ChatVisualService : IDisposable
     /// <summary>Releases the shared acquisition Context.</summary>
     public void Dispose() => _acquisitionContext.Dispose();
 
+    internal ValueTask<RemoteVisualContext> GetAcquisitionContextAsync(
+        RpcConnection connection,
+        CancellationToken cancellationToken) =>
+        _acquisitionContext.GetRemoteContextAsync(connection, cancellationToken);
+
     internal async ValueTask<Guid> GetCurrentContextIdAsync(ChatVisualState state, CancellationToken cancellationToken) =>
         (await GetContextAsync(state, cancellationToken).ConfigureAwait(false)).Context.Id;
 
@@ -291,6 +296,15 @@ public sealed class ChatVisualService : IDisposable
     private sealed class SharedAcquisitionContext(IHostConnectionSource connectionSource) : HostedVisualContext<RemoteVisualContext>(connectionSource)
     {
         private protected override string ContextResetNotice => ResetNotice;
+
+        public async ValueTask<RemoteVisualContext> GetRemoteContextAsync(
+            RpcConnection expectedConnection,
+            CancellationToken cancellationToken)
+        {
+            var state = await GetStateAsync(cancellationToken).ConfigureAwait(false);
+            if (!ReferenceEquals(state.Connection, expectedConnection)) throw CreateContextResetException();
+            return state.Context;
+        }
 
         private protected override async ValueTask<RemoteVisualContext> CreateRemoteContextAsync(
             RpcConnection connection,

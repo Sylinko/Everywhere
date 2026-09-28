@@ -68,6 +68,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private int _isFailureSignaled;
     private int _isGracefulShutdownRequested;
     private int _isHandshakeCompleted;
+    private long _nextResourceId;
     private Task? _handshakeTimeoutTask;
     private bool _isResourceQueueClosed;
     private int _isStarted;
@@ -113,6 +114,14 @@ public sealed class RpcConnection : IAsyncDisposable
             ObjectDisposedException.ThrowIf(IsDisposed || _isResourceQueueClosed, this);
             return _safeHandleReleaseQueue ??= new RpcSafeHandleReleaseQueue(this);
         }
+    }
+
+    /// <summary>Allocates one connection-scoped resource ID from this endpoint's disjoint signed range.</summary>
+    public long AllocateResourceId()
+    {
+        var resourceId = IsServer ? Interlocked.Decrement(ref _nextResourceId) : Interlocked.Increment(ref _nextResourceId);
+        if (IsServer ? resourceId < 0 : resourceId > 0) return resourceId;
+        throw new InvalidOperationException("The RPC resource identifier space was exhausted.");
     }
 
     /// <summary>Starts one reader and one writer for this connection.</summary>

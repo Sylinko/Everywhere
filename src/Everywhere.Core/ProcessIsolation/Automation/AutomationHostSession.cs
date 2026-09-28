@@ -15,44 +15,53 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
 {
     private readonly IVisualElementBackend _backend;
     private readonly IVisualPickerResolver _pickerResolver;
+    private readonly ITextSelectionMonitorFactory _textSelectionMonitorFactory;
     private readonly Lock _drainGate = new();
     private readonly RpcRemoteResourceRegistry _resources = new();
+
     private Task? _drainTask;
     private int _isDraining;
+    private int _mainProcessId;
+    private RpcConnection? _connection;
+    private IAutomationHostNotificationRpc? _notifications;
 
     /// <summary>Creates a connection session and assumes ownership of the supplied Backend.</summary>
-    public AutomationHostSession(IVisualElementBackend backend)
+    public AutomationHostSession(IVisualElementBackend backend) :
+        this(backend, DefaultVisualPickerResolver.Shared, UnsupportedTextSelectionMonitorFactory.Shared)
     {
-        _backend = backend;
-        _pickerResolver = DefaultVisualPickerResolver.Shared;
     }
 
-    /// <summary>Creates a connection session with a platform-aware interactive picker resolver.</summary>
-    public AutomationHostSession(IVisualElementBackend backend, IVisualPickerResolver pickerResolver)
+    /// <summary>Creates a connection session with platform-aware picker and text-selection services.</summary>
+    public AutomationHostSession(
+        IVisualElementBackend backend,
+        IVisualPickerResolver pickerResolver,
+        ITextSelectionMonitorFactory textSelectionMonitorFactory)
     {
         _backend = backend;
         _pickerResolver = pickerResolver;
+        _textSelectionMonitorFactory = textSelectionMonitorFactory;
     }
 
     /// <inheritdoc />
     public void Bind(RpcConnection connection)
     {
         connection.RegisterExceptionMapper(AutomationRpcExceptionMapper.Shared);
+        _connection = connection;
+        _notifications = new AutomationHostNotificationRpcClient(connection);
         _resources.Bind(connection);
         AutomationHostRpcBinding.Bind(connection, this);
         AutomationHostDiagnosticsRpcBinding.Bind(connection, this);
     }
 
     /// <inheritdoc />
-    public void OnAuthenticated(RpcHandshake peer)
-    {
-    }
+    public void OnAuthenticated(RpcHandshake peer) => _mainProcessId = checked((int)peer.ProcessId);
 
     /// <inheritdoc />
     public async ValueTask<Guid> CreateContextAsync(CreateAutomationContextRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _isDraining) != 0, this);
+
         var resource = new AutomationContextResource(
             new VisualContext(request.MaximumRetainedTurnCount, request.MaximumRetainedTargetCount),
             _backend,
@@ -146,6 +155,12 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
         Interlocked.Exchange(ref _isDraining, 1);
         try
         {
+            TextSelectionMonitorRegistration? monitor;
+            lock (_textSelectionGate)
+            {
+                monitor = _textSelectionMonitor;
+            }
+            if (monitor is not null) await monitor.DisposeAsync().ConfigureAwait(false);
             await _resources.DisposeAsync().ConfigureAwait(false);
         }
         finally
@@ -154,7 +169,7 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
         }
     }
 
-    private sealed partial class AutomationContextResource : IAsyncDisposable
+    private sealed partial class AutomationContextResource : IAsyncDisposable, ITextSelectionMonitorContext
     {
         public VisualContext Context { get; }
 
@@ -169,6 +184,7 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
             });
         private readonly Lock _queueGate = new();
         private readonly Task _worker;
+
         private VisualTargetTurn? _turn;
         private bool _isDisposing;
 

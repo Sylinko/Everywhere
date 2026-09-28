@@ -1,18 +1,21 @@
 # Process isolation
 
-These documents describe the current Windows and macOS Main, Input Host, Automation Host, controller, and RPC architecture. Linux still uses its legacy in-process platform services and is outside this implemented boundary. The implementation is the source of truth when a document and code disagree.
+These documents define the Windows and macOS Main, Input Host, Automation Host, controller, and RPC architecture. Keep each contract complete and current when responsibilities change. Linux uses its legacy in-process platform services and is outside this role model. Runtime behavior and implementation progress must be verified from code and validation evidence; they are not alternative versions of the specification.
 
 ## Document map
 
 - [Runtime architecture](RuntimeArchitecture.md) describes process roles, startup, endpoint ownership, recovery, status, and platform composition.
-- [RPC and Automation Host](RpcAndAutomation.md) describes handshakes, peer verification, remote resources, visual Context recovery, and typed exception transport.
+- [RPC and Automation Host](RpcAndAutomation.md) describes handshakes, peer verification, signed resource-ID allocation, request and notification resource ownership, visual Context recovery, and typed exception transport.
 - [Windows installation and Hosts control](WindowsInstallationAndHosts.md) describes Task Scheduler service mode, installation security, portable behavior, settings UX, and remaining validation.
+- [Text selection monitoring](../Automation/11-TextSelectionMonitoring.md) specifies the complete native selection workflow, Main-controlled lifetime, and result ownership.
 
 ## Stable boundaries
 
 - Main owns product state, the UI, Host generations, and authenticated RPC connections.
-- Input Host owns global input hooks and shortcut delivery.
-- Automation Host owns Agent-facing accessibility objects, chat visual Contexts, visual targets, remote pickers, target captures, and automation actions.
+- Input Host owns shortcut registration, shortcut delivery, and shortcut recording, including the hooks needed by those features. It is not the exclusive owner of all native input observation.
+- Automation Host owns accessibility objects, visual Contexts and targets, remote pickers, target captures, automation actions, and the complete native text-selection monitoring workflow.
 - `--hosts-control` is a short-lived command surface for fixed lifecycle and installation operations. It is not a daemon and does not own Host readiness.
 - Watchdog supervises registered process handles. It is separate from the Host launch and RPC protocols.
-- Native objects owned by the Automation RPC domain remain in the Host. Main receives copied result models, remote resource identities, and selected platform-neutral failures; mapped provider details remain Host-side diagnostics. Interactive screenshot snapping uses the same Host picker observations as element picking, while Main retains final pixel capture and free-form rectangle selection. Selected-text detection remains a narrow Main-local platform service.
+- Native objects owned by the Automation RPC domain remain in the Host. Main receives copied result models, remote resource identities, and selected platform-neutral failures; mapped provider details remain Host-side diagnostics. Interactive screenshot snapping uses the same Host picker observations as element picking, while Main retains final pixel capture and free-form rectangle selection.
+
+Main controls one connection-owned text-selection monitor and consumes text with its retained source. Gesture detection, debounce, accessibility reads, and clipboard fallback run together in Automation Host. See the [text-selection specification](../Automation/11-TextSelectionMonitoring.md) for control, lifetime, and verification requirements.

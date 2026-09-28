@@ -70,7 +70,8 @@ public sealed class RpcRemoteResourceRegistry : IRpcResourceReleaseRpc, IAsyncDi
     /// <returns><see langword="true" /> when a live registration was removed.</returns>
     public bool Consume(long resourceId)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(resourceId);
+        ArgumentOutOfRangeException.ThrowIfZero(resourceId);
+
         lock (_gate)
         {
             return !_isDisposed && _resources.Remove(resourceId);
@@ -80,7 +81,8 @@ public sealed class RpcRemoteResourceRegistry : IRpcResourceReleaseRpc, IAsyncDi
     /// <inheritdoc />
     public async ValueTask<RpcAck> ReleaseResourceAsync(RpcResourceReleaseRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.ResourceId);
+        ArgumentOutOfRangeException.ThrowIfZero(request.ResourceId);
+
         ResourceEntry? entry;
         lock (_gate)
         {
@@ -123,7 +125,8 @@ public sealed class RpcRemoteResourceRegistry : IRpcResourceReleaseRpc, IAsyncDi
 
     private bool RegisterCore(long resourceId, ResourceEntry entry)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(resourceId);
+        ArgumentOutOfRangeException.ThrowIfZero(resourceId);
+
         lock (_gate)
         {
             if (_isDisposed || _releasedBeforeRegistration.Remove(resourceId)) return true;

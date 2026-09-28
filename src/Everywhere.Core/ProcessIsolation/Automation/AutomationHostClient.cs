@@ -26,7 +26,7 @@ public sealed class AutomationHostClient
         CancellationToken cancellationToken = default)
     {
         return await CreateContextAsync(
-            (id, resourceId) => new RemoteVisualContext(id, resourceId, _rpc, _releaseQueue),
+            (id, resourceId) => new RemoteVisualContext(id, resourceId, _connection, _rpc, _releaseQueue),
             maximumRetainedTurnCount,
             maximumRetainedTargetCount,
             cancellationToken).ConfigureAwait(false);
@@ -39,6 +39,7 @@ public sealed class AutomationHostClient
             (id, resourceId) => new RemoteDebuggerVisualContext(
                 id,
                 resourceId,
+                _connection,
                 _rpc,
                 new AutomationHostDiagnosticsRpcClient(_connection),
                 _releaseQueue),
@@ -55,7 +56,7 @@ public sealed class AutomationHostClient
         where TContext : RemoteVisualContext
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var resourceId = _releaseQueue.AllocateResourceId();
+        var resourceId = _connection.AllocateResourceId();
         try
         {
             var id = await _rpc.CreateContextAsync(
@@ -88,18 +89,71 @@ public class RemoteVisualContext : RpcSafeHandle
     public bool IsConnectionClosed => _releaseQueue.IsConnectionClosed;
 
     private readonly IAutomationHostRpc _rpc;
+    private readonly RpcConnection _connection;
     private readonly RpcSafeHandleReleaseQueue _releaseQueue;
 
     internal RemoteVisualContext(
         Guid id,
         long resourceId,
+        RpcConnection connection,
         IAutomationHostRpc rpc,
         RpcSafeHandleReleaseQueue releaseQueue
     ) : base(resourceId, releaseQueue)
     {
         Id = id;
+        _connection = connection;
         _rpc = rpc;
         _releaseQueue = releaseQueue;
+    }
+
+    internal long AllocateResourceId() => _connection.AllocateResourceId();
+
+    /// <summary>Starts one native text-selection monitor owned by this Context.</summary>
+    public async ValueTask<RemoteTextSelectionMonitor> StartTextSelectionMonitoringAsync(
+        long monitorId,
+        int mainProcessId,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(monitorId);
+
+        var contextLease = AcquireLease();
+        try
+        {
+            await _rpc.StartTextSelectionMonitoringAsync(
+                new StartTextSelectionMonitoringRequest
+                {
+                    ContextId = contextLease.ResourceId,
+                    MonitorId = monitorId,
+                    MainProcessId = mainProcessId,
+                },
+                cancellationToken).ConfigureAwait(false);
+            return new RemoteTextSelectionMonitor(contextLease, monitorId, _releaseQueue);
+        }
+        catch
+        {
+            _releaseQueue.TryQueueRelease(monitorId);
+            contextLease.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>Accepts one Host-allocated pushed anchor into this remote Context.</summary>
+    public RemoteVisualAnchor CreatePushedAnchor(long anchorId, AcquireAutomationAnchorResponse observation)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(anchorId, 0);
+
+        observation.ThrowIfFailed();
+        if (!observation.IsAvailable) throw new InvalidDataException("A pushed Automation anchor must contain an available source observation.");
+        var contextLease = AcquireLease();
+        try
+        {
+            return new RemoteVisualAnchor(this, contextLease, observation, anchorId, _releaseQueue);
+        }
+        catch
+        {
+            contextLease.Dispose();
+            throw;
+        }
     }
 
     /// <summary>Ensures that an Agent turn exists without advancing an existing turn.</summary>
@@ -211,8 +265,9 @@ public class RemoteVisualContext : RpcSafeHandle
     public async ValueTask<RemoteVisualPicker> BeginPickerAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
         var contextLease = AcquireLease();
-        var pickerId = _releaseQueue.AllocateResourceId();
+        var pickerId = _connection.AllocateResourceId();
         try
         {
             await _rpc.BeginPickerAsync(
@@ -243,7 +298,7 @@ public class RemoteVisualContext : RpcSafeHandle
         cancellationToken.ThrowIfCancellationRequested();
 
         var contextLease = AcquireLease();
-        var anchorId = _releaseQueue.AllocateResourceId();
+        var anchorId = _connection.AllocateResourceId();
         try
         {
             var response = await _rpc.AcquireAnchorAsync(
@@ -291,7 +346,7 @@ public class RemoteVisualContext : RpcSafeHandle
         cancellationToken.ThrowIfCancellationRequested();
         using var sourceLease = sourceAnchor.AcquireLease();
         var destinationContextLease = destinationContext.AcquireLease();
-        var destinationAnchorId = _releaseQueue.AllocateResourceId();
+        var destinationAnchorId = _connection.AllocateResourceId();
         try
         {
             var effectiveQuery = query ?? VisualElementQueryRequest.Default;

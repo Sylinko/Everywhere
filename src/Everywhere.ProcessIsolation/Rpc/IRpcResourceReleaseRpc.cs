@@ -11,7 +11,7 @@ public interface IRpcResourceReleaseRpc
     ValueTask<RpcAck> ReleaseResourceAsync(RpcResourceReleaseRequest request, CancellationToken cancellationToken = default);
 }
 
-/// <summary>Identifies one positive resource ID allocated by the requesting peer.</summary>
+/// <summary>Identifies one nonzero resource ID allocated by either endpoint of the originating connection.</summary>
 [MessagePackObject]
 public sealed partial class RpcResourceReleaseRequest
 {

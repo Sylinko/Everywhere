@@ -420,13 +420,14 @@ public sealed partial class AutomationHostSession
         private static long RequireTarget(AutomationActionStep action) =>
             action.TargetId ?? throw new ArgumentException($"A target is required for a {action.Kind} action.", nameof(action));
 
-        private AutomationAnchor GetAnchor(long anchorId) => _anchors.TryGetValue(anchorId, out var anchor) ?
-            anchor :
-            throw new InvalidOperationException($"Automation anchor {anchorId} is no longer available.");
+        private AutomationAnchor GetAnchor(long anchorId) =>
+            _anchors.TryGetValue(anchorId, out var anchor) ?
+                anchor :
+                throw new InvalidOperationException($"Automation anchor {anchorId} is no longer available.");
 
         private VisualElement RetainAnchor(long anchorId, VisualElementRetention retention)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(anchorId);
+            ArgumentOutOfRangeException.ThrowIfZero(anchorId);
             var element = GetAnchor(anchorId).Result.Element;
             retention.Retain(element);
             return element;

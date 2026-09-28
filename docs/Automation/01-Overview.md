@@ -18,6 +18,7 @@ The numbered chapters are the current specification. [07-Migration](07-Migration
 8. **[Verification](08-Verification.md)** — acceptance requirements and links to the declarative test infrastructure.
 9. **[Final Text Allocation](09-FinalTextAllocation.md)** — final-string results, progressive Root/body allocation, and publication before return.
 10. **[Query and Scan Images](10-QueryAndScanImages.md)** — Context-bound queries, optional capture preparation, and image-only animation ownership.
+11. **[Text Selection Monitoring](11-TextSelectionMonitoring.md)** — Host-owned monitoring, control and result delivery, source identity, clipboard fallback, and acceptance criteria.
 
 Supporting specifications:
 
@@ -56,7 +57,7 @@ The decisive separation is:
 
 Inside the Automation Host, root acquisition is the only operation without an existing element receiver. It enters through the connection-owned Backend with a caller-created `VisualElementRetention`; that retention alone selects the destination Context. After acquisition, the concrete element propagates the same Context and Backend through every relation result. Main invokes coarse Context operations through remote resource handles and never receives a native `VisualElement`.
 
-Main also owns narrow platform services that must run with the interactive application. Screenshot pixels and free-form rectangles remain Main-local, while screen/window/element snapping uses copied observations from the Automation Host picker. Selected-text detection remains Main-local. These services do not publish chat target IDs or replace the Automation Host boundary for Agent-visible queries and actions.
+Main owns screenshot pixels and free-form rectangle selection, while screen/window/element snapping uses copied observations from the Automation Host picker. The Automation Host owns the complete native text-selection workflow, including gesture observation and clipboard fallback. Main controls monitoring and accepts text with an optional retained source anchor. See [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md) for that feature's lifecycle and ownership contract.
 
 There is no native-call worker pool, Dispatcher, custom `TaskScheduler`, `SynchronizationContext`, operation pin, or execution Scope. Those mechanisms were explored and removed because they could not terminate a synchronous native RPC. Each Host-side Context now has one ordinary Channel consumer to serialize complete Context operations; process termination is the containment boundary when a native call ignores its platform timeout.
 
@@ -135,3 +136,4 @@ The replacement treats observation, compression, identity, publication, platform
 - [06-VisualQuery](06-VisualQuery.md) is authoritative for Agent-visible query semantics.
 - [07-Migration](07-Migration.md) describes temporary implementation state and must not weaken target contracts.
 - [08-Verification](08-Verification.md) and [Testing](Testing.md) define acceptance evidence; tests do not create production-only hooks or distort the architecture.
+- [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md) is authoritative for text-selection monitoring, source ownership, and clipboard behavior.

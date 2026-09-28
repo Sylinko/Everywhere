@@ -39,7 +39,7 @@ public sealed partial class CaptureAutomationVisualRequest
     [Key(1)]
     public required AutomationVisualReferenceKind ReferenceKind { get; init; }
 
-    /// <summary>Connection-scoped anchor ID or positive Agent target ID.</summary>
+    /// <summary>Connection-scoped nonzero anchor ID or positive Agent target ID.</summary>
     [Key(2)]
     public required long ReferenceId { get; init; }
 }

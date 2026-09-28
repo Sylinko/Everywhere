@@ -1,5 +1,7 @@
 # Visual Context Verification
 
+Text-selection monitoring has a separate [acceptance checklist](11-TextSelectionMonitoring.md#8-acceptance-evidence) covering monitor control, ownership, and manual Windows/macOS E2E. Element-level selected-text provider checks cover only the read operation, not the complete monitoring lifecycle.
+
 ## 1. Strategy
 
 Verification has five distinct evidence layers:
@@ -26,6 +28,9 @@ Verify:
 - direct element operations do not route through a worker, Dispatcher, TaskScheduler, SynchronizationContext, or Scope;
 - draining the Automation Host session disposes the Backend and releases shared platform objects exactly once;
 - each remote Context owns one Host-side `VisualContext`, and releasing or disconnecting it disposes its complete identity and target domain;
+- connection-level client/server allocation produces unique positive/negative resource IDs without reuse or wraparound; zero is invalid while Agent target IDs remain positive;
+- positive and negative resource IDs share handle leases, release-before-registration handling, and connection cleanup; release is always routed to the originating connection;
+- Host-pushed negative anchors support snapshot, capture, Context transfer, and release; failed enqueue rolls back locally, and rejected notifications release remotely even after monitoring is disabled;
 - one single-reader Channel serializes complete operations for each hosted Context without pretending to cancel a synchronous native call;
 - Automation Host replacement invalidates old resource IDs, anchors, pickers, and target IDs rather than replaying operations;
 - an action interrupted by connection loss reports an unknown outcome rather than being retried;

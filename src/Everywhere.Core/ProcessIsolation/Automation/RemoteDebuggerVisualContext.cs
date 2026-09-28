@@ -11,10 +11,11 @@ public sealed class RemoteDebuggerVisualContext : RemoteVisualContext
     internal RemoteDebuggerVisualContext(
         Guid id,
         long resourceId,
+        RpcConnection connection,
         IAutomationHostRpc rpc,
         IAutomationHostDiagnosticsRpc diagnosticsRpc,
         RpcSafeHandleReleaseQueue releaseQueue
-    ) : base(id, resourceId, rpc, releaseQueue)
+    ) : base(id, resourceId, connection, rpc, releaseQueue)
     {
         _diagnosticsRpc = diagnosticsRpc;
     }

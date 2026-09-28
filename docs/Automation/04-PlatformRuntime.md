@@ -2,7 +2,7 @@
 
 ## 1. Responsibility
 
-`IVisualElementBackend` is the composition-local platform service for root acquisition and native resources. Accessibility acquisition, including interactive screenshot snapping, uses the Automation Host session's Backend. Main owns final screenshot pixels, free-form rectangle selection, and selected-text detection. `VisualContext` is a separate platform-neutral identity and ownership domain. Chat and acquisition Contexts live behind connection-scoped remote resources. Neither type is a conversation Session, execution transaction, or native-call dispatcher.
+`IVisualElementBackend` is the Automation Host's platform service for root acquisition and native resources. Accessibility acquisition, interactive screenshot snapping, and selected-text reads use this session-owned Backend. The Automation Host also owns the complete native text-selection monitor. Main owns final screenshot pixels, free-form rectangle selection, monitoring enablement, and result presentation. `VisualContext` is a separate platform-neutral identity and ownership domain. Chat and acquisition Contexts live behind connection-scoped remote resources. Neither type is a conversation Session, execution transaction, or native-call dispatcher.
 
 The current neutral responsibility is deliberately narrow:
 
@@ -230,6 +230,8 @@ This path does not focus the element and does not use TextPattern, LegacyIAccess
 ## 12. Selected Text
 
 `VisualElement.GetSelectedText(maxCharacters)` is a separate bounded observation rather than part of ordinary scalar Snapshot queries. Windows refreshes Text, Selection, and LegacyIAccessible Patterns together. It first concatenates nonempty TextPattern selection ranges in provider order. When no text range contains content, it reads selected child elements through SelectionPattern and finally through LegacyIAccessible's normalized MSAA selection. Selected child labels prefer the UIA Name, then Legacy Name and Value, and multiple labels are newline-separated.
+
+[11-TextSelectionMonitoring](11-TextSelectionMonitoring.md) specifies the monitoring workflow around this element operation. Gesture hooks, debounce, target checks, and clipboard fallback belong to the Automation Host, with Main managing enablement and consuming results. Native callbacks perform only bounded event work; finite element operations use Context serialization. Windows hook message loops and macOS event-tap/AppKit loops are native facilities independent of Avalonia.
 
 All paths share one UTF-16 character budget and a fixed 256-part operation ceiling so provider-controlled range or child collections cannot create unbounded RPC traffic. A missing Pattern, missing selection collection, or only empty ranges/items advances to the next compatible mechanism and eventually returns null. Every range, selected element, collection, Pattern, CacheRequest, and operation-local element is released on every path. Provider HRESULTs and timeouts use the normal failure boundary rather than being treated as an empty selection. Clipboard simulation remains an orchestration fallback in the user-selection detector rather than hidden element behavior.
 

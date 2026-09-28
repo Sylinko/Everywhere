@@ -20,25 +20,16 @@ public sealed class RpcSafeHandleReleaseQueue : IRpcSafeHandleReleaser
             SingleWriter = false,
             AllowSynchronousContinuations = false,
         });
-    private long _nextResourceId;
-
     internal RpcSafeHandleReleaseQueue(RpcConnection connection)
     {
         _connection = connection;
         Completion = SendReleasesAsync(new RpcResourceReleaseRpcClient(connection));
     }
 
-    /// <summary>Allocates a positive identifier never reused by this release queue.</summary>
-    public long AllocateResourceId()
-    {
-        var resourceId = Interlocked.Increment(ref _nextResourceId);
-        return resourceId > 0 ? resourceId : throw new InvalidOperationException("The RPC resource identifier space was exhausted.");
-    }
-
     /// <inheritdoc />
     public bool TryQueueRelease(long resourceId)
     {
-        if (resourceId <= 0) return false;
+        if (resourceId == 0) return false;
         if (_connection.Completion.IsCompleted) return true;
         if (_releases.Writer.TryWrite(resourceId)) return true;
         return _connection.Completion.IsCompleted;
