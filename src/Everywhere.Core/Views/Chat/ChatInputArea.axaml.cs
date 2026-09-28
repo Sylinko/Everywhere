@@ -1,12 +1,11 @@
-﻿using System.Collections.Specialized;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
-using Avalonia.Media;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
@@ -17,6 +16,7 @@ namespace Everywhere.Views;
 [TemplatePart("PART_ChatTextEditor", typeof(ChatTextEditor), IsRequired = true)]
 [TemplatePart("PART_SendButton", typeof(Button), IsRequired = true)]
 [TemplatePart("PART_ChatAttachmentItemsControl", typeof(ChatAttachmentItemsControl), IsRequired = true)]
+[TemplatePart("PART_AttachmentScrollViewer", typeof(ScrollViewer), IsRequired = true)]
 public sealed class ChatInputArea : TemplatedControl
 {
     public static readonly StyledProperty<string?> TextProperty =
@@ -198,36 +198,51 @@ public sealed class ChatInputArea : TemplatedControl
     private IDisposable? _chatAttachmentItemsControlPointerMovedSubscription;
     private IDisposable? _chatAttachmentItemsControlPointerExitedSubscription;
     private IDisposable? _assistantSelectionButtonPointerWheelChangedSubscription;
+    private IDisposable? _attachmentScrollViewerPointerWheelChangedSubscription;
+    private IDisposable? _attachmentScrollViewerPointerPressedSubscription;
     private ChatAttachmentItemsControl? _chatAttachmentItemsControl;
 
-    private readonly VisualElementOverlayWindow _visualElementAttachmentOverlayWindow = new()
-    {
-        Content = new Border
-        {
-            Background = Brushes.DodgerBlue,
-            Opacity = 0.2
-        },
-    };
-
-    static ChatInputArea()
-    {
-        LostFocusEvent.AddClassHandler<ChatInputArea>(HandleLostFocus, handledEventsToo: true);
-    }
-
-    private static void HandleLostFocus(ChatInputArea sender, RoutedEventArgs args)
-    {
-        sender._visualElementAttachmentOverlayWindow.UpdateForVisualElement(null);
-    }
+    public long AttachmentInteractionVersion { get; private set; }
 
     public ChatInputArea()
     {
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel);
     }
 
-    public bool TryGetAttachmentCenterOnScreen(ChatAttachment attachment, out PixelPoint center)
+    public bool TryGetAttachmentBoundsOnScreen(VisualElementAttachment attachment, out PixelRect bounds)
     {
-        center = default;
-        return _chatAttachmentItemsControl?.TryGetAttachmentCenterOnScreen(attachment, out center) ?? false;
+        bounds = default;
+        return _chatAttachmentItemsControl?.TryGetAttachmentBoundsOnScreen(attachment, out bounds) ?? false;
+    }
+
+    public bool RegisterPendingAttachment(VisualElementAttachment attachment)
+    {
+        if (_chatAttachmentItemsControl is null) ApplyTemplate();
+        if (_chatAttachmentItemsControl is not { } control) return false;
+
+        control.RegisterPendingAttachment(attachment);
+        return true;
+    }
+
+    public bool BeginAttachmentAcceptance(VisualElementAttachment attachment)
+    {
+        return _chatAttachmentItemsControl?.BeginAttachmentAcceptance(attachment) ?? false;
+    }
+
+    public bool IsAttachmentReady(VisualElementAttachment attachment, out PixelRect bounds)
+    {
+        bounds = default;
+        return _chatAttachmentItemsControl?.IsAttachmentReady(attachment, out bounds) ?? false;
+    }
+
+    public void CompleteAttachmentAcceptance(VisualElementAttachment attachment)
+    {
+        _chatAttachmentItemsControl?.CompleteAttachmentAcceptance(attachment);
+    }
+
+    public void CancelAttachmentAcceptance(VisualElementAttachment attachment)
+    {
+        _chatAttachmentItemsControl?.CancelAttachmentAcceptance(attachment);
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -239,6 +254,8 @@ public sealed class ChatInputArea : TemplatedControl
         DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerMovedSubscription);
         DisposeHelper.DisposeToDefault(ref _chatAttachmentItemsControlPointerExitedSubscription);
         DisposeHelper.DisposeToDefault(ref _assistantSelectionButtonPointerWheelChangedSubscription);
+        DisposeHelper.DisposeToDefault(ref _attachmentScrollViewerPointerWheelChangedSubscription);
+        DisposeHelper.DisposeToDefault(ref _attachmentScrollViewerPointerPressedSubscription);
 
         _chatTextEditor = e.NameScope.Find<ChatTextEditor>("PART_ChatTextEditor").NotNull();
 
@@ -257,57 +274,27 @@ public sealed class ChatInputArea : TemplatedControl
             handledEventsToo: true);
 
         _chatAttachmentItemsControl = e.NameScope.Find<ChatAttachmentItemsControl>("PART_ChatAttachmentItemsControl").NotNull();
-        _chatAttachmentItemsControlPointerMovedSubscription = _chatAttachmentItemsControl.AddDisposableHandler(
-            PointerMovedEvent,
+        var attachmentScrollViewer = e.NameScope.Find<ScrollViewer>("PART_AttachmentScrollViewer").NotNull();
+        _attachmentScrollViewerPointerWheelChangedSubscription = attachmentScrollViewer.AddDisposableHandler(
+            PointerWheelChangedEvent,
+            (_, _) => AttachmentInteractionVersion++,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+        _attachmentScrollViewerPointerPressedSubscription = attachmentScrollViewer.AddDisposableHandler(
+            PointerPressedEvent,
             (_, args) =>
             {
-                var element = args.Source as StyledElement;
-                while (element != null)
+                if (args.Source is Visual source &&
+                    (source is ScrollBar || source.GetVisualAncestors().OfType<ScrollBar>().Any()))
                 {
-                    element = element.Parent;
-                    if (element is not { DataContext: VisualElementAttachment attachment }) continue;
-                    _visualElementAttachmentOverlayWindow.UpdateForVisualElement(attachment);
-                    return;
+                    AttachmentInteractionVersion++;
                 }
-                _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null);
             },
+            RoutingStrategies.Tunnel,
             handledEventsToo: true);
-        _chatAttachmentItemsControlPointerExitedSubscription = _chatAttachmentItemsControl.AddDisposableHandler(
-            PointerExitedEvent,
-            (_, _) => _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null),
-            handledEventsToo: true);
-    }
-
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
-    {
-        base.OnPropertyChanged(change);
-
-        if (change.Property == ChatAttachmentItemsSourceProperty)
-        {
-            if (change.OldValue is INotifyCollectionChanged oldValue)
-            {
-                oldValue.CollectionChanged -= HandleChatAttachmentItemsSourceChanged;
-            }
-            if (change.NewValue is INotifyCollectionChanged newValue)
-            {
-                newValue.CollectionChanged += HandleChatAttachmentItemsSourceChanged;
-            }
-        }
-    }
-
-    private void HandleChatAttachmentItemsSourceChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null); // Hide the overlay window when the attachment list changes.
     }
 
     public void Focus() => _chatTextEditor?.Focus();
-
-    protected override void OnUnloaded(RoutedEventArgs e)
-    {
-        base.OnUnloaded(e);
-
-        _visualElementAttachmentOverlayWindow.UpdateForVisualElement(null); // Hide the overlay window when the control is unloaded.
-    }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {

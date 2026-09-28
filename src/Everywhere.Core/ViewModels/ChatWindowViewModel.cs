@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -18,10 +19,17 @@ using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
-using Everywhere.Views;
 using Microsoft.Extensions.Logging;
 
 namespace Everywhere.ViewModels;
+
+internal readonly record struct VisualElementCaptureRequest(
+    VisualElementLocator? Locator,
+    VisualElementResolution Resolution = VisualElementResolution.Direct
+)
+{
+    public static VisualElementCaptureRequest Interactive => new(null);
+}
 
 public sealed partial class ChatWindowViewModel :
     ReactiveViewModelBase,
@@ -63,6 +71,10 @@ public sealed partial class ChatWindowViewModel :
     public bool IsPickingFiles { get; set; }
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
+
+    internal bool CanAddAttachment => _chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount;
+
+    internal Func<VisualElementCaptureRequest, CancellationToken, Task>? VisualElementCaptureRequested { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
@@ -208,212 +220,85 @@ public sealed partial class ChatWindowViewModel :
         HandleActivateChatSessionMessageCommand.Execute(message);
     }
 
+    public bool CanAddVisualElement(RemoteVisualAnchor anchor) =>
+        _chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount &&
+        !_chatAttachmentsSource.Items
+            .AsValueEnumerable()
+            .OfType<VisualElementAttachment>()
+            .Any(attachment => attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
+                ReferenceEquals(existingAnchor.Context, anchor.Context) &&
+                string.Equals(attachment.InitialSnapshot?.Id, anchor.Snapshot.Id, StringComparison.Ordinal));
+
+    public bool TryAddVisualElementAttachment(VisualElementAttachment attachment)
+    {
+        if (attachment.Anchor is not { } anchor || !CanAddVisualElement(anchor)) return false;
+
+        _chatAttachmentsSource.Add(attachment);
+        return true;
+    }
+
+    public bool ContainsAttachment(VisualElementAttachment attachment) =>
+        _chatAttachmentsSource.Items.Any(item => ReferenceEquals(item, attachment));
+
+    public void PrepareChatWindowActivation()
+    {
+        if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
+            ChatContextManager.CreateNewCommand.Execute(null);
+    }
+
+    public void ActivateChatWindow()
+    {
+        PrepareChatWindowActivation();
+        WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+    }
+
     [RelayCommand]
     private async Task HandleActivateChatSessionMessageAsync(ActivateChatSessionMessage message)
     {
-        RemoteVisualAnchor? pendingAnchor = null;
-        VisualElementAttachment? pendingAttachment = null;
         try
         {
-            var targetLocator = message.TargetLocator;
-            if (targetLocator is null)
+            if (message.TargetLocator is not { } targetLocator)
             {
-                VisualElementAttachment? removedAttachment = null;
-                _chatAttachmentsSource.Edit(list =>
-                {
-                    if (list is not [VisualElementAttachment { IsPrimary: true } attachment, ..]) return;
-                    removedAttachment = attachment;
-                    list.RemoveAt(0);
-                });
-                removedAttachment?.Dispose();
-
-                ShowChatWindow();
+                ActivateChatWindow();
                 return;
             }
 
-            PrepareChatContext();
-            var createElement = Settings.ChatWindow.AutomaticallyAddElement;
-            if (!createElement)
+            if (!Settings.ChatWindow.AutomaticallyAddElement)
             {
-                ShowChatWindow();
+                ActivateChatWindow();
                 return;
             }
 
-            pendingAnchor = await _visualService.AcquireAnchorAsync(
-                targetLocator.Value,
-                message.TargetResolution,
-                cancellationToken: CancellationToken.None);
-            if (pendingAnchor is null)
+            if (VisualElementCaptureRequested is { } captureRequested)
             {
-                ShowChatWindow();
+                await captureRequested(
+                    new VisualElementCaptureRequest(targetLocator, message.TargetResolution),
+                    CancellationToken.None);
                 return;
             }
 
-            if (_chatAttachmentsSource.Items.OfType<VisualElementAttachment>().Any(attachment =>
-                    attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
-                    ReferenceEquals(existingAnchor.Context, pendingAnchor.Context) &&
-                    string.Equals(attachment.InitialSnapshot?.Id, pendingAnchor.Snapshot.Id, StringComparison.Ordinal)))
-            {
-                ShowChatWindow();
-                return;
-            }
-
-            var chatAttachment = VisualElementAttachment.FromRemoteAnchor(pendingAnchor);
-            pendingAttachment = chatAttachment;
-            pendingAnchor = null;
-
-            VisualElementEffect? visualElementEffect = null;
-            if (Settings.ChatWindow.EnableVisualElementPickAnimation)
-            {
-                visualElementEffect = ServiceLocator.Resolve<VisualElementEffect>();
-                visualElementEffect.ArrangeEffectWindows();
-            }
-
-            ShowChatWindow();
-
-            var replacedAttachments = _chatAttachmentsSource.Items
-                .OfType<VisualElementAttachment>()
-                .Where(static attachment => attachment.IsPrimary)
-                .ToArray();
-            _chatAttachmentsSource.Edit(list =>
-            {
-                list.RemoveWhere(a => a is VisualElementAttachment { IsPrimary: true });
-                list.Insert(
-                    0,
-                    chatAttachment.With(a =>
-                    {
-                        a.IsPrimary = true;
-                        a.Opacity = visualElementEffect is not null ? 0d : 1d;
-                    }));
-            });
-            foreach (var attachment in replacedAttachments) attachment.Dispose();
-            pendingAttachment = null;
-
-            if (visualElementEffect is not null)
-            {
-                try
-                {
-                    var capture = await chatAttachment.CaptureAsync();
-                    await visualElementEffect.CreatePickEffect(capture, chatAttachment);
-                }
-                catch (Exception exception)
-                {
-                    chatAttachment.Opacity = 1d;
-                    _logger.LogWarning(exception, "Failed to prepare pick capture.");
-                }
-            }
+            ActivateChatWindow();
         }
         catch (OperationCanceledException) { }
-        catch (TimeoutException) { }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process ActivateChatSessionMessage");
-        }
-        finally
-        {
-            pendingAttachment?.Dispose();
-            pendingAnchor?.Dispose();
-        }
-
-        void ShowChatWindow()
-        {
-            PrepareChatContext();
-
-            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
-        }
-
-        void PrepareChatContext()
-        {
-            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
-                ChatContextManager.CreateNewCommand.Execute(null);
         }
     }
 
     [RelayCommand]
     private async Task PickVisualElementAsync(CancellationToken cancellationToken)
     {
-        RemoteVisualAnchor? pendingAnchor = null;
-        VisualElementAttachment? pendingAttachment = null;
-        var isChatWindowCloaked = false;
         try
         {
-            if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
-
-            // Hide the chat window to avoid picking itself
-            if (IsOpened)
-            {
-                WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
-                isChatWindowCloaked = true;
-            }
-
-            pendingAnchor = await _screenSelectionService.PickVisualElementAsync(
-                _visualService.AcquisitionContext,
-                null,
-                cancellationToken);
-            if (pendingAnchor is null)
-            {
-                RestoreChatWindow();
-                return;
-            }
-
-            if (_chatAttachmentsSource.Items.OfType<VisualElementAttachment>().Any(attachment =>
-                    attachment is { IsElementValid: true, Anchor: { } existingAnchor } &&
-                    ReferenceEquals(existingAnchor.Context, pendingAnchor.Context) &&
-                    string.Equals(attachment.InitialSnapshot?.Id, pendingAnchor.Snapshot.Id, StringComparison.Ordinal)))
-            {
-                RestoreChatWindow();
-                return;
-            }
-
-            var chatAttachment = VisualElementAttachment.FromRemoteAnchor(pendingAnchor);
-            pendingAttachment = chatAttachment;
-            pendingAnchor = null;
-
-            if (Settings.ChatWindow.EnableVisualElementPickAnimation)
-            {
-                var visualElementEffect = ServiceLocator.Resolve<VisualElementEffect>();
-                visualElementEffect.ArrangeEffectWindows();
-
-                RestoreChatWindow();
-                _chatAttachmentsSource.Add(chatAttachment.With(x => x.Opacity = 0d));
-                pendingAttachment = null;
-
-                try
-                {
-                    var capture = await chatAttachment.CaptureAsync(cancellationToken);
-                    await visualElementEffect.CreatePickEffect(capture, chatAttachment);
-                }
-                catch (Exception exception) when (exception is not OperationCanceledException)
-                {
-                    chatAttachment.Opacity = 1d;
-                    _logger.LogWarning(exception, "Failed to prepare pick capture.");
-                }
-            }
-            else
-            {
-                RestoreChatWindow();
-                _chatAttachmentsSource.Add(chatAttachment);
-                pendingAttachment = null;
-            }
+            if (VisualElementCaptureRequested is { } captureRequested)
+                await captureRequested(VisualElementCaptureRequest.Interactive, cancellationToken);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to pick visual element");
             ToastExceptionHandler.HandleException(ex);
-        }
-        finally
-        {
-            pendingAttachment?.Dispose();
-            pendingAnchor?.Dispose();
-            RestoreChatWindow();
-        }
-
-        void RestoreChatWindow()
-        {
-            if (!isChatWindowCloaked) return;
-            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
-            isChatWindowCloaked = false;
         }
     }
 
@@ -427,7 +312,7 @@ public sealed partial class ChatWindowViewModel :
             // Hide the chat window to avoid picking itself
             var isOpened = IsOpened;
             if (isOpened) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
-            var bitmap = await _screenSelectionService.TakeScreenshotAsync(null);
+            var bitmap = await _screenSelectionService.TakeScreenshotAsync(_visualService.AcquisitionContext, null, cancellationToken);
             if (isOpened || bitmap is not null) WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
             if (bitmap is null) return;
             _chatAttachmentsSource.Add(await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));

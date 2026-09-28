@@ -1,11 +1,14 @@
-﻿using Windows.Win32;
+﻿using System.Runtime.CompilerServices;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
+using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Patches.Contracts.Interop;
 using Everywhere.Interop;
+using Everywhere.Patches.Contracts.Interop;
 using Everywhere.Views;
+using DrawingPoint = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
 
@@ -14,112 +17,103 @@ namespace Everywhere.Windows.Interop;
 /// </summary>
 public sealed class WindowHelper : IWindowHelper
 {
-    public void SetFocusable(Window window, bool focusable)
+    private readonly ConditionalWeakTable<Window, WindowPropertiesState> _windowProperties = new();
+
+    public unsafe void SetWindowProperties(
+        Window window,
+        bool? focusable = null,
+        bool? hitTestVisible = null,
+        WindowLayer? layer = null)
     {
-        if (focusable)
+        if (focusable is null && hitTestVisible is null && layer is null) return;
+
+        if (!_windowProperties.TryGetValue(window, out var properties))
         {
-            Win32Properties.RemoveWindowStylesCallback(window, WindowStylesCallback);
-            Win32Properties.RemoveWndProcHookCallback(window, WndProcHookCallback);
+            properties = new WindowPropertiesState(window, focusable, hitTestVisible, layer);
+            _windowProperties.Add(window, properties);
         }
         else
         {
-            Win32Properties.AddWindowStylesCallback(window, WindowStylesCallback);
-            Win32Properties.AddWndProcHookCallback(window, WndProcHookCallback);
+            properties.Update(focusable, hitTestVisible, layer);
         }
 
-        if (window.TryGetPlatformHandle() is { } handle)
-        {
-            var exStyle = PInvoke.GetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        if (focusable is { } isFocusable) window.Focusable = isFocusable;
+        if (hitTestVisible is { } isHitTestVisible) window.IsHitTestVisible = isHitTestVisible;
+        if (layer is { } windowLayer) window.Topmost = windowLayer >= WindowLayer.Topmost;
 
-            if (focusable)
+        if (window.TryGetPlatformHandle() is not { } handle) return;
+        var hWnd = (HWND)handle.Handle;
+        var style = (uint)PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+        var exStyle = (uint)PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        var (updatedStyle, updatedExStyle) = properties.ApplyStyles(style, exStyle);
+
+        if (updatedStyle != style)
+        {
+            PInvoke.SetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_STYLE, (int)updatedStyle);
+        }
+
+        if (updatedExStyle != exStyle)
+        {
+            PInvoke.SetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)updatedExStyle);
+        }
+
+        fixed (char* propertyName = "UIA_WindowVisibilityOverridden")
+        {
+            if (properties.IsHitTestVisible is true)
             {
-                exStyle &= ~((int)WINDOW_EX_STYLE.WS_EX_NOACTIVATE | (int)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW);
+                PInvoke.RemoveProp(hWnd, new PCWSTR(propertyName));
             }
-            else
+            else if (properties.IsHitTestVisible is false)
             {
-                exStyle |= (int)WINDOW_EX_STYLE.WS_EX_NOACTIVATE | (int)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
-            }
-
-            PInvoke.SetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
-        }
-
-        static (uint style, uint exStyle) WindowStylesCallback(uint style, uint exStyle)
-        {
-            return (style, exStyle | (uint)WINDOW_EX_STYLE.WS_EX_NOACTIVATE | (uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW);
-        }
-
-        static IntPtr WndProcHookCallback(IntPtr hWnd, uint msg, IntPtr wparam, IntPtr lparam, ref bool handled)
-        {
-            // handle and block all activate messages
-            // if (msg is not (>= (uint)WINDOW_MESSAGE.WM_MOUSEMOVE and <= (uint)WINDOW_MESSAGE.WM_XBUTTONDBLCLK or (uint)WINDOW_MESSAGE.WM_NCHITTEST))
-            //     Console.WriteLine($"{(WINDOW_MESSAGE)msg}\t{wparam}\t{lparam}");
-            switch (msg)
-            {
-                case (uint)WINDOW_MESSAGE.WM_MOUSEACTIVATE:
-                    handled = true;
-                    return 3; // MA_NOACTIVATE;
-                case (uint)WINDOW_MESSAGE.WM_ACTIVATE:
-                case (uint)WINDOW_MESSAGE.WM_SETFOCUS:
-                case (uint)WINDOW_MESSAGE.WM_KILLFOCUS:
-                case (uint)WINDOW_MESSAGE.WM_ACTIVATEAPP:
-                case (uint)WINDOW_MESSAGE.WM_NCACTIVATE:
-                    handled = true;
-                    return IntPtr.Zero;
-                default:
-                    return IntPtr.Zero;
+                PInvoke.SetProp(hWnd, new PCWSTR(propertyName), new HANDLE(2));
             }
         }
+
+        if (properties.IsHitTestVisible is false)
+        {
+            PInvoke.SetLayeredWindowAttributes(hWnd, new COLORREF(), 255, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
+        }
+
+        PInvoke.SetWindowPos(
+            hWnd,
+            default,
+            0,
+            0,
+            0,
+            0,
+            SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED |
+            SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE |
+            SET_WINDOW_POS_FLAGS.SWP_NOMOVE |
+            SET_WINDOW_POS_FLAGS.SWP_NOSIZE |
+            SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
     }
 
-    public void SetHitTestVisible(Window window, bool visible)
+    public void RaiseWindow(Window window)
     {
-        if (visible)
-        {
-            Win32Properties.RemoveWindowStylesCallback(window, WindowStylesCallback);
-        }
-        else
-        {
-            Win32Properties.AddWindowStylesCallback(window, WindowStylesCallback);
-        }
+        if (window.TryGetPlatformHandle() is not { } handle) return;
 
-        if (window.TryGetPlatformHandle() is { } handle)
-        {
-            var style = PInvoke.GetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_STYLE);
-            var exStyle = PInvoke.GetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-
-            if (visible)
-            {
-                style &= ~(int)WINDOW_STYLE.WS_DISABLED;
-                PInvoke.SetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_STYLE, style);
-
-                exStyle &= ~((int)WINDOW_EX_STYLE.WS_EX_LAYERED | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT);
-                PInvoke.SetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
-            }
-            else
-            {
-                style |= (int)WINDOW_STYLE.WS_DISABLED;
-                PInvoke.SetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_STYLE, style);
-
-                exStyle |= (int)WINDOW_EX_STYLE.WS_EX_LAYERED | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
-                PInvoke.SetWindowLong((HWND)handle.Handle, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle);
-                PInvoke.SetLayeredWindowAttributes((HWND)handle.Handle, new COLORREF(), 255, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
-            }
-        }
-
-        static (uint style, uint exStyle) WindowStylesCallback(uint style, uint exStyle)
-        {
-            return
-            (
-                style | (uint)WINDOW_STYLE.WS_DISABLED,
-                exStyle | (uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW | (uint)WINDOW_EX_STYLE.WS_EX_LAYERED | (uint)WINDOW_EX_STYLE.WS_EX_TRANSPARENT
-            );
-        }
+        var layer = _windowProperties.TryGetValue(window, out var properties) && properties.Layer is { } configuredLayer ?
+            configuredLayer :
+            window.Topmost ?
+                WindowLayer.Topmost :
+                WindowLayer.Normal;
+        var insertAfter = layer < WindowLayer.Topmost ? new HWND(0) : HWND.HWND_TOPMOST;
+        PInvoke.SetWindowPos(
+            (HWND)handle.Handle,
+            insertAfter,
+            0,
+            0,
+            0,
+            0,
+            SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE |
+            SET_WINDOW_POS_FLAGS.SWP_NOMOVE |
+            SET_WINDOW_POS_FLAGS.SWP_NOSIZE |
+            SET_WINDOW_POS_FLAGS.SWP_NOOWNERZORDER);
     }
 
     public bool GetEffectiveVisible(Window window)
     {
         var isVisible = window.IsVisible;
-
         if (window.TryGetPlatformHandle() is not { } handle) return isVisible;
 
         unsafe
@@ -136,6 +130,37 @@ public sealed class WindowHelper : IWindowHelper
         }
 
         return isVisible;
+    }
+
+    public bool? IsRegionCovered(Window window, PixelRect bounds)
+    {
+        if (window.TryGetPlatformHandle() is not { } handle || bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return null;
+        }
+
+        var root = PInvoke.GetAncestor((HWND)handle.Handle, GET_ANCESTOR_FLAGS.GA_ROOT);
+        if (root == 0) return null;
+
+        var insetX = Math.Min(4, Math.Max(0, bounds.Width / 4));
+        var insetY = Math.Min(4, Math.Max(0, bounds.Height / 4));
+        Span<DrawingPoint> samplePoints =
+        [
+            new(bounds.Center.X, bounds.Center.Y),
+            new(bounds.X + insetX, bounds.Y + insetY),
+            new(bounds.Right - insetX - 1, bounds.Y + insetY),
+            new(bounds.X + insetX, bounds.Bottom - insetY - 1),
+            new(bounds.Right - insetX - 1, bounds.Bottom - insetY - 1)
+        ];
+
+        foreach (var samplePoint in samplePoints)
+        {
+            var hit = PInvoke.WindowFromPoint(samplePoint);
+            if (hit == 0) return null;
+            if (PInvoke.GetAncestor(hit, GET_ANCESTOR_FLAGS.GA_ROOT) != root) return false;
+        }
+
+        return true;
     }
 
     public void SetCloaked(Window window, bool cloaked)
@@ -308,6 +333,81 @@ public sealed class WindowHelper : IWindowHelper
         if (window is ChatWindow chatWindow)
         {
             ChatWindowShadow.Attach(chatWindow);
+        }
+    }
+
+    private sealed class WindowPropertiesState
+    {
+        public WindowLayer? Layer { get; private set; }
+
+        public bool? IsHitTestVisible { get; private set; }
+
+        private bool? IsFocusable { get; set; }
+
+        public WindowPropertiesState(Window window, bool? focusable, bool? hitTestVisible, WindowLayer? layer)
+        {
+            Update(focusable, hitTestVisible, layer);
+            Win32Properties.AddWindowStylesCallback(window, ApplyStyles);
+            Win32Properties.AddWndProcHookCallback(window, WndProcHookCallback);
+        }
+
+        public void Update(bool? focusable, bool? hitTestVisible, WindowLayer? layer)
+        {
+            if (focusable.HasValue) IsFocusable = focusable;
+            if (hitTestVisible.HasValue) IsHitTestVisible = hitTestVisible;
+            if (layer.HasValue) Layer = layer;
+        }
+
+        public (uint style, uint exStyle) ApplyStyles(uint style, uint exStyle)
+        {
+            if (IsHitTestVisible is true)
+            {
+                style &= ~(uint)WINDOW_STYLE.WS_DISABLED;
+                // Layering belongs to the renderer. Input-enabled transparent windows must retain it;
+                // only the native mouse pass-through flag is controlled by hit-test visibility.
+                exStyle &= ~(uint)WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
+            }
+            else if (IsHitTestVisible is false)
+            {
+                style |= (uint)WINDOW_STYLE.WS_DISABLED;
+                exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_LAYERED | (uint)WINDOW_EX_STYLE.WS_EX_TRANSPARENT;
+            }
+
+            if (IsFocusable is true)
+            {
+                exStyle &= ~(uint)WINDOW_EX_STYLE.WS_EX_NOACTIVATE;
+            }
+            else if (IsFocusable is false)
+            {
+                exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_NOACTIVATE;
+            }
+
+            if (IsFocusable is true)
+            {
+                exStyle &= ~(uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
+            }
+            else if (IsFocusable is false)
+            {
+                exStyle |= (uint)WINDOW_EX_STYLE.WS_EX_TOOLWINDOW;
+            }
+
+            return (style, exStyle);
+        }
+
+        private IntPtr WndProcHookCallback(IntPtr hWnd, uint msg, IntPtr wparam, IntPtr lparam, ref bool handled)
+        {
+            if (IsFocusable is not false) return IntPtr.Zero;
+
+            if (msg == (uint)WINDOW_MESSAGE.WM_MOUSEACTIVATE)
+            {
+                handled = true;
+                return 3; // MA_NOACTIVATE
+            }
+
+            // Activation and focus notifications must reach the default window procedure. In particular,
+            // returning FALSE for WM_NCACTIVATE while deactivating prevents Windows from completing the
+            // activation change and can consume the initiating mouse-down message.
+            return IntPtr.Zero;
         }
     }
 }

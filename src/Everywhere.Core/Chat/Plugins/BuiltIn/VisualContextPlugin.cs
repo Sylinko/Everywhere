@@ -26,16 +26,19 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     private readonly IBlobStorage _blobStorage;
     private readonly ChatVisualService _visualService;
     private readonly IStatisticsRecorder _statisticsRecorder;
+    private readonly IVisualContextScanEffect _visualContextScanEffect;
 
     public VisualContextPlugin(
         IBlobStorage blobStorage,
         ChatVisualService visualService,
-        IStatisticsRecorder statisticsRecorder
+        IStatisticsRecorder statisticsRecorder,
+        IVisualContextScanEffect visualContextScanEffect
     ) : base("visual_context")
     {
         _blobStorage = blobStorage;
         _visualService = visualService;
         _statisticsRecorder = statisticsRecorder;
+        _visualContextScanEffect = visualContextScanEffect;
 
         _functionsSource.Edit(list =>
         {
@@ -159,6 +162,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken = default)
     {
         var request = new VisualQueryRequest { Directions = ParseTraverseDirections(directions), Offset = offset, Limit = limit };
+        using var scanScope = _visualContextScanEffect.Begin(cancellationToken);
         var (visualContextId, result) = await _visualService.QueryTargetAsync(
             chatContext.VisualState,
             target,
@@ -166,7 +170,9 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             request.Offset,
             request.Limit,
             VisualContextLengthLimit.Detailed.ToTokenLimit(),
+            scanScope,
             cancellationToken);
+        scanScope.Complete();
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
@@ -352,7 +358,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         if (parts.Length == 0) return VisualContextTraverseDirections.All;
 
         return parts.AsValueEnumerable().Aggregate(
-            VisualContextTraverseDirections.Core,
+            VisualContextTraverseDirections.Origin,
             (current, part) => current | part.ToLowerInvariant() switch
             {
                 "parent" => VisualContextTraverseDirections.Parent,
@@ -361,7 +367,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 "next" => VisualContextTraverseDirections.NextSibling,
                 "sibling" or "siblings" => VisualContextTraverseDirections.PreviousSibling | VisualContextTraverseDirections.NextSibling,
                 "all" => VisualContextTraverseDirections.All,
-                "none" => VisualContextTraverseDirections.Core,
+                "none" => VisualContextTraverseDirections.Origin,
                 _ => throw new HandledFunctionInvokingException(
                     HandledFunctionInvokingExceptionType.ArgumentError,
                     nameof(direction),

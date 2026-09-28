@@ -33,7 +33,7 @@ public sealed class VisualContextSnapshotter
 {
     VisualContextSnapshot CreateSnapshot(
         VisualContext context,
-        IReadOnlyList<VisualElement> coreElements,
+        IReadOnlyList<VisualElement> originElements,
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
         Action<VisualElementQueryResult>? onTopLevelObserved = null,
@@ -47,7 +47,7 @@ Snapshot:
 - is the only phase that reads live platform visual state, including accessibility providers and composed native topology;
 - traverses the platform's composed Element graph and does not assume that one root or relation chain uses one concrete backend;
 - creates one Snapshot `VisualElementRetention`, uses synchronous `VisualElement.Query` and `VisualElement.CreateEnumerator`, and transfers that ownership into the returned `VisualContextSnapshot`;
-- accepts already acquired core Elements; acquisitions without an Element receiver occur through `IVisualElementBackend.Query` before Snapshot traversal begins;
+- accepts already acquired origin Elements; acquisitions without an Element receiver occur through `IVisualElementBackend.Query` before Snapshot traversal begins;
 - preserves the existing traversal order and records its metadata;
 - returns a bounded, partial observation forest;
 - records facts and status without choosing serialization syntax;
@@ -65,7 +65,7 @@ Platform relations are observations of a potentially malformed graph, not a guar
 
 The implementation lifts the tuned algorithm rather than redesigning relevance:
 
-- core Elements remain the highest-priority seeds;
+- origin Elements remain the highest-priority seeds;
 - existing direction weights remain unchanged;
 - `TraverseDistance.Reset()` and `TraverseDistance.Step()` remain unchanged;
 - current type weights remain unchanged unless separately reviewed;
@@ -124,7 +124,7 @@ Snapshot handles a virtualized or extremely large collection as follows:
 3. report that more children may exist;
 4. retain a continuation descriptor where the provider and target semantics allow it;
 5. avoid realizing off-screen or not-yet-materialized items merely to count them;
-6. preserve focused previous/next sibling exploration around a core Element.
+6. preserve focused previous/next sibling exploration around an origin Element.
 
 Unknown Enumerator `Count = -1` is normal and does not force eager counting.
 
@@ -164,7 +164,7 @@ The builder's planning pass performs these operations in fixed order:
 
 1. establish stable root and sibling ordering;
 2. coalesce snapshot entries resolving to the same native top-level root;
-3. preserve every core node as an anchor under its coalesced root;
+3. preserve every origin node as an anchor under its coalesced root;
 4. compute `HasRenderableDescendant` independently from `ShouldRenderSelf`;
 5. collapse transparent containers while preserving child order;
 6. identify source ranges and subtrees whose expanded representation has excessive structural cost;
@@ -177,13 +177,13 @@ Performing normalization during provider traversal would make the output depend 
 
 ### 3.2 Root Coalescing
 
-Several core Elements may belong to one platform root. Prompt output represents that root once with ordered anchors. Root identity uses observed platform identity first, with process and native-root identity only as fallback.
+Several origin Elements may belong to one platform root. Prompt output represents that root once with ordered anchors. Root identity uses observed platform identity first, with process and native-root identity only as fallback.
 
 Coalescing never merges genuinely disconnected roots merely because their properties look similar.
 
 ### 3.3 Transparent Containers
 
-The production projection uses one fixed compact policy. There is no detail-level option in the Builder, chat settings, or debugger. Token budgets remain configurable. Core, interactive, Screen/TopLevel, content-bearing, state-bearing, and status-bearing nodes are retained during normalization. Otherwise roots and Documents require a projected child, Panels require more than one projected child, and other nodes are collapsed. Child counts are evaluated after recursive normalization and Composite merging, before token-budget pruning.
+The production projection uses one fixed compact policy. There is no detail-level option in the Builder, chat settings, or debugger. Token budgets remain configurable. Origin, interactive, Screen/TopLevel, content-bearing, state-bearing, and status-bearing nodes are retained during normalization. Otherwise roots and Documents require a projected child, Panels require more than one projected child, and other nodes are collapsed. Child counts are evaluated after recursive normalization and Composite merging, before token-budget pruning.
 
 `HasRenderableDescendant` and `ShouldRenderSelf` express different facts. A nameless Panel with no own text, state, action, bounds requirement, or status responsibility normally has:
 
@@ -209,7 +209,7 @@ Measurable policy may use member count, estimated structural overhead, or conten
 
 - source members remain retained so the Composite text stream can be read without exposing an internal member protocol;
 - normalized logical order is preserved;
-- core Elements are never silently absorbed without an exposed anchor;
+- origin Elements are never silently absorbed without an exposed anchor;
 - selected interactive descendants receive independent Element targets;
 - Composite is never an actionable platform Element;
 - previews are bounded and deterministic;
@@ -260,7 +260,7 @@ The same builder that normalizes and admits the Snapshot owns final syntax and p
 
 Internally the Builder uses a tree of `PromptCompactElement` nodes and returns its final rendered string. It renders familiar XML-like tags, compact scalar attributes, and valueless Boolean flags, but is deliberately not valid XML. A typical target is `<TextEdit id=7 name="Draft message" focused disabled/>`.
 
-Visual element type is the tag name. A projected logical aggregation uses `Composite` as its element type rather than becoming a second tool-level target category. `id`, bounded `name`, optional bounds, exceptional `status`, and `textLength` for an incomplete body are attributes. Safe nonempty values without whitespace, control characters, or markup delimiters omit quotes; all other values remain quoted and escaped. Sparse non-default facts such as `focused`, `disabled`, `selected`, `readOnly`, `password`, and `offscreen` are bare flags. The builder does not emit speculative action capabilities, implementation priority, a retained-member count, or a normal `complete` field. Absence of `status` means that no relevant problem was observed; it does not claim an exhaustive or immutable read.
+Visual element type is the tag name. A projected logical aggregation uses `Composite` as its element type rather than becoming a second tool-level target category. `id`, bounded `name`, optional bounds, exceptional `status`, and `textLength` for an incomplete body are attributes. Safe nonempty values without whitespace, control characters, or markup delimiters omit quotes; all other values remain quoted and escaped. Sparse non-default facts such as `origin`, `focused`, `disabled`, `selected`, `readOnly`, `password`, and `offscreen` are bare flags. `origin` identifies the element or elements around which the current observation was requested; it does not mean focus, root, or permanent priority. The builder does not emit speculative action capabilities, implementation priority, a retained-member count, or a normal `complete` field. Absence of `status` means that no relevant problem was observed; it does not claim an exhaustive or immutable read.
 
 The builder does not hand-assemble markup. It renders Prompting primitives once the final allocation is known. Untrusted attribute values and child text stay inside Prompting nodes so the renderer owns escaping.
 
@@ -278,7 +278,7 @@ An abandoned publication batch consumes no ID. If required anchors cannot fit, f
 
 ### 4.4 Automatic Attachment Boundary
 
-Automatic attachment processing supplies every valid attachment Element as a core of one bounded Snapshot. Snapshot limits therefore accumulate across the complete attachment forest instead of resetting for each process or native-window group. The prompt builder then publishes one coherent target set under the active visual target turn.
+Automatic attachment processing supplies every valid attachment Element as an origin of one bounded Snapshot. Snapshot limits therefore accumulate across the complete attachment forest instead of resetting for each process or native-window group. The prompt builder then publishes one coherent target set under the active visual target turn.
 
 The first valid `VisualElementAttachment` carries a `PromptText` wrapping the combined final string; later attachments leave their content null and are reported as duplicates by chat-history projection. `VisualElementAttachment.Content` remains structured at MessagePack key 2. Its member formatter reads the legacy string form as `PromptText`, writes new values through the normal polymorphic `PromptNode` union, and leaves the surrounding attachment union and inheritance format unchanged. This is a forward migration boundary: current code reads both forms, while an older executable is not expected to understand a newly written PromptNode union at that key.
 
@@ -289,7 +289,7 @@ Visual rendering finishes during attachment construction; ChatHistoryBuilder for
 Determinism applies to equivalent snapshots, options, and initial publication state, not to a changing live UI.
 
 - use a monotonic enqueue sequence to break equal traversal priorities;
-- define input order for core Elements and roots;
+- define input order for origin Elements and roots;
 - retain ordered children and Composite members;
 - use sibling index followed by traversal ordinal as deterministic fallback;
 - preserve relative child order through transparent-container collapse;

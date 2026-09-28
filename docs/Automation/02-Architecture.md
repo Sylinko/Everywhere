@@ -66,7 +66,7 @@ The Backend does not own conversation identities, Agent IDs, traversal state, ou
 
 The Agent-facing Backend is created once for the Automation Host session, before the Host begins serving the authenticated Main connection. Host RPC creates `VisualContext` resources lazily for chats, acquisition, and diagnostics; Contexts are not DI services. `ChatVisualState` owns only the corresponding Main-side remote handle and recreates it when the Host connection changes. Multiple Host Contexts share the native client; their complete Context operations are independently serialized. The Windows evidence supports one immutable-policy `CUIAutomation8` client shared across calls; element identity is independent of the client that returned a COM pointer.
 
-Main separately registers one platform Backend for UI-only screenshot selection and selected-text monitoring. These paths create transient local Contexts, return copied UI data, and never participate in chat target identity or Agent action routing. Sharing the Backend contract does not merge the two processes' native clients or Context domains.
+Main separately retains platform services for screenshot pixels, free-form selection, and selected-text monitoring. Screen/window/element screenshot snapping uses the same Automation Host picker observation contract as element selection, without transferring an anchor or streaming screenshot pixels over RPC. These paths never participate in chat target identity or Agent action routing.
 
 ## 4. VisualContext
 

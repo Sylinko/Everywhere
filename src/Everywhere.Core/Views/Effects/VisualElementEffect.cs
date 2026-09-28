@@ -1,100 +1,53 @@
-﻿using System.Threading.Channels;
+using System.Threading.Channels;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Everywhere.Automation;
-using Everywhere.Chat;
 using Everywhere.Common;
+using Everywhere.Interop;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 
 namespace Everywhere.Views;
 
-/// <summary>
-/// A high-performance, cross-monitor visual effect manager that orchestrates flying particle animations
-/// from original screen positions into target UI attachments or regions within the ChatWindow. 
-/// Designed as a singleton service.
-/// </summary>
-/// <remarks>
-/// This system supports two distinctly handled animation modes:
-/// 
-/// 1. Single-Element Morphing (`CreatePickEffect`):
-///    Triggered when a user selects a specific visual element on screen. A snapshot is captured, 
-///    and a UI particle dynamically morphs (fades and scales) from the raw image bounds into its 
-///    final DataContext-bound destination (e.g., a `ChatAttachment` chip) while tracking the window.
-///    
-/// 2. Multi-Element Swarm (`ScanEffectScope` / visual-context Snapshot pipeline):
-///    Used during automated visual-tree observation. Employs a DPI-aware, batched TopLevel screenshot strategy
-///    where hundreds of `IImage` sub-crops are fired sequentially based on a heuristic queue. 
-///    The physics engine applies lateral scattering ("flocking") and Hooke's Law spring dynamics to 
-///    absorb particles seamlessly behind the chatbot mascot (Eva). Masking is handled via a transparent Overlay window.
-/// </remarks>
-public sealed class VisualElementEffect(
-    IVisualElementAnimationTarget animationTarget,
-    ILogger<VisualElementEffect> logger
-)
+/// <summary>Owns the shared cross-monitor overlay windows and pooled particles used by visual-element effects.</summary>
+public sealed class VisualElementEffect(IWindowHelper windowHelper, ILogger<VisualElementEffect> logger) : IVisualContextScanEffect
 {
-    private readonly IVisualElementAnimationTarget _animationTarget = animationTarget;
     private readonly List<VisualElementEffectWindow> _effectWindows = [];
 
-    /// <summary>Consumes an owned capture and plays a pick animation, releasing it on every exit path.</summary>
-    public async Task CreatePickEffect(IVisualElementCapture capture, ChatAttachment chatAttachment)
+    /// <summary>Starts a prepared capture-to-attachment animation on every effect window.</summary>
+    /// <returns><see langword="true" /> when at least one particle was started.</returns>
+    public bool PlayPickEffect(
+        PixelRect sourceBounds,
+        Bitmap startContent,
+        object endContent,
+        IParticleTargetTracker targetTracker)
     {
-        using var ownedCapture = capture;
-        try
+        if (_effectWindows.Count == 0) return false;
+
+        foreach (var effectWindow in _effectWindows)
         {
-            if (_effectWindows.Count == 0)
-            {
-                chatAttachment.Opacity = 1d;
-                return;
-            }
-
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Input);
-            if (!_animationTarget.IsKeyboardFocusWithin)
-            {
-                chatAttachment.Opacity = 1d;
-                return;
-            }
-
-            var sourceBounds = capture.Bounds;
-            var startBitmap = capture.ToAvaloniaBitmap();
-            if (startBitmap is null)
-            {
-                chatAttachment.Opacity = 1d;
-                return;
-            }
-
-            using var image = new VisualEffectImage<Bitmap>(startBitmap);
-            foreach (var effectWindow in _effectWindows)
-            {
-#if !IsMacOS
-                effectWindow.Topmost = false;
-                effectWindow.Topmost = true; // Ensure the effect window is above all others to properly display the animation 
-#endif
-
-                var sourceCenter = new PixelPoint(sourceBounds.Center.X, sourceBounds.Center.Y);
-                var startPoint = effectWindow.ScreenPixelToLocal(sourceCenter);
-                var startSize = new Size(
-                    Math.Max(16, sourceBounds.Width / effectWindow.Scale),
-                    Math.Max(16, sourceBounds.Height / effectWindow.Scale));
-
-                var tracker = new RunOnceTracker(this, chatAttachment, _animationTarget);
-                effectWindow.AddParticle<PickVisualElementParticle>(
-                    startPoint,
-                    tracker,
-                    image,
-                    chatAttachment,
-                    startSize);
-            }
+            var sourceCenter = new PixelPoint(sourceBounds.Center.X, sourceBounds.Center.Y);
+            var startPoint = effectWindow.ScreenPixelToLocal(sourceCenter);
+            var startSize = new Size(
+                Math.Max(1d, sourceBounds.Width / effectWindow.Scale),
+                Math.Max(1d, sourceBounds.Height / effectWindow.Scale));
+            effectWindow.AddParticle<PickVisualElementParticle>(
+                startPoint,
+                targetTracker,
+                startContent,
+                endContent,
+                startSize);
+            ShowAndRaise(effectWindow);
         }
-        catch
-        {
-            chatAttachment.Opacity = 1d;
-        }
+
+        return true;
     }
 
-    /// <summary>Creates an image-consumer scope with no native-element or Context ownership.</summary>
-    public ScanEffectScope CreateScanEffect(CancellationToken cancellationToken) => new(this, logger, cancellationToken);
+    /// <inheritdoc />
+    public IVisualContextScanScope Begin(CancellationToken cancellationToken) =>
+        new ScanEffectScope(this, logger, cancellationToken);
 
+    /// <summary>Creates, removes, and positions passive effect windows for the current displays.</summary>
     public void ArrangeEffectWindows()
     {
         var screens = App.Screens.All;
@@ -105,82 +58,92 @@ public sealed class VisualElementEffect(
             return;
         }
 
-        var i = 0;
-        for (; i < screens.Count; i++)
+        var index = 0;
+        for (; index < screens.Count; index++)
         {
             VisualElementEffectWindow effectWindow;
-            if (_effectWindows.Count > i)
+            if (_effectWindows.Count > index)
             {
-                effectWindow = _effectWindows[i];
+                effectWindow = _effectWindows[index];
             }
             else
             {
                 effectWindow = new VisualElementEffectWindow();
+                windowHelper.InitializeWindow(effectWindow);
+                windowHelper.SetWindowProperties(effectWindow, focusable: false, hitTestVisible: false, WindowLayer.Overlay);
                 _effectWindows.Add(effectWindow);
             }
 
-            effectWindow.SetPlacement(screens[i]);
-            effectWindow.Show();
+            effectWindow.SetPlacement(screens[index]);
         }
 
-        // Remove unnecessary VisualElementEffectWindow
-        for (var j = _effectWindows.Count - 1; j >= i; j--)
+        for (var extraIndex = _effectWindows.Count - 1; extraIndex >= index; extraIndex--)
         {
-            _effectWindows[j].Close();
-            _effectWindows.RemoveAt(j);
+            _effectWindows[extraIndex].Close();
+            _effectWindows.RemoveAt(extraIndex);
         }
     }
 
-    /// <summary>Owns a bounded capture queue. Complete hands draining to the consumer; disposing before Complete abandons queued images.</summary>
-    public sealed class ScanEffectScope(VisualElementEffect owner, ILogger logger, CancellationToken cancellationToken) : IDisposable
+    private void ShowAndRaise(VisualElementEffectWindow effectWindow)
     {
-        // A capture can occupy 64 MiB. Do not turn the old thousand-element queue into a thousand-image queue.
-        private readonly Channel<IVisualElementCapture> _emissionQueue = Channel.CreateBounded<IVisualElementCapture>(new BoundedChannelOptions(4)
-        {
-            SingleReader = true, SingleWriter = true
-        });
+        if (!effectWindow.IsVisible) effectWindow.Show();
+        windowHelper.RaiseWindow(effectWindow);
+    }
+
+    private sealed class ScanEffectScope : IVisualContextScanScope
+    {
+        private readonly VisualElementEffect _owner;
+        private readonly ILogger _logger;
+        private readonly CancellationTokenSource _lifetimeCancellation;
+        private readonly Channel<IVisualElementCapture> _captures = Channel.CreateBounded<IVisualElementCapture>(
+            new BoundedChannelOptions(4)
+            {
+                SingleReader = true,
+                SingleWriter = true,
+                FullMode = BoundedChannelFullMode.Wait,
+                AllowSynchronousContinuations = false,
+            });
+
         private int _completionState;
 
-        /// <summary>Takes ownership, including when a completed, canceled, or full scope discards the capture.</summary>
+        public ScanEffectScope(VisualElementEffect owner, ILogger logger, CancellationToken cancellationToken)
+        {
+            _owner = owner;
+            _logger = logger;
+            _lifetimeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task.Run(ConsumeAsync, CancellationToken.None).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+        }
+
         public void AddCapture(IVisualElementCapture capture)
         {
-            if (cancellationToken.IsCancellationRequested || Volatile.Read(ref _completionState) != 0 || !_emissionQueue.Writer.TryWrite(capture))
+            if (Volatile.Read(ref _completionState) != 0 || _lifetimeCancellation.IsCancellationRequested || !_captures.Writer.TryWrite(capture))
                 capture.Dispose();
         }
 
-        /// <summary>Completes production and drains owned images independently of the query Context.</summary>
         public void Complete()
         {
-            if (Interlocked.CompareExchange(ref _completionState, 1, 0) != 0) return;
-            _emissionQueue.Writer.TryComplete();
-            Task.Run(EmissionLoopAsync, CancellationToken.None).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+            if (Interlocked.CompareExchange(ref _completionState, 1, 0) == 0) _captures.Writer.TryComplete();
         }
 
-        /// <summary>Discards incomplete production; after Complete the consumer owns cleanup.</summary>
         public void Dispose()
         {
             if (Interlocked.CompareExchange(ref _completionState, 2, 0) != 0) return;
-            _emissionQueue.Writer.TryComplete();
+            _lifetimeCancellation.Cancel();
+            _captures.Writer.TryComplete();
             Drain();
         }
 
-        private void Drain()
+        private async Task ConsumeAsync()
         {
-            while (_emissionQueue.Reader.TryRead(out var capture)) capture.Dispose();
-        }
-
-        private async Task EmissionLoopAsync()
-        {
+            var cancellationToken = _lifetimeCancellation.Token;
             try
             {
-                await Dispatcher.UIThread.InvokeAsync(owner.ArrangeEffectWindows, DispatcherPriority.Render, cancellationToken);
-                while (_emissionQueue.Reader.TryRead(out var capture))
+                await Dispatcher.UIThread.InvokeAsync(_owner.ArrangeEffectWindows, DispatcherPriority.Render, cancellationToken);
+                await foreach (var capture in _captures.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
                 {
                     using (capture)
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
                         if (capture.Bounds.Width <= 16 || capture.Bounds.Height <= 16) continue;
-
                         var image = capture.ToSKImage();
                         if (image is null) continue;
 
@@ -192,47 +155,38 @@ public sealed class VisualElementEffect(
                     }
                 }
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+            }
             catch (Exception exception)
             {
-                logger.LogWarning(exception, "Failed to play scan captures.");
+                _logger.LogWarning(exception, "Failed to play visual-context scan captures.");
             }
             finally
             {
                 Interlocked.Exchange(ref _completionState, 2);
                 Drain();
+                _lifetimeCancellation.Dispose();
             }
         }
 
         private void EmitParticle(PixelRect bounds, VisualEffectImage<SKImage> image)
         {
-            foreach (var effectWindow in owner._effectWindows)
+            foreach (var effectWindow in _owner._effectWindows)
             {
-                effectWindow.Topmost = false;
-                effectWindow.Topmost = true; // Ensure the effect window is above all others to properly display the animation
-
                 var sourceCenter = new PixelPoint(bounds.Center.X, bounds.Center.Y);
                 var startPoint = effectWindow.ScreenPixelToLocal(sourceCenter);
-                var startSize = new Size(Math.Max(16, bounds.Width / effectWindow.Scale), Math.Max(16, bounds.Height / effectWindow.Scale));
+                var startSize = new Size(
+                    Math.Max(16d, bounds.Width / effectWindow.Scale),
+                    Math.Max(16d, bounds.Height / effectWindow.Scale));
                 effectWindow.AddParticle<ScanVisualElementParticle>(startPoint, null, image, null, startSize);
+                _owner.ShowAndRaise(effectWindow);
             }
         }
-    }
 
-    private sealed class RunOnceTracker(
-        VisualElementEffect owner,
-        ChatAttachment chatAttachment,
-        IVisualElementAnimationTarget target
-    ) : IParticleTargetTracker
-    {
-        public bool IsCancelled => !target.IsVisible;
-
-        public bool TryGetTargetCenterOnScreen(out PixelPoint point) =>
-            owner._animationTarget.TryGetAttachmentCenterOnScreen(chatAttachment, out point);
-
-        public void OnParticleCompleted()
+        private void Drain()
         {
-            chatAttachment.Opacity = 1d;
+            while (_captures.Reader.TryRead(out var capture)) capture.Dispose();
         }
     }
 }

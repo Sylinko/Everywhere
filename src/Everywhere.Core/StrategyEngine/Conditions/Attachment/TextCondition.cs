@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using Everywhere.Chat;
-using ZLinq;
 
 namespace Everywhere.StrategyEngine.Conditions;
 
@@ -10,11 +9,6 @@ namespace Everywhere.StrategyEngine.Conditions;
 public sealed class TextCondition : IAttachmentCondition
 {
     public AttachmentType TargetType { get; init; } = AttachmentType.TextSelection;
-
-    /// <summary>
-    /// If true, at least one matching attachment must be primary.
-    /// </summary>
-    public bool IsPrimaryRequired { get; init; }
 
     /// <summary>
     /// Regex pattern to match against the text content.
@@ -44,8 +38,6 @@ public sealed class TextCondition : IAttachmentCondition
     public bool Evaluate(StrategyContext context)
     {
         var matchingCount = 0;
-        var hasPrimary = false;
-
         foreach (var attachment in context.Attachments)
         {
             var text = GetText(attachment);
@@ -60,18 +52,9 @@ public sealed class TextCondition : IAttachmentCondition
             }
 
             matchingCount++;
-            if (attachment.IsPrimary)
-            {
-                hasPrimary = true;
-            }
         }
 
         if (matchingCount < MinCount)
-        {
-            return false;
-        }
-
-        if (IsPrimaryRequired && !hasPrimary)
         {
             return false;
         }

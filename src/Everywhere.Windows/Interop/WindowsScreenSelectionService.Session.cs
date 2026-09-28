@@ -1,16 +1,15 @@
 using System.Diagnostics;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Threading;
 using DynamicData;
 using Everywhere.Automation;
 using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Point = System.Drawing.Point;
@@ -35,29 +34,26 @@ public sealed partial class WindowsScreenSelectionService
         protected ScreenSelectionToolTipWindow ToolTipWindow { get; }
 
         protected ScreenSelectionMode CurrentMode { get; private set; }
-        protected VisualElementQueryResult? PickingElement { get; private set; }
+        protected long SelectionModeVersion { get; private set; }
 
-        private readonly IVisualElementBackend _visualElementBackend;
-        private readonly VisualContext _context;
         private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
-        private readonly HashSet<HWND> _ownWindows = [];
         private IDisposable? _keyboardHookSubscription;
-        private VisualElementRetention? _pickingRetention;
 
         protected ScreenSelectionSession(
             IWindowHelper windowHelper,
-            IVisualElementBackend visualElementBackend,
-            VisualContext context,
             IReadOnlyList<ScreenSelectionMode> allowedModes,
             ScreenSelectionMode initialMode)
         {
             Debug.Assert(allowedModes.Count > 0);
 
             _allowedModes = allowedModes;
-            _visualElementBackend = visualElementBackend;
-            _context = context;
             WindowHelper = windowHelper;
             CurrentMode = initialMode;
+            windowHelper.SetWindowProperties(
+                this,
+                focusable: true,
+                hitTestVisible: true,
+                WindowLayer.Overlay);
 
             var allScreens = Screens.All;
             MaskWindows = new ScreenSelectionMaskWindow[allScreens.Count];
@@ -67,7 +63,11 @@ public sealed partial class WindowsScreenSelectionService
                 var screen = allScreens[i];
                 allScreenBounds = allScreenBounds.Union(screen.Bounds);
                 var maskWindow = new ScreenSelectionMaskWindow(screen.Bounds);
-                windowHelper.SetHitTestVisible(maskWindow, false);
+                windowHelper.SetWindowProperties(
+                    maskWindow,
+                    focusable: false,
+                    hitTestVisible: false,
+                    WindowLayer.Overlay + 1);
                 MaskWindows[i] = maskWindow;
             }
 
@@ -75,7 +75,11 @@ public sealed partial class WindowsScreenSelectionService
             SetPlacement(allScreenBounds, out _);
 
             ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
-            windowHelper.SetHitTestVisible(ToolTipWindow, false);
+            windowHelper.SetWindowProperties(
+                ToolTipWindow,
+                focusable: false,
+                hitTestVisible: false,
+                WindowLayer.Overlay + 2);
         }
 
         protected override void OnOpened(EventArgs e)
@@ -84,23 +88,16 @@ public sealed partial class WindowsScreenSelectionService
 
             if (TryGetPlatformHandle()?.Handle is { } hWnd and > 0)
             {
-                var exStyle = PInvoke.GetWindowLong((HWND)hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-                PInvoke.SetWindowLong((HWND)hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle | (int)WINDOW_EX_STYLE.WS_EX_TRANSPARENT);
-                PInvoke.SetLayeredWindowAttributes((HWND)hWnd, new COLORREF(0), 254, LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
-
                 SetUiaWindowVisibilityOverridden((HWND)hWnd);
             }
 
-            // Collect all overlay HWNDs so PickElement can skip them when looking for the window behind.
             foreach (var maskWindow in MaskWindows) maskWindow.Show();
             ToolTipWindow.Show();
 
-            _ownWindows.Clear();
             foreach (var w in MaskWindows.Cast<Window>().Append(this).Append(ToolTipWindow))
             {
                 if (w.TryGetPlatformHandle()?.Handle is { } h and not 0)
                 {
-                    _ownWindows.Add((HWND)h);
                     SetUiaWindowVisibilityOverridden((HWND)h);
                 }
             }
@@ -111,7 +108,7 @@ public sealed partial class WindowsScreenSelectionService
             _keyboardHookSubscription ??= LowLevelHook.CreateKeyboardHook(HandleKeyboardHook, false);
 
             // Pick the element under the cursor immediately
-            Dispatcher.UIThread.Post(PickCursorElement);
+            Dispatcher.Post(PickCursorElement);
         }
 
         protected override void OnPointerMoved(PointerEventArgs e)
@@ -198,7 +195,7 @@ public sealed partial class WindowsScreenSelectionService
             if ((VIRTUAL_KEY)hookStruct.vkCode == VIRTUAL_KEY.VK_ESCAPE)
             {
                 blockNext = true;
-                Dispatcher.UIThread.Post(Cancel);
+                Dispatcher.Post(Cancel);
             }
         }
 
@@ -213,8 +210,14 @@ public sealed partial class WindowsScreenSelectionService
 
         private void HandleModeChanged()
         {
+            SelectionModeVersion++;
             ToolTipWindow.ToolTip.Mode = CurrentMode;
+            OnSelectionModeChanged();
             PickCursorElement();
+        }
+
+        protected virtual void OnSelectionModeChanged()
+        {
         }
 
         protected override void OnClosing(WindowClosingEventArgs e)
@@ -227,7 +230,6 @@ public sealed partial class WindowsScreenSelectionService
         {
             foreach (var maskWindow in MaskWindows) maskWindow.Close();
             ToolTipWindow.Close();
-            DisposeHelper.DisposeToDefault(ref _pickingRetention);
 
             base.OnClosed(e);
         }
@@ -238,42 +240,6 @@ public sealed partial class WindowsScreenSelectionService
 
             PickElement(cursorPos);
             SetToolTipWindowPosition(cursorPos);
-        }
-
-        /// <summary>
-        /// Finds the topmost window at <paramref name="screenPoint"/> that does not belong to this session's
-        /// own overlay windows (mask windows, tooltip, or the session window itself).
-        /// </summary>
-        private unsafe HWND FindWindowBehindOwnOverlays(Point screenPoint)
-        {
-            var result = HWND.Null;
-            PInvoke.EnumWindows(
-                (hWnd, _) =>
-                {
-                    if (_ownWindows.Contains(hWnd)) return true;
-                    if (!PInvoke.IsWindowVisible(hWnd)) return true;
-                    if (PInvoke.IsIconic(hWnd)) return true;
-                    if (PInvoke.GetWindowLong(hWnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE) is var exStyle &&
-                        (exStyle & (int)WINDOW_EX_STYLE.WS_EX_NOACTIVATE) != 0)
-                        return true; // skip non-activatable windows (e.g., tool windows, some system windows)
-
-                    // Skip cloaked windows (e.g., UWP apps on other virtual desktops)
-                    long cloaked = 0;
-                    PInvoke.DwmGetWindowAttribute(hWnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloaked, sizeof(long));
-                    if (cloaked != 0) return true;
-
-                    PInvoke.GetWindowRect(hWnd, out var rect);
-                    if (rect.left <= screenPoint.X && screenPoint.X < rect.right && rect.top <= screenPoint.Y && screenPoint.Y < rect.bottom)
-                    {
-                        result = hWnd;
-                        return false; // stop enumeration
-                    }
-
-                    return true;
-                },
-                0);
-
-            return result;
         }
 
         private static unsafe void SetUiaWindowVisibilityOverridden(HWND window)
@@ -292,73 +258,22 @@ public sealed partial class WindowsScreenSelectionService
 
         protected virtual void OnCanceled()
         {
-            PickingElement = null;
-            DisposeHelper.DisposeToDefault(ref _pickingRetention);
         }
 
-        /// <summary>
-        /// Picks the element under the cursor based on the current selection mode.
-        /// </summary>
-        /// <param name="cursorPos"></param>
-        protected virtual void PickElement(Point cursorPos)
+        protected abstract void PickElement(Point cursorPos);
+
+        protected void ApplyPickingObservation(VisualPickerObservation? observation)
         {
-            // cursorPos = new Point(cursorPos.X * 2, cursorPos.Y * 2);
-
-            DisposeHelper.DisposeToDefault(ref _pickingRetention);
-            _pickingRetention = _context.CreateRetention();
-            PickingElement = null;
-            var maskRect = default(PixelRect);
-            switch (CurrentMode)
-            {
-                case ScreenSelectionMode.Screen:
-                {
-                    var pixelPoint = new PixelPoint(cursorPos.X, cursorPos.Y);
-                    var screen = Screens.All.FirstOrDefault(s => s.Bounds.Contains(pixelPoint));
-                    if (screen == null) break;
-
-                    var locator = VisualElementLocator.FromPoint(pixelPoint);
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator, VisualElementResolution.Screen);
-                    if (PickingElement is not null) maskRect = screen.Bounds;
-                    break;
-                }
-                case ScreenSelectionMode.Window:
-                {
-                    var targetHWnd = FindWindowBehindOwnOverlays(cursorPos);
-                    if (targetHWnd.IsNull) break;
-
-                    var rootHWnd = PInvoke.GetAncestor(targetHWnd, GET_ANCESTOR_FLAGS.GA_ROOTOWNER);
-                    if (rootHWnd.IsNull) break;
-
-                    var locator = VisualElementLocator.FromNativeWindow(rootHWnd);
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator);
-                    if (PickingElement == null) break;
-
-                    maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
-                    break;
-                }
-                case ScreenSelectionMode.Element:
-                {
-                    var locator = VisualElementLocator.FromPoint(new PixelPoint(cursorPos.X, cursorPos.Y));
-                    PickingElement = _visualElementBackend.Query(_pickingRetention, locator);
-
-                    if (PickingElement == null) break;
-
-                    maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
-                    break;
-                }
-            }
-
-            ApplyPickingSnapshot(PickingElement?.Snapshot, maskRect);
+            var snapshot = observation?.Snapshot;
+            ApplyPickingSnapshot(
+                snapshot,
+                snapshot?.Bounds.GetValueOrDefault() ?? default,
+                observation?.FailureKind,
+                observation?.FailureMessage);
         }
 
-        protected void ApplyPickingSnapshot(
-            VisualElementSnapshot? snapshot,
-            VisualElementQueryFailureKind? failureKind,
-            IDynamicLocaleKey? failureMessage = null)
-        {
-            var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
-            ApplyPickingSnapshot(snapshot, bounds, failureKind, failureMessage);
-        }
+        protected void ApplyPickingFailure(VisualElementQueryFailureKind failureKind) =>
+            ApplyPickingSnapshot(null, default, failureKind);
 
         private void ApplyPickingSnapshot(
             VisualElementSnapshot? snapshot,

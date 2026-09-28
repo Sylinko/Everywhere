@@ -1,5 +1,4 @@
 ﻿using Everywhere.Chat;
-using ZLinq;
 
 namespace Everywhere.StrategyEngine.Conditions;
 
@@ -9,11 +8,6 @@ namespace Everywhere.StrategyEngine.Conditions;
 public abstract class AttachmentConditionBase<T> : IAttachmentCondition where T : ChatAttachment
 {
     public abstract AttachmentType TargetType { get; }
-
-    /// <summary>
-    /// If true, at least one matching attachment must be primary.
-    /// </summary>
-    public bool IsPrimaryRequired { get; init; }
 
     /// <summary>
     /// Minimum number of matching attachments required.
@@ -34,11 +28,6 @@ public abstract class AttachmentConditionBase<T> : IAttachmentCondition where T 
         }
 
         if (MaxCount >= 0 && matchingAttachments.Length > MaxCount)
-        {
-            return false;
-        }
-
-        if (IsPrimaryRequired && !matchingAttachments.AsValueEnumerable().Any(a => a.IsPrimary))
         {
             return false;
         }

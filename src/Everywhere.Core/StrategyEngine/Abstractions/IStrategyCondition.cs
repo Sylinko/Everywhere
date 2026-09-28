@@ -25,11 +25,6 @@ public interface IAttachmentCondition : IStrategyCondition
     /// The type of attachment this condition applies to.
     /// </summary>
     AttachmentType TargetType { get; }
-
-    /// <summary>
-    /// If true, at least one matching attachment must be primary.
-    /// </summary>
-    bool IsPrimaryRequired { get; init; }
 }
 
 /// <summary>

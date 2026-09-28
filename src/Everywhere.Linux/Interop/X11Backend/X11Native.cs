@@ -97,6 +97,9 @@ public static partial class X11Native
         ref XSetWindowAttributes attributes);
 
     [LibraryImport(LibX11)]
+    internal static partial int XRaiseWindow(IntPtr display, X11Window window);
+
+    [LibraryImport(LibX11)]
     internal static unsafe partial int XSendEvent(
         IntPtr display,
         X11Window window,

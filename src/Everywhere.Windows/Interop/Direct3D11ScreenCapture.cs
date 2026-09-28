@@ -387,12 +387,6 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
                 case (uint)WINDOW_MESSAGE.WM_NCHITTEST:
                     // -1 = HTTRANSPARENT
                     return new LRESULT(-1);
-                case (uint)WINDOW_MESSAGE.WM_ACTIVATE:
-                case (uint)WINDOW_MESSAGE.WM_SETFOCUS:
-                case (uint)WINDOW_MESSAGE.WM_KILLFOCUS:
-                case (uint)WINDOW_MESSAGE.WM_ACTIVATEAPP:
-                case (uint)WINDOW_MESSAGE.WM_NCACTIVATE:
-                    return default; // Do not activate or take focus
                 default:
                     return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
             }

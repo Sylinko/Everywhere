@@ -8,38 +8,38 @@
     TargetType="v:ChatAttachmentItemsControl">
     <Setter Property="Template">
       <ControlTemplate TargetType="v:ChatAttachmentItemsControl">
-        <ItemsControl
+        <v:ChatAttachmentItemsPresenter
           x:Name="PART_ItemsControl"
           ItemsSource="{TemplateBinding ItemsSource}">
 
-          <ItemsControl.Styles>
+          <v:ChatAttachmentItemsPresenter.Styles>
             <Style Selector="shadui|SmoothBorder#PART_Border:not(.Supported)">
-              <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource WarningColor}"/>
               <Setter Property="ToolTip.Tip" Value="{I18N {x:Static LocaleKey.ChatAttachmentItemsControl_FileAttachment_NotSupportToolTip_Tip}}"/>
             </Style>
 
             <Style Selector="Button#PART_RemoveButton:disabled">
               <Setter Property="IsVisible" Value="False"/>
             </Style>
-          </ItemsControl.Styles>
+          </v:ChatAttachmentItemsPresenter.Styles>
 
-          <ItemsControl.ItemsPanel>
+          <v:ChatAttachmentItemsPresenter.ItemsPanel>
             <ItemsPanelTemplate>
               <WrapPanel
                 ItemSpacing="6" LineSpacing="4"/>
             </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
+          </v:ChatAttachmentItemsPresenter.ItemsPanel>
 
-          <ItemsControl.DataTemplates>
+          <v:ChatAttachmentItemsPresenter.DataTemplates>
             <DataTemplate DataType="chat:FileAttachment">
               <shadui:SmoothBorder
-                x:Name="PART_Border" Height="24"
+                x:Name="PART_Border"
+                Height="{DynamicResource LineHeightL}"
+                MaxWidth="240"
                 Background="{DynamicResource CardBackgroundColor}"
                 BorderBrush="{DynamicResource BorderColor}"
                 BorderThickness="1"
-                Classes.Primary="{Binding IsPrimary}"
                 CornerRadius="{DynamicResource XlCornerRadius}"
-                Opacity="{Binding Opacity}"
                 ToolTip.Placement="Top">
                 <Interaction.Behaviors>
                   <in:MiddleClickEventTrigger>
@@ -64,7 +64,7 @@
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     IsVisible="{Binding !IsImage}"
                     Kind="{Binding Icon}"
-                    Size="{DynamicResource FontSizeM}"/>
+                    Size="{DynamicResource FontSizeL}"/>
 
                   <Button
                     x:Name="PART_RemoveButton" DockPanel.Dock="Right"
@@ -83,14 +83,16 @@
                   </Button>
 
                   <Image
-                    MaxWidth="24" MaxHeight="24"
+                    MaxWidth="{DynamicResource LineHeightL}"
+                    MaxHeight="{DynamicResource LineHeightL}"
                     Margin="0,4" VerticalAlignment="Center"
                     IsVisible="{Binding IsImage}"
                     Source="{Binding Image}"
                     ToolTip.Placement="Top">
                     <ToolTip.Tip>
                       <Image
-                        MaxWidth="600" MaxHeight="600"
+                        MaxWidth="800" MaxHeight="800"
+                        Margin="-10,-4"
                         Source="{Binding Image}"/>
                     </ToolTip.Tip>
                   </Image>
@@ -100,21 +102,25 @@
                     FontSize="{DynamicResource FontSizeS}"
                     IsVisible="{Binding !IsImage}"
                     Text="{Binding HeaderKey^}"
-                    TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}"/>
+                    TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}">
+                    <Interaction.Behaviors>
+                      <shadui:TextTrimmedToolTipBehavior/>
+                    </Interaction.Behaviors>
+                  </TextBlock>
                 </DockPanel>
               </shadui:SmoothBorder>
             </DataTemplate>
 
-            <DataTemplate DataType="chat:ChatAttachment">
+            <DataTemplate DataType="chat:VisualElementAttachment">
               <shadui:SmoothBorder
                 x:Name="PART_Border" Classes="Supported"
-                Height="24"
+                Height="{DynamicResource LineHeightL}"
+                MaxWidth="240"
                 Background="{DynamicResource CardBackgroundColor}"
                 BorderBrush="{DynamicResource BorderColor}"
                 BorderThickness="1"
-                Classes.Primary="{Binding IsPrimary}"
-                CornerRadius="{DynamicResource XlCornerRadius}"
-                Opacity="{Binding Opacity}">
+                CornerRadius="{DynamicResource FullCornerRadius}">
+
                 <Interaction.Behaviors>
                   <in:MiddleClickEventTrigger>
                     <!--  Middle click to close  -->
@@ -129,8 +135,24 @@
                   HorizontalSpacing="2" LastChildFill="True">
                   <LucideIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
+                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
                     Kind="{Binding Icon}"
-                    Size="{DynamicResource FontSizeM}"/>
+                    Size="{DynamicResource FontSizeL}"/>
+                  <Image
+                    DockPanel.Dock="Left"
+                    MaxWidth="{DynamicResource LineHeightL}"
+                    MaxHeight="{DynamicResource LineHeightL}"
+                    Margin="0,4,2,4" VerticalAlignment="Center"
+                    IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    Source="{Binding PreviewImage}"
+                    ToolTip.Placement="Top">
+                    <ToolTip.Tip>
+                      <Image
+                        MaxWidth="800" MaxHeight="800"
+                        Margin="-10,-4"
+                        Source="{Binding PreviewImage}"/>
+                    </ToolTip.Tip>
+                  </Image>
 
                   <Button
                     x:Name="PART_RemoveButton" DockPanel.Dock="Right"
@@ -149,16 +171,76 @@
                   </Button>
 
                   <TextBlock
-                    MaxWidth="160" VerticalAlignment="Center"
+                    VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeS}"
                     Text="{Binding HeaderKey^}"
                     TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}"
-                    TextWrapping="NoWrap"/>
+                    TextWrapping="NoWrap">
+                    <Interaction.Behaviors>
+                      <shadui:TextTrimmedToolTipBehavior/>
+                    </Interaction.Behaviors>
+                  </TextBlock>
                 </DockPanel>
               </shadui:SmoothBorder>
             </DataTemplate>
-          </ItemsControl.DataTemplates>
-        </ItemsControl>
+
+            <DataTemplate DataType="chat:ChatAttachment">
+              <shadui:SmoothBorder
+                x:Name="PART_Border" Classes="Supported"
+                Height="{DynamicResource LineHeightL}"
+                MaxWidth="240"
+                Background="{DynamicResource CardBackgroundColor}"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1"
+                CornerRadius="{DynamicResource XlCornerRadius}">
+                <Interaction.Behaviors>
+                  <in:MiddleClickEventTrigger>
+                    <!--  Middle click to close  -->
+                    <InvokeCommandAction
+                      Command="{Binding $parent[v:ChatAttachmentItemsControl].RemoveCommand}"
+                      CommandParameter="{Binding}"/>
+                  </in:MiddleClickEventTrigger>
+                </Interaction.Behaviors>
+
+                <DockPanel
+                  Margin="6,0" ClipToBounds="False"
+                  HorizontalSpacing="2" LastChildFill="True">
+                  <LucideIcon
+                    DockPanel.Dock="Left" VerticalAlignment="Center"
+                    Kind="{Binding Icon}"
+                    Size="{DynamicResource FontSizeL}"/>
+
+                  <Button
+                    x:Name="PART_RemoveButton" DockPanel.Dock="Right"
+                    Margin="0,0,-2,0" Padding="1"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource TransparentColor}"
+                    BorderThickness="0"
+                    Command="{Binding $parent[v:ChatAttachmentItemsControl].RemoveCommand}"
+                    CommandParameter="{Binding}"
+                    Focusable="False"
+                    ToolTip.Tip="{I18N {x:Static LocaleKey.ChatAttachment_RemoveButton_ToolTip}}">
+                    <LucideIcon
+                      Foreground="{DynamicResource MutedColor}"
+                      Kind="X"
+                      Size="{DynamicResource FontSizeS}"/>
+                  </Button>
+
+                  <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="{DynamicResource FontSizeS}"
+                    Text="{Binding HeaderKey^}"
+                    TextTrimming="{x:Static TextTrimming.PrefixCharacterEllipsis}"
+                    TextWrapping="NoWrap">
+                    <Interaction.Behaviors>
+                      <shadui:TextTrimmedToolTipBehavior/>
+                    </Interaction.Behaviors>
+                  </TextBlock>
+                </DockPanel>
+              </shadui:SmoothBorder>
+            </DataTemplate>
+          </v:ChatAttachmentItemsPresenter.DataTemplates>
+        </v:ChatAttachmentItemsPresenter>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

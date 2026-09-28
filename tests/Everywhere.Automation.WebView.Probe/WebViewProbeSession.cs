@@ -280,13 +280,13 @@ internal sealed class WebViewProbeSession(ProbeOptions options) : IAsyncDisposab
     private static VisualContextTraverseDirections ParseDirections(string value)
     {
         if (string.IsNullOrWhiteSpace(value)) return VisualContextTraverseDirections.All;
-        var result = VisualContextTraverseDirections.Core;
+        var result = VisualContextTraverseDirections.Origin;
         foreach (var part in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             result |= part.ToLowerInvariant() switch
             {
                 "all" => VisualContextTraverseDirections.All,
-                "none" or "core" => VisualContextTraverseDirections.Core,
+                "none" or "origin" => VisualContextTraverseDirections.Origin,
                 "parent" => VisualContextTraverseDirections.Parent,
                 "child" or "children" => VisualContextTraverseDirections.Child,
                 "previous" or "previoussibling" => VisualContextTraverseDirections.PreviousSibling,

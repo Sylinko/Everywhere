@@ -51,6 +51,8 @@ public static class VisualElementExtension
                     return SKColorType.Rgba8888;
                 if (fmt == PixelFormat.Rgb32)
                     return SKColorType.Rgb888x;
+                if (fmt == PixelFormats.Gray8)
+                    return SKColorType.Alpha8;
                 throw new ArgumentException("Unknown pixel format: " + fmt);
             }
 

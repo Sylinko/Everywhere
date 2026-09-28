@@ -1,5 +1,5 @@
-﻿using Avalonia.Automation.Peers;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -13,21 +13,21 @@ using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
-using Everywhere.Extensions;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Lucide.Avalonia;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace Everywhere.Views;
 
-public partial class ChatWindow :
+public sealed partial class ChatWindow :
     ReactiveShadWindow<ChatWindowViewModel>,
     IRecipient<CloakChatWindowMessage>,
     IRecipient<FlashChatWindowMessage>,
-    IRecipient<ApplicationMessage>,
-    IVisualElementAnimationTarget
+    IRecipient<ApplicationMessage>
 {
     public IReadOnlyBindableList<DynamicNotification> ModelAvailabilityNotifications =>
         _modelAvailabilityPresenter.Notifications;
@@ -57,6 +57,7 @@ public partial class ChatWindow :
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
     private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
+    private readonly ILogger<ChatWindow> _logger;
     private IDisposable? _pendingHiddenCompaction;
 
     /// <summary>
@@ -68,6 +69,7 @@ public partial class ChatWindow :
     /// Indicates whether the window can be closed.
     /// </summary>
     private bool _canCloseWindow;
+    private long _cloakInteractionVersion;
 
     public ChatWindow(
         IServiceProvider serviceProvider,
@@ -76,7 +78,11 @@ public partial class ChatWindow :
         Settings settings,
         PersistentState persistentState,
         AssistantCatalog assistantCatalog,
-        IKeyValueStorage keyValueStorage
+        IKeyValueStorage keyValueStorage,
+        IScreenSelectionService screenSelectionService,
+        ChatVisualService visualService,
+        VisualElementEffect visualElementEffect,
+        ILogger<ChatWindow> logger
     ) : base(serviceProvider, disposeOnUnloaded: false)
     {
         _windowHelper = windowHelper;
@@ -85,9 +91,17 @@ public partial class ChatWindow :
         _persistentState = persistentState;
         _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
+        _screenSelectionService = screenSelectionService;
+        _visualService = visualService;
+        _visualElementEffect = visualElementEffect;
+        _logger = logger;
+
         InitializeComponent();
+
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
         ViewModel.TextSearch.FocusRequested += HandleTextSearchFocusRequested;
+
+        ViewModel.VisualElementCaptureRequested = CaptureAsync;
 
         ChatInputArea.AddDisposableHandler(TextBox.TextChangedEvent, HandleChatInputAreaTextChanged);
         ChatInputArea.AddDisposableHandler(TextBox.PastingFromClipboardEvent, HandleChatInputAreaPastingFromClipboard);
@@ -146,7 +160,7 @@ public partial class ChatWindow :
                 }
                 else
                 {
-                    SetCloaked(true);
+                    RequestCloaked(true);
                 }
 
                 e.Handled = true;
@@ -178,7 +192,7 @@ public partial class ChatWindow :
 
     private void HandleTextSearchFocusRequested(object? sender, EventArgs e)
     {
-        Dispatcher.UIThread.Post(
+        Dispatcher.Post(
             () =>
             {
                 ChatTextSearchTextBox.Focus();
@@ -221,7 +235,7 @@ public partial class ChatWindow :
     private void HandleModelSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ModelSettings.SelectedCustomAssistant))
-            Dispatcher.UIThread.PostOnDemand(() => _modelAvailabilityPresenter.SetAssistant(_settings.Model.SelectedCustomAssistant));
+            Dispatcher.PostOnDemand(() => _modelAvailabilityPresenter.SetAssistant(_settings.Model.SelectedCustomAssistant));
     }
 
     protected override void OnResized(WindowResizedEventArgs e)
@@ -297,7 +311,7 @@ public partial class ChatWindow :
 
         if (!ViewModel.IsPickingFiles && !IsActive && IsWindowPinned is false && !_windowHelper.AnyModelDialogOpened(this))
         {
-            SetCloaked(true);
+            RequestCloaked(true);
         }
     }
 
@@ -308,12 +322,12 @@ public partial class ChatWindow :
 
     void IRecipient<CloakChatWindowMessage>.Receive(CloakChatWindowMessage message)
     {
-        Dispatcher.UIThread.Invoke(() => SetCloaked(message.IsCloaked));
+        Dispatcher.Invoke(() => RequestCloaked(message.IsCloaked));
     }
 
     void IRecipient<FlashChatWindowMessage>.Receive(FlashChatWindowMessage message)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Dispatcher.Invoke(() =>
         {
             if (!IsFocused) _windowHelper.RequestUserAttention(this);
 
@@ -323,7 +337,7 @@ public partial class ChatWindow :
                 {
                     if (t is { IsCompletedSuccessfully: true, Result: true })
                     {
-                        Dispatcher.UIThread.Invoke(() => SetCloaked(false));
+                        Dispatcher.Invoke(() => RequestCloaked(false));
                     }
                 });
             }
@@ -334,11 +348,26 @@ public partial class ChatWindow :
     {
         if (message is ShowWindowMessage { Name: ShowWindowMessage.ChatWindow })
         {
-            Dispatcher.UIThread.Invoke(() => SetCloaked(false));
+            Dispatcher.Invoke(() => RequestCloaked(false));
         }
     }
 
-    private void SetCloaked(bool value)
+    /// <summary>
+    /// Records a new visibility request before applying it. Advancing the version prevents an earlier
+    /// asynchronous capture from restoring the window over this request, even when the requested value is unchanged.
+    /// </summary>
+    private void RequestCloaked(bool value)
+    {
+        _cloakInteractionVersion++;
+        ApplyCloakedCore(value);
+    }
+
+    /// <summary>
+    /// Applies visibility without recording a new request. Showing also restores the initial pin mode
+    /// when needed and focuses the input. Capture uses this for temporary hiding and version-checked restoration;
+    /// ordinary visibility requests should use <see cref="RequestCloaked"/>.
+    /// </summary>
+    private void ApplyCloakedCore(bool value)
     {
         if (value)
         {
@@ -412,7 +441,7 @@ public partial class ChatWindow :
 
         // do not allow closing, just hide the window
         e.Cancel = true;
-        SetCloaked(true);
+        RequestCloaked(true);
 
         base.OnClosing(e);
     }
@@ -549,10 +578,5 @@ public partial class ChatWindow :
 
         localPath = path;
         return true;
-    }
-
-    public bool TryGetAttachmentCenterOnScreen(ChatAttachment attachment, out PixelPoint center)
-    {
-        return ChatInputArea.TryGetAttachmentCenterOnScreen(attachment, out center);
     }
 }

@@ -1,6 +1,5 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Threading;
-using Everywhere.Automation;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
@@ -17,63 +16,58 @@ public sealed partial class WindowsScreenSelectionService
 
         public static async Task<RemoteVisualAnchor?> PickAsync(
             IWindowHelper windowHelper,
-            IVisualElementBackend visualElementBackend,
-            VisualContext context,
             IHostedVisualContext visualContext,
             ScreenSelectionMode? initialMode,
             CancellationToken cancellationToken)
         {
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             var remotePicker = await visualContext.BeginPickerAsync(cancellationToken);
-            var pump = new VisualPickerUpdateWorker(visualContext, remotePicker);
+            var updateWorker = new VisualPickerUpdateWorker(visualContext, remotePicker);
             try
             {
-                var window = new PickerSession(
-                    windowHelper,
-                    visualElementBackend,
-                    context,
-                    pump,
-                    initialMode ?? _previousMode,
-                    cancellationToken);
+                var window = new PickerSession(windowHelper, updateWorker, initialMode ?? _previousMode, cancellationToken);
                 window.Show();
                 return await window._pickingPromise.Task;
             }
             catch
             {
-                pump.Dispose();
+                updateWorker.Dispose();
                 throw;
             }
         }
 
         private readonly TaskCompletionSource<RemoteVisualAnchor?> _pickingPromise = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly CancellationTokenRegistration _cancellationRegistration;
-        private readonly VisualPickerUpdateWorker _worker;
+        private readonly VisualPickerUpdateWorker _updateWorker;
         private RemoteVisualAnchor? _result;
         private bool _isConfirming;
 
         private PickerSession(
             IWindowHelper windowHelper,
-            IVisualElementBackend visualElementBackend,
-            VisualContext context,
-            VisualPickerUpdateWorker worker,
+            VisualPickerUpdateWorker updateWorker,
             ScreenSelectionMode initialMode,
             CancellationToken cancellationToken)
             : base(
                 windowHelper,
-                visualElementBackend,
-                context,
                 [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element],
                 initialMode)
         {
-            _worker = worker;
-            _worker.ObservationReceived += HandleObservationReceived;
-            _worker.UpdateFailed += HandleUpdateFailed;
-            _cancellationRegistration = cancellationToken.Register(() => Dispatcher.UIThread.Post(CancelFromToken));
+            _updateWorker = updateWorker;
+            _updateWorker.ObservationReceived += HandleObservationReceived;
+            _updateWorker.UpdateFailed += HandleUpdateFailed;
+            _cancellationRegistration = cancellationToken.Register(() => Dispatcher.Post(CancelFromToken));
         }
 
         protected override void PickElement(Point cursorPos) =>
-            _worker.Update(new PixelPoint(cursorPos.X, cursorPos.Y), CurrentMode);
+            _updateWorker.Update(new PixelPoint(cursorPos.X, cursorPos.Y), CurrentMode);
+
+        protected override void OnSelectionModeChanged()
+        {
+            _updateWorker.InvalidateObservation();
+            ApplyPickingObservation(null);
+        }
 
         protected override bool OnLeftButtonUp()
         {
@@ -87,9 +81,9 @@ public sealed partial class WindowsScreenSelectionService
         {
             _previousMode = CurrentMode;
             _cancellationRegistration.Dispose();
-            _worker.ObservationReceived -= HandleObservationReceived;
-            _worker.UpdateFailed -= HandleUpdateFailed;
-            _worker.Dispose();
+            _updateWorker.ObservationReceived -= HandleObservationReceived;
+            _updateWorker.UpdateFailed -= HandleUpdateFailed;
+            _updateWorker.Dispose();
             base.OnClosed(e);
             _pickingPromise.TrySetResult(_result);
         }
@@ -98,48 +92,59 @@ public sealed partial class WindowsScreenSelectionService
         {
             try
             {
-                _result = await _worker.ConfirmAsync();
-                await Dispatcher.UIThread.InvokeAsync(Close);
+                var result = await _updateWorker.ConfirmAsync();
+                if (result is null)
+                {
+                    await Dispatcher.InvokeAsync(() => _isConfirming = false);
+                    return;
+                }
+
+                _result = result;
+                await Dispatcher.InvokeAsync(Close);
             }
             catch (OperationCanceledException)
             {
                 _pickingPromise.TrySetResult(null);
-                await Dispatcher.UIThread.InvokeAsync(Close);
+                await Dispatcher.InvokeAsync(Close);
             }
             catch (Exception exception) when (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
+                await Dispatcher.InvokeAsync(() =>
                 {
                     _isConfirming = false;
-                    ApplyPickingSnapshot(null, failureKind);
+                    ApplyPickingFailure(failureKind);
                 });
             }
             catch (Exception exception)
             {
                 _pickingPromise.TrySetException(exception);
-                await Dispatcher.UIThread.InvokeAsync(Close);
+                await Dispatcher.InvokeAsync(Close);
             }
         }
 
-        private void HandleObservationReceived(VisualPickerObservation observation) =>
-            Dispatcher.UIThread.Post(() =>
+        private void HandleObservationReceived(VisualPickerObservation observation)
+        {
+            var modeVersion = SelectionModeVersion;
+            Dispatcher.Post(() =>
             {
-                if (IsVisible) ApplyPickingSnapshot(observation.Snapshot, observation.FailureKind, observation.FailureMessage);
+                if (IsVisible && modeVersion == SelectionModeVersion) ApplyPickingObservation(observation);
             });
+        }
 
         private void HandleUpdateFailed(Exception exception)
         {
+            var modeVersion = SelectionModeVersion;
             if (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
             {
-                Dispatcher.UIThread.Post(() =>
+                Dispatcher.Post(() =>
                 {
-                    if (IsVisible) ApplyPickingSnapshot(null, failureKind);
+                    if (IsVisible && modeVersion == SelectionModeVersion) ApplyPickingFailure(failureKind);
                 });
                 return;
             }
 
             _pickingPromise.TrySetException(exception);
-            Dispatcher.UIThread.Post(Close);
+            Dispatcher.Post(Close);
         }
 
         private void CancelFromToken()

@@ -45,12 +45,21 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
         if (backend is X11WindowBackend x11backend)
         {
+            x11backend.SetWindowProperties(this, focusable: true, hitTestVisible: true, WindowLayer.Overlay);
             foreach (var maskWindow in MaskWindows)
             {
-                x11backend.SetHitTestVisible(maskWindow, false);
+                x11backend.SetWindowProperties(
+                    maskWindow,
+                    focusable: false,
+                    hitTestVisible: false,
+                    (WindowLayer)((int)WindowLayer.Overlay + 1));
                 x11backend.SetOverrideRedirect(maskWindow, true);
             }
-            x11backend.SetHitTestVisible(ToolTipWindow, false);
+            x11backend.SetWindowProperties(
+                ToolTipWindow,
+                focusable: false,
+                hitTestVisible: false,
+                (WindowLayer)((int)WindowLayer.Overlay + 2));
             x11backend.SetOverrideRedirect(ToolTipWindow, true);
         }
 

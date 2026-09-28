@@ -110,9 +110,9 @@ public sealed class VisualContextSnapshotNode
     public long TraversalOrdinal { get; init; }
 
     /// <summary>
-    /// Gets whether this node originated from a caller-supplied core element.
+    /// Gets whether this node originated from a caller-supplied origin element.
     /// </summary>
-    public bool IsCore { get; init; }
+    public bool IsOrigin { get; init; }
 
     /// <summary>
     /// Gets whether this node exposes an independently useful interaction.

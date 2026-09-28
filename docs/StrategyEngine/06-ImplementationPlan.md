@@ -591,6 +591,8 @@ After new pipeline works:
 | `none` over null | null. |
 | Regex timeout | null diagnostic. |
 | Array any extension | true for matching item. |
+| Multiple visual attachments | Collection operators evaluate the applicable attachments. |
+| Add another visual attachment | Earlier attachments remain in input order. |
 
 ### 13.5 ExtraContext tests
 
@@ -610,6 +612,9 @@ After new pipeline works:
 | `@text` not referenced | Does not call `GetText`. |
 | Invalid query | Validation diagnostic. |
 | Query timeout | null diagnostic. |
+| Relative query with multiple visual attachments | Evaluate from each attachment context. |
+| Attachments share a root or overlapping query results | Traverse distinct roots and count each resulting element once. |
+| Query across several attachment contexts | One shared query budget and deterministic result order. |
 
 ### 13.7 Preprocessor tests
 
@@ -620,6 +625,8 @@ After new pipeline works:
 | Timeout | Execution stopped. |
 | Variable interpolation | Rendered body contains value. |
 | Retry | Uses persisted preprocessor result. |
+| Visual text extraction from multiple attachments | Ordered per-attachment results preserve source association. |
+| A required visual input becomes unavailable before execution | Execution fails with diagnostics. |
 
 ### 13.8 Integration tests
 

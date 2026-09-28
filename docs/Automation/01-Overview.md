@@ -56,7 +56,7 @@ The decisive separation is:
 
 Inside the Automation Host, root acquisition is the only operation without an existing element receiver. It enters through the connection-owned Backend with a caller-created `VisualElementRetention`; that retention alone selects the destination Context. After acquisition, the concrete element propagates the same Context and Backend through every relation result. Main invokes coarse Context operations through remote resource handles and never receives a native `VisualElement`.
 
-Main also owns a platform Backend for narrow UI services that must run with the interactive application, including screenshot selection and selected-text detection. Those services use transient local Contexts and copied results; they do not publish chat target IDs or replace the Automation Host boundary for Agent-visible queries and actions.
+Main also owns narrow platform services that must run with the interactive application. Screenshot pixels and free-form rectangles remain Main-local, while screen/window/element snapping uses copied observations from the Automation Host picker. Selected-text detection remains Main-local. These services do not publish chat target IDs or replace the Automation Host boundary for Agent-visible queries and actions.
 
 There is no native-call worker pool, Dispatcher, custom `TaskScheduler`, `SynchronizationContext`, operation pin, or execution Scope. Those mechanisms were explored and removed because they could not terminate a synchronous native RPC. Each Host-side Context now has one ordinary Channel consumer to serialize complete Context operations; process termination is the containment boundary when a native call ignores its platform timeout.
 

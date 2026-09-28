@@ -20,7 +20,9 @@ public interface IAutomationHostRpc
 
     /// <summary>Acquires a platform-default root and builds final model-facing visual text.</summary>
     [RpcMethod(4)]
-    ValueTask<AutomationVisualQueryResponse> BuildDefaultAsync(BuildDefaultVisualContextRequest request, CancellationToken cancellationToken = default);
+    ValueTask<AutomationVisualQueryResponse> BuildDefaultAsync(
+        BuildDefaultVisualContextRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Queries one retained Agent target and returns final model-facing visual text.</summary>
     [RpcMethod(5)]
@@ -32,7 +34,9 @@ public interface IAutomationHostRpc
 
     /// <summary>Acquires one pre-publication visual anchor owned by its parent Context.</summary>
     [RpcMethod(7)]
-    ValueTask<AcquireAutomationAnchorResponse> AcquireAnchorAsync(AcquireAutomationAnchorRequest request, CancellationToken cancellationToken = default);
+    ValueTask<AcquireAutomationAnchorResponse> AcquireAnchorAsync(
+        AcquireAutomationAnchorRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Builds final model-facing text from pre-publication visual anchors.</summary>
     [RpcMethod(8)]
@@ -52,7 +56,9 @@ public interface IAutomationHostRpc
 
     /// <summary>Returns a fresh field-selected scalar observation of one Context-owned visual anchor.</summary>
     [RpcMethod(12)]
-    ValueTask<AcquireAutomationAnchorResponse> GetElementSnapshotAsync(GetAutomationElementSnapshotRequest request, CancellationToken cancellationToken = default);
+    ValueTask<AcquireAutomationAnchorResponse> GetElementSnapshotAsync(
+        GetAutomationElementSnapshotRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Creates one Context-owned interactive visual picker using a caller-allocated resource ID.</summary>
     [RpcMethod(13)]
@@ -69,4 +75,16 @@ public interface IAutomationHostRpc
     /// <summary>Moves one pre-publication anchor into another Context on this connection.</summary>
     [RpcMethod(16)]
     ValueTask<AcquireAutomationAnchorResponse> MoveAnchorAsync(MoveAutomationAnchorRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Queries one retained Agent target and streams optional Alpha8 scan captures before the final result.</summary>
+    [RpcMethod(17)]
+    IAsyncEnumerable<AutomationVisualQueryFrame> QueryTargetWithCapturesAsync(
+        QueryAutomationTargetRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Builds from pre-publication anchors and streams optional Alpha8 scan captures before the final result.</summary>
+    [RpcMethod(18)]
+    IAsyncEnumerable<AutomationVisualQueryFrame> BuildAnchorsWithCapturesAsync(
+        BuildAutomationAnchorsRequest request,
+        CancellationToken cancellationToken = default);
 }

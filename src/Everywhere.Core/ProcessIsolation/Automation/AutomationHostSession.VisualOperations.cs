@@ -95,6 +95,14 @@ public sealed partial class AutomationHostSession
     }
 
     /// <inheritdoc />
+    public IAsyncEnumerable<AutomationVisualQueryFrame> BuildAnchorsWithCapturesAsync(
+        BuildAutomationAnchorsRequest request,
+        CancellationToken cancellationToken = default) =>
+        GetContext(request.ContextId).ExecuteStreamAsync(
+            (resource, token) => resource.BuildAnchorsWithCapturesAsync(request, token),
+            cancellationToken);
+
+    /// <inheritdoc />
     public async IAsyncEnumerable<AutomationCaptureFrame> CaptureAsync(
         CaptureAutomationVisualRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -236,7 +244,7 @@ public sealed partial class AutomationHostSession
             catch
             {
                 retention.Dispose();
-                throw; // TODO: How to handle this?
+                throw;
             }
         }
 
@@ -256,6 +264,24 @@ public sealed partial class AutomationHostSession
             BuildAutomationAnchorsRequest request,
             CancellationToken cancellationToken)
         {
+            var result = await BuildAnchorsCoreAsync(request, null, cancellationToken).ConfigureAwait(false);
+            return ToResponse(result);
+        }
+
+        public IAsyncEnumerable<AutomationVisualQueryFrame> BuildAnchorsWithCapturesAsync(
+            BuildAutomationAnchorsRequest request,
+            CancellationToken cancellationToken)
+        {
+            return StreamQueryAsync(
+                (receiver, token) => BuildAnchorsCoreAsync(request, receiver, token),
+                cancellationToken);
+        }
+
+        private async Task<VisualQueryResult> BuildAnchorsCoreAsync(
+            BuildAutomationAnchorsRequest request,
+            Func<IVisualElementCapture, CancellationToken, ValueTask>? captureReceiver,
+            CancellationToken cancellationToken)
+        {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.MaximumNodes);
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.TargetTokenBudget);
             var elements = new VisualElement[request.AnchorIds.Length];
@@ -272,13 +298,12 @@ public sealed partial class AutomationHostSession
                 MaximumNodes = request.MaximumNodes,
                 MaximumChildrenPerNode = Math.Min(defaultLimits.MaximumChildrenPerNode, request.MaximumNodes),
             };
-            var result = await new VisualQuery(Context).BuildAsync(
+            return await new VisualQuery(Context, captureReceiver).BuildAsync(
                 elements,
                 new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
                 limits,
                 request.Directions,
                 cancellationToken).ConfigureAwait(false);
-            return ToResponse(result);
         }
 
         public async ValueTask<IVisualElementCapture> CaptureAsync(

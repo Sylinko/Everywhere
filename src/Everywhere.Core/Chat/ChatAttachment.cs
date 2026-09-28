@@ -27,19 +27,6 @@ public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : Obse
 
     [Key(0)]
     public virtual IDynamicLocaleKey HeaderKey => headerKey;
-
-    /// <summary>
-    /// Indicates whether the attachment is presently focused in the UI.
-    /// </summary>
-    [IgnoreMember]
-    public bool IsPrimary { get; set; }
-
-    /// <summary>
-    /// The opacity that bind to the view for animation.
-    /// </summary>
-    [IgnoreMember]
-    [ObservableProperty]
-    public partial double Opacity { get; set; } = 1d;
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
@@ -70,6 +57,13 @@ public partial class VisualElementAttachment : ChatAttachment, IDisposable
     /// </summary>
     [IgnoreMember]
     public bool IsElementValid => Anchor is { IsClosed: false, Context.IsConnectionClosed: false };
+
+    /// <summary>
+    /// The preview image of the visual element, if available.
+    /// </summary>
+    [IgnoreMember]
+    [ObservableProperty]
+    public partial Bitmap? PreviewImage { get; set; }
 
     [SerializationConstructor]
     protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
@@ -201,7 +195,6 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     public TextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
     {
         Text = text;
-        IsPrimary = true;
     }
 
     /// <summary>Creates a selected-text attachment and assumes ownership of its remote anchor.</summary>
@@ -213,7 +206,6 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
         anchor)
     {
         Text = text;
-        IsPrimary = true;
     }
 
     /// <summary>

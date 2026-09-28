@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Platform;
 using Everywhere.Automation;
+using Everywhere.Interop;
 using Everywhere.Views;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -26,8 +27,12 @@ public sealed class VisualQueryCaptureTests
             if (shouldReject) throw new InvalidOperationException("Delivery failed before ownership transfer.");
             received.Add(image);
         } : null;
-        var query = new VisualQuery(context, receiver);
-        var result = await query.BuildAsync([element, element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Core);
+        var query = new VisualQuery(context, receiver is null ? null : (capture, _) =>
+        {
+            receiver(capture);
+            return ValueTask.CompletedTask;
+        });
+        var result = await query.BuildAsync([element, element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Origin);
         Assert.Multiple(() =>
         {
             Assert.That(element.CaptureCount, Is.EqualTo(hasReceiver ? 1 : 0));
@@ -52,8 +57,12 @@ public sealed class VisualQueryCaptureTests
         using var cancellation = new CancellationTokenSource();
         var capture = new TestCapture();
         var element = context.GetIdentityMap<string>(StringComparer.Ordinal).GetOrAdd(retention, "window", (Capture: capture, Cancellation: cancellation), static (identity, state) => new CaptureElement(identity, state.Capture, state.Cancellation));
-        var query = new VisualQuery(context, _ => Assert.Fail("Canceled capture must not be delivered."));
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync([element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Core, cancellationToken: cancellation.Token));
+        var query = new VisualQuery(context, (_, _) =>
+        {
+            Assert.Fail("Canceled capture must not be delivered.");
+            return ValueTask.CompletedTask;
+        });
+        Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync([element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Origin, cancellationToken: cancellation.Token));
         Assert.Multiple(() =>
         {
             Assert.That(capture.DisposeCount, Is.EqualTo(1));
@@ -62,20 +71,12 @@ public sealed class VisualQueryCaptureTests
     }
 
     [Test]
-    public void ScanScope_WhenFullOrAbandoned_DisposesEveryOwnedCaptureOnce()
+    public void ScanScope_WhenCanceled_RejectsAndDisposesCapture()
     {
-        var effect = new VisualElementEffect(Substitute.For<IVisualElementAnimationTarget>(), NullLogger<VisualElementEffect>.Instance);
-        var images = Enumerable.Range(0, 6).Select(_ => new TestCapture()).ToArray();
-        using (var scope = effect.CreateScanEffect(CancellationToken.None))
-        {
-            foreach (var capture in images) scope.AddCapture(capture);
-            Assert.That(images.Count(image => image.DisposeCount > 0), Is.EqualTo(2));
-        }
-        Assert.That(images.All(image => image.DisposeCount == 1), Is.True);
-
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
-        using var canceledScope = effect.CreateScanEffect(cancellation.Token);
+        var effect = new VisualElementEffect(Substitute.For<IWindowHelper>(), NullLogger<VisualElementEffect>.Instance);
+        using var canceledScope = effect.Begin(cancellation.Token);
         var rejected = new TestCapture();
         canceledScope.AddCapture(rejected);
         Assert.That(rejected.DisposeCount, Is.EqualTo(1));

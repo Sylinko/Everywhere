@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Platform;
 using Everywhere.Automation;
 using Everywhere.Common;
+using Everywhere.Extensions;
 using Everywhere.I18N;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
@@ -13,6 +14,7 @@ using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using NSubstitute;
+using SkiaSharp;
 
 namespace Everywhere.Core.Tests.ProcessIsolation;
 
@@ -73,7 +75,7 @@ public sealed class AutomationHostSessionTests
         var options = new RpcConnectionOptions { RequireHandshake = false };
         await using var serverConnection = new RpcConnection(serverStream, isServer: true, options);
         await using var clientConnection = new RpcConnection(clientStream, isServer: false, options);
-        var backend = new TestBackend();
+        var backend = new TestBackend { ElementType = VisualElementType.TopLevel };
         await using var session = new AutomationHostSession(backend);
         session.Bind(serverConnection);
         serverConnection.Start();
@@ -101,7 +103,24 @@ public sealed class AutomationHostSessionTests
                 Assert.That(backend.LastMaxTextCharacters, Is.Zero);
             });
             using var anchorCapture = await context.CaptureAnchorAsync(anchor);
-            var initial = await context.BuildAnchorsAsync([anchor], directions: VisualContextTraverseDirections.Core);
+            var initial = await context.BuildAnchorsAsync([anchor], directions: VisualContextTraverseDirections.Origin);
+            byte[]? scanCapture = null;
+            PixelFormat? scanCaptureFormat = null;
+            SKImage? scanImage = null;
+            var streamed = await context.BuildAnchorsWithCapturesAsync(
+                [anchor],
+                VisualContextTraverseDirections.Origin,
+                maximumNodes: 16,
+                targetTokenBudget: 4096,
+                captureReceiver: capture =>
+                {
+                    using (capture)
+                    {
+                        scanCaptureFormat = capture.Format;
+                        scanCapture = ReadCapture(capture);
+                        scanImage = capture.ToSKImage();
+                    }
+                });
             Assert.Multiple(() =>
             {
                 Assert.That(anchor.Snapshot.Name, Is.EqualTo("Root"));
@@ -111,11 +130,17 @@ public sealed class AutomationHostSessionTests
                 Assert.That(initial.Content, Does.Contain("Root"));
                 Assert.That(initial.Content, Does.Contain("hello world"));
                 Assert.That(initial.RepresentedTargetCount, Is.EqualTo(1));
+                Assert.That(streamed.Content, Is.EqualTo(initial.Content));
+                Assert.That(streamed.RepresentedTargetCount, Is.EqualTo(initial.RepresentedTargetCount));
+                Assert.That(scanCaptureFormat, Is.EqualTo(PixelFormats.Gray8));
+                Assert.That(scanCapture, Is.EqualTo(new byte[] { 4, 8 }));
+                Assert.That(scanImage, Is.Not.Null);
             });
+            scanImage?.Dispose();
         }
 
         await context.AdvanceTurnAsync();
-        var query = await context.QueryTargetAsync(1, directions: VisualContextTraverseDirections.Core);
+        var query = await context.QueryTargetAsync(1, directions: VisualContextTraverseDirections.Origin);
         var text = await context.ReadTextAsync(1, limit: 5);
         using var targetCapture = await context.CaptureTargetAsync(1);
         await context.ExecuteActionsAsync(
@@ -141,6 +166,55 @@ public sealed class AutomationHostSessionTests
         await session.DisposeAsync();
 
         Assert.That(backend.DisposeCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task RemoteContext_WhenScanCaptureHasPaddedRowsAndMultipleChunks_StreamsAlphaOnly()
+    {
+        var width = 4096;
+        var height = 33;
+        var stride = width * 4 + 16;
+        var source = new byte[stride * height];
+        var expected = new byte[width * height];
+        for (var y = 0; y < height; y++)
+        {
+            Array.Fill(source, (byte)0xee, y * stride + width * 4, stride - width * 4);
+            for (var x = 0; x < width; x++)
+            {
+                var alpha = (byte)((y * 17 + x) % 251);
+                source[y * stride + x * 4 + 3] = alpha;
+                expected[y * width + x] = alpha;
+            }
+        }
+
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend
+        {
+            ElementType = VisualElementType.TopLevel,
+            CaptureFactory = () => new TestCapture(source, new PixelSize(width, height), stride, AlphaFormat.Premul),
+        };
+        await using var session = new AutomationHostSession(backend);
+        session.Bind(pair.Server);
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var client = new AutomationHostClient(pair.Client);
+        using var context = await client.CreateContextAsync();
+        await context.EnsureTurnAsync();
+        using var anchor = await context.AcquireAnchorAsync(VisualElementLocator.Default) ??
+                           throw new InvalidOperationException("The test Backend did not return its default element.");
+        var actual = Array.Empty<byte>();
+        await context.BuildAnchorsWithCapturesAsync(
+            [anchor],
+            VisualContextTraverseDirections.Origin,
+            maximumNodes: 16,
+            targetTokenBudget: 4096,
+            captureReceiver: capture =>
+            {
+                using (capture) actual = ReadCapture(capture);
+            });
+
+        Assert.That(actual, Is.EqualTo(expected));
     }
 
     [Test]
@@ -349,6 +423,51 @@ public sealed class AutomationHostSessionTests
     }
 
     [Test]
+    public async Task VisualPickerUpdateWorker_WhenObservationIsUnavailable_CanContinue()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend(shouldUsePointIdentity: true)
+        {
+            AcquisitionException = new UnauthorizedAccessException("denied by test provider"),
+        };
+        await using var session = new AutomationHostSession(backend);
+        session.Bind(pair.Server);
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var source = new TestHostConnectionSource(pair.Client);
+        using var visualService = new ChatVisualService(source);
+        var visualContext = visualService.AcquisitionContext;
+        var picker = await visualContext.BeginPickerAsync();
+        using var pump = new VisualPickerUpdateWorker(visualContext, picker);
+        var observationReceived = new TaskCompletionSource<VisualPickerObservation>(TaskCreationOptions.RunContinuationsAsynchronously);
+        pump.ObservationReceived += observation => observationReceived.TrySetResult(observation);
+
+        pump.Update(new PixelPoint(10, 20), ScreenSelectionMode.Element);
+        var unavailableObservation = await observationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var unavailableAnchor = await pump.ConfirmAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(unavailableObservation.FailureKind, Is.EqualTo(VisualElementQueryFailureKind.PermissionDenied));
+            Assert.That(unavailableAnchor, Is.Null);
+            Assert.That(picker.IsClosed, Is.False);
+        });
+
+        observationReceived = new TaskCompletionSource<VisualPickerObservation>(TaskCreationOptions.RunContinuationsAsynchronously);
+        pump.Update(new PixelPoint(30, 40), ScreenSelectionMode.Element);
+        var recoveredObservation = await observationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        using var anchor = await pump.ConfirmAsync() ??
+                           throw new InvalidOperationException("The recovered picker did not retain its candidate.");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(recoveredObservation.Snapshot, Is.Not.Null);
+            Assert.That(anchor.Snapshot.Name, Is.EqualTo("Root"));
+            Assert.That(picker.IsClosed, Is.True);
+        });
+    }
+
+    [Test]
     public async Task RpcStream_WhenMappedFailureFollowsChunk_RestoresTypedException()
     {
         await using var pair = await TestConnectionPair.CreateAsync();
@@ -496,7 +615,7 @@ public sealed class AutomationHostSessionTests
 
         // This exercises real duplex RPC with a deliberately blocked substitute Backend. It does
         // not cover platform UIA/AX behavior or native timeout handling.
-        var query = context.BuildDefaultAsync(directions: VisualContextTraverseDirections.Core).AsTask();
+        var query = context.BuildDefaultAsync(directions: VisualContextTraverseDirections.Origin).AsTask();
         int controlResponse;
         try
         {
@@ -533,9 +652,9 @@ public sealed class AutomationHostSessionTests
         var initial = await visualService.BuildAnchorsAsync(
             visualState,
             [oldAnchor],
-            directions: VisualContextTraverseDirections.Core);
+            directions: VisualContextTraverseDirections.Origin);
         Assert.That(initial.Value.RepresentedTargetCount, Is.EqualTo(1));
-        _ = await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Core);
+        _ = await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Origin);
 
         // Replacing this source exercises Main-side connection state without simulating a Host crash.
         await using var secondPair = await TestConnectionPair.CreateAsync();
@@ -548,7 +667,7 @@ public sealed class AutomationHostSessionTests
         await visualService.EnsureTurnAsync(visualState);
         var secondContextId = await visualService.GetCurrentContextIdAsync(visualState, CancellationToken.None);
         var staleQuery = Assert.ThrowsAsync<VisualContextResetException>(async () =>
-            await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Core));
+            await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Origin));
 
         Assert.Multiple(() =>
         {
@@ -637,7 +756,9 @@ public sealed class AutomationHostSessionTests
         public Exception? AcquisitionException { get; set; }
         public Exception? ElementQueryException { get; set; }
         public VisualElementQueryFailure? ElementQueryFailure { get; set; }
+        public VisualElementType ElementType { get; set; } = VisualElementType.Label;
         public bool ShouldFailAdoption { get; set; }
+        public Func<IVisualElementCapture> CaptureFactory { get; set; } = static () => new TestCapture();
 
         public VisualElementQueryResult Query(
             VisualElementRetention retention,
@@ -680,6 +801,8 @@ public sealed class AutomationHostSessionTests
 
         public void RecordKeyGesture(KeyGesture keyGesture) => LastKeyGesture = keyGesture;
 
+        public IVisualElementCapture CreateCapture() => CaptureFactory();
+
         public VisualElementQueryFailure? RecordQuery(VisualElementQueryRequest request)
         {
             LastRequestedFields = request.RequestedFields;
@@ -708,7 +831,7 @@ public sealed class AutomationHostSessionTests
 
             return new(
                 this,
-                new VisualElementSnapshot(Id, VisualElementType.Label, VisualElementStates.None, "Root", Text, false, new PixelRect(0, 0, 100, 20), null, null),
+                new VisualElementSnapshot(Id, backend.ElementType, VisualElementStates.None, "Root", Text, false, new PixelRect(0, 0, 100, 20), null, null),
                 request.RequestedFields,
                 VisualElementFields.None,
                 null);
@@ -725,7 +848,7 @@ public sealed class AutomationHostSessionTests
             EmptyVisualElementEnumerator.Shared;
 
         protected override Task<IVisualElementCapture> CaptureCoreAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<IVisualElementCapture>(new TestCapture());
+            Task.FromResult(backend.CreateCapture());
 
         protected override VisualElement AdoptCore(VisualElementRetention destinationRetention)
         {
@@ -754,14 +877,32 @@ public sealed class AutomationHostSessionTests
 
     private sealed class TestCapture : IVisualElementCapture
     {
-        public PixelRect Bounds => new(10, 20, 2, 1);
-        public PixelFormat Format => PixelFormat.Bgra8888;
-        public AlphaFormat AlphaFormat => AlphaFormat.Premul;
+        public PixelRect Bounds { get; }
+        public PixelFormat Format { get; }
+        public AlphaFormat AlphaFormat { get; }
         public nint Data => _data.AddrOfPinnedObject();
-        public PixelSize Size => new(2, 1);
-        public int Stride => 8;
+        public PixelSize Size { get; }
+        public int Stride { get; }
 
-        private GCHandle _data = GCHandle.Alloc(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, GCHandleType.Pinned);
+        private GCHandle _data;
+
+        public TestCapture() : this(
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            new PixelSize(2, 1),
+            8,
+            AlphaFormat.Premul)
+        {
+        }
+
+        public TestCapture(byte[] data, PixelSize size, int stride, AlphaFormat alphaFormat)
+        {
+            Bounds = new PixelRect(10, 20, size.Width, size.Height);
+            Format = PixelFormat.Bgra8888;
+            AlphaFormat = alphaFormat;
+            Size = size;
+            Stride = stride;
+            _data = GCHandle.Alloc(data, GCHandleType.Pinned);
+        }
 
         public void Dispose()
         {

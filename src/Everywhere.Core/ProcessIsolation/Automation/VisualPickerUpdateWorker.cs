@@ -20,6 +20,7 @@ public sealed class VisualPickerUpdateWorker : IDisposable
     private VisualPickerObservation? _latestObservation;
     private PendingUpdate? _pendingUpdate;
     private Task? _worker;
+    private long _generation;
     private bool _isCompleting;
     private bool _isDisposed;
 
@@ -37,8 +38,35 @@ public sealed class VisualPickerUpdateWorker : IDisposable
         lock (_stateGate)
         {
             if (_isDisposed || _isCompleting) return;
-            _pendingUpdate = new PendingUpdate(point, mode);
+            _pendingUpdate = new PendingUpdate(point, mode, _generation);
             _worker ??= Task.Run(ProcessUpdatesAsync, _lifetimeToken);
+        }
+    }
+
+    /// <summary>Invalidates the current observation and ignores results already in flight for an older selection mode.</summary>
+    public void InvalidateObservation()
+    {
+        lock (_stateGate)
+        {
+            if (_isDisposed) return;
+            _generation++;
+            _pendingUpdate = null;
+            _latestObservation = null;
+        }
+    }
+
+    /// <summary>Drains the latest pending update and returns its copied observation without consuming the Host picker.</summary>
+    public async ValueTask<VisualPickerObservation?> GetCurrentObservationAsync(CancellationToken cancellationToken = default)
+    {
+        var worker = BeginCompletion();
+        try
+        {
+            await worker.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return GetLatestObservation();
+        }
+        finally
+        {
+            EndCompletion();
         }
     }
 
@@ -52,9 +80,9 @@ public sealed class VisualPickerUpdateWorker : IDisposable
         {
             await worker.WaitAsync(cancellationToken).ConfigureAwait(false);
             var observation = GetLatestObservation();
-            if (observation is null)
+            if (observation is not { Candidate.IsAvailable: true })
             {
-                Dispose();
+                EndCompletion();
                 return null;
             }
             using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetimeToken);
@@ -118,13 +146,16 @@ public sealed class VisualPickerUpdateWorker : IDisposable
                     update.Point,
                     update.Mode,
                     _lifetimeToken).ConfigureAwait(false);
+                Action<VisualPickerObservation>? observationReceived;
                 lock (_stateGate)
                 {
                     if (_isDisposed) return;
+                    if (update.Generation != _generation) continue;
                     _latestObservation = observation;
+                    observationReceived = ObservationReceived;
                 }
 
-                ObservationReceived?.Invoke(observation);
+                observationReceived?.Invoke(observation);
             }
             catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested)
             {
@@ -132,13 +163,25 @@ public sealed class VisualPickerUpdateWorker : IDisposable
             }
             catch (Exception exception)
             {
+                Action<Exception>? updateFailed;
                 lock (_stateGate)
                 {
+                    if (_isDisposed) return;
+                    if (update.Generation != _generation) continue;
                     _latestObservation = null;
+                    updateFailed = UpdateFailed;
                 }
 
-                UpdateFailed?.Invoke(exception);
+                updateFailed?.Invoke(exception);
             }
+        }
+    }
+
+    private void EndCompletion()
+    {
+        lock (_stateGate)
+        {
+            if (!_isDisposed) _isCompleting = false;
         }
     }
 
@@ -167,5 +210,5 @@ public sealed class VisualPickerUpdateWorker : IDisposable
         }
     }
 
-    private readonly record struct PendingUpdate(PixelPoint Point, ScreenSelectionMode Mode);
+    private readonly record struct PendingUpdate(PixelPoint Point, ScreenSelectionMode Mode, long Generation);
 }

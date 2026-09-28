@@ -52,12 +52,12 @@ public sealed record VisualQueryRequest
 public sealed partial class VisualQuery
 {
     private readonly VisualContext _context;
-    private readonly Action<IVisualElementCapture>? _captureReceiver;
+    private readonly Func<IVisualElementCapture, CancellationToken, ValueTask>? _captureReceiver;
 
     /// <summary>Binds queries to a conversation's identity domain and optionally delivers scan images.</summary>
     /// <param name="context">The caller-owned Context; calls remain serialized by the caller.</param>
     /// <param name="captureReceiver">A single receiver that takes ownership on normal return, including rejected images. On exception, ownership remains with the query. RPC adapters can use the same image-delivery boundary.</param>
-    public VisualQuery(VisualContext context, Action<IVisualElementCapture>? captureReceiver = null)
+    public VisualQuery(VisualContext context, Func<IVisualElementCapture, CancellationToken, ValueTask>? captureReceiver = null)
     {
         _context = context;
         _captureReceiver = captureReceiver;
@@ -96,15 +96,15 @@ public sealed partial class VisualQuery
 
     /// <summary>Observes host-owned attachment/debugger anchors, optionally captures observed TopLevels, and publishes final text.</summary>
     public Task<VisualQueryResult> BuildAsync(
-        IReadOnlyList<VisualElement> coreElements,
+        IReadOnlyList<VisualElement> originElements,
         VisualContextPromptOptions promptOptions,
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
         CancellationToken cancellationToken = default) =>
-        BuildAsync(coreElements, promptOptions, limits, directions, 0, cancellationToken);
+        BuildAsync(originElements, promptOptions, limits, directions, 0, cancellationToken);
 
     private async Task<VisualQueryResult> BuildAsync(
-        IReadOnlyList<VisualElement> coreElements,
+        IReadOnlyList<VisualElement> originElements,
         VisualContextPromptOptions promptOptions,
         VisualContextSnapshotLimits? limits,
         VisualContextTraverseDirections directions,
@@ -117,7 +117,7 @@ public sealed partial class VisualQuery
         Action<VisualElementQueryResult>? onTopLevelObserved = topLevels is null ? null : topLevels.Add;
         using var snapshot = VisualContextSnapshotter.CreateSnapshot(
             _context,
-            coreElements,
+            originElements,
             limits,
             directions,
             onTopLevelObserved,
@@ -137,7 +137,7 @@ public sealed partial class VisualQuery
                 {
                     capture = await topLevel.Element.CaptureAsync(cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
-                    _captureReceiver(capture);
+                    await _captureReceiver(capture, cancellationToken).ConfigureAwait(false);
                     capture = null; // Successful delivery transfers ownership, even when the receiver drops it.
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

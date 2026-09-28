@@ -2,11 +2,10 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Threading;
 using DynamicData;
 using Everywhere.Automation;
 using Everywhere.Interop;
-using Everywhere.Mac.Automation;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Views;
 using ObjCRuntime;
 using ZLinq;
@@ -20,52 +19,26 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     protected ScreenSelectionToolTipWindow ToolTipWindow { get; }
 
     protected ScreenSelectionMode CurrentMode { get; private set; }
+    protected long SelectionModeVersion { get; private set; }
 
     // Track current mouse location for updates
     protected CGPoint CurrentMouseLocation { get; private set; }
 
-    protected VisualElementQueryResult? PickingElement { get; private set; }
-
-    private static readonly VisualElementQueryRequest PickingQueryRequest = new(
-        VisualElementFields.Id | VisualElementFields.Type | VisualElementFields.Bounds | VisualElementFields.ProcessId,
-        0);
-
-    private readonly MacVisualElementBackend _visualElementBackend;
-    private readonly VisualContext _context;
     private readonly IReadOnlyList<ScreenSelectionMode> _allowedModes;
-    private readonly uint _windowNumber;
     private readonly CGRect _allScreenFrame;
     private readonly PixelRect _allScreenBounds;
 
-    /// <summary>
-    /// We reuse a single list to avoid allocations during picking.
-    /// </summary>
-    private readonly List<int> _windowOwnerPids = [];
-    private VisualElementRetention? _pickingRetention;
-
     protected ScreenSelectionSession(
         IWindowHelper windowHelper,
-        MacVisualElementBackend visualElementBackend,
-        VisualContext context,
         IReadOnlyList<ScreenSelectionMode> allowedModes,
         ScreenSelectionMode initialMode)
     {
         Debug.Assert(allowedModes.Count > 0);
 
         WindowHelper = windowHelper;
-        _visualElementBackend = visualElementBackend;
-        _context = context;
         _allowedModes = allowedModes;
         CurrentMode = initialMode;
-
-        var handle = TryGetPlatformHandle()?.Handle ?? 0;
-        if (handle != 0)
-        {
-            using var nsWindow = new NSWindow();
-            nsWindow.Handle = handle;
-            _windowNumber = (uint)nsWindow.WindowNumber;
-            nsWindow.Handle = 0;
-        }
+        windowHelper.SetWindowProperties(this, focusable: true, hitTestVisible: true, WindowLayer.Overlay);
 
         // Use NSScreen to get accurate logical bounds and handle scaling
         var allScreens = NSScreen.Screens;
@@ -90,22 +63,30 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 (int)frame.Height);
             _allScreenBounds = _allScreenBounds.Union(bounds);
             var maskWindow = new ScreenSelectionMaskWindow(bounds);
-            SetNsWindowPlacement(maskWindow, frame, NSWindowLevel.ScreenSaver + 1);
-            windowHelper.SetHitTestVisible(maskWindow, false);
+            SetNsWindowPlacement(maskWindow, frame);
+            windowHelper.SetWindowProperties(
+                maskWindow,
+                focusable: false,
+                hitTestVisible: false,
+                WindowLayer.Overlay + 1);
             MaskWindows[i] = maskWindow;
         }
 
         SetPlacement(_allScreenBounds, out _); // Place window to (0, 0) in avalonia way
 
         ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
-        windowHelper.SetHitTestVisible(ToolTipWindow, false);
-        SetNsWindowPlacement(ToolTipWindow, null, NSWindowLevel.ScreenSaver + 2);
+        SetNsWindowPlacement(ToolTipWindow, null);
+        windowHelper.SetWindowProperties(
+            ToolTipWindow,
+            focusable: false,
+            hitTestVisible: false,
+            WindowLayer.Overlay + 2);
 
         // Since the window is full screen and transparent, we need to listen to keyboard events globally.
         CGEventListener.Default.EventReceived += HandleCGEvent;
     }
 
-    private static void SetNsWindowPlacement(Window window, CGRect? frame, NSWindowLevel level)
+    private static void SetNsWindowPlacement(Window window, CGRect? frame)
     {
         var handle = window.TryGetPlatformHandle()?.Handle ?? 0;
         if (handle == 0) return;
@@ -113,8 +94,6 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         using var nsWindow = Runtime.GetNSObject<NSWindow>(handle);
         if (nsWindow is null) return;
 
-        // Keep the input window below the masks and the tooltip above them, independently of activation order.
-        nsWindow.Level = level;
         if (frame.HasValue) nsWindow.SetFrame(frame.Value, true);
         nsWindow.Handle = 0;
     }
@@ -125,7 +104,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
         // Place window to cover all screens
         // We must set after opened otherwise macOS may ignore the frame set in constructor
-        SetNsWindowPlacement(this, _allScreenFrame, NSWindowLevel.ScreenSaver);
+        SetNsWindowPlacement(this, _allScreenFrame);
 
         foreach (var maskWindow in MaskWindows) maskWindow.Show(this);
         ToolTipWindow.Show(this);
@@ -136,7 +115,6 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         CGEventListener.Default.EventReceived -= HandleCGEvent;
         foreach (var maskWindow in MaskWindows) maskWindow.Close();
         ToolTipWindow.Close();
-        ReleasePickingRetention();
         base.OnClosed(e);
     }
 
@@ -186,7 +164,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
                 // and the state of Escape will be stuck.
                 if (type == CGEventType.KeyUp)
                 {
-                    Dispatcher.UIThread.Post(() =>
+                    Dispatcher.Post(() =>
                     {
                         OnCanceled();
                         Close();
@@ -229,7 +207,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
             if (type != CGEventType.KeyDown) return;
             if (!_allowedModes.Contains(mode)) return;
 
-            Dispatcher.UIThread.Post(() =>
+            Dispatcher.Post(() =>
             {
                 CurrentMode = mode;
                 HandlePickModeChanged();
@@ -258,8 +236,14 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
     private void HandlePickModeChanged()
     {
+        SelectionModeVersion++;
+        OnSelectionModeChanged();
         HandlePointerMoved(CurrentMouseLocation);
         ToolTipWindow.ToolTip.Mode = CurrentMode;
+    }
+
+    protected virtual void OnSelectionModeChanged()
+    {
     }
 
     private void HandlePointerMoved(CGPoint point)
@@ -325,82 +309,22 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
     protected virtual void OnCanceled()
     {
-        PickingElement = null;
-        ReleasePickingRetention();
     }
 
-    protected virtual void OnMove(CGPoint point)
+    protected abstract void OnMove(CGPoint point);
+
+    protected void ApplyPickingObservation(VisualPickerObservation? observation)
     {
-        ReleasePickingRetention();
-        _pickingRetention = _context.CreateRetention();
-        PickingElement = null;
-        var maskRect = new PixelRect();
-        switch (CurrentMode)
-        {
-            case ScreenSelectionMode.Screen:
-            {
-                var pixelPoint = new PixelPoint((int)point.X, (int)point.Y);
-                var locator = VisualElementLocator.FromPoint(pixelPoint);
-                PickingElement = _visualElementBackend.Query(
-                    _pickingRetention,
-                    locator,
-                    VisualElementResolution.Screen,
-                    PickingQueryRequest);
-                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
-                break;
-            }
-            case ScreenSelectionMode.Window:
-            {
-                PickingElement = GetElementAtPoint(VisualElementResolution.TopLevel);
-                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
-                break;
-            }
-            case ScreenSelectionMode.Element:
-            {
-                PickingElement = GetElementAtPoint(VisualElementResolution.Direct);
-                if (PickingElement is not null) maskRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
-                break;
-            }
-        }
-
-        ApplyPickingSnapshot(PickingElement?.Snapshot, maskRect);
-
-        VisualElementQueryResult? GetElementAtPoint(VisualElementResolution resolution)
-        {
-            _windowOwnerPids.Clear();
-            GetWindowOwnerPidsAtLocation(point, _windowNumber, _windowOwnerPids);
-            foreach (var windowOwnerPid in _windowOwnerPids)
-            {
-                var result = _visualElementBackend.QueryElementAtPointForProcess(
-                    _pickingRetention,
-                    windowOwnerPid,
-                    new PixelPoint((int)point.X, (int)point.Y),
-                    resolution,
-                    PickingQueryRequest);
-                if (result is not null)
-                {
-                    return result;
-                }
-            }
-
-            return null;
-        }
+        var snapshot = observation?.Snapshot;
+        ApplyPickingSnapshot(
+            snapshot,
+            snapshot?.Bounds.GetValueOrDefault() ?? default,
+            observation?.FailureKind,
+            observation?.FailureMessage);
     }
 
-    protected void ApplyPickingSnapshot(VisualElementSnapshot? snapshot)
-    {
-        var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
-        ApplyPickingSnapshot(snapshot, bounds);
-    }
-
-    protected void ApplyPickingSnapshot(
-        VisualElementSnapshot? snapshot,
-        VisualElementQueryFailureKind? failureKind,
-        IDynamicLocaleKey? failureMessage = null)
-    {
-        var bounds = snapshot?.Bounds.GetValueOrDefault() ?? default;
-        ApplyPickingSnapshot(snapshot, bounds, failureKind, failureMessage);
-    }
+    protected void ApplyPickingFailure(VisualElementQueryFailureKind failureKind) =>
+        ApplyPickingSnapshot(null, default, failureKind);
 
     private void ApplyPickingSnapshot(
         VisualElementSnapshot? snapshot,
@@ -426,56 +350,4 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         ToolTipWindow.ToolTip.SizeInfo = $"{rect.Width} x {rect.Height}";
     }
 
-    private static void GetWindowOwnerPidsAtLocation(CGPoint point, uint relativeToWindow, List<int> pids)
-    {
-        var currentPid = Environment.ProcessId;
-        var pArray = CGInterop.CGWindowListCopyWindowInfo(CGWindowListOption.OnScreenBelowWindow, relativeToWindow);
-        if (pArray == 0) return;
-
-        try
-        {
-            var array = Runtime.GetNSObject<NSArray>(pArray);
-            if (array == null) return;
-
-            using var kOwnerPid = new NSString("kCGWindowOwnerPID");
-            using var kBounds = new NSString("kCGWindowBounds");
-            using var kX = new NSString("X");
-            using var kY = new NSString("Y");
-            using var kW = new NSString("Width");
-            using var kH = new NSString("Height");
-
-            for (nuint i = 0; i < array.Count; i++)
-            {
-                var dict = array.GetItem<NSDictionary>(i);
-                if (dict == null) continue;
-
-                if (!dict.TryGetValue(kOwnerPid, out var pidObj) || pidObj is not NSNumber pidNum) continue;
-
-                // Filter out our own process (Picker, Mask, ToolTip, etc.)
-                if (pidNum.Int32Value == currentPid) continue;
-
-                if (!dict.TryGetValue(kBounds, out var boundsObj) || boundsObj is not NSDictionary boundsDict) continue;
-                if (!boundsDict.TryGetValue(kX, out var xObj) || xObj is not NSNumber x ||
-                    !boundsDict.TryGetValue(kY, out var yObj) || yObj is not NSNumber y ||
-                    !boundsDict.TryGetValue(kW, out var wObj) || wObj is not NSNumber w ||
-                    !boundsDict.TryGetValue(kH, out var hObj) || hObj is not NSNumber h) continue;
-
-                var rect = new CGRect(x.DoubleValue, y.DoubleValue, w.DoubleValue, h.DoubleValue);
-                if (rect.Contains(point))
-                {
-                    pids.Add(pidNum.Int32Value);
-                }
-            }
-        }
-        finally
-        {
-            CFInterop.CFRelease(pArray);
-        }
-    }
-
-    private void ReleasePickingRetention()
-    {
-        _pickingRetention?.Dispose();
-        _pickingRetention = null;
-    }
 }

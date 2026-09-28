@@ -137,3 +137,4 @@ PostThreadMessage
 FlashWindowEx
 
 SetProp
+RemoveProp

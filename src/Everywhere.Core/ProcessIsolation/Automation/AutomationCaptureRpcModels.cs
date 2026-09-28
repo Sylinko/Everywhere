@@ -16,6 +16,7 @@ public enum AutomationCapturePixelFormat
     Rgba8888,
     Rgb565,
     Rgb32,
+    Alpha8,
 }
 
 /// <summary>Alpha layouts supported by the raw Automation capture stream.</summary>
@@ -101,4 +102,28 @@ public sealed partial class AutomationCaptureChunk : AutomationCaptureFrame
     /// <summary>Raw bitmap bytes.</summary>
     [Key(0)]
     public required byte[] Data { get; init; }
+}
+
+/// <summary>Base item in a query stream containing scan captures followed by one final query result.</summary>
+[MessagePackObject]
+[Union(0, typeof(AutomationVisualQueryCaptureFrame))]
+[Union(1, typeof(AutomationVisualQueryResultFrame))]
+public abstract partial class AutomationVisualQueryFrame;
+
+/// <summary>Wraps one frame from the shared capture protocol in a query stream.</summary>
+[MessagePackObject]
+public sealed partial class AutomationVisualQueryCaptureFrame : AutomationVisualQueryFrame
+{
+    /// <summary>The header or ordered pixel block for the current Alpha8 capture.</summary>
+    [Key(0)]
+    public required AutomationCaptureFrame Capture { get; init; }
+}
+
+/// <summary>Terminates a successful query stream with its final published text result.</summary>
+[MessagePackObject]
+public sealed partial class AutomationVisualQueryResultFrame : AutomationVisualQueryFrame
+{
+    /// <summary>The final published query response.</summary>
+    [Key(0)]
+    public required AutomationVisualQueryResponse Result { get; init; }
 }

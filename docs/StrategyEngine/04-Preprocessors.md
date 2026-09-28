@@ -323,7 +323,15 @@ The exact list can be smaller in the first PR, but the design should support:
 | `file-manager-selection` | Expand file manager selection into paths/content summaries. |
 | `browser-active-page` | Expose URL/title and possibly readable text. |
 | `clipboard-text` | Expose clipboard text. |
-| `visual-element-text` | Extract text from the primary visual element. |
+| `visual-element-text` | Extract text from visual attachments in the execution context, preserving attachment order and source association. |
+
+Visual attachment input rules:
+
+1. Use the execution-time attachment snapshot as the input collection.
+2. `visual-element-text` processes the visual attachments in that snapshot and returns per-attachment results in source order. Preserve the association between each result and its source attachment, including when elements belong to different processes.
+3. Each preprocessor documents its input selection and cardinality requirements. A preprocessor requiring exactly one input validates that requirement against the execution snapshot.
+4. An unavailable element, failed extraction, or timeout follows the failure rules in section 14 and stops execution with diagnostics.
+5. Persist the ordered result with the message under the existing replay rules. Retries and replays use that persisted result.
 
 Each built-in preprocessor must have:
 

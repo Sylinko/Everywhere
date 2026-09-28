@@ -7,9 +7,9 @@ namespace Everywhere.Automation;
 public enum VisualContextTraverseDirections
 {
     /// <summary>
-    /// Represents the caller-supplied core elements without enabling an additional relation.
+    /// Represents the caller-supplied origin elements without enabling an additional relation.
     /// </summary>
-    Core = 0,
+    Origin = 0,
 
     /// <summary>
     /// Enables traversal toward an element's parent.

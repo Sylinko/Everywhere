@@ -257,7 +257,7 @@ public static class VisualContextPromptBuilder
     {
         var snapshot = source.Snapshot;
         var type = snapshot.Type ?? VisualElementType.Unknown;
-        if (source.IsCore || source.IsInteractive || type is VisualElementType.Screen or VisualElementType.TopLevel ||
+        if (source.IsOrigin || source.IsInteractive || type is VisualElementType.Screen or VisualElementType.TopLevel ||
             snapshot.States is not null and not VisualElementStates.None || snapshot.HasMoreText || source.Status.Count > 0 ||
             !string.IsNullOrWhiteSpace(snapshot.Name) || !string.IsNullOrWhiteSpace(snapshot.TextPreview))
         {
@@ -301,7 +301,7 @@ public static class VisualContextPromptBuilder
     }
 
     private static bool IsCompositeCandidate(ProjectionNode node) =>
-        node is { IsComposite: false, Children.Count: 0, IsCore: false, IsInteractive: false, Type: VisualElementType.Label, Sources.Count: 1 } &&
+        node is { IsComposite: false, Children.Count: 0, IsOrigin: false, IsInteractive: false, Type: VisualElementType.Label, Sources.Count: 1 } &&
         !string.IsNullOrWhiteSpace(GetPreferredContent(node.PrimarySource.Snapshot));
 
     private static (string? Preview, bool IsTruncated) CreateCompositePreview(List<VisualContextSnapshotNode> sources, int maximumCharacters)
@@ -425,6 +425,7 @@ public static class VisualContextPromptBuilder
         element.Attribute("id", id)
             .AttributeNotNullOrEmpty("name", node.IsComposite ? null : Bound(snapshot.Name, options.MaximumScalarCharacters))
             .AttributeNotNullOrEmpty("status", Bound(string.Join("; ", status), options.MaximumScalarCharacters));
+        element.Flag("origin", node.IsOrigin);
         AppendStateFlags(element, snapshot.States);
         var isContentIncomplete = node.AllocatedContent.Length < (node.Content?.Length ?? 0) || node.IsPreviewTruncated ||
             node.Sources.AsValueEnumerable().Any(static source => source.Snapshot.HasMoreText);
@@ -601,11 +602,11 @@ public static class VisualContextPromptBuilder
 
         public bool IsComposite { get; } = isComposite;
 
-        public bool IsCore => Sources.AsValueEnumerable().Any(static source => source.IsCore);
+        public bool IsOrigin => Sources.AsValueEnumerable().Any(static source => source.IsOrigin);
 
         public bool IsInteractive => Sources.AsValueEnumerable().Any(static source => source.IsInteractive);
 
-        public bool IsRequired => IsCore || Type is VisualElementType.Screen or VisualElementType.TopLevel;
+        public bool IsRequired => IsOrigin || Type is VisualElementType.Screen or VisualElementType.TopLevel;
 
         public bool IsPreviewTruncated { get; } = isPreviewTruncated;
 

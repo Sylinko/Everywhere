@@ -3,8 +3,9 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Everywhere.Automation;
+using Everywhere.Extensions;
 using Everywhere.Interop;
-using Everywhere.Mac.Automation;
+using Everywhere.ProcessIsolation.Automation;
 using ImageIO;
 
 namespace Everywhere.Mac.Interop;
@@ -17,20 +18,27 @@ public sealed partial class MacScreenSelectionService
 
         public static async Task<Bitmap?> TakeAsync(
             IWindowHelper windowHelper,
-            MacVisualElementBackend visualElementBackend,
-            VisualContext context,
-            ScreenSelectionMode? initialMode)
+            IHostedVisualContext visualContext,
+            ScreenSelectionMode? initialMode,
+            CancellationToken cancellationToken)
         {
             // Give time to hide other windows
-            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            var window = new ScreenshotSession(windowHelper, visualElementBackend, context, initialMode ?? _previousMode);
+            var window = new ScreenshotSession(windowHelper, visualContext, initialMode ?? _previousMode, cancellationToken);
             window.Show();
             return await window._pickingPromise.Task;
         }
 
-        private readonly TaskCompletionSource<Bitmap?> _pickingPromise = new();
+        private readonly TaskCompletionSource<Bitmap?> _pickingPromise = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly IHostedVisualContext _visualContext;
+        private readonly CancellationTokenSource _lifetimeCancellation;
+        private readonly CancellationTokenRegistration _cancellationRegistration;
         private Bitmap? _resultBitmap;
+        private VisualPickerUpdateWorker? _updateWorker;
+        private CGPoint _lastPointerPosition;
+        private bool _isCompleting;
 
         private readonly CompositeDisposable _disposables = new();
 
@@ -41,17 +49,24 @@ public sealed partial class MacScreenSelectionService
 
         private ScreenshotSession(
             IWindowHelper windowHelper,
-            MacVisualElementBackend visualElementBackend,
-            VisualContext context,
-            ScreenSelectionMode initialMode)
+            IHostedVisualContext visualContext,
+            ScreenSelectionMode initialMode,
+            CancellationToken cancellationToken)
             : base(
                 windowHelper,
-                visualElementBackend,
-                context,
                 [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
                 initialMode)
         {
+            _visualContext = visualContext;
+            _lifetimeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            _cancellationRegistration = cancellationToken.Register(() => Dispatcher.Post(CancelFromToken));
             CaptureAndSetBackground();
+        }
+
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
+            InitializePickerAsync().Detach();
         }
 
         private void CaptureAndSetBackground()
@@ -80,6 +95,10 @@ public sealed partial class MacScreenSelectionService
 
         protected override void OnClosed(EventArgs e)
         {
+            _cancellationRegistration.Dispose();
+            _lifetimeCancellation.Cancel();
+            DetachWorker();
+            _lifetimeCancellation.Dispose();
             _previousMode = CurrentMode;
             _disposables.Dispose();
             _pickingPromise.TrySetResult(_resultBitmap);
@@ -113,29 +132,24 @@ public sealed partial class MacScreenSelectionService
 
         protected override bool OnLeftButtonUp()
         {
-            PixelRect captureRect;
-
             if (CurrentMode == ScreenSelectionMode.Free)
             {
                 if (!_isDragging) return false;
                 _isDragging = false;
-                captureRect = _dragRect;
-                if (captureRect.Width <= 0 || captureRect.Height <= 0) return false;
-            }
-            else
-            {
-                if (PickingElement == null) return false;
-                captureRect = PickingElement.Snapshot.Bounds.GetValueOrDefault();
+                if (_dragRect.Width <= 0 || _dragRect.Height <= 0) return false;
+                CaptureAndClose(_dragRect);
+                return false;
             }
 
-            WindowHelper.SetCloaked(ToolTipWindow, true);
-            Dispatcher.UIThread.Invoke(() => { }, DispatcherPriority.Background);
-            _resultBitmap = CaptureScreen(captureRect);
-            return true;
+            if (_isCompleting || _updateWorker is null) return false;
+            _isCompleting = true;
+            CompleteSnappedScreenshotAsync().Detach();
+            return false;
         }
 
         protected override void OnMove(CGPoint point)
         {
+            _lastPointerPosition = point;
             if (CurrentMode == ScreenSelectionMode.Free)
             {
                 if (_isDragging)
@@ -163,11 +177,139 @@ public sealed partial class MacScreenSelectionService
             }
             else
             {
-                // Reuse element picking logic
                 _isDragging = false;
-
-                base.OnMove(point);
+                _updateWorker?.Update(new PixelPoint((int)point.X, (int)point.Y), CurrentMode);
             }
+        }
+
+        protected override void OnSelectionModeChanged()
+        {
+            _updateWorker?.InvalidateObservation();
+            ApplyPickingObservation(null);
+            _isCompleting = false;
+        }
+
+        private async Task InitializePickerAsync()
+        {
+            try
+            {
+                var remotePicker = await _visualContext.BeginPickerAsync(_lifetimeCancellation.Token);
+                var updateWorker = new VisualPickerUpdateWorker(_visualContext, remotePicker);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (!IsVisible)
+                    {
+                        updateWorker.Dispose();
+                        return;
+                    }
+
+                    _updateWorker = updateWorker;
+                    updateWorker.ObservationReceived += HandleObservationReceived;
+                    updateWorker.UpdateFailed += HandleUpdateFailed;
+                    if (CurrentMode != ScreenSelectionMode.Free)
+                    {
+                        updateWorker.Update(new PixelPoint((int)_lastPointerPosition.X, (int)_lastPointerPosition.Y), CurrentMode);
+                    }
+                });
+            }
+            catch (OperationCanceledException) when (_lifetimeCancellation.IsCancellationRequested)
+            {
+            }
+            catch
+            {
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (IsVisible) ApplyPickingFailure(VisualElementQueryFailureKind.ProviderFailure);
+                });
+            }
+        }
+
+        private async Task CompleteSnappedScreenshotAsync()
+        {
+            var modeVersion = SelectionModeVersion;
+            try
+            {
+                var observation = await _updateWorker!.GetCurrentObservationAsync(_lifetimeCancellation.Token);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (!IsVisible) return;
+                    if (modeVersion != SelectionModeVersion)
+                    {
+                        _isCompleting = false;
+                        return;
+                    }
+                    if (observation?.Snapshot?.Bounds is not { Width: > 0, Height: > 0 } bounds)
+                    {
+                        _isCompleting = false;
+                        ApplyPickingObservation(observation);
+                        return;
+                    }
+
+                    CaptureAndClose(bounds);
+                });
+            }
+            catch (OperationCanceledException) when (_lifetimeCancellation.IsCancellationRequested)
+            {
+            }
+            catch (Exception exception)
+            {
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (!IsVisible) return;
+                    _isCompleting = false;
+                    if (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
+                        ApplyPickingFailure(failureKind);
+                    else
+                        ApplyPickingFailure(VisualElementQueryFailureKind.ProviderFailure);
+                });
+            }
+        }
+
+        private void CaptureAndClose(PixelRect captureRect)
+        {
+            WindowHelper.SetCloaked(ToolTipWindow, true);
+            Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
+            _resultBitmap = CaptureScreen(captureRect);
+            Close();
+        }
+
+        private void HandleObservationReceived(VisualPickerObservation observation)
+        {
+            var modeVersion = SelectionModeVersion;
+            Dispatcher.Post(() =>
+            {
+                if (IsVisible && CurrentMode != ScreenSelectionMode.Free && modeVersion == SelectionModeVersion)
+                    ApplyPickingObservation(observation);
+            });
+        }
+
+        private void HandleUpdateFailed(Exception exception)
+        {
+            var modeVersion = SelectionModeVersion;
+            Dispatcher.Post(() =>
+            {
+                if (!IsVisible || CurrentMode == ScreenSelectionMode.Free || modeVersion != SelectionModeVersion) return;
+                if (AutomationRpcExceptionMapping.TryGetVisualElementQueryFailureKind(exception, out var failureKind))
+                    ApplyPickingFailure(failureKind);
+                else
+                    ApplyPickingFailure(VisualElementQueryFailureKind.ProviderFailure);
+            });
+        }
+
+        private void DetachWorker()
+        {
+            if (_updateWorker is not { } worker) return;
+            _updateWorker = null;
+            worker.ObservationReceived -= HandleObservationReceived;
+            worker.UpdateFailed -= HandleUpdateFailed;
+            worker.Dispose();
+        }
+
+        private void CancelFromToken()
+        {
+            if (!IsVisible) return;
+            OnCanceled();
+            Close();
         }
 
         private static Bitmap? CaptureScreen(PixelRect rect)

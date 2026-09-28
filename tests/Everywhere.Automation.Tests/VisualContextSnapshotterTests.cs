@@ -6,7 +6,7 @@ namespace Everywhere.Automation.Tests;
 public sealed class VisualContextSnapshotterTests
 {
     [Test]
-    public void CreateSnapshot_WhenCoreSiblingsObserveSameParent_CoalescesOneRootAndPreservesBothEdges()
+    public void CreateSnapshot_WhenOriginSiblingsObserveSameParent_CoalescesOneRootAndPreservesBothEdges()
     {
         using var backend = CreateBackend(new Panel(new Text("first"), new Text("middle"), new Text("last")));
         var first = backend.GetElement(0);
@@ -95,7 +95,7 @@ public sealed class VisualContextSnapshotterTests
             MaximumTextCharactersPerNode = 10,
             MaximumTotalTextCharacters = 10,
         };
-        using var snapshot = VisualContextSnapshotter.CreateSnapshot(backend.Context, [backend.RootElement], limits, VisualContextTraverseDirections.Core);
+        using var snapshot = VisualContextSnapshotter.CreateSnapshot(backend.Context, [backend.RootElement], limits, VisualContextTraverseDirections.Origin);
         var root = snapshot.Roots[0];
 
         Assert.Multiple(() =>
@@ -169,7 +169,7 @@ public sealed class VisualContextSnapshotterTests
     }
 
     [Test]
-    public void CreateSnapshot_WhenCoreElementIsOffscreen_KeepsCorePriority()
+    public void CreateSnapshot_WhenOriginElementIsOffscreen_KeepsOriginPriority()
     {
         using var backend = CreateBackend(new Panel(new Text("visible")) { States = ScenarioControlStates.Offscreen });
         using var snapshot = VisualContextSnapshotter.CreateSnapshot(backend.Context, [backend.RootElement], allowedTraverseDirections: VisualContextTraverseDirections.Child);
@@ -178,7 +178,7 @@ public sealed class VisualContextSnapshotterTests
         Assert.Multiple(() =>
         {
             Assert.That(nodes[0].Element, Is.SameAs(backend.RootElement));
-            Assert.That(nodes[0].IsCore, Is.True);
+            Assert.That(nodes[0].IsOrigin, Is.True);
             Assert.That(nodes[0].TraversalPriority, Is.EqualTo(float.NegativeInfinity));
         });
     }

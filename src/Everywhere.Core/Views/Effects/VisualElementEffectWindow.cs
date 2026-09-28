@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Platform;
+using Avalonia.Rendering.Composition;
+using Avalonia.Threading;
+using Everywhere.Common;
 
 namespace Everywhere.Views;
 
@@ -11,6 +14,7 @@ public sealed class VisualElementEffectWindow : VisualElementOverlayWindow
     private readonly VisualElementParticleHost<ScanVisualElementParticle> _scanHost;
 
     private PixelRect _screenBounds;
+    private long _activityVersion;
 
     public VisualElementEffectWindow()
     {
@@ -27,8 +31,9 @@ public sealed class VisualElementEffectWindow : VisualElementOverlayWindow
         IParticleTargetTracker? targetTracker,
         object? startContent,
         object? endContent,
-        Size startSize) where T : VisualElementParticle
+        Size startSize) where T : IVisualElementParticle
     {
+        _activityVersion++;
         if (typeof(T) == typeof(ScanVisualElementParticle)) _scanHost.SpawnParticle(startPoint, targetTracker, startContent, endContent, startSize);
         else _pickHost.SpawnParticle(startPoint, targetTracker, startContent, endContent, startSize);
     }
@@ -39,7 +44,12 @@ public sealed class VisualElementEffectWindow : VisualElementOverlayWindow
         Position = _screenBounds.Position;
         Scale = DesktopScaling; // we must set Position first to get the correct scaling factor
         Width = _screenBounds.Width / Scale;
+
+#if WINDOWS
         Height = _screenBounds.Height / Scale - 1d; // Let the window slightly smaller than screen, avoid focus assist
+#else
+        Height = _screenBounds.Height / Scale;
+#endif
     }
 
     public Point ScreenPixelToLocal(PixelPoint screenPoint)
@@ -58,7 +68,31 @@ public sealed class VisualElementEffectWindow : VisualElementOverlayWindow
 
     public void HandleHostIdle()
     {
-        if (!_pickHost.HasActiveParticles && !_scanHost.HasActiveParticles) Hide();
+        if (_pickHost.HasActiveParticles || _scanHost.HasActiveParticles) return;
+
+        var idleVersion = ++_activityVersion;
+        HideAfterClearRenderAsync(idleVersion).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
+    }
+
+    private async Task HideAfterClearRenderAsync(long idleVersion)
+    {
+        var visual = ElementComposition.GetElementVisual(this);
+        if (visual is not null)
+            await visual.Compositor.RequestCompositionBatchCommitAsync().Rendered;
+
+        await Dispatcher.UIThread.InvokeAsync(
+            () =>
+            {
+                if (idleVersion != _activityVersion ||
+                    _pickHost.HasActiveParticles ||
+                    _scanHost.HasActiveParticles)
+                {
+                    return;
+                }
+
+                Hide();
+            },
+            DispatcherPriority.Render);
     }
 
     /// <inheritdoc />

@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using Everywhere.Utilities;
@@ -9,12 +8,18 @@ using SkiaSharp;
 
 namespace Everywhere.Views;
 
-public class ScanVisualElementParticle : VisualElementParticle
+public class ScanVisualElementParticle : UserControl, IVisualElementParticle
 {
     private VisualEffectImage<SKImage>? _windowMaskRef;
     private double _animationProgress;
 
-    public override void Spawn(Point startPosition, IParticleTargetTracker? targetTracker, object? startContent, object? endContent, Size startSize)
+    public void Spawn(
+        VisualElementEffectWindow owner,
+        Point startPosition,
+        IParticleTargetTracker? targetTracker,
+        object? startContent,
+        object? endContent,
+        Size startSize)
     {
         _windowMaskRef = startContent.NotNull<VisualEffectImage<SKImage>>();
         _windowMaskRef.AddRef();
@@ -27,12 +32,12 @@ public class ScanVisualElementParticle : VisualElementParticle
         _animationProgress = 0d;
     }
 
-    public override void Recycle()
+    public void Recycle()
     {
         DisposeHelper.DisposeToDefault(ref _windowMaskRef);
     }
 
-    public override bool Update(double deltaTimeMs)
+    public bool Update(double deltaTimeMs)
     {
         if (_windowMaskRef is null) return true;
         if (deltaTimeMs <= 0) return false;
@@ -48,9 +53,10 @@ public class ScanVisualElementParticle : VisualElementParticle
         if (_windowMaskRef is null) return;
         if (Bounds is not { Width: > 16d and < 5120, Height: > 16d and < 5120 }) return;
 
-        context.Custom(new FluidScanDrawOperation(
-            this,
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d));
+        context.Custom(
+            new FluidScanDrawOperation(
+                this,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d));
     }
 
 

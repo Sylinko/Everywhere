@@ -2,6 +2,7 @@
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
+using Everywhere.Automation;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
@@ -107,8 +108,8 @@ public static class ServiceExtensions
                 .AddTransient<ChangeLogView>()
                 .AddSingleton<MainViewModel>()
                 .AddSingleton<MainView>()
-                .AddSingleton<IVisualElementAnimationTarget>(x => x.GetRequiredService<ChatWindow>())
-                .AddSingleton<VisualElementEffect>();
+                .AddSingleton<VisualElementEffect>()
+                .AddSingleton<IVisualContextScanEffect>(x => x.GetRequiredService<VisualElementEffect>());
 
         public IServiceCollection AddDatabaseAndStorage() =>
             services

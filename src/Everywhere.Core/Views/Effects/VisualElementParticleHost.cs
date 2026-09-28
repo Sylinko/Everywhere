@@ -6,11 +6,11 @@ namespace Everywhere.Views;
 /// A lightweight host for control-based particles.
 /// It uses Avalonia's native RequestAnimationFrame to drive physics and visual updates.
 /// </summary>
-public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int maxPoolSize) : Canvas where T : VisualElementParticle, new()
+public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int maxPoolSize) : Canvas where T : Control, IVisualElementParticle, new()
 {
     // A list to hold all currently animating particles
     private readonly List<T> _activeParticles = [];
-    
+
     // A bounded object pool to reuse particles and avoid GC pressure
     private readonly Stack<T> _particlePool = new(maxPoolSize);
 
@@ -37,21 +37,26 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
             Children.Add(particle); // Add to VisualTree immediately. Pool elements remain in tree but are hidden.
         }
 
+        // Hidden controls report an empty desired size. Let the pooled control participate in layout while
+        // keeping it non-drawing until all content, geometry, and animation state have been reset.
+        particle.Opacity = 0d;
+        particle.IsVisible = true;
         try
         {
-            particle.Spawn(startPosition, targetTracker, startContent, endContent, startSize);
-            particle.IsVisible = true;
-            _activeParticles.Add(particle);
-            StartAnimationLoop();
+            particle.Spawn(owner, startPosition, targetTracker, startContent, endContent, startSize);
         }
         catch
         {
-            _activeParticles.Remove(particle);
             particle.IsVisible = false;
             particle.Recycle();
-            Children.Remove(particle);
+            if (_particlePool.Count < maxPoolSize) _particlePool.Push(particle);
+            else Children.Remove(particle);
             throw;
         }
+        particle.Opacity = 1d;
+        _activeParticles.Add(particle);
+
+        StartAnimationLoop();
     }
 
     /// <summary>
@@ -73,7 +78,7 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
                 Children.Remove(particle); // Overflow drops out of the visual tree
             }
         }
-        
+
         _activeParticles.Clear();
         _isAnimating = false;
     }
@@ -112,7 +117,7 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
                 // Particle has reached the end of its lifecycle
                 particle.IsVisible = false;
                 particle.Recycle();
-                
+
                 if (_particlePool.Count < maxPoolSize)
                 {
                     _particlePool.Push(particle);
@@ -122,7 +127,7 @@ public class VisualElementParticleHost<T>(VisualElementEffectWindow owner, int m
                     // Pool is full, destroy the excess control
                     Children.Remove(particle);
                 }
-                
+
                 _activeParticles.RemoveAt(i);
             }
         }

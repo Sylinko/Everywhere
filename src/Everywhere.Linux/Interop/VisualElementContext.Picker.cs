@@ -33,7 +33,7 @@ public partial class VisualElementContext
             : base(backend, [ScreenSelectionMode.Screen, ScreenSelectionMode.Window], screenSelectionMode)
         {
             _context = context;
-            backend.SetFocusable(this, true);
+            backend.SetWindowProperties(this, focusable: true, hitTestVisible: true, WindowLayer.Topmost);
         }
 
         protected override void OnCanceled()

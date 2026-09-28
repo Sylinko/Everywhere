@@ -126,20 +126,31 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
     public void GrabMouseHook(Action<PixelPoint, EventType> hook) => InputHandler.GrabMouseHook(hook);
     public void UngrabMouseHook() => InputHandler.UngrabMouseHook();
 
-    public void SetFocusable(AvaloniaWindow window, bool focusable)
+    public void SetWindowProperties(
+        AvaloniaWindow window,
+        bool? focusable = null,
+        bool? hitTestVisible = null,
+        WindowLayer? layer = null)
     {
-        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
-            WindowManager.SetFocusable((X11Window)x11Handle, focusable);
-    }
+        if (focusable is { } isFocusable) window.Focusable = isFocusable;
+        if (hitTestVisible is { } isHitTestVisible) window.IsHitTestVisible = isHitTestVisible;
+        if (layer is { } windowLayer) window.Topmost = windowLayer >= WindowLayer.Topmost;
 
-    public void SetHitTestVisible(AvaloniaWindow window, bool visible)
-    {
         if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
         {
             var width = (ushort)window.Width;
             var height = (ushort)window.Height;
-            WindowManager.SetHitTestVisible((X11Window)x11Handle, visible, width, height);
+            if (focusable is { } nativeFocusable)
+                WindowManager.SetFocusable((X11Window)x11Handle, nativeFocusable);
+            if (hitTestVisible is { } nativeHitTestVisible)
+                WindowManager.SetHitTestVisible((X11Window)x11Handle, nativeHitTestVisible, width, height);
         }
+    }
+
+    public void RaiseWindow(AvaloniaWindow window)
+    {
+        if (window.TryGetPlatformHandle()?.Handle is { } x11Handle)
+            WindowManager.RaiseWindow((X11Window)x11Handle);
     }
 
     public void SetOverrideRedirect(AvaloniaWindow window, bool redirect)
@@ -165,6 +176,8 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
             return WindowManager.GetEffectiveVisible((X11Window)x11Handle);
         return false;
     }
+
+    public bool? IsRegionCovered(AvaloniaWindow window, PixelRect bounds) => null;
 
     public bool AnyModelDialogOpened(AvaloniaWindow window)
     {

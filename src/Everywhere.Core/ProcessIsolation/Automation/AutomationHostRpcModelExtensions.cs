@@ -197,6 +197,7 @@ internal static class AutomationHostRpcModelExtensions
         AutomationCapturePixelFormat.Rgba8888 => PixelFormat.Rgba8888,
         AutomationCapturePixelFormat.Rgb565 => PixelFormat.Rgb565,
         AutomationCapturePixelFormat.Rgb32 => PixelFormat.Rgb32,
+        AutomationCapturePixelFormat.Alpha8 => PixelFormats.Gray8,
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
     };
 

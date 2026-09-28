@@ -13,10 +13,10 @@ namespace Everywhere.Automation;
 public static class VisualContextSnapshotter
 {
     /// <summary>
-    /// Creates one bounded Snapshot around the supplied core Elements.
+    /// Creates one bounded Snapshot around the supplied origin Elements.
     /// </summary>
     /// <param name="context">The identity and lifetime domain shared by every supplied Element.</param>
-    /// <param name="coreElements">The ordered high-priority Elements that anchor traversal.</param>
+    /// <param name="originElements">The ordered high-priority Elements that anchor traversal.</param>
     /// <param name="limits">The monotonic risk limits, or <see langword="null" /> to use <see cref="VisualContextSnapshotLimits.Default" />.</param>
     /// <param name="allowedTraverseDirections">The relations that traversal may observe.</param>
     /// <param name="onTopLevelObserved">Optional synchronous notification for each newly admitted TopLevel. The Snapshot retains the borrowed element; the callback must not perform platform work.</param>
@@ -25,7 +25,7 @@ public static class VisualContextSnapshotter
     /// <returns>A disposable Snapshot that owns every admitted Element until publication or disposal.</returns>
     public static VisualContextSnapshot CreateSnapshot(
         VisualContext context,
-        IReadOnlyList<VisualElement> coreElements,
+        IReadOnlyList<VisualElement> originElements,
         VisualContextSnapshotLimits? limits = null,
         VisualContextTraverseDirections allowedTraverseDirections = VisualContextTraverseDirections.All,
         Action<VisualElementQueryResult>? onTopLevelObserved = null,
@@ -37,7 +37,7 @@ public static class VisualContextSnapshotter
         effectiveLimits.Validate();
         return new Traversal(
             context,
-            coreElements,
+            originElements,
             effectiveLimits,
             allowedTraverseDirections,
             relationOffset,
@@ -47,7 +47,7 @@ public static class VisualContextSnapshotter
 
     private sealed class Traversal(
         VisualContext context,
-        IReadOnlyList<VisualElement> coreElements,
+        IReadOnlyList<VisualElement> originElements,
         VisualContextSnapshotLimits limits,
         VisualContextTraverseDirections allowedTraverseDirections,
         int relationOffset,
@@ -193,7 +193,7 @@ public static class VisualContextSnapshotter
 
             private float GetScore()
             {
-                if (Direction == VisualContextTraverseDirections.Core)
+                if (Direction == VisualContextTraverseDirections.Origin)
                 {
                     return float.NegativeInfinity;
                 }
@@ -276,9 +276,9 @@ public static class VisualContextSnapshotter
 
         private void EnqueueCoreElements()
         {
-            for (var index = 0; index < coreElements.Count && !_shouldStop; index++)
+            for (var index = 0; index < originElements.Count && !_shouldStop; index++)
             {
-                var element = coreElements[index];
+                var element = originElements[index];
                 if (!TryBeginPlatformOperation())
                 {
                     break;
@@ -300,7 +300,7 @@ public static class VisualContextSnapshotter
                         observation,
                         null,
                         0,
-                        VisualContextTraverseDirections.Core,
+                        VisualContextTraverseDirections.Origin,
                         null,
                         index,
                         0,
@@ -334,7 +334,7 @@ public static class VisualContextSnapshotter
 
         private void ProcessWork(TraversalWork work)
         {
-            if (work.Direction != VisualContextTraverseDirections.Core &&
+            if (work.Direction != VisualContextTraverseDirections.Origin &&
                 work.Observation.FailureKind == VisualElementQueryFailureKind.ElementUnavailable)
             {
                 // Live providers can invalidate a relation item between enumeration and its first structural query.
@@ -457,7 +457,7 @@ public static class VisualContextSnapshotter
                 GlobalDistance = work.Distance.Global,
                 TraversalPriority = work.Priority,
                 TraversalOrdinal = _nextTraversalOrdinal++,
-                IsCore = work.Direction == VisualContextTraverseDirections.Core,
+                IsOrigin = work.Direction == VisualContextTraverseDirections.Origin,
                 IsInteractive = IsInteractive(snapshot.Type ?? VisualElementType.Unknown, snapshot.States ?? VisualElementStates.None),
             };
             if (status is not null)
@@ -581,7 +581,7 @@ public static class VisualContextSnapshotter
             var type = node.Snapshot.Type ?? VisualElementType.Unknown;
             switch (work.Direction)
             {
-                case VisualContextTraverseDirections.Core:
+                case VisualContextTraverseDirections.Origin:
                     if (type != VisualElementType.TopLevel)
                     {
                         TryCreateRelation(work, VisualElementRelation.Parent, VisualContextTraverseDirections.Parent, work.Distance.Step());
@@ -623,7 +623,7 @@ public static class VisualContextSnapshotter
                 return;
             }
 
-            var offset = previous.Direction == VisualContextTraverseDirections.Core ? relationOffset : 0;
+            var offset = previous.Direction == VisualContextTraverseDirections.Origin ? relationOffset : 0;
             var enumerator = previous.Observation.Element.CreateEnumerator(
                 relation,
                 _structuralQueryRequest,

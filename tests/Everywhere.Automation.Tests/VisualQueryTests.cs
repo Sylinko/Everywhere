@@ -39,7 +39,7 @@ public sealed class VisualQueryTests
             ],
         };
         using var turn = backend.Context.BeginTurn();
-        var request = new VisualQueryRequest { Directions = VisualContextTraverseDirections.Core };
+        var request = new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin };
 
         var exception = Assert.ThrowsAsync<NotSupportedException>(async () =>
             await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default));

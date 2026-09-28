@@ -16,6 +16,9 @@ namespace Everywhere.Mac.Interop;
 
 public sealed class WindowHelper : IWindowHelper
 {
+    private readonly ConditionalWeakTable<Window, WindowPropertiesState> _windowProperties = new();
+    private readonly HashSet<int> _overlayWindowNumbers = [];
+
     private int OpenedWindowCount
     {
         get;
@@ -64,51 +67,96 @@ public sealed class WindowHelper : IWindowHelper
 
     private void HandleWindowOpened(Window window, RoutedEventArgs args)
     {
-        if (window is not ChatWindow) OpenedWindowCount++;
+        // Passive effect windows must not switch the application away from Accessory mode,
+        // because that mode is part of keeping overlays visible over other apps' full-screen spaces.
+        if (window is not ChatWindow and not VisualElementEffectWindow) OpenedWindowCount++;
+
+        if (_windowProperties.TryGetValue(window, out var properties) && GetNativeWindow(window) is { } nativeWindow)
+        {
+            ApplyWindowProperties(nativeWindow, properties);
+        }
 
         ApplyNativeBackdrop(window);
     }
 
     private void HandleWindowClosed(Window window, RoutedEventArgs args)
     {
-        if (window is not ChatWindow) OpenedWindowCount--;
+        if (window is not ChatWindow and not VisualElementEffectWindow) OpenedWindowCount--;
+        if (GetNativeWindow(window) is { } nativeWindow)
+        {
+            _overlayWindowNumbers.Remove((int)nativeWindow.WindowNumber);
+        }
     }
 
     /// <summary>
-    /// Sets whether the window can become the key window (i.e., receive keyboard focus).
+    /// Sets the native input and z-order properties of a window.
     /// </summary>
-    /// <param name="window">The Avalonia window.</param>
-    /// <param name="focusable">True to allow focus, false to prevent it.</param>
-    public void SetFocusable(Window window, bool focusable)
+    public void SetWindowProperties(
+        Window window,
+        bool? focusable = null,
+        bool? hitTestVisible = null,
+        WindowLayer? layer = null)
     {
-        // We need to NonactivatingPanel, but only NSPanel supports that.
-        // So we cannot implement currently.
+        if (focusable is null && hitTestVisible is null && layer is null) return;
+
+        var properties = _windowProperties.GetValue(window, static _ => new WindowPropertiesState());
+        if (hitTestVisible.HasValue) properties.IsHitTestVisible = hitTestVisible;
+        if (layer.HasValue) properties.Layer = layer;
+
+        if (focusable is { } isFocusable) window.Focusable = isFocusable;
+        if (hitTestVisible is { } isHitTestVisible) window.IsHitTestVisible = isHitTestVisible;
+        if (layer is { } windowLayer) window.Topmost = windowLayer >= WindowLayer.Topmost;
+        if (GetNativeWindow(window) is not { } nativeWindow) return;
+
+        ApplyWindowProperties(nativeWindow, properties);
     }
 
-    /// <summary>
-    /// Sets whether the window is transparent to mouse events.
-    /// </summary>
-    /// <param name="window">The Avalonia window.</param>
-    /// <param name="visible">True to make it receive mouse events, false to let them pass through.</param>
-    public void SetHitTestVisible(Window window, bool visible)
+    private void ApplyWindowProperties(NSWindow nativeWindow, WindowPropertiesState properties)
+    {
+        // This is the direct equivalent of WS_EX_TRANSPARENT on Windows.
+        if (properties.IsHitTestVisible is { } isHitTestVisible)
+            nativeWindow.IgnoresMouseEvents = !isHitTestVisible;
+
+        if (properties.Layer is not { } layer) return;
+        if (layer >= WindowLayer.Overlay)
+        {
+            _overlayWindowNumbers.Add((int)nativeWindow.WindowNumber);
+        }
+        else
+        {
+            _overlayWindowNumbers.Remove((int)nativeWindow.WindowNumber);
+        }
+
+        if (layer >= WindowLayer.Overlay)
+        {
+            nativeWindow.CollectionBehavior |=
+                NSWindowCollectionBehavior.CanJoinAllSpaces |
+                NSWindowCollectionBehavior.FullScreenAuxiliary;
+            nativeWindow.CollectionBehavior &=
+                ~(NSWindowCollectionBehavior.FullScreenPrimary |
+                    NSWindowCollectionBehavior.FullScreenNone |
+                    NSWindowCollectionBehavior.Managed);
+        }
+
+        ApplyWindowLayer(nativeWindow, layer);
+    }
+
+    public void RaiseWindow(Window window)
     {
         if (GetNativeWindow(window) is not { } nativeWindow) return;
 
-        // This is the direct equivalent of WS_EX_TRANSPARENT on Windows.
-        nativeWindow.IgnoresMouseEvents = !visible;
-
-        // Special handling to ensure it remains interactive in full screen mode.
-        nativeWindow.CollectionBehavior |=
-            NSWindowCollectionBehavior.CanJoinAllSpaces |
-            NSWindowCollectionBehavior.FullScreenAuxiliary;
-        nativeWindow.CollectionBehavior &=
-            ~(NSWindowCollectionBehavior.FullScreenPrimary |
-                NSWindowCollectionBehavior.Managed);
-
-        if (window is VisualElementEffectWindow)
+        var layer = _windowProperties.TryGetValue(window, out var properties) && properties.Layer is { } configuredLayer ?
+            configuredLayer :
+            window.Topmost ?
+                WindowLayer.Topmost :
+                WindowLayer.Normal;
+        if ((int)layer >= (int)WindowLayer.Overlay)
         {
-            nativeWindow.Level = NSWindowLevel.ScreenSaver + 1;
+            _overlayWindowNumbers.Add((int)nativeWindow.WindowNumber);
         }
+
+        ApplyWindowLayer(nativeWindow, layer);
+        nativeWindow.OrderFrontRegardless();
     }
 
     /// <summary>
@@ -127,6 +175,87 @@ public sealed class WindowHelper : IWindowHelper
         var isOccluded = (nativeWindow.OcclusionState & NSWindowOcclusionState.Visible) == 0;
 
         return isVisible && !isOccluded;
+    }
+
+    public bool? IsRegionCovered(Window window, PixelRect bounds)
+    {
+        if (GetNativeWindow(window) is not { } nativeWindow || bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return null;
+        }
+
+        var windowInfoPointer = CGInterop.CGWindowListCopyWindowInfo(CGWindowListOption.OnScreenOnly, 0);
+        if (windowInfoPointer == 0) return null;
+
+        try
+        {
+            var windowInfo = Runtime.GetNSObject<NSArray>(windowInfoPointer);
+            if (windowInfo is null) return null;
+
+            using var numberKey = new NSString("kCGWindowNumber");
+            using var boundsKey = new NSString("kCGWindowBounds");
+            using var alphaKey = new NSString("kCGWindowAlpha");
+            using var xKey = new NSString("X");
+            using var yKey = new NSString("Y");
+            using var widthKey = new NSString("Width");
+            using var heightKey = new NSString("Height");
+
+            var targetWindowNumber = (int)nativeWindow.WindowNumber;
+            var samplePoints = CreateSamplePoints(bounds);
+            for (nuint i = 0; i < windowInfo.Count; i++)
+            {
+                var dictionary = windowInfo.GetItem<NSDictionary>(i);
+                if (dictionary is null ||
+                    !dictionary.TryGetValue(numberKey, out var numberObject) ||
+                    numberObject is not NSNumber number)
+                {
+                    continue;
+                }
+
+                var windowNumber = number.Int32Value;
+                if (windowNumber == targetWindowNumber) return true;
+                if (_overlayWindowNumbers.Contains(windowNumber)) continue;
+
+                if (dictionary.TryGetValue(alphaKey, out var alphaObject) &&
+                    alphaObject is NSNumber { DoubleValue: <= 0d })
+                {
+                    continue;
+                }
+
+                if (!dictionary.TryGetValue(boundsKey, out var boundsObject) ||
+                    boundsObject is not NSDictionary boundsDictionary ||
+                    !boundsDictionary.TryGetValue(xKey, out var xObject) || xObject is not NSNumber x ||
+                    !boundsDictionary.TryGetValue(yKey, out var yObject) || yObject is not NSNumber y ||
+                    !boundsDictionary.TryGetValue(widthKey, out var widthObject) || widthObject is not NSNumber width ||
+                    !boundsDictionary.TryGetValue(heightKey, out var heightObject) || heightObject is not NSNumber height)
+                {
+                    continue;
+                }
+
+                var candidateBounds = new CGRect(x.DoubleValue, y.DoubleValue, width.DoubleValue, height.DoubleValue);
+                if (samplePoints.Any(candidateBounds.Contains)) return false;
+            }
+
+            return null;
+        }
+        finally
+        {
+            CFInterop.CFRelease(windowInfoPointer);
+        }
+    }
+
+    private static CGPoint[] CreateSamplePoints(PixelRect bounds)
+    {
+        var insetX = Math.Min(4, Math.Max(0, bounds.Width / 4));
+        var insetY = Math.Min(4, Math.Max(0, bounds.Height / 4));
+        return
+        [
+            new CGPoint(bounds.Center.X, bounds.Center.Y),
+            new CGPoint(bounds.X + insetX, bounds.Y + insetY),
+            new CGPoint(bounds.Right - insetX - 1, bounds.Y + insetY),
+            new CGPoint(bounds.X + insetX, bounds.Bottom - insetY - 1),
+            new CGPoint(bounds.Right - insetX - 1, bounds.Bottom - insetY - 1)
+        ];
     }
 
     /// <summary>
@@ -222,7 +351,7 @@ public sealed class WindowHelper : IWindowHelper
             // for ChatWindow, disallow closing
             nativeWindow.StyleMask &= ~NSWindowStyle.Closable;
         }
-        else
+        else if (window is not VisualElementEffectWindow)
         {
             // for other windows, disable fullscreen
             nativeWindow.CollectionBehavior |= NSWindowCollectionBehavior.FullScreenNone;
@@ -236,6 +365,18 @@ public sealed class WindowHelper : IWindowHelper
     private static NSWindow? GetNativeWindow(Window window)
     {
         return window.TryGetPlatformHandle()?.Handle is { } handle ? Runtime.GetNSObject<NSWindow>(handle) : null;
+    }
+
+    private static void ApplyWindowLayer(NSWindow nativeWindow, WindowLayer layer)
+    {
+        var value = (int)layer;
+        nativeWindow.Level = value switch
+        {
+            (int)WindowLayer.Normal => NSWindowLevel.Normal,
+            >= (int)WindowLayer.Overlay => NSWindowLevel.ScreenSaver + value - (int)WindowLayer.Overlay,
+            >= (int)WindowLayer.Topmost => NSWindowLevel.Floating + value - (int)WindowLayer.Topmost,
+            _ => throw new ArgumentOutOfRangeException(nameof(layer), layer, null),
+        };
     }
 
     private static void ApplyNativeBackdrop(Window window)
@@ -279,6 +420,13 @@ public sealed class WindowHelper : IWindowHelper
         }
 
         return null;
+    }
+
+    private sealed class WindowPropertiesState
+    {
+        public WindowLayer? Layer { get; set; }
+
+        public bool? IsHitTestVisible { get; set; }
     }
 
     private sealed class WindowFrameModifier : IDisposable
@@ -333,16 +481,22 @@ public sealed class WindowHelper : IWindowHelper
             _subscriptions.Add(_window.GetObservable(Visual.IsVisibleProperty).Subscribe(_ => Update()));
             _subscriptions.Add(NSWindow.Notifications.ObserveDidResize(_nativeWindow, (_, _) => Update()));
             _subscriptions.Add(NSWindow.Notifications.ObserveWillClose(_nativeWindow, (_, _) => Dispose()));
-            _subscriptions.Add(NSWindow.Notifications.ObserveWillEnterFullScreen(_nativeWindow, (_, _) =>
-            {
-                _isFullScreen = true;
-                Update();
-            }));
-            _subscriptions.Add(NSWindow.Notifications.ObserveDidExitFullScreen(_nativeWindow, (_, _) =>
-            {
-                _isFullScreen = false;
-                Update();
-            }));
+            _subscriptions.Add(
+                NSWindow.Notifications.ObserveWillEnterFullScreen(
+                    _nativeWindow,
+                    (_, _) =>
+                    {
+                        _isFullScreen = true;
+                        Update();
+                    }));
+            _subscriptions.Add(
+                NSWindow.Notifications.ObserveDidExitFullScreen(
+                    _nativeWindow,
+                    (_, _) =>
+                    {
+                        _isFullScreen = false;
+                        Update();
+                    }));
 
             Update();
         }

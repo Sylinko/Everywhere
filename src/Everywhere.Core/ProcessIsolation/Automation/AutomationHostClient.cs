@@ -160,6 +160,33 @@ public class RemoteVisualContext : RpcSafeHandle
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Queries one retained Agent target and delivers owned scan captures before returning the final projection.</summary>
+    public async ValueTask<AutomationVisualQueryResponse> QueryTargetWithCapturesAsync(
+        int targetId,
+        VisualContextTraverseDirections directions,
+        int offset,
+        int limit,
+        int targetTokenBudget,
+        Action<IVisualElementCapture> captureReceiver,
+        CancellationToken cancellationToken = default)
+    {
+        using var lease = AcquireLease();
+        return await ReceiveQueryAsync(
+            _rpc.QueryTargetWithCapturesAsync(
+                new QueryAutomationTargetRequest
+                {
+                    ContextId = lease.ResourceId,
+                    TargetId = targetId,
+                    Directions = directions,
+                    Offset = offset,
+                    Limit = limit,
+                    TargetTokenBudget = targetTokenBudget,
+                },
+                cancellationToken),
+            captureReceiver,
+            cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Reads one bounded text page from a retained Agent target.</summary>
     public async ValueTask<string> ReadTextAsync(
         int targetId,
@@ -338,6 +365,53 @@ public class RemoteVisualContext : RpcSafeHandle
         }
     }
 
+    /// <summary>Builds from pre-publication anchors and delivers owned scan captures before returning the final projection.</summary>
+    public async ValueTask<AutomationVisualQueryResponse> BuildAnchorsWithCapturesAsync(
+        IReadOnlyList<RemoteVisualAnchor> anchors,
+        VisualContextTraverseDirections directions,
+        int maximumNodes,
+        int targetTokenBudget,
+        Action<IVisualElementCapture> captureReceiver,
+        CancellationToken cancellationToken = default)
+    {
+        using var contextLease = AcquireLease();
+        var anchorIds = new long[anchors.Count];
+        var anchorLeases = new List<RpcSafeHandleLease>(anchors.Count);
+        try
+        {
+            for (var index = 0; index < anchors.Count; index++)
+            {
+                var anchor = anchors[index];
+                if (!ReferenceEquals(anchor.Context, this))
+                {
+                    throw new ArgumentException("Every anchor must belong to this remote visual Context.", nameof(anchors));
+                }
+
+                var anchorLease = anchor.AcquireLease();
+                anchorLeases.Add(anchorLease);
+                anchorIds[index] = anchorLease.ResourceId;
+            }
+
+            return await ReceiveQueryAsync(
+                _rpc.BuildAnchorsWithCapturesAsync(
+                    new BuildAutomationAnchorsRequest
+                    {
+                        ContextId = contextLease.ResourceId,
+                        AnchorIds = anchorIds,
+                        Directions = directions,
+                        MaximumNodes = maximumNodes,
+                        TargetTokenBudget = targetTokenBudget,
+                    },
+                    cancellationToken),
+                captureReceiver,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            foreach (var anchorLease in anchorLeases) anchorLease.Dispose();
+        }
+    }
+
     /// <summary>Captures one retained Agent target as an owned raw bitmap.</summary>
     public async ValueTask<IVisualElementCapture> CaptureTargetAsync(int targetId, CancellationToken cancellationToken = default)
     {
@@ -441,55 +515,169 @@ public class RemoteVisualContext : RpcSafeHandle
         CaptureAutomationVisualRequest request,
         CancellationToken cancellationToken)
     {
-        AutomationCaptureHeader? header = null;
-        byte[]? data = null;
-        var offset = 0;
-        await foreach (var frame in _rpc.CaptureAsync(request, cancellationToken).ConfigureAwait(false))
+        var assembler = new CaptureStreamAssembler();
+        RemoteVisualElementCapture? result = null;
+        try
         {
+            await foreach (var frame in _rpc.CaptureAsync(request, cancellationToken).ConfigureAwait(false))
+            {
+                if (result is not null)
+                {
+                    throw new InvalidDataException("The Automation capture stream contains data after its completed capture.");
+                }
+
+                switch (frame)
+                {
+                    case AutomationCaptureHeader header:
+                    {
+                        assembler.Begin(header);
+                        break;
+                    }
+                    case AutomationCaptureChunk chunk:
+                    {
+                        result = assembler.Append(chunk);
+                        break;
+                    }
+                    default:
+                    {
+                        throw new InvalidDataException($"The Automation capture stream contains an unsupported frame type '{frame.GetType().Name}'.");
+                    }
+                }
+            }
+
+            assembler.EnsureNoIncompleteCapture();
+            return result ?? throw new InvalidDataException("The Automation capture stream did not contain a complete capture.");
+        }
+        catch
+        {
+            result?.Dispose();
+            throw;
+        }
+    }
+
+    private static async ValueTask<AutomationVisualQueryResponse> ReceiveQueryAsync(
+        IAsyncEnumerable<AutomationVisualQueryFrame> frames,
+        Action<IVisualElementCapture> captureReceiver,
+        CancellationToken cancellationToken)
+    {
+        var assembler = new CaptureStreamAssembler();
+        AutomationVisualQueryResponse? result = null;
+
+        await foreach (var frame in frames.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            if (result is not null)
+            {
+                var message = frame is AutomationVisualQueryResultFrame ?
+                    "The Automation query stream contains more than one result." :
+                    "The Automation query stream contains data after its final result.";
+                throw new InvalidDataException(message);
+            }
+
             switch (frame)
             {
-                case AutomationCaptureHeader captureHeader when header is null:
+                case AutomationVisualQueryCaptureFrame { Capture: AutomationCaptureHeader header }:
                 {
-                    if (captureHeader.PixelWidth is <= 0 or > IVisualElementCapture.MaximumDimension ||
-                        captureHeader.PixelHeight is <= 0 or > IVisualElementCapture.MaximumDimension ||
-                        captureHeader.Stride <= 0 ||
-                        captureHeader.DataLength != checked(captureHeader.Stride * captureHeader.PixelHeight))
-                    {
-                        throw new InvalidDataException("The Automation capture header contains inconsistent bitmap dimensions.");
-                    }
-
-                    header = captureHeader;
-                    data = new byte[captureHeader.DataLength];
+                    assembler.Begin(header);
                     break;
                 }
-                case AutomationCaptureHeader:
+                case AutomationVisualQueryCaptureFrame { Capture: AutomationCaptureChunk chunk }:
                 {
-                    throw new InvalidDataException("The Automation capture stream contains more than one header.");
-                }
-                case AutomationCaptureChunk chunk when data is not null:
-                {
-                    if (offset > data.Length - chunk.Data.Length)
-                    {
-                        throw new InvalidDataException("The Automation capture stream exceeds its declared data length.");
-                    }
-
-                    chunk.Data.CopyTo(data, offset);
-                    offset += chunk.Data.Length;
+                    var capture = assembler.Append(chunk);
+                    if (capture is not null) DeliverCapture(capture);
                     break;
                 }
-                case AutomationCaptureChunk:
+                case AutomationVisualQueryCaptureFrame captureFrame:
                 {
-                    throw new InvalidDataException("The Automation capture stream started with pixel data instead of a header.");
+                    var frameType = captureFrame.Capture.GetType().Name;
+                    throw new InvalidDataException($"The Automation query stream contains an unsupported capture frame type '{frameType}'.");
+                }
+                case AutomationVisualQueryResultFrame resultFrame:
+                {
+                    assembler.EnsureNoIncompleteCapture();
+                    result = resultFrame.Result ?? throw new InvalidDataException("The Automation query stream contains an empty final result.");
+                    break;
                 }
                 default:
                 {
-                    throw new InvalidDataException($"The Automation capture stream contains an unsupported frame type '{frame.GetType().Name}'.");
+                    throw new InvalidDataException($"The Automation query stream contains an unsupported frame type '{frame.GetType().Name}'.");
                 }
             }
+
         }
 
-        if (header is null || data is null) throw new InvalidDataException("The Automation capture stream did not contain a header.");
-        if (offset != data.Length) throw new InvalidDataException("The Automation capture stream ended before its declared data length.");
-        return new RemoteVisualElementCapture(header, data);
+        assembler.EnsureNoIncompleteCapture();
+        return result ?? throw new InvalidDataException("The Automation query stream ended without a final result.");
+
+        void DeliverCapture(RemoteVisualElementCapture completedCapture)
+        {
+            var capture = completedCapture;
+            try
+            {
+                captureReceiver(capture);
+                capture = null;
+            }
+            finally
+            {
+                capture?.Dispose();
+            }
+        }
+    }
+
+    private sealed class CaptureStreamAssembler
+    {
+        private AutomationCaptureHeader? _header;
+        private byte[]? _data;
+        private int _offset;
+
+        public void Begin(AutomationCaptureHeader header)
+        {
+            if (_header is not null)
+            {
+                throw new InvalidDataException("The Automation capture stream contains a new header before completing the current capture.");
+            }
+
+            if (header.PixelWidth is <= 0 or > IVisualElementCapture.MaximumDimension ||
+                header.PixelHeight is <= 0 or > IVisualElementCapture.MaximumDimension ||
+                header.Stride <= 0 ||
+                header.DataLength != checked(header.Stride * header.PixelHeight))
+            {
+                throw new InvalidDataException("The Automation capture header contains inconsistent bitmap dimensions.");
+            }
+
+            _header = header;
+            _data = new byte[header.DataLength];
+            _offset = 0;
+        }
+
+        public RemoteVisualElementCapture? Append(AutomationCaptureChunk chunk)
+        {
+            if (_header is null || _data is null)
+            {
+                throw new InvalidDataException("The Automation capture stream started with pixel data instead of a header.");
+            }
+
+            if (_offset > _data.Length - chunk.Data.Length)
+            {
+                throw new InvalidDataException("The Automation capture stream exceeds its declared data length.");
+            }
+
+            chunk.Data.CopyTo(_data, _offset);
+            _offset += chunk.Data.Length;
+            if (_offset != _data.Length) return null;
+
+            var capture = new RemoteVisualElementCapture(_header, _data);
+            _header = null;
+            _data = null;
+            _offset = 0;
+            return capture;
+        }
+
+        public void EnsureNoIncompleteCapture()
+        {
+            if (_header is not null)
+            {
+                throw new InvalidDataException("The Automation capture stream ended before its declared data length.");
+            }
+        }
     }
 }

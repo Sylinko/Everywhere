@@ -43,6 +43,7 @@ public sealed partial class ChatService : IChatService
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
     private readonly ChatVisualService _visualService;
+    private readonly IVisualContextScanEffect _visualContextScanEffect;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ChatService> _logger;
     private readonly AsyncLocal<Guid?> _currentTurnEventId = new();
@@ -70,6 +71,7 @@ public sealed partial class ChatService : IChatService
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
         ChatVisualService visualService,
+        IVisualContextScanEffect visualContextScanEffect,
         IServiceProvider serviceProvider,
         ILogger<ChatService> logger)
     {
@@ -83,6 +85,7 @@ public sealed partial class ChatService : IChatService
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
         _visualService = visualService;
+        _visualContextScanEffect = visualContextScanEffect;
         _serviceProvider = serviceProvider;
         _logger = logger;
 
@@ -386,11 +389,14 @@ public sealed partial class ChatService : IChatService
 
             if (anchors.Count == 0) return;
 
+            using var scanScope = _visualContextScanEffect.Begin(cancellationToken);
             var (visualContextId, response) = await _visualService.BuildAnchorsAsync(
                 chatContext.VisualState,
                 anchors,
                 targetTokenBudget: approximateTokenLimit,
+                scanScope: scanScope,
                 cancellationToken: cancellationToken);
+            scanScope.Complete();
             validAttachments[0].Content = new PromptText(response.Content);
             for (var index = 1; index < validAttachments.Count; index++) validAttachments[index].Content = null;
             if (response.RepresentedTargetCount > 0) userChatMessage.VisualContextId = visualContextId;

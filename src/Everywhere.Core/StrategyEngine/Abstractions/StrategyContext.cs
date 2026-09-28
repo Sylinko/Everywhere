@@ -11,7 +11,6 @@ public sealed class StrategyContext
 {
     /// <summary>
     /// User-provided attachments (files, text selections, visual elements).
-    /// Use <see cref="ChatAttachment.IsPrimary"/> to identify focused items (0 or more).
     /// </summary>
     public required IReadOnlyList<ChatAttachment> Attachments { get; init; }
 

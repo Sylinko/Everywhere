@@ -220,6 +220,15 @@ public sealed class X11WindowManager(ILogger logger, X11Context context, X11Core
         }
     }
 
+    public void RaiseWindow(X11Window window)
+    {
+        context.InvokeSync(() =>
+        {
+            X11Native.XRaiseWindow(context.Display, window);
+            context.XFlush();
+        });
+    }
+
     public void SetOverrideRedirect(X11Window window, bool redirect)
     {
         try

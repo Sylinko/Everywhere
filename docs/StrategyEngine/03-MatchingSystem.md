@@ -180,6 +180,8 @@ Base context is collected from data already available to Everywhere or cheap pla
 
 The existing `StrategyContext.FromAttachments(...)` can be retained but should be expanded or wrapped so matching is not attachment-only.
 
+Construct query contexts from all available visual attachments in input order and deduplicate shared visual roots. Attachments from different processes can participate in the same evaluation.
+
 Recommended target:
 
 ```csharp
@@ -421,6 +423,15 @@ Evaluation:
 5. `visual.count` returns `true` if result count is within range, otherwise `false`.
 6. `visual.match` selects attribute values and applies normal operators.
 
+Multiple-attachment scope:
+
+1. For an attachment-relative query such as `.//TextEdit`, each live visual attachment supplies an initial context node. `.` means the context node for that query evaluation.
+2. Root-scoped queries run against the distinct visual roots derived from the available attachments.
+3. Combine results across contexts and deduplicate elements by their visual identity. `visual.exists` tests the combined result, `visual.count` counts distinct elements, and `visual.match` succeeds when a selected value satisfies its operators.
+4. Preserve attachment order when visiting contexts and the query's traversal order within each context. Keep the first occurrence of a duplicate result.
+5. Share the query timeout and result limits across the whole evaluation. An unavailable or incomplete result follows the existing `null` and diagnostic rules.
+6. A known empty context collection is distinct from an unavailable context: its query result is empty, so `visual.exists` is false and `visual.count` compares zero with the requested range.
+
 ## 16. Visual Query DSL Scope
 
 The visual query DSL is XPath-like, not XPath.
@@ -431,7 +442,7 @@ Supported:
 | --- | --- |
 | `//Button` | Any descendant with visual type `Button`. |
 | `/TopLevel/Panel/Button` | Strict parent-child path. |
-| `.` | Current primary visual attachment. |
+| `.` | Current query context node; an attachment-relative query starts at each live visual attachment. |
 | `*` | Any visual type. |
 | `@name` | Read element name. |
 | `@text` | Read element text. |

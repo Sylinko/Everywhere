@@ -5,7 +5,6 @@ using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Serilog;
-using ZLinq;
 
 namespace Everywhere.Views;
 
@@ -28,10 +27,6 @@ public class VisualElementOverlayWindow : Window
         Background = null;
         Focusable = false;
         Topmost = true;
-
-        var windowHelper = ServiceLocator.Resolve<IWindowHelper>();
-        windowHelper.SetFocusable(this, false);
-        windowHelper.SetHitTestVisible(this, false);
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)

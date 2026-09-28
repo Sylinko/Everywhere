@@ -37,6 +37,8 @@ Confirmation includes the revision that was actually presented. The Host transfe
 
 Permission denial, timeout, unsupported-provider behavior, or element disappearance while resolving an update becomes a revisioned unavailable observation with a neutral failure kind. An equivalent failure at another picker boundary may arrive as a mapped exception. The picker UX may continue after these expected failures; transport loss resets the entire remote Context.
 
+Element selection and screenshot snapping share this observation path. Element confirmation transfers the retained candidate into a remote anchor. Screenshot confirmation uses only the copied observation bounds, releases the picker, and captures pixels in Main; free-form screenshot selection remains entirely Main-local. Mode changes invalidate older in-flight observations so a late snapped result cannot overwrite a newer mode or free-form rectangle.
+
 ## Exception transport
 
 The RPC frame always carries a stable error code and a diagnostic message. A connection may additionally register one application exception mapper. The mapper serializes selected failures into an application-owned MessagePack union payload stored in the error frame; mapped failures replace the remote exception text with a fixed transport message.

@@ -81,7 +81,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
     private DynamicLocaleKey GetElementDescription(VisualElementSnapshot? snapshot, VisualElementQueryFailureKind? failureKind)
     {
-        if (snapshot is null && failureKind is { } failure)
+        if (failureKind is { } failure)
         {
             var failureKey = failure switch
             {

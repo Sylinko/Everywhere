@@ -2,7 +2,7 @@
 
 ## 1. Responsibility
 
-`IVisualElementBackend` is the composition-local platform service for root acquisition and native resources. Agent-facing operations use the Automation Host session's Backend; Main may own a separate Backend for UI-only screenshot selection and selected-text detection. `VisualContext` is a separate platform-neutral identity and ownership domain. Chat Contexts live behind connection-scoped remote resources, while Main-only UI helpers use short-lived local Contexts. Neither type is a conversation Session, execution transaction, or native-call dispatcher.
+`IVisualElementBackend` is the composition-local platform service for root acquisition and native resources. Accessibility acquisition, including interactive screenshot snapping, uses the Automation Host session's Backend. Main owns final screenshot pixels, free-form rectangle selection, and selected-text detection. `VisualContext` is a separate platform-neutral identity and ownership domain. Chat and acquisition Contexts live behind connection-scoped remote resources. Neither type is a conversation Session, execution transaction, or native-call dispatcher.
 
 The current neutral responsibility is deliberately narrow:
 
@@ -27,7 +27,7 @@ public interface IVisualElementBackend
 }
 ```
 
-Locator answers where acquisition begins; `Default` deliberately supplies no anchor. Resolution answers whether the result is the direct element, its nearest TopLevel, or its containing Screen; with `Default`, it instead selects the platform-default object at that same level. Resolution defaults to Direct, and an omitted scalar request means `VisualElementQueryRequest.Default`. The Backend is registered once in each owning composition. Each connection-scoped Host resource constructs and owns its own neutral `VisualContext`; it is not resolved from dependency injection. Releasing that remote resource disposes the conversation's elements and targets. Draining the authenticated Host session then disposes its concrete Backend and shared services. Main's UI-only services instead create and dispose transient local Contexts against Main's Backend. A Backend and its shared clients must not retain Contexts, Retentions, Elements, or callbacks that capture them after the owning Context is released.
+Locator answers where acquisition begins; `Default` deliberately supplies no anchor. Resolution answers whether the result is the direct element, its nearest TopLevel, or its containing Screen; with `Default`, it instead selects the platform-default object at that same level. Resolution defaults to Direct, and an omitted scalar request means `VisualElementQueryRequest.Default`. The Backend is registered once in each owning Host composition. Each connection-scoped Host resource constructs and owns its own neutral `VisualContext`; it is not resolved from dependency injection. Releasing that remote resource disposes the conversation's elements and targets. Draining the authenticated Host session then disposes its concrete Backend and shared services. A Backend and its shared clients must not retain Contexts, Retentions, Elements, or callbacks that capture them after the owning Context is released.
 
 The Backend is platform-wide, not provider-specific. Windows root acquisition may return a Win32 Screen element or a UI Automation element. macOS may eventually return NSScreen-, Application-, TopLevel-, or AX-backed elements. Concrete element types retain honest native behavior after acquisition and store the Context selected by the acquisition retention.
 

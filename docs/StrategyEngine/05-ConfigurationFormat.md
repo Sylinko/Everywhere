@@ -337,9 +337,10 @@ attachments.files[].mimeType
 attachments.files[].extension
 attachments.selection.text
 attachments.text
-attachments.visual.primary
 attachments.visual.items
 ```
+
+`attachments.visual.items` contains visual attachments in input order. Use collection operators to express which items or how many items are required.
 
 Examples:
 
@@ -355,6 +356,25 @@ attachments.files:
     extension:
       equals: ".png"
 ```
+
+Require one or more visual attachments:
+
+```yaml
+attachments.visual.items:
+  count:
+    min: 1
+```
+
+Require exactly one visual attachment when the operation only supports one input:
+
+```yaml
+attachments.visual.items:
+  count:
+    min: 1
+    max: 1
+```
+
+Preprocessors validate their input requirements again against the execution snapshot when the user sends the request.
 
 ## 13. Clipboard Paths
 
@@ -511,6 +531,8 @@ visual.match:
 
 The query must select attribute values. The rest of the object uses normal string/numeric/bool operators.
 
+Visual queries use all applicable attachment contexts. Attachment-relative queries start at each live visual attachment; root-scoped queries use distinct attachment-derived roots. Results are combined with element deduplication: `visual.exists` tests for any match, `visual.count` counts distinct elements, and `visual.match` tests selected values across the result. Ordering, budgets, and unavailable-context behavior follow [Matching System, Visual Query Conditions](03-MatchingSystem.md#15-visual-query-conditions).
+
 ## 18. Visual Query Syntax
 
 Supported examples:
@@ -531,7 +553,7 @@ Supported concepts:
 | --- | --- |
 | `//Type` | Descendant search by visual element type. |
 | `/` | Strict parent-child step. |
-| `.` | Current primary visual element. |
+| `.` | Current query context node; an attachment-relative query starts at each live visual attachment. |
 | `*` | Any element type. |
 | `@name` | Name attribute. |
 | `@text` | Text content, read only when explicitly requested. |
@@ -548,6 +570,8 @@ Supported concepts:
 | `@bounds.height` | Bounds height. |
 | `contains(@name,'x')` | String contains. |
 | `matches(@text,'regex')` | Regex match. |
+
+`@focused` reads a visual element's platform-reported focus state and can be used as a query filter.
 
 Not supported in v1:
 
