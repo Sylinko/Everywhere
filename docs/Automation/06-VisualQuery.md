@@ -11,9 +11,10 @@ The implemented tool name is `query_visual`. Its kernel request contains:
 - one published integer visual element ID;
 - traversal directions appropriate to the requested neighborhood;
 - a zero-based offset into each requested initial relation;
-- a clamped result limit.
+- a clamped result limit;
+- whether represented elements should include bounding boxes.
 
-The current defaults are `directions=all`, `offset=0`, and `limit=128`; limits above 256 are clamped. Offset zero begins with the first child or the immediately adjacent sibling. A positive offset skips that many results before the first returned relation item. When several directions are requested, the same offset is applied independently to each relation originating at the target. Relations recursively opened from returned nodes begin at zero. Tree continuation follows returned IDs and issues another query with the relation and offset needed by that call.
+The current defaults are `directions=all`, `offset=0`, `limit=128`, and `boxes=false`; limits above 256 are clamped. Offset zero begins with the first child or the immediately adjacent sibling. A positive offset skips that many results before the first returned relation item. When several directions are requested, the same offset is applied independently to each relation originating at the target. Relations recursively opened from returned nodes begin at zero. Tree continuation follows returned IDs and issues another query with the relation and offset needed by that call.
 
 Offset is a logical request, not a portable implementation ceiling. macOS can seek into indexed AX child collections directly. Windows UI Automation tree walking is sequential and may stop at a platform work limit before reaching a large offset. Such a boundary is returned as a typed `LimitReached` failure with Agent-facing detail; it is not advertised as a universal tool argument restriction.
 
@@ -61,6 +62,10 @@ The syntax is deliberately not valid XML:
 
 Only retrieval-relevant information is emitted. Normal `query_visual` output does not include a `complete` field, speculative action capabilities, implementation priority, PID, native handles, or a full state bitmask. The dedicated `list_windows` discovery result may include PID and process name, but still exposes only the published target ID as an address. Salient non-default states may appear as flags such as `focused`, `disabled`, `selected`, `readOnly`, `password`, or `offscreen`.
 
+When `boxes=true`, every represented Element or Composite with observed bounds includes `box=x,y,width,height`. A Composite box is the union of its observed member boxes and can include empty space between members; it is descriptive coverage rather than a promised clickable region. Missing provider bounds are omitted instead of becoming a zero rectangle. When `boxes=false`, structural query output omits all box attributes. Values use the platform desktop coordinate space: desktop pixels on Windows and X11, and desktop points on macOS. Multi-display origins may be negative. Box attributes are present during final token allocation, so their cost participates in the same result budget and target-publication decision as other attributes.
+
+Other model-facing projections, including visual attachments, omit boxes by default. Diagnostic visual-tree export enables them explicitly. `query_visual` follows its `boxes` argument and does not affect Snapshot acquisition, scan-image placement, capture bounds, or native traversal.
+
 `status` remains an attribute because it contains bounded diagnostic information rather than a Boolean fact. An incomplete body uses one structured `textLength=shown/total` attribute. Both numbers describe UTF-16 code units:
 
 - `textLength=800/12000` means the exact total is 12,000;
@@ -101,6 +106,8 @@ For an Element target, the handler may:
 If a target does not expose the requested relation, the operation reports an ordinary unsupported result. The tool description does not teach internal target categories or list special prohibitions. Composite text remains available through `read_visual_text`; structural inspection does not expose its retained source members.
 
 Element scalar query, relation enumeration, image Snapshot, and actions remain receiver-centered platform operations. High-level orchestration belongs to the VisualQuery handler, Snapshotter, merged prompt builder, and any optional UI/input guard.
+
+Main carries one complete `VisualQueryRequest` through its visual service, remote Context, and RPC boundary. Target, platform-default-root, and pre-publication-anchor RPC envelopes nest that MessagePack contract beside their identity data and output token budget. Automation Host passes the request unchanged into `VisualQuery.BuildAsync` for ordinary and scan-stream queries. `BuildAsync` consumes traversal, offset, node limit, and requested result fields; `VisualContextPromptOptions` contains only local prompt-budget and compression policy. Validation and future structural-query fields therefore stay at one execution boundary without parallel wire fields or hand-written mappings.
 
 ## 6. Structural Offset
 

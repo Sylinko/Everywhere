@@ -100,6 +100,28 @@ public sealed class VisualQueryTests
         });
     }
 
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task Execute_WhenBoundingBoxPolicyIsExplicit_ProjectsOnlyWhenRequested(bool includesBoundingBox)
+    {
+        using var backend = CreateBackend(new Window(new Text("first"), new Text("second")));
+        using var turn = backend.Context.BeginTurn();
+        var target = new ElementTarget { Element = backend.RootElement };
+        var request = new VisualQueryRequest
+        {
+            Directions = VisualContextTraverseDirections.Child,
+            IncludesBoundingBox = includesBoundingBox,
+        };
+
+        var rendered = (await new VisualQuery(backend.Context).ExecuteAsync(target, request, VisualContextPromptOptions.Default)).Content;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rendered, Does.Contain("<Composite"));
+            Assert.That(rendered.Split("box=", StringSplitOptions.None).Length - 1, Is.EqualTo(includesBoundingBox ? 2 : 0));
+        });
+    }
+
     private static ScenarioMockBackend CreateBackend(VisualControl root)
     {
         var scenario = Scenario.Define("visual-query", _ => root);

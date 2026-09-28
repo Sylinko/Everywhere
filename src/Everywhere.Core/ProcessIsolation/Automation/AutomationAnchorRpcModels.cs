@@ -195,16 +195,12 @@ public sealed partial class BuildAutomationAnchorsRequest
     [Key(1)]
     public required long[] AnchorIds { get; init; }
 
-    /// <summary>Relations observed around each anchor.</summary>
+    /// <summary>Complete bounded structural query applied to every anchor.</summary>
     [Key(2)]
-    public required VisualContextTraverseDirections Directions { get; init; }
-
-    /// <summary>Maximum admitted Snapshot nodes.</summary>
-    [Key(3)]
-    public required int MaximumNodes { get; init; }
+    public required VisualQueryRequest Query { get; init; }
 
     /// <summary>Approximate token budget for the final projection.</summary>
-    [Key(4)]
+    [Key(3)]
     public required int TargetTokenBudget { get; init; }
 }
 

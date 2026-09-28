@@ -30,7 +30,7 @@ public sealed record VisualContextPromptOptions
     /// </summary>
     public int MaximumCompositePreviewCharacters { get; init; } = 4_096;
 
-    internal void Validate()
+    public void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(TargetTokenBudget);
         ArgumentOutOfRangeException.ThrowIfLessThan(MinimumCompositeMemberCount, 2);

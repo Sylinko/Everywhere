@@ -103,14 +103,15 @@ public sealed class AutomationHostSessionTests
                 Assert.That(backend.LastMaxTextCharacters, Is.Zero);
             });
             using var anchorCapture = await context.CaptureAnchorAsync(anchor);
-            var initial = await context.BuildAnchorsAsync([anchor], directions: VisualContextTraverseDirections.Origin);
+            var initial = await context.BuildAnchorsAsync(
+                [anchor],
+                new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin });
             byte[]? scanCapture = null;
             PixelFormat? scanCaptureFormat = null;
             SKImage? scanImage = null;
             var streamed = await context.BuildAnchorsWithCapturesAsync(
                 [anchor],
-                VisualContextTraverseDirections.Origin,
-                maximumNodes: 16,
+                new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin, Limit = 16 },
                 targetTokenBudget: 4096,
                 captureReceiver: capture =>
                 {
@@ -129,6 +130,7 @@ public sealed class AutomationHostSessionTests
                 Assert.That(initial.Content, Does.Contain("id=1"));
                 Assert.That(initial.Content, Does.Contain("Root"));
                 Assert.That(initial.Content, Does.Contain("hello world"));
+                Assert.That(initial.Content, Does.Not.Contain("box="));
                 Assert.That(initial.RepresentedTargetCount, Is.EqualTo(1));
                 Assert.That(streamed.Content, Is.EqualTo(initial.Content));
                 Assert.That(streamed.RepresentedTargetCount, Is.EqualTo(initial.RepresentedTargetCount));
@@ -140,7 +142,13 @@ public sealed class AutomationHostSessionTests
         }
 
         await context.AdvanceTurnAsync();
-        var query = await context.QueryTargetAsync(1, directions: VisualContextTraverseDirections.Origin);
+        var query = await context.QueryTargetAsync(
+            1,
+            new VisualQueryRequest
+            {
+                Directions = VisualContextTraverseDirections.Origin,
+                IncludesBoundingBox = true,
+            });
         var text = await context.ReadTextAsync(1, limit: 5);
         using var targetCapture = await context.CaptureTargetAsync(1);
         await context.ExecuteActionsAsync(
@@ -154,6 +162,7 @@ public sealed class AutomationHostSessionTests
         Assert.Multiple(() =>
         {
             Assert.That(query.Content, Does.Contain("id=1"));
+            Assert.That(query.Content, Does.Contain("box=0,0,100,20"));
             Assert.That(text, Does.Contain("hello"));
             Assert.That(ReadCapture(targetCapture), Is.EqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
             Assert.That(backend.InvokeCount, Is.EqualTo(1));
@@ -206,8 +215,7 @@ public sealed class AutomationHostSessionTests
         var actual = Array.Empty<byte>();
         await context.BuildAnchorsWithCapturesAsync(
             [anchor],
-            VisualContextTraverseDirections.Origin,
-            maximumNodes: 16,
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin, Limit = 16 },
             targetTokenBudget: 4096,
             captureReceiver: capture =>
             {
@@ -615,7 +623,8 @@ public sealed class AutomationHostSessionTests
 
         // This exercises real duplex RPC with a deliberately blocked substitute Backend. It does
         // not cover platform UIA/AX behavior or native timeout handling.
-        var query = context.BuildDefaultAsync(directions: VisualContextTraverseDirections.Origin).AsTask();
+        var query = context.BuildDefaultAsync(
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin }).AsTask();
         int controlResponse;
         try
         {
@@ -652,9 +661,12 @@ public sealed class AutomationHostSessionTests
         var initial = await visualService.BuildAnchorsAsync(
             visualState,
             [oldAnchor],
-            directions: VisualContextTraverseDirections.Origin);
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin });
         Assert.That(initial.Value.RepresentedTargetCount, Is.EqualTo(1));
-        _ = await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Origin);
+        _ = await visualService.QueryTargetAsync(
+            visualState,
+            1,
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin });
 
         // Replacing this source exercises Main-side connection state without simulating a Host crash.
         await using var secondPair = await TestConnectionPair.CreateAsync();
@@ -667,7 +679,10 @@ public sealed class AutomationHostSessionTests
         await visualService.EnsureTurnAsync(visualState);
         var secondContextId = await visualService.GetCurrentContextIdAsync(visualState, CancellationToken.None);
         var staleQuery = Assert.ThrowsAsync<VisualContextResetException>(async () =>
-            await visualService.QueryTargetAsync(visualState, 1, directions: VisualContextTraverseDirections.Origin));
+            await visualService.QueryTargetAsync(
+                visualState,
+                1,
+                new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin }));
 
         Assert.Multiple(() =>
         {

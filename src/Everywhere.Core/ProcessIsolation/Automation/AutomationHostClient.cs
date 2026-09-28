@@ -172,9 +172,8 @@ public class RemoteVisualContext : RpcSafeHandle
 
     /// <summary>Acquires a platform-default root and returns the Host-built final visual projection.</summary>
     public async ValueTask<AutomationVisualQueryResponse> BuildDefaultAsync(
+        VisualQueryRequest request,
         VisualElementResolution resolution = VisualElementResolution.TopLevel,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int maximumNodes = VisualQueryRequest.DefaultLimit,
         int targetTokenBudget = 4096,
         CancellationToken cancellationToken = default)
     {
@@ -184,8 +183,7 @@ public class RemoteVisualContext : RpcSafeHandle
             {
                 ContextId = lease.ResourceId,
                 Resolution = resolution,
-                Directions = directions,
-                MaximumNodes = maximumNodes,
+                Query = request,
                 TargetTokenBudget = targetTokenBudget,
             },
             cancellationToken).ConfigureAwait(false);
@@ -194,9 +192,7 @@ public class RemoteVisualContext : RpcSafeHandle
     /// <summary>Queries one retained Agent target through the Host's existing VisualQuery pipeline.</summary>
     public async ValueTask<AutomationVisualQueryResponse> QueryTargetAsync(
         int targetId,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int offset = 0,
-        int limit = VisualQueryRequest.DefaultLimit,
+        VisualQueryRequest request,
         int targetTokenBudget = 4096,
         CancellationToken cancellationToken = default)
     {
@@ -206,9 +202,7 @@ public class RemoteVisualContext : RpcSafeHandle
             {
                 ContextId = lease.ResourceId,
                 TargetId = targetId,
-                Directions = directions,
-                Offset = offset,
-                Limit = limit,
+                Query = request,
                 TargetTokenBudget = targetTokenBudget,
             },
             cancellationToken).ConfigureAwait(false);
@@ -217,9 +211,7 @@ public class RemoteVisualContext : RpcSafeHandle
     /// <summary>Queries one retained Agent target and delivers owned scan captures before returning the final projection.</summary>
     public async ValueTask<AutomationVisualQueryResponse> QueryTargetWithCapturesAsync(
         int targetId,
-        VisualContextTraverseDirections directions,
-        int offset,
-        int limit,
+        VisualQueryRequest request,
         int targetTokenBudget,
         Action<IVisualElementCapture> captureReceiver,
         CancellationToken cancellationToken = default)
@@ -231,9 +223,7 @@ public class RemoteVisualContext : RpcSafeHandle
                 {
                     ContextId = lease.ResourceId,
                     TargetId = targetId,
-                    Directions = directions,
-                    Offset = offset,
-                    Limit = limit,
+                    Query = request,
                     TargetTokenBudget = targetTokenBudget,
                 },
                 cancellationToken),
@@ -380,8 +370,7 @@ public class RemoteVisualContext : RpcSafeHandle
     /// <summary>Builds final model-facing text from Context-owned pre-publication anchors.</summary>
     public async ValueTask<AutomationVisualQueryResponse> BuildAnchorsAsync(
         IReadOnlyList<RemoteVisualAnchor> anchors,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int maximumNodes = VisualQueryRequest.DefaultLimit,
+        VisualQueryRequest request,
         int targetTokenBudget = 4096,
         CancellationToken cancellationToken = default)
     {
@@ -408,8 +397,7 @@ public class RemoteVisualContext : RpcSafeHandle
                 {
                     ContextId = contextLease.ResourceId,
                     AnchorIds = anchorIds,
-                    Directions = directions,
-                    MaximumNodes = maximumNodes,
+                    Query = request,
                     TargetTokenBudget = targetTokenBudget,
                 },
                 cancellationToken).ConfigureAwait(false);
@@ -423,8 +411,7 @@ public class RemoteVisualContext : RpcSafeHandle
     /// <summary>Builds from pre-publication anchors and delivers owned scan captures before returning the final projection.</summary>
     public async ValueTask<AutomationVisualQueryResponse> BuildAnchorsWithCapturesAsync(
         IReadOnlyList<RemoteVisualAnchor> anchors,
-        VisualContextTraverseDirections directions,
-        int maximumNodes,
+        VisualQueryRequest request,
         int targetTokenBudget,
         Action<IVisualElementCapture> captureReceiver,
         CancellationToken cancellationToken = default)
@@ -453,8 +440,7 @@ public class RemoteVisualContext : RpcSafeHandle
                     {
                         ContextId = contextLease.ResourceId,
                         AnchorIds = anchorIds,
-                        Directions = directions,
-                        MaximumNodes = maximumNodes,
+                        Query = request,
                         TargetTokenBudget = targetTokenBudget,
                     },
                     cancellationToken),

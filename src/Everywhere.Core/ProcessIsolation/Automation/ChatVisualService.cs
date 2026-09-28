@@ -74,8 +74,7 @@ public sealed class ChatVisualService : IDisposable
     public async ValueTask<VisualContextOperationResult<AutomationVisualQueryResponse>> BuildAnchorsAsync(
         ChatVisualState state,
         IReadOnlyList<RemoteVisualAnchor> anchors,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int maximumNodes = VisualQueryRequest.DefaultLimit,
+        VisualQueryRequest request,
         int targetTokenBudget = 4096,
         IVisualContextScanScope? scanScope = null,
         CancellationToken cancellationToken = default)
@@ -92,14 +91,12 @@ public sealed class ChatVisualService : IDisposable
             var response = scanScope is null ?
                 await contextState.Context.BuildAnchorsAsync(
                     anchors,
-                    directions,
-                    maximumNodes,
+                    request,
                     targetTokenBudget,
                     cancellationToken).ConfigureAwait(false) :
                 await contextState.Context.BuildAnchorsWithCapturesAsync(
                     anchors,
-                    directions,
-                    maximumNodes,
+                    request,
                     targetTokenBudget,
                     scanScope.AddCapture,
                     cancellationToken).ConfigureAwait(false);
@@ -127,17 +124,15 @@ public sealed class ChatVisualService : IDisposable
     public ValueTask<VisualContextOperationResult<AutomationVisualQueryResponse>> QueryTargetAsync(
         ChatVisualState state,
         int targetId,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        int offset = 0,
-        int limit = VisualQueryRequest.DefaultLimit,
+        VisualQueryRequest request,
         int targetTokenBudget = 4096,
         IVisualContextScanScope? scanScope = null,
         CancellationToken cancellationToken = default) =>
         ExecutePublishingAsync(
             state,
             (context, token) => scanScope is null ?
-                context.QueryTargetAsync(targetId, directions, offset, limit, targetTokenBudget, token) :
-                context.QueryTargetWithCapturesAsync(targetId, directions, offset, limit, targetTokenBudget, scanScope.AddCapture, token),
+                context.QueryTargetAsync(targetId, request, targetTokenBudget, token) :
+                context.QueryTargetWithCapturesAsync(targetId, request, targetTokenBudget, scanScope.AddCapture, token),
             requiresCurrentTargets: true,
             cancellationToken);
 

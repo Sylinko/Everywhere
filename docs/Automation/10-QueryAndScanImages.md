@@ -2,7 +2,9 @@
 
 ## Query Boundary
 
-VisualQuery is a Context-bound instance. ExecuteAsync resolves a retained integer target or accepts an acquired target for host/probe use. BuildAsync accepts attachment/debugger anchors. ReadText resolves an integer target in the same Context; the former public static VisualTextQuery entry point is removed and its text implementation is part of VisualQuery.
+VisualQuery is a Context-bound instance. ExecuteAsync resolves a retained integer target or accepts an acquired target for host/probe use. BuildAsync accepts attachment/debugger anchors together with the same complete VisualQueryRequest used by ExecuteAsync. ReadText resolves an integer target in the same Context; the former public static VisualTextQuery entry point is removed and its text implementation is part of VisualQuery.
+
+VisualQueryRequest is the single source of truth for traversal directions, relation offset, admitted node limit, and requested result fields such as bounding boxes. VisualContextPromptOptions contains only local token-budget and compression policy. Target, platform-default-root, and pre-publication-anchor RPC operations all carry the complete query contract instead of duplicating selected fields.
 
 The instance neither owns/disposes Context nor creates/completes a turn. Callers continue to serialize Context operations. Structural results use VisualQueryResult (final Content and RepresentedTargetCount), not the lower-level builder's result type. QoS, final text, native capture policy, and target identity remain unchanged.
 

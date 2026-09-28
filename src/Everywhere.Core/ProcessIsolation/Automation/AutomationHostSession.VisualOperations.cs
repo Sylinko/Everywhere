@@ -282,7 +282,6 @@ public sealed partial class AutomationHostSession
             Func<IVisualElementCapture, CancellationToken, ValueTask>? captureReceiver,
             CancellationToken cancellationToken)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.MaximumNodes);
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.TargetTokenBudget);
             var elements = new VisualElement[request.AnchorIds.Length];
             for (var index = 0; index < request.AnchorIds.Length; index++)
@@ -292,17 +291,10 @@ public sealed partial class AutomationHostSession
                 elements[index] = GetAnchor(anchorId).Result.Element;
             }
 
-            var defaultLimits = VisualContextSnapshotLimits.Default;
-            var limits = defaultLimits with
-            {
-                MaximumNodes = request.MaximumNodes,
-                MaximumChildrenPerNode = Math.Min(defaultLimits.MaximumChildrenPerNode, request.MaximumNodes),
-            };
             return await new VisualQuery(Context, captureReceiver).BuildAsync(
                 elements,
+                request.Query,
                 new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
-                limits,
-                request.Directions,
                 cancellationToken).ConfigureAwait(false);
         }
 

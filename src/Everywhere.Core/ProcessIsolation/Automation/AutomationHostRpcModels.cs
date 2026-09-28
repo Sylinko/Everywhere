@@ -41,16 +41,12 @@ public sealed partial class BuildDefaultVisualContextRequest
     [Key(1)]
     public required VisualElementResolution Resolution { get; init; }
 
-    /// <summary>Relations observed around the acquired root.</summary>
+    /// <summary>Complete bounded structural query applied to the acquired root.</summary>
     [Key(2)]
-    public required VisualContextTraverseDirections Directions { get; init; }
-
-    /// <summary>Maximum admitted Snapshot nodes.</summary>
-    [Key(3)]
-    public required int MaximumNodes { get; init; }
+    public required VisualQueryRequest Query { get; init; }
 
     /// <summary>Approximate token budget for the final projection.</summary>
-    [Key(4)]
+    [Key(3)]
     public required int TargetTokenBudget { get; init; }
 }
 
@@ -66,20 +62,12 @@ public sealed partial class QueryAutomationTargetRequest
     [Key(1)]
     public required int TargetId { get; init; }
 
-    /// <summary>Relations observed around the target.</summary>
+    /// <summary>Complete bounded structural query passed to the Host execution boundary.</summary>
     [Key(2)]
-    public required VisualContextTraverseDirections Directions { get; init; }
-
-    /// <summary>Zero-based offset applied independently to each requested initial relation.</summary>
-    [Key(3)]
-    public required int Offset { get; init; }
-
-    /// <summary>Maximum admitted query nodes.</summary>
-    [Key(4)]
-    public required int Limit { get; init; }
+    public required VisualQueryRequest Query { get; init; }
 
     /// <summary>Approximate token budget for the final projection.</summary>
-    [Key(5)]
+    [Key(3)]
     public required int TargetTokenBudget { get; init; }
 }
 

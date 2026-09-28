@@ -84,6 +84,7 @@ public sealed partial class AutomationHostSession
                     {
                         Directions = VisualContextTraverseDirections.All,
                         Limit = VisualQueryRequest.MaximumLimit,
+                        IncludesBoundingBox = true,
                     },
                     new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
                     cancellationToken).ConfigureAwait(false);

@@ -1,5 +1,6 @@
 using Everywhere.ProcessIsolation;
 using Everywhere.ProcessIsolation.Roles;
+using MessagePack;
 using Serilog;
 
 namespace Everywhere.Automation;
@@ -7,7 +8,8 @@ namespace Everywhere.Automation;
 /// <summary>
 /// Describes one bounded structural query over a published visual target.
 /// </summary>
-public sealed record VisualQueryRequest
+[MessagePackObject]
+public sealed partial record VisualQueryRequest
 {
     /// <summary>
     /// Gets the default maximum number of observed nodes returned by one query.
@@ -22,19 +24,35 @@ public sealed record VisualQueryRequest
     /// <summary>
     /// Gets the relations that may be observed around the query anchors.
     /// </summary>
-    public VisualContextTraverseDirections Directions { get; init; } = VisualContextTraverseDirections.All;
+    [Key(0)]
+    public VisualContextTraverseDirections Directions { get; init; }
 
     /// <summary>
     /// Gets the zero-based offset applied independently to each requested initial relation.
     /// </summary>
+    [Key(1)]
     public int Offset { get; init; }
 
     /// <summary>
     /// Gets the requested maximum observed node count. Values above <see cref="MaximumLimit" /> are clamped.
     /// </summary>
-    public int Limit { get; init; } = DefaultLimit;
+    [Key(2)]
+    public int Limit { get; init; }
 
-    internal int GetNormalizedLimit()
+    /// <summary>
+    /// Gets whether every represented element with observed bounds includes a model-facing bounding box.
+    /// </summary>
+    [Key(3)]
+    public bool IncludesBoundingBox { get; init; }
+
+    /// <summary>Creates a structural query with the Agent-facing defaults.</summary>
+    public VisualQueryRequest()
+    {
+        Directions = VisualContextTraverseDirections.All;
+        Limit = DefaultLimit;
+    }
+
+    public int GetNormalizedLimit()
     {
         ArgumentOutOfRangeException.ThrowIfNegative(Offset);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Limit);
@@ -78,50 +96,37 @@ public sealed partial class VisualQuery
         VisualContextPromptOptions promptOptions,
         CancellationToken cancellationToken = default)
     {
-        var limit = request.GetNormalizedLimit();
         var coreElement = target is ElementTarget elementTarget ?
             elementTarget.Element :
             throw new NotSupportedException("This visual element does not expose structural relations.");
+        return await BuildAsync([coreElement], request, promptOptions, cancellationToken);
+    }
+
+    /// <summary>Observes host-owned attachment/debugger anchors, optionally captures observed TopLevels, and publishes final text.</summary>
+    public async Task<VisualQueryResult> BuildAsync(
+        IReadOnlyList<VisualElement> originElements,
+        VisualQueryRequest request,
+        VisualContextPromptOptions promptOptions,
+        CancellationToken cancellationToken = default)
+    {
+        var limit = request.GetNormalizedLimit();
         promptOptions.Validate();
         cancellationToken.ThrowIfCancellationRequested();
-
         var defaultLimits = VisualContextSnapshotLimits.Default;
-        var snapshotLimits = defaultLimits with
+        var limits = defaultLimits with
         {
             MaximumNodes = limit,
             MaximumChildrenPerNode = Math.Min(defaultLimits.MaximumChildrenPerNode, limit),
         };
-        return await BuildAsync([coreElement], promptOptions, snapshotLimits, request.Directions, request.Offset, cancellationToken);
-    }
-
-    /// <summary>Observes host-owned attachment/debugger anchors, optionally captures observed TopLevels, and publishes final text.</summary>
-    public Task<VisualQueryResult> BuildAsync(
-        IReadOnlyList<VisualElement> originElements,
-        VisualContextPromptOptions promptOptions,
-        VisualContextSnapshotLimits? limits = null,
-        VisualContextTraverseDirections directions = VisualContextTraverseDirections.All,
-        CancellationToken cancellationToken = default) =>
-        BuildAsync(originElements, promptOptions, limits, directions, 0, cancellationToken);
-
-    private async Task<VisualQueryResult> BuildAsync(
-        IReadOnlyList<VisualElement> originElements,
-        VisualContextPromptOptions promptOptions,
-        VisualContextSnapshotLimits? limits,
-        VisualContextTraverseDirections directions,
-        int relationOffset,
-        CancellationToken cancellationToken)
-    {
-        promptOptions.Validate();
-        cancellationToken.ThrowIfCancellationRequested();
         var topLevels = _captureReceiver is null ? null : new List<VisualElementQueryResult>();
         Action<VisualElementQueryResult>? onTopLevelObserved = topLevels is null ? null : topLevels.Add;
         using var snapshot = VisualContextSnapshotter.CreateSnapshot(
             _context,
             originElements,
             limits,
-            directions,
+            request.Directions,
             onTopLevelObserved,
-            relationOffset,
+            request.Offset,
             cancellationToken);
 
         // Snapshot retains these elements throughout serial capture. No effect or background worker
@@ -155,7 +160,7 @@ public sealed partial class VisualQuery
             }
         }
 
-        var result = VisualContextPromptBuilder.BuildWithOutcome(_context, snapshot, promptOptions, cancellationToken);
+        var result = VisualContextPromptBuilder.BuildWithResult(_context, snapshot, request, promptOptions, cancellationToken);
         return new VisualQueryResult(result.Content, result.RepresentedTargetCount);
     }
 

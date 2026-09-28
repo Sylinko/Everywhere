@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using Everywhere.AI;
 using Everywhere.Automation;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
@@ -79,24 +80,23 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         CancellationToken cancellationToken = default)
     {
-        var operation = await _visualService.ListWindowsAsync(chatContext.VisualState, cancellationToken: cancellationToken);
-        var result = operation.Value;
+        var (id, response) = await _visualService.ListWindowsAsync(chatContext.VisualState, cancellationToken: cancellationToken);
 
         displaySink.AppendDynamicLocaleKey(
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
-                new DirectLocaleKey(result.RepresentedTargetCount)));
+                new DirectLocaleKey(response.RepresentedTargetCount)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.VisualContextPlugin,
-                    ElementCount: result.RepresentedTargetCount),
+                    ElementCount: response.RepresentedTargetCount),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
 
-        Guid? visualContextId = result.RepresentedTargetCount > 0 ? operation.VisualContextId : null;
-        return new VisualTextFunctionResult(visualContextId, result.Content);
+        Guid? visualContextId = response.RepresentedTargetCount > 0 ? id : null;
+        return new VisualTextFunctionResult(visualContextId, response.Content);
     }
 
     [KernelFunction("capture_visual_element")]
@@ -106,7 +106,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description)]
     private async Task<VisualAttachmentFunctionResult?> CaptureVisualElementAsync(
         [FromKernelServices] ChatContext chatContext,
-        [Description("Integer visual element ID returned by visual context")] int target,
+        [Description("Visual element ID in visual-context")] int target,
         CancellationToken cancellationToken = default)
     {
         var operation = await _visualService.CaptureTargetAsync(chatContext.VisualState, target, cancellationToken);
@@ -144,32 +144,40 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         Read a bounded, best-effort region of the live visual tree. Use this like read_file for on-screen UI, then follow returned integer IDs with narrower queries.
         The tree may be extremely large and can change between calls. A result can be incomplete; status reports known timeouts, provider failures, traversal limits, or prompt-budget omissions. Absence of status does not promise an exhaustive or immutable result, and this tool never retries automatically.
         Every integer ID addresses a visual element and uses this same operation. Unavailable IDs fail instead of being reconstructed.
-        Directions may contain parent, child, previous, next, siblings, all, or none. The result uses compact XML-like markup but is not strict XML: target IDs and delimiter-free attributes can be unquoted, and states such as focused or disabled are bare flags.
+        The result uses compact XML-like markup but is not strict XML: target IDs and delimiter-free attributes can be unquoted, and states such as focused or disabled are bare flags.
         An incomplete body carries textLength=shown/total in UTF-16 code units. A plain total is exact and ≥ marks a proven lower bound.
+        With boxes=true, elements with observed bounds include box=x,y,width,height in platform desktop coordinates; multi-display origins may be negative.
         """)]
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_QueryVisual_Description)]
     private async Task<VisualTextFunctionResult> QueryVisual(
         [FromKernelServices] ChatContext chatContext,
+        [FromKernelServices] Assistant assistant,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
-        [Description("Integer visual element ID returned by visual-context")] int target,
+        [Description("Visual element ID in visual-context")] int target,
         [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, or none")]
         string directions = "all",
         [Description("Number of results to skip independently in each requested initial direction")]
         int offset = 0,
         [Description("Maximum admitted nodes; values above 256 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
+        bool boxes = false,
         CancellationToken cancellationToken = default)
     {
-        var request = new VisualQueryRequest { Directions = ParseTraverseDirections(directions), Offset = offset, Limit = limit };
+        var request = new VisualQueryRequest
+        {
+            Directions = ParseTraverseDirections(directions),
+            Offset = offset,
+            Limit = limit,
+            IncludesBoundingBox = boxes,
+        };
+        var tokenLimit = ((assistant as CustomAssistant)?.VisualContextLengthLimit ?? VisualContextLengthLimit.Balanced).ToTokenLimit();
         using var scanScope = _visualContextScanEffect.Begin(cancellationToken);
         var (visualContextId, result) = await _visualService.QueryTargetAsync(
             chatContext.VisualState,
             target,
-            request.Directions,
-            request.Offset,
-            request.Limit,
-            VisualContextLengthLimit.Detailed.ToTokenLimit(),
+            request,
+            tokenLimit,
             scanScope,
             cancellationToken);
         scanScope.Complete();

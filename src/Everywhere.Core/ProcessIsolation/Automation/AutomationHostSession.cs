@@ -262,22 +262,14 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
             BuildDefaultVisualContextRequest request,
             CancellationToken cancellationToken)
         {
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.MaximumNodes);
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(request.TargetTokenBudget);
             using var retention = Context.CreateRetention();
             var root = _backend.Query(retention, VisualElementLocator.Default, request.Resolution) ??
                 throw new InvalidOperationException("The platform-default visual root is not available.");
-            var defaultLimits = VisualContextSnapshotLimits.Default;
-            var limits = defaultLimits with
-            {
-                MaximumNodes = request.MaximumNodes,
-                MaximumChildrenPerNode = Math.Min(defaultLimits.MaximumChildrenPerNode, request.MaximumNodes),
-            };
             var result = await new VisualQuery(Context).BuildAsync(
                 [root.Element],
+                request.Query,
                 new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
-                limits,
-                request.Directions,
                 cancellationToken).ConfigureAwait(false);
             return ToResponse(result);
         }
@@ -288,12 +280,7 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
         {
             var result = await new VisualQuery(Context).ExecuteAsync(
                 request.TargetId,
-                new VisualQueryRequest
-                {
-                    Directions = request.Directions,
-                    Offset = request.Offset,
-                    Limit = request.Limit,
-                },
+                request.Query,
                 new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
                 cancellationToken).ConfigureAwait(false);
             return ToResponse(result);
@@ -305,12 +292,7 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
             StreamQueryAsync(
                 (receiver, token) => new VisualQuery(Context, receiver).ExecuteAsync(
                     request.TargetId,
-                    new VisualQueryRequest
-                    {
-                        Directions = request.Directions,
-                        Offset = request.Offset,
-                        Limit = request.Limit,
-                    },
+                    request.Query,
                     new VisualContextPromptOptions { TargetTokenBudget = request.TargetTokenBudget },
                     token),
                 cancellationToken);

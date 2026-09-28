@@ -393,6 +393,7 @@ public sealed partial class ChatService : IChatService
             var (visualContextId, response) = await _visualService.BuildAnchorsAsync(
                 chatContext.VisualState,
                 anchors,
+                new VisualQueryRequest(),
                 targetTokenBudget: approximateTokenLimit,
                 scanScope: scanScope,
                 cancellationToken: cancellationToken);

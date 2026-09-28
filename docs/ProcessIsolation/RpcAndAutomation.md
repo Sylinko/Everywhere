@@ -30,6 +30,8 @@ Resource IDs remain distinct from RPC correlation IDs, positive Agent target IDs
 
 The endpoint containing the actual resource registers its cleanup owner in `RpcRemoteResourceRegistry`. The endpoint using it remotely wraps its ID in `RpcSafeHandle`. Both signs use the same registry, handle, lease, and release machinery.
 
+Submitting a cleanup object to `RegisterAsync` transfers cleanup responsibility, including registration failure and release-before-registration. Callers do not repeat disposal in a second failure handler. Resource preparation before that handoff must either commit a complete object or roll back its own partial mutation.
+
 `AcquireLease()` keeps a handle alive while an operation uses it. An anchor also holds a lease on its parent Context. Disposing the handle queues an idempotent release through `RpcSafeHandleReleaseQueue` on the originating connection. The queue only delivers remote releases; it does not allocate IDs or dispose locally registered objects. A local rollback uses the local registry and its cleanup path.
 
 Request-driven creation allocates the ID before dispatch. The requester therefore knows what to release even if it cancels before receiving the response. If release arrives before registration, the registry records that ID and disposes the resource when registration occurs. `Consume` removes a cleanup registration only after another operation has already transferred or consumed its ownership. IDs are not recycled after release or consumption.
@@ -66,6 +68,8 @@ Main owns `RemoteVisualContext`, `RemoteVisualAnchor`, `RemoteVisualPicker`, and
 
 Each Host-side Automation Context has a single-reader operation queue. Calls that mutate one `VisualContext` therefore execute serially, while separate Contexts remain independent. Native element methods remain synchronous inside the Host because UIA and AX are synchronous provider APIs; the RPC boundary is coarse and asynchronous from Main's perspective.
 
+This serialization includes release of temporary, unsent retentions. A monitor worker must not directly dispose a retention outside its owning Context queue, even if its ownership field is exchanged atomically. Sharing the acquisition Context does not require another set of locks when every ownership path follows the queue.
+
 Caller cancellation is transport cancellation: Main cancels its pending correlation and the Host receives the request token. An operation-local deadline is application policy instead. Snapshot traversal links its own deadline token to the request token so platform cursors can observe both between native calls, but it consumes only its own deadline and returns a partial result with status. It never cancels the request token or turns an aggregate Snapshot deadline into an RPC cancellation frame. A synchronous native provider call that does not return cannot observe either token; the Host process remains the reclaimable boundary.
 
 `ChatVisualState` attaches lazily to the current Automation connection. When the Host connection changes, `ChatVisualService` creates a replacement remote Context and invalidates previously published target IDs. Reads and queries fail with `VisualContextResetException` until the caller re-observes. An action batch is not replayed: connection loss yields `VisualActionOutcomeUnknownException` because the Host may have performed part or all of the action before disconnection.
@@ -84,13 +88,15 @@ Element selection and screenshot snapping share this observation path. Element c
 
 ## Text-selection monitoring
 
-The complete monitoring workflow runs inside Automation Host, with Main-controlled start/stop over the authenticated connection. Host directly pushes the outcome, copied text, optional registered anchor descriptor, monitoring identity, and observation revision. Main does not fetch or confirm the observation in another RPC. The full feature contract is in [11-TextSelectionMonitoring](../Automation/11-TextSelectionMonitoring.md).
+The complete monitoring workflow runs inside Automation Host. Main sends enable/disable and complete filter configuration through acknowledged control operations, showing a busy state during user-driven transitions. Successful enable means native listening is established; expected setup failure leaves the switch off and returns a localized explanation for one Toast. Stop acknowledgement means cleanup completed, not merely that a SafeHandle release was queued. The full contract is in [11-TextSelectionMonitoring](../Automation/11-TextSelectionMonitoring.md).
 
-Monitoring is a long-lived session resource, not a long-running Context queue operation. Hooks and debounce are independent; finite native element reads and retention transfers use Context serialization. Main restores only desired monitoring state after reconnection, never a clipboard copy attempt.
+Monitoring is a long-lived session resource, not a long-running Context queue operation. Hooks, debounce, and clipboard waiting are independent; finite reads and all retention cleanup use the shared acquisition Context's queue. Start, stop, and drain share one lifecycle handoff, and repeated disposal awaits the same completion. Normal stop and fallback SafeHandle release reuse the same resource owner. Main restores saved monitoring intent and configuration after reconnecting, never an old copy attempt.
 
-The monitor retains at most one unsent observation and releases it on replacement or stop. Once enqueued, its anchor follows the notification ownership rules above. Main releases results rejected by subscription identity or observation ordering; accepted anchors outlive monitor stop under their attachment owners. Text and source always refer to the same Host observation without a later focus query. Sequential display of two valid observations is allowed; an older asynchronous completion must not overwrite a newer published result.
+Host directly pushes successfully captured text, an optional registered anchor descriptor, monitoring identity, revision, and text-completeness information. Main does not fetch or confirm the result in another RPC. The complete serialized notification fits the effective payload ceiling, including UTF-8 text, metadata, and overhead. Clipboard results without a reliable source association remain text-only; Main never reacquires focus to invent a source.
 
-Expected background provider failures leave the monitor active. Native diagnostics remain Host-side, and persistent UI messages retain dynamic localization structure.
+The monitor retains at most one unsent observation and releases it on replacement or stop. Once enqueued, anchors follow the notification ownership rules above. Acceptance checks extend through the UI queue: disabling invalidates pending updates and re-enabling cannot accept an old subscription's result. Accepted anchors outlive monitor stop. Successful captures replace draft selection attachments; empty/failed observations leave them unchanged. Sequential display of valid observations is allowed, but older asynchronous work cannot overwrite a newer accepted result.
+
+Application exclusions and default-on target-fullscreen filtering precede detection, and current copy policy is rechecked before synthetic input. Recognized terminals use accessibility-only detection. Expected provider failures leave monitoring active; listener setup failure does not close a healthy Automation connection. Native diagnostics remain Host-side, and persistent UI messages retain dynamic localization structure.
 
 ## Exception transport
 

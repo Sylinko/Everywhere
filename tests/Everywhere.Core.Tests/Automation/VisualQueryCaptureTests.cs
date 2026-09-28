@@ -32,12 +32,16 @@ public sealed class VisualQueryCaptureTests
             receiver(capture);
             return ValueTask.CompletedTask;
         });
-        var result = await query.BuildAsync([element, element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Origin);
+        var result = await query.BuildAsync(
+            [element, element],
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin },
+            VisualContextPromptOptions.Default);
         Assert.Multiple(() =>
         {
             Assert.That(element.CaptureCount, Is.EqualTo(hasReceiver ? 1 : 0));
             Assert.That(result.RepresentedTargetCount, Is.EqualTo(1));
             Assert.That(result.Content, Does.Contain("TopLevel"));
+            Assert.That(result.Content, Does.Not.Contain("box="));
             Assert.That(capture.DisposeCount, Is.EqualTo(shouldReject ? 1 : 0));
         });
         context.Dispose();
@@ -62,7 +66,11 @@ public sealed class VisualQueryCaptureTests
             Assert.Fail("Canceled capture must not be delivered.");
             return ValueTask.CompletedTask;
         });
-        Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync([element], VisualContextPromptOptions.Default, directions: VisualContextTraverseDirections.Origin, cancellationToken: cancellation.Token));
+        Assert.ThrowsAsync<OperationCanceledException>(async () => await query.BuildAsync(
+            [element],
+            new VisualQueryRequest { Directions = VisualContextTraverseDirections.Origin },
+            VisualContextPromptOptions.Default,
+            cancellation.Token));
         Assert.Multiple(() =>
         {
             Assert.That(capture.DisposeCount, Is.EqualTo(1));
