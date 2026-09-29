@@ -1,0 +1,19 @@
+<UserControl
+  x:Class="ExpressionBinding.Avalonia.Tests.ExpressionBindingView"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:expression="using:ExpressionBinding.Avalonia"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime">
+  <TextBlock>
+    <TextBlock.FontSize>
+      <expression:ExpressionBinding Expression="min(3 * A, B) + 24">
+        <DynamicResource ResourceKey="FontSize3Xl"/>
+        <ReflectionBinding>
+          <ReflectionBinding.Source>
+            <system:Double>4</system:Double>
+          </ReflectionBinding.Source>
+        </ReflectionBinding>
+      </expression:ExpressionBinding>
+    </TextBlock.FontSize>
+  </TextBlock>
+</UserControl>

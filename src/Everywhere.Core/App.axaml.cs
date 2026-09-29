@@ -18,7 +18,6 @@ using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
-
 #if DEBUG
 using ClassicDiagnostics.Avalonia;
 #endif

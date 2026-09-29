@@ -13,10 +13,10 @@ public sealed record ModelProviderTemplate
     public required string Id { get; init; }
 
     /// <summary>
-    /// Display name of the model provider, used for UI.
+    /// Localized display name of the model provider, used for UI.
     /// This name is shown to the user in the application's settings or model selection UI.
     /// </summary>
-    public string? DisplayName { get; set; }
+    public DynamicLocaleKey DisplayNameKey { get; init; } = DirectLocaleKey.Empty;
 
     /// <summary>
     /// This icon is displayed next to the provider's name in the UI.

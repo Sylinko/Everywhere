@@ -19,24 +19,32 @@ public sealed partial class UserActionChatMessage : ChatMessage
     public partial LucideIconKind Icon { get; set; }
 
     [Key(1)]
-    [ObservableProperty]
-    public partial DynamicLocaleKey? HeaderKey { get; set; }
+    public IDynamicLocaleKey? HeaderKey { get; }
 
     /// <summary>
     /// The actual prompt that sends to the LLM.
     /// </summary>
     [Key(2)]
-    [ObservableProperty]
-    public partial string? Content { get; set; }
+    public string? Content { get; }
+
+    [Key(3)]
+    public override DateTimeOffset CreatedAt { get; }
 
     [SerializationConstructor]
-    private UserActionChatMessage() { }
-
-    public UserActionChatMessage(LucideIconKind icon, DynamicLocaleKey? headerKey, string? content)
+    private UserActionChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey, string? content, DateTimeOffset createdAt)
     {
         Icon = icon;
         HeaderKey = headerKey;
         Content = content;
+        CreatedAt = createdAt;
+    }
+
+    public UserActionChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey, string? content)
+    {
+        Icon = icon;
+        HeaderKey = headerKey;
+        Content = content;
+        CreatedAt = DateTimeOffset.UtcNow;
     }
 
     public override string? ToString() => Content;

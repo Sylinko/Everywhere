@@ -1,5 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Avalonia.Automation.Peers;
+﻿using Avalonia.Automation.Peers;
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -7,9 +7,13 @@ using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
+using Everywhere.AI;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
+using Everywhere.Collections;
+using Everywhere.Common.Notification;
 using Everywhere.Configuration;
+using Everywhere.Extensions;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
@@ -25,6 +29,9 @@ public partial class ChatWindow :
     IRecipient<ApplicationMessage>,
     IVisualElementAnimationTarget
 {
+    public IReadOnlyBindableList<DynamicNotification> ModelAvailabilityNotifications =>
+        _modelAvailabilityPresenter.Notifications;
+
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
     /// </summary>
@@ -49,6 +56,7 @@ public partial class ChatWindow :
     private readonly INativeHelper _nativeHelper;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
+    private readonly ChatModelAvailabilityPresenter _modelAvailabilityPresenter;
     private IDisposable? _pendingHiddenCompaction;
 
     /// <summary>
@@ -66,12 +74,16 @@ public partial class ChatWindow :
         IWindowHelper windowHelper,
         INativeHelper nativeHelper,
         Settings settings,
-        PersistentState persistentState) : base(serviceProvider, disposeOnUnloaded: false)
+        PersistentState persistentState,
+        AssistantCatalog assistantCatalog,
+        IKeyValueStorage keyValueStorage
+    ) : base(serviceProvider, disposeOnUnloaded: false)
     {
         _windowHelper = windowHelper;
         _nativeHelper = nativeHelper;
         _settings = settings;
         _persistentState = persistentState;
+        _modelAvailabilityPresenter = new ChatModelAvailabilityPresenter(assistantCatalog, keyValueStorage);
 
         InitializeComponent();
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
@@ -86,6 +98,9 @@ public partial class ChatWindow :
         WeakReferenceMessenger.Default.Register<CloakChatWindowMessage>(this);
         WeakReferenceMessenger.Default.Register<FlashChatWindowMessage>(this);
         WeakReferenceMessenger.Default.Register<ApplicationMessage>(this);
+
+        settings.Model.PropertyChanged += HandleModelSettingsChanged;
+        _modelAvailabilityPresenter.SetAssistant(settings.Model.SelectedCustomAssistant);
     }
 
     private void SetupDragDropHandlers()
@@ -137,19 +152,19 @@ public partial class ChatWindow :
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.F, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.F } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 ViewModel.TextSearch.OpenSearchCommand.Execute(null);
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.H, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.H } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 _persistentState.IsChatWindowHistoryOpened = !_persistentState.IsChatWindowHistoryOpened;
                 e.Handled = true;
                 break;
             }
-            case { Key: Key.T, KeyModifiers: KeyModifiers.Control }:
+            case { Key: Key.T } when e.KeyModifiers.IsApplicationShortcutModifierOnly():
             {
                 if (ViewModel.Settings.Model.SelectedCustomAssistant is { } assistant)
                 {
@@ -180,6 +195,7 @@ public partial class ChatWindow :
         {
             var isVisible = change.NewValue is true;
             ViewModel.IsOpened = isVisible;
+            _modelAvailabilityPresenter.SetActive(isVisible);
 
             DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
             if (!isVisible)
@@ -200,6 +216,12 @@ public partial class ChatWindow :
             Topmost = value is not null; // false: topmost, null: normal, true: topmost
             _windowHelper.SetCloaked(this, false); // Uncloak when pinned state changes to ensure visibility
         }
+    }
+
+    private void HandleModelSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ModelSettings.SelectedCustomAssistant))
+            Dispatcher.UIThread.PostOnDemand(() => _modelAvailabilityPresenter.SetAssistant(_settings.Model.SelectedCustomAssistant));
     }
 
     protected override void OnResized(WindowResizedEventArgs e)
@@ -401,6 +423,8 @@ public partial class ChatWindow :
             Log.ForContext<ChatWindow>().Error("Chat window was closed unexpectedly. This should not happen.");
 
         DisposeHelper.DisposeToDefault(ref _pendingHiddenCompaction);
+        _settings.Model.PropertyChanged -= HandleModelSettingsChanged;
+        _modelAvailabilityPresenter.Dispose();
 
         base.OnClosed(e);
     }
@@ -429,55 +453,23 @@ public partial class ChatWindow :
             return;
         }
 
-        // Check file support
         if (hasFiles)
         {
             var files = e.DataTransfer.TryGetFiles();
-            if (files != null)
+            if (files?.AsValueEnumerable().Any(TryGetLocalFilePath) is true)
             {
-                var hasSupportedFile = false;
-                var hasUnsupportedFile = false;
-                string? firstMimeType = null;
-
-                foreach (var item in files)
-                {
-                    if (IsSupportedFile(item, out _, out var mimeType))
-                    {
-                        hasSupportedFile = true;
-                        firstMimeType ??= mimeType;
-                    }
-                    else
-                    {
-                        hasUnsupportedFile = true;
-                    }
-                }
-
-                if (hasUnsupportedFile)
+                if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount)
                 {
                     e.DragEffects = DragDropEffects.None;
-                    DragDropIcon.Kind = LucideIconKind.FileX;
-                    DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_Unsupported;
-                    DragDropOverlay.IsVisible = true;
+                    DragDropOverlay.IsVisible = false;
                     return;
                 }
 
-                if (hasSupportedFile)
-                {
-                    if (ViewModel.ChatAttachments.Count >= _persistentState.MaxChatAttachmentCount)
-                    {
-                        e.DragEffects = DragDropEffects.None;
-                        DragDropOverlay.IsVisible = false;
-                        return;
-                    }
-
-                    e.DragEffects = DragDropEffects.Copy;
-                    DragDropIcon.Kind = firstMimeType != null && FileUtilities.IsOfCategory(firstMimeType, FileTypeCategory.Image) ?
-                        LucideIconKind.Image :
-                        LucideIconKind.FileUp;
-                    DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_DropFilesHere;
-                    DragDropOverlay.IsVisible = true;
-                    return;
-                }
+                e.DragEffects = DragDropEffects.Copy;
+                DragDropIcon.Kind = LucideIconKind.FileUp;
+                DragDropText.Text = LocaleResolver.ChatWindow_DragDrop_Overlay_DropFilesHere;
+                DragDropOverlay.IsVisible = true;
+                return;
             }
         }
 
@@ -518,8 +510,7 @@ public partial class ChatWindow :
 
                 foreach (var item in files)
                 {
-                    if (!IsSupportedFile(item, out var localPath, out _))
-                        continue;
+                    if (!TryGetLocalFilePath(item, out var localPath)) continue;
 
                     try
                     {
@@ -546,25 +537,18 @@ public partial class ChatWindow :
         }
     }
 
-    private static bool IsSupportedFile(IStorageItem storageItem, [NotNullWhen(true)] out string? localPath, [NotNullWhen(true)] out string? mimeType)
+    private static bool TryGetLocalFilePath(IStorageItem storageItem) => TryGetLocalFilePath(storageItem, out _);
+
+    private static bool TryGetLocalFilePath(IStorageItem storageItem, out string localPath)
     {
-        localPath = null;
-        mimeType = null;
-
         if (!storageItem.Path.IsFile || storageItem.TryGetLocalPath() is not { } path)
-            return false;
-
-        localPath = path;
-        var extension = Path.GetExtension(path).ToLowerInvariant();
-        if (FileUtilities.KnownMimeTypes.TryGetValue(extension, out var mime) &&
-            FileUtilities.KnownFileTypes.TryGetValue(mime, out var fileType) &&
-            fileType is FileTypeCategory.Image or FileTypeCategory.Audio or FileTypeCategory.Document or FileTypeCategory.Script)
         {
-            mimeType = mime;
-            return true;
+            localPath = string.Empty;
+            return false;
         }
 
-        return false;
+        localPath = path;
+        return true;
     }
 
     public bool TryGetAttachmentCenterOnScreen(ChatAttachment attachment, out PixelPoint center)

@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using Everywhere.Collections;
 
 namespace Everywhere.AI;
 
@@ -60,14 +61,17 @@ public sealed partial record ModelDefinitionTemplate : IModelDefinition
     public bool IsQuotaLimited { get; init; }
 
     /// <summary>
+    /// User-facing reasoning effort values in increasing order, when the model catalog declares them.
+    /// Other reasoning controls such as toggles and token budgets remain protocol-specific.
+    /// </summary>
+    [Key(17)]
+    public ValueArray<string> ReasoningEffortValues { get; init; }
+
+    /// <summary>
     /// Gets or sets the default model in a model provider.
     /// This indicates the best (powerful but economical) model in the provider.
     /// </summary>
     public bool IsDefault { get; init; }
-
-    public bool Equals(ModelDefinitionTemplate? other) => ModelId == other?.ModelId;
-
-    public override int GetHashCode() => ModelId.GetHashCode();
 
     public override string ToString() => Name ?? ModelId;
 }

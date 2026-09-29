@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
-using Everywhere.AI.Configurator;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -48,7 +47,6 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
 
     private readonly IReadOnlyList<WelcomeViewModelStep> _steps;
     private int _currentStepIndex;
-
     public WelcomeViewModel(IServiceProvider serviceProvider)
     {
         Settings = serviceProvider.GetRequiredService<Settings>();
@@ -58,7 +56,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
         Assistant = new CustomAssistant
         {
             Name = LocaleResolver.CustomAssistant_Name_Default,
-            ConfiguratorType = AssistantConfiguratorType.Official
+            Configuration = new OfficialAssistantConfiguration()
         };
         Assistant.PropertyChanged += HandleAssistantPropertyChanged;
 
@@ -182,7 +180,7 @@ public sealed partial class WelcomeViewModelConfiguratorStep(WelcomeViewModel vi
     private void MoveNext()
     {
         // Skip the hard login step if not using official configurator or already logged in
-        if (ViewModel.Assistant.ConfiguratorType != AssistantConfiguratorType.Official || ViewModel.CloudClient.UserProfile is not null)
+        if (ViewModel.Assistant.Configuration is not OfficialAssistantConfiguration || ViewModel.CloudClient.UserProfile is not null)
         {
             ViewModel.MoveTo<WelcomeViewModelAssistantStep>();
         }
@@ -216,7 +214,7 @@ public sealed partial class WelcomeViewModelAssistantStep(WelcomeViewModel viewM
     private Task CheckConnectivityAsync()
     {
         ViewModel.IsConnectivityChecked = false;
-        if (!ViewModel.Assistant.Configurator.Validate()) return Task.CompletedTask;
+        if (!ViewModel.Assistant.Configuration.Validate()) return Task.CompletedTask;
 
         return ExecuteBusyTaskAsync(
             async cancellationToken =>

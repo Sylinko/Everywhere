@@ -1,5 +1,6 @@
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
+using Everywhere.Common;
 
 namespace Everywhere.Core.Tests.Chat;
 
@@ -101,7 +102,7 @@ public class PatchReviewSessionTests
                 (item, _) =>
                 {
                     callbackCount++;
-                    Assert.That(item.File.ReviewPath, Is.EqualTo(Path.Combine(root, "file.txt")));
+                    Assert.That(item.File.ReviewPath, Is.EqualTo(ResolveFinalPath(Path.Combine(root, "file.txt"))));
                     return Task.FromResult(RequestConsentResult.Accept);
                 },
                 sink,
@@ -400,6 +401,12 @@ public class PatchReviewSessionTests
         var path = Path.Combine(Path.GetTempPath(), "everywhere-patch-review-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
         return path;
+    }
+
+    private static string ResolveFinalPath(string path)
+    {
+        var result = PathUtilities.ResolvePath(path, PathResolutionMode.FollowFinalComponent);
+        return result.ResolvedPath ?? throw new AssertionException($"Could not resolve test path '{path}'.");
     }
 
     private static void DeleteTemporaryDirectory(string path)

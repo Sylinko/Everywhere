@@ -158,9 +158,7 @@ public static class ChatHistoryBuilder
                 continue;
             }
 
-            anchorIndex = compression.CoveredThroughNodeId == Guid.Empty
-                ? -1
-                : FindNodeIndex(chatNodes, compression.CoveredThroughNodeId);
+            anchorIndex = compression.CoveredThroughNodeId == Guid.Empty ? -1 : FindNodeIndex(chatNodes, compression.CoveredThroughNodeId);
             if (compression.CoveredThroughNodeId != Guid.Empty && anchorIndex < 0) continue;
             if (anchorIndex < compressionIndex) return compressionIndex;
         }
@@ -181,9 +179,9 @@ public static class ChatHistoryBuilder
 
     private static List<ChatMessage> SelectRetainedUserMessages(IReadOnlyList<ChatMessageNode> chatNodes, int anchorIndex, int declaredContextLimit)
     {
-        var tokenBudget = declaredContextLimit > 0
-            ? Math.Min(MaximumRetainedUserMessageTokens, (int)(declaredContextLimit * RetainedUserMessageContextRatio))
-            : 0;
+        var tokenBudget = declaredContextLimit > 0 ?
+            Math.Min(MaximumRetainedUserMessageTokens, (int)(declaredContextLimit * RetainedUserMessageContextRatio)) :
+            0;
         if (tokenBudget <= 0 || anchorIndex < 0) return [];
 
         var remainingTokens = tokenBudget;
@@ -392,8 +390,10 @@ public static class ChatHistoryBuilder
                 }
                 else
                 {
-                    // No attachments, just add the content directly.
-                    items.Add(new TextContent(userChatMessage.Content));
+                    if (userChatMessage.Content.Length > 0)
+                    {
+                        items.Add(new TextContent(userChatMessage.Content));
+                    }
                 }
 
                 yield return new ChatMessageContent(AuthorRole.User, items);
@@ -478,9 +478,12 @@ public static class ChatHistoryBuilder
                     contents.Add(GetOmittedContent("file is empty"));
                     break;
                 }
-                if (fileInfo.Length > 25 * 1024 * 1024) // TODO: Configurable max file size?
+                if (fileInfo.Length > FileAttachment.MaximumInlineContentSizeInBytes)
                 {
-                    contents.Add(GetOmittedContent($"file size {fileInfo.Length} exceeds the maximum supported size 25MB"));
+                    contents.Add(
+                        GetOmittedContent(
+                            $"file size {Humanizer.HumanizeBytes(fileInfo.Length)} exceeds the maximum supported size " +
+                            Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes)));
                     break;
                 }
                 if (!supportedModalities.SupportsMimeType(file.MimeType))
@@ -492,18 +495,15 @@ public static class ChatHistoryBuilder
                 byte[] data;
                 try
                 {
-                    await using var stream = fileInfo.OpenRead();
                     data = await File.ReadAllBytesAsync(file.FilePath, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    // If we fail to read the file, just skip it.
-                    // The file might be deleted or moved.
-                    // We don't want to fail the whole message because of one attachment.
-                    // Just log the error and continue.
+                    // Keep the reference in the prompt even when the content cannot be read.
                     ex = HandledSystemException.Handle(ex, true); // treat all as expected
                     Log.ForContext(typeof(ChatHistoryBuilder)).Warning(ex, "Failed to read attachment file '{FilePath}'", file.FilePath);
-                    return;
+                    contents.Add(GetOmittedContent("file could not be read"));
+                    break;
                 }
 
                 contents.Add(

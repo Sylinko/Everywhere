@@ -15,18 +15,20 @@ namespace Everywhere.Views;
 public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
 {
     /// <summary>
-    /// Defines the full-area background reached while previewing a turn.
+    /// Defines the animated presence of the turn previews.
     /// </summary>
-    public static readonly StyledProperty<IBrush?> BackgroundProperty =
-        AvaloniaProperty.Register<ChatTurnNavigator, IBrush?>(nameof(Background));
+    public static readonly DirectProperty<ChatTurnNavigator, double> PreviewPresenceProperty =
+        AvaloniaProperty.RegisterDirect<ChatTurnNavigator, double>(
+            nameof(PreviewPresence),
+            static navigator => navigator.PreviewPresence);
 
     /// <summary>
-    /// Gets or sets the hover backdrop. Its opacity follows the preview entrance and exit.
+    /// Gets the animated preview presence, from zero while hidden to one while fully shown.
     /// </summary>
-    public IBrush? Background
+    public double PreviewPresence
     {
-        get => GetValue(BackgroundProperty);
-        set => SetValue(BackgroundProperty, value);
+        get;
+        private set => SetAndRaise(PreviewPresenceProperty, ref field, value);
     }
 
     /// <summary>
@@ -75,6 +77,21 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     }
 
     /// <summary>
+    /// Defines how turn navigation and its previews are presented.
+    /// </summary>
+    public static readonly StyledProperty<ChatTurnNavigationMode> ModeProperty =
+        AvaloniaProperty.Register<ChatTurnNavigator, ChatTurnNavigationMode>(nameof(Mode), ChatTurnNavigationMode.Fluid);
+
+    /// <summary>
+    /// Gets or sets how turn navigation and its previews are presented.
+    /// </summary>
+    public ChatTurnNavigationMode Mode
+    {
+        get => GetValue(ModeProperty);
+        set => SetValue(ModeProperty, value);
+    }
+
+    /// <summary>
     /// Defines the theme line height used to budget preview slots before they are created.
     /// </summary>
     public static readonly StyledProperty<double> PreviewLineHeightProperty =
@@ -111,9 +128,7 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
 
     private const double Pitch = 12;
     private const double RailWidth = 40;
-    private readonly Canvas _previews = new() { IsHitTestVisible = false };
-    private readonly RectangleGeometry _previewClip = new();
-    private readonly Dictionary<ChatTurnNavigationIndex.Entry, ChatTurnPreview> _cards = [];
+    private readonly ChatTurnPreviewPanel _previews;
     private readonly List<Wake> _wakes = [];
     private ChatTurnNavigationIndex? _index;
     private TopLevel? _topLevel;
@@ -161,8 +176,8 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     /// </summary>
     public ChatTurnNavigator()
     {
+        _previews = new ChatTurnPreviewPanel(this);
         Child = _previews;
-        _previews.Clip = _previewClip;
     }
 
     /// <inheritdoc />
@@ -193,9 +208,14 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == TextElement.ForegroundProperty || change.Property == BackgroundProperty) InvalidateVisual();
+        if (change.Property == TextElement.ForegroundProperty) InvalidateVisual();
         else if (change.Property == ChatContextProperty && _topLevel is not null) Reconnect();
         else if (change.Property == ReadingNodeProperty) UpdateReadingPosition();
+        else if (change.Property == ModeProperty)
+        {
+            SetCurrentValue(IsVisibleProperty, Mode != ChatTurnNavigationMode.None);
+            RequestFrame();
+        }
         else if (change.Property == PreviewLineHeightProperty) RequestFrame();
         else if (change.Property == BoundsProperty || change.Property == LinePaddingProperty)
         {
@@ -233,7 +253,6 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         _offset.Value = Math.Clamp(_offset.Value, 0, MaximumOffset);
         UpdateReadingPosition();
         UpdateCards();
-        RefreshPreviewText();
         InvalidateVisual();
         RequestFrame();
     }
@@ -347,105 +366,35 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         if (_isHovering) _focus.Target = PointerPosition;
         isMoving |= _focus.Step(elapsed, 28);
         isMoving |= _presence.Step(elapsed, 22);
+        PreviewPresence = Math.Clamp(_presence.Value, 0, 1);
         isMoving |= _previewY.Step(elapsed, 28);
+        isMoving |= _previews.Step(elapsed);
         for (var i = _wakes.Count - 1; i >= 0; i--)
         {
-            _wakes[i].Age += elapsed;
-            if (_wakes[i].Age > 0.45) _wakes.RemoveAt(i);
+            var wake = _wakes[i];
+            wake.Age += elapsed;
+            if (wake.Age > 0.45) _wakes.RemoveAt(i);
+            else _wakes[i] = wake;
         }
 
-        UpdateCards();
+        isMoving |= UpdateCards();
         InvalidateVisual();
         if (isMoving || _wakes.Count > 0) RequestFrame();
         else _lastFrame = null;
     }
 
-    private void UpdateCards()
+    private bool UpdateCards()
     {
         if (_index is null || TurnCount == 0 || _presence.Value < 0.002 && !_isHovering)
         {
-            DisposeCards();
-            _previews.Children.Clear();
-            return;
+            _previews.Clear();
+            return false;
         }
 
         var center = Math.Clamp(_focus.Value, 0, TurnCount - 1);
-        // Keep previews inside the message viewport without expanding their input ownership.
-        _previewClip.Rect = new Rect(Bounds.Size);
-        var neighborCount = Math.Clamp((int)((Bounds.Height - 16) / (PreviewSlotHeight + 8) - 1) / 2, 0, 2);
-        var first = Math.Max(0, (int)Math.Floor(center) - neighborCount);
-        var last = Math.Min(TurnCount - 1, (int)Math.Ceiling(center) + neighborCount);
-
-        // A seventh slot is unnecessary: floor/ceiling plus two neighbors bounds the tree at six.
-        foreach (var pair in _cards.ToArray())
-        {
-            var shouldKeep = false;
-            for (var i = first; i <= last; i++) shouldKeep |= ReferenceEquals(_index.Turns[i], pair.Key);
-            if (shouldKeep) continue;
-            pair.Value.PropertyChanged -= HandleCardPropertyChanged;
-            pair.Value.Dispose();
-            _previews.Children.Remove(pair.Value);
-            _cards.Remove(pair.Key);
-        }
-
-        var width = Math.Max(0, Math.Min(320, Bounds.Width - RailWidth - 24));
-        for (var i = first; i <= last; i++)
-        {
-            var entry = _index.Turns[i];
-            if (!_cards.TryGetValue(entry, out var card))
-            {
-                card = new ChatTurnPreview
-                {
-                    RenderTransform = new MatrixTransform(),
-                    RenderTransformOrigin = RelativePoint.TopLeft
-                };
-                _cards.Add(entry, card);
-                _previews.Children.Add(card);
-                card.PropertyChanged += HandleCardPropertyChanged;
-                card.Observe(_index, entry);
-            }
-            card.Width = width;
-        }
-
-        var slotHeight = _cards.Values.Max(card => Math.Max(card.MinHeight, card.Bounds.Height));
-        var spacing = slotHeight * 0.9 + 12;
-        var halfHeight = Math.Min(slotHeight / 2, Bounds.Height / 2);
-        var minimumY = halfHeight + Math.Min(center, neighborCount) * spacing + 8;
-        var maximumY = Bounds.Height - halfHeight - Math.Min(TurnCount - 1 - center, neighborCount) * spacing - 8;
-        // Preview motion is in viewport coordinates, independent of rail padding and scrolling.
-        var anchorY = Math.Clamp(_previewY.Value, Math.Min(minimumY, maximumY), Math.Max(minimumY, maximumY));
-        for (var i = first; i <= last; i++)
-        {
-            var card = _cards[_index.Turns[i]];
-            var distance = i - center;
-            var magnitude = Math.Abs(distance);
-            var edgeScale = Math.Clamp(neighborCount + 1 - magnitude, 0, 1);
-            var baseScale = Math.Max(0.72, 1 - 0.1 * magnitude);
-            var scale = Math.Max(0.001, baseScale * edgeScale * _presence.Value);
-            var height = Math.Max(card.MinHeight, card.Bounds.Height);
-            // Collapse the upper edge card toward its bottom-left corner, and the lower one
-            // toward its top-left corner. Account for the base depth scale separately, so the
-            // inner edge does not retreat and open a gap while edgeScale approaches zero.
-            var pivot = Math.Clamp(0.5 - distance * 0.5, 0, 1);
-            var y = anchorY + distance * spacing - height * baseScale / 2 + height * (baseScale - scale) * pivot;
-            card.ZIndex = 10 - (int)(magnitude * 2);
-            if (card.RenderTransform is MatrixTransform transform)
-                transform.Matrix = Matrix.CreateScale(scale, scale) *
-                    Matrix.CreateTranslation(RailWidth + 8 - (1 - _presence.Value) * 24, y);
-        }
-    }
-
-    private void RefreshPreviewText()
-    {
-        if (!IsEffectivelyVisible || !IsEnabled)
-        {
-            ClearMotion();
-            return;
-        }
-
-        if (_index is null) return;
-
-        foreach (var pair in _cards) pair.Value.Observe(_index, pair.Key);
+        var fittedNeighborCount = (int)((Bounds.Height - 16) / (PreviewSlotHeight + 8) - 1) / 2;
+        var neighborCount = Math.Clamp(fittedNeighborCount + 1, 0, 3);
+        return _previews.Update(_index, center, neighborCount, _presence.Value, _previewY.Value);
     }
 
     private void ClearMotion()
@@ -453,16 +402,11 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         _isHovering = false;
         _lastFrame = null;
         _presence = default;
+        PreviewPresence = 0;
         _focus = default;
         _previewY = default;
         _wakes.Clear();
-        DisposeCards();
-        _previews.Children.Clear();
-    }
-
-    private void HandleCardPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property == MinHeightProperty || e.Property == BoundsProperty) RequestFrame();
+        _previews.Clear();
     }
 
     private void HandleTopLevelPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -470,16 +414,6 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         if (e.Property != IsVisibleProperty) return;
         if (e.NewValue is false) ClearMotion();
         else RequestFrame();
-    }
-
-    private void DisposeCards()
-    {
-        foreach (var card in _cards.Values)
-        {
-            card.PropertyChanged -= HandleCardPropertyChanged;
-            card.Dispose();
-        }
-        _cards.Clear();
     }
 
     /// <inheritdoc />
@@ -490,15 +424,9 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     {
         base.Render(context);
 
-        // Drawing the backdrop does not expand input ownership: ICustomHitTest still restricts
-        // pointer input to the actual marks, allowing the remaining chat area to stay interactive.
-        if (Background is { } background && _presence.Value > 0)
-        {
-            using (context.PushOpacity(_presence.Value)) context.FillRectangle(background, new Rect(Bounds.Size));
-        }
-
         var clip = RailClip;
         if (clip.Height <= 0) return;
+
         var top = clip.Top;
         var origin = Origin - _offset.Value;
         var first = Math.Max(0, (int)Math.Floor((top - origin) / Pitch) - 2);
@@ -523,12 +451,13 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
                 }
 
                 var isReading = i == _readingIndex;
-                var length = 7 + influence * 23;
+                var length = 4 + influence * 24;
                 var y = origin + i * Pitch;
-                var edge = (1 - topFade * (1 - Math.Clamp((y - top) / fadeLength, 0, 1))) *
-                    (1 - bottomFade * (1 - Math.Clamp((clip.Bottom - y) / fadeLength, 0, 1)));
+                var edge = (1 - topFade * (1 - Math.Clamp((y - top) / fadeLength, 0, 1))) * (1 - bottomFade * (1 - Math.Clamp((clip.Bottom - y) / fadeLength, 0, 1)));
                 using (context.PushOpacity((0.24 + 0.7 * Math.Max(influence, isReading ? 0.7 : 0)) * edge))
+                {
                     context.DrawLine(isReading ? readingPen : normalPen, new Point(clip.Left, y), new Point(clip.Left + length, y));
+                }
             }
         }
     }
@@ -563,7 +492,7 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         Activate(e);
     }
 
-    private sealed class Wake(double position)
+    private struct Wake(double position)
     {
         public double Position { get; } = position;
         public double Age { get; set; }
@@ -575,6 +504,12 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
         public double Target { get; set; }
 
         private double _velocity;
+
+        public void Reset(double value)
+        {
+            Value = value;
+            _velocity = 0;
+        }
 
         public bool Step(double elapsed, double frequency)
         {
@@ -590,6 +525,298 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
             Value = Target;
             _velocity = 0;
             return false;
+        }
+    }
+
+
+    /// <summary>
+    /// Owns the small realized preview window. Child collection changes happen before layout;
+    /// measure captures natural heights and arrange commits them as one coherent snapshot.
+    /// </summary>
+    internal sealed class ChatTurnPreviewPanel : Panel
+    {
+        private const double EdgeFadeLength = 6;
+        private const double PreviewGap = 12;
+        private const double PreviewLeft = 48;
+        private const int RealizationBuffer = 1;
+        private readonly ChatTurnNavigator _owner;
+        private readonly Dictionary<ChatTurnNavigationIndex.PreviewItem, PreviewState> _items = [];
+        private readonly List<PreviewState> _orderedItems = [];
+        private readonly Stack<ChatTurnPreviewItemPresenter> _recyclePool = [];
+        private readonly GradientStop _topOpaqueStop = new(Colors.White, 0);
+        private readonly GradientStop _bottomOpaqueStop = new(Colors.White, 1);
+        private bool _preserveItemPositions;
+
+        public ChatTurnPreviewPanel(ChatTurnNavigator owner)
+        {
+            _owner = owner;
+            // Composition resolves a visual opacity mask against its rendered subtree bounds.
+            // A transparent background pins that subtree to this panel's viewport as cards move.
+            Background = Brushes.Transparent;
+            ClipToBounds = true;
+            IsHitTestVisible = false;
+            OpacityMask = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0.5, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(0.5, 1, RelativeUnit.Relative),
+                GradientStops =
+                {
+                    new GradientStop(Colors.Transparent, 0),
+                    _topOpaqueStop,
+                    _bottomOpaqueStop,
+                    new GradientStop(Colors.Transparent, 1)
+                }
+            };
+        }
+
+        public bool Update(ChatTurnNavigationIndex index, double center, int neighborCount, double presence, double requestedY)
+        {
+            EnsureRealizedItems(index, center, neighborCount);
+            return UpdateTransforms(index, center, presence, requestedY);
+        }
+
+        public bool Step(double elapsed)
+        {
+            return _orderedItems.AsValueEnumerable().Aggregate(false, (current, state) => current | state.LayoutCorrection.Step(elapsed, 32));
+        }
+
+        public void Clear()
+        {
+            _items.Clear();
+            _orderedItems.Clear();
+            _recyclePool.Clear();
+            while (Children.Count > 0) Children.RemoveAt(Children.Count - 1);
+            _preserveItemPositions = false;
+        }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            var previewWidth = GetPreviewWidth(availableSize.Width);
+            var constraint = new Size(previewWidth, double.PositiveInfinity);
+            foreach (var state in _orderedItems) state.Presenter.Measure(constraint);
+
+            var geometryChanged = false;
+            var hasNewMeasurements = false;
+            foreach (var state in _orderedItems)
+            {
+                var height = state.Presenter.DesiredSize.Height;
+                geometryChanged |= state.IsMeasured && Math.Abs(state.Height - height) > 0.01;
+                hasNewMeasurements |= !state.IsMeasured;
+            }
+            foreach (var state in _orderedItems)
+            {
+                state.Height = state.Presenter.DesiredSize.Height;
+                state.IsMeasured = true;
+            }
+
+            if (geometryChanged) _preserveItemPositions = true;
+            if (geometryChanged || hasNewMeasurements) _owner.RequestFrame();
+
+            // This panel is an overlay and must not reserve space in its parent.
+            return default;
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            UpdateOpacityMask(finalSize.Height);
+            var previewWidth = GetPreviewWidth(finalSize.Width);
+            foreach (var state in _orderedItems)
+                state.Presenter.Arrange(new Rect(0, 0, previewWidth, state.Height));
+            return finalSize;
+        }
+
+        private void EnsureRealizedItems(ChatTurnNavigationIndex index, double center, int neighborCount)
+        {
+            var firstTurn = Math.Max(0, (int)Math.Floor(center) - neighborCount);
+            var lastTurn = Math.Min(index.Turns.Count - 1, (int)Math.Ceiling(center) + neighborCount);
+
+            // A fixed turn window decides what to create. Items that have left that window stay
+            // alive until their transformed bounds leave the viewport. Fold those items into the
+            // required range before adding the buffer so a measured item is always waiting beyond
+            // either visible edge, even though Fluid distance scaling never drops below 50 percent.
+            foreach (var state in _items.Values)
+            {
+                var itemIndex = state.Item.PreviewIndex;
+                if (!ReferenceEquals(state.Item.Index, index) ||
+                    (uint)itemIndex >= (uint)index.PreviewItems.Count ||
+                    !ReferenceEquals(index.PreviewItems[itemIndex], state.Item) ||
+                    !state.HasRendered ||
+                    state.LastRenderedY + state.VisibleHeight <= 0 ||
+                    state.LastRenderedY >= Bounds.Height) continue;
+
+                firstTurn = Math.Min(firstTurn, state.Item.TurnIndex);
+                lastTurn = Math.Max(lastTurn, state.Item.TurnIndex);
+            }
+
+            firstTurn = Math.Max(0, firstTurn - RealizationBuffer);
+            lastTurn = Math.Min(index.Turns.Count - 1, lastTurn + RealizationBuffer);
+            var first = index.Turns[firstTurn].PreviewIndex;
+            if (first > 0 && index.PreviewItems[first - 1] is ChatTurnNavigationIndex.DateHeader) first--;
+            var last = index.Turns[lastTurn].PreviewIndex;
+
+            var rangeChanged = _orderedItems.Count == 0 || _orderedItems[0].Index != first || _orderedItems[^1].Index != last;
+            if (!rangeChanged)
+            {
+                var matches = true;
+                for (var i = first; i <= last; i++) matches &= ReferenceEquals(_orderedItems[i - first].Item, index.PreviewItems[i]);
+                if (matches) return;
+            }
+
+            foreach (var pair in _items.ToArray())
+            {
+                var keep = false;
+                for (var i = first; i <= last; i++) keep |= ReferenceEquals(index.PreviewItems[i], pair.Key);
+                if (keep) continue;
+
+                pair.Value.Presenter.Item = null;
+                Children.Remove(pair.Value.Presenter);
+                _recyclePool.Push(pair.Value.Presenter);
+                _items.Remove(pair.Key);
+            }
+
+            _orderedItems.Clear();
+            for (var i = first; i <= last; i++)
+            {
+                var item = index.PreviewItems[i];
+                if (!_items.TryGetValue(item, out var state))
+                {
+                    var preview = GetPresenter();
+                    state = new PreviewState(preview, item, i);
+                    _items.Add(item, state);
+                    Children.Add(preview);
+                    preview.Item = item;
+                }
+                state.Index = i;
+                _orderedItems.Add(state);
+            }
+        }
+
+        private ChatTurnPreviewItemPresenter GetPresenter()
+        {
+            if (_recyclePool.TryPop(out var recycled)) return recycled;
+
+            var preview = new ChatTurnPreviewItemPresenter
+            {
+                CacheMode = new BitmapCache(),
+                RenderTransform = new MatrixTransform(),
+                RenderTransformOrigin = RelativePoint.TopLeft
+            };
+            if (preview.RenderTransform is MatrixTransform transform)
+            {
+                transform.Matrix = Matrix.CreateScale(0.001, 0.001);
+            }
+
+            return preview;
+        }
+
+        private bool UpdateTransforms(ChatTurnNavigationIndex index, double center, double presence, double requestedY)
+        {
+            if (_orderedItems.Count == 0) return false;
+
+            var isFluid = _owner.Mode == ChatTurnNavigationMode.Fluid;
+            var lowerTurnIndex = Math.Clamp((int)Math.Floor(center), 0, index.Turns.Count - 1);
+            var lowerState = _items[index.Turns[lowerTurnIndex]];
+            var upperState = lowerTurnIndex + 1 < index.Turns.Count ? _items[index.Turns[lowerTurnIndex + 1]] : null;
+            var presenceScale = Math.Clamp(presence * 3, 0, 1);
+            foreach (var state in _orderedItems)
+            {
+                state.Distance = state.Item.TurnIndex - center;
+                var magnitude = Math.Abs(state.Distance);
+                var distanceScale = Math.Max(0.5, 1 - 0.1 * magnitude);
+                var scale = isFluid ? distanceScale * presenceScale : 1;
+                state.Scale = state.IsMeasured ? scale : 0;
+                state.VisibleHeight = state.Height * state.Scale;
+                state.Presenter.Opacity = state.IsMeasured ? isFluid ? 1 : presenceScale : 0;
+            }
+
+            _orderedItems[0].CenterY = 0;
+            for (var i = 1; i < _orderedItems.Count; i++)
+            {
+                _orderedItems[i].CenterY = _orderedItems[i - 1].CenterY + GetInterval(_orderedItems[i - 1], _orderedItems[i]);
+            }
+
+            var fraction = center - lowerTurnIndex;
+            var focusCenter = lowerState.CenterY;
+            if (upperState is not null) focusCenter += (upperState.CenterY - focusCenter) * fraction;
+            foreach (var state in _orderedItems) state.CenterY -= focusCenter;
+
+            var anchorY = isFluid ? Math.Clamp(requestedY, 0, Bounds.Height) : GetSimplePreviewAnchor(lowerState, upperState, fraction, requestedY);
+            var preservePositions = _preserveItemPositions;
+            var isMoving = false;
+            foreach (var state in _orderedItems)
+            {
+                if (!state.IsMeasured) continue;
+
+                var targetY = anchorY + state.CenterY - state.VisibleHeight / 2;
+                if (preservePositions && state.HasRendered)
+                {
+                    state.LayoutCorrection.Reset(state.LastRenderedY - targetY);
+                    isMoving = true;
+                }
+
+                var y = targetY + state.LayoutCorrection.Value;
+                state.LastRenderedY = y;
+                state.HasRendered = true;
+                state.Presenter.ZIndex = 10 - (int)(Math.Abs(state.Distance) * 2);
+                if (state.Presenter.RenderTransform is MatrixTransform transform)
+                {
+                    if (isFluid)
+                    {
+                        var renderScale = Math.Max(0.001, state.Scale);
+                        transform.Matrix = Matrix.CreateScale(renderScale, renderScale) * Matrix.CreateTranslation(PreviewLeft - (1 - presence) * 24, y);
+                    }
+                    else
+                    {
+                        transform.Matrix = Matrix.CreateTranslation(PreviewLeft, y);
+                    }
+                }
+            }
+
+            _preserveItemPositions = false;
+            return isMoving;
+        }
+
+        private double GetSimplePreviewAnchor(PreviewState lowerState, PreviewState? upperState, double fraction, double requestedY)
+        {
+            // Interpolate between turn cards; date headings between them participate in spacing
+            // but must not become the pointer anchor themselves.
+            var height = lowerState.Height;
+            if (upperState is not null) height += (upperState.Height - height) * fraction;
+
+            // Collapse the permitted range continuously to the viewport center if it is too small.
+            var inset = Math.Min(height / 2 + 8, Bounds.Height / 2);
+            return Math.Clamp(requestedY, inset, Bounds.Height - inset);
+        }
+
+        private void UpdateOpacityMask(double height)
+        {
+            var offset = height > 0 ? Math.Min(0.5, EdgeFadeLength / height) : 0.5;
+            if (Math.Abs(_topOpaqueStop.Offset - offset) < 0.001) return;
+
+            _topOpaqueStop.Offset = offset;
+            _bottomOpaqueStop.Offset = 1 - offset;
+        }
+
+        private static double GetInterval(PreviewState first, PreviewState second) =>
+            first.VisibleHeight / 2 + PreviewGap + second.VisibleHeight / 2;
+
+        private static double GetPreviewWidth(double availableWidth) =>
+            Math.Max(0, Math.Min(320, availableWidth - PreviewLeft - 16));
+
+        private sealed class PreviewState(ChatTurnPreviewItemPresenter presenter, ChatTurnNavigationIndex.PreviewItem item, int index)
+        {
+            public ChatTurnPreviewItemPresenter Presenter { get; } = presenter;
+            public ChatTurnNavigationIndex.PreviewItem Item { get; } = item;
+            public int Index { get; set; } = index;
+            public double Height { get; set; }
+            public double LastRenderedY { get; set; }
+            public double Distance { get; set; }
+            public double Scale { get; set; }
+            public double VisibleHeight { get; set; }
+            public double CenterY { get; set; }
+            public bool IsMeasured { get; set; }
+            public bool HasRendered { get; set; }
+            public Spring LayoutCorrection { get; } = new();
         }
     }
 }

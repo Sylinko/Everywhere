@@ -9,19 +9,27 @@ namespace Everywhere.Storage;
 
 public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory) : IBlobStorage
 {
+    private const long MaximumCopiedBlobSizeInBytes = 25L * 1024 * 1024;
+
     private readonly string _blobBasePath = RuntimeConstants.EnsureWritableDataFolderPath("blob");
 
     public Task<BlobEntity> StorageBlobAsync(
         Stream content,
         string mimeType,
         string? extension = null,
-        CancellationToken cancellationToken = default) =>
-        StorageBlobAsync(content, null, mimeType, extension, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        if (content.Length > MaximumCopiedBlobSizeInBytes)
+        {
+            throw new OverflowException($"Blob size exceeds the maximum allowed size of {MaximumCopiedBlobSizeInBytes} bytes.");
+        }
+
+        return StorageBlobAsync(content, null, mimeType, extension, cancellationToken);
+    }
 
     public async Task<BlobEntity> StorageBlobAsync(
         string filePath,
         string? mimeType = null,
-        long maxBytesSize = 26214400,
         CancellationToken cancellationToken = default)
     {
         if (filePath.Length > 1024)
@@ -30,11 +38,6 @@ public class BlobStorage(IDbContextFactory<ChatDbContext> dbFactory) : IBlobStor
         }
 
         await using var stream = File.OpenRead(filePath);
-        if (stream.Length > maxBytesSize)
-        {
-            throw new OverflowException($"File size exceeds the maximum allowed size of {maxBytesSize} bytes.");
-        }
-
         mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
         return await StorageBlobAsync(stream, filePath, mimeType, Path.GetExtension(filePath), cancellationToken);
     }

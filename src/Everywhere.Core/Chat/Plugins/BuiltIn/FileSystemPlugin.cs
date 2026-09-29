@@ -316,6 +316,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileTransferRenderer))]
     private async Task TransferPathAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("The existing local file or directory to copy or move.")] string source,
         [Description("The destination path, including the final file or directory name.")] string destination,
@@ -340,6 +341,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 LocaleKey.HandledSystemException_ArgumentOutOfRange);
         }
 
+        var sourceEntryPath = ResolveFileOperationPath(source, PathResolutionMode.PreserveFinalComponent);
+        source = operation is FileTransferOperation.Move ?
+            sourceEntryPath :
+            ResolveFileOperationPath(source, PathResolutionMode.FollowFinalComponent);
+        destination = ResolveFileOperationPath(destination, PathResolutionMode.PreserveFinalComponent);
+
         userInterface.ActivityPreview = new ChatPluginFileTransferActivityPreview(
             new ChatPluginFileReference(source),
             new DynamicLocaleKey(
@@ -363,7 +370,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         if (string.Equals(
                 Path.TrimEndingDirectorySeparator(source),
                 Path.TrimEndingDirectorySeparator(destination),
-                PathContainment.SystemPathComparison))
+                PathUtilities.SystemPathComparison))
         {
             throw new HandledException(
                 new IOException($"The source and destination resolve to the same path, so the {operationName} operation cannot be performed."),
@@ -377,7 +384,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 LocaleKey.HandledSystemException_IOException);
         }
 
-        if (!isFile && PathContainment.IsInsideDirectory(destination, source))
+        if (!isFile && PathUtilities.IsInsideDirectory(destination, source))
         {
             throw new HandledException(
                 new IOException($"The destination directory is inside the source directory, so the {operationName} operation cannot be performed."),
@@ -389,11 +396,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 new DirectoryNotFoundException($"The destination path does not contain a valid parent directory: '{destination}'."),
                 LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
 
-        if (operation is FileTransferOperation.Copy && isFile && File.GetAttributes(source).HasFlag(FileAttributes.ReparsePoint))
+        if (operation is FileTransferOperation.Copy && File.GetAttributes(sourceEntryPath).HasFlag(FileAttributes.ReparsePoint))
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"The file copy was not performed because '{source}' is a symbolic link. Copying linked files is not supported."),
+                    $"The copy was not performed because '{sourceEntryPath}' is a symbolic link or directory junction. Copying linked paths is not supported."),
                 LocaleKey.HandledSystemException_NotSupported);
         }
 
@@ -404,6 +411,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 operation is FileTransferOperation.Copy ?
@@ -438,6 +446,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Header, LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_Description)]
     private async Task<string> DeletePathsAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("Explicit local file or directory paths to delete.")] IReadOnlyList<string> paths,
         [Description("Whether non-empty directories may be deleted recursively.")] bool recursive = false,
@@ -455,7 +464,8 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var targets = paths
             .AsValueEnumerable()
             .Select(path => ExpandLocalPath(chatContext, path))
-            .Distinct(PathContainment.SystemPathComparer)
+            .Select(path => ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent))
+            .Distinct(PathUtilities.SystemPathComparer)
             .Select(path => PrepareDeleteTarget(path, workingDirectory, recursive, cancellationToken))
             .ToArray();
         if (targets.Length == 0) return "No files or directories to delete.";
@@ -472,6 +482,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var requiresExplicitApproval = recursive && targets.AsValueEnumerable().Any(static target => target is DirectoryInfo);
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header,
@@ -517,7 +528,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         var normalizedPath = Path.TrimEndingDirectorySeparator(path);
         var root = Path.TrimEndingDirectorySeparator(Path.GetPathRoot(path) ?? string.Empty);
-        if (string.Equals(normalizedPath, root, PathContainment.SystemPathComparison))
+        if (string.Equals(normalizedPath, root, PathUtilities.SystemPathComparison))
         {
             throw new HandledException(
                 new UnauthorizedAccessException(
@@ -525,8 +536,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_FileSystem_DeletePaths_RootDirectory_Deletion_ErrorMessage);
         }
 
-        var normalizedWorkingDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(workingDirectory));
-        if (string.Equals(normalizedPath, normalizedWorkingDirectory, PathContainment.SystemPathComparison))
+        var normalizedWorkingDirectory = Path.TrimEndingDirectorySeparator(
+            PathUtilities.ResolvePath(workingDirectory, PathResolutionMode.FollowFinalComponent).ResolvedPath ??
+            Path.GetFullPath(workingDirectory));
+        if (string.Equals(normalizedPath, normalizedWorkingDirectory, PathUtilities.SystemPathComparison))
         {
             throw new HandledException(
                 new UnauthorizedAccessException(
@@ -574,6 +587,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectoryAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         string path,
         CancellationToken cancellationToken = default)
@@ -581,6 +595,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         _logger.LogDebug("Creating directory at {Path}", path);
 
         path = ExpandLocalPath(chatContext, path);
+        path = ResolveFileOperationPath(path, PathResolutionMode.PreserveFinalComponent);
         userInterface.ActivityPreview = CreateFilePreview(path);
         userInterface.DisplaySink.AppendFileReferences(new ChatPluginFileReference(path));
         if (Directory.Exists(path)) return;
@@ -594,6 +609,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         await RequestFileOperationConsentAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header,
@@ -707,6 +723,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Description)]
     private async Task<PromptNode> ApplyPatchAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
+        [FromKernelServices] IStorageProvider storageProvider,
         [FromKernelServices] ChatContext chatContext,
         [Description("The complete patch document, including the *** Begin Patch and *** End Patch markers.")]
         string? patch,
@@ -747,7 +764,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         try
         {
             decisions = await review.ReviewAsync(
-                (item, token) => RequestPatchFileDecisionAsync(userInterface, chatContext, item, token),
+                (item, token) => RequestPatchFileDecisionAsync(userInterface, storageProvider, chatContext, item, token),
                 userInterface.DisplaySink,
                 cancellationToken);
         }
@@ -785,18 +802,24 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         foreach (var file in plan.Files)
         {
             paths.Add(file.SourcePath);
-            if (file is PatchMovePlanFile move) paths.Add(move.DestinationPath);
+            if (file is PatchUpdatePlanFile update) paths.Add(update.SourceEntryPath);
+            if (file is PatchMovePlanFile move)
+            {
+                paths.Add(move.ContentPath);
+                paths.Add(move.DestinationPath);
+            }
         }
 
         return paths
             .AsValueEnumerable()
-            .Distinct(PathContainment.SystemPathComparer)
+            .Distinct(PathUtilities.SystemPathComparer)
             .Select(static path => new ChatPluginFileReference(path))
             .ToArray();
     }
 
     private Task<RequestConsentResult> RequestPatchFileDecisionAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         PatchReviewItem item,
         CancellationToken cancellationToken)
@@ -804,12 +827,56 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         var paths = item.File is PatchMovePlanFile move ? new[] { move.SourcePath, move.DestinationPath } : new[] { item.File.ReviewPath };
         return RequestFileOperationConsentResultAsync(
             userInterface,
+            storageProvider,
             chatContext,
             new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header),
             paths,
-            () => item.DisplayBlock,
+            () => CreatePatchReviewContent(item),
             cancellationToken);
     }
+
+    private static ChatPluginDisplayBlock CreatePatchReviewContent(PatchReviewItem item)
+    {
+        if (item.File is PatchUpdatePlanFile update &&
+            !string.Equals(update.SourceEntryPath, update.SourcePath, PathUtilities.SystemPathComparison))
+        {
+            return new ChatPluginContainerDisplayBlock
+            {
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath, update.RequestedSourcePath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved, update.SourceEntryPath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated, update.SourcePath),
+                item.DisplayBlock
+            };
+        }
+
+        if (item.File is PatchDeletePlanFile { SourceLink: not null } delete)
+        {
+            return new ChatPluginContainerDisplayBlock
+            {
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath, delete.RequestedSourcePath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved, delete.SourcePath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved, delete.SourceLink.Target),
+                item.DisplayBlock
+            };
+        }
+
+        if (item.File is PatchMovePlanFile { SourceLink: not null } move)
+        {
+            return new ChatPluginContainerDisplayBlock
+            {
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath, move.RequestedSourcePath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead, move.ContentPath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten, move.DestinationPath),
+                CreatePatchPathDetailBlock(LocaleKey.BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved, move.SourcePath),
+                item.DisplayBlock
+            };
+        }
+
+        return item.DisplayBlock;
+    }
+
+    private static ChatPluginDynamicLocaleKeyDisplayBlock CreatePatchPathDetailBlock(string key, string path) =>
+        new(new FormattedDynamicLocaleKey(key, new DirectLocaleKey(path)), "Muted");
 
     private static string FormatPatchCommitResult(PatchCommitResult result, PatchPlan plan)
     {
@@ -934,7 +1001,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         var resultsByPath = result.Files.ToDictionary(
             static file => file.Path,
-            PathContainment.SystemPathComparer);
+            PathUtilities.SystemPathComparer);
         output.AppendLine("Warnings: tolerant matching was used while planning this patch:");
         foreach (var file in plan.Files)
         {
@@ -1195,7 +1262,9 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private static string ExpandLocalPath(ChatContext chatContext, string path)
     {
-        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && !uri.IsFile)
+        Uri? uri = null;
+        if (PathUtilities.HasExplicitUriScheme(path) &&
+            (!Uri.TryCreate(path, UriKind.Absolute, out uri) || !uri.IsFile))
         {
             throw new HandledException(
                 new NotSupportedException(
@@ -1205,7 +1274,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         try
         {
-            return ExpandFullPath(chatContext.EnsureWorkingDirectory(), uri?.IsFile == true ? uri.LocalPath : path);
+            return PathUtilities.ExpandFullPath(uri?.IsFile == true ? uri.LocalPath : path, chatContext.EnsureWorkingDirectory());
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
@@ -1215,27 +1284,19 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         }
     }
 
-    internal static string ExpandFullPath(string workingDirectory, string path)
+    private static string ResolveFileOperationPath(string path, PathResolutionMode mode)
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            throw new HandledException(
-                new ArgumentException(
-                    "The path argument is empty. Provide a local file or directory path.",
-                    nameof(path)),
-                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
-        }
+        var result = PathUtilities.ResolvePath(path, mode);
+        if (result.ResolvedPath is { } resolvedPath) return resolvedPath;
 
-        if (string.IsNullOrWhiteSpace(workingDirectory))
-        {
-            throw new HandledException(
-                new ArgumentException(
-                    "The chat working directory is empty, so the requested relative path cannot be resolved.",
-                    nameof(workingDirectory)),
-                LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage);
-        }
-
-        return Path.GetFullPath(Environment.ExpandEnvironmentVariables(path), workingDirectory);
+        var failure = result.Failure;
+        throw new HandledException(
+            new IOException(
+                failure is null ?
+                    $"The file-operation path '{path}' could not be resolved." :
+                    $"The file-operation path '{path}' could not be resolved at '{failure.Path}' ({failure.Kind}): {failure.Message}"),
+            LocaleKey.BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage,
+            showDetails: true);
     }
 
     private static ChatPluginContainerDisplayBlock CreateFileTransferContent(string source, string destination, FileTransferOperation operation) =>
@@ -1312,6 +1373,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     private async Task RequestFileOperationConsentAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         IDynamicLocaleKey headerKey,
         string[] paths,
@@ -1321,6 +1383,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     {
         var consent = await RequestFileOperationConsentResultAsync(
             userInterface,
+            storageProvider,
             chatContext,
             headerKey,
             paths,
@@ -1338,10 +1401,12 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
     /// <summary>
     /// Returns the effective file-operation approval after applying tool, working-directory, and
-    /// persisted path rules, requesting consent only when none of those rules covers every path.
+    /// persisted path rules, requesting consent only when none of those rules covers every final
+    /// operation path supplied by the caller.
     /// </summary>
     private async Task<RequestConsentResult> RequestFileOperationConsentResultAsync(
         IChatPluginUserInterface userInterface,
+        IStorageProvider storageProvider,
         ChatContext chatContext,
         IDynamicLocaleKey headerKey,
         string[] paths,
@@ -1352,8 +1417,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         if (chatContext.FunctionCallContext.Value?.BypassesApproval is true) return RequestConsentResult.Accept;
 
         var workingDirectory = chatContext.EnsureWorkingDirectory();
+        var resolvedWorkingDirectory = PathUtilities.ResolvePath(
+            workingDirectory,
+            PathResolutionMode.FollowFinalComponent).ResolvedPath;
         if (!forceConsent && paths.Length > 0 &&
-            paths.AsValueEnumerable().All(path => Path.IsPathFullyQualified(path) && PathContainment.IsInsideDirectory(path, workingDirectory)))
+            paths.AsValueEnumerable().All(path => Path.IsPathFullyQualified(path) &&
+                resolvedWorkingDirectory is not null &&
+                PathUtilities.IsResolvedPathInsideDirectory(path, resolvedWorkingDirectory)))
         {
             return RequestConsentResult.Accept;
         }
@@ -1367,7 +1437,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             };
 
         // Build custom options
-        var commonParentDirectory = PathContainment.GetCommonParentDirectory(paths);
+        var commonParentDirectory = PathUtilities.GetCommonParentDirectory(paths);
         var customOptions = new List<RequestConsentCustomOption>
         {
             new(
@@ -1410,6 +1480,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             case FileSystemConsentOption.ExactPaths:
             {
+                // TODO: Exact paths are persisted in the same syntax as user-authored globs. A
+                // literal file name containing '*', '?', '[', or ']' can therefore broaden the
+                // saved rule. Introduce a lossless literal-rule representation before escaping or
+                // changing the persisted string format.
                 foreach (var path in paths) _fileSystemSettings.AddApprovalPath(path);
                 break;
             }
@@ -1428,11 +1502,11 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                         var options = new FolderPickerOpenOptions { AllowMultiple = false };
                         if (!commonParentDirectory.IsNullOrWhiteSpace())
                         {
-                            options.SuggestedStartLocation = await App.StorageProvider.TryGetFolderFromPathAsync(commonParentDirectory);
+                            options.SuggestedStartLocation = await storageProvider.TryGetFolderFromPathAsync(commonParentDirectory);
                         }
 
                         cancellationToken.ThrowIfCancellationRequested();
-                        return await App.StorageProvider.OpenFolderPickerAsync(options);
+                        return await storageProvider.OpenFolderPickerAsync(options);
                     });
                     selectedDirectory = folders.FirstOrDefault()?.Path.LocalPath;
                 }
@@ -1458,15 +1532,40 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
                         LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
                 }
 
-                if (!paths.AsValueEnumerable().All(path => PathContainment.IsInsideDirectory(path, selectedDirectory)))
+                var selectedDirectoryResolution = PathUtilities.ResolvePath(selectedDirectory, PathResolutionMode.FollowFinalComponent);
+                if (!selectedDirectoryResolution.IsSuccess)
                 {
+                    var failure = selectedDirectoryResolution.Failure;
                     throw new HandledException(
                         new UnauthorizedAccessException(
-                            "The user chose a folder for always-allow approval, but that folder does not contain every path required by this operation. No approval was saved and the operation was not performed."),
+                            failure is null ?
+                                $"The selected folder '{selectedDirectory}' could not be resolved. No approval was saved and the operation was not performed." :
+                                $"The selected folder '{selectedDirectory}' could not be resolved at '{failure.Path}' ({failure.Kind}): {failure.Message} No approval was saved and the operation was not performed."),
                         LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
                 }
 
-                _fileSystemSettings.AddApprovalPath(CreateDirectoryApprovalPattern(selectedDirectory));
+                var resolvedSelectedDirectory = selectedDirectoryResolution.ResolvedPath ??
+                    throw new InvalidOperationException("Successful selected-directory resolution did not provide a final path.");
+                var uncoveredPaths = paths
+                    .AsValueEnumerable()
+                    .Where(path => !PathUtilities.IsResolvedPathInsideDirectory(path, resolvedSelectedDirectory))
+                    .ToArray();
+                if (uncoveredPaths.Length > 0)
+                {
+                    var uncoveredPathDetails = uncoveredPaths.Length <= 10 ?
+                        Environment.NewLine + "Paths outside the selected folder:" + Environment.NewLine +
+                        string.Join(Environment.NewLine, uncoveredPaths.Select(static path => $"- {path}")) :
+                        string.Empty;
+                    throw new HandledException(
+                        new UnauthorizedAccessException(
+                            $"The user chose '{resolvedSelectedDirectory}' for always-allow approval, but it does not contain " +
+                            $"{uncoveredPaths.Length} required operation path(s). No approval was saved and the operation was not performed." +
+                            uncoveredPathDetails),
+                        LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage,
+                        showDetails: true);
+                }
+
+                _fileSystemSettings.AddApprovalPath(CreateDirectoryApprovalPattern(resolvedSelectedDirectory));
                 break;
             }
         }
@@ -1477,7 +1576,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         {
             try
             {
-                return App.StorageProvider.CanPickFolder;
+                return storageProvider.CanPickFolder;
             }
             catch (InvalidOperationException ex)
             {

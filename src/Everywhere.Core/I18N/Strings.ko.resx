@@ -103,7 +103,7 @@
     <data name="Assistant_TopP_Header" xml:space="preserve">
         <value>top_p</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Description" xml:space="preserve">
+    <data name="WebSearchEngineSettings_SelectedProvider_Description" xml:space="preserve">
         <value>웹 검색 엔진의 서비스 제공자를 선택하세요.</value>
     </data>
     <data name="WebSearchEngineProvider_EndPoint_Header" xml:space="preserve">
@@ -127,10 +127,10 @@
     <data name="ChatInputArea_ImageButton_Text" xml:space="preserve">
         <value>이미지</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_ToolTip" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_ToolTip" xml:space="preserve">
         <value>도구를 사용하여 보조 기능 향상 (Ctrl+T)</value>
     </data>
-    <data name="ChatInputArea_ToolCallButton_Text" xml:space="preserve">
+    <data name="ChatCustomAssistantSelector_ToolCall_Text" xml:space="preserve">
         <value>도구</value>
     </data>
     <data name="ChatInputArea_SendButton_ToolTip" xml:space="preserve">
@@ -223,6 +223,15 @@
     <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
         <value>검색 닫기 (Esc)</value>
     </data>
+    <data name="ChatWindow_TextSearchScope_All_ToolTip" xml:space="preserve">
+        <value>모든 메시지 검색</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_User_ToolTip" xml:space="preserve">
+        <value>사용자 메시지만 검색</value>
+    </data>
+    <data name="ChatWindow_TextSearchScope_Assistant_ToolTip" xml:space="preserve">
+        <value>도우미 메시지만 검색</value>
+    </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>새 채팅 만들기 (Ctrl+N)</value>
     </data>
@@ -238,13 +247,13 @@
     <data name="ChatWindow_DragDrop_Overlay_Unsupported" xml:space="preserve">
         <value>이 항목 유형은 지원되지 않습니다</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PickVisualElement" xml:space="preserve">
         <value>시각 요소 선택</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_PasteFromClipboard" xml:space="preserve">
         <value>클립보드에서 붙여넣기</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_AttachFile" xml:space="preserve">
         <value>파일 첨부</value>
     </data>
     <data name="ChatWindowViewModel_QuickActions_Translate" xml:space="preserve">
@@ -548,12 +557,6 @@
     <data name="ChatWindowSettings_WindowPinMode_Description" xml:space="preserve">
         <value>채팅 창이 열릴 때 고정 모드를 지정합니다. 창이 고정되지 않은 경우, 포커스를 잃으면 자동으로 숨겨집니다.</value>
     </data>
-    <data name="PersistentState_VisualContextDetailLevel_Header" xml:space="preserve">
-        <value>시각적 맥락 세부 수준</value>
-    </data>
-    <data name="PersistentState_VisualContextDetailLevel_Description" xml:space="preserve">
-        <value>시각 요소 첨부가 추가된 경우, Everywhere는 이를 주변 요소와 함께 구조화된 텍스트로 수집하여 도우미에게 보냅니다. 이 옵션은 수집의 풍부함과 정보량을 제어합니다.</value>
-    </data>
     <data name="FriendlyExceptionMessage_ClientResult" xml:space="preserve">
         <value>클라이언트 오류입니다.</value>
     </data>
@@ -603,7 +606,7 @@
         <value>이미지 입력 지원</value>
     </data>
     <data name="Assistant_ContextLimit_Description" xml:space="preserve">
-        <value>대화의 최대 컨텍스트 길이 (context_limit). 이 값은 시각적 컨텍스트를 구축하는 전략에 영향을 미치므로 가능한 실제 값으로 설정하세요.</value>
+        <value>대화의 최대 컨텍스트 길이 (context_limit). 이 값은 여러 전략에 영향을 미치므로 가능한 한 실제 값으로 설정하세요.</value>
     </data>
     <data name="Assistant_ContextLimit_Header" xml:space="preserve">
         <value>최대 컨텍스트</value>
@@ -696,10 +699,10 @@
         <value>도구</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>채팅 도구에는 내장 도구와 MCP 서버가 포함되어 있으며, 도구 호출을 지원하는 대형 언어 모델이 적절한 시점에 이러한 도구를 사용하여 더 강력한 기능을 제공합니다.</value>
+        <value>어시스턴트는 적절한 시점에 이러한 도구(웹 검색, 로컬 파일 접근 등)를 사용하여 더 강력한 기능을 제공합니다.</value>
     </data>
-    <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
-        <value>웹 검색 엔진 제공자</value>
+    <data name="WebSearchEngineSettings_SelectedProvider_Header" xml:space="preserve">
+        <value>웹 검색 엔진</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header" xml:space="preserve">
         <value>API 키</value>
@@ -714,25 +717,25 @@
         <value>프로그래머블 검색 엔진 ID를 제공합니다. 자세한 내용은 문서를 참조하세요.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>웹</value>
+        <value>웹 브라우징</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>웹 페이지를 탐색할 수 있는 기능을 제공하여, 도우미가 실시간으로 웹 콘텐츠를 탐색하여 능력을 향상시킵니다.</value>
+        <value>웹을 탐색할 수 있는 기능을 제공합니다. 검색, 웹 콘텐츠 가져오기 등을 포함합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
-        <value>파일 시스템</value>
+        <value>파일 작업</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
-        <value>파일 열람, 생성, 삭제, 이름 변경, 읽기 또는 쓰기 등의 파일 접근 기능을 제공합니다.</value>
+        <value>파일 나열, 생성, 수정, 삭제, 이름 변경 등 파일을 조작하는 기능을 제공합니다.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
         <value>승인된 경로</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
-        <value>이 절대 경로 glob와 일치하는 파일 시스템 작업은 경로 승인을 다시 요청할 필요가 없습니다. **는 임의 깊이의 디렉토리를 나타냅니다. 예: C:\** 또는 D:\**\3rd.</value>
+        <value>최종 확인 경로가 이 절대 glob 패턴과 일치하는 파일 시스템 작업은 경로 승인을 다시 요청하지 않고 허용됩니다. 규칙 자체는 심볼릭 링크나 정션을 통해 확인되지 않습니다. 구분자로 /를 사용하고 임의의 디렉터리 깊이에는 **를 사용하세요. 예: C:/** 또는 D:/**/3rd.</value>
     </data>
     <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
-        <value>절대 glob 경로, 예: C:\Source\Everywhere\**</value>
+        <value>최종 경로의 절대 glob, 예: C:/Source/Everywhere/**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>잘못된 작업입니다.</value>
@@ -750,7 +753,7 @@
         <value>도구</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
-        <value>시각적 컨텍스트</value>
+        <value>화면 인식</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Description" xml:space="preserve">
         <value>화면 콘텐츠를 인식하고 조작하는 기능을 제공합니다.</value>
@@ -987,8 +990,8 @@
     <data name="ChatInputArea_SettingsButton_ToolTip" xml:space="preserve">
         <value>설정</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Header" xml:space="preserve">
-        <value>시각적 맥락 길이 예산</value>
+    <data name="CustomAssistant_VisualContextLengthLimit_Header" xml:space="preserve">
+        <value>화면 인식 예산</value>
     </data>
     <data name="ChatMessageControl_Assistant_Reasoning" xml:space="preserve">
         <value>깊은 사고</value>
@@ -1057,7 +1060,8 @@
         <value>경고</value>
     </data>
     <data name="CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message" xml:space="preserve">
-        <value>&quot;{0}&quot;을(를) 삭제하시겠습니까?</value>
+        <value>현재 어시스턴트를 삭제하시겠습니까?
+“{0}”은(는) 영구적으로 사라집니다! (정말 오래!)</value>
     </data>
     <data name="Common_Yes" xml:space="preserve">
         <value>예</value>
@@ -1303,10 +1307,31 @@
         <value>이동하기</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>Allow directory creation?</value>
+        <value>폴더 “{0}”을(를) 새로 만들도록 허용하시겠습니까?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
         <value>이 파일 작업을 허용하시겠습니까?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RequestedPath" xml:space="preserve">
+        <value>요청한 경로: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryPreserved" xml:space="preserve">
+        <value>유지되는 링크 항목: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentTargetUpdated" xml:space="preserve">
+        <value>업데이트되는 콘텐츠 대상: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_LinkEntryRemoved" xml:space="preserve">
+        <value>제거되는 링크 항목: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ReferentPreserved" xml:space="preserve">
+        <value>참조 대상은 유지됨; 링크에 저장된 대상: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_ContentSourceRead" xml:space="preserve">
+        <value>수정 없이 읽는 콘텐츠 원본: {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Consent_RegularDestinationWritten" xml:space="preserve">
+        <value>일반 파일로 쓰는 대상: {0}</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
         <value>{0}을(를) 새로 만들겠습니까?</value>
@@ -1384,7 +1409,7 @@
         <value>디렉토리 생성</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
-        <value>패치 적용</value>
+        <value>파일 수정</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1408,7 +1433,7 @@
         <value>{0} 링크</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header" xml:space="preserve">
-        <value>UI 요소 캡처</value>
+        <value>스크린샷</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header" xml:space="preserve">
         <value>자동화 작업</value>
@@ -1462,7 +1487,7 @@
         <value>지정된 경로에 있는 파일 또는 디렉터리에 대한 정보를 가져옵니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFileContent_Description" xml:space="preserve">
-        <value>파일 내에서 특정 텍스트를 검색하고 일치하는 줄을 반환합니다.</value>
+        <value>파일에서 지정한 텍스트를 검색합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_Description" xml:space="preserve">
         <value>지정된 경로에 있는 파일의 내용을 읽습니다.</value>
@@ -1474,13 +1499,13 @@
         <value>파일이나 폴더를 복사하거나 이동하지만 내용을 수정하지 않습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
-        <value>명시된 파일이나 폴더를 삭제합니다. 비어 있지 않은 폴더는 recursive=true가 필요합니다.</value>
+        <value>파일 또는 폴더를 삭제합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>지정된 경로에 새 디렉터리를 생성합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
-        <value>Codex 스타일 패치를 사용하여 로컬 텍스트 파일을 추가, 업데이트, 삭제 또는 이동합니다.</value>
+        <value>텍스트 파일을 추가, 수정, 삭제 또는 이동합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
         <value>파일 크기가 {0}MB를 초과하여 읽기 작업이 지원되지 않습니다.</value>
@@ -1504,7 +1529,7 @@
         <value>모델이 매개변수 '{0}'에 대해 잘못된 값을 제공했습니다. 아마도 환각 때문입니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
-        <value>패치를 적용할 수 없습니다. 패치를 확인한 후 다시 시도하세요.</value>
+        <value>변경 사항을 적용할 수 없습니다. 일반적으로 어시스턴트의 실수로 인해 발생합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>지정된 경로는 파일이며, 디렉토리가 아닙니다.</value>
@@ -1522,7 +1547,7 @@
         <value>지정된 경로가 존재하지 않습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description" xml:space="preserve">
-        <value>시각적 요소의 스크린샷을 캡처합니다.</value>
+        <value>화면의 특정 영역을 스크린샷합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description" xml:space="preserve">
         <value>클릭, 입력 또는 단축키 전송과 같은 일련의 자동화 작업을 실행합니다.</value>
@@ -1531,7 +1556,7 @@
         <value>웹 검색을 수행합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebExtract_Description" xml:space="preserve">
-        <value>웹 페이지의 주요 내용을 추출합니다. 이는 백그라운드에서 Puppeteer를 통해 숨겨진 웹 브라우저를 실행하고, 이 브라우저를 통해 웹 페이지에 접근합니다. 호환성 문제로 인해 처음 열 때 자동으로 웹 브라우저를 다운로드할 수 있으며, 네트워크 상황에 따라 시간이 걸릴 수 있습니다.</value>
+        <value>어시스턴트가 웹 페이지를 탐색하고 주요 내용을 가져올 수 있도록 합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
         <value>웹 검색 엔진이 선택되지 않았습니다. 도구 설정의 웹 브라우저 구성에서 검색 엔진을 설정하세요.</value>
@@ -1591,10 +1616,10 @@
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>요청 시간 초과</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Description" xml:space="preserve">
         <value>보고된 상황 인식 사용량이 모델이 선언한 상황 길이의 이 백분율에 도달하면 대화 상황을 자동으로 압축합니다.</value>
     </data>
-    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+    <data name="CustomAssistant_ContextCompressionThreshold_Header" xml:space="preserve">
         <value>상황 인식 압축 임계값</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
@@ -1631,7 +1656,7 @@
         <value>메시지 수정 중...</value>
     </data>
     <data name="ChatWindow_ModelWarning_Unavailable" xml:space="preserve">
-        <value>현재 도우미의 모델이 지원되지 않습니다. 요청이 실패할 수 있습니다.</value>
+        <value>현재 도우미의 모델이 최신 카탈로그에 없습니다. 요청이 실패할 수 있습니다.</value>
     </data>
     <data name="ChatWindow_ModelWarning_Deprecated" xml:space="preserve">
         <value>현재 도우미의 모델이 {0}에 중단되었습니다. 더 최신 모델로 전환하는 것을 권장합니다.</value>
@@ -1889,7 +1914,7 @@
         <value>할 일 목록 관리</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Description" xml:space="preserve">
-        <value>보조 도우미가 간결한 할 일 목록을 유지하도록 허용하면 복잡한 작업을 처리할 때 매우 유용합니다. 이 목록은 임시 목록이며 대화를 전환하거나 Everywhere를 종료하면 사라집니다.</value>
+        <value>어시스턴트가 간결한 할 일 목록을 유지하도록 허용합니다. 이는 복잡한 작업을 처리할 때 매우 유용합니다.</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_Header" xml:space="preserve">
         <value>필수</value>
@@ -1907,10 +1932,10 @@
         <value>{0} 입력 · {1} 출력 · {2} 총</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Header" xml:space="preserve">
-        <value>사용자에게 질문하기</value>
+        <value>질문하기</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_AskUserQuestion_Description" xml:space="preserve">
-        <value>도우미가 대화형 대화 상자를 통해 사용자에게 질문하고 입력을 수집할 수 있도록 합니다.</value>
+        <value>도우미가 단일 선택, 복수 선택 또는 자유 입력 형식으로 질문하여 현재 작업을 더 잘 이해할 수 있도록 합니다.</value>
     </data>
     <data name="AskQuestionCard_NextButton_Content" xml:space="preserve">
         <value>다음</value>
@@ -1938,6 +1963,9 @@
     </data>
     <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
         <value>프롬프트 관리</value>
+    </data>
+    <data name="ChatAssistantPromptSelector_ChangeWarning" xml:space="preserve">
+        <value>대화 중에 프롬프트를 전환하면 프롬프트 캐시 적중률이 낮아지고 LLM 비용이 증가할 수 있습니다.</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} 개의 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다!</value>
@@ -2057,7 +2085,7 @@
         <value>왼쪽 버튼을 눌러 선택하고, 오른쪽 버튼이나 Esc로 종료
 휠 또는 숫자 키로 선택 모드 전환</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
+    <data name="ChatWindow_AddAttachmentMenuItems_TakeScreenshot" xml:space="preserve">
         <value>스크린샷 찍기</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
@@ -2087,9 +2115,6 @@
     <data name="ModelProviderSchema_DeepSeek" xml:space="preserve">
         <value>DeepSeek</value>
     </data>
-    <data name="ChatWindow_ChatInputArea_SettingsMenuItems_MoreSettings" xml:space="preserve">
-        <value>추가 설정</value>
-    </data>
     <data name="HandledSystemException_Serialization" xml:space="preserve">
         <value>데이터를 분석하는 중 오류가 발생했습니다.</value>
     </data>
@@ -2099,11 +2124,8 @@
     <data name="ChatWindowViewModel_ExportMarkdown_ReasoningOutput" xml:space="preserve">
         <value>심층 사고</value>
     </data>
-    <data name="PersistentState_VisualContextLengthLimit_Description" xml:space="preserve">
-        <value>비주얼 컨텍스트 수집의 길이 한계, 단위는 토큰입니다. 이 값은 추정치로, 정확한 제한을 보장하지 않습니다. 간단한 컨텍스트의 경우 소모되는 토큰 수는 이 수치보다 적을 수 있으며, 복잡한 컨텍스트의 경우 초과된 부분은 잘립니다.</value>
-    </data>
-    <data name="ChatInputArea_ToolCallButton_Header" xml:space="preserve">
-        <value>도구 호출 활성화</value>
+    <data name="CustomAssistant_VisualContextLengthLimit_Description" xml:space="preserve">
+        <value>화면 인식 1회당 소모되는 토큰의 추정 상한.</value>
     </data>
     <data name="Greetings_Tip1" xml:space="preserve">
         <value>알고 계셨나요? Ctrl + 숫자 키를 사용하여 도우미를 빠르게 전환할 수 있습니다.</value>
@@ -2132,11 +2154,11 @@
     <data name="Assistant_ReasoningEffort_Header" xml:space="preserve">
         <value>추론 강도 (reasoning_effort)</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Header" xml:space="preserve">
+    <data name="CustomAssistant_MaxContextRounds_Header" xml:space="preserve">
         <value>최대 컨텍스트 라운드</value>
     </data>
-    <data name="PersistentState_MaxContextRounds_Description" xml:space="preserve">
-        <value>컨텍스트에 보존할 최근 사용자 메시지 라운드를 제한합니다. 질문과 답변은 하나의 라운드로 간주됩니다.</value>
+    <data name="CustomAssistant_MaxContextRounds_Description" xml:space="preserve">
+        <value>컨텍스트에 보존할 최근 사용자 메시지 라운드를 제한합니다. 질문과 답변은 하나의 라운드로 간주됩니다. -1로 설정하면 제한이 없습니다.</value>
     </data>
     <data name="PersistentState_MaxContextRounds_Value_CurrentInputOnly" xml:space="preserve">
         <value>현재 메시지만</value>
@@ -2742,26 +2764,14 @@
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header" xml:space="preserve">
         <value>다음 자동화 작업을 실행해도 괜찮습니까?</value>
     </data>
-    <data name="WebSearchPage_Title" xml:space="preserve">
-        <value>웹 검색</value>
-    </data>
     <data name="WebSearchEngineProvider_Bocha" xml:space="preserve">
         <value>Bocha</value>
     </data>
     <data name="WebSearchEngineProvider_Official" xml:space="preserve">
         <value>Everywhere Cloud</value>
     </data>
-    <data name="WebSearchPage_DocsHyperlinkButton_Content" xml:space="preserve">
-        <value>문서 보기</value>
-    </data>
     <data name="Common_Default" xml:space="preserve">
         <value>기본</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_Content" xml:space="preserve">
-        <value>기본으로 설정</value>
-    </data>
-    <data name="WebSearchPage_SetDefaultButton_AlreadyDefaultContent" xml:space="preserve">
-        <value>기본으로 설정됨</value>
     </data>
     <data name="ValidationErrorMessage_RequiredApiKey" xml:space="preserve">
         <value>API 키는 비어 있을 수 없습니다.</value>
@@ -3001,13 +3011,13 @@
         <value>추론 강도 (reasoning_effort)</value>
     </data>
     <data name="OpenAIOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>추론 모델의 선택적 강도 수준. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+        <value>추론 모델의 선택적 강도 수준. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Header" xml:space="preserve">
         <value>추론 강도 (reasoning.effort)</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Responses 추론 모델이 얼마나 많은 사고를 할지 안내합니다. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요.</value>
+        <value>Responses 추론 모델이 얼마나 많은 사고를 할지 안내합니다. 지원되는 값은 모델에 따라 다르며, 기본값은 비워 두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="OpenAIResponsesOptions_ReasoningSummary_Header" xml:space="preserve">
         <value>추론 요약 (reasoning.summary)</value>
@@ -3040,7 +3050,7 @@
         <value>생각 강도</value>
     </data>
     <data name="AnthropicOptions_ThinkingEffort_Description" xml:space="preserve">
-        <value>Anthropic 적응형 생각 깊이에 대한 부드러운 안내로, low, medium, high, xhigh 또는 max를 사용할 수 있습니다. 기본값은 비워두세요.</value>
+        <value>Anthropic 적응형 생각 깊이에 대한 부드러운 안내로, low, medium, high, xhigh 또는 max를 사용할 수 있습니다. 기본값은 비워두세요. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="AnthropicOptions_CacheControl_Header" xml:space="preserve">
         <value>프롬프트 캐시</value>
@@ -3070,7 +3080,7 @@
         <value>생각 수준</value>
     </data>
     <data name="GoogleOptions_ThinkingLevel_Description" xml:space="preserve">
-        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다.</value>
+        <value>Gemini 3 모델의 생각 깊이로, minimal, low, medium 또는 high를 선택할 수 있습니다. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="SoftwareSettings_UpdateChannel_Header" xml:space="preserve">
         <value>업데이트 채널</value>
@@ -3403,7 +3413,7 @@
         <value>사고 강도</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>선택 가능한 모델 특정 추론 강도입니다. Mistral은 현재 지원되는 모델에 대해 high와 none을 명확히 설명하며, 다른 비어 있지 않은 값은 그대로 전달됩니다. 비워두면 모델 기본 동작을 사용합니다. '추론 포함'을 끄면 none이 전송됩니다.</value>
+        <value>선택 가능한 모델 특정 추론 강도입니다. Mistral은 현재 지원되는 모델에 대해 high와 none을 명확히 설명하며, 다른 비어 있지 않은 값은 그대로 전달됩니다. 비워두면 모델 기본 동작을 사용합니다. '추론 포함'을 끄면 none이 전송됩니다. low|medium|high처럼 여러 값을 |로 구분하세요. 채팅에서 입력한 순서대로 전환할 수 있습니다.</value>
     </data>
     <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
         <value>설정 경로 &quot;{0}&quot; 쓰기 실패.</value>
@@ -3937,10 +3947,94 @@
     <data name="ChatTurnPreview_ToolActivity" xml:space="preserve">
         <value>도구 호출</value>
     </data>
-    <data name="ChatWindowSettings_ShowTurnNavigation_Header" xml:space="preserve">
-        <value>대화 탐색 표시</value>
+    <data name="ChatWindowSettings_TurnNavigationMode_Header" xml:space="preserve">
+        <value>대화 턴 탐색</value>
     </data>
-    <data name="ChatWindowSettings_ShowTurnNavigation_Description" xml:space="preserve">
-        <value>현재 대화 왼쪽에 탐색 바를 표시합니다. 마우스를 올리면 해당 질문과 응답을 미리 볼 수 있으며, 클릭하면 해당 위치로 이동합니다.</value>
+    <data name="ChatWindowSettings_TurnNavigationMode_Description" xml:space="preserve">
+        <value>대화 왼쪽에 턴 탐색 막대를 표시합니다. 위아래로만 움직이는 간단한 애니메이션, 크기 조절이 포함된 유연한 애니메이션 또는 끄기를 선택할 수 있습니다.</value>
+    </data>
+    <data name="ChatTurnNavigationMode_None" xml:space="preserve">
+        <value>끄기</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Simple" xml:space="preserve">
+        <value>간단</value>
+    </data>
+    <data name="ChatTurnNavigationMode_Fluid" xml:space="preserve">
+        <value>유연함</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ManageAssistantsButton_Content" xml:space="preserve">
+        <value>어시스턴트 관리</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_ToolCall_NotSupported" xml:space="preserve">
+        <value>지원되지 않음</value>
+    </data>
+    <data name="Assistant_SupportsPdf_Header" xml:space="preserve">
+        <value>PDF 입력 지원</value>
+    </data>
+    <data name="Assistant_SupportsAudio_Header" xml:space="preserve">
+        <value>오디오 입력 지원</value>
+    </data>
+    <data name="Assistant_SupportsVideo_Header" xml:space="preserve">
+        <value>동영상 입력 지원</value>
+    </data>
+    <data name="ChatInputArea_CustomAssistantSelector_ToolTip" xml:space="preserve">
+        <value>어시스턴트 선택</value>
+    </data>
+    <data name="ReasoningEffortSlider_Header" xml:space="preserve">
+        <value>추론 수준</value>
+    </data>
+    <data name="ChatCustomAssistantSelector_MoreSettingsButton_Content" xml:space="preserve">
+        <value>추가 설정</value>
+    </data>
+    <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
+        <value>문서 보기</value>
+    </data>
+    <data name="PresetModelProvider_Google" xml:space="preserve">
+        <value>Google</value>
+    </data>
+    <data name="PresetModelProvider_Anthropic" xml:space="preserve">
+        <value>Anthropic</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxInternational" xml:space="preserve">
+        <value>MiniMax</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuChina" xml:space="preserve">
+        <value>Zhipu AI (중국)</value>
+    </data>
+    <data name="PresetModelProvider_Mistral" xml:space="preserve">
+        <value>Mistral AI</value>
+    </data>
+    <data name="PresetModelSelector_Unlisted" xml:space="preserve">
+        <value>이 모델은 현재 카탈로그에 나열되어 있지 않습니다. 저장된 구성은 유지됩니다.</value>
+    </data>
+    <data name="PresetModelProvider_OpenAI" xml:space="preserve">
+        <value>OpenAI</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowChina" xml:space="preserve">
+        <value>SiliconFlow (중국)</value>
+    </data>
+    <data name="PresetModelProvider_Ollama" xml:space="preserve">
+        <value>Ollama</value>
+    </data>
+    <data name="PresetModelProvider_OpenRouter" xml:space="preserve">
+        <value>OpenRouter</value>
+    </data>
+    <data name="PresetModelProvider_ZhipuInternational" xml:space="preserve">
+        <value>Z.AI</value>
+    </data>
+    <data name="PresetModelProvider_SiliconFlowInternational" xml:space="preserve">
+        <value>SiliconFlow</value>
+    </data>
+    <data name="PresetModelProvider_MiniMaxChina" xml:space="preserve">
+        <value>MiniMax (중국)</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotChina" xml:space="preserve">
+        <value>Moonshot AI (China)</value>
+    </data>
+    <data name="PresetModelProvider_DeepSeek" xml:space="preserve">
+        <value>DeepSeek</value>
+    </data>
+    <data name="PresetModelProvider_MoonshotInternational" xml:space="preserve">
+        <value>Moonshot AI</value>
     </data>
 </root>

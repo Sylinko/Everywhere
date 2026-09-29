@@ -1,17 +1,25 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
 [GeneratedSettingsItems]
-public sealed partial class OpenAIResponsesOptions : ObservableObject
+public sealed partial class OpenAIResponsesOptions : ReasoningModelSchemaOptions
 {
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override ModelProviderSchema Schema => ModelProviderSchema.OpenAIResponses;
+
     [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Header,
         LocaleKey.OpenAIResponsesOptions_ReasoningEffort_Description)]
-    [SettingsItem(Group = "_", DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
-    public partial string? ReasoningEffort { get; set; }
+    [SettingsItem(
+        Group = "_",
+        Modifier = nameof(RegisterReasoningEffortSettingsItem),
+        DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort")]
+    public override partial string? ReasoningEffort { get; set; }
 
     [ObservableProperty]
     [DynamicLocaleKey(
@@ -20,6 +28,7 @@ public sealed partial class OpenAIResponsesOptions : ObservableObject
     [SettingsItem(Group = "_", DocumentUrl = "https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries")]
     public partial string? ReasoningSummary { get; set; } = "auto";
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
@@ -27,8 +36,9 @@ public sealed partial class OpenAIResponsesOptions : ObservableObject
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/responses/methods/create#(resource)%20responses%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20temperature%20%3E%20(schema)")]
-    public string? Temperature { get; set; }
+    public partial string? Temperature { get; set; }
 
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
@@ -36,5 +46,5 @@ public sealed partial class OpenAIResponsesOptions : ObservableObject
         Group = "_",
         DocumentUrl =
             "https://developers.openai.com/api/reference/resources/responses/methods/create#(resource)%20responses%20%3E%20(method)%20create%20%3E%20(params)%200.non_streaming%20%3E%20(param)%20top_p%20%3E%20(schema)")]
-    public string? TopP { get; set; }
+    public partial string? TopP { get; set; }
 }

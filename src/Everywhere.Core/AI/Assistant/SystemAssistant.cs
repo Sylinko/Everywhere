@@ -9,13 +9,10 @@ namespace Everywhere.AI;
 [GeneratedSettingsItems]
 public sealed partial class SystemAssistant(ModelSpecializations requiredSpecializations) : Assistant
 {
+    [SettingsItemIgnore]
+    public ModelSpecializations RequiredSpecializations { get; } = requiredSpecializations;
+
     [ObservableProperty]
     [SettingsItemIgnore]
     public partial bool AutoSelect { get; set; } = true;
-
-    public Assistant Resolve(Assistant currentAssistant)
-    {
-        if (AutoSelect) return currentAssistant.Configurator.ResolveAssistant(requiredSpecializations);
-        return this;
-    }
 }

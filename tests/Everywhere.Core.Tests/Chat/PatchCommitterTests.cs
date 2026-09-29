@@ -218,6 +218,183 @@ public class PatchCommitterTests
         }
     }
 
+    [Test]
+    public async Task CommitAsync_UpdateFinalLink_UpdatesReferentAndPreservesLink()
+    {
+        var root = CreateTemporaryDirectory();
+        var targetPath = Path.Combine(root, "target.txt");
+        var linkPath = Path.Combine(root, "link.txt");
+        await File.WriteAllTextAsync(targetPath, "old\n");
+
+        try
+        {
+            CreateFileLinkOrIgnore(linkPath, "target.txt");
+            var plan = await BuildAsync(
+                """
+                *** Begin Patch
+                *** Update File: link.txt
+                @@
+                -old
+                +new
+                *** End Patch
+                """,
+                root);
+            var file = plan.Files.Single();
+
+            var result = await PatchCommitter.CommitAsync(
+                plan,
+                [new PatchContentFileDecision(file.SourcePath, file.ProposedContent, [])],
+                PatchLimits.Default,
+                CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Succeeded, Is.True);
+                Assert.That(File.ReadAllText(targetPath), Is.EqualTo("new\n"));
+                Assert.That(new FileInfo(linkPath).LinkTarget, Is.EqualTo("target.txt"));
+            });
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task CommitAsync_DeleteFinalLink_RemovesEntryAndPreservesReferent(bool isDangling)
+    {
+        var root = CreateTemporaryDirectory();
+        var targetPath = Path.Combine(root, "target.txt");
+        var linkPath = Path.Combine(root, "link.txt");
+        if (!isDangling) await File.WriteAllTextAsync(targetPath, "content\n");
+
+        try
+        {
+            CreateFileLinkOrIgnore(linkPath, "target.txt");
+            var plan = await BuildAsync(
+                """
+                *** Begin Patch
+                *** Delete File: link.txt
+                *** End Patch
+                """,
+                root);
+            var file = plan.Files.Single();
+
+            var result = await PatchCommitter.CommitAsync(
+                plan,
+                [new PatchDeleteFileDecision(file.SourcePath, [])],
+                PatchLimits.Default,
+                CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Succeeded, Is.True);
+                Assert.That(new FileInfo(linkPath).LinkTarget, Is.Null);
+                Assert.That(File.Exists(targetPath), Is.EqualTo(!isDangling));
+                if (!isDangling) Assert.That(File.ReadAllText(targetPath), Is.EqualTo("content\n"));
+            });
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Test]
+    public async Task CommitAsync_MoveFinalLink_WritesRegularDestinationAndPreservesReferent()
+    {
+        var root = CreateTemporaryDirectory();
+        var targetPath = Path.Combine(root, "target.txt");
+        var linkPath = Path.Combine(root, "link.txt");
+        var destinationPath = Path.Combine(root, "moved.txt");
+        await File.WriteAllTextAsync(targetPath, "old\n");
+
+        try
+        {
+            CreateFileLinkOrIgnore(linkPath, "target.txt");
+            var plan = await BuildAsync(
+                """
+                *** Begin Patch
+                *** Update File: link.txt
+                *** Move to: moved.txt
+                @@
+                -old
+                +new
+                *** End Patch
+                """,
+                root);
+            var file = plan.Files.Single();
+
+            var result = await PatchCommitter.CommitAsync(
+                plan,
+                [new PatchContentFileDecision(file.SourcePath, file.ProposedContent, [])],
+                PatchLimits.Default,
+                CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Succeeded, Is.True);
+                Assert.That(new FileInfo(linkPath).LinkTarget, Is.Null);
+                Assert.That(File.ReadAllText(targetPath), Is.EqualTo("old\n"));
+                Assert.That(File.ReadAllText(destinationPath), Is.EqualTo("new\n"));
+                Assert.That(new FileInfo(destinationPath).LinkTarget, Is.Null);
+            });
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Test]
+    public async Task CommitAsync_WhenLinkTargetChangesAfterPlanning_ReturnsConflictWithoutWriting()
+    {
+        var root = CreateTemporaryDirectory();
+        var firstTargetPath = Path.Combine(root, "first.txt");
+        var secondTargetPath = Path.Combine(root, "second.txt");
+        var linkPath = Path.Combine(root, "link.txt");
+        await File.WriteAllTextAsync(firstTargetPath, "old\n");
+        await File.WriteAllTextAsync(secondTargetPath, "old\n");
+
+        try
+        {
+            CreateFileLinkOrIgnore(linkPath, "first.txt");
+            var plan = await BuildAsync(
+                """
+                *** Begin Patch
+                *** Update File: link.txt
+                @@
+                -old
+                +new
+                *** End Patch
+                """,
+                root);
+            File.Delete(linkPath);
+            CreateFileLinkOrIgnore(linkPath, "second.txt");
+            var file = plan.Files.Single();
+
+            var result = await PatchCommitter.CommitAsync(
+                plan,
+                [new PatchContentFileDecision(file.SourcePath, file.ProposedContent, [])],
+                PatchLimits.Default,
+                CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Succeeded, Is.False);
+                Assert.That(result.Files.Single().Status, Is.EqualTo(PatchCommitStatus.Conflict));
+                Assert.That(result.Error, Does.Contain("resolves differently"));
+                Assert.That(File.ReadAllText(firstTargetPath), Is.EqualTo("old\n"));
+                Assert.That(File.ReadAllText(secondTargetPath), Is.EqualTo("old\n"));
+            });
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
     private static async Task<PatchPlan> BuildAsync(string patch, string root) =>
         await PatchPlanBuilder.BuildAsync(PatchParser.Parse(patch), root, PatchLimits.Default, CancellationToken.None);
 
@@ -226,6 +403,18 @@ public class PatchCommitterTests
         var path = Path.Combine(Path.GetTempPath(), "everywhere-patch-committer-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
         return path;
+    }
+
+    private static void CreateFileLinkOrIgnore(string path, string target)
+    {
+        try
+        {
+            File.CreateSymbolicLink(path, target);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or PlatformNotSupportedException or IOException)
+        {
+            Assert.Ignore($"Symbolic links are unavailable in this test environment: {ex.Message}");
+        }
     }
 
     private static void DeleteTemporaryDirectory(string path)

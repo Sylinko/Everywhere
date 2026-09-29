@@ -23,7 +23,7 @@ public static class PromptTemplateAnalyzer
         IPromptPlaceholderSource? placeholderSource = null,
         PromptPlaceholderContext? placeholderContext = null)
     {
-        placeholderSource ??= SystemPromptPlaceholderSource.Instance;
+        placeholderSource ??= SystemPromptPlaceholderSource.Shared;
         placeholderContext ??= PromptPlaceholderContext.Preview;
 
         var placeholders = PromptTemplateParser.ParsePlaceholders(template);

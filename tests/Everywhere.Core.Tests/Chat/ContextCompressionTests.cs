@@ -376,7 +376,6 @@ public sealed class ContextCompressionTests
         new(
             Guid.CreateVersion7(),
             "test-model",
-            DateTimeOffset.UtcNow,
             trigger,
             160_000,
             200_000);
@@ -389,7 +388,6 @@ public sealed class ContextCompressionTests
         var message = new ContextCompressionChatMessage(
             coveredThroughNodeId,
             "test-model",
-            DateTimeOffset.UtcNow,
             ContextCompressionTrigger.Manual,
             160_000,
             200_000);

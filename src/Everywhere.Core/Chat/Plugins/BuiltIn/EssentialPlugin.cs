@@ -25,6 +25,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
     public override bool IsDefaultEnabled => true;
 
     private readonly SystemAssistantSettings _systemAssistantSettings;
+    private readonly AssistantSpecializationResolver _assistantSpecializationResolver;
     private readonly ILogger<EssentialPlugin> _logger;
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -36,9 +37,14 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         Clear
     }
 
-    public EssentialPlugin(Settings settings, ILogger<EssentialPlugin> logger) : base("essential")
+    public EssentialPlugin(
+        Settings settings,
+        AssistantSpecializationResolver assistantSpecializationResolver,
+        ILogger<EssentialPlugin> logger
+    ) : base("essential")
     {
         _systemAssistantSettings = settings.SystemAssistant;
+        _assistantSpecializationResolver = assistantSpecializationResolver;
         _logger = logger;
 
         _functionsSource.Edit(list =>
@@ -76,7 +82,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         string prompt,
         [Description("A concise title for the agent's task")] string title,
         [Description("Optional, specifies the agent's area of expertise. Allowed values: default, image-understanding.")]
-        string? specialization = null,
+        string? specialization = null, // TODO: move image understanding to a separate function, and remove specialization parameter
         CancellationToken cancellationToken = default)
     {
         // Fork a temporary chat context for the subagent
@@ -97,8 +103,8 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         };
         var specializedAssistant = specializations switch
         {
-            ModelSpecializations.ImageUnderstanding => _systemAssistantSettings.ImageUnderstanding.Resolve(assistant),
-            _ => _systemAssistantSettings.DefaultSubagent.Resolve(assistant)
+            ModelSpecializations.ImageUnderstanding => _assistantSpecializationResolver.Resolve(_systemAssistantSettings.ImageUnderstanding, assistant),
+            _ => _assistantSpecializationResolver.Resolve(_systemAssistantSettings.DefaultSubagent, assistant)
         };
         var systemPrompt = specializations switch
         {
@@ -184,10 +190,12 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                 }
 
                 chatContext.UserInterfaceBroker.TodoItems.SourceList.Reset(
-                    items.Select(static item => item.Status is not null ? item : item with
-                    {
-                        Status = ChatPluginTodoStatus.NotStarted
-                    }));
+                    items.Select(static item => item.Status is not null ?
+                        item :
+                        item with
+                        {
+                            Status = ChatPluginTodoStatus.NotStarted
+                        }));
                 displaySink.AppendDynamicLocaleKey(
                     new FormattedDynamicLocaleKey(
                         LocaleKey.BuiltInChatPlugin_Essential_ManageTodoList_Reset,

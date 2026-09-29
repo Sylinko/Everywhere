@@ -14,26 +14,18 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     public override AuthorRole Role => AuthorRole.Assistant;
 
     [Key(0)]
-    private string? Content
-    {
-        get => null; // for forward compatibility
-        init
-        {
-            if (!value.IsNullOrEmpty())
-            {
-                _spansSource.Edit(list => list.Add(new AssistantChatMessageTextSpan(value)));
-            }
-        }
-    }
+#pragma warning disable CA1822
+    // ReSharper disable once MemberCanBeMadeStatic.Local
+    // for forward compatibility
+    private string? LegacyContent => null;
+#pragma warning restore CA1822
 
     [Key(1)]
     [ObservableProperty]
     public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
     [Key(2)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public override DateTimeOffset CreatedAt { get; }
 
     [Key(3)]
     [ObservableProperty]
@@ -45,64 +37,19 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     public double ElapsedSeconds => Math.Max((FinishedAt - CreatedAt).TotalSeconds, 0);
 
     [Key(4)]
-    private IList<FunctionCallChatMessage>? FunctionCalls
-    {
-        get => null; // for forward compatibility
-        init
-        {
-            if (value is { Count: > 0 })
-            {
-                _spansSource.Edit(list => list.Add(new AssistantChatMessageFunctionCallSpan(value)));
-            }
-        }
-    }
+#pragma warning disable CA1822
+    // ReSharper disable once MemberCanBeMadeStatic.Local
+    // for forward compatibility
+    private IList<FunctionCallChatMessage>? LegacyFunctionCalls => null;
+#pragma warning restore CA1822
 
     [Key(5)]
-    [Obsolete]
-    private IEnumerable<LegacyAssistantChatMessageSpan>? LegacySerializableSpans
-    {
-        get => null; // For forward compatibility
-        init
-        {
-            if (value is null) return;
-            _spansSource.Edit(list =>
-            {
-                list.Clear();
-                foreach (var legacySpan in value)
-                {
-                    if (legacySpan.ReasoningOutput is { Length: > 0 } reasoningOutput)
-                    {
-                        list.Add(
-                            new AssistantChatMessageReasoningSpan(reasoningOutput)
-                            {
-                                CreatedAt = legacySpan.CreatedAt,
-                                FinishedAt = legacySpan.ReasoningFinishedAt ?? legacySpan.FinishedAt
-                            });
-                    }
 
-                    if (legacySpan.FunctionCalls is { Count: > 0 } functionCalls)
-                    {
-                        list.Add(
-                            new AssistantChatMessageFunctionCallSpan(functionCalls)
-                            {
-                                CreatedAt = legacySpan.CreatedAt,
-                                FinishedAt = legacySpan.FinishedAt
-                            });
-                    }
-
-                    if (legacySpan.Content is { Length: > 0 } content)
-                    {
-                        list.Add(
-                            new AssistantChatMessageTextSpan(content)
-                            {
-                                CreatedAt = legacySpan.CreatedAt,
-                                FinishedAt = legacySpan.FinishedAt
-                            });
-                    }
-                }
-            });
-        }
-    }
+#pragma warning disable CA1822
+    // ReSharper disable once MemberCanBeMadeStatic.Local
+    // for forward compatibility
+    private IEnumerable<LegacyAssistantChatMessageSpan>? LegacySerializableSpans => null;
+#pragma warning restore CA1822
 
     /// <summary>
     /// Each span represents a part of the message content and function calls.
@@ -112,22 +59,13 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
 
     [Key(9)]
     [ObservableProperty]
-    public partial MetadataDictionary? Metadata { get; set; }
+    public partial MetadataDictionary Metadata { get; set; }
 
     [Key(10)]
-    private IEnumerable<AssistantChatMessageSpan>? SerializableSpans
-    {
-        get => _spansSource.Items;
-        set
-        {
-            if (value is null) return;
-            _spansSource.Edit(list => list.Reset(value));
-        }
-    }
+    private IEnumerable<AssistantChatMessageSpan> SerializableSpans => _spansSource.Items;
 
     [Key(11)]
-    [ObservableProperty]
-    public partial ChatUsageDetails UsageDetails { get; private set; } = new();
+    public ChatUsageDetails UsageDetails { get; }
 
     [IgnoreMember]
     public IEnumerable<ChatAttachment> Attachments => _spansSource.Items.OfType<IHaveChatAttachments>().SelectMany(s => s.Attachments);
@@ -139,8 +77,80 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     [IgnoreMember] private readonly IDisposable _spansConnection;
     [IgnoreMember] private readonly IDisposable _spansPersistenceConnection;
 
-    public AssistantChatMessage()
+    [SerializationConstructor]
+    private AssistantChatMessage(
+        string? obsoletedContent,
+        IDynamicLocaleKey? errorMessageKey,
+        DateTimeOffset createdAt,
+        DateTimeOffset finishedAt,
+        IList<FunctionCallChatMessage>? legacyFunctionCalls,
+        IEnumerable<LegacyAssistantChatMessageSpan>? legacySerializableSpans,
+        MetadataDictionary metadata,
+        IEnumerable<AssistantChatMessageSpan>? serializableSpans,
+        ChatUsageDetails? usageDetails)
     {
+        if (!obsoletedContent.IsNullOrEmpty())
+        {
+            _spansSource.Edit(list => list.Add(new AssistantChatMessageTextSpan(obsoletedContent)));
+        }
+
+        ErrorMessageKey = errorMessageKey;
+        CreatedAt = createdAt;
+        FinishedAt = finishedAt;
+        Metadata = metadata;
+        UsageDetails = usageDetails ?? new ChatUsageDetails();
+
+        if (serializableSpans is not null)
+        {
+            _spansSource.Edit(list => list.Reset(serializableSpans));
+        }
+        else
+        {
+            if (legacyFunctionCalls is { Count: > 0 })
+            {
+                _spansSource.Edit(list => list.Add(new AssistantChatMessageFunctionCallSpan(legacyFunctionCalls)));
+            }
+            if (legacySerializableSpans is not null)
+            {
+                _spansSource.Edit(list =>
+                {
+                    list.Clear();
+                    foreach (var legacySpan in legacySerializableSpans)
+                    {
+                        if (legacySpan.ReasoningOutput is { Length: > 0 } reasoningOutput)
+                        {
+                            list.Add(
+                                new AssistantChatMessageReasoningSpan(reasoningOutput)
+                                {
+                                    CreatedAt = legacySpan.CreatedAt,
+                                    FinishedAt = legacySpan.ReasoningFinishedAt ?? legacySpan.FinishedAt
+                                });
+                        }
+
+                        if (legacySpan.FunctionCalls is { Count: > 0 } functionCalls)
+                        {
+                            list.Add(
+                                new AssistantChatMessageFunctionCallSpan(functionCalls)
+                                {
+                                    CreatedAt = legacySpan.CreatedAt,
+                                    FinishedAt = legacySpan.FinishedAt
+                                });
+                        }
+
+                        if (legacySpan.Content is { Length: > 0 } content)
+                        {
+                            list.Add(
+                                new AssistantChatMessageTextSpan(content)
+                                {
+                                    CreatedAt = legacySpan.CreatedAt,
+                                    FinishedAt = legacySpan.FinishedAt
+                                });
+                        }
+                    }
+                });
+            }
+        }
+
         Spans = _spansSource
             .Connect()
             .ObserveOnAvaloniaDispatcher()
@@ -155,6 +165,19 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
             .Connect()
             .AutoRefresh()
             .Subscribe(_ => OnPropertyChanged(nameof(Spans)));
+    }
+
+    public AssistantChatMessage() : this(
+        obsoletedContent: null,
+        errorMessageKey: null,
+        createdAt: DateTimeOffset.UtcNow,
+        finishedAt: default,
+        legacyFunctionCalls: null,
+        legacySerializableSpans: null,
+        metadata: MetadataDictionary.Empty,
+        serializableSpans: null,
+        usageDetails: null)
+    {
     }
 
     public void AddSpan(AssistantChatMessageSpan span)

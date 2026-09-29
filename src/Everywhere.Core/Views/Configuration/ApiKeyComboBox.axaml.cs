@@ -123,13 +123,5 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
         RebuildItemsSource();
     }
 
-    private void RebuildItemsSource()
-    {
-        _items.Clear();
-        _items.Add(ApiKey.Empty);
-        foreach (var apiKey in _itemsSource)
-        {
-            _items.Add(apiKey);
-        }
-    }
+    private void RebuildItemsSource() => _items.Reset([ApiKey.Empty, .. _itemsSource]);
 }

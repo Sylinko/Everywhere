@@ -33,7 +33,7 @@ public interface IWebSearchEngineProvider
 
     string IconUrl { get; }
 
-    string? DocsUrl { get; }
+    string? DocumentsUrl { get; }
 
     SettingsItems SettingsItems { get; }
 
@@ -82,7 +82,7 @@ public sealed partial class OfficialWebSearchEngineProvider : ObservableObject, 
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public string? DocsUrl => null;
+    public string? DocumentsUrl => null;
 
     [SettingsItemIgnore]
     public OfficialWebSearchEngineSettings Settings { get; } = new();
@@ -115,7 +115,7 @@ public abstract class ThirdPartyWebSearchEngineProvider : ObservableValidator, I
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public abstract string? DocsUrl { get; }
+    public abstract string? DocumentsUrl { get; }
 
     public abstract SettingsItems SettingsItems { get; }
 
@@ -149,7 +149,7 @@ public sealed partial class GoogleWebSearchEngineProvider(ObservableCollection<A
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public override string DocsUrl => "https://developers.google.com/custom-search/v1/overview";
+    public override string DocumentsUrl => "https://developers.google.com/custom-search/v1/overview";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
@@ -228,7 +228,7 @@ public sealed partial class ApiKeyWebSearchEngineProvider(
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public override string? DocsUrl { get; } = docsUrl;
+    public override string? DocumentsUrl { get; } = docsUrl;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
@@ -296,7 +296,7 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public override string? DocsUrl { get; } = docsUrl;
+    public override string? DocumentsUrl { get; } = docsUrl;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
@@ -357,7 +357,7 @@ public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearch
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public override string DocsUrl => "https://docs.searxng.org";
+    public override string DocumentsUrl => "https://docs.searxng.org";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
@@ -381,10 +381,17 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
     [SettingsItemIgnore]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedProvider))]
-    public partial WebSearchEngineProviderId SelectedProviderId { get; set; }
+    public partial WebSearchEngineProviderId SelectedProviderId { get; set; } = WebSearchEngineProviderId.AnySearch;
 
     [JsonIgnore]
-    [SettingsItemIgnore]
+    [DynamicLocaleKey(
+        LocaleKey.WebSearchEngineSettings_SelectedProvider_Header,
+        LocaleKey.WebSearchEngineSettings_SelectedProvider_Description)]
+    [SettingsItem(
+        Group = LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header,
+        DocumentUrlBindingPath = nameof(SelectedProvider) + "." + nameof(IWebSearchEngineProvider.DocumentsUrl))]
+    [SettingsSelectionItem($"{nameof(Providers)}.Values", DataTemplateKey = typeof(IWebSearchEngineProvider))]
+    [SettingsItems(IsExpanded = true)]
     public IWebSearchEngineProvider? SelectedProvider
     {
         get => Providers.GetValueOrDefault(SelectedProviderId);

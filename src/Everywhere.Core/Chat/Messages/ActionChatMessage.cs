@@ -32,9 +32,7 @@ public sealed partial class ActionChatMessage : ChatMessage
     public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
     [Key(5)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
-    public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public override DateTimeOffset CreatedAt { get; }
 
     [Key(6)]
     [ObservableProperty]
@@ -46,11 +44,26 @@ public sealed partial class ActionChatMessage : ChatMessage
     public double ElapsedSeconds => Math.Max((FinishedAt - CreatedAt).TotalSeconds, 0);
 
     [SerializationConstructor]
-    private ActionChatMessage() { }
+    private ActionChatMessage(
+        LucideIconKind icon,
+        DynamicLocaleKey? headerKey,
+        string? content,
+        IDynamicLocaleKey? errorMessageKey,
+        DateTimeOffset createdAt,
+        DateTimeOffset finishedAt)
+    {
+        Icon = icon;
+        HeaderKey = headerKey;
+        Content = content;
+        ErrorMessageKey = errorMessageKey;
+        CreatedAt = createdAt;
+        FinishedAt = finishedAt;
+    }
 
     public ActionChatMessage(LucideIconKind icon, DynamicLocaleKey? headerKey)
     {
         Icon = icon;
         HeaderKey = headerKey;
+        CreatedAt = DateTimeOffset.UtcNow;
     }
 }

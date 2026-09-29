@@ -14,7 +14,8 @@
         FontSize="{DynamicResource FontSizeM}"
         FontWeight="SemiBold" MaxLines="2"
         TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
-      <StackPanel x:Name="Response">
+      <StackPanel
+        x:Name="Response" Spacing="3">
         <StackPanel.Styles>
           <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
@@ -24,6 +25,7 @@
           </Style>
           <Style Selector="Border.error">
             <Setter Property="Background" Value="{DynamicResource ErrorColor20}"/>
+            <Setter Property="Padding" Value="4,2"/>
           </Style>
         </StackPanel.Styles>
         <TextBlock

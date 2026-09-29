@@ -4,13 +4,16 @@ using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Everywhere.Common;
-using ZLinq;
 
 namespace Everywhere.ValueConverters;
 
 public static class CommonConverters
 {
     public static IValueConverter ObjectToString { get; } = new FuncValueConverter<object?, string?>(convert: x => x?.ToString());
+
+    public static IValueConverter JoinStrings { get; } = new FuncValueConverter<IReadOnlyList<string>?, string?, string?>(
+        convert: (values, parameter) => values is { Count: > 0 } ? string.Join(parameter?.ToString() ?? string.Empty, values) : null
+    );
 
     public static IValueConverter TypeEquals { get; } = new FuncValueConverter<object?, object?, bool>(
         convert: (x, parameter) => x?.GetType() == parameter as Type
@@ -74,7 +77,12 @@ public static class CommonConverters
     /// </summary>
     public static IMultiValueConverter FirstNotNull { get; } = new FirstNonNullConverter();
 
-    private class DefaultMultiValueConverter : IMultiValueConverter
+    /// <summary>
+    /// Returns the first non-null, non-empty, and non-UnsetValue value from the input values.
+    /// </summary>
+    public static IMultiValueConverter FirstNotNullAndEmpty { get; } = new FirstNonNullAndEmptyConverter();
+
+    private sealed class DefaultMultiValueConverter : IMultiValueConverter
     {
         private readonly DefaultValueConverter _defaultValueConverter = new();
 
@@ -91,7 +99,7 @@ public static class CommonConverters
         }
     }
 
-    private class AllEqualsConverter : IMultiValueConverter
+    private sealed class AllEqualsConverter : IMultiValueConverter
     {
         public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
@@ -101,11 +109,23 @@ public static class CommonConverters
         }
     }
 
-    private class FirstNonNullConverter : IMultiValueConverter
+    private sealed class FirstNonNullConverter : IMultiValueConverter
     {
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             return values.AsValueEnumerable().OfType<object>().FirstOrDefault(value => value != AvaloniaProperty.UnsetValue);
+        }
+    }
+
+    private sealed class FirstNonNullAndEmptyConverter : IMultiValueConverter
+    {
+        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            return values.AsValueEnumerable()
+                .OfType<object>()
+                .FirstOrDefault(value =>
+                    value != AvaloniaProperty.UnsetValue &&
+                    (value is not string str || !string.IsNullOrWhiteSpace(str)));
         }
     }
 }

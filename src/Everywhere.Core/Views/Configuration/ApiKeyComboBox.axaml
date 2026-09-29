@@ -29,8 +29,8 @@
                   <Interaction.Behaviors>
                     <ButtonClickEventTriggerBehavior>
                       <ButtonClickEventTriggerBehavior.Actions>
-                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                         <InvokeCommandAction Command="{Binding $parent[v:ApiKeyComboBox].AddApiKeyCommand}"/>
+                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                       </ButtonClickEventTriggerBehavior.Actions>
                     </ButtonClickEventTriggerBehavior>
                   </Interaction.Behaviors>
@@ -45,8 +45,8 @@
                   <Interaction.Behaviors>
                     <ButtonClickEventTriggerBehavior>
                       <ButtonClickEventTriggerBehavior.Actions>
-                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                         <InvokeCommandAction Command="{Binding $parent[v:ApiKeyComboBox].ManageApiKeyCommand}"/>
+                        <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                       </ButtonClickEventTriggerBehavior.Actions>
                     </ButtonClickEventTriggerBehavior>
                   </Interaction.Behaviors>

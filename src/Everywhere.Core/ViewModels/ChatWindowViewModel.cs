@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Chat;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
@@ -64,8 +63,6 @@ public sealed partial class ChatWindowViewModel :
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
 
-    public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
     public partial ChatMessageNode? EditingMessageNode { get; private set; }
@@ -96,7 +93,7 @@ public sealed partial class ChatWindowViewModel :
     /// Can be set to one of greetings or instructions based on the chat context, or a default value.
     /// </summary>
     [ObservableProperty]
-    public partial IDynamicLocaleKey? ChatInputAreaWatermarkKey { get; private set; }
+    public partial IDynamicLocaleKey ChatInputAreaWatermarkKey { get; private set; }
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -105,7 +102,6 @@ public sealed partial class ChatWindowViewModel :
     private readonly IBlobStorage _blobStorage;
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
-    private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
@@ -120,7 +116,6 @@ public sealed partial class ChatWindowViewModel :
         Settings settings,
         PersistentState persistentState,
         IChatContextManager chatContextManager,
-        IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
         IVisualElementContext visualElementContext,
@@ -141,7 +136,6 @@ public sealed partial class ChatWindowViewModel :
         _blobStorage = blobStorage;
         _strategyEngine = strategyEngine;
         _greetings = greetings;
-        _notificationService = notificationService;
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
@@ -179,7 +173,8 @@ public sealed partial class ChatWindowViewModel :
             Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
                 .Select(assistant => assistant is null ?
                     Observable.Return(0) :
-                    assistant.WhenValueChanged(x => x.ModelId).Select(_ => 0).Merge(assistant.WhenValueChanged(x => x.ContextLimit).Select(_ => 0)))
+                    assistant.WhenValueChanged(x => x.Configuration.ModelId).Select(_ => 0)
+                        .Merge(assistant.WhenValueChanged(x => x.Configuration.ContextLimit).Select(_ => 0)))
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
@@ -384,21 +379,21 @@ public sealed partial class ChatWindowViewModel :
                 return;
             }
 
+            var addedFiles = false;
             if (formats.Contains(DataFormat.File))
             {
-                var files = await Clipboard.TryGetFilesAsync();
-                if (files != null)
+                foreach (var storageItem in await Clipboard.TryGetFilesAsync() ?? [])
                 {
-                    foreach (var storageItem in files)
-                    {
-                        var uri = storageItem.Path;
-                        if (!uri.IsFile) break;
-                        await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
-                        if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
-                    }
+                    var uri = storageItem.Path;
+                    if (!uri.IsFile) continue;
+                    addedFiles |= await AddFileUncheckAsync(uri.LocalPath, "from clipboard, temporary filepath", cancellationToken);
+                    if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
                 }
             }
-            else if (formats.Contains(DataFormat.Bitmap) && await Clipboard.TryGetBitmapAsync() is { } bitmap)
+
+            // A copied image file offers a file URL, while a screenshot or an image copied from an app
+            // usually offers bitmap data only. Use the bitmap when no file could be added.
+            if (!addedFiles && formats.Contains(DataFormat.Bitmap) && await Clipboard.TryGetBitmapAsync() is { } bitmap)
             {
                 _chatAttachmentsSource.Add(await Task.Run(() => CreateFromBitmapAsync(bitmap, cancellationToken), cancellationToken));
             }
@@ -473,14 +468,17 @@ public sealed partial class ChatWindowViewModel :
                 IsPickingFiles = false;
             }
 
-            if (files.Count <= 0) return;
-            if (files[0].TryGetLocalPath() is not { } filePath)
+            foreach (var file in files)
             {
-                _logger.LogWarning("File path is not available.");
-                return;
-            }
+                if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) break;
+                if (file.TryGetLocalPath() is not { } filePath)
+                {
+                    _logger.LogWarning("File path is not available for {File}.", file.Name);
+                    continue;
+                }
 
-            await AddFileUncheckAsync(filePath, cancellationToken: cancellationToken);
+                await AddFileUncheckAsync(filePath, cancellationToken: cancellationToken);
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -496,9 +494,9 @@ public sealed partial class ChatWindowViewModel :
     /// <param name="filePath"></param>
     /// <param name="description"></param>
     /// <param name="cancellationToken"></param>
-    private async ValueTask AddFileUncheckAsync(string filePath, string? description = null, CancellationToken cancellationToken = default)
+    private async ValueTask<bool> AddFileUncheckAsync(string filePath, string? description = null, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(filePath)) return;
+        if (string.IsNullOrWhiteSpace(filePath)) return false;
 
         FileAttachment attachment;
         try
@@ -519,10 +517,11 @@ public sealed partial class ChatWindowViewModel :
                 .DismissOnClick()
                 .OnBottomRight()
                 .ShowError();
-            return;
+            return false;
         }
 
         _chatAttachmentsSource.Add(attachment);
+        return true;
     }
 
     /// <summary>
@@ -551,6 +550,16 @@ public sealed partial class ChatWindowViewModel :
     {
         using var memoryStream = new MemoryStream();
         bitmap.Save(memoryStream, PngBitmapEncoderOptions.Default);
+        if (memoryStream.Length > FileAttachment.MaximumInlineContentSizeInBytes)
+        {
+            throw new HandledException(
+                new NotSupportedException("The image is too large to store as a chat attachment."),
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.FileAttachment_Create_FileTooLarge,
+                    new DirectLocaleKey(Humanizer.HumanizeBytes(memoryStream.Length)),
+                    new DirectLocaleKey(Humanizer.HumanizeBytes(FileAttachment.MaximumInlineContentSizeInBytes))),
+                showDetails: false);
+        }
 
         var blob = await _blobStorage.StorageBlobAsync(memoryStream, "image/png", cancellationToken: cancellationToken);
         return new FileAttachment(
@@ -569,10 +578,9 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void SendMessage(string? message)
     {
-        if (message is null) return;
-        message = message.Trim();
+        message = message?.Trim() ?? string.Empty;
 
-        if (message.Length == 0 && SelectedStrategy is null) return;
+        if (message.Length == 0 && SelectedStrategy is null && _chatAttachmentsSource.Count == 0) return;
 
         ChatAttachment[]? attachments = null;
         _chatAttachmentsSource.Edit(list =>
@@ -766,6 +774,9 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
+    private Task PerformUpdateAsync() => SoftwareUpdater.PerformUpdateAsync();
+
+    [RelayCommand]
     private static void Close()
     {
         WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));
@@ -779,7 +790,9 @@ public sealed partial class ChatWindowViewModel :
     private void UpdateCurrentContextUsageModel()
     {
         var assistant = Settings.Model.SelectedCustomAssistant;
-        ChatContextManager.Current.ContextUsage.UpdateModel(assistant?.ModelId, assistant?.ContextLimit ?? 0);
+        ChatContextManager.Current.ContextUsage.UpdateModel(
+            assistant?.Configuration.ModelId,
+            assistant?.Configuration.ContextLimit ?? 0);
     }
 
     partial void OnIsBusyChanged(bool value)

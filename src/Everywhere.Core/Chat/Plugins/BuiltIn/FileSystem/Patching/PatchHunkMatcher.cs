@@ -3,7 +3,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <summary>
 /// Locates patch hunks against one immutable logical-line snapshot.
 /// </summary>
-internal static class PatchHunkMatcher
+public static class PatchHunkMatcher
 {
     /// <summary>
     /// Finds the target range for a hunk and fails closed when its declared location cannot be resolved safely.
@@ -288,7 +288,7 @@ internal static class PatchHunkMatcher
 /// <summary>
 /// Identifies how a hunk was matched.
 /// </summary>
-internal enum PatchMatchKind
+public enum PatchMatchKind
 {
     Exact,
     TrailingWhitespaceFallback,
@@ -303,9 +303,9 @@ internal enum PatchMatchKind
 /// <summary>
 /// Describes a located hunk as a zero-based half-open logical-line range.
 /// </summary>
-internal sealed record PatchHunkMatch(int StartIndex, int EndIndex, PatchMatchKind Kind);
+public sealed record PatchHunkMatch(int StartIndex, int EndIndex, PatchMatchKind Kind);
 
 /// <summary>
 /// Reports a hunk location failure that must prevent any filesystem mutation.
 /// </summary>
-internal sealed class PatchMatchException(string message, Exception? innerException = null) : InvalidOperationException(message, innerException);
+public sealed class PatchMatchException(string message, Exception? innerException = null) : InvalidOperationException(message, innerException);

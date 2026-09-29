@@ -33,6 +33,12 @@ public abstract partial class ChatMessage : ObservableObject
     [IgnoreMember]
     [JsonIgnore]
     public virtual bool IsHidden => false;
+
+    /// <summary>
+    /// Gets the timestamp when the message was created.
+    /// </summary>
+    [IgnoreMember]
+    public abstract DateTimeOffset CreatedAt { get; }
 }
 
 public interface IHaveChatAttachments

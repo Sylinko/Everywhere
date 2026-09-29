@@ -69,7 +69,7 @@
 
     <TransitioningContentControl
       x:Name="TransitioningContentControl" ClipToBounds="False"
-      Content="{Binding SelectedItem.Route, FallbackValue={x:Null}}">
+      Content="{Binding SelectedItem?.Route}">
       <TransitioningContentControl.PageTransition>
         <CrossFade
           FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"

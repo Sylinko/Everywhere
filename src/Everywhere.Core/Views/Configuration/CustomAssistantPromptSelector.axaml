@@ -1,7 +1,6 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:CustomAssistantPromptSelector}"
     TargetType="v:CustomAssistantPromptSelector">
@@ -27,8 +26,8 @@
               shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.AssistantPromptSelector_ComboBox_Label}}"
               ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
               MaxDropDownHeight="320"
-              SelectedValue="{Binding SelectedId, Mode=TwoWay, FallbackValue={x:Static system:Guid.Empty}, RelativeSource={RelativeSource TemplatedParent}}"
-              SelectedValueBinding="{Binding Id, x:DataType=v:CustomAssistantPromptSelector+Item, FallbackValue={x:Static system:Guid.Empty}}">
+              SelectedValue="{Binding SelectedId, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+              SelectedValueBinding="{Binding Id, x:DataType=v:CustomAssistantPromptSelector+Item}">
               <shadui:ControlAssist.Footer>
                 <Border
                   BorderBrush="{DynamicResource BorderColor}"
@@ -44,8 +43,8 @@
                       <Interaction.Behaviors>
                         <ButtonClickEventTriggerBehavior>
                           <ButtonClickEventTriggerBehavior.Actions>
-                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                             <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].CreatePromptCommand}"/>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                           </ButtonClickEventTriggerBehavior.Actions>
                         </ButtonClickEventTriggerBehavior>
                       </Interaction.Behaviors>
@@ -60,8 +59,8 @@
                       <Interaction.Behaviors>
                         <ButtonClickEventTriggerBehavior>
                           <ButtonClickEventTriggerBehavior.Actions>
-                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                             <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].ManagePromptsCommand}"/>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
                           </ButtonClickEventTriggerBehavior.Actions>
                         </ButtonClickEventTriggerBehavior>
                       </Interaction.Behaviors>

@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace Everywhere.Chat;
 
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
-public partial class UserChatMessage(string content, IReadOnlyList<ChatAttachment> attachments) : ChatMessage, IHaveChatAttachments
+public partial class UserChatMessage : ChatMessage, IHaveChatAttachments
 {
     public override AuthorRole Role => AuthorRole.User;
 
@@ -15,16 +15,32 @@ public partial class UserChatMessage(string content, IReadOnlyList<ChatAttachmen
     /// </summary>
     [Key(0)]
     [ObservableProperty]
-    public partial string Content { get; set; } = content;
+    public partial string Content { get; set; }
 
     [Key(1)]
-    public IReadOnlyList<ChatAttachment> Attachments { get; set; } = attachments;
+    public IReadOnlyList<ChatAttachment> Attachments { get; set; }
 
     [IgnoreMember]
     IEnumerable<ChatAttachment> IHaveChatAttachments.Attachments => Attachments;
 
     [Key(3)]
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public override DateTimeOffset CreatedAt { get; }
 
     public override string ToString() => Content;
+
+    /// <inheritdoc/>
+    public UserChatMessage(string content, IReadOnlyList<ChatAttachment> attachments)
+    {
+        Content = content;
+        Attachments = attachments;
+        CreatedAt = DateTimeOffset.UtcNow;
+    }
+
+    [SerializationConstructor]
+    protected UserChatMessage(string content, IReadOnlyList<ChatAttachment> attachments, DateTimeOffset createdAt)
+    {
+        Content = content;
+        Attachments = attachments;
+        CreatedAt = createdAt;
+    }
 }

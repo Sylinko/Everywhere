@@ -4,8 +4,7 @@
   xmlns:ai="clr-namespace:Everywhere.AI" xmlns:c="clr-namespace:Everywhere.Configuration"
   xmlns:common="clr-namespace:Everywhere.Common" xmlns:interop="clr-namespace:Everywhere.Interop"
   xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:mdSkia="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia.Svg.Skia"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
   <DataTemplate
     x:Key="{x:Type aai:ModelProviderTemplate}"
     x:DataType="aai:ModelProviderTemplate">
@@ -36,7 +35,7 @@
 
       <TextBlock
         VerticalAlignment="Center"
-        Text="{Binding DisplayName}"/>
+        Text="{Binding DisplayNameKey^}"/>
     </StackPanel>
   </DataTemplate>
 
@@ -108,74 +107,25 @@
   </DataTemplate>
 
   <DataTemplate
-    x:Key="{x:Type ai:CustomAssistant}"
-    x:DataType="ai:CustomAssistant">
-    <Grid ColumnSpacing="4">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition/>
-        <ColumnDefinition
-          Width="Auto" SharedSizeGroup="Badges"/>
-      </Grid.ColumnDefinitions>
+    x:Key="{x:Type c:IWebSearchEngineProvider}"
+    x:DataType="c:IWebSearchEngineProvider">
+    <DockPanel HorizontalSpacing="6">
+      <Image
+        DockPanel.Dock="Left"
+        Width="{DynamicResource FontSizeXl}"
+        Height="{DynamicResource FontSizeXl}"
+        VerticalAlignment="Center" md:AsyncImageLoader.SizeToContent="Manual"
+        md:AsyncImageLoader.Source="{Binding IconUrl}"
+        mdSkia:SvgImageExtension.Css=":nth-child(0) { font-size: 1px }" Stretch="UniformToFill"/>
 
-      <v:IconPresenter
-        Grid.Column="0" Width="24"
-        Height="24" VerticalAlignment="Center"
-        FontSize="14"
-        Icon="{Binding Icon}"
-        IconSize="14"/>
       <TextBlock
-        Grid.Column="1" Margin="4,0,0,0"
         VerticalAlignment="Center"
-        Text="{Binding Name}"
-        TextTrimming="CharacterEllipsis"
-        ToolTip.Tip="{Binding Description}"/>
-
-      <StackPanel
-        Grid.Column="2" Margin="16,0,0,0"
-        HorizontalAlignment="Right" Orientation="Horizontal"
-        Spacing="2">
-        <StackPanel.Styles>
-          <Style Selector="shadui|Badge">
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Style Selector="^ LucideIcon">
-              <Setter Property="Size" Value="12"/>
-              <Setter Property="Foreground" Value="{DynamicResource BadgeForegroundColor}"/>
-            </Style>
-          </Style>
-        </StackPanel.Styles>
-
-        <shadui:Badge
-          Background="Chocolate"
-          IsVisible="{Binding InputModalities, Converter={x:Static vc:ModalitiesConverters.SupportsImage}}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsImage_Header}}">
-          <LucideIcon Kind="Eye"/>
-        </shadui:Badge>
-        <shadui:Badge
-          Background="CadetBlue"
-          IsVisible="{Binding SupportsToolCall}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.Assistant_SupportsToolCall_Header}}">
-          <LucideIcon Kind="Hammer"/>
-        </shadui:Badge>
-        <shadui:Badge
-          Padding="6,0" Background="MediumSlateBlue">
-          <ToolTip.Tip>
-            <TextBlock>
-              <Run Text="{I18N {x:Static LocaleKey.Assistant_ContextLimit_Header}}"/>
-              <Run Text="{Binding ContextLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
-              <LineBreak/>
-              <Run Text="{I18N {x:Static LocaleKey.Assistant_OutputLimit_Header}}"/>
-              <Run Text="{Binding OutputLimit, StringFormat=' {0:N0}', FallbackValue={x:Null}}"/>
-            </TextBlock>
-          </ToolTip.Tip>
-
-          <TextBlock
-            FontSize="{DynamicResource FontSizeS}"
-            Foreground="{DynamicResource BadgeForegroundColor}"
-            Text="{Binding ContextLimit, Converter={x:Static vc:TokenCountHumanizationConverter.Shared}}"/>
-        </shadui:Badge>
-      </StackPanel>
-    </Grid>
+        Text="{Binding HeaderKey^}"
+        TextTrimming="CharacterEllipsis">
+        <Interaction.Behaviors>
+          <shadui:TextTrimmedToolTipBehavior/>
+        </Interaction.Behaviors>
+      </TextBlock>
+    </DockPanel>
   </DataTemplate>
 </ResourceDictionary>

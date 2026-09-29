@@ -17,6 +17,7 @@ public interface IBlobStorage
     /// <param name="extension">The extension of the storage file. If null, it will be inferred from the MIME type or left empty.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The BlobEntity representing the stored blob.</returns>
+    /// <exception cref="OverflowException">The content exceeds the copied-blob size limit.</exception>
     Task<BlobEntity> StorageBlobAsync(Stream content, string mimeType, string? extension = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -25,13 +26,11 @@ public interface IBlobStorage
     /// </summary>
     /// <param name="filePath"></param>
     /// <param name="mimeType"></param>
-    /// <param name="maxBytesSize"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<BlobEntity> StorageBlobAsync(
         string filePath,
         string? mimeType = null,
-        long maxBytesSize = 25L * 1024 * 1024,
         CancellationToken cancellationToken = default);
 
     /// <summary>

@@ -1,5 +1,4 @@
 using Everywhere.Common;
-using ZLinq;
 
 namespace Everywhere.AI.Prompts;
 
@@ -129,7 +128,7 @@ public sealed class SystemPromptPlaceholderSource : IPromptPlaceholderSource
     private static readonly IReadOnlyList<PromptPlaceholderToken> DefaultSystemPromptPlaceholders =
         PromptTemplateParser.ParsePlaceholders(DefaultPrompts.DefaultSystemPrompt);
 
-    public static SystemPromptPlaceholderSource Instance { get; } = new();
+    public static SystemPromptPlaceholderSource Shared { get; } = new();
 
     public IReadOnlyList<PromptPlaceholderDefinition> Definitions { get; } =
         Descriptors.Values

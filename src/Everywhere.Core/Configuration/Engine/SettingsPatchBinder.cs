@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using Everywhere.Common;
 using Everywhere.Utilities;
 
 namespace Everywhere.Configuration.Engine;
@@ -72,9 +73,17 @@ public sealed class SettingsPatchBinder
         try
         {
             var resolution = ResolveObservedPath(rootDescriptor, rootValue, observedPath, observedValue);
-            var valueType = resolution.DeclaredType ?? resolution.RuntimeValue?.GetType() ?? typeof(object);
-            var node = SettingsEngineJson.SerializeToNode(resolution.RuntimeValue, valueType);
-            store.ReplaceSubtree(resolution.JsonPath, node);
+            if (resolution.RuntimeValue is ISyncRoot syncRoot)
+            {
+                lock (syncRoot)
+                {
+                    WriteResolvedValue(store, resolution);
+                }
+            }
+            else
+            {
+                WriteResolvedValue(store, resolution);
+            }
         }
         catch (Exception ex)
         {
@@ -89,6 +98,13 @@ public sealed class SettingsPatchBinder
             _diagnostics.Add(diagnostic);
             store.AddDiagnostic(diagnostic);
         }
+    }
+
+    private static void WriteResolvedValue(JsonSettingsStorage store, PathResolution resolution)
+    {
+        var valueType = resolution.DeclaredType ?? resolution.RuntimeValue?.GetType() ?? typeof(object);
+        var node = SettingsEngineJson.SerializeToNode(resolution.RuntimeValue, valueType);
+        store.ReplaceSubtree(resolution.JsonPath, node);
     }
 
     private void PatchObject(

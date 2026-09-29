@@ -240,10 +240,10 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
 
         var wasEdgeLoadingEnabled = _edgeLoadingEnabled;
         _edgeLoadingEnabled = false;
+        _pendingViewportAnchor = new PendingViewportAnchor(rows[snapshot.AnchorIndex], snapshot.OffsetWithinAnchor);
 
         if (context.Presentation.CompactAround(rows[snapshot.FirstIndex], rows[snapshot.LastIndex]))
         {
-            _pendingViewportAnchor = new PendingViewportAnchor(rows[snapshot.AnchorIndex], snapshot.OffsetWithinAnchor);
             return;
         }
 

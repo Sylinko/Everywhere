@@ -1,4 +1,5 @@
 using System.Reflection;
+using Avalonia.Platform.Storage;
 using Everywhere.Chat;
 using Everywhere.Chat.Documents;
 using Everywhere.Chat.Plugins;
@@ -216,7 +217,7 @@ public class FileSystemPluginTests
             {
                 Assert.That(File.ReadAllText(path), Is.EqualTo("new\n"));
                 Assert.That(result, Does.Contain("Warnings: tolerant matching was used while planning this patch:"));
-                Assert.That(result, Does.Contain($"committed: {path}, hunk #1 (patch header line 3) matched {expectedWarning}."));
+                Assert.That(result, Does.Contain($"committed: {ResolveFinalPath(path)}, hunk #1 (patch header line 3) matched {expectedWarning}."));
                 Assert.That(result, Does.Contain("Added lines were kept exactly as supplied"));
                 Assert.That(result, Does.Contain("re-read the affected lines and verify indentation and intended text"));
                 Assert.That(result, Does.Contain("successful fallback matches, not patch errors").And.Contain("Do not retry automatically"));
@@ -264,9 +265,9 @@ public class FileSystemPluginTests
             Assert.Multiple(() =>
             {
                 Assert.That(File.ReadAllText(path), Is.EqualTo("    old\n"));
-                Assert.That(result, Does.Contain($"rejected by user: {path}, hunk #1"));
+                Assert.That(result, Does.Contain($"rejected by user: {ResolveFinalPath(path)}, hunk #1"));
                 Assert.That(result, Does.Contain("For committed files, re-read"));
-                Assert.That(result, Does.Not.Contain($"committed: {path}, hunk #1"));
+                Assert.That(result, Does.Not.Contain($"committed: {ResolveFinalPath(path)}, hunk #1"));
             });
         }
         finally
@@ -371,7 +372,7 @@ public class FileSystemPluginTests
         try
         {
             var settings = new Settings(Substitute.For<IServiceProvider>());
-            settings.Plugin.FileSystem.AddApprovalPath(path);
+            settings.Plugin.FileSystem.AddApprovalPath(ResolveFinalPath(path));
             var displaySink = new ChatPluginDisplaySink();
             var userInterface = CreateUserInterface(consent: true, displaySink);
             var patch = $"""
@@ -505,6 +506,61 @@ public class FileSystemPluginTests
     }
 
     [Test]
+    public async Task ApplyPatchAsync_AlwaysAllowExactLinkUpdate_SavesDisplayedTargetPath()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var targetPath = Path.Combine(root, "target.txt");
+        var linkPath = Path.Combine(root, "link.txt");
+        Directory.CreateDirectory(root);
+        await File.WriteAllTextAsync(targetPath, "old\n");
+
+        try
+        {
+            CreateFileLinkOrIgnore(linkPath, "target.txt");
+            var settings = new Settings(Substitute.For<IServiceProvider>());
+            var userInterface = Substitute.For<IChatPluginUserInterface>();
+            userInterface.DisplaySink.Returns(new ChatPluginDisplaySink());
+            userInterface.RequestConsentAsync(
+                    Arg.Any<string?>(),
+                    Arg.Any<IDynamicLocaleKey>(),
+                    Arg.Any<ChatPluginDisplayBlock?>(),
+                    Arg.Any<RequestConsentRememberMasks>(),
+                    Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                    cancellationToken: Arg.Any<CancellationToken>())
+                .Returns(call =>
+                {
+                    var options = call.ArgAt<IReadOnlyList<RequestConsentCustomOption>?>(4) ??
+                        throw new AssertionException("The consent request has no path options.");
+                    return Task.FromResult(RequestConsentResult.Custom(options[0]));
+                });
+            var patch = $"""
+                *** Begin Patch
+                *** Update File: {new Uri(linkPath).AbsoluteUri}
+                @@
+                -old
+                +new
+                *** End Patch
+                """;
+
+            await InvokeApplyPatchAsync(CreatePlugin(settings), userInterface, patch);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(File.ReadAllText(targetPath), Is.EqualTo("new\n"));
+                Assert.That(
+                    settings.Plugin.FileSystem.ApprovalPaths.Select(static item => item.Pattern),
+                    Is.EqualTo([FileSystemApprovalPath.Normalize(ResolveFinalPath(targetPath))]));
+                Assert.That(settings.Plugin.FileSystem.ApprovalPaths.Select(static item => item.Pattern),
+                    Does.Not.Contain(FileSystemApprovalPath.Normalize(linkPath)));
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
+    [Test]
     public async Task ApplyPatchAsync_InvalidPatch_LeavesFileUnchanged()
     {
         var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -609,6 +665,30 @@ public class FileSystemPluginTests
             new FileHandlerContextFactory([new PdfFileHandler(), new TextFileHandler(), new BinaryFileHandler()]),
             Substitute.For<ILogger<FileSystemPlugin>>());
 
+    private static string ResolveFinalPath(string path)
+    {
+        var result = PathUtilities.ResolvePath(path, PathResolutionMode.FollowFinalComponent);
+        return result.ResolvedPath ?? throw new AssertionException($"Could not resolve test path '{path}'.");
+    }
+
+    private static string ResolveFinalPath(string path, PathResolutionMode mode)
+    {
+        var result = PathUtilities.ResolvePath(path, mode);
+        return result.ResolvedPath ?? throw new AssertionException($"Could not resolve test path '{path}'.");
+    }
+
+    private static void CreateFileLinkOrIgnore(string path, string target)
+    {
+        try
+        {
+            File.CreateSymbolicLink(path, target);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or PlatformNotSupportedException or IOException)
+        {
+            Assert.Ignore($"Symbolic links are unavailable in this test environment: {ex.Message}");
+        }
+    }
+
     private static IChatPluginUserInterface CreateUserInterface(
         bool consent,
         ChatPluginDisplaySink? displaySink = null,
@@ -652,6 +732,7 @@ public class FileSystemPluginTests
             plugin,
             [
                 userInterface,
+                Substitute.For<IStorageProvider>(),
                 new ChatContext(),
                 source,
                 destination,
@@ -673,7 +754,13 @@ public class FileSystemPluginTests
         var applyPatchMethod = method ?? throw new AssertionException("ApplyPatchAsync was not found.");
         var invocation = applyPatchMethod.Invoke(
             plugin,
-            [userInterface, chatContext ?? new ChatContext(), patch, CancellationToken.None]);
+            [
+                userInterface,
+                Substitute.For<IStorageProvider>(),
+                chatContext ?? new ChatContext(),
+                patch,
+                CancellationToken.None
+            ]);
         if (invocation is not Task<PromptNode> task)
             throw new AssertionException("ApplyPatchAsync did not return Task<PromptNode>.");
 
@@ -693,7 +780,14 @@ public class FileSystemPluginTests
 
         var task = (Task<string>)method!.Invoke(
             plugin,
-            [userInterface, new ChatContext(), paths, recursive, CancellationToken.None])!;
+            [
+                userInterface,
+                Substitute.For<IStorageProvider>(),
+                new ChatContext(),
+                paths,
+                recursive,
+                CancellationToken.None
+            ])!;
         await task;
     }
 

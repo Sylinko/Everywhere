@@ -145,7 +145,8 @@
             </StackPanel.Styles>
 
             <Border
-              Classes="ChatBubble" HorizontalAlignment="Right">
+              Classes="ChatBubble" HorizontalAlignment="Right"
+              IsVisible="{Binding Content, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
               <Classes.Editing>
                 <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
                   <Binding Path="$parent[v:ChatMessageNodeControl].Node"/>

@@ -1,0 +1,21 @@
+<UserControl
+  x:Class="Everywhere.Views.ChatTurnPreviewItemPresenter" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="using:Everywhere.Views"
+  x:Name="Self" ClipToBounds="False"
+  IsHitTestVisible="False">
+  <ContentControl
+    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+    Content="{Binding Item, ElementName=Self}">
+    <ContentControl.DataTemplates>
+      <DataTemplate x:DataType="v:ChatTurnNavigationIndex+Entry">
+        <v:ChatTurnPreview Entry="{Binding}"/>
+      </DataTemplate>
+      <DataTemplate x:DataType="v:ChatTurnNavigationIndex+DateHeader">
+        <TextBlock
+          Classes="Muted"
+          FontSize="{DynamicResource FontSizeS}"
+          Text="{Binding Text}"/>
+      </DataTemplate>
+    </ContentControl.DataTemplates>
+  </ContentControl>
+</UserControl>

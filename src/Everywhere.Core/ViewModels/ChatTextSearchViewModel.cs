@@ -6,9 +6,20 @@ using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat;
 using Everywhere.Views;
 using LiveMarkdown.Avalonia;
+using Lucide.Avalonia;
 using Serilog;
 
 namespace Everywhere.ViewModels;
+
+/// <summary>
+/// Defines the scope of a chat text search operation, allowing filtering of search results based on the origin of the messages.
+/// </summary>
+public enum ChatTextSearchScope
+{
+    All,
+    User,
+    Assistant,
+}
 
 /// <summary>
 /// Searches the complete current chat model while resolving visual rows only when navigation needs
@@ -18,6 +29,25 @@ namespace Everywhere.ViewModels;
 public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposable
 {
     public TextSearchPattern? ActivePattern { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SearchScopeIcon))]
+    [NotifyPropertyChangedFor(nameof(SearchScopeToolTipKey))]
+    public partial ChatTextSearchScope SearchScope { get; private set; }
+
+    public LucideIconKind SearchScopeIcon => SearchScope switch
+    {
+        ChatTextSearchScope.User => LucideIconKind.User,
+        ChatTextSearchScope.Assistant => LucideIconKind.Bot,
+        _ => LucideIconKind.MessagesSquare,
+    };
+
+    public IDynamicLocaleKey SearchScopeToolTipKey => SearchScope switch
+    {
+        ChatTextSearchScope.User => UserScopeToolTipKey,
+        ChatTextSearchScope.Assistant => AssistantScopeToolTipKey,
+        _ => AllScopeToolTipKey,
+    };
 
     [ObservableProperty]
     public partial bool IsOpen { get; set; }
@@ -61,6 +91,10 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
     /// Raised when the search input should receive keyboard focus.
     /// </summary>
     public event EventHandler? FocusRequested;
+
+    private static readonly IDynamicLocaleKey AllScopeToolTipKey = new DynamicLocaleKey(LocaleKey.ChatWindow_TextSearchScope_All_ToolTip);
+    private static readonly IDynamicLocaleKey UserScopeToolTipKey = new DynamicLocaleKey(LocaleKey.ChatWindow_TextSearchScope_User_ToolTip);
+    private static readonly IDynamicLocaleKey AssistantScopeToolTipKey = new DynamicLocaleKey(LocaleKey.ChatWindow_TextSearchScope_Assistant_ToolTip);
 
     private readonly IChatContextManager _chatContextManager;
     private readonly List<SearchSourceState> _sourceStates = [];
@@ -113,8 +147,15 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
             return;
         }
 
-        RestartMatchingForProjectionChange();
+        if (IsIncluded(state)) RestartMatchingForProjectionChange();
     }
+
+    internal bool IsRowIncluded(ChatPresentationRow row) => SearchScope switch
+    {
+        ChatTextSearchScope.User => row is ChatMessagePresentationRow { Node.Message: UserChatMessage },
+        ChatTextSearchScope.Assistant => row is AssistantTextOutputPresentationRow,
+        _ => row is ChatMessagePresentationRow { Node.Message: UserChatMessage } or AssistantTextOutputPresentationRow,
+    };
 
     internal int GetCurrentLocalIndex(ChatPresentationRow row)
     {
@@ -141,6 +182,14 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
     [RelayCommand]
     private void NextResult() => MoveCurrent(1);
 
+    [RelayCommand]
+    private void CycleSearchScope() => SearchScope = SearchScope switch
+    {
+        ChatTextSearchScope.All => ChatTextSearchScope.User,
+        ChatTextSearchScope.User => ChatTextSearchScope.Assistant,
+        _ => ChatTextSearchScope.All,
+    };
+
     partial void OnIsOpenChanged(bool value)
     {
         if (value)
@@ -160,6 +209,12 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
 
     // ReSharper disable once UnusedParameterInPartialMethod
     partial void OnQueryChanged(string? value)
+    {
+        if (IsOpen) StartRefresh(clearMatches: true);
+    }
+
+    // ReSharper disable once UnusedParameterInPartialMethod
+    partial void OnSearchScopeChanged(ChatTextSearchScope value)
     {
         if (IsOpen) StartRefresh(clearMatches: true);
     }
@@ -289,7 +344,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         Dispatcher.UIThread.PostOnDemand(() =>
         {
             if (!_statesBySource.TryGetValue(state.Key, out var current) || !ReferenceEquals(current, state)) return;
-            if (IsOpen) StartRefresh(clearMatches: false);
+            if (IsOpen && IsIncluded(state)) StartRefresh(clearMatches: false);
         });
     }
 
@@ -322,6 +377,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         var work = new List<ProjectionWork>();
         foreach (var state in _sourceStates)
         {
+            if (!IsIncluded(state)) continue;
             if (state.TryCreateProjectionWork() is { } item) work.Add(item);
         }
 
@@ -387,7 +443,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
     {
         if (!IsOpen || ActivePattern is not { } pattern) return;
 
-        if (_sourceStates.Any(static state => !state.IsProjectionCurrent))
+        if (_sourceStates.Any(state => IsIncluded(state) && !state.IsProjectionCurrent))
         {
             EnsureProjections();
             return;
@@ -402,6 +458,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         var snapshots = new List<SearchSnapshot>(_sourceStates.Count);
         foreach (var state in _sourceStates)
         {
+            if (!IsIncluded(state)) continue;
             if (state.CreateSearchSnapshot() is { } snapshot) snapshots.Add(snapshot);
         }
 
@@ -470,12 +527,13 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
                 foreach (var range in pattern.FindRanges(text))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    nextMatches.Add(new ChatTextSearchMatch(
-                        snapshot.Node,
-                        null,
-                        0,
-                        localIndex++,
-                        new TextHighlightRange(range.Start + snapshot.PlainTextOffset, range.Length)));
+                    nextMatches.Add(
+                        new ChatTextSearchMatch(
+                            snapshot.Node,
+                            null,
+                            0,
+                            localIndex++,
+                            new TextHighlightRange(range.Start + snapshot.PlainTextOffset, range.Length)));
                 }
 
                 continue;
@@ -487,12 +545,13 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
                 foreach (var range in pattern.FindRanges(projection.Buffers[bufferIndex].Text))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    nextMatches.Add(new ChatTextSearchMatch(
-                        snapshot.Node,
-                        span,
-                        bufferIndex,
-                        localIndex++,
-                        range));
+                    nextMatches.Add(
+                        new ChatTextSearchMatch(
+                            snapshot.Node,
+                            span,
+                            bufferIndex,
+                            localIndex++,
+                            range));
                 }
             }
         }
@@ -505,6 +564,13 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         ChatMessagePresentationRow messageRow => match.Span is null && ReferenceEquals(match.Node, messageRow.Node),
         AssistantTextOutputPresentationRow outputRow => match.Span is not null && ReferenceEquals(match.Span, outputRow.TextSpan),
         _ => false,
+    };
+
+    private bool IsIncluded(SearchSourceState state) => SearchScope switch
+    {
+        ChatTextSearchScope.User => state.Scope == ChatTextSearchScope.User,
+        ChatTextSearchScope.Assistant => state.Scope == ChatTextSearchScope.Assistant,
+        _ => true,
     };
 
     private void RestartMatchingForProjectionChange()
@@ -590,23 +656,27 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
         AssistantChatMessageSpan? Span,
         int BufferIndex,
         int LocalIndex,
-        TextHighlightRange Range);
+        TextHighlightRange Range
+    );
 
     private readonly record struct ProjectionWork(
         SearchSourceState State,
         ObservableStringBuilder Source,
-        ObservableStringBuilderSnapshot Snapshot);
+        ObservableStringBuilderSnapshot Snapshot
+    );
 
     private readonly record struct SearchSnapshot(
         ChatMessageNode Node,
         AssistantChatMessageTextSpan? Span,
         string? PlainText,
         int PlainTextOffset,
-        MarkdownTextProjection? Projection);
+        MarkdownTextProjection? Projection
+    );
 
     private sealed class SearchSourceState : IDisposable
     {
         public object Key { get; }
+        public ChatTextSearchScope Scope => _userMessage is null ? ChatTextSearchScope.Assistant : ChatTextSearchScope.User;
         public bool IsProjectionCurrent => _markdownSource is null || _projection?.SourceVersion == _markdownSource.Version;
 
         private readonly ChatMessageNode _node;
@@ -678,9 +748,7 @@ public sealed partial class ChatTextSearchViewModel : ObservableObject, IDisposa
                     null);
             }
 
-            return IsProjectionCurrent && _projection is not null
-                ? new SearchSnapshot(_node, _span, null, 0, _projection)
-                : null;
+            return IsProjectionCurrent && _projection is not null ? new SearchSnapshot(_node, _span, null, 0, _projection) : null;
         }
 
         public void Dispose()

@@ -29,6 +29,16 @@ public static partial class PromptTemplateRenderer
     /// <summary>
     /// Renders a template to plain text, leaving unknown placeholders unchanged.
     /// </summary>
+    public static string Render(string template, IPromptPlaceholderSource placeholderSource, PromptPlaceholderContext placeholderContext) =>
+        Expand(
+            template,
+            key => placeholderSource.TryResolve(key, placeholderContext, out var value) ? value : null,
+            new HashSet<string>(StringComparer.Ordinal),
+            0);
+
+    /// <summary>
+    /// Renders a template to plain text, leaving unknown placeholders unchanged.
+    /// </summary>
     public static string Render(string template, Func<string, string?> resolver) =>
         Expand(template, resolver, new HashSet<string>(StringComparer.Ordinal), 0);
 
@@ -145,24 +155,27 @@ public static partial class PromptTemplateRenderer
             var value = resolver(name);
             if (value is null)
             {
-                segments.Add(new PromptTemplateRenderSegment(
-                    match.Value,
-                    name,
-                    PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
+                segments.Add(
+                    new PromptTemplateRenderSegment(
+                        match.Value,
+                        name,
+                        PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
             }
             else if (value.IndexOf('{') < 0 || depth >= MaxDepth)
             {
-                segments.Add(new PromptTemplateRenderSegment(
-                    value,
-                    name,
-                    PromptTemplateRenderSegmentKind.PlaceholderValue));
+                segments.Add(
+                    new PromptTemplateRenderSegment(
+                        value,
+                        name,
+                        PromptTemplateRenderSegmentKind.PlaceholderValue));
             }
             else if (!visiting.Add(name))
             {
-                segments.Add(new PromptTemplateRenderSegment(
-                    match.Value,
-                    name,
-                    PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
+                segments.Add(
+                    new PromptTemplateRenderSegment(
+                        match.Value,
+                        name,
+                        PromptTemplateRenderSegmentKind.UnresolvedPlaceholder));
             }
             else
             {
@@ -195,12 +208,13 @@ public static partial class PromptTemplateRenderer
             return;
         }
 
-        segments.Add(inheritedPlaceholderName is null ?
-            new PromptTemplateRenderSegment(text, null, PromptTemplateRenderSegmentKind.Text) :
-            new PromptTemplateRenderSegment(
-                text,
-                inheritedPlaceholderName,
-                PromptTemplateRenderSegmentKind.PlaceholderValue));
+        segments.Add(
+            inheritedPlaceholderName is null ?
+                new PromptTemplateRenderSegment(text, null, PromptTemplateRenderSegmentKind.Text) :
+                new PromptTemplateRenderSegment(
+                    text,
+                    inheritedPlaceholderName,
+                    PromptTemplateRenderSegmentKind.PlaceholderValue));
     }
 
     private static IReadOnlyList<PromptTemplateRenderSegment> MergeAdjacentSegments(
@@ -257,7 +271,8 @@ public sealed record PromptTemplateRenderResult(
 public sealed record PromptTemplateRenderSegment(
     string Text,
     string? PlaceholderName,
-    PromptTemplateRenderSegmentKind Kind);
+    PromptTemplateRenderSegmentKind Kind
+);
 
 public enum PromptTemplateRenderSegmentKind
 {

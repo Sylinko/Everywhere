@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Everywhere.Common;
 using Everywhere.Utilities;
 
 namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
@@ -7,7 +8,7 @@ namespace Everywhere.Chat.Plugins.BuiltIn.FileSystem.Patching;
 /// <summary>
 /// Holds an immutable raw-byte and decoded-text snapshot used by planning and conflict checks.
 /// </summary>
-internal sealed class PatchTextFileSnapshot
+public sealed class PatchTextFileSnapshot
 {
     private static readonly byte[][] KnownPreambles =
     [
@@ -166,28 +167,36 @@ internal sealed class PatchTextFileSnapshot
         long maxBytes,
         CancellationToken cancellationToken)
     {
-        FileAttributes attributes;
+        PathUtilities.EntryInspection entry;
         try
         {
-            attributes = File.GetAttributes(path);
+            entry = PathUtilities.InspectEntry(path);
         }
-        catch (FileNotFoundException)
-        {
-            throw new PatchPlanException($"The target file '{path}' does not exist.");
-        }
-        catch (DirectoryNotFoundException)
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             throw new PatchPlanException($"The target file '{path}' does not exist.");
         }
 
-        if (attributes.HasFlag(FileAttributes.Directory))
+        if (entry.Kind is PathUtilities.EntryKind.Missing)
+        {
+            throw new PatchPlanException($"The target file '{path}' does not exist.");
+        }
+
+        if (entry.Kind is PathUtilities.EntryKind.Link)
+        {
+            throw new PatchPlanException(
+                $"The resolved target file '{path}' is still a link to '{entry.RawLinkTarget}' and cannot be patched without a new resolution.");
+        }
+
+        if (entry.Kind is PathUtilities.EntryKind.UnsupportedReparsePoint)
+        {
+            throw new PatchPlanException(
+                $"The resolved target file '{path}' is an unsupported reparse point and cannot be patched.");
+        }
+
+        if (entry.Attributes.HasFlag(FileAttributes.Directory))
         {
             throw new PatchPlanException($"The target path '{path}' is a directory, not a text file.");
-        }
-
-        if (attributes.HasFlag(FileAttributes.ReparsePoint))
-        {
-            throw new PatchPlanException($"The target file '{path}' is a symbolic link or reparse point and cannot be patched.");
         }
 
         await using var stream = new FileStream(
@@ -216,7 +225,7 @@ internal sealed class PatchTextFileSnapshot
             Array.Resize(ref bytes, offset);
         }
 
-        return (bytes, attributes);
+        return (bytes, entry.Attributes);
     }
 
     private static async ValueTask<Encoding?> DetectEncodingAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -274,4 +283,4 @@ internal sealed class PatchTextFileSnapshot
 /// <summary>
 /// Represents one decoded line and its exact line-ending sequence.
 /// </summary>
-internal readonly record struct PatchSourceLine(string Text, string LineEnding);
+public readonly record struct PatchSourceLine(string Text, string LineEnding);
