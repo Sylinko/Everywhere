@@ -29,7 +29,13 @@ public sealed record HostsServiceModeStatus(
     string? ConfiguredExecutablePath = null,
     int? LastTaskResult = null,
     string? DiagnosticDetail = null
-);
+)
+{
+    public bool RequiresAttention =>
+        State is HostsServiceModeConfigurationState.OtherExecutable or
+            HostsServiceModeConfigurationState.Invalid or
+            HostsServiceModeConfigurationState.Unavailable;
+}
 
 /// <summary>Limited safety assessment performed before a portable copy requests service mode.</summary>
 /// <param name="RequiresPortableAuthorization">Whether the elevated controller requires an explicit portable-copy authorization.</param>

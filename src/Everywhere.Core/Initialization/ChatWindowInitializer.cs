@@ -16,31 +16,43 @@ namespace Everywhere.Initialization;
 /// <summary>
 /// Initializes the chat window hotkey listener and preloads the chat window.
 /// </summary>
-/// <param name="serviceProvider"></param>
-/// <param name="settings"></param>
-/// <param name="shortcutListener"></param>
-/// <param name="textSelectionWatcher"></param>
-/// <param name="chatVisualService"></param>
-/// <param name="logger"></param>
-public sealed class ChatWindowInitializer(
-    IServiceProvider serviceProvider,
-    Settings settings,
-    IShortcutListener shortcutListener,
-    ITextSelectionWatcher textSelectionWatcher,
-    ChatVisualService chatVisualService,
-    ILogger<ChatWindowInitializer> logger
-) : IAsyncInitializer
+public sealed class ChatWindowInitializer : IAsyncInitializer
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
 
+    private readonly IServiceProvider _serviceProvider;
+    private readonly Settings _settings;
+    private readonly IShortcutListener _shortcutListener;
+    private readonly ChatVisualService _chatVisualService;
+    private readonly ILogger<ChatWindowInitializer> _logger;
     private readonly Lock _syncLock = new();
 
-    private IDisposable? _textSelectionSubscription;
+    /// <summary>
+    /// Initializes the chat window hotkey listener and preloads the chat window.
+    /// </summary>
+    /// <param name="serviceProvider"></param>
+    /// <param name="settings"></param>
+    /// <param name="shortcutListener"></param>
+    /// <param name="chatVisualService"></param>
+    /// <param name="logger"></param>
+    public ChatWindowInitializer(
+        IServiceProvider serviceProvider,
+        Settings settings,
+        IShortcutListener shortcutListener,
+        ChatVisualService chatVisualService,
+        ILogger<ChatWindowInitializer> logger)
+    {
+        _serviceProvider = serviceProvider;
+        _settings = settings;
+        _shortcutListener = shortcutListener;
+        _chatVisualService = chatVisualService;
+        _logger = logger;
+    }
 
     public Task InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var chatWindow = serviceProvider.GetRequiredService<ChatWindow>();
+        var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
         var chatWindowViewModel = chatWindow.ViewModel;
         var chatWindowHandle = chatWindow.TryGetPlatformHandle()?.Handle ?? 0;
 
@@ -48,23 +60,14 @@ public sealed class ChatWindowInitializer(
         chatWindow.Initialize();
 
         InitializeShortcut(
-            settings.Shortcut.ChatWindow,
+            _settings.Shortcut.ChatWindow,
             (shortcut, ref subscription) => RegisterChatWindowShortcut(chatWindow, chatWindowHandle, shortcut, ref subscription));
         InitializeShortcut(
-            settings.Shortcut.PickVisualElement,
+            _settings.Shortcut.PickVisualElement,
             (shortcut, ref subscription) => RegisterPickElementShortcut(chatWindowViewModel, shortcut, ref subscription));
         InitializeShortcut(
-            settings.Shortcut.TakeScreenshot,
+            _settings.Shortcut.TakeScreenshot,
             (shortcut, ref subscription) => RegisterScreenshotShortcut(chatWindowViewModel, shortcut, ref subscription));
-
-        settings.ChatWindow.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(ChatWindowSettings.AutomaticallyAddTextSelection))
-            {
-                HandleTextSelectionChanged(chatWindowViewModel, settings.ChatWindow.AutomaticallyAddTextSelection);
-            }
-        };
-        HandleTextSelectionChanged(chatWindowViewModel, settings.ChatWindow.AutomaticallyAddTextSelection);
 
         return Task.CompletedTask;
     }
@@ -84,10 +87,11 @@ public sealed class ChatWindowInitializer(
                     if (shortcut.IsEnabled) RegisterAll();
                     else
                     {
-                        using var _0 = _syncLock.EnterScope();
-
-                        DisposeHelper.DisposeToDefault(ref mainSubscription);
-                        DisposeHelper.DisposeToDefault(ref alternativeSubscription);
+                        using (_syncLock.EnterScope())
+                        {
+                            DisposeHelper.DisposeToDefault(ref mainSubscription);
+                            DisposeHelper.DisposeToDefault(ref alternativeSubscription);
+                        }
                     }
 
                     break;
@@ -120,7 +124,7 @@ public sealed class ChatWindowInitializer(
     {
         RegisterShortcutListener(
             shortcut,
-            () => ResolveChatWindowTargetAsync(chatWindow, chatWindowHandle).Detach(logger.ToExceptionHandler()),
+            () => ResolveChatWindowTargetAsync(chatWindow, chatWindowHandle).Detach(_logger.ToExceptionHandler()),
             ref subscription);
     }
 
@@ -131,7 +135,7 @@ public sealed class ChatWindowInitializer(
         try
         {
             var query = new VisualElementQueryRequest(VisualElementFields.NativeWindowHandle, 0);
-            var snapshot = await chatVisualService.ObserveElementAsync(VisualElementLocator.Focused, query: query);
+            var snapshot = await _chatVisualService.ObserveElementAsync(VisualElementLocator.Focused, query: query);
             if (snapshot is { } focusedSnapshot)
             {
                 targetLocator = VisualElementLocator.Focused;
@@ -139,7 +143,10 @@ public sealed class ChatWindowInitializer(
             }
             else
             {
-                var pointerSnapshot = await chatVisualService.ObserveElementAsync(VisualElementLocator.Pointer, VisualElementResolution.TopLevel, query);
+                var pointerSnapshot = await _chatVisualService.ObserveElementAsync(
+                    VisualElementLocator.Pointer,
+                    VisualElementResolution.TopLevel,
+                    query);
                 nativeWindowHandle = pointerSnapshot?.NativeWindowHandle;
                 targetLocator = nativeWindowHandle is > 0 and var handle ? VisualElementLocator.FromNativeWindow(handle) : null;
             }
@@ -148,7 +155,7 @@ public sealed class ChatWindowInitializer(
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "Failed to resolve the visual target for the chat-window shortcut.");
+            _logger.LogWarning(exception, "Failed to resolve the visual target for the chat-window shortcut.");
             targetLocator = null;
             nativeWindowHandle = null;
         }
@@ -191,19 +198,11 @@ public sealed class ChatWindowInitializer(
 
         try
         {
-            subscription = shortcutListener.Register(shortcut, callback);
+            subscription = _shortcutListener.Register(shortcut, callback);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to register shortcut {Shortcut}", shortcut);
+            _logger.LogError(ex, "Failed to register shortcut {Shortcut}", shortcut);
         }
-    }
-
-    private void HandleTextSelectionChanged(ChatWindowViewModel chatWindowViewModel, bool isEnabled)
-    {
-        using var _ = _syncLock.EnterScope();
-
-        _textSelectionSubscription?.Dispose();
-        if (isEnabled) _textSelectionSubscription = textSelectionWatcher.Subscribe(chatWindowViewModel);
     }
 }

@@ -675,10 +675,7 @@
         <value>已就绪</value>
     </data>
     <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>此功能目前由另一份 Everywhere 管理</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable_ToolTip" xml:space="preserve">
-        <value>当前由以下程序配置：{0}</value>
+        <value>此功能目前由本机的另一个 Everywhere 管理</value>
     </data>
     <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
         <value>此功能需要重新设置</value>
@@ -691,24 +688,6 @@
     </data>
     <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
         <value>无法卸载 Everywhere 服务。</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Title" xml:space="preserve">
-        <value>将 Everywhere 安装为服务？</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Continue" xml:space="preserve">
-        <value>继续</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeOwnershipConflict_Message" xml:space="preserve">
-        <value>此功能已由另一份 Everywhere 配置。继续将改为使用当前版本，另一份 Everywhere 可能无法再操作管理员权限应用。&#xA;&#xA;当前配置：{0}&#xA;当前版本：{1}</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeInvalidOwnership_Message" xml:space="preserve">
-        <value>检测到已有设置，但 Everywhere 无法确认它属于哪个版本。继续将为当前版本修复此设置。</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeUnsafeEnvironment_Message" xml:space="preserve">
-        <value>当前位置中的 Everywhere 程序文件可以被其他应用修改。此功能会让后台组件获得管理员权限，建议先将 Everywhere 安装到受保护的 Program Files 文件夹。</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Footer" xml:space="preserve">
-        <value>仍要继续吗？</value>
     </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere 当前正以管理员身份运行。来自普通应用的拖放可能无法使用，助手执行的操作也会拥有更高的系统权限。不需要管理员权限时，请正常重新启动 Everywhere。</value>
@@ -2139,7 +2118,7 @@
         <value>总是开启新对话</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>使用快捷键唤起应用时，将自动忽略上次对话并开启全新会话。</value>
+        <value>使用快捷键唤起聊天窗口时，将自动忽略上次对话并开启全新会话。</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>从 JSON 导入</value>
@@ -2186,6 +2165,15 @@
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>启用后，划词文本将自动被添加为附件</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>当前环境不支持自动添加划词。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere 无法启动自动划词。请检查系统的辅助功能权限后重试。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>自动划词未能启动，请重试。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>列出窗口</value>

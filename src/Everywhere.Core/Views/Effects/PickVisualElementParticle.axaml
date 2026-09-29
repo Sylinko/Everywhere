@@ -27,7 +27,7 @@
           CornerRadius="{DynamicResource FullCornerRadius}">
           <DockPanel
             Margin="6,0" ClipToBounds="False"
-            HorizontalSpacing="2" LastChildFill="True">
+            HorizontalSpacing="4" LastChildFill="True">
             <LucideIcon
               DockPanel.Dock="Left" VerticalAlignment="Center"
               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
@@ -37,10 +37,11 @@
               x:Name="PART_PreviewImage" DockPanel.Dock="Left"
               MaxWidth="{DynamicResource LineHeightL}"
               MaxHeight="{DynamicResource LineHeightL}"
-              Margin="0,4,2,4" VerticalAlignment="Center"
+              Margin="0,4" VerticalAlignment="Center"
               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"
               Opacity="0"
-              Source="{Binding PreviewImage}"/>
+              Source="{Binding PreviewImage}"
+              Stretch="UniformToFill"/>
 
             <Button
               x:Name="PART_RemoveButton" DockPanel.Dock="Right"

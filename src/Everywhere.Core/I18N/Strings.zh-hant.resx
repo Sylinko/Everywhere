@@ -2022,7 +2022,7 @@
         <value>總是開始新的對話</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>透過快捷鍵呼叫應用程式時，自動開始一個全新的會話，跳過之前的對話。</value>
+        <value>使用快捷鍵喚起聊天視窗時，將自動忽略上次對話並開啟全新會話。</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>從 JSON 匯入</value>
@@ -3991,5 +3991,8 @@
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>檢視文件</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>此功能目前由本機的另一個 Everywhere 管理</value>
     </data>
 </root>

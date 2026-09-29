@@ -675,10 +675,7 @@
         <value>Ready</value>
     </data>
     <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>Another copy of Everywhere currently controls this feature</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable_ToolTip" xml:space="preserve">
-        <value>Configured by: {0}</value>
+        <value>This feature is currently managed by another Everywhere on this machine</value>
     </data>
     <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
         <value>This feature needs to be set up again</value>
@@ -691,24 +688,6 @@
     </data>
     <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
         <value>The Everywhere service could not be removed.</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Title" xml:space="preserve">
-        <value>Install Everywhere as a service?</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Continue" xml:space="preserve">
-        <value>Continue</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeOwnershipConflict_Message" xml:space="preserve">
-        <value>This feature is already set up by another copy of Everywhere. Continuing will switch it to the current copy, and the other copy may no longer be able to interact with administrator apps.&#xA;&#xA;Currently configured: {0}&#xA;Current copy: {1}</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeInvalidOwnership_Message" xml:space="preserve">
-        <value>An existing setup was found, but Everywhere could not verify which copy created it. Continuing will repair it for the current copy.</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeUnsafeEnvironment_Message" xml:space="preserve">
-        <value>Other apps can modify Everywhere in its current location. Because this feature runs a background component with administrator privileges, we recommend installing Everywhere in a protected Program Files folder first.</value>
-    </data>
-    <data name="HostsStatusControl_ServiceModeConfirmation_Footer" xml:space="preserve">
-        <value>Do you want to continue?</value>
     </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere is running as administrator. Drag and drop from standard apps may not work, and actions performed by the assistant have broader access to your system. Restart Everywhere normally when administrator access is not needed.</value>
@@ -2139,7 +2118,7 @@ Scroll wheel or number keys to switch pick modes</value>
         <value>Always Start New Chat</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Automatically start a fresh session when summoning the app via shortcut, bypassing the previous conversation.</value>
+        <value>When summoning the chat window with a shortcut, the previous conversation is automatically ignored and a brand new session starts.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Import from JSON</value>
@@ -2186,6 +2165,15 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>When enabled, selected text will be automatically added as an attachment.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>Automatic text selection is not supported in the current environment.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere could not start automatic text selection. Check the system accessibility permissions and try again.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>Automatic text selection could not be started. Please try again.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>List Windows</value>

@@ -2022,7 +2022,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Her zaman yeni sohbet başlat</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Kısayol ile uygulamayı çağırdığınızda, önceki konuşmayı atlayarak yeni bir oturum başlatın.</value>
+        <value>Sohbet penceresini kısayol ile çağırdığınızda, önceki konuşma otomatik olarak yok sayılır ve yepyeni bir oturum başlatılır.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>JSON'dan içe aktar</value>
@@ -3991,5 +3991,8 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Belgeyi görüntüle</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Bu özellik şu anda bu cihazdaki başka bir Everywhere tarafından yönetiliyor</value>
     </data>
 </root>

@@ -2022,7 +2022,7 @@ Molette de défilement ou touches numériques pour changer de mode de sélection
         <value>Toujours commencer un nouveau chat</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Démarrez automatiquement une nouvelle session lorsque vous invoquez l'application via un raccourci, en contournant la conversation précédente.</value>
+        <value>Lorsque vous invoquez la fenêtre de discussion à l'aide d'un raccourci, la conversation précédente est automatiquement ignorée et une toute nouvelle session démarre.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Importer depuis JSON</value>
@@ -3991,5 +3991,8 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Afficher le document</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Cette fonctionnalité est actuellement gérée par un autre Everywhere sur cet appareil</value>
     </data>
 </root>

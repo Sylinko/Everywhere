@@ -28,25 +28,25 @@ public partial class HostsStatusControl(HostProcessCoordinator coordinator, ILog
     {
         get;
         private set => SetAndRaise(InputStatusProperty, ref field, value);
-    } = CreatePresentation(coordinator.GetStatus(ProcessRole.Input));
+    } = CreatePresentation(coordinator.GetRoleStatus(ProcessRole.Input));
 
     public HostStatusPresentation AutomationStatus
     {
         get;
         private set => SetAndRaise(AutomationStatusProperty, ref field, value);
-    } = CreatePresentation(coordinator.GetStatus(ProcessRole.Automation));
+    } = CreatePresentation(coordinator.GetRoleStatus(ProcessRole.Automation));
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        coordinator.StatusChanged += HandleStatusChanged;
-        ApplyStatus(coordinator.GetStatus(ProcessRole.Input));
-        ApplyStatus(coordinator.GetStatus(ProcessRole.Automation));
+        coordinator.RoleStatusChanged += HandleRoleStatusChanged;
+        ApplyStatus(coordinator.GetRoleStatus(ProcessRole.Input));
+        ApplyStatus(coordinator.GetRoleStatus(ProcessRole.Automation));
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        coordinator.StatusChanged -= HandleStatusChanged;
+        coordinator.RoleStatusChanged -= HandleRoleStatusChanged;
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -65,7 +65,7 @@ public partial class HostsStatusControl(HostProcessCoordinator coordinator, ILog
         }
     }
 
-    private void HandleStatusChanged(HostRoleStatus status) =>
+    private void HandleRoleStatusChanged(HostRoleStatus status) =>
         Dispatcher.UIThread.PostOnDemand(() => ApplyStatus(status));
 
     private void ApplyStatus(HostRoleStatus status)

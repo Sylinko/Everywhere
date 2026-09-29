@@ -89,13 +89,13 @@ public static class HostsControlRunner
         var result = platform.StartServiceMode(Process.GetCurrentProcess().SessionId);
         if (!string.IsNullOrWhiteSpace(result.DiagnosticDetail))
         {
-            var writer = result.Outcome is HostsControlPlatformOutcome.Succeeded or HostsControlPlatformOutcome.DirectLaunchRequired ?
+            var writer = result.State is HostsControlPlatformState.Succeeded or HostsControlPlatformState.DirectLaunchRequired ?
                 Console.Out :
                 Console.Error;
             writer.WriteLine(result.DiagnosticDetail);
         }
 
-        if (result.Outcome is HostsControlPlatformOutcome.Succeeded)
+        if (result.State is HostsControlPlatformState.Succeeded)
         {
             return HostsControlExitCodes.Success;
         }
@@ -107,7 +107,7 @@ public static class HostsControlRunner
             return HostsControlExitCodes.Failure;
         }
 
-        if (result.Outcome is HostsControlPlatformOutcome.DirectLaunchRequired)
+        if (result.State is HostsControlPlatformState.DirectLaunchRequired)
         {
             return HostsControlExitCodes.Success;
         }
@@ -241,17 +241,17 @@ public static class HostsControlRunner
 
     private static int ReportPlatformResult(string operation, HostsControlPlatformResult result)
     {
-        var isSuccess = result.Outcome is HostsControlPlatformOutcome.Succeeded;
+        var isSuccess = result.State is HostsControlPlatformState.Succeeded;
         var writer = isSuccess ? Console.Out : Console.Error;
         writer.WriteLine(
             string.IsNullOrWhiteSpace(result.DiagnosticDetail) ?
                 $"Everywhere Hosts Control '{operation}' {(isSuccess ? "completed" : "failed")}." :
                 result.DiagnosticDetail);
-        return result.Outcome switch
+        return result.State switch
         {
-            HostsControlPlatformOutcome.Succeeded => HostsControlExitCodes.Success,
-            HostsControlPlatformOutcome.Conflict => HostsControlExitCodes.Conflict,
-            HostsControlPlatformOutcome.Failed => HostsControlExitCodes.Failure,
+            HostsControlPlatformState.Succeeded => HostsControlExitCodes.Success,
+            HostsControlPlatformState.Conflict => HostsControlExitCodes.Conflict,
+            HostsControlPlatformState.Failed => HostsControlExitCodes.Failure,
             _ => HostsControlExitCodes.Unavailable
         };
     }

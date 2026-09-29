@@ -1,39 +1,56 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views">
+  xmlns:hosting="clr-namespace:Everywhere.ProcessIsolation.Hosting;assembly=Everywhere.ProcessIsolation" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:HostsServiceModeControl}"
     TargetType="v:HostsServiceModeControl">
+    <Setter Property="Margin" Value="4,0"/>
     <Setter Property="Template">
       <ControlTemplate>
-        <StackPanel
-          shadui:BindingAssist.ToolTip="{Binding Status.ToolTip^, RelativeSource={RelativeSource TemplatedParent}}"
-          Orientation="Horizontal" Spacing="8">
-          <Panel
-            Width="16" Height="16"
-            VerticalAlignment="Center"
-            IsVisible="{Binding Status.RequiresAttention, RelativeSource={RelativeSource TemplatedParent}}">
-            <LucideIcon
-              Foreground="{DynamicResource WarningColor}"
-              IsVisible="{Binding Status.IsWarning, RelativeSource={RelativeSource TemplatedParent}}"
-              Kind="TriangleAlert"/>
-            <LucideIcon
-              Foreground="{DynamicResource ErrorColor}"
-              IsVisible="{Binding Status.IsError, RelativeSource={RelativeSource TemplatedParent}}"
-              Kind="CircleX"/>
-          </Panel>
-          <Panel
-            Width="44" Height="32">
+        <DockPanel HorizontalSpacing="8">
+          <LucideIcon
+            DockPanel.Dock="Left" VerticalAlignment="Center"
+            Foreground="{DynamicResource WarningColor}"
+            IsVisible="{Binding Coordinator.ModeStatus?.RequiresAttention, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
+            Kind="TriangleAlert"
+            Size="{DynamicResource FontSizeL}"
+            ToolTip.Tip="{Binding Coordinator.ModeStatus?.State, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static v:HostsServiceModeControl.StateToolTipConverter}}"/>
+
+          <Panel>
             <ToggleSwitch
-              HorizontalAlignment="Center" VerticalAlignment="Center"
-              IsChecked="{Binding IsInstalled, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-              IsVisible="{Binding !IsOperationRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
+              x:Name="PART_ToggleSwitch" HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Command="{Binding ChangeInstallationCommand, RelativeSource={RelativeSource TemplatedParent}}"
+              CommandParameter="{Binding $self}"
+              IsChecked="{Binding Coordinator.ModeStatus?.State, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static hosting:HostsServiceModeConfigurationState.CurrentExecutable}}">
+              <ToggleSwitch.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding
+                    Path="!ChangeInstallationCommand.IsRunning"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="!Coordinator.IsServiceModeChanging"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                </MultiBinding>
+              </ToggleSwitch.IsVisible>
+            </ToggleSwitch>
             <shadui:Loading
               HorizontalAlignment="Center" VerticalAlignment="Center"
-              IsVisible="{Binding IsOperationRunning, RelativeSource={RelativeSource TemplatedParent}}"
-              Size="{DynamicResource FontSizeM}"/>
+              Size="{DynamicResource FontSizeM}">
+              <shadui:Loading.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                  <Binding
+                    Path="ChangeInstallationCommand.IsRunning"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                  <Binding
+                    Path="Coordinator.IsServiceModeChanging"
+                    RelativeSource="{RelativeSource TemplatedParent}"/>
+                </MultiBinding>
+              </shadui:Loading.IsVisible>
+            </shadui:Loading>
           </Panel>
-        </StackPanel>
+        </DockPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

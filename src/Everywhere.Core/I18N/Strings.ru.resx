@@ -2022,7 +2022,7 @@
         <value>Всегда начинать новый чат</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Автоматически начинать новую сессию при вызове приложения с помощью ярлыка, обходя предыдущий разговор.</value>
+        <value>При вызове окна чата с помощью сочетания клавиш предыдущий разговор автоматически игнорируется и запускается совершенно новый сеанс.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Импортировать из JSON</value>
@@ -3991,5 +3991,8 @@
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Просмотреть документ</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Эта функция в настоящее время управляется другим Everywhere на этом устройстве</value>
     </data>
 </root>

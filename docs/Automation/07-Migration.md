@@ -251,7 +251,7 @@ Provider quirks and input simulation remain in the high-level Windows action pol
 
 ## 5. Cutover Invariants
 
-Text-selection monitoring follows [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md). Its platform hooks, accessibility reads, clipboard fallback, remote source ownership, and Main consumer must move together. Main has no local Backend fallback. Enabling/disabling monitoring and reconnecting preserve resource ownership; only a confirmed empty selection clears an existing automatic text-selection attachment. Clipboard fallback retains the platform's limited-format best-effort behavior and avoids overwriting detected intervening writes.
+Text-selection monitoring follows [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md). Its platform hooks, accessibility reads, clipboard fallback, remote source ownership, and Main consumer move together. Main has no local Backend fallback. Enable/disable has acknowledged completion and a busy UI; setup rejection reports a feature failure without closing a healthy Automation connection. The shared acquisition Context serializes all source retention operations, including unsent cleanup. Only successful text captures replace automatic selection attachments; empty or failed observations preserve them. Fullscreen filtering defaults on, and application/copy exclusions are configured in Main and applied through RPC. Clipboard restoration uses the platform guarantees available, retaining explicit best-effort boundaries for attribution, macOS races, and unsupported formats. Delivered text fits the complete RPC message budget with explicit incompleteness information.
 
 The following concerns migrate together because splitting them would expose inconsistent target identity:
 

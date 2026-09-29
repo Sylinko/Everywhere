@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.ProcessIsolation.Hosts.Diagnostics;
 using Everywhere.ProcessIsolation.Hosts.Lifecycle;
@@ -26,6 +28,19 @@ public sealed record HostStopResult(
     /// <summary>Result used when no Host generation is currently owned.</summary>
     public static HostStopResult NoGeneration { get; } = new(true, true);
 }
+
+/// <summary>Describes one requested service-mode transition after any UI confirmation.</summary>
+/// <param name="ShouldInstall">Whether service mode should be installed rather than removed.</param>
+/// <param name="ShouldReplaceExisting">Whether another Everywhere copy may be replaced.</param>
+/// <param name="ShouldAuthorizePortable">Whether a portable copy was explicitly authorized.</param>
+public sealed record HostsServiceModeChangeRequest(
+    bool ShouldInstall,
+    bool ShouldReplaceExisting = false,
+    bool ShouldAuthorizePortable = false
+);
+
+/// <summary>Reports a platform-level failure from a requested service-mode transition.</summary>
+public sealed class HostsServiceModeChangeException(string? message) : Exception(message);
 
 /// <summary>
 /// Describes a Host role whose automatic recovery circuit has opened after
@@ -70,7 +85,10 @@ public delegate void HostStatusChangedHandler(HostRoleStatus status);
 /// later replaced, while an unexpected disconnect is still recovered immediately
 /// inside that generation and subject to the three-failures-in-five-minutes rule.
 /// </summary>
-public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitializer, IAsyncDisposable
+public sealed partial class HostProcessCoordinator(
+    INamedPipePeerVerifier peerVerifier,
+    IHostsServiceModeManager? serviceModeManager
+) : ObservableObject, IHostConnectionSource, IAsyncInitializer, IAsyncDisposable
 {
     private static readonly TimeSpan ConnectAttemptTimeout = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan ConnectRetryDelay = TimeSpan.FromMilliseconds(200);
@@ -81,9 +99,19 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
     public AsyncInitializerIndex Index => AsyncInitializerIndex.HostProcesses;
 
+    /// <summary>
+    /// Gets the latest queried service-mode configuration.
+    /// </summary>
+    [ObservableProperty]
+    public partial HostsServiceModeStatus? ModeStatus { get; private set; }
+
+    /// <summary>Gets whether a service-mode installation or removal is currently running.</summary>
+    [ObservableProperty]
+    public partial bool IsServiceModeChanging { get; private set; }
+
     public event AutomaticRecoveryStoppedHandler? AutomaticRecoveryStopped;
 
-    public event HostStatusChangedHandler? StatusChanged;
+    public event HostStatusChangedHandler? RoleStatusChanged;
 
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
 
@@ -94,8 +122,8 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     private readonly Lock _generationStateGate = new();
     private readonly Lock _disposeGate = new();
     private readonly Lock _statusGate = new();
-    private readonly INamedPipePeerVerifier _peerVerifier;
-    private readonly IHostsServiceModeManager? _serviceModeManager;
+    private readonly INamedPipePeerVerifier _peerVerifier = peerVerifier;
+
     private TaskCompletionSource _generationChanged = CreateStateChangeSource();
     private HostRoleStatus _inputStatus = new(ProcessRole.Input, HostConnectionState.Starting);
     private HostRoleStatus _automationStatus = new(ProcessRole.Automation, HostConnectionState.Starting);
@@ -103,24 +131,8 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     private Task? _disposeTask;
     private int _isDisposed;
 
-    private HostProcessCoordinator(INamedPipePeerVerifier peerVerifier, IHostsServiceModeManager? serviceModeManager)
-    {
-        _peerVerifier = peerVerifier;
-        _serviceModeManager = serviceModeManager;
-    }
-
-    /// <summary>
-    /// Creates an unstarted coordinator. Main uses this form when it must publish
-    /// the control endpoint before the first Host generation begins, closing the
-    /// startup window in which an external stop could otherwise arrive too early.
-    /// </summary>
-    /// <param name="peerVerifier">Verifies the identity of each named-pipe peer.</param>
-    /// <param name="serviceModeManager">Optional platform service-mode integration. Platforms without one launch Hosts directly.</param>
-    public static HostProcessCoordinator Create(INamedPipePeerVerifier peerVerifier, IHostsServiceModeManager? serviceModeManager = null) =>
-        new(peerVerifier, serviceModeManager);
-
     /// <summary>Returns the latest runtime status for one Host role.</summary>
-    public HostRoleStatus GetStatus(ProcessRole role)
+    public HostRoleStatus GetRoleStatus(ProcessRole role)
     {
         lock (_statusGate)
         {
@@ -134,7 +146,60 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     }
 
     /// <summary>Starts the first Host generation through the application initialization pipeline.</summary>
-    public Task InitializeAsync(CancellationToken cancellationToken) => StartHostsAsync(cancellationToken);
+    public async Task InitializeAsync(CancellationToken cancellationToken)
+    {
+        Task startupTask;
+        await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            var generation = GetGeneration() ?? CreateGenerationCore();
+            startupTask = generation.Start();
+        }
+        finally
+        {
+            _generationGate.Release();
+        }
+
+        // Startup waiting is deliberately outside the lifecycle gate. An
+        // external stop can take the published generation immediately, cancel
+        // its supervisors, and receive a bounded response even while the first
+        // connection attempt is still in progress.
+        await startupTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        await RefreshServiceModeStatusAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Refreshes and publishes the current service-mode configuration.</summary>
+    public async Task<HostsServiceModeStatus> RefreshServiceModeStatusAsync(CancellationToken cancellationToken = default)
+    {
+        if (serviceModeManager is null)
+        {
+            var status = new HostsServiceModeStatus(HostsServiceModeConfigurationState.NotConfigured);
+            await PublishModeStatusAsync(status);
+            return status;
+        }
+
+        try
+        {
+            var status = await Task.Run(serviceModeManager.GetStatus, cancellationToken);
+            await PublishModeStatusAsync(status);
+            return status;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.Warning(exception, "Failed to query Hosts service-mode configuration.");
+            var status = new HostsServiceModeStatus(
+                HostsServiceModeConfigurationState.Unavailable,
+                DiagnosticDetail: exception.Message);
+            await PublishModeStatusAsync(status);
+            return status;
+        }
+    }
 
     /// <summary>
     /// Returns the currently authenticated connection for a Host role, waiting
@@ -193,33 +258,6 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     }
 
     /// <summary>
-    /// Starts a generation when none is running. The operation is idempotent and
-    /// publishes its generation under the same gate as stop/restart. The bounded
-    /// connection wait happens after publication so stop can cancel startup.
-    /// </summary>
-    public async Task StartHostsAsync(CancellationToken cancellationToken = default)
-    {
-        Task startupTask;
-        await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            ThrowIfDisposed();
-            var generation = GetGeneration() ?? CreateGenerationCore();
-            startupTask = generation.Start();
-        }
-        finally
-        {
-            _generationGate.Release();
-        }
-
-        // Startup waiting is deliberately outside the lifecycle gate. An
-        // external stop can take the published generation immediately, cancel
-        // its supervisors, and receive a bounded response even while the first
-        // connection attempt is still in progress.
-        await startupTask.WaitAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
     /// Requests normal cooperative shutdown and removes the generation from the
     /// coordinator. The returned result is the explicit aggregate confirmation
     /// consumed by the Main-control RPC.
@@ -239,7 +277,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
         await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            ThrowIfDisposed();
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             var current = TakeGeneration();
             if (current is not null)
             {
@@ -270,26 +308,48 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     }
 
     /// <summary>
-    /// Requests update draining and stops the current generation. Success requires
-    /// both acknowledgments and disappearance of both owned role endpoints before
-    /// the updater may replace files.
+    /// Requests a service-mode transition. The coordinator will attempt to install or remove the service-mode configuration.
     /// </summary>
-    public async Task PrepareForUpdateAsync(CancellationToken cancellationToken = default)
+    /// <param name="request"></param>
+    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="HostsServiceModeChangeException"></exception>
+    public async Task ChangeServiceModeAsync(HostsServiceModeChangeRequest request)
     {
-        using var shutdownDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        shutdownDeadline.CancelAfter(ShutdownTimeout);
-        var result = await StopHostsCoreAsync(HostStopReason.PrepareForUpdate, shutdownDeadline.Token).ConfigureAwait(false);
-        if (!result.Succeeded)
-        {
-            throw new TimeoutException("One or more Hosts did not acknowledge update shutdown.");
-        }
+        Dispatcher.UIThread.VerifyAccess();
+        if (IsServiceModeChanging) return;
 
-        var endpointsGone = await EndpointPresenceProbe
-            .WaitForRolesToDisappearAsync(_mainIdentity.DesktopSessionId, ShutdownTimeout, shutdownDeadline.Token)
-            .ConfigureAwait(false);
-        if (!endpointsGone)
+        var manager = serviceModeManager ?? throw new NotSupportedException("Service mode is unavailable on this platform.");
+        IsServiceModeChanging = true;
+        try
         {
-            throw new TimeoutException("A Host endpoint remained present after update shutdown.");
+            var result = request.ShouldInstall ?
+                await manager.RequestInstallAsync(request.ShouldReplaceExisting, request.ShouldAuthorizePortable) :
+                await manager.RequestUninstallAsync();
+            _logger.Information(
+                "Hosts service-mode change completed: install={ShouldInstall}, state={State}, detail={Detail}.",
+                request.ShouldInstall,
+                result.State,
+                result.DiagnosticDetail);
+
+            if (result.State is HostsControlPlatformState.Succeeded)
+            {
+                await RestartHostsAsync();
+            }
+            else if (result.State is not HostsControlPlatformState.Cancelled)
+            {
+                throw new HostsServiceModeChangeException(result.DiagnosticDetail);
+            }
+        }
+        finally
+        {
+            try
+            {
+                await RefreshServiceModeStatusAsync();
+            }
+            finally
+            {
+                IsServiceModeChanging = false;
+            }
         }
     }
 
@@ -314,15 +374,26 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
         return generation;
     }
 
+    private HostGeneration? GetGeneration()
+    {
+        lock (_generationStateGate)
+        {
+            return _generation;
+        }
+    }
+
+    private async Task PublishModeStatusAsync(HostsServiceModeStatus status) =>
+        await Dispatcher.UIThread.InvokeAsync(() => ModeStatus = status);
+
     private bool ShouldUseServiceMode() =>
-        _serviceModeManager?.GetStatus().State is HostsServiceModeConfigurationState.CurrentExecutable;
+        serviceModeManager?.GetStatus().State is HostsServiceModeConfigurationState.CurrentExecutable;
 
     private async Task<HostStopResult> StopHostsCoreAsync(HostStopReason reason, CancellationToken cancellationToken)
     {
         await _generationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            ThrowIfDisposed();
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             var generation = TakeGeneration();
             return generation is null ?
                 HostStopResult.NoGeneration :
@@ -388,14 +459,6 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
         }
     }
 
-    private HostGeneration? GetGeneration()
-    {
-        lock (_generationStateGate)
-        {
-            return _generation;
-        }
-    }
-
     private HostGeneration? TakeGeneration()
     {
         TaskCompletionSource? changed = null;
@@ -456,23 +519,16 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     private static TaskCompletionSource CreateStateChangeSource() =>
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private void ThrowIfDisposed()
-    {
-        if (IsDisposed)
-        {
-            throw new ObjectDisposedException(nameof(HostProcessCoordinator));
-        }
-    }
-
     private void OnAutomaticRecoveryStopped(ProcessRole role, int failureCount, TimeSpan failureWindow) =>
         ReportAutomaticRecoveryStopped(role, failureCount, failureWindow);
 
     private void ReportAutomaticRecoveryStopped(ProcessRole role, int failureCount, TimeSpan failureWindow)
     {
-        SetStatus(new HostRoleStatus(
-            role,
-            HostConnectionState.Unavailable,
-            new DynamicLocaleKey(LocaleKey.HostsStatusControl_RecoveryStopped_ToolTip)));
+        SetStatus(
+            new HostRoleStatus(
+                role,
+                HostConnectionState.Unavailable,
+                new DynamicLocaleKey(LocaleKey.HostsStatusControl_RecoveryStopped_ToolTip)));
         AutomaticRecoveryStopped?.Invoke(new HostRecoveryStoppedEventArgs(role, failureCount, failureWindow));
     }
 
@@ -480,21 +536,20 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     {
         lock (_statusGate)
         {
-            if (status.Role is ProcessRole.Input)
+            switch (status.Role)
             {
-                _inputStatus = status;
-            }
-            else if (status.Role is ProcessRole.Automation)
-            {
-                _automationStatus = status;
-            }
-            else
-            {
-                throw new ArgumentException("Main does not have an isolated Host status.", nameof(status));
+                case ProcessRole.Input:
+                    _inputStatus = status;
+                    break;
+                case ProcessRole.Automation:
+                    _automationStatus = status;
+                    break;
+                default:
+                    throw new ArgumentException("Main does not have an isolated Host status.", nameof(status));
             }
         }
 
-        StatusChanged?.Invoke(status);
+        RoleStatusChanged?.Invoke(status);
     }
 
     /// <summary>Reason sent to the role lifecycle contract.</summary>
@@ -505,7 +560,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
     }
 
     /// <summary>Generation-local result of the requested platform launch route.</summary>
-    private enum HostLaunchOutcome
+    private enum HostLaunchState
     {
         Pending,
         Preferred,
@@ -531,14 +586,14 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
         private Task? _controllerTask;
         private Task? _startupTask;
         private long _lastControllerStartTimestamp;
-        private int _launchOutcome;
+        private int _launchState;
 
         public HostGeneration(HostProcessCoordinator owner, CancellationToken parentToken)
         {
             _owner = owner;
             _lifetime = CancellationTokenSource.CreateLinkedTokenSource(parentToken);
             _isServiceModeRequested = owner.ShouldUseServiceMode();
-            _launchOutcome = (int)(_isServiceModeRequested ? HostLaunchOutcome.Pending : HostLaunchOutcome.Preferred);
+            _launchState = (int)(_isServiceModeRequested ? HostLaunchState.Pending : HostLaunchState.Preferred);
             _input = new RoleConnectionSupervisor(this, ProcessRole.Input, _lifetime.Token);
             _automation = new RoleConnectionSupervisor(this, ProcessRole.Automation, _lifetime.Token);
             ReportStarting(ProcessRole.Input);
@@ -626,29 +681,30 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
 
         private void ReportConnected(ProcessRole role)
         {
-            var launchOutcome = (HostLaunchOutcome)Volatile.Read(ref _launchOutcome);
-            if (launchOutcome is HostLaunchOutcome.Pending)
+            var launchState = (HostLaunchState)Volatile.Read(ref _launchState);
+            if (launchState is HostLaunchState.Pending)
             {
                 ReportStarting(role);
                 return;
             }
 
-            var isDegraded = launchOutcome is HostLaunchOutcome.LimitedFallback;
-            _owner.SetStatus(new HostRoleStatus(
-                role,
-                isDegraded ? HostConnectionState.Degraded : HostConnectionState.Connected));
+            var isDegraded = launchState is HostLaunchState.LimitedFallback;
+            _owner.SetStatus(
+                new HostRoleStatus(
+                    role,
+                    isDegraded ? HostConnectionState.Degraded : HostConnectionState.Connected));
         }
 
-        private void SetLaunchOutcome(int exitCode)
+        private void SetLaunchState(int exitCode)
         {
-            var launchOutcome = exitCode switch
+            var launchState = exitCode switch
             {
-                HostsControlExitCodes.Success => HostLaunchOutcome.Preferred,
-                HostsControlExitCodes.EquivalentFallbackStarted => HostLaunchOutcome.EquivalentFallback,
-                HostsControlExitCodes.LimitedFallbackStarted => HostLaunchOutcome.LimitedFallback,
-                _ => HostLaunchOutcome.Failed
+                HostsControlExitCodes.Success => HostLaunchState.Preferred,
+                HostsControlExitCodes.EquivalentFallbackStarted => HostLaunchState.EquivalentFallback,
+                HostsControlExitCodes.LimitedFallbackStarted => HostLaunchState.LimitedFallback,
+                _ => HostLaunchState.Failed
             };
-            Volatile.Write(ref _launchOutcome, (int)launchOutcome);
+            Volatile.Write(ref _launchState, (int)launchState);
 
             if (exitCode is not HostsControlExitCodes.Success and
                 not HostsControlExitCodes.EquivalentFallbackStarted and
@@ -702,7 +758,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             if (string.IsNullOrWhiteSpace(executablePath))
             {
                 _owner._logger.Warning("Hosts Control could not run because the current executable path is unavailable.");
-                SetLaunchOutcome(HostsControlExitCodes.Failure);
+                SetLaunchState(HostsControlExitCodes.Failure);
                 return;
             }
 
@@ -723,7 +779,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                 if (process is null)
                 {
                     _owner._logger.Warning("Hosts Control process creation returned no process handle.");
-                    SetLaunchOutcome(HostsControlExitCodes.Failure);
+                    SetLaunchState(HostsControlExitCodes.Failure);
                     return;
                 }
 
@@ -740,7 +796,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                     await outputLifetime.CancelAsync();
                     await errorTask.ConfigureAwait(false);
                     _owner._logger.Warning("Hosts Control did not exit within {ControllerTimeout}.", ControllerTimeout);
-                    SetLaunchOutcome(HostsControlExitCodes.Unavailable);
+                    SetLaunchState(HostsControlExitCodes.Unavailable);
                     return;
                 }
 
@@ -749,7 +805,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
                 await outputLifetime.CancelAsync();
                 await errorTask.ConfigureAwait(false);
                 var detail = string.Join(Environment.NewLine, errorLines).Trim();
-                SetLaunchOutcome(process.ExitCode);
+                SetLaunchState(process.ExitCode);
                 if (process.ExitCode != 0)
                 {
                     _owner._logger.Warning(
@@ -764,7 +820,7 @@ public sealed class HostProcessCoordinator : IHostConnectionSource, IAsyncInitia
             catch (Exception exception)
             {
                 _owner._logger.Warning(exception, "Hosts Control could not be started.");
-                SetLaunchOutcome(HostsControlExitCodes.Failure);
+                SetLaunchState(HostsControlExitCodes.Failure);
             }
         }
 

@@ -2022,7 +2022,7 @@ Use a roda do mouse ou as teclas numéricas para alternar o modo de seleção.</
         <value>Sempre Iniciar Nova Conversa</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Ao invocar o aplicativo por meio de um atalho, a conversa anterior será ignorada e uma nova será iniciada.</value>
+        <value>Ao invocar a janela de chat com um atalho, a conversa anterior é automaticamente ignorada e uma sessão totalmente nova é iniciada.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Importar de JSON</value>
@@ -3991,5 +3991,8 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Exibir documento</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Este recurso é gerenciado atualmente por outro Everywhere neste dispositivo</value>
     </data>
 </root>

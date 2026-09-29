@@ -10,20 +10,20 @@ using TaskScheduler = Windows.Win32.System.TaskScheduler.TaskScheduler;
 namespace Everywhere.Windows.Interop;
 
 /// <summary>Diagnostic result returned by a Task Scheduler command.</summary>
-/// <param name="Outcome">Stable outcome consumed by the controller.</param>
+/// <param name="State">Stable outcome consumed by the controller.</param>
 /// <param name="DiagnosticDetail">English detail intended for logs and command-line output.</param>
-public sealed record TaskSchedulerCommandResult(HostsControlPlatformOutcome Outcome, string DiagnosticDetail)
+public sealed record TaskSchedulerCommandResult(HostsControlPlatformState State, string DiagnosticDetail)
 {
-    public bool Succeeded => Outcome is HostsControlPlatformOutcome.Succeeded;
+    public bool Succeeded => State is HostsControlPlatformState.Succeeded;
 
     public static TaskSchedulerCommandResult Success(string detail) =>
-        new(HostsControlPlatformOutcome.Succeeded, detail);
+        new(HostsControlPlatformState.Succeeded, detail);
 
     public static TaskSchedulerCommandResult Failure(string detail) =>
-        new(HostsControlPlatformOutcome.Failed, detail);
+        new(HostsControlPlatformState.Failed, detail);
 
     public static TaskSchedulerCommandResult Conflict(string detail) =>
-        new(HostsControlPlatformOutcome.Conflict, detail);
+        new(HostsControlPlatformState.Conflict, detail);
 }
 
 public static class TaskSchedulerHelper

@@ -97,7 +97,10 @@ public static class Program
             ProcessRole.Automation,
             args,
             peerVerifier,
-            static () => new AutomationHostSession(new MacVisualElementBackend(), new MacVisualPickerResolver()));
+            static () => new AutomationHostSession(
+                new MacVisualElementBackend(),
+                new MacVisualPickerResolver(),
+                new MacTextSelectionMonitorFactory()));
         if (hostTask.IsCompleted)
         {
             return hostTask;
@@ -150,12 +153,8 @@ public static class Program
                 .AddSingleton<INamedPipePeerVerifier>(peerVerifier)
                 .AddProcessIsolation()
                 .AddInputHostShortcutListener()
-                .AddSingleton<MacVisualElementBackend>()
-                .AddSingleton<IVisualElementBackend>(sp => sp.GetRequiredService<MacVisualElementBackend>())
                 .AddSingleton<MacScreenSelectionService>()
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<MacScreenSelectionService>())
-                .AddSingleton<MacTextSelectionWatcher>()
-                .AddSingleton<ITextSelectionWatcher>(sp => sp.GetRequiredService<MacTextSelectionWatcher>())
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()

@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -851,38 +852,49 @@ public sealed partial class ChatWindowViewModel :
 
     void IObserver<TextSelectionData>.OnNext(TextSelectionData data)
     {
-        var version = Interlocked.Increment(ref _textSelectionVersion);
-        HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            var version = Interlocked.Increment(ref _textSelectionVersion);
+            HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
+        });
     }
 
     private async Task HandleTextSelectionAsync(TextSelectionData data, int version)
     {
-        if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount) return;
-
         RemoteVisualAnchor? anchor = null;
         TextSelectionAttachment? pendingAttachment = null;
         try
         {
-            if (data.Locator is { } locator)
+            using (data)
             {
-                anchor = await _visualService.AcquireAnchorAsync(locator, data.Resolution);
-                if (anchor?.Snapshot.ProcessId == Environment.ProcessId) return;
-            }
+                if (!data.IsCurrent || string.IsNullOrEmpty(data.Text)) return;
 
-            if (!data.Text.IsNullOrEmpty())
-            {
+                if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount &&
+                    !_chatAttachmentsSource.Items.AsValueEnumerable().OfType<TextSelectionAttachment>().Any())
+                {
+                    return;
+                }
+
+                anchor = data.TakeSource();
+                if (anchor is null && data.Locator is { } locator)
+                {
+                    anchor = await _visualService.AcquireAnchorAsync(locator, data.Resolution);
+                    if (anchor?.Snapshot.ProcessId == Environment.ProcessId) return;
+                }
+
+                if (!data.IsCurrent) return;
                 if (anchor is not null)
                 {
-                    pendingAttachment = new TextSelectionAttachment(data.Text, anchor);
+                    pendingAttachment = new TextSelectionAttachment(data.Text, data.IsTextIncomplete, anchor);
                     anchor = null;
                 }
                 else
                 {
-                    pendingAttachment = new TextSelectionAttachment(data.Text);
+                    pendingAttachment = new TextSelectionAttachment(data.Text, data.IsTextIncomplete);
                 }
             }
 
-            if (version != Volatile.Read(ref _textSelectionVersion)) return;
+            if (version != Volatile.Read(ref _textSelectionVersion) || !data.IsCurrent) return;
 
             _chatAttachmentsSource.Edit(list =>
             {
@@ -893,10 +905,9 @@ public sealed partial class ChatWindowViewModel :
                     attachment.Dispose();
                 }
 
-                // Insert the new attachment at the beginning if it has text
                 // ReSharper disable AccessToDisposedClosure
                 // ReSharper disable AccessToModifiedClosure
-                if (pendingAttachment is not null) list.Insert(0, pendingAttachment);
+                list.Insert(0, pendingAttachment);
                 // ReSharper restore AccessToDisposedClosure
                 // ReSharper restore AccessToModifiedClosure
             });

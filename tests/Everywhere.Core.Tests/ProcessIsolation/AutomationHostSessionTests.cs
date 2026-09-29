@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Platform;
 using Everywhere.Automation;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.I18N;
 using Everywhere.Interop;
@@ -223,6 +224,148 @@ public sealed class AutomationHostSessionTests
             });
 
         Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task TextSelectionMonitoring_WhenHostPushesSource_TransfersNegativeAnchorOwnership()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend { ElementType = VisualElementType.Label };
+        var monitorFactory = new TestTextSelectionMonitorFactory();
+        await using var session = new AutomationHostSession(backend, Substitute.For<IVisualPickerResolver>(), monitorFactory);
+        session.Bind(pair.Server);
+        session.OnAuthenticated(
+            new RpcHandshake
+            {
+                AssemblyInformationalVersion = "test",
+                Role = ProcessRoleNames.ToWireName(ProcessRole.Main),
+                ProcessId = Environment.ProcessId,
+                DesktopSessionId = "test",
+            });
+        var notificationReceived = new TaskCompletionSource<TextSelectionObservedNotification>(TaskCreationOptions.RunContinuationsAsynchronously);
+        AutomationHostNotificationRpcBinding.Bind(pair.Client, new TestAutomationNotificationSink(notificationReceived));
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var client = new AutomationHostClient(pair.Client);
+        using var context = await client.CreateContextAsync();
+        using var destinationContext = await client.CreateContextAsync();
+        var monitorId = pair.Client.AllocateResourceId();
+        var start = await context.StartTextSelectionMonitoringAsync(
+            monitorId,
+            Environment.ProcessId,
+            TextSelectionMonitoringConfiguration.CreateDefault(),
+            CancellationToken.None);
+        var monitor = start.Monitor ?? throw new AssertionException("The monitor did not start.");
+        await monitorFactory.PublishAsync("selected text");
+        var notification = await notificationReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        using var anchor = context.CreatePushedAnchor(notification.AnchorId, notification.Source!);
+        var snapshot = await context.GetElementSnapshotAsync(anchor, VisualElementFields.Name);
+        using var capture = await context.CaptureAnchorAsync(anchor);
+        using var movedAnchor = await anchor.MoveAsync(destinationContext);
+        using var movedCapture = await destinationContext.CaptureAnchorAsync(movedAnchor);
+        Assert.Multiple(() =>
+        {
+            Assert.That(notification.AnchorId, Is.LessThan(0));
+            Assert.That(notification.MonitorId, Is.EqualTo(monitorId));
+            Assert.That(notification.Text, Is.EqualTo("selected text"));
+            Assert.That(snapshot.Name, Is.EqualTo("Root"));
+            Assert.That(anchor.IsClosed, Is.True);
+            Assert.That(movedAnchor.Context, Is.SameAs(destinationContext));
+            Assert.That(ReadCapture(capture), Is.EqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
+            Assert.That(ReadCapture(movedCapture), Is.EqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
+        });
+
+        monitor.Dispose();
+        await WaitForAsync(() => monitorFactory.DisposeCount == 1);
+    }
+
+    [Test]
+    public async Task TextSelectionMonitoring_WhenNotificationEnqueueFails_ReleasesPreparedAnchor()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend { ElementType = VisualElementType.Label };
+        var monitorFactory = new TestTextSelectionMonitorFactory();
+        await using var session = new AutomationHostSession(backend, Substitute.For<IVisualPickerResolver>(), monitorFactory);
+        session.Bind(pair.Server);
+        session.OnAuthenticated(
+            new RpcHandshake
+            {
+                AssemblyInformationalVersion = "test",
+                Role = ProcessRoleNames.ToWireName(ProcessRole.Main),
+                ProcessId = Environment.ProcessId,
+                DesktopSessionId = "test",
+            });
+        var notificationReceived = new TaskCompletionSource<TextSelectionObservedNotification>(TaskCreationOptions.RunContinuationsAsynchronously);
+        AutomationHostNotificationRpcBinding.Bind(pair.Client, new TestAutomationNotificationSink(notificationReceived));
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var client = new AutomationHostClient(pair.Client);
+        using var context = await client.CreateContextAsync();
+        var monitorId = pair.Client.AllocateResourceId();
+        var start = await context.StartTextSelectionMonitoringAsync(
+            monitorId,
+            Environment.ProcessId,
+            TextSelectionMonitoringConfiguration.CreateDefault(),
+            CancellationToken.None);
+        using var monitor = start.Monitor ?? throw new AssertionException("The monitor did not start.");
+        await pair.Server.DisposeAsync();
+
+        Assert.That(async () => await monitorFactory.PublishAsync("selected text"), Throws.Exception);
+        await WaitForAsync(() => backend.ElementReleaseCount == 1);
+    }
+
+    [Test]
+    public async Task AutomationTextSelectionWatcher_WhenHostPushesSource_DeliversOwnedResultToMainConsumer()
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        var backend = new TestBackend { ElementType = VisualElementType.Label };
+        var monitorFactory = new TestTextSelectionMonitorFactory();
+        await using var session = new AutomationHostSession(backend, Substitute.For<IVisualPickerResolver>(), monitorFactory);
+        session.Bind(pair.Server);
+        session.OnAuthenticated(
+            new RpcHandshake
+            {
+                AssemblyInformationalVersion = "test",
+                Role = ProcessRoleNames.ToWireName(ProcessRole.Main),
+                ProcessId = Environment.ProcessId,
+                DesktopSessionId = "test",
+            });
+        pair.Server.Start();
+        pair.Client.Start();
+
+        var connectionSource = new WatchingTestHostConnectionSource(pair.Client);
+        using var visualService = new ChatVisualService(connectionSource);
+        await using var watcher = new AutomationTextSelectionWatcher(
+            connectionSource,
+            visualService,
+            new Settings(Substitute.For<IServiceProvider>()),
+            Substitute.For<Microsoft.Extensions.Logging.ILogger<AutomationTextSelectionWatcher>>());
+        var observer = new TestTextSelectionObserver();
+        using var subscription = watcher.Subscribe(observer);
+        watcher.UpdateConfiguration(TextSelectionMonitoringConfiguration.CreateDefault());
+        Assert.That(watcher.SetEnabledCommand.CanExecute(true), Is.True);
+        await watcher.SetEnabledCommand.ExecuteAsync(true).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(watcher.IsEnabled, Is.True);
+        await WaitForAsync(() => monitorFactory.IsStarted);
+        await monitorFactory.PublishAsync("selected text");
+        using var data = await observer.Received.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        using var anchor = data.TakeSource();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(data.Text, Is.EqualTo("selected text"));
+            Assert.That(data.IsTextIncomplete, Is.False);
+            Assert.That(anchor, Is.Not.Null);
+            Assert.That(anchor!.Snapshot.Name, Is.EqualTo("Root"));
+        });
+
+        Assert.That(watcher.SetEnabledCommand.CanExecute(false), Is.True);
+        await watcher.SetEnabledCommand.ExecuteAsync(false).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.That(watcher.IsEnabled, Is.False);
+        Assert.That(monitorFactory.DisposeCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -925,6 +1068,84 @@ public sealed class AutomationHostSessionTests
         }
     }
 
+    private sealed class TestTextSelectionMonitorFactory : ITextSelectionMonitorFactory
+    {
+        public int DisposeCount => _monitor?.DisposeCount ?? 0;
+        public bool IsStarted => _monitor is not null;
+
+        private ITextSelectionMonitorContext? _context;
+        private TestTextSelectionMonitor? _monitor;
+        private Func<TextSelectionObservation, CancellationToken, ValueTask>? _publish;
+
+        public ITextSelectionMonitor Create(
+            ITextSelectionMonitorContext context,
+            int mainProcessId,
+            TextSelectionMonitoringConfiguration configuration,
+            Func<TextSelectionObservation, CancellationToken, ValueTask> publish)
+        {
+            _context = context;
+            _publish = publish;
+            _monitor = new TestTextSelectionMonitor();
+            return _monitor;
+        }
+
+        public async Task PublishAsync(string text)
+        {
+            var context = _context ?? throw new InvalidOperationException("The test monitor was not started.");
+            var publish = _publish ?? throw new InvalidOperationException("The test monitor was not started.");
+            var source = await context.ExecuteAsync(
+                (visualContext, backend, token) =>
+                {
+                    var retention = visualContext.CreateRetention();
+                    var result = backend.Query(retention, VisualElementLocator.Focused) ??
+                                 throw new InvalidOperationException("The test Backend did not return its focused element.");
+                    return new TextSelectionSource(retention, result);
+                });
+            await publish(new TextSelectionObservation(context, text, source), CancellationToken.None);
+        }
+    }
+
+    private sealed class TestTextSelectionMonitor : ITextSelectionMonitor
+    {
+        public int DisposeCount => Volatile.Read(ref _disposeCount);
+
+        private int _disposeCount;
+
+        public ValueTask UpdateConfigurationAsync(
+            TextSelectionMonitoringConfiguration configuration,
+            CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCount);
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class TestAutomationNotificationSink(TaskCompletionSource<TextSelectionObservedNotification> received) : IAutomationHostNotificationRpc
+    {
+        public ValueTask TextSelectionObservedAsync(
+            TextSelectionObservedNotification notification,
+            CancellationToken cancellationToken = default)
+        {
+            received.TrySetResult(notification);
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class TestTextSelectionObserver : IObserver<TextSelectionData>
+    {
+        public TaskCompletionSource<TextSelectionData> Received { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error) => Received.TrySetException(error);
+
+        public void OnNext(TextSelectionData value) => Received.TrySetResult(value);
+    }
+
     private sealed class TestHostConnectionSource(RpcConnection current) : IHostConnectionSource
     {
         public RpcConnection Current { get; set; } = current;
@@ -939,6 +1160,21 @@ public sealed class AutomationHostSessionTests
         {
             await Task.CompletedTask;
             yield break;
+        }
+    }
+
+    private sealed class WatchingTestHostConnectionSource(RpcConnection current) : IHostConnectionSource
+    {
+        public ValueTask<RpcConnection> GetConnectionAsync(
+            ProcessRole role,
+            CancellationToken cancellationToken = default) => ValueTask.FromResult(current);
+
+        public async IAsyncEnumerable<RpcConnection> WatchConnectionsAsync(
+            ProcessRole role,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            yield return current;
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
         }
     }
 

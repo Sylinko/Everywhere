@@ -89,7 +89,10 @@ public static class Program
             throw new InvalidOperationException("The Windows Automation Host must initialize UI Automation on an MTA thread.");
         }
 
-        return new AutomationHostSession(new WindowsVisualElementBackend(), new WindowsVisualPickerResolver());
+        return new AutomationHostSession(
+            new WindowsVisualElementBackend(),
+            new WindowsVisualPickerResolver(),
+            new WindowsTextSelectionMonitorFactory());
     }
 
     private static async Task<int> RunMainAsync(
@@ -113,9 +116,6 @@ public static class Program
                 .AddInputHostShortcutListener()
                 .AddSingleton<WindowsScreenSelectionService>()
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<WindowsScreenSelectionService>())
-                .AddSingleton<WindowsTextSelectionWatcher>()
-                .AddSingleton<ITextSelectionWatcher>(sp => sp.GetRequiredService<WindowsTextSelectionWatcher>())
-                .AddSingleton<IVisualElementBackend, WindowsVisualElementBackend>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()

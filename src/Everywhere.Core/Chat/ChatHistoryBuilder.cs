@@ -460,10 +460,11 @@ public static class ChatHistoryBuilder
         {
             case TextSelectionAttachment textSelection:
             {
+                var incompleteAttribute = textSelection.IsTextIncomplete ? " incomplete=\"true\"" : string.Empty;
                 contents.Add(
                     new TextContent(
                         $"""
-                         <Attachment type="text-selection">
+                         <Attachment type="text-selection"{incompleteAttribute}>
                          <Text>
                          {textSelection.Text}
                          </Text>

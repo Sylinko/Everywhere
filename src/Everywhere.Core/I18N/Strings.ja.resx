@@ -2022,7 +2022,7 @@
         <value>常に新しいチャットを開始</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>ショートカットを使ってアプリを呼び出すときに、前の会話をバイパスして新しいセッションを自動的に開始します。</value>
+        <value>ショートカットでチャットウィンドウを呼び出すと、前回の会話は自動的に無視され、まったく新しいセッションが開始されます。</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>JSONからインポート</value>
@@ -3991,5 +3991,8 @@
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>ドキュメントを表示</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>この機能は現在、このデバイス上の別の Everywhere によって管理されています</value>
     </data>
 </root>

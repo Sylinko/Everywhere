@@ -2022,7 +2022,7 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
         <value>Siempre iniciar un nuevo chat</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Iniciar automáticamente una nueva sesión al invocar la aplicación mediante un atajo, omitiendo la conversación anterior.</value>
+        <value>Al invocar la ventana de chat con un atajo, se ignora automáticamente la conversación anterior y se inicia una sesión completamente nueva.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Importar desde JSON</value>
@@ -3991,5 +3991,8 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Ver documento</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Esta función actualmente la administra otro Everywhere en este equipo</value>
     </data>
 </root>

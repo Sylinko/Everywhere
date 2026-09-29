@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
+using Everywhere.ProcessIsolation.Automation;
 using Lucide.Avalonia;
 
 namespace Everywhere.Configuration;
@@ -48,6 +49,16 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     public partial bool AutomaticallyGenerateTitle { get; set; } = true;
 
     /// <summary>
+    /// When enabled, always start a new chat when opening chat window.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Header,
+        LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Description)]
+    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Behavior)]
+    public partial bool AlwaysStartNewChat { get; set; }
+
+    /// <summary>
     /// When enabled, automatically add focused element as attachment when opening chat window.
     /// </summary>
     [ObservableProperty]
@@ -57,22 +68,18 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
     public partial bool AutomaticallyAddElement { get; set; } = true;
 
+    // TODO: Expose the retained text-selection settings from their dedicated settings page.
     [ObservableProperty]
-    [DynamicLocaleKey(
-        LocaleKey.ChatWindowSettings_AutomaticallyAddTextSelection_Header,
-        LocaleKey.ChatWindowSettings_AutomaticallyAddTextSelection_Description)]
-    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment, IsExperimental = true)]
+    [SettingsItemIgnore]
     public partial bool AutomaticallyAddTextSelection { get; set; }
 
-    /// <summary>
-    /// When enabled, always start a new chat when opening chat window.
-    /// </summary>
     [ObservableProperty]
-    [DynamicLocaleKey(
-        LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Header,
-        LocaleKey.ChatWindowSettings_AlwaysStartNewChat_Description)]
-    [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
-    public partial bool AlwaysStartNewChat { get; set; }
+    [SettingsItemIgnore]
+    public partial bool IsTextSelectionFullscreenExcluded { get; set; } = true;
+
+    [ObservableProperty]
+    [SettingsItemIgnore]
+    public partial string? TextSelectionExcludedApplications { get; set; }
 
     /// <summary>
     /// When enabled, show chat statistics in the chat window.
@@ -124,6 +131,17 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
         Meter.CreateGauge<int>($"settings.{nameof(EnableVisualElementPickAnimation)}");
     private readonly Gauge<int> _enableVisualContextAnimationGauge =
         Meter.CreateGauge<int>($"settings.{nameof(EnableVisualContextAnimation)}");
+
+    /// <summary>Creates the complete native monitoring policy represented by the persisted settings.</summary>
+    public TextSelectionMonitoringConfiguration CreateTextSelectionMonitoringConfiguration() => new()
+    {
+        IsFullscreenApplicationExcluded = IsTextSelectionFullscreenExcluded,
+        // Newlines are the only portable separator because valid application paths may contain commas.
+        ExcludedApplications = TextSelectionExcludedApplications?
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray() ?? [],
+    };
 
     public ChatWindowSettings(IServiceProvider serviceProvider) : base(serviceProvider)
     {

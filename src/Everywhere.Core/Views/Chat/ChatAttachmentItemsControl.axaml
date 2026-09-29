@@ -88,12 +88,19 @@
                     Margin="0,4" VerticalAlignment="Center"
                     IsVisible="{Binding IsImage}"
                     Source="{Binding Image}"
-                    ToolTip.Placement="Top">
+                    Stretch="UniformToFill" ToolTip.Placement="Top">
+                    <Image.Styles>
+                      <Style Selector="ToolTip">
+                        <Setter Property="MaxHeight" Value="600"/>
+                        <Setter Property="MaxWidth" Value="600"/>
+                        <Setter Property="Padding" Value="0"/>
+                      </Style>
+                    </Image.Styles>
+
                     <ToolTip.Tip>
                       <Image
-                        MaxWidth="800" MaxHeight="800"
-                        Margin="-10,-4"
-                        Source="{Binding Image}"/>
+                        Source="{Binding Image}"
+                        Stretch="Uniform"/>
                     </ToolTip.Tip>
                   </Image>
 
@@ -132,7 +139,7 @@
 
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
-                  HorizontalSpacing="2" LastChildFill="True">
+                  HorizontalSpacing="4" LastChildFill="True">
                   <LucideIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
@@ -142,15 +149,22 @@
                     DockPanel.Dock="Left"
                     MaxWidth="{DynamicResource LineHeightL}"
                     MaxHeight="{DynamicResource LineHeightL}"
-                    Margin="0,4,2,4" VerticalAlignment="Center"
+                    Margin="0,4" VerticalAlignment="Center"
                     IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"
                     Source="{Binding PreviewImage}"
-                    ToolTip.Placement="Top">
+                    Stretch="UniformToFill" ToolTip.Placement="Top">
+                    <Image.Styles>
+                      <Style Selector="ToolTip">
+                        <Setter Property="MaxHeight" Value="600"/>
+                        <Setter Property="MaxWidth" Value="600"/>
+                        <Setter Property="Padding" Value="0"/>
+                      </Style>
+                    </Image.Styles>
+
                     <ToolTip.Tip>
                       <Image
-                        MaxWidth="800" MaxHeight="800"
-                        Margin="-10,-4"
-                        Source="{Binding PreviewImage}"/>
+                        Source="{Binding PreviewImage}"
+                        Stretch="Uniform"/>
                     </ToolTip.Tip>
                   </Image>
 
@@ -204,7 +218,7 @@
 
                 <DockPanel
                   Margin="6,0" ClipToBounds="False"
-                  HorizontalSpacing="2" LastChildFill="True">
+                  HorizontalSpacing="4" LastChildFill="True">
                   <LucideIcon
                     DockPanel.Dock="Left" VerticalAlignment="Center"
                     Kind="{Binding Icon}"

@@ -2022,7 +2022,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Immer neuen Chat starten</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Automatisch eine neue Sitzung starten, wenn die App über die Verknüpfung aufgerufen wird, und die vorherige Unterhaltung umgehen.</value>
+        <value>Wenn Sie das Chatfenster per Tastenkürzel aufrufen, wird die vorherige Unterhaltung automatisch ignoriert und eine ganz neue Sitzung gestartet.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Von JSON importieren</value>
@@ -3991,5 +3991,8 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Dokument anzeigen</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Diese Funktion wird derzeit von einem anderen Everywhere auf diesem Gerät verwaltet</value>
     </data>
 </root>

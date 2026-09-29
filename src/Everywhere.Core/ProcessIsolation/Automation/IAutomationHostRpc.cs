@@ -87,4 +87,22 @@ public interface IAutomationHostRpc
     IAsyncEnumerable<AutomationVisualQueryFrame> BuildAnchorsWithCapturesAsync(
         BuildAutomationAnchorsRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Creates one connection-owned native text-selection monitor.</summary>
+    [RpcMethod(19)]
+    ValueTask<TextSelectionMonitoringControlResult> StartTextSelectionMonitoringAsync(
+        StartTextSelectionMonitoringRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Stops one addressed connection-owned native text-selection monitor after cleanup completes.</summary>
+    [RpcMethod(20)]
+    ValueTask<RpcAck> StopTextSelectionMonitoringAsync(
+        StopTextSelectionMonitoringRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Applies a complete policy snapshot to one active native text-selection monitor.</summary>
+    [RpcMethod(21)]
+    ValueTask<RpcAck> UpdateTextSelectionMonitoringAsync(
+        UpdateTextSelectionMonitoringRequest request,
+        CancellationToken cancellationToken = default);
 }

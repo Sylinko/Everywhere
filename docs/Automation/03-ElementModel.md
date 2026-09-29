@@ -62,7 +62,7 @@ The base methods provide the common usability check and platform-exception conve
 
 `GetSelectedText` is an explicit bounded observation rather than a normal Snapshot field. It returns a textual representation of the element's current selection: platforms prefer true text ranges and may fall back to selected child labels for selection containers. Ordinary tree traversal must not query this transient state for every element. A null result means that no nonempty textual selection is available. Provider failures still cross the normal platform-exception boundary.
 
-The monitor must distinguish that null result from positive evidence of an empty selection and from an unsuccessful fallback. Text/source retention and product-level outcomes are specified in [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md); they do not change this element-level signature or make selected text a Snapshot field.
+The monitor preserves an existing attachment when no nonempty text is obtained, including an empty selection or unsuccessful fallback. Successful captures replace the attachment; external selection clearing does not retract captured draft text. Text/source ownership and the transport-derived text budget are specified in [11-TextSelectionMonitoring](11-TextSelectionMonitoring.md); they do not change this element-level signature or make selected text a Snapshot field.
 
 Query, navigation, and actions are synchronous inside the Automation Host because the underlying UIA/AX operations are synchronous provider RPCs. Capture may remain asynchronous where the graphics backend already has an asynchronous contract. Main invokes asynchronous coarse-grained Host operations without changing this process-local object model.
 

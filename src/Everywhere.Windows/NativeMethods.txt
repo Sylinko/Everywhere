@@ -123,6 +123,7 @@ GetCursorInfo
 GlobalAlloc
 GlobalLock
 GlobalUnlock
+GlobalFree
 RegisterClipboardFormat
 EmptyClipboard
 SetClipboardData

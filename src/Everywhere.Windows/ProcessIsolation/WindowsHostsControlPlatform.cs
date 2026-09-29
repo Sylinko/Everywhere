@@ -75,7 +75,7 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
         var legacyCleanup = TaskSchedulerHelper.DeleteOwnedTask(LegacyElevatedMainTaskName, executablePath);
         var previousOwner = status.State is HostsServiceModeConfigurationState.OtherExecutable ? status.ConfiguredExecutablePath : null;
         var detail = previousOwner is null ? taskResult.DiagnosticDetail : $"{taskResult.DiagnosticDetail} Previous owner: {previousOwner}.";
-        if (legacyCleanup is { Succeeded: false, Outcome: not HostsControlPlatformOutcome.Conflict })
+        if (legacyCleanup is { Succeeded: false, State: not HostsControlPlatformState.Conflict })
         {
             detail = $"{detail} Legacy task cleanup failed: {legacyCleanup.DiagnosticDetail}";
         }
@@ -99,7 +99,7 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
         }
 
         var legacyCleanup = TaskSchedulerHelper.DeleteOwnedTask(LegacyElevatedMainTaskName, executablePath);
-        return legacyCleanup is { Succeeded: false, Outcome: not HostsControlPlatformOutcome.Conflict } ?
+        return legacyCleanup is { Succeeded: false, State: not HostsControlPlatformState.Conflict } ?
             HostsControlPlatformResult.Failure($"{result.DiagnosticDetail} Legacy task cleanup failed: {legacyCleanup.DiagnosticDetail}") :
             HostsControlPlatformResult.Success(result.DiagnosticDetail);
     }
@@ -226,5 +226,5 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
     }
 
     private static HostsControlPlatformResult ToPlatformResult(TaskSchedulerCommandResult result) =>
-        new(result.Outcome, result.DiagnosticDetail);
+        new(result.State, result.DiagnosticDetail);
 }

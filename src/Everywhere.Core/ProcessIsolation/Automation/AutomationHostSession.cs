@@ -155,12 +155,20 @@ public sealed partial class AutomationHostSession : IProcessRoleSession, IAutoma
         Interlocked.Exchange(ref _isDraining, 1);
         try
         {
-            TextSelectionMonitorRegistration? monitor;
-            lock (_textSelectionGate)
+            await _textSelectionTransitionGate.WaitAsync().ConfigureAwait(false);
+            try
             {
-                monitor = _textSelectionMonitor;
+                TextSelectionMonitorRegistration? monitor;
+                lock (_textSelectionGate)
+                {
+                    monitor = _textSelectionMonitor;
+                }
+                if (monitor is not null) await monitor.DisposeAsync().ConfigureAwait(false);
             }
-            if (monitor is not null) await monitor.DisposeAsync().ConfigureAwait(false);
+            finally
+            {
+                _textSelectionTransitionGate.Release();
+            }
             await _resources.DisposeAsync().ConfigureAwait(false);
         }
         finally

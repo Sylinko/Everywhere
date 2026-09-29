@@ -2,8 +2,8 @@ using Everywhere.ProcessIsolation.Roles;
 
 namespace Everywhere.ProcessIsolation.Hosting;
 
-/// <summary>Outcome of one platform-specific Hosts-control operation.</summary>
-public enum HostsControlPlatformOutcome
+/// <summary>State of one platform-specific Hosts-control operation.</summary>
+public enum HostsControlPlatformState
 {
     /// <summary>The requested platform operation completed.</summary>
     Succeeded,
@@ -22,24 +22,24 @@ public enum HostsControlPlatformOutcome
 }
 
 /// <summary>Result of one platform-specific Hosts-control operation.</summary>
-/// <param name="Outcome">Operation outcome.</param>
+/// <param name="State">Operation outcome.</param>
 /// <param name="DiagnosticDetail">Optional English diagnostic detail for logs and command-line output.</param>
-public sealed record HostsControlPlatformResult(HostsControlPlatformOutcome Outcome, string? DiagnosticDetail = null)
+public sealed record HostsControlPlatformResult(HostsControlPlatformState State, string? DiagnosticDetail = null)
 {
     /// <summary>Creates a successful result.</summary>
-    public static HostsControlPlatformResult Success(string? detail = null) => new(HostsControlPlatformOutcome.Succeeded, detail);
+    public static HostsControlPlatformResult Success(string? detail = null) => new(HostsControlPlatformState.Succeeded, detail);
 
     /// <summary>Creates a result requesting direct Host launch.</summary>
-    public static HostsControlPlatformResult Direct(string? detail = null) => new(HostsControlPlatformOutcome.DirectLaunchRequired, detail);
+    public static HostsControlPlatformResult Direct(string? detail = null) => new(HostsControlPlatformState.DirectLaunchRequired, detail);
 
     /// <summary>Creates a failed result.</summary>
-    public static HostsControlPlatformResult Failure(string detail) => new(HostsControlPlatformOutcome.Failed, detail);
+    public static HostsControlPlatformResult Failure(string detail) => new(HostsControlPlatformState.Failed, detail);
 
     /// <summary>Creates an ownership-conflict result.</summary>
-    public static HostsControlPlatformResult OwnershipConflict(string detail) => new(HostsControlPlatformOutcome.Conflict, detail);
+    public static HostsControlPlatformResult OwnershipConflict(string detail) => new(HostsControlPlatformState.Conflict, detail);
 
     /// <summary>Creates a user-cancelled result.</summary>
-    public static HostsControlPlatformResult Cancelled(string? detail = null) => new(HostsControlPlatformOutcome.Cancelled, detail);
+    public static HostsControlPlatformResult Cancelled(string? detail = null) => new(HostsControlPlatformState.Cancelled, detail);
 }
 
 /// <summary>

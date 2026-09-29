@@ -1,6 +1,6 @@
 # Visual Context Verification
 
-Text-selection monitoring has a separate [acceptance checklist](11-TextSelectionMonitoring.md#8-acceptance-evidence) covering monitor control, ownership, and manual Windows/macOS E2E. Element-level selected-text provider checks cover only the read operation, not the complete monitoring lifecycle.
+Text-selection monitoring has a separate [acceptance checklist](11-TextSelectionMonitoring.md#8-acceptance-evidence) covering acknowledged control, shared-Context cleanup, UI acceptance, application/fullscreen filters, transport text budgets, and manual Windows/macOS clipboard E2E. Element-level selected-text checks cover the read operation, not the complete monitoring lifecycle. The checklist defines required evidence rather than asserting that the implementation has passed it.
 
 ## 1. Strategy
 

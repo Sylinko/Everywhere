@@ -191,21 +191,29 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     [Key(0)]
     public string Text { get; }
 
+    /// <summary>Gets whether the captured selection may omit trailing text.</summary>
+    [Key(1)]
+    public bool IsTextIncomplete { get; }
+
     [SerializationConstructor]
-    public TextSelectionAttachment(string text) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
+    public TextSelectionAttachment(string text, bool isTextIncomplete = false) : base(CreateHeaderKey(text), LucideIconKind.TextSelect)
     {
         Text = text;
+        IsTextIncomplete = isTextIncomplete;
     }
 
     /// <summary>Creates a selected-text attachment and assumes ownership of its remote anchor.</summary>
     public TextSelectionAttachment(
         string text,
-        RemoteVisualAnchor anchor) : base(
+        bool isTextIncomplete,
+        RemoteVisualAnchor anchor
+    ) : base(
         CreateHeaderKey(text),
         LucideIconKind.TextSelect,
         anchor)
     {
         Text = text;
+        IsTextIncomplete = isTextIncomplete;
     }
 
     /// <summary>
@@ -220,8 +228,8 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
             return new DirectLocaleKey(string.Empty);
         }
 
-        const int MaxLength = 30;
-        const string MiddlePart = " ";
+        const int MaxLength = 128;
+        const string MiddlePart = "...";
 
         var resultLength = text.Length <= MaxLength ? text.Length : MaxLength;
 

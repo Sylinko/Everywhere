@@ -2022,7 +2022,7 @@ Rotellina o tasti numerici per cambiare modalità di selezione</value>
         <value>Inizia sempre una nuova chat</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>Avvia automaticamente una nuova sessione quando richiami l'app tramite scorciatoia, bypassando la conversazione precedente.</value>
+        <value>Quando richiami la finestra della chat con una scorciatoia, la conversazione precedente viene ignorata automaticamente e viene avviata una sessione completamente nuova.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>Importa da JSON</value>
@@ -3991,5 +3991,8 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Visualizza documento</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Questa funzione è attualmente gestita da un altro Everywhere su questo dispositivo</value>
     </data>
 </root>

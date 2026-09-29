@@ -2022,7 +2022,7 @@
         <value>항상 새 채팅 시작</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
-        <value>단축키로 앱을 호출할 때 이전 대화를 우회하고 새 세션을 자동으로 시작합니다.</value>
+        <value>단축키로 채팅 창을 호출하면 이전 대화는 자동으로 무시되고 완전히 새로운 세션이 시작됩니다.</value>
     </data>
     <data name="ChatPluginPage_ImportMcpPluginButton_ToolTip" xml:space="preserve">
         <value>JSON에서 가져오기</value>
@@ -3991,5 +3991,8 @@
     </data>
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>문서 보기</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>이 기능은 현재 이 기기의 다른 Everywhere에서 관리합니다</value>
     </data>
 </root>

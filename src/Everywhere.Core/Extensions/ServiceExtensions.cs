@@ -48,11 +48,12 @@ public static class ServiceExtensions
         /// <summary>Registers Main's process-isolation lifecycle services.</summary>
         public IServiceCollection AddProcessIsolation() =>
             services
-                .AddSingleton<HostProcessCoordinator>(sp => HostProcessCoordinator.Create(
+                .AddSingleton<HostProcessCoordinator>(sp => new HostProcessCoordinator(
                     sp.GetRequiredService<INamedPipePeerVerifier>(),
                     sp.GetService<IHostsServiceModeManager>()))
                 .AddSingleton<IHostConnectionSource>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton(sp => new ChatVisualService(sp.GetRequiredService<IHostConnectionSource>()))
+                // TODO: Re-register the text-selection Watcher when its dedicated settings page is ready.
                 .AddSingleton(sp => new DebuggerVisualContext(sp.GetRequiredService<IHostConnectionSource>()))
                 .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(
                     sp.GetRequiredService<HostProcessCoordinator>(),

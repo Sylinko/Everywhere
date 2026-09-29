@@ -1,17 +1,17 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Reactive.Disposables;
-using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Channels;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Dwm;
+using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.System.Memory;
 using Windows.Win32.System.Threading;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
-using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Everywhere.Automation;
-using Everywhere.Interop;
+using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Everywhere.Windows.Automation;
 using Everywhere.Windows.Interop.UIAutomation;
@@ -24,97 +24,60 @@ namespace Everywhere.Windows.Interop;
 /// <summary>
 /// Monitors text selection through Windows accessibility, input, and clipboard facilities.
 /// </summary>
-public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElementBackend) : ITextSelectionWatcher
+public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFactory
 {
-    private readonly Subject<TextSelectionData> _textSelectionSubject = new();
-    private IDisposable? _hookSubscription;
-    private int _subscriberCount;
-
     /// <inheritdoc />
-    public IDisposable Subscribe(IObserver<TextSelectionData> observer)
-    {
-        var subscription = _textSelectionSubject.Subscribe(observer);
-
-        // Start monitoring when the first subscriber arrives
-        if (Interlocked.Increment(ref _subscriberCount) == 1)
-        {
-            StartTextSelectionMonitoring();
-        }
-
-        return Disposable.Create(() =>
-        {
-            subscription.Dispose();
-            // Stop monitoring when the last subscriber leaves
-            if (Interlocked.Decrement(ref _subscriberCount) == 0)
-            {
-                StopTextSelectionMonitoring();
-            }
-        });
-    }
-
-    private void StartTextSelectionMonitoring()
-    {
-        if (_hookSubscription != null) return;
-
-        var detector = new TextSelectionDetector(visualElementBackend);
-        detector.SelectionDetected += OnSelectionDetected;
-        _hookSubscription = detector;
-    }
-
-    private void StopTextSelectionMonitoring()
-    {
-        if (_hookSubscription is TextSelectionDetector detector)
-        {
-            detector.SelectionDetected -= OnSelectionDetected;
-            detector.Dispose();
-        }
-        _hookSubscription = null;
-    }
-
-    private void OnSelectionDetected(TextSelectionData data)
-    {
-        _textSelectionSubject.OnNext(data);
-    }
+    public ITextSelectionMonitor Create(
+        ITextSelectionMonitorContext context,
+        int mainProcessId,
+        TextSelectionMonitoringConfiguration configuration,
+        Func<TextSelectionObservation, CancellationToken, ValueTask> publish) =>
+        new TextSelectionDetector(context, mainProcessId, configuration, publish);
 
     /// <summary>
     /// Detects text selection using mouse hooks.
     /// Ported from selection-hook
     /// https://github.com/0xfullex/selection-hook
     /// </summary>
-    private sealed class TextSelectionDetector : IDisposable
+    private sealed class TextSelectionDetector : ITextSelectionMonitor
     {
-        public event Action<TextSelectionData>? SelectionDetected;
-
+        private readonly ITextSelectionMonitorContext _context;
+        private readonly Task _detectionWorker;
+        private readonly Channel<DetectionTrigger> _pendingDetections = Channel.CreateBounded<DetectionTrigger>(
+            new BoundedChannelOptions(1)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false,
+            });
+        private readonly Func<TextSelectionObservation, CancellationToken, ValueTask> _publish;
         private readonly IDisposable _mouseHookSubscription;
-        private readonly IVisualElementBackend _visualElementBackend;
         private readonly ReusableCancellationTokenSource _reusableCancellationTokenSource = new();
+
+        private TextSelectionMonitoringConfiguration _configuration;
+        private int _isDisposed;
+        private readonly uint _mainProcessId;
 
         private bool _isMouseDown;
         private Point _mouseDownPos;
         private long _mouseDownTime;
+        private uint _mouseDownClipboardSequence;
         private HWND _mouseDownHwnd;
         private RECT _mouseDownRect;
 
         private Point _lastMouseUpPos;
         private long _lastMouseUpTime;
 
-        // System state cache
-        private bool _lastShouldProcessResult = true;
-        private long _lastShouldProcessCheckTime;
-
         // Clipboard fallback support
         private HCURSOR _mouseDownCursor;
         private HCURSOR _mouseUpCursor;
-
-        // Atomic flags
-        private volatile int _isProcessing; // 0 = false, 1 = true
 
         // Constants from selection-hook.cc
         private const int MIN_DRAG_DISTANCE = 8;
         private const int MAX_DRAG_TIME_MS = 8000;
         private const int DOUBLE_CLICK_MAX_DISTANCE = 3;
         private const int DOUBLE_CLICK_TIME_MS = 500;
-        private const int SYSTEM_STATE_CACHE_MS = 10000;
 
         // Win32 constants
         private const uint CF_DIB = 8;
@@ -124,7 +87,7 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         /// <summary>
         /// Process names to exclude from clipboard fallback strategy.
         /// </summary>
-        private static readonly HashSet<string> ExcludeProcessNames = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> ClipboardFallbackExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
         {
             // Screenshot
             "snipaste.exe",
@@ -149,7 +112,14 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             "acad.exe",
             "sldworks.exe",
             // Remote Desktop
-            "mstsc.exe"
+            "mstsc.exe",
+            // Terminals: Ctrl+C may interrupt a foreground program and Ctrl+Insert is not universal.
+            "cmd.exe",
+            "conhost.exe",
+            "powershell.exe",
+            "pwsh.exe",
+            "WindowsTerminal.exe",
+            "wt.exe"
         };
 
         /// <summary>
@@ -175,7 +145,7 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         /// </summary>
         private static readonly HashSet<string> NoCtrlCProcessNames = new(StringComparer.OrdinalIgnoreCase)
         {
-            "cmd.exe", "powershell.exe", "WindowsTerminal.exe", "wt.exe", "conhost.exe"
+            "cmd.exe", "powershell.exe", "pwsh.exe", "WindowsTerminal.exe", "wt.exe", "conhost.exe"
         };
 
         private enum CopyKeyType
@@ -184,14 +154,23 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             CtrlC
         }
 
-        public TextSelectionDetector(IVisualElementBackend visualElementBackend)
+        public TextSelectionDetector(
+            ITextSelectionMonitorContext context,
+            int mainProcessId,
+            TextSelectionMonitoringConfiguration configuration,
+            Func<TextSelectionObservation, CancellationToken, ValueTask> publish)
         {
-            _visualElementBackend = visualElementBackend;
+            _context = context;
+            _mainProcessId = checked((uint)mainProcessId);
+            _configuration = configuration;
+            _publish = publish;
             _mouseHookSubscription = LowLevelHook.CreateMouseHook(MouseHookCallback);
+            _detectionWorker = Task.Run(ProcessDetectionsAsync);
         }
 
         private void MouseHookCallback(WINDOW_MESSAGE msg, ref MSLLHOOKSTRUCT hookStruct, ref bool blockNext)
         {
+            if (Volatile.Read(ref _isDisposed) != 0) return;
             switch (msg)
             {
                 case WINDOW_MESSAGE.WM_LBUTTONDOWN:
@@ -199,6 +178,7 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                     _isMouseDown = true;
                     _mouseDownPos = hookStruct.pt;
                     _mouseDownTime = Environment.TickCount64;
+                    _mouseDownClipboardSequence = PInvoke.GetClipboardSequenceNumber();
                     CaptureCursor(ref _mouseDownCursor);
 
                     // Capture window state for HasWindowMoved check
@@ -244,8 +224,6 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         private void ProcessMouseUp(Point mouseUpPos, long mouseUpTime)
         {
             _reusableCancellationTokenSource.Cancel();
-
-            if (!ShouldProcessGetSelection()) return;
 
             var shouldDetectSelection = false;
 
@@ -307,36 +285,24 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
 
             if (shouldDetectSelection)
             {
-                // Debounce the detection to handle multi-click scenarios (double/triple click)
-                // This prevents multiple detection triggers in rapid succession.
-                var cancellationToken = _reusableCancellationTokenSource.Token;
-                Task.Run(() => BeginDetectAsync(currentHwnd, cancellationToken), cancellationToken);
+                // Keep one executing attempt and only the latest pending trigger.
+                _pendingDetections.Writer.TryWrite(
+                    new DetectionTrigger(
+                        currentHwnd,
+                        _mouseDownCursor,
+                        _mouseUpCursor,
+                        _mouseDownClipboardSequence,
+                        _reusableCancellationTokenSource.Token));
             }
         }
 
-        private bool ShouldProcessGetSelection()
+        private async Task ProcessDetectionsAsync()
         {
-            var now = Environment.TickCount64;
-            if (now - _lastShouldProcessCheckTime < SYSTEM_STATE_CACHE_MS)
+            await foreach (var trigger in _pendingDetections.Reader.ReadAllAsync().ConfigureAwait(false))
             {
-                return _lastShouldProcessResult;
+                if (Volatile.Read(ref _isDisposed) != 0) break;
+                await BeginDetectAsync(trigger).ConfigureAwait(false);
             }
-
-            _lastShouldProcessCheckTime = now;
-
-            if (PInvoke.SHQueryUserNotificationState(out var state).Succeeded)
-            {
-                if (state is
-                    QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN or
-                    QUERY_USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE)
-                {
-                    _lastShouldProcessResult = false;
-                    return false;
-                }
-            }
-
-            _lastShouldProcessResult = true;
-            return true;
         }
 
         /// <summary>
@@ -355,20 +321,19 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         /// Begin the detection process with a debounce to handle multi-click scenarios.
         /// This prevents multiple detection triggers in rapid succession.
         /// </summary>
-        /// <param name="hWnd"></param>
-        /// <param name="cancellationToken"></param>
-        private async Task BeginDetectAsync(HWND hWnd, CancellationToken cancellationToken)
+        /// <param name="trigger">Stable input evidence captured for this attempt.</param>
+        private async Task BeginDetectAsync(DetectionTrigger trigger)
         {
             try
             {
                 // Debounce delay: Wait for multi-click sequence to settle.
                 // If user double clicks, we likely don't want to trigger immediately if they are about to triple click.
-                await Task.Delay(TimeSpan.FromMilliseconds(DOUBLE_CLICK_TIME_MS), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(DOUBLE_CLICK_TIME_MS), trigger.CancellationToken);
 
                 // If cancellation requested, it means another click happened, we should abort this detection.
-                if (cancellationToken.IsCancellationRequested) return;
+                if (trigger.CancellationToken.IsCancellationRequested) return;
 
-                await DetectAsync(hWnd, cancellationToken);
+                await DetectAsync(trigger);
             }
             catch (OperationCanceledException)
             {
@@ -384,111 +349,237 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             }
         }
 
-        private async Task DetectAsync(HWND hWnd, CancellationToken cancellationToken)
+        private async Task DetectAsync(DetectionTrigger trigger)
         {
-            // Check processing flag
-            if (Interlocked.CompareExchange(ref _isProcessing, 1, 0) == 1) return;
-
+            var cancellationToken = trigger.CancellationToken;
+            var hWnd = trigger.WindowHandle;
+            TextSelectionSource? source = null;
+            ProcessIdentity? process = null;
+            var phase = "target validation";
             try
             {
-                var processName = GetProcessInformationByHwnd(hWnd, out var pid) ?? string.Empty;
+                process = GetProcessInformationByHwnd(hWnd);
+                if (process is null) return;
+                var configuration = Volatile.Read(ref _configuration);
                 if (cancellationToken.IsCancellationRequested) return;
 
-                if (ExcludeProcessNames.Contains(processName))
+                if (process.Value.ProcessId == _mainProcessId ||
+                    MatchesApplication(configuration.ExcludedApplications, process.Value))
                 {
                     return;
                 }
+                if (configuration.IsFullscreenApplicationExcluded && IsFullscreenTarget(hWnd, process.Value.ProcessId)) return;
 
-                string? text = null;
-                VisualElementLocator? locator = null;
+                phase = "accessibility read";
+                var selectedText = default(TextSelectionText);
                 var controlType = UIAutomationControlType.Unknown;
 
                 // 1. Try to get selection from element
                 // Console.WriteLine("1. TryGetSelectionTextFromElement");
-                TryGetSelectionTextFromElement();
+                try
+                {
+                    var result = await _context.ExecuteAsync(
+                        (visualContext, backend, token) =>
+                        {
+                            VisualElementRetention? retention = visualContext.CreateRetention();
+                            try
+                            {
+                                var queryResult = backend.Query(retention, VisualElementLocator.Focused);
+                                if (queryResult?.Snapshot.ProcessId is not { } processId ||
+                                    unchecked((uint)processId) != process.Value.ProcessId)
+                                {
+                                    retention.Dispose();
+                                    return (Source: null, ControlType: UIAutomationControlType.Unknown, Text: null);
+                                }
+
+                                token.ThrowIfCancellationRequested();
+                                var observedControlType = queryResult.Element is UIAutomationVisualElement automationElement ?
+                                    automationElement.ControlType :
+                                    UIAutomationControlType.Unknown;
+                                var observedText = queryResult.Element.GetSelectedText(TextSelectionTextBudget.MaximumNativeReadCharacters);
+                                var observedSource = new TextSelectionSource(retention, queryResult);
+                                retention = null;
+                                return (
+                                    Source: (TextSelectionSource?)observedSource,
+                                    ControlType: observedControlType,
+                                    Text: observedText);
+                            }
+                            finally
+                            {
+                                retention?.Dispose();
+                            }
+                        },
+                        cancellationToken).ConfigureAwait(false);
+                    source = result.Source;
+                    controlType = result.ControlType;
+                    if (!string.IsNullOrEmpty(result.Text))
+                    {
+                        selectedText = TextSelectionTextBudget.Apply(
+                            result.Text,
+                            result.Text.Length >= TextSelectionTextBudget.MaximumNativeReadCharacters);
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (ex is
+                                               COMException { ErrorCode: unchecked((int)0x80040201) } or
+                                               UnauthorizedAccessException or
+                                               TimeoutException or
+                                               NotSupportedException or
+                                               VisualElementProviderException)
+                {
+                    Log.ForContext<TextSelectionDetector>()
+                        .ForContext("Application", process.Value.ProcessName)
+                        .Debug(ex, "Accessibility selection read failed; evaluating clipboard fallback");
+                }
                 if (cancellationToken.IsCancellationRequested) return;
 
                 // 2. Fallback to Clipboard
-                if (string.IsNullOrEmpty(text) && ShouldProcessViaClipboard(controlType, processName))
+                configuration = Volatile.Read(ref _configuration);
+                phase = "clipboard fallback";
+                if (!selectedText.HasText &&
+                    !ClipboardFallbackExcludedProcessNames.Contains(process.Value.ProcessName) &&
+                    !MatchesApplication(configuration.ExcludedApplications, process.Value) &&
+                    (!configuration.IsFullscreenApplicationExcluded || !IsFullscreenTarget(hWnd, process.Value.ProcessId)) &&
+                    ShouldProcessViaClipboard(controlType, process.Value.ProcessName, trigger.MouseDownCursor, trigger.MouseUpCursor))
                 {
                     if (cancellationToken.IsCancellationRequested) return;
 
                     // Console.WriteLine("2. GetTextViaClipboardAsync");
-                    text = await GetTextViaClipboardAsync(processName, cancellationToken);
+                    selectedText = await GetTextViaClipboardAsync(
+                        process.Value.ProcessName,
+                        hWnd,
+                        process.Value.ProcessId,
+                        trigger.ClipboardSequence,
+                        cancellationToken);
                 }
 
                 if (cancellationToken.IsCancellationRequested) return;
 
-                // Trigger event whatever we got
-                // A null or empty text indicates selection was canceled or failed
-                SelectionDetected?.Invoke(new TextSelectionData(text, locator));
-
-                void TryGetSelectionTextFromElement()
+                if (selectedText.Text is { Length: > 0 } text)
                 {
-                    using var visualContext = new VisualContext();
-                    using var retention = visualContext.CreateRetention();
-                    VisualElementQueryResult? result;
+                    phase = "notification publish";
+                    TextSelectionObservation? observation = new(_context, text, source, selectedText.IsIncomplete);
+                    source = null;
                     try
                     {
-                        result = _visualElementBackend.Query(retention, VisualElementLocator.Focused);
-                        if (result is null || result.Snapshot.ProcessId is not { } processId || unchecked((uint)processId) != pid) return;
+                        await _publish(observation, cancellationToken).ConfigureAwait(false);
+                        observation = null;
                     }
-                    catch
+                    finally
                     {
-                        return;
+                        if (observation is not null) await observation.DisposeAsync().ConfigureAwait(false);
                     }
-
-                    if (cancellationToken.IsCancellationRequested) return;
-
-                    controlType = result.Element is UIAutomationVisualElement automationElement ?
-                        automationElement.ControlType :
-                        UIAutomationControlType.Unknown;
-                    locator = VisualElementLocator.Focused;
-                    text = result.Element.GetSelectedText(65_536);
                 }
+
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
             }
             catch (Exception ex)
             {
                 var isExpected = ex is
                     COMException { ErrorCode: unchecked((int)0x80040201) } or // COMException: 事件无法调用任何订户 (0x80040201)
-                    InvalidOperationException or
-                    TimeoutException;
+                    UnauthorizedAccessException or
+                    TimeoutException or
+                    VisualElementProviderException;
 
-                // Ignore errors during detection
-                if (!isExpected) Log.ForContext<TextSelectionDetector>().Error(ex, "Error during text selection detection");
+                if (isExpected)
+                {
+                    Log.ForContext<TextSelectionDetector>()
+                        .ForContext("Application", process?.ProcessName)
+                        .Debug(ex, "Text-selection detection could not complete during {Phase}", phase);
+                }
+                else
+                {
+                    Log.ForContext<TextSelectionDetector>()
+                        .ForContext("Application", process?.ProcessName)
+                        .Warning(ex, "Unexpected text-selection failure during {Phase}", phase);
+                }
             }
             finally
             {
-                Interlocked.Exchange(ref _isProcessing, 0);
+                if (source is not null) await _context.ReleaseAsync(source).ConfigureAwait(false);
             }
         }
 
-        private static string? GetProcessInformationByHwnd(HWND hWnd, out uint pid)
+        public ValueTask UpdateConfigurationAsync(
+            TextSelectionMonitoringConfiguration configuration,
+            CancellationToken cancellationToken = default)
         {
-            pid = 0;
+            cancellationToken.ThrowIfCancellationRequested();
+            Volatile.Write(ref _configuration, configuration);
+            _reusableCancellationTokenSource.Cancel();
+            return ValueTask.CompletedTask;
+        }
+
+        private static ProcessIdentity? GetProcessInformationByHwnd(HWND hWnd)
+        {
             if (hWnd == HWND.Null) return null;
 
-            PInvoke.GetWindowThreadProcessId(hWnd, out pid);
+            PInvoke.GetWindowThreadProcessId(hWnd, out var pid);
             if (pid == 0) return null;
 
             var hProcess = PInvoke.OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
             using var safeProcessHandle = new SafeProcessHandle(hProcess, true);
 
-            Span<char> buffer = stackalloc char[260];
+            var buffer = new char[32_768].AsSpan();
             var size = (uint)buffer.Length;
             var result = PInvoke.QueryFullProcessImageName(safeProcessHandle, PROCESS_NAME_FORMAT.PROCESS_NAME_WIN32, buffer, ref size);
 
             if (!result || size == 0) return null;
 
             var fullPath = new string(buffer[..(int)size]);
-            return Path.GetFileName(fullPath);
+            return new ProcessIdentity(pid, Path.GetFileName(fullPath), fullPath);
+        }
+
+        private static bool MatchesApplication(IEnumerable<string> applications, ProcessIdentity process) =>
+            applications.Any(application =>
+                string.Equals(application, process.ProcessName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(application, process.ExecutablePath, StringComparison.OrdinalIgnoreCase));
+
+        private static unsafe bool IsFullscreenTarget(HWND targetWindow, uint processId)
+        {
+            if (!IsForegroundTarget(targetWindow, processId)) return false;
+
+            var root = PInvoke.GetAncestor(targetWindow, GET_ANCESTOR_FLAGS.GA_ROOT);
+            if (root == HWND.Null) root = targetWindow;
+            if (PInvoke.IsZoomed(root)) return false;
+
+            var bounds = default(RECT);
+            if (PInvoke.DwmGetWindowAttribute(
+                    root,
+                    DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS,
+                    &bounds,
+                    (uint)sizeof(RECT)).Failed)
+            {
+                if (!PInvoke.GetWindowRect(root, out bounds)) return false;
+            }
+
+            var monitor = PInvoke.MonitorFromWindow(root, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONULL);
+            if (monitor.IsNull) return false;
+            var monitorInfo = new MONITORINFO { cbSize = (uint)sizeof(MONITORINFO) };
+            if (!PInvoke.GetMonitorInfo(monitor, ref monitorInfo)) return false;
+
+            const int Tolerance = 2;
+            var monitorBounds = monitorInfo.rcMonitor;
+            return Math.Abs(bounds.left - monitorBounds.left) <= Tolerance &&
+                Math.Abs(bounds.top - monitorBounds.top) <= Tolerance &&
+                Math.Abs(bounds.right - monitorBounds.right) <= Tolerance &&
+                Math.Abs(bounds.bottom - monitorBounds.bottom) <= Tolerance;
         }
 
         /// <summary>
         /// Check if we should process GetTextViaClipboard
         /// </summary>
         /// <returns></returns>
-        private bool ShouldProcessViaClipboard(UIAutomationControlType controlType, string processName)
+        private static bool ShouldProcessViaClipboard(
+            UIAutomationControlType controlType,
+            string processName,
+            HCURSOR mouseDownCursor,
+            HCURSOR mouseUpCursor)
         {
             // when mouse down or up, any one of them is beamCursor, we can use clipboard
             // otherwise, we have to check the situation further
@@ -499,10 +590,10 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             var cursorHand = PInvoke.LoadCursor(default, PInvoke.IDC_HAND);
 
             // beam cursor detected: valid text selection
-            if (_mouseDownCursor == cursorIBeam || _mouseUpCursor == cursorIBeam) return true;
+            if (mouseDownCursor == cursorIBeam || mouseUpCursor == cursorIBeam) return true;
 
             // not beam, not arrow, not hand: invalid text selection cursor
-            if (_mouseUpCursor != cursorArrow && _mouseUpCursor != cursorHand)
+            if (mouseUpCursor != cursorArrow && mouseUpCursor != cursorHand)
             {
                 // only apps in the list can use clipboard (exclude cursor detection)
                 return CursorDetectExcludeProcessNames.Contains(processName);
@@ -522,15 +613,20 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                 UIAutomationControlType.Text;
         }
 
-        private async static Task<string?> GetTextViaClipboardAsync(string processName, CancellationToken cancellationToken)
+        private async static Task<TextSelectionText> GetTextViaClipboardAsync(
+            string processName,
+            HWND targetWindow,
+            uint processId,
+            uint gestureClipboardSequence,
+            CancellationToken cancellationToken)
         {
+            if (PInvoke.GetClipboardSequenceNumber() != gestureClipboardSequence) return default;
+
             // 1. User Intent Check (Avoid interfering with user copy)
-            if (ShouldAbortForUserIntent(out var text))
+            TextSelectionText text;
+            if (ShouldAbortForUserIntent())
             {
-                // If user copied text successfully, set it and return true
-                // If no text, return false to skip clipboard strategy
-                // Console.WriteLine("AbortForUserIntent");
-                return text;
+                return default;
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -540,8 +636,10 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             // This prevents losing screenshots when a text selection fallback occurs.
             byte[]? backupData = null;
             uint backupFormat = 0;
+            uint? copiedClipboardSequence = null;
+            var hasRestorableBackup = false;
 
-            if (PInvoke.OpenClipboard())
+            if (PInvoke.OpenClipboard(MessageWindow.Shared.HWnd))
             {
                 // Priority 1: Text
                 if (TryGetClipboardData(CF_UNICODETEXT, out backupData))
@@ -564,10 +662,20 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                     backupFormat = CF_HDROP;
                 }
 
+                // An empty clipboard can be restored. Clipboard content made exclusively of unsupported
+                // formats cannot, so skip synthetic copy rather than knowingly destroying it. EnumClipboardFormats
+                // uses the last-error value to distinguish an empty clipboard from enumeration failure.
+                Marshal.SetLastPInvokeError(0);
+                var firstFormat = PInvoke.EnumClipboardFormats(0);
+                hasRestorableBackup = backupFormat != 0 ||
+                    firstFormat == 0 && Marshal.GetLastPInvokeError() == 0;
+
                 // Note: We don't empty here, as that might clear file handles or other formats we didn't backup.
                 // We rely on the Copy command to overwrite ownership.
                 PInvoke.CloseClipboard();
             }
+
+            if (!hasRestorableBackup) return default;
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -582,8 +690,9 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                     if (ShouldKeyInterruptViaClipboard())
                     {
                         // Console.WriteLine("Strategy A: ShouldKeyInterruptViaClipboard");
-                        return null;
+                        return default;
                     }
+                    if (!IsForegroundTarget(targetWindow, processId)) return default;
 
                     var clipboardSequence = PInvoke.GetClipboardSequenceNumber();
                     SendCopyKey(CopyKeyType.CtrlInsert);
@@ -606,8 +715,11 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                     cancellationToken.ThrowIfCancellationRequested();
                     if (hasClipboardChanged)
                     {
+                        copiedClipboardSequence = PInvoke.GetClipboardSequenceNumber();
                         await Task.Delay(TimeSpan.FromMilliseconds(10), cancellationToken).ConfigureAwait(false);
+                        copiedClipboardSequence = PInvoke.GetClipboardSequenceNumber();
 
+                        if (!IsForegroundTarget(targetWindow, processId)) return default;
                         if (TryGetClipboardText(out text, emptyClipboard: false))
                         {
                             // Console.WriteLine($"Strategy A: TryGetClipboardText: {text}");
@@ -620,12 +732,13 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                 if (ShouldKeyInterruptViaClipboard())
                 {
                     // Console.WriteLine("Strategy A-B: ShouldKeyInterruptViaClipboard");
-                    return null;
+                    return default;
                 }
 
                 // 4. Strategy B: Ctrl + C (Fallback)
                 if (!NoCtrlCProcessNames.Contains(processName))
                 {
+                    if (!IsForegroundTarget(targetWindow, processId)) return default;
                     var clipboardSequence = PInvoke.GetClipboardSequenceNumber();
                     SendCopyKey(CopyKeyType.CtrlC);
 
@@ -646,8 +759,14 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                     // Handle case when clipboard update was detected
                     if (!hasClipboardChanged)
                     {
-                        return null;
+                        return default;
                     }
+
+                    copiedClipboardSequence = PInvoke.GetClipboardSequenceNumber();
+                }
+                else if (copiedClipboardSequence is null)
+                {
+                    return default;
                 }
 
                 // some apps will change the clipboard content many times after the first time GetClipboardSequenceNumber() changed
@@ -662,13 +781,15 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
 
                 if (ShouldKeyInterruptViaClipboard())
                 {
-                    return null;
+                    return default;
                 }
 
                 // Final Attempt
                 cancellationToken.ThrowIfCancellationRequested();
+                if (!IsForegroundTarget(targetWindow, processId)) return default;
                 if (TryGetClipboardText(out text, emptyClipboard: false))
                 {
+                    copiedClipboardSequence = PInvoke.GetClipboardSequenceNumber();
                     // Console.WriteLine($"Strategy A: TryGetClipboardText: {text}");
                     return text;
                 }
@@ -676,33 +797,34 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             finally
             {
                 // 5. Restore Clipboard
-                if (backupFormat != 0 && backupData != null)
+                if (copiedClipboardSequence is { } sequence)
                 {
-                    SetClipboardData(backupFormat, backupData);
-                }
-                else
-                {
-                    // If we didn't have recognized data, clear the clipboard to remove the "Selected Text"
-                    if (PInvoke.OpenClipboard())
-                    {
-                        PInvoke.EmptyClipboard();
-                        PInvoke.CloseClipboard();
-                    }
+                    await MessageWindow.Shared.InvokeAsync(() => RestoreClipboard(sequence, backupFormat, backupData)).ConfigureAwait(false);
                 }
             }
 
             return text;
         }
 
+        private static bool IsForegroundTarget(HWND targetWindow, uint processId)
+        {
+            var foregroundWindow = PInvoke.GetForegroundWindow();
+            if (foregroundWindow == HWND.Null) return false;
+
+            var targetRoot = PInvoke.GetAncestor(targetWindow, GET_ANCESTOR_FLAGS.GA_ROOTOWNER);
+            var foregroundRoot = PInvoke.GetAncestor(foregroundWindow, GET_ANCESTOR_FLAGS.GA_ROOTOWNER);
+            if (targetRoot != HWND.Null && targetRoot == foregroundRoot) return true;
+
+            PInvoke.GetWindowThreadProcessId(foregroundWindow, out var foregroundProcessId);
+            return foregroundProcessId == processId;
+        }
+
         /// <summary>
         /// Check if user is trying to copy text manually, to avoid interfering.
         /// </summary>
-        /// <param name="userCopiedText"></param>
         /// <returns>true to abort the clipboard strategy</returns>
-        private static bool ShouldAbortForUserIntent(out string? userCopiedText)
+        private static bool ShouldAbortForUserIntent()
         {
-            userCopiedText = null;
-
             var isCtrlPressed = false;
             var isCPressed = false;
             var isXPressed = false;
@@ -721,8 +843,7 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                 // if it's changed, it means user has copied something, we can read it directly
                 if (PInvoke.GetClipboardSequenceNumber() != initSeq)
                 {
-                    // User copied something! Try to read from clipboard directly
-                    return TryGetClipboardText(out userCopiedText) && !string.IsNullOrEmpty(userCopiedText);
+                    return true;
                 }
 
 
@@ -855,10 +976,13 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         /// <param name="emptyClipboard"></param>
         /// <param name="openClipboard"></param>
         /// <returns></returns>
-        private static unsafe bool TryGetClipboardText(out string? text, bool emptyClipboard = false, bool openClipboard = true)
+        private static unsafe bool TryGetClipboardText(
+            out TextSelectionText text,
+            bool emptyClipboard = false,
+            bool openClipboard = true)
         {
-            text = null;
-            if (openClipboard && !PInvoke.OpenClipboard()) return false;
+            text = default;
+            if (openClipboard && !PInvoke.OpenClipboard(MessageWindow.Shared.HWnd)) return false;
 
             try
             {
@@ -868,7 +992,19 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
                 var ptr = PInvoke.GlobalLock((HGLOBAL)handle.Value);
                 if (ptr != null)
                 {
-                    text = Marshal.PtrToStringUni((nint)ptr);
+                    var availableCharacters = checked((int)Math.Min(
+                        PInvoke.GlobalSize((HGLOBAL)handle.Value) / sizeof(char),
+                        int.MaxValue));
+                    var inspectedCharacters = Math.Min(
+                        availableCharacters,
+                        TextSelectionTextBudget.MaximumNativeReadCharacters);
+                    var characters = new ReadOnlySpan<char>(ptr, inspectedCharacters);
+                    var terminatorIndex = characters.IndexOf('\0');
+                    var length = terminatorIndex >= 0 ? terminatorIndex : inspectedCharacters;
+                    var value = new string(characters[..length]);
+                    text = TextSelectionTextBudget.Apply(
+                        value,
+                        terminatorIndex < 0 && availableCharacters > inspectedCharacters);
                     PInvoke.GlobalUnlock((HGLOBAL)handle.Value);
 
                     if (emptyClipboard) PInvoke.EmptyClipboard();
@@ -912,35 +1048,26 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
         {
             if (cfFormat == 0) cfFormat = PInvoke.RegisterClipboardFormat(format);
 
-            // Allocation for DWORD 0. We don't need to release it.
+            // Clipboard ownership transfers only when SetClipboardData succeeds.
             var hMem = PInvoke.GlobalAlloc(GLOBAL_ALLOC_FLAGS.GMEM_MOVEABLE | GLOBAL_ALLOC_FLAGS.GMEM_ZEROINIT, sizeof(int));
-            PInvoke.SetClipboardData(cfFormat, (HANDLE)hMem.Value);
+            if (hMem == 0) return;
+            if (PInvoke.SetClipboardData(cfFormat, (HANDLE)hMem.Value).Value == null) PInvoke.GlobalFree(hMem);
         }
 
-        private static unsafe void SetClipboardData(uint format, byte[] data)
+        private static bool RestoreClipboard(uint expectedSequence, uint format, byte[]? data)
         {
-            if (!PInvoke.OpenClipboard()) return;
+            if (!PInvoke.OpenClipboard(MessageWindow.Shared.HWnd)) return false;
 
             try
             {
+                if (PInvoke.GetClipboardSequenceNumber() != expectedSequence) return false;
                 PInvoke.EmptyClipboard();
+                if (format != 0 && data is not null && !SetClipboardDataCore(format, data)) return false;
 
-                var bytes = data.Length;
-                var hGlobal = PInvoke.GlobalAlloc(GLOBAL_ALLOC_FLAGS.GMEM_MOVEABLE, (nuint)bytes);
-                if (hGlobal == 0) return;
-
-                var targetPtr = PInvoke.GlobalLock(hGlobal);
-                if (targetPtr == null) return;
-
-                Marshal.Copy(data, 0, (nint)targetPtr, bytes);
-                PInvoke.GlobalUnlock(hGlobal);
-
-                // Set primary data
-                PInvoke.SetClipboardData(format, (HANDLE)hGlobal.Value);
-
-                // Apply Exclusions
+                // Prevent this internal restoration from entering clipboard history or cloud sync.
                 SetClipboardExclusion(ref _cfHistory, "CanIncludeInClipboardHistory");
                 SetClipboardExclusion(ref _cfCloud, "CanUploadToCloudClipboard");
+                return true;
             }
             finally
             {
@@ -948,9 +1075,53 @@ public sealed class WindowsTextSelectionWatcher(IVisualElementBackend visualElem
             }
         }
 
-        public void Dispose()
+        private static unsafe bool SetClipboardDataCore(uint format, byte[] data)
         {
-            _mouseHookSubscription.Dispose();
+            var hGlobal = PInvoke.GlobalAlloc(GLOBAL_ALLOC_FLAGS.GMEM_MOVEABLE, (nuint)data.Length);
+            if (hGlobal == 0) return false;
+
+            var targetPtr = PInvoke.GlobalLock(hGlobal);
+            if (targetPtr == null)
+            {
+                PInvoke.GlobalFree(hGlobal);
+                return false;
+            }
+
+            Marshal.Copy(data, 0, (nint)targetPtr, data.Length);
+            PInvoke.GlobalUnlock(hGlobal);
+            if (PInvoke.SetClipboardData(format, (HANDLE)hGlobal.Value).Value != null) return true;
+
+            PInvoke.GlobalFree(hGlobal);
+            return false;
         }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _isDisposed, 1) != 0) return;
+            _mouseHookSubscription.Dispose();
+            _reusableCancellationTokenSource.Cancel();
+            _pendingDetections.Writer.TryComplete();
+            try
+            {
+                await _detectionWorker.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _reusableCancellationTokenSource.Dispose();
+            }
+        }
+
+        private readonly record struct DetectionTrigger(
+            HWND WindowHandle,
+            HCURSOR MouseDownCursor,
+            HCURSOR MouseUpCursor,
+            uint ClipboardSequence,
+            CancellationToken CancellationToken
+        );
+
+        private readonly record struct ProcessIdentity(uint ProcessId, string ProcessName, string ExecutablePath);
     }
 }

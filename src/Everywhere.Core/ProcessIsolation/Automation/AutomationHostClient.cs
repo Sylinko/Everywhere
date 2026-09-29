@@ -109,9 +109,10 @@ public class RemoteVisualContext : RpcSafeHandle
     internal long AllocateResourceId() => _connection.AllocateResourceId();
 
     /// <summary>Starts one native text-selection monitor owned by this Context.</summary>
-    public async ValueTask<RemoteTextSelectionMonitor> StartTextSelectionMonitoringAsync(
+    public async ValueTask<RemoteTextSelectionMonitorStartResult> StartTextSelectionMonitoringAsync(
         long monitorId,
         int mainProcessId,
+        TextSelectionMonitoringConfiguration configuration,
         CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(monitorId);
@@ -119,15 +120,24 @@ public class RemoteVisualContext : RpcSafeHandle
         var contextLease = AcquireLease();
         try
         {
-            await _rpc.StartTextSelectionMonitoringAsync(
+            var result = await _rpc.StartTextSelectionMonitoringAsync(
                 new StartTextSelectionMonitoringRequest
                 {
                     ContextId = contextLease.ResourceId,
                     MonitorId = monitorId,
                     MainProcessId = mainProcessId,
+                    Configuration = configuration,
                 },
                 cancellationToken).ConfigureAwait(false);
-            return new RemoteTextSelectionMonitor(contextLease, monitorId, _releaseQueue);
+            if (!result.IsSucceeded)
+            {
+                contextLease.Dispose();
+                return new RemoteTextSelectionMonitorStartResult(result, null);
+            }
+
+            return new RemoteTextSelectionMonitorStartResult(
+                result,
+                new RemoteTextSelectionMonitor(_rpc, contextLease, monitorId, _releaseQueue));
         }
         catch
         {
