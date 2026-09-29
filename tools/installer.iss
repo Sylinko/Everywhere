@@ -229,10 +229,7 @@ begin
     exit;
   end;
 
-  if WindowsGetDriveType('D:\') = DRIVE_FIXED then
-    Result := 'D:\Program Files\{#AppName}'
-  else
-    Result := ExpandConstant('{autopf}\{#AppName}');
+  Result := ExpandConstant('{autopf}\{#AppName}');
 end;
 
 function IsSameDirectory(FirstPath: String; SecondPath: String): Boolean;
