@@ -29,6 +29,7 @@ public static class HostsControlRunner
     {
         HostsControlOperation.Start => Task.FromResult(StartServiceModeHosts(platform)),
         HostsControlOperation.Stop => StopHostsAsync(peerVerifier, cancellationToken),
+        HostsControlOperation.Shutdown => ApplicationShutdownRunner.RunAsync(peerVerifier, cancellationToken),
         HostsControlOperation.Install => Task.FromResult(ReportPlatformResult("install", platform.InstallServiceMode(command))),
         HostsControlOperation.Uninstall => Task.FromResult(ReportPlatformResult("uninstall", platform.UninstallServiceMode())),
         HostsControlOperation.Launch => Task.FromResult(StartHosts()),

@@ -39,6 +39,7 @@ public class ProcessRoleAndRpcTests
 
     [TestCase("--hosts-control=start", HostsControlOperation.Start)]
     [TestCase("--hosts-control", HostsControlOperation.Stop)]
+    [TestCase("--hosts-control=shutdown", HostsControlOperation.Shutdown)]
     [TestCase("--hosts-control=install", HostsControlOperation.Install)]
     [TestCase("--hosts-control", HostsControlOperation.Uninstall)]
     [TestCase("--hosts-control=launch", HostsControlOperation.Launch)]
@@ -1044,6 +1045,10 @@ public class ProcessRoleAndRpcTests
     private sealed class TestMainHostControl : IMainHostControlRpc
     {
         public int CallCount { get; private set; }
+
+        public ValueTask<RpcAck> ShutdownApplicationAsync(
+            ShutdownApplicationRequest request,
+            CancellationToken cancellationToken = default) => ValueTask.FromResult(default(RpcAck));
 
         public ValueTask<StopHostsResponse> StopHostsAsync(
             StopHostsRequest request,

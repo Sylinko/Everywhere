@@ -23,6 +23,7 @@ The executable handles `--hosts-control` before Entrance, DI, Avalonia, or user 
 | `start` | Ask the owned scheduled task to run in the caller's interactive session; directly launch both Hosts if that request fails |
 | `launch` | Start exactly the Input and Automation roles with the controller's current token |
 | `stop` | Ask the session-local Main instance to stop both roles and verify endpoint disappearance |
+| `shutdown` | Windows only: ask Main to exit normally, retain its process handle, wait for termination, and verify that application endpoints are absent |
 | `install` | Idempotently create or repair the task for the current executable |
 | `uninstall` | Remove the task only when its action belongs to the current executable |
 
@@ -40,6 +41,50 @@ The stable exit codes are:
 | 11 | service launch failed; direct fallback is capability-equivalent because the controller already has an administrative token |
 
 CLI stdout and stderr are readable English diagnostics. They are not parsed into persistent UI messages. Structured output remains unnecessary until a real external consumer exists.
+
+### Cooperative application shutdown
+
+Setup runs the **installed** `Everywhere.exe --hosts-control shutdown` before invoking
+the previous uninstaller. The installed executable is required because the control
+endpoint validates the same build and executable path. `stop` remains a Host-generation
+operation and must not be treated as proof that Main has exited.
+
+The shutdown RPC carries no caller-selected PID or path. Main accepts it only when an
+application shutdown owner is attached. Its response means acceptance, not completion.
+The server drains the response and disposes the control connection before dispatching
+normal UI shutdown. The existing application lifetime then cancels initialization,
+drains activation, and disposes DI, including the Hosts and Watchdog owners. The RPC
+handler never waits for the application lifetime that will dispose that same handler.
+
+The controller retains the authenticated Main process handle **before** sending the
+request, waits for that process to terminate, and checks the activation, Main-control,
+Input, and Automation endpoints. It has a 30-second deadline. An inaccessible endpoint
+is not considered absent. A missing control pipe is successful only when all application
+endpoints are absent; it is not itself evidence that Main has exited.
+
+Setup also queries Windows process image paths through WMI for `Everywhere.exe` and
+`Everywhere.Watchdog.exe` in the exact installation directory. This catches remaining
+Hosts and other-session instances; it does not terminate processes by name. Query
+failures or unresolvable matching process images block destructive work. This is a
+product-process check; Restart Manager remains responsible for other file users.
+
+The installer writes `ShutdownProtocolVersion=1` beside its installed layout metadata.
+An upgrade invokes the command only when the old installation advertises that version.
+Legacy versions without the marker require manual exit rather than receiving an unknown
+command-line argument. The new uninstaller knows its own installed image supports the command.
+
+Opening Setup leaves Main running. After directory validation, `PrepareToInstall`
+asks once before cooperative shutdown and verifies exit before `ssInstall` can run
+the previous uninstaller. It rechecks before destructive work. Direct uninstall applies
+the same check after uninstall confirmation, before task cleanup and file removal.
+Interactive failure offers Retry/Cancel; silent failure stops without removing the old
+installation. `/NOCLOSEAPPLICATIONS` disables the cooperative request but not the exit
+check. `/ALLOWINCOMPLETECLEANUP` never bypasses this process check. No forced termination
+is performed. In-app Setup launch likewise leaves Main alive until Setup requests exit.
+
+The completion page retains its ordinary-user launch option (`RestartApplications=no`);
+there is no second automatic restart route competing with it. Portable ZIP update behavior
+is outside this installer protocol.
 
 ## Task Scheduler integration
 
@@ -124,10 +169,10 @@ The current Inno installer:
 - creates the selected directory and applies its protected DACL in-process before copying or executing application files;
 - keeps Inno's path-redirection guard enabled and allows an interactive user to explicitly continue when directory protection cannot be established;
 - installs or repairs service mode after copying, treating failure as a nonfatal degraded installation;
-- invokes session-local Host stop and controller-based task removal during uninstall, with ownership-aware Task Scheduler COM cleanup as a fallback;
+- confirms application shutdown before uninstall and uses controller-based task removal, with ownership-aware Task Scheduler COM cleanup as a fallback;
 - performs uninstall cleanup only after the user confirms removal; if both cleanup paths fail, an interactive user may abort, retry, or continue with a clear residual-service warning, while silent uninstall fails unless its calling Setup propagates that explicit continue decision;
 - signs both the Setup executable and the generated Inno uninstaller through the release SignTool integration;
-- uses the application mutex to detect a running same-session Main process and a global Setup mutex to prevent concurrent machine-wide Setup runs;
+- uses cooperative shutdown and exact-image process checks before changing an installation, and a global Setup mutex to prevent concurrent machine-wide Setup runs;
 - enables installation and uninstall logging, including logs from a previous Inno uninstaller invoked during migration;
 - preserves settings and databases stored outside the application directory.
 
@@ -163,7 +208,17 @@ The following items are still open and must not be described as complete:
 
 ### Installation-wide shutdown
 
-The current controller stop is scoped to the caller's user/session and exact build. Setup does not yet stop every logged-on session, hold a machine-wide replacement lock, or prove that all processes holding application files exited. A cross-version maintenance protocol or carefully bounded process-handle strategy is still required.
+The shutdown controller is scoped to the caller's user/session and exact build. Setup
+detects product processes from other sessions by exact image path and blocks until they
+exit, but does not cooperatively stop all logged-on sessions. Alternate-credential
+elevation may therefore require manual exit. Native checks must cover elevated Main,
+standard-user Main, unavailable WMI, and concurrent RDP sessions.
+
+Setup rechecks before destructive work but does not yet hold a replacement lock honored
+by every application launch. A new process starting after the last check remains a race.
+Restart Manager and directory readiness checks remain additional protection, not proof
+of an installation-wide exclusion interval. Legacy installs without the shutdown marker
+also require manual exit; no cross-version relaxation of the runtime RPC handshake is made.
 
 Alternate-credential elevation can hide the original user's HKCU legacy registration. A bootstrapper or explicit original-user discovery is required to migrate that case reliably.
 

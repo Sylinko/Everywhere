@@ -11,6 +11,9 @@ public enum HostsControlOperation
     /// <summary>Request bounded shutdown of the running Host roles.</summary>
     Stop,
 
+    /// <summary>Request normal Main shutdown and wait for the application process to exit.</summary>
+    Shutdown,
+
     /// <summary>Install or repair the Windows Hosts Control task.</summary>
     Install,
 
@@ -185,10 +188,11 @@ public static class ProcessRoleCommandLine
         {
             "start" => HostsControlOperation.Start,
             "stop" => HostsControlOperation.Stop,
+            "shutdown" => HostsControlOperation.Shutdown,
             "install" => HostsControlOperation.Install,
             "uninstall" => HostsControlOperation.Uninstall,
             "launch" => HostsControlOperation.Launch,
-            _ => throw new ArgumentException("The --hosts-control value must be start, stop, install, uninstall, or launch.", nameof(args))
+            _ => throw new ArgumentException("The --hosts-control value must be start, stop, shutdown, install, uninstall, or launch.", nameof(args))
         };
 
         if (operation is not HostsControlOperation.Install && (shouldReplaceExisting || shouldAuthorizePortable))

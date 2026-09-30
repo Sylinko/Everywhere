@@ -9,7 +9,7 @@ On Windows and macOS, Everywhere uses the same executable for three long-lived r
 | Main | no role argument, or `--process-role main` | UI, application state, Host lifecycle, Agent orchestration, and remote proxies |
 | Input Host | `--process-role input` | global shortcuts and shortcut recording, including their native hooks |
 | Automation Host | `--process-role automation` | accessibility backend, visual Contexts, queries, picking, capture, actions, and text-selection monitoring |
-| Hosts controller | `--hosts-control <operation>` | fixed launch, stop, install, and uninstall operations, then immediate exit |
+| Hosts controller | `--hosts-control <operation>` | fixed launch, stop, application shutdown, install, and uninstall operations, then immediate exit |
 
 [Text-selection monitoring](../Automation/11-TextSelectionMonitoring.md) runs entirely in Automation Host: gesture observation, debounce, accessibility reads, and clipboard fallback. Main controls enablement and consumes results over its Automation connection. Each Host owns the native hooks required by its features; reusable hook infrastructure does not determine process ownership.
 
@@ -64,6 +64,14 @@ Main exposes independent Input and Automation status. A healthy role stays healt
 ## Shutdown
 
 Main requests graceful role shutdown through the lifecycle RPC and waits for acknowledgement with a bounded deadline. `--hosts-control stop` connects to Main's session-scoped control endpoint rather than stealing a role endpoint, requests both roles to stop, and then checks that the role endpoints disappeared.
+
+On Windows, `--hosts-control shutdown` requests normal application exit through that
+same Main-control endpoint. Main drains the acceptance response before dispatching
+UI shutdown and DI cleanup. The installed controller retains Main's process handle
+before requesting exit and waits for actual termination. Setup separately checks exact
+installation image paths, including other-session instances, before removing files.
+See [Windows installation and Hosts control](WindowsInstallationAndHosts.md#cooperative-application-shutdown)
+for legacy-version handling and installer interaction.
 
 Host cleanup is also bounded. The role session drains first, then the RPC connection and endpoint are disposed. Failure to drain or dispose within the deadline produces a distinct Host exit failure.
 

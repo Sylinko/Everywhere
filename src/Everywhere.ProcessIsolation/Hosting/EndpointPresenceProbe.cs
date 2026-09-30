@@ -11,8 +11,8 @@ namespace Everywhere.ProcessIsolation.Hosting;
 /// </summary>
 public static partial class EndpointPresenceProbe
 {
-    private const int ErrorPipeBusy = 231;
-    private const int ErrorSemTimeout = 121;
+    private const int ErrorFileNotFound = 2;
+    private const int ErrorPathNotFound = 3;
 
     /// <summary>Waits until both fixed role endpoints are absent.</summary>
     public static async Task<bool> WaitForRolesToDisappearAsync(
@@ -43,7 +43,8 @@ public static partial class EndpointPresenceProbe
         return roles.All(role => !IsPresent(ProcessRoleNames.GetDefaultEndpoint(role, desktopSessionId)));
     }
 
-    private static bool IsPresent(string endpoint)
+    /// <summary>Checks endpoint ownership without opening a competing RPC connection. Uncertain access is treated as present.</summary>
+    public static bool IsPresent(string endpoint)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -57,7 +58,8 @@ public static partial class EndpointPresenceProbe
         }
 
         var error = Marshal.GetLastWin32Error();
-        return error is ErrorPipeBusy or ErrorSemTimeout;
+        // Only a missing pipe proves absence. Access failures must not authorize file replacement.
+        return error is not ErrorFileNotFound and not ErrorPathNotFound;
     }
 
     [LibraryImport("kernel32.dll", EntryPoint = "WaitNamedPipeW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]

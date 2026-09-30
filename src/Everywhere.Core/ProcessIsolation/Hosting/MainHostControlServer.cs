@@ -91,15 +91,13 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
         var endpoint = ProcessRoleNames.GetMainControlEndpoint(_mainIdentity.DesktopSessionId);
         while (!_lifetime.IsCancellationRequested)
         {
-            NamedPipeServerStream? server = null;
             try
             {
-                server = NamedPipeEndpoint.CreateServer(endpoint);
+                await using var server = NamedPipeEndpoint.CreateServer(endpoint);
                 _started.TrySetResult();
                 await server.WaitForConnectionAsync(_lifetime.Token).ConfigureAwait(false);
                 _peerVerifier.VerifyClient(server);
                 await HandleConnectionAsync(server).ConfigureAwait(false);
-                server = null;
             }
             catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
             {
@@ -136,13 +134,6 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
 
                 _logger.Warning(exception, "The Main Hosts-control connection failed.");
             }
-            finally
-            {
-                if (server is not null)
-                {
-                    await server.DisposeAsync().ConfigureAwait(false);
-                }
-            }
         }
     }
 
@@ -178,10 +169,28 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
         {
             _logger.Debug(exception, "The Main Hosts-control connection ended before completion.");
         }
+
+        if (implementation.IsApplicationShutdownRequested)
+        {
+            (Application.Current as App)?.Shutdown();
+        }
     }
 
     private sealed class MainHostControlRpcImplementation(HostProcessCoordinator coordinator, RpcConnection connection) : IMainHostControlRpc
     {
+        public bool IsApplicationShutdownRequested { get; private set; }
+
+        /// <inheritdoc />
+        public ValueTask<RpcAck> ShutdownApplicationAsync(
+            ShutdownApplicationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            IsApplicationShutdownRequested = true;
+            connection.RequestGracefulShutdown();
+            return ValueTask.FromResult(default(RpcAck));
+        }
+
         public async ValueTask<StopHostsResponse> StopHostsAsync(
             StopHostsRequest request,
             CancellationToken cancellationToken = default)

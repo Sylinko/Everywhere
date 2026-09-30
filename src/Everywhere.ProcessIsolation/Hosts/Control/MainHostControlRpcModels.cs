@@ -6,6 +6,10 @@ namespace Everywhere.ProcessIsolation.Hosts.Control;
 [MessagePackObject]
 public sealed partial class StopHostsRequest;
 
+/// <summary>Requests normal application shutdown without accepting a caller-selected process.</summary>
+[MessagePackObject]
+public sealed partial class ShutdownApplicationRequest;
+
 /// <summary>
 /// Main's explicit stop confirmation. A controller may report success only when
 /// both role supervisors have acknowledged or confirmed that no lease existed.

@@ -3,11 +3,10 @@ using Everywhere.ProcessIsolation.Rpc;
 namespace Everywhere.ProcessIsolation.Hosts.Control;
 
 /// <summary>
-/// Main-owned control contract for the short-lived <c>--hosts-control stop</c>
-/// command. The controller uses this endpoint instead of opening a competing
-/// primary connection to either Host. A successful response means Main has sent
-/// lifecycle shutdown requests to both roles and both role supervisors have
-/// released their authenticated connection leases.
+/// Main-owned control contract for short-lived <c>--hosts-control stop</c> and
+/// <c>--hosts-control shutdown</c> commands. Controllers use this endpoint instead
+/// of opening a competing primary connection to either Host. Host stop confirms
+/// role cleanup; application shutdown confirms acceptance and requires a separate process wait.
 /// </summary>
 [RpcContract(2)]
 public interface IMainHostControlRpc
@@ -22,5 +21,14 @@ public interface IMainHostControlRpc
     [RpcMethod(1)]
     ValueTask<StopHostsResponse> StopHostsAsync(
         StopHostsRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Accepts normal application shutdown. The response is flushed before Main requests
+    /// UI shutdown; the controller must separately wait for the Main process to exit.
+    /// </summary>
+    [RpcMethod(2)]
+    ValueTask<RpcAck> ShutdownApplicationAsync(
+        ShutdownApplicationRequest request,
         CancellationToken cancellationToken = default);
 }

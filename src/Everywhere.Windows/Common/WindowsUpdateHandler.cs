@@ -32,7 +32,8 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
         }
 
         Process.Start(new ProcessStartInfo(assetPath) { UseShellExecute = true });
-        Environment.Exit(0);
+        // Setup coordinates normal shutdown after the user confirms installation.
+        // Cancelling UAC or the wizard must leave the running application intact.
         return Task.CompletedTask;
     }
 

@@ -18,7 +18,6 @@ PrivilegesRequired=admin
 UsePreviousAppDir=no
 AllowUNCPath=no
 AllowNetworkDrive=no
-AppMutex=com.sylinko.everywhere
 SetupMutex=Global\Everywhere.Setup.D66EA41B-8DEB-4E5A-9D32-AB4F8305F664
 Compression=lzma2
 CloseApplications=yes
@@ -72,6 +71,14 @@ en.PreviousInstallCleanupFailed=Some background services from the previous insta
 zh.PreviousInstallCleanupFailed=旧版本的部分后台服务未能移除。%n%n你可以中止安装并稍后重试，也可以立即重试，或忽略此问题并继续。如果继续，Windows 中可能会留下需要手动清理的后台启动项。详细信息已写入安装日志。
 en.UninstallCleanupFailed=Some background services could not be removed.%n%nYou can abort and try again later, retry now, or ignore this problem and continue uninstalling. If you continue, Windows may retain background startup entries that need to be removed manually. Details have been written to the uninstall log.
 zh.UninstallCleanupFailed=部分后台服务未能移除。%n%n你可以中止并稍后重试，也可以立即重试，或忽略此问题并继续卸载。如果继续，Windows 中可能会留下需要手动清理的后台启动项。详细信息已写入卸载日志。
+en.CloseEverywhere=Everywhere needs to close before continuing. Any running tasks will stop.%n%nClick OK to close Everywhere and continue, or Cancel to leave it running.
+zh.CloseEverywhere=继续操作前需要关闭 Everywhere，正在进行的任务将停止。%n%n点击“确定”关闭 Everywhere 并继续，或点击“取消”保持运行。
+en.ClosingEverywhere=Closing Everywhere...
+zh.ClosingEverywhere=正在关闭 Everywhere…
+en.EverywhereStillRunning=Everywhere or one of its background processes is still running, or Windows could not verify that it has exited.%n%nExit Everywhere, including any instances in other signed-in Windows sessions, then click Retry. Cancel to stop without removing the existing installation. Details have been written to the log.
+zh.EverywhereStillRunning=Everywhere 或其后台进程仍在运行，或 Windows 无法确认它们已经退出。%n%n请退出 Everywhere（包括其他已登录 Windows 会话中的实例），然后点击“重试”。点击“取消”将停止操作，并保留现有安装。详细信息已写入日志。
+en.EverywhereShutdownRequired=Everywhere must exit before its installation can be changed. Close all instances and try again.
+zh.EverywhereShutdownRequired=更改安装前必须退出 Everywhere。请关闭所有实例后重试。
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -110,13 +117,16 @@ type
 var
   HasPreviousMachineInstall: Boolean;
   PreviousMachineLayoutVersion: Cardinal;
+  PreviousMachineShutdownProtocolVersion: Cardinal;
   PreviousMachineInstallDirectory: String;
   PreviousMachineUninstaller: String;
   HasPreviousUserInstall: Boolean;
   PreviousUserInstallDirectory: String;
   PreviousUserUninstaller: String;
+  PreviousUserShutdownProtocolVersion: Cardinal;
   ApprovedUnprotectedDirectory: String;
   ShouldAllowIncompletePreviousCleanup: Boolean;
+  HasApprovedApplicationShutdown: Boolean;
 
 function WindowsGetDriveType(RootPathName: String): Cardinal;
   external 'GetDriveTypeW@kernel32.dll stdcall';
@@ -214,7 +224,9 @@ function InitializeSetup(): Boolean;
 begin
   HasPreviousMachineInstall := QueryPreviousInstall(HKEY_LOCAL_MACHINE, PreviousMachineInstallDirectory, PreviousMachineUninstaller);
   RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', PreviousMachineLayoutVersion);
+  RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', PreviousMachineShutdownProtocolVersion);
   HasPreviousUserInstall := QueryPreviousInstall(HKEY_CURRENT_USER, PreviousUserInstallDirectory, PreviousUserUninstaller);
+  RegQueryDWordValue(HKEY_CURRENT_USER, InstallRegistryKey, 'ShutdownProtocolVersion', PreviousUserShutdownProtocolVersion);
   if HasPreviousMachineInstall and HasPreviousUserInstall and
      (CompareText(PreviousUserUninstaller, PreviousMachineUninstaller) = 0) then
     HasPreviousUserInstall := False;
@@ -586,6 +598,130 @@ begin
   Result := Result and (ResultCode = 0);
 end;
 
+{ Query exact image paths across sessions. Never terminate by image name, and never
+  equate an inaccessible process or a failed query with an empty installation. }
+function QueryInstallationProcesses(InstallDirectory: String; var HasRunningProcesses: Boolean): Boolean;
+var
+  Locator: Variant;
+  Services: Variant;
+  Processes: Variant;
+  Item: Variant;
+  ImagePath: String;
+  Index: Integer;
+begin
+  Result := False;
+  HasRunningProcesses := False;
+  if InstallDirectory = '' then
+  begin
+    Result := True;
+    exit;
+  end;
+
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Services := Locator.ConnectServer('', 'root\CIMV2');
+    Processes := Services.ExecQuery('SELECT ProcessId, ExecutablePath FROM Win32_Process WHERE Name = ''{#AppExeName}'' OR Name = ''Everywhere.Watchdog.exe''');
+    for Index := 0 to Processes.Count - 1 do
+    begin
+      Item := Processes.ItemIndex(Index);
+      if VarIsNull(Item.ExecutablePath) then
+      begin
+        Log(Format('Cannot verify the application image for process %d.', [Integer(Item.ProcessId)]));
+        exit;
+      end;
+      ImagePath := Item.ExecutablePath;
+      if Trim(ImagePath) = '' then
+      begin
+        Log(Format('The application image path is unavailable for process %d.', [Integer(Item.ProcessId)]));
+        exit;
+      end;
+      if IsSameFile(ImagePath, AddBackslash(InstallDirectory) + '{#AppExeName}') or
+         IsSameFile(ImagePath, AddBackslash(InstallDirectory) + 'Everywhere.Watchdog.exe') then
+      begin
+        HasRunningProcesses := True;
+        Log(Format('Installation process still running: %s (PID %d).', [ImagePath, Integer(Item.ProcessId)]));
+      end;
+    end;
+    Result := True;
+  except
+    Log('Could not inspect installation processes: ' + GetExceptionMessage);
+  end;
+end;
+
+function ConfirmInstallationShutdown(InstallDirectory: String; CanRequestShutdown: Boolean; IsUserInstall: Boolean; IsSilent: Boolean): Boolean;
+var
+  HasRunningProcesses: Boolean;
+  CanInspect: Boolean;
+  CanCloseApplications: Boolean;
+  ExecutablePath: String;
+  ResultCode: Integer;
+begin
+  Result := False;
+  if InstallDirectory = '' then
+  begin
+    Result := True;
+    exit;
+  end;
+
+  ExecutablePath := AddBackslash(InstallDirectory) + '{#AppExeName}';
+  CanCloseApplications := not HasCommandLineParameter('/NOCLOSEAPPLICATIONS');
+  repeat
+    CanInspect := QueryInstallationProcesses(InstallDirectory, HasRunningProcesses);
+    if CanInspect and (not HasRunningProcesses) then
+    begin
+      Result := True;
+      exit;
+    end;
+
+    if CanInspect and CanCloseApplications and CanRequestShutdown and FileExists(ExecutablePath) then
+    begin
+      if (not IsSilent) and (not HasApprovedApplicationShutdown) then
+      begin
+        if MsgBox(ExpandConstant('{cm:CloseEverywhere}'), mbConfirmation, MB_OKCANCEL) <> IDOK then
+          exit;
+        HasApprovedApplicationShutdown := True;
+      end;
+
+      ResultCode := -1;
+      if IsUninstaller then
+        UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}')
+      else
+        WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
+      { Run the installed image: runtime RPC intentionally requires the same build and path. }
+      if IsUserInstall then
+        ExecAsOriginalUser(ExecutablePath, '--hosts-control shutdown', InstallDirectory, SW_HIDE, ewWaitUntilTerminated, ResultCode)
+      else
+        Exec(ExecutablePath, '--hosts-control shutdown', InstallDirectory, SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      Log(Format('Cooperative application shutdown returned code %d.', [ResultCode]));
+
+      { The controller's acknowledgement alone is not enough. This check also covers
+        other desktop sessions and Watchdog/Host processes after Main has exited. }
+      if QueryInstallationProcesses(InstallDirectory, HasRunningProcesses) and (not HasRunningProcesses) then
+      begin
+        Result := True;
+        exit;
+      end;
+    end;
+
+    if IsSilent then
+      exit;
+    if MsgBox(ExpandConstant('{cm:EverywhereStillRunning}'), mbError, MB_RETRYCANCEL) <> IDRETRY then
+      exit;
+  until False;
+end;
+
+function ConfirmPreviousApplicationShutdown(): Boolean;
+begin
+  Result := False;
+  if HasPreviousMachineInstall and
+     (not ConfirmInstallationShutdown(PreviousMachineInstallDirectory, PreviousMachineShutdownProtocolVersion = 1, False, WizardSilent)) then
+    exit;
+  if HasPreviousUserInstall and (not IsSameDirectory(PreviousUserInstallDirectory, PreviousMachineInstallDirectory)) and
+     (not ConfirmInstallationShutdown(PreviousUserInstallDirectory, PreviousUserShutdownProtocolVersion = 1, True, WizardSilent)) then
+    exit;
+  Result := True;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ErrorDetail: String;
@@ -614,7 +750,13 @@ begin
       Result := ExpandConstant('{cm:InstallDirectoryNotEmpty}')
     else
       Result := ExpandConstant('{cm:InstallDirectoryUnavailable}');
+    exit;
   end;
+
+  { Inno's automatic Restart Manager shutdown occurs after ssInstall. Our previous
+    uninstaller runs in ssInstall, so application shutdown must complete here first. }
+  if not ConfirmPreviousApplicationShutdown() then
+    Result := ExpandConstant('{cm:EverywhereShutdownRequired}');
 end;
 
 procedure RegisterInstallResource(InstallDirectory: String; FileName: String);
@@ -893,7 +1035,8 @@ function RegisterInstalledLayout(): Boolean;
 var
   RegisteredLayoutVersion: Cardinal;
 begin
-  Result := RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', 2) and
+  Result := RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', 1) and
+    RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', 2) and
     RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', RegisteredLayoutVersion) and
     (RegisteredLayoutVersion = 2);
 end;
@@ -904,6 +1047,9 @@ var
 begin
   if CurStep = ssInstall then
   begin
+    { Recheck before destructive work if the application was reopened after preparation. }
+    if not ConfirmPreviousApplicationShutdown() then
+      RaiseException(ExpandConstant('{cm:EverywhereShutdownRequired}'));
     RemovePreviousInstallation();
     PrepareInstallDirectory();
     exit;
@@ -946,10 +1092,6 @@ begin
   if FileExists(ExecutablePath) then
   begin
     ResultCode := -1;
-    if (not Exec(ExecutablePath, '--hosts-control stop', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode)) or (ResultCode <> 0) then
-      Log(Format('Hosts stop was not confirmed before uninstall; exit code %d. Continuing with owned resource cleanup.', [ResultCode]));
-
-    ResultCode := -1;
     IsControllerCleanupComplete := Exec(ExecutablePath, '--hosts-control uninstall', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
     if not IsControllerCleanupComplete then
       Log(Format('Hosts controller cleanup failed with exit code %d; using Task Scheduler COM fallback.', [ResultCode]));
@@ -983,6 +1125,11 @@ var
 begin
   if CurUninstallStep <> usUninstall then
     exit;
+
+  { This runs only after uninstall confirmation, before task cleanup or file removal.
+    ALLOWINCOMPLETECLEANUP never authorizes removing files from a running application. }
+  if not ConfirmInstallationShutdown(ExpandConstant('{app}'), True, False, UninstallSilent) then
+    Abort;
 
   repeat
     if TryCleanupCurrentResources(ErrorDetail) then

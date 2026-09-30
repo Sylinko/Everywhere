@@ -29,8 +29,6 @@ namespace Everywhere;
 
 public class App(IServiceProvider serviceProvider) : Application, IRecipient<ApplicationMessage>
 {
-    public new static App Current => (App?)Application.Current ?? throw new InvalidOperationException("Application is not initialized correctly.");
-
     public static string Version => RuntimeConstants.Version.ToString();
 
     public static IClipboard Clipboard =>
