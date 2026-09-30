@@ -34,6 +34,8 @@ public static class Program
                 .AddSingleton<IShortcutListener, CGEventShortcutListener>()
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
+                // TODO: implement over CGEventListener, as the text selection detector already does.
+                .AddSingleton<IOverlayDismissWatcher, UnsupportedOverlayDismissWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
@@ -61,6 +63,7 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
                 .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
             #endregion

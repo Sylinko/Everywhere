@@ -16,6 +16,7 @@ public static class StrategyEngineServiceCollectionExtensions
         // Register core services
         services.AddSingleton<IStrategyRegistry, StrategyRegistry>();
         services.AddSingleton<IStrategyEngine, StrategyEngine>();
+        services.AddSingleton<TextSelectionToolbarActions>();
 
         // Register built-in strategies
         services.AddSingleton<IStrategyProvider, GlobalStrategyProvider>();

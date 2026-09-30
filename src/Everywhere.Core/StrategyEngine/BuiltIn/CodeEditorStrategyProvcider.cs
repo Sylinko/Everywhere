@@ -7,7 +7,7 @@ namespace Everywhere.StrategyEngine.BuiltIn;
 /// Strategy for code editor contexts.
 /// Provides commands for code review, explanation, and refactoring.
 /// </summary>
-public sealed class CodeEditorStrategyProvcider : BuiltInStrategyProvider
+public sealed class CodeEditorStrategyProvcider() : BuiltInStrategyProvider("code-editor")
 {
     private IStrategyCondition Condition { get; } =
         CompositeCondition.Or(

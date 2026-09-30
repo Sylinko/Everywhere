@@ -1,0 +1,113 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:TextSelectionToolbarActionsControl}"
+    TargetType="v:TextSelectionToolbarActionsControl">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:TextSelectionToolbarActionsControl">
+        <StackPanel Spacing="12">
+          <Button
+            HorizontalAlignment="Left"
+            shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+            Content="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Add}}"
+            Command="{Binding AddActionCommand, RelativeSource={RelativeSource TemplatedParent}}"/>
+          <ListBox
+            MaxHeight="460"
+            ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <Interaction.Behaviors>
+              <ContextDropBehavior Handler="{Binding DropHandler, RelativeSource={RelativeSource TemplatedParent}}"/>
+            </Interaction.Behaviors>
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="v:TextSelectionToolbarActionsControl+Item">
+                <Panel>
+                  <DockPanel HorizontalSpacing="8">
+                    <StackPanel
+                      DockPanel.Dock="Right" VerticalAlignment="Center"
+                      Orientation="Horizontal" Spacing="2">
+                      <Button
+                        Classes="Ghost Compact Uniform"
+                        shadui:ButtonAssist.Icon="{LucideIconContent ArrowUp}"
+                        Command="{Binding $parent[v:TextSelectionToolbarActionsControl].MoveUpCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_MoveUp}}"/>
+                      <Button
+                        Classes="Ghost Compact Uniform"
+                        shadui:ButtonAssist.Icon="{LucideIconContent ArrowDown}"
+                        Command="{Binding $parent[v:TextSelectionToolbarActionsControl].MoveDownCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_MoveDown}}"/>
+                      <Button
+                        Classes="Ghost Compact Uniform"
+                        shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                        Command="{Binding $parent[v:TextSelectionToolbarActionsControl].EditActionCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Edit}}"/>
+                      <Button
+                        Classes="Ghost Compact Uniform"
+                        shadui:ButtonAssist.Icon="{LucideIconContent RotateCcw}"
+                        IsVisible="{Binding Action.IsBuiltIn}"
+                        Command="{Binding $parent[v:TextSelectionToolbarActionsControl].ResetActionCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Reset}}"/>
+                      <Button
+                        Classes="Ghost Compact Uniform"
+                        shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+                        IsVisible="{Binding !Action.IsBuiltIn}"
+                        Command="{Binding $parent[v:TextSelectionToolbarActionsControl].DeleteActionCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}"/>
+                    </StackPanel>
+                    <Border
+                      Name="DragHandle" DockPanel.Dock="Left"
+                      Padding="4,8" VerticalAlignment="Center"
+                      Background="Transparent" Cursor="SizeAll"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_DragToReorder}}">
+                      <Interaction.Behaviors>
+                        <ContextDragBehavior Context="{Binding}"/>
+                      </Interaction.Behaviors>
+                      <LucideIcon
+                        Kind="GripVertical" Size="18"
+                        IsHitTestVisible="False"/>
+                    </Border>
+                    <ToggleSwitch
+                      DockPanel.Dock="Left" VerticalAlignment="Center"
+                      IsChecked="{Binding Action.IsEnabled, Mode=TwoWay}"
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_IsEnabled}}"/>
+                    <v:IconPresenter
+                      DockPanel.Dock="Left" Width="24" Height="24"
+                      VerticalAlignment="Center" IconSize="18"
+                      Icon="{Binding Icon}"/>
+                    <StackPanel
+                      VerticalAlignment="Center" Spacing="2">
+                      <TextBlock
+                        Text="{Binding NameKey^}" TextTrimming="CharacterEllipsis"/>
+                      <TextBlock
+                        Classes="Muted" FontSize="{DynamicResource FontSizeS}"
+                        Text="{Binding DescriptionKey^, FallbackValue={x:Null}}"
+                        TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </DockPanel>
+                  <Border
+                    Height="2" VerticalAlignment="Top"
+                    Background="{DynamicResource PrimaryColor}"
+                    IsHitTestVisible="False" IsVisible="{Binding IsDropBefore}"/>
+                  <Border
+                    Height="2" VerticalAlignment="Bottom"
+                    Background="{DynamicResource PrimaryColor}"
+                    IsHitTestVisible="False" IsVisible="{Binding IsDropAfter}"/>
+                </Panel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

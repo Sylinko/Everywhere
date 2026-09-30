@@ -8,7 +8,7 @@ namespace Everywhere.StrategyEngine.BuiltIn;
 /// Strategy for browser-related contexts.
 /// Provides commands for web pages, articles, and online content.
 /// </summary>
-public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
+public sealed class BrowserStrategyProvider() : BuiltInStrategyProvider("browser")
 {
     // Common browser process names across platforms
     private static readonly string[] BrowserProcessNames =
