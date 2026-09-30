@@ -617,6 +617,84 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere se ejecutará automáticamente después del inicio. Si “Iniciar como Administrador” está habilitado, la opción actual solo se puede desactivar en modo administrador.</value>
     </data>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>Interacción del Sistema</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>Estado de Funciones</value>
+    </data>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>Atajos y Entrada</value>
+    </data>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>Reconocimiento y Operación de Pantalla</value>
+    </data>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>Preparando…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>Conectado</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>Funciones Limitadas</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>No Disponible Temporalmente</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>Actualmente funcional, pero puede que no reconozca o opere aplicaciones ejecutadas como administrador. Puedes intentar reconectar.</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>Esta función no puede conectarse temporalmente. Puedes intentar reconectar.</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>La conexión se ha interrumpido, Everywhere está reconectando automáticamente.</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>Los componentes de fondo no se han preparado a tiempo. Puedes intentar reconectar.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windows no puede iniciar los componentes de fondo. Puedes intentar reconectar o verificar la configuración del servicio.</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>Varios intentos de conexión han fallado. Selecciona 'Reconectar' para intentar nuevamente.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>Instalado en Modo Servicio</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>Al activarlo, Everywhere también podrá reconocer y operar aplicaciones ejecutadas como administrador. Al activarlo por primera vez, Windows puede solicitar autorización de administrador.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>Verificando Configuración…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>Se requiere completar la configuración para usar</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>Listo</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Esta función actualmente la administra otro Everywhere en este equipo</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>Esta función requiere reconfiguración</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>No se puede verificar esta función temporalmente</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>No se puede instalar Everywhere como servicio.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>No se puede desinstalar el servicio de Everywhere.</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere se está ejecutando actualmente como administrador. El arrastre y la suelta desde aplicaciones normales pueden no funcionar, y las acciones realizadas por el asistente tendrán mayores permisos del sistema.</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>Reconectar</value>
+    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Características de depuración</value>
     </data>
@@ -1571,6 +1649,24 @@ Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</va
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>Ninguno</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
+        <value>No se puede acceder a este elemento</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Timeout" xml:space="preserve">
+        <value>Este elemento no ha respondido aún</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>Este elemento ya no está disponible</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Unsupported" xml:space="preserve">
+        <value>No se puede seleccionar este elemento</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>No se puede verificar este elemento</value>
+    </data>
     <data name="Common_None" xml:space="preserve">
         <value>Ninguno</value>
     </data>
@@ -2069,6 +2165,15 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>Al habilitar, el texto seleccionado se añadirá automáticamente como un adjunto.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>El entorno actual no admite la adición automática de selección de texto.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere no puede iniciar la selección automática de texto. Por favor, verifica los permisos de accesibilidad del sistema y vuelve a intentarlo.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>No se pudo iniciar la selección automática de texto, por favor intenta de nuevo.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>Listar Ventanas</value>
@@ -2724,9 +2829,6 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>Esperar {0} milisegundos</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>Ventana {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>Elemento {0}</value>
@@ -3992,7 +4094,22 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Ver documento</value>
     </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>Esta función actualmente la administra otro Everywhere en este equipo</value>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>Leyendo texto visual</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>Leyendo una página de texto delimitado desde elementos visuales</value>
+    </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere intentó recuperar el atajo {0} veces en {1} minutos, pero no tuvo éxito. Por favor, reinicia Everywhere y vuelve a intentarlo.</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere intentó recuperar el reconocimiento de pantalla {0} veces en {1} minutos, pero no tuvo éxito. Por favor, reinicia Everywhere y vuelve a intentarlo.</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere utiliza procesos independientes para alojar las siguientes funciones, proporcionando mayor seguridad y flexibilidad.</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>No se puede enviar la solicitud a Everywhere en ejecución. Por favor, abre Everywhere y vuelve a intentarlo.</value>
     </data>
 </root>

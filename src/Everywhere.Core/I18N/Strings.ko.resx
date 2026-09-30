@@ -617,6 +617,84 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere는 시작 후 자동으로 실행됩니다. &quot;관리자 권한으로 시작&quot;이 활성화된 경우, 현재 옵션은 관리자 모드에서만 비활성화할 수 있습니다.</value>
     </data>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>시스템 상호작용</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>기능 상태</value>
+    </data>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>단축키 및 입력</value>
+    </data>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>화면 인식 및 조작</value>
+    </data>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>준비 중…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>연결됨</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>일부 기능 제한됨</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>현재 사용 불가</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>현재 정상적으로 사용 가능하지만, 관리자 권한으로 실행되는 애플리케이션을 인식하거나 조작하지 못할 수 있습니다. 다시 연결을 시도해 보세요.</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>이 기능은 현재 연결할 수 없습니다. 다시 연결을 시도해 보세요.</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>연결이 끊어졌습니다. Everywhere가 자동으로 다시 연결 중입니다.</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>백그라운드 구성 요소가 제때 준비되지 않았습니다. 다시 연결을 시도해 보세요.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windows가 백그라운드 구성 요소를 시작할 수 없습니다. 다시 연결을 시도하거나 서비스 설정을 확인해 보세요.</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>여러 번의 연결 시도가 실패했습니다. '다시 연결'을 선택하여 다시 시도하세요.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>서비스 모드로 설치</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>활성화하면, Everywhere가 관리자 권한으로 실행되는 애플리케이션을 인식하고 조작할 수 있습니다. 처음 활성화할 때 Windows가 관리자 권한을 요청할 수 있습니다.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>설정 확인 중…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>설정을 완료해야 사용 가능합니다.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>준비 완료</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>이 기능은 현재 이 기기의 다른 Everywhere에서 관리합니다</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>이 기능은 재설정이 필요합니다.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>이 기능을 확인할 수 없습니다.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>Everywhere를 서비스로 설치할 수 없습니다.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>Everywhere 서비스를 제거할 수 없습니다.</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere가 현재 관리자 권한으로 실행 중입니다. 일반 애플리케이션에서의 드래그 앤 드롭이 작동하지 않을 수 있으며, 도우미가 수행하는 작업은 더 높은 시스템 권한을 가집니다.</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>다시 연결</value>
+    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>디버그 기능</value>
     </data>
@@ -1571,6 +1649,24 @@
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>없음</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
+        <value>이 요소에 접근할 수 없습니다.</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Timeout" xml:space="preserve">
+        <value>이 요소가 응답하지 않습니다.</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>이 요소를 사용할 수 없습니다.</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Unsupported" xml:space="preserve">
+        <value>이 요소를 선택할 수 없습니다.</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>이 요소를 확인할 수 없습니다.</value>
+    </data>
     <data name="Common_None" xml:space="preserve">
         <value>없음</value>
     </data>
@@ -2069,6 +2165,15 @@
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>활성화하면 선택한 텍스트가 자동으로 첨부됩니다.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>현재 환경에서는 자동 선택 추가를 지원하지 않습니다.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere가 자동 선택을 시작할 수 없습니다. 시스템의 접근성 권한을 확인한 후 다시 시도하세요.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>자동 선택이 시작되지 않았습니다. 다시 시도하세요.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>창 목록</value>
@@ -2724,9 +2829,6 @@
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>{0}밀리초 대기합니다</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>창 {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>요소 {0}</value>
@@ -3992,7 +4094,22 @@
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>문서 보기</value>
     </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>이 기능은 현재 이 기기의 다른 Everywhere에서 관리합니다</value>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>시각 텍스트를 읽는 중</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>시각 요소에서 페이지의 경계 텍스트를 계속 읽습니다.</value>
+    </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere가 {1} 분 동안 단축키 {0} 회 복구를 시도했으나 여전히 성공하지 못했습니다. Everywhere를 재시작한 후 다시 시도하세요.</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere가 {1} 분 동안 화면 인식을 {0} 회 복구를 시도했으나 여전히 성공하지 못했습니다. Everywhere를 재시작한 후 다시 시도하세요.</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere는 더 강력한 보안성과 유연성을 제공하기 위해 아래 기능을 독립 프로세스로 실행합니다.</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>실행 중인 Everywhere에 요청을 보낼 수 없습니다. Everywhere를 열고 다시 시도하세요.</value>
     </data>
 </root>

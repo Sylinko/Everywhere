@@ -617,6 +617,84 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhere başlatıldığında otomatik olarak çalışacak. “Yönetici Olarak Başlangıç” etkinse, mevcut seçenek yalnızca yönetici modunda devre dışı bırakılabilir.</value>
     </data>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>Sistem Etkileşimi</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>Fonksiyon Durumu</value>
+    </data>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>Klavye Kısayolları ve Giriş</value>
+    </data>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>Ekran Tanıma ve İşlem</value>
+    </data>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>Hazırlanıyor…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>Bağlı</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>Bazı fonksiyonlar kısıtlı</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>Geçici olarak kullanılamıyor</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>Şu anda normal şekilde çalışıyor, ancak yönetici olarak çalışan uygulamaları tanıyıp işlemeyebilir. Yeniden bağlanmayı deneyebilirsiniz.</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>Bu özellik geçici olarak bağlanamıyor. Yeniden bağlanmayı deneyebilirsiniz.</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>Bağlantı kesildi, Everywhere otomatik olarak yeniden bağlanıyor.</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>Arka plan bileşeni zamanında hazır olamadı. Yeniden bağlanmayı deneyebilirsiniz.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windows arka plan bileşenini başlatamadı. Yeniden bağlanmayı deneyebilir veya hizmet ayarlarını kontrol edebilirsiniz.</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>Birden fazla bağlantı denemesi başarısız oldu. Lütfen 'Yeniden Bağlan' seçeneğini seçerek tekrar deneyin.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>Hizmet Modu ile Kurulum</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>Açıldığında, Everywhere yönetici olarak çalışan uygulamaları da tanıyıp işleyebilir. İlk kez açıldığında, Windows yönetici izni isteyebilir.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>Ayarlar kontrol ediliyor…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>Kullanmak için ayarların tamamlanması gerekiyor</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>Hazır</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>Bu özellik şu anda bu cihazdaki başka bir Everywhere tarafından yönetiliyor</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>Bu özellik yeniden ayarlanmayı gerektiriyor</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>Bu özellik geçici olarak kontrol edilemiyor.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>Everywhere hizmet olarak yüklenemedi.</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>Everywhere hizmeti kaldırılamadı.</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere şu anda yönetici olarak çalışıyor. Normal uygulamalardan sürükleyip bırakma işlemleri kullanılamayabilir ve asistanın gerçekleştirdiği işlemler daha yüksek sistem izinlerine sahip olacaktır.</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>Bağlantıyı Yenile</value>
+    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>Hata Ayıklama Özellikleri</value>
     </data>
@@ -1571,6 +1649,24 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>Yok</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
+        <value>Bu elemana erişilemiyor</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Timeout" xml:space="preserve">
+        <value>Bu eleman yanıt vermiyor</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>Bu eleman artık kullanılamıyor</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Unsupported" xml:space="preserve">
+        <value>Bu eleman seçilemiyor</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>Bu eleman kontrol edilemiyor</value>
+    </data>
     <data name="Common_None" xml:space="preserve">
         <value>Yok</value>
     </data>
@@ -2069,6 +2165,15 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>Etkinleştirildiğinde, seçili metin otomatik olarak ek olarak eklenir.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>Mevcut ortam otomatik kelime eklemeyi desteklemiyor.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere otomatik kelime eklemeyi başlatamadı. Lütfen sistemin erişilebilirlik izinlerini kontrol edip tekrar deneyin.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>Otomatik kelime ekleme başlatılamadı, lütfen tekrar deneyin.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>Pencereleri Listele</value>
@@ -2724,9 +2829,6 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>{0} milisaniye bekle</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>pencere {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>öğe {0}</value>
@@ -3992,7 +4094,22 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>Belgeyi görüntüle</value>
     </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>Bu özellik şu anda bu cihazdaki başka bir Everywhere tarafından yönetiliyor</value>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>Görsel metin okunuyor</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>Görsel elemanlardan bir sayfa metin okunuyor</value>
+    </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere, {1} dakika içinde kısayolu {0} kez kurtarmaya çalıştı, ancak hala başarılı olamadı. Lütfen Everywhere'ı yeniden başlatıp tekrar deneyin.</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere, {1} dakika içinde ekran tanımayı {0} kez kurtarmaya çalıştı, ancak hala başarılı olamadı. Lütfen Everywhere'ı yeniden başlatıp tekrar deneyin.</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere, daha güçlü güvenlik ve esneklik sağlamak için aşağıdaki işlevleri bağımsız süreçler aracılığıyla sunar.</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>Çalışan Everywhere'a istek gönderilemedi. Lütfen Everywhere'ı açıp tekrar deneyin.</value>
     </data>
 </root>

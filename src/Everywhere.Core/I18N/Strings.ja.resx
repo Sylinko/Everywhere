@@ -617,6 +617,84 @@
     <data name="SoftwareSettings_IsStartupEnabled_Description" xml:space="preserve">
         <value>Everywhereはスタートアップ後に自動的に実行されます。「管理者としてスタートアップ」が有効な場合、このオプションは管理者モードでのみ無効にできます。</value>
     </data>
+    <data name="SoftwareSettings_HostsStatus_Header" xml:space="preserve">
+        <value>システムインタラクション</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Header" xml:space="preserve">
+        <value>機能ステータス</value>
+    </data>
+    <data name="HostsStatusControl_InputHost_Header" xml:space="preserve">
+        <value>ショートカットと入力</value>
+    </data>
+    <data name="HostsStatusControl_AutomationHost_Header" xml:space="preserve">
+        <value>画面認識と操作</value>
+    </data>
+    <data name="HostsStatusControl_Connecting" xml:space="preserve">
+        <value>準備中…</value>
+    </data>
+    <data name="HostsStatusControl_Connected" xml:space="preserve">
+        <value>接続済み</value>
+    </data>
+    <data name="HostsStatusControl_ConnectedFallback" xml:space="preserve">
+        <value>一部機能制限中</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable" xml:space="preserve">
+        <value>利用不可</value>
+    </data>
+    <data name="HostsStatusControl_Fallback_ToolTip" xml:space="preserve">
+        <value>現在正常に使用できますが、管理者権限で実行されているアプリの認識や操作ができない場合があります。再接続を試みてください。</value>
+    </data>
+    <data name="HostsStatusControl_Unavailable_ToolTip" xml:space="preserve">
+        <value>この機能は一時的に接続できません。再接続を試みてください。</value>
+    </data>
+    <data name="HostsStatusControl_Reconnecting_ToolTip" xml:space="preserve">
+        <value>接続が切断されました。Everywhereが自動的に再接続しています。</value>
+    </data>
+    <data name="HostsStatusControl_StartupTimedOut_ToolTip" xml:space="preserve">
+        <value>バックグラウンドコンポーネントがタイムリーに準備できませんでした。再接続を試みてください。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceLaunchFailed_ToolTip" xml:space="preserve">
+        <value>Windowsがバックグラウンドコンポーネントを起動できませんでした。再接続を試みるか、サービス設定を確認してください。</value>
+    </data>
+    <data name="HostsStatusControl_RecoveryStopped_ToolTip" xml:space="preserve">
+        <value>複数回の接続試行が失敗しました。「再接続」を選択して再試行してください。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Header" xml:space="preserve">
+        <value>サービスモードでインストール</value>
+    </data>
+    <data name="HostsStatusControl_ServiceMode_Description" xml:space="preserve">
+        <value>有効にすると、Everywhereが管理者権限で実行されているアプリを認識し操作できるようになります。初回有効化時に、Windowsが管理者の承認を求める場合があります。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeChecking" xml:space="preserve">
+        <value>設定を確認中…</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeNotConfigured" xml:space="preserve">
+        <value>設定を完了する必要があります</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeCurrentExecutable" xml:space="preserve">
+        <value>準備完了</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
+        <value>この機能は現在、このデバイス上の別の Everywhere によって管理されています</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeInvalid" xml:space="preserve">
+        <value>この機能は再設定が必要です</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeUnavailableStatus" xml:space="preserve">
+        <value>この機能を一時的に確認できません</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeConfigurationFailed" xml:space="preserve">
+        <value>Everywhere をサービスとしてインストールできませんでした。</value>
+    </data>
+    <data name="HostsStatusControl_ServiceModeRemovalFailed" xml:space="preserve">
+        <value>Everywhere サービスをアンインストールできませんでした。</value>
+    </data>
+    <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
+        <value>Everywhere は現在管理者として実行されています。通常のアプリからのドラッグ＆ドロップは使用できない場合があり、アシスタントが実行する操作はより高いシステム権限を持ちます。</value>
+    </data>
+    <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
+        <value>再接続</value>
+    </data>
     <data name="SoftwareSettings_DebugFeatures_Header" xml:space="preserve">
         <value>デバッグ機能</value>
     </data>
@@ -1571,6 +1649,24 @@
     <data name="ScreenSelectionToolTip_GetElementDescription_NoElement" xml:space="preserve">
         <value>なし</value>
     </data>
+    <data name="ScreenSelectionToolTip_ElementDescription" xml:space="preserve">
+        <value>{0} - {1}</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_PermissionDenied" xml:space="preserve">
+        <value>この要素にアクセスできません</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Timeout" xml:space="preserve">
+        <value>この要素はまだ応答していません</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ElementUnavailable" xml:space="preserve">
+        <value>この要素は利用できなくなりました</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_Unsupported" xml:space="preserve">
+        <value>この要素を選択できません</value>
+    </data>
+    <data name="ScreenSelectionToolTip_QueryFailure_ProviderFailure" xml:space="preserve">
+        <value>この要素を確認できません</value>
+    </data>
     <data name="Common_None" xml:space="preserve">
         <value>なし</value>
     </data>
@@ -2069,6 +2165,15 @@
     </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>有効にすると、選択したテキストが自動的に添付ファイルとして追加されます。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_Unsupported" xml:space="preserve">
+        <value>現在の環境では自動選択追加がサポートされていません。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_PermissionDenied" xml:space="preserve">
+        <value>Everywhere は自動選択を開始できませんでした。システムのアクセシビリティ権限を確認して再試行してください。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
+        <value>自動選択の開始に失敗しました。再試行してください。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>ウィンドウを一覧表示</value>
@@ -2724,9 +2829,6 @@
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait" xml:space="preserve">
         <value>{0} ミリ秒待機</value>
-    </data>
-    <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd" xml:space="preserve">
-        <value>ウィンドウ {0}</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId" xml:space="preserve">
         <value>要素 {0}</value>
@@ -3992,7 +4094,22 @@
     <data name="SettingsItemControl_OpenDocumentHyperlinkButton_Content" xml:space="preserve">
         <value>ドキュメントを表示</value>
     </data>
-    <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
-        <value>この機能は現在、このデバイス上の別の Everywhere によって管理されています</value>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Header" xml:space="preserve">
+        <value>視覚テキストを読み取っています</value>
+    </data>
+    <data name="BuiltInChatPlugin_VisualContext_ReadVisualText_Description" xml:space="preserve">
+        <value>視覚要素からページの有界テキストを読み取ります</value>
+    </data>
+    <data name="ProcessIsolation_InputHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere は {1} 分間にショートカットキー {0} 回の回復を試みましたが、成功しませんでした。Everywhere を再起動して再試行してください。</value>
+    </data>
+    <data name="ProcessIsolation_AutomationHostRecoveryStopped_NotificationMessage" xml:space="preserve">
+        <value>Everywhere は {1} 分間に画面認識 {0} 回の回復を試みましたが、成功しませんでした。Everywhere を再起動して再試行してください。</value>
+    </data>
+    <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
+        <value>Everywhere は、より強力なセキュリティと柔軟性を提供するために、独立したプロセスで以下の機能をホストします。</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>実行中の Everywhere にリクエストを送信できませんでした。Everywhere を開いて再試行してください。</value>
     </data>
 </root>
