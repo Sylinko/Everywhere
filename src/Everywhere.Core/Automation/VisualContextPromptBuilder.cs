@@ -55,7 +55,6 @@ public static class VisualContextPromptBuilder
         var allNodes = OrderNodesByRootFairness(roots);
         for (var index = 0; index < allNodes.Length; index++) allNodes[index].RelevanceRank = index;
 
-
         var selectedNodes = new HashSet<ProjectionNode>(allNodes, ReferenceEqualityComparer.Instance);
         var hasBudgetOmission = false;
         var maximumAttempts = checked(allNodes.Length + 2);
@@ -73,9 +72,14 @@ public static class VisualContextPromptBuilder
                     $"The visual-context skeleton cannot fit within the target budget of {effectiveOptions.TargetTokenBudget} tokens.");
             }
 
-            var survivingNodes = attempt.TargetElements.AsValueEnumerable().Where(pair => includedNodes.Contains(pair.Key))
-                .Select(static pair => pair.Value).ToHashSet(ReferenceEqualityComparer.Instance);
-            var missingRequiredNode = selectedNodes.AsValueEnumerable().FirstOrDefault(node => node.IsRequired && !survivingNodes.Contains(node));
+            var survivingNodes = attempt.TargetElements
+                .AsValueEnumerable()
+                .Where(pair => includedNodes.Contains(pair.Key))
+                .Select(static pair => pair.Value)
+                .ToHashSet(ReferenceEqualityComparer.Instance);
+            var missingRequiredNode = selectedNodes
+                .AsValueEnumerable()
+                .FirstOrDefault(node => node.IsRequired && !survivingNodes.Contains(node));
             if (missingRequiredNode is not null)
             {
                 throw new PromptBudgetExceededException(

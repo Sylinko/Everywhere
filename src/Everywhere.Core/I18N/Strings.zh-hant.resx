@@ -3995,4 +3995,7 @@
     <data name="HostsStatusControl_ServiceModeOtherExecutable" xml:space="preserve">
         <value>此功能目前由本機的另一個 Everywhere 管理</value>
     </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>無法將請求傳送至正在執行的 Everywhere。請開啟 Everywhere 後重試。</value>
+    </data>
 </root>

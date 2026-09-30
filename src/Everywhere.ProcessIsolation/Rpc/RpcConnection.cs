@@ -74,7 +74,7 @@ public sealed class RpcConnection : IAsyncDisposable
     private int _isStarted;
     private RpcSafeHandleReleaseQueue? _safeHandleReleaseQueue;
 
-    /// <summary>Creates an unstarted connection over an owned full-duplex stream.</summary>
+    /// <summary>Creates an unstarted connection over a full-duplex stream, owned unless the options retain it.</summary>
     public RpcConnection(Stream stream, bool isServer, RpcConnectionOptions? options = null, MessagePackRpcPayloadCodec? codec = null)
     {
         IsServer = isServer;
@@ -901,7 +901,7 @@ public sealed class RpcConnection : IAsyncDisposable
 
         public ValueTask DisposeAsync()
         {
-            return stream.DisposeAsync();
+            return options.LeaveOpen ? ValueTask.CompletedTask : stream.DisposeAsync();
         }
 
         public void Start(Func<RpcFrame, CancellationToken, ValueTask> receive, Action<Exception?> ended, CancellationToken cancellationToken)

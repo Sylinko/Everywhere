@@ -326,8 +326,6 @@ public sealed partial class OAuthCloudClient :
     {
         if (message is not UrlProtocolCallbackMessage oauth) return;
 
-        _logger.LogDebug("Received URL callback: {url}", oauth.Url);
-
         // Route the callback to the active interactive flow if one is currently awaiting
         _activeAuthFlow?.HandleCallback(oauth.Url);
     }

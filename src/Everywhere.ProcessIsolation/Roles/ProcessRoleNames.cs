@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Security.Principal;
 
 namespace Everywhere.ProcessIsolation.Roles;
 
@@ -51,7 +52,14 @@ public static class ProcessRoleNames
         // the temporary directory. Keep the complete socket path below
         // sockaddr_un's 104-byte limit on every platform while retaining the
         // user/session scope in the stable identity hash.
-        var identity = $"{Environment.UserName}\0{desktopSessionId}";
+        var userIdentity = Environment.UserName;
+        if (OperatingSystem.IsWindows())
+        {
+            using var windowsIdentity = WindowsIdentity.GetCurrent();
+            userIdentity = windowsIdentity.User?.Value ?? throw new InvalidOperationException("The current Windows user SID is unavailable.");
+        }
+
+        var identity = $"{userIdentity}\0{desktopSessionId}";
         var identityHash = SHA256.HashData(Encoding.UTF8.GetBytes(identity));
         var compactIdentity = Convert.ToHexString(identityHash.AsSpan(0, 8));
         return $"Everywhere.{compactIdentity}.{wireName}";

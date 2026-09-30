@@ -13,7 +13,7 @@ On Windows and macOS, Everywhere uses the same executable for three long-lived r
 
 [Text-selection monitoring](../Automation/11-TextSelectionMonitoring.md) runs entirely in Automation Host: gesture observation, debounce, accessibility reads, and clipboard fallback. Main controls enablement and consumes results over its Automation connection. Each Host owns the native hooks required by its features; reusable hook infrastructure does not determine process ownership.
 
-Role and controller dispatch occurs before Entrance, dependency injection, Avalonia, databases, or the ordinary application graph. Host processes use `ProcessRoleHostRunner` and construct only their platform session. The controller receives a small platform implementation directly from the platform entry point.
+Role and controller dispatch occurs before Main's single-instance arbitration, Entrance, dependency injection, Avalonia, databases, or the ordinary application graph. Each platform entry point owns its single-instance claim and secondary-launch policy; only a primary calls `Entrance.Initialize` for the shared runtime. Host processes use `ProcessRoleHostRunner` and construct only their platform session. The controller receives a small platform implementation directly from the platform entry point.
 
 Main uses the caller's token and requests neither elevation nor UIAccess in its manifest. On Windows, service mode elevates only the Input and Automation Hosts through the registered scheduled task. Starting Main as administrator is allowed but produces a user warning because drag-and-drop interoperability may fail and Agent actions inherit broader authority.
 
@@ -33,7 +33,7 @@ Task Scheduler acceptance, controller exit, process creation, and authenticated 
 
 ## Endpoint ownership and identity
 
-Endpoints are derived from role plus the current user/session identity. Independent interactive sessions can therefore run independent Main and Host pairs. Windows uses the first-pipe-instance flag for ownership; macOS uses an additional endpoint lease because its named-pipe implementation does not expose equivalent ownership.
+Endpoints are derived from role plus the current user/session identity; Windows uses the token user SID rather than a display or account name. Independent interactive sessions can therefore run independent Main and Host pairs. Windows uses the first-pipe-instance flag for ownership; macOS uses an additional endpoint lease because its named-pipe implementation does not expose equivalent ownership.
 
 A Host accepts one Main connection. That connection owns the role session lifetime, and the Host does not listen again after it ends. Competing late candidates may start, but endpoint ownership decides which process can become the live Host.
 
@@ -43,6 +43,8 @@ Peer verification precedes the application handshake:
 - macOS obtains the peer effective user and PID from the Unix-domain socket, resolves the process image with `proc_pidpath`, canonicalizes both paths with `realpath`, and requires an exact match.
 
 The handshake then checks role, build identity, and desktop-session identity. Claimed PID or path values are not treated as peer authentication.
+
+On Windows and Linux, Main additionally owns an early, session-scoped activation listener for secondary launches and URL callbacks. Its stable endpoint claim replaces the named application mutex, and its short RPC sessions do not own Main's lifetime. The shared Windows pipe factory applies a current-user DACL and medium integrity label for communication across UAC elevation. macOS uses native application events and retains a separate named-object claim for direct executable starts; it does not create an activation RPC listener. A direct macOS secondary prints a console message and exits. Windows interprets `--autorun` only for a secondary, which exits without activation; primary window policy is unchanged. Shared runtime initialization and App shutdown do not require the activation service. See [Application activation](ApplicationActivation.md) for platform routing, acceptance, startup delivery, and shutdown ownership.
 
 ## Host generation and recovery
 

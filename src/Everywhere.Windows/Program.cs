@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -8,6 +7,7 @@ using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
@@ -19,8 +19,8 @@ using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
 using Everywhere.Windows.Initialization;
 using Everywhere.Windows.Interop;
-using Everywhere.Windows.ProcessIsolation.Input;
 using Everywhere.Windows.ProcessIsolation;
+using Everywhere.Windows.ProcessIsolation.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Serilog;
@@ -53,34 +53,30 @@ public static class Program
                 RunAutomationHostAsync(args, peerVerifier)).ConfigureAwait(false);
         }
 
-        var entrance = Entrance.Initialize(args);
-        try
+        // Claim before runtime initialization and retain ownership through application and DI cleanup.
+        await using var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
+        if (activationServer is null)
         {
-            if (!entrance.IsPrimary)
-            {
-                return await entrance.ForwardAsync().ConfigureAwait(false);
-            }
+            // Login startup must not activate an already running Main. Primary window policy is unchanged.
+            if (args.Contains("--autorun")) return 0;
+            return await ApplicationActivationEntrance.SendToPrimaryAsync(args, peerVerifier).ConfigureAwait(false);
+        }
 
-            return await RunMainAsync(args, hostsControlPlatform, peerVerifier).ConfigureAwait(false);
-        }
-        finally
-        {
-            await entrance.DisposeAsync().ConfigureAwait(false);
-        }
+        Entrance.Initialize();
+        return await RunMainAsync(args, hostsControlPlatform, peerVerifier, activationServer).ConfigureAwait(false);
     }
 
-    private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier) => Task.Run(
-        async () =>
+    private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier) => Task.Run(async () =>
+    {
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
         {
-            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
-            {
-                throw new InvalidOperationException("The Windows Automation Host must run on an MTA thread.");
-            }
+            throw new InvalidOperationException("The Windows Automation Host must run on an MTA thread.");
+        }
 
-            return await ProcessRoleHostRunner
-                .RunAsync(ProcessRole.Automation, args, peerVerifier, CreateAutomationHostSession)
-                .ConfigureAwait(false);
-        });
+        return await ProcessRoleHostRunner
+            .RunAsync(ProcessRole.Automation, args, peerVerifier, CreateAutomationHostSession)
+            .ConfigureAwait(false);
+    });
 
     private static IProcessRoleSession CreateAutomationHostSession()
     {
@@ -98,7 +94,8 @@ public static class Program
     private static async Task<int> RunMainAsync(
         string[] args,
         WindowsHostsControlPlatform hostsControlPlatform,
-        INamedPipePeerVerifier peerVerifier)
+        INamedPipePeerVerifier peerVerifier,
+        ApplicationActivationServer activationServer)
     {
         if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
         {
@@ -107,9 +104,10 @@ public static class Program
 
         var serviceProvider = ServiceLocator.Build(x => x
 
-            #region Basic
+                #region Basic
 
                 .AddApplicationLogging()
+                .AddSingleton(activationServer)
                 .AddSingleton<IHostsServiceModeManager>(hostsControlPlatform)
                 .AddSingleton(peerVerifier)
                 .AddProcessIsolation()
@@ -128,25 +126,25 @@ public static class Program
                 .AddCloudClient()
                 .AddChatEssentials()
 
-            #endregion
+                #endregion
 
-            #region Chat Plugins
+                #region Chat Plugins
 
-            .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
+                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
-            #endregion
+                #endregion
 
-            #region Strategy Engine
+                #region Strategy Engine
 
-            .AddStrategyEngine()
+                .AddStrategyEngine()
 
-            #endregion
+                #endregion
 
-            #region Initialize
+                #region Initialize
 
-            .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-            .AddTransient<IAsyncInitializer, UpdaterInitializer>()
-            .AddTransient<IAsyncInitializer, ElevatedMainNotificationInitializer>()
+                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+                .AddTransient<IAsyncInitializer, ElevatedMainNotificationInitializer>()
 
             #endregion
 

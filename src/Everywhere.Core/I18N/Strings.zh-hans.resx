@@ -690,7 +690,7 @@
         <value>无法卸载 Everywhere 服务。</value>
     </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
-        <value>Everywhere 当前正以管理员身份运行。来自普通应用的拖放可能无法使用，助手执行的操作也会拥有更高的系统权限。不需要管理员权限时，请正常重新启动 Everywhere。</value>
+        <value>Everywhere 当前正以管理员身份运行。来自普通应用的拖放可能无法使用，助手执行的操作也会拥有更高的系统权限。</value>
     </data>
     <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
         <value>重新连接</value>
@@ -4106,5 +4106,8 @@
     </data>
     <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
         <value>Everywhere 使用独立进程承载下列功能，以提供更强的安全性和灵活性。</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>无法将请求发送到正在运行的 Everywhere。请打开 Everywhere 后重试。</value>
     </data>
 </root>

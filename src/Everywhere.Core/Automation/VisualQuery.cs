@@ -19,7 +19,7 @@ public sealed partial record VisualQueryRequest
     /// <summary>
     /// Gets the hard maximum node limit accepted from an Agent call.
     /// </summary>
-    public const int MaximumLimit = 256;
+    public const int MaximumLimit = 1024;
 
     /// <summary>
     /// Gets the relations that may be observed around the query anchors.

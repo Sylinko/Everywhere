@@ -11,6 +11,8 @@ using Everywhere.Interop;
 using Everywhere.Linux.Chat.Plugins;
 using Everywhere.Linux.Common;
 using Everywhere.Linux.Interop;
+using Everywhere.Linux.ProcessIsolation;
+using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,83 +54,85 @@ public static class Program
 
     private static async Task<int> RunAsync(string[] args)
     {
-        var entrance = Entrance.Initialize(args);
-        try
+        var peerVerifier = new LinuxNamedPipePeerVerifier();
+        // Retain the endpoint claim until application and DI cleanup complete.
+        await using var activationServer = ApplicationActivationEntrance.TryCreateServer(args, peerVerifier);
+        if (activationServer is null)
         {
-            if (!entrance.IsPrimary)
-            {
-                return await entrance.ForwardAsync().ConfigureAwait(false);
-            }
+            return await ApplicationActivationEntrance.SendToPrimaryAsync(args, peerVerifier).ConfigureAwait(false);
+        }
 
-            var serviceProvider = ServiceLocator.Build(x => x
+        Entrance.Initialize();
+        return await RunMainAsync(args, activationServer).ConfigureAwait(false);
+    }
 
-                #region Basic
+    private static async Task<int> RunMainAsync(string[] args, ApplicationActivationServer activationServer)
+    {
+        var serviceProvider = ServiceLocator.Build(x => x
 
-                .AddApplicationLogging()
-                .AddWindowEventHelper()
-                .AddSingleton<IVisualElementContext, VisualElementContext>()
-                .AddSingleton<IShortcutListener, ShortcutListener>()
-                .AddSingleton<INativeHelper, NativeHelper>()
-                .AddSingleton<IPlatformUpdateHandler, LinuxUpdateHandler>()
-                .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
-                .AddSettings()
-                .AddWatchdogManager()
-                .ConfigureNetwork()
-                .AddViewsAndViewModels()
-                .AddDatabaseAndStorage()
-                .AddChatEssentials()
+            #region Basic
 
-                #endregion
-
-                #region Chat Plugins
-
-                .AddTransient<BuiltInChatPlugin, FdFindPlugin>()
-
-                #endregion
-
-                #region Chat
-
-                .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
-                .AddSingleton<IChatPluginManager, ChatPluginManager>()
-                .AddSingleton<IChatService, ChatService>()
-                .AddChatContextManager()
-
-                #endregion
-
-                #region Strategy Engine
-
-                .AddStrategyEngine()
-
-                #endregion
-
-                #region Initialize
-
-                .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+            .AddApplicationLogging()
+            .AddSingleton(activationServer)
+            .AddWindowEventHelper()
+            .AddSingleton<IVisualElementContext, VisualElementContext>()
+            .AddSingleton<IShortcutListener, ShortcutListener>()
+            .AddSingleton<INativeHelper, NativeHelper>()
+            .AddSingleton<IPlatformUpdateHandler, LinuxUpdateHandler>()
+            .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
+            .AddSettings()
+            .AddWatchdogManager()
+            .ConfigureNetwork()
+            .AddViewsAndViewModels()
+            .AddDatabaseAndStorage()
+            .AddChatEssentials()
 
             #endregion
 
-        );
+            #region Chat Plugins
 
-            try
-            {
-                var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-                if (Application.Current is App app)
-                {
-                    await app.WaitForShutdownAsync().ConfigureAwait(false);
-                }
+            .AddTransient<BuiltInChatPlugin, FdFindPlugin>()
 
-                return exitCode;
-            }
-            finally
+            #endregion
+
+            #region Chat
+
+            .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
+            .AddSingleton<IChatPluginManager, ChatPluginManager>()
+            .AddSingleton<IChatService, ChatService>()
+            .AddChatContextManager()
+
+            #endregion
+
+            #region Strategy Engine
+
+            .AddStrategyEngine()
+
+            #endregion
+
+            #region Initialize
+
+            .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
+            .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+
+        #endregion
+
+    );
+
+        try
+        {
+            var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
+            if (Application.Current is App app)
             {
-                // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
-                await serviceProvider.DisposeAsync().ConfigureAwait(false);
+                await app.WaitForShutdownAsync().ConfigureAwait(false);
             }
+
+            return exitCode;
         }
         finally
         {
-            await entrance.DisposeAsync().ConfigureAwait(false);
+            // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
+            await serviceProvider.DisposeAsync().ConfigureAwait(false);
         }
     }
 

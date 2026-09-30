@@ -13,6 +13,7 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
+using Everywhere.ProcessIsolation.Activation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.Views;
@@ -52,7 +53,12 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
     private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
 
+    // Platform entry points opt in by registering their externally owned RPC listener.
+    // macOS delivers activation through native application events instead.
+    private readonly ApplicationActivationServer? _activationServer = serviceProvider.GetService<ApplicationActivationServer>();
+
     private Task? _initializationTask;
+    private Task? _activationTask;
 
     // Native message boxes run a nested Windows message loop. A dispatcher exception can therefore
     // arrive while the first error dialog is still open; without this guard every nested exception
@@ -121,6 +127,16 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
             catch (OperationCanceledException) when (_initializationCancellation.IsCancellationRequested)
             {
             }
+        }
+
+        if (_activationServer is not null)
+        {
+            await _activationServer.StopAsync().ConfigureAwait(false);
+        }
+
+        if (_activationTask is not null)
+        {
+            await _activationTask.ConfigureAwait(false);
         }
     }
 
@@ -295,6 +311,12 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
                 RecordAppLaunchMetric();
                 TrayIcon.SetIcons(this, [new MainTrayIcon(this, serviceProvider)]);
                 ShowMainWindowOnNeeded();
+
+                if (_activationServer is not null)
+                {
+                    _activationTask = DispatchActivationsAsync(_activationServer, cancellationToken);
+                    _activationTask.Detach(NativeMessageBox.ExceptionHandler);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -311,6 +333,44 @@ public class App(IServiceProvider serviceProvider) : Application, IRecipient<App
 
                 Shutdown(1);
             }
+        }
+    }
+
+    /// <summary>
+    /// Drains background ingress only after application recipients and the chat window are initialized.
+    /// Only message delivery enters Avalonia's UI thread. Cancellable dispatcher operations keep
+    /// the worker drainable after the desktop message loop exits.
+    /// </summary>
+    private async Task DispatchActivationsAsync(ApplicationActivationServer server, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await foreach (var request in server.ReadPendingAsync(cancellationToken).ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ApplicationMessage message = request switch
+                {
+                    UrlCallbackActivationRequest callback => new UrlProtocolCallbackMessage(callback.Url),
+                    ShowChatWindowActivationRequest => new ShowWindowMessage(ShowWindowMessage.ChatWindow),
+                    _ => throw new NotSupportedException($"Unsupported activation request type: {request.GetType().FullName}")
+                };
+                await Dispatcher.UIThread.InvokeAsync(
+                    () =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        WeakReferenceMessenger.Default.Send(message);
+                    },
+                    DispatcherPriority.Normal,
+                    cancellationToken).GetTask().ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Log.Logger.Fatal(exception, "Application activation delivery stopped.");
+            Dispatcher.UIThread.PostOnDemand(() => Shutdown(1));
         }
     }
 

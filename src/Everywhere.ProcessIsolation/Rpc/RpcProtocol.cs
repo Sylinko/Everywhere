@@ -142,6 +142,12 @@ public sealed class RpcRemoteException(string code, string message) : Exception(
 /// </summary>
 public sealed record RpcConnectionOptions
 {
+    /// <summary>
+    /// Leaves the stream open after all connection I/O has stopped. Activation listeners
+    /// retain their pipe handle across short-lived sessions to preserve endpoint ownership.
+    /// </summary>
+    public bool LeaveOpen { get; init; }
+
     /// <summary>Whether ordinary frames are rejected until the handshake succeeds.</summary>
     public bool RequireHandshake { get; init; } = true;
 

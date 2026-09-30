@@ -257,9 +257,12 @@ public static class VisualContextSnapshotter
                 _traversalCancellation.CancelAfter(limits.MaximumElapsed);
                 EnqueueCoreElements();
                 ProcessQueue();
-                var roots = _nodes.Values.AsValueEnumerable().Where(static node => node.Parent is null).OrderBy(static node => node.TraversalOrdinal)
+                var roots = _nodes.Values
+                    .AsValueEnumerable()
+                    .Where(static node => node.Parent is null)
+                    .OrderBy(static node => node.TraversalOrdinal)
                     .ToArray();
-                var snapshot = new VisualContextSnapshot(_retention, roots, _status.ToArray());
+                var snapshot = new VisualContextSnapshot(_retention, roots, [.. _status]);
                 _isRetentionTransferred = true;
                 return snapshot;
             }

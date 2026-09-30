@@ -690,7 +690,7 @@
         <value>The Everywhere service could not be removed.</value>
     </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
-        <value>Everywhere is running as administrator. Drag and drop from standard apps may not work, and actions performed by the assistant have broader access to your system. Restart Everywhere normally when administrator access is not needed.</value>
+        <value>Everywhere is running as administrator. Drag and drop from standard apps may not work, and actions performed by the assistant have broader access to your system.</value>
     </data>
     <data name="HostsStatusControl_Retry_Content" xml:space="preserve">
         <value>Reconnect</value>
@@ -4108,5 +4108,8 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="SoftwareSettings_HostsStatusItem_Description" xml:space="preserve">
         <value>Everywhere uses separate processes to host the following features, providing greater security and flexibility.</value>
+    </data>
+    <data name="Entrance_ActivationFailed" xml:space="preserve">
+        <value>Could not deliver the request to the running Everywhere instance. Open Everywhere and try again.</value>
     </data>
 </root>

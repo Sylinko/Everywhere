@@ -1,14 +1,12 @@
-using MessagePack;
+using Everywhere.ProcessIsolation.Activation;
 
 namespace Everywhere.Messages;
 
 /// <summary>
-/// Represents an application message. It can be sent between different parts of the application or different processes.
+/// Represents a message exchanged between parts of Main.
+/// External activation uses a separate RPC contract.
 /// </summary>
-[MessagePackObject]
-[Union(0, typeof(ShowWindowMessage))]
-[Union(1, typeof(UrlProtocolCallbackMessage))]
-public abstract partial class ApplicationMessage;
+public abstract class ApplicationMessage;
 
 /// <summary>
 /// Message to show the main application window.
@@ -21,27 +19,22 @@ public abstract partial class ApplicationMessage;
 /// <param name="name">
 /// The name of the ViewModel to be shown.
 /// </param>
-[MessagePackObject]
-public partial class ShowWindowMessage(string name, object? route = null) : ApplicationMessage
+public class ShowWindowMessage(string name, object? route = null) : ApplicationMessage
 {
     public const string MainWindow = nameof(MainWindow);
     public const string ChatWindow = nameof(ChatWindow);
 
-    [Key(0)]
     public string Name { get; } = name;
 
-    [Key(1)]
     public object? Route { get; } = route;
 }
 
 /// <summary>
 /// Message to handle when the application is launched via URL protocol.
 /// </summary>
-[MessagePackObject]
-public partial class UrlProtocolCallbackMessage(string url) : ApplicationMessage
+public class UrlProtocolCallbackMessage(string url) : ApplicationMessage
 {
-    public const string Scheme = "sylinko-everywhere";
+    public const string Scheme = UrlCallbackActivationRequest.UrlScheme;
 
-    [Key(0)]
     public string Url { get; } = url;
 }

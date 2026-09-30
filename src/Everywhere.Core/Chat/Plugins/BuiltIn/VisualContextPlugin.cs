@@ -156,11 +156,11 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [FromKernelServices] Assistant assistant,
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Visual element ID in visual-context")] int target,
-        [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, or none")]
+        [Description("Comma-separated traversal directions: all, parent, child, previous, next, siblings, none")]
         string directions = "all",
         [Description("Number of results to skip independently in each requested initial direction")]
         int offset = 0,
-        [Description("Maximum admitted nodes; values above 256 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
+        [Description("Maximum admitted nodes; values above 1024 are clamped")] int limit = VisualQueryRequest.DefaultLimit,
         bool boxes = false,
         CancellationToken cancellationToken = default)
     {

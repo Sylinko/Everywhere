@@ -33,7 +33,8 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
     }
 
     /// <summary>Creates an unstarted Main-control listener for the current desktop session.</summary>
-    public static MainHostControlServer Create(HostProcessCoordinator coordinator, INamedPipePeerVerifier peerVerifier) => new(coordinator, peerVerifier);
+    public static MainHostControlServer Create(HostProcessCoordinator coordinator, INamedPipePeerVerifier peerVerifier) =>
+        new(coordinator, peerVerifier);
 
     /// <summary>
     /// Starts accepting controller connections. Completion means the control pipe
@@ -93,7 +94,7 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
             NamedPipeServerStream? server = null;
             try
             {
-                server = CreateServer(endpoint);
+                server = NamedPipeEndpoint.CreateServer(endpoint);
                 _started.TrySetResult();
                 await server.WaitForConnectionAsync(_lifetime.Token).ConfigureAwait(false);
                 _peerVerifier.VerifyClient(server);
@@ -177,22 +178,6 @@ public sealed class MainHostControlServer : IAsyncInitializer, IAsyncDisposable
         {
             _logger.Debug(exception, "The Main Hosts-control connection ended before completion.");
         }
-    }
-
-    private static NamedPipeServerStream CreateServer(string endpoint)
-    {
-        var options = PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly;
-        if (OperatingSystem.IsWindows())
-        {
-            options |= PipeOptions.FirstPipeInstance;
-        }
-
-        return new NamedPipeServerStream(
-            endpoint,
-            PipeDirection.InOut,
-            1,
-            PipeTransmissionMode.Byte,
-            options);
     }
 
     private sealed class MainHostControlRpcImplementation(HostProcessCoordinator coordinator, RpcConnection connection) : IMainHostControlRpc

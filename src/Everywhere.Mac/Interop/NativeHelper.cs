@@ -28,10 +28,7 @@ public sealed class NativeHelper : INativeHelper
 
     /// <summary>
     /// Manages whether the app starts automatically on user login.
-    /// This uses the modern SMLoginItemSetEnabled API.
-    /// Note: This requires a helper XPC service or a separate launcher app bundled inside the main app,
-    /// which is the Apple-recommended way. For simplicity, we use the older, less reliable LaunchAgent method here.
-    /// A full implementation would be more complex.
+    /// A per-user LaunchAgent executes the application bundle at login.
     /// </summary>
     public bool IsStartupEnabled
     {
@@ -54,7 +51,6 @@ public sealed class NativeHelper : INativeHelper
                          <key>ProgramArguments</key>
                          <array>
                              <string>{MainBundle.ExecutablePath}</string>
-                             <string>--autorun</string>
                          </array>
                          <key>RunAtLoad</key>
                          <true/>

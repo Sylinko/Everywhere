@@ -1,218 +1,30 @@
 ﻿using System.Diagnostics;
-using System.IO.Pipes;
-using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Interop;
-using Everywhere.Messages;
-using Everywhere.ProcessIsolation.Roles;
-using Everywhere.ProcessIsolation.Rpc;
-using MessagePack;
 using PuppeteerSharp;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Json;
-#if DEBUG
-using Avalonia.Controls;
-#endif
 
 namespace Everywhere.Common;
 
 public static class Entrance
 {
+    /// <summary>
+    /// Raised when a task exception is unobserved. The default handler logs the exception and marks it as observed.
+    /// </summary>
     public static event EventHandler<UnobservedTaskExceptionEventArgs>? UnobservedTaskExceptionFilter;
 
-    private const string BundleName = "com.sylinko.everywhere";
-    private static string ActivationEndpoint => ProcessRoleNames.GetApplicationActivationEndpoint(RpcRuntimeIdentity.GetDesktopSessionId());
-    private static EntranceStartup? _startup;
-
-    public static EntranceStartup Initialize(string[] args)
-    {
-        var startup = InitializeSingleInstance(args);
-        _startup = startup;
-        if (!startup.IsPrimary)
-        {
-            return startup;
-        }
-
-        try
-        {
-            InitializeRuntimeConstants();
-            Telemetry.Initialize();
-            InitializeLogger();
-            InitializeErrorHandling();
-            return startup;
-        }
-        catch
-        {
-            startup.Abort();
-            throw;
-        }
-    }
-
     /// <summary>
-    /// Releases the single-instance claim before an intentional process replacement.
-    /// The activation pipe remains owned by the startup session until normal cleanup.
+    /// Initializes Main's shared runtime after the platform entry point has claimed its single-instance lifetime.
+    /// Host, controller, and secondary processes must not initialize this runtime.
     /// </summary>
-    public static void ReleaseSingleInstanceClaim() => _startup?.ReleaseSingleInstanceClaim();
-
-    /// <summary>
-    /// Atomically claims the application-wide named object used to identify the primary instance.
-    /// </summary>
-    private static EntranceStartup InitializeSingleInstance(string[] args)
+    public static void Initialize()
     {
-#if DEBUG
-        if (Design.IsDesignMode) return EntranceStartup.CreatePrimary();
-#endif
-
-        // The mutex is used only as a cross-process named object. Never acquiring it
-        // avoids tying the application lifetime to the thread that created the handle.
-        var instanceClaim = new Mutex(false, BundleName, out var createdNew);
-        if (createdNew)
-        {
-            var lifetime = new CancellationTokenSource();
-            var pipeServerTask = StartHostPipeServer(lifetime.Token);
-            return EntranceStartup.CreatePrimary(instanceClaim, lifetime, pipeServerTask);
-        }
-
-        instanceClaim.Dispose();
-
-        if (args.Contains("--autorun"))
-        {
-            // Autorun, if there is already an instance, exits without contacting the primary instance.
-            return EntranceStartup.CreateExit();
-        }
-
-#if IsWindows
-        if (args.FirstOrDefault(x => x.StartsWith($"{UrlProtocolCallbackMessage.Scheme}:")) is { } url)
-        {
-            // Bring the existing instance to the foreground.
-            return EntranceStartup.CreateForward(SendToHostAsync(new UrlProtocolCallbackMessage(url)));
-        }
-#endif
-
-        // Bring the existing instance to the foreground.
-        return EntranceStartup.CreateForward(SendToHostAsync(new ShowWindowMessage(ShowWindowMessage.ChatWindow)));
-    }
-
-    private static async Task StartHostPipeServer(CancellationToken cancellationToken)
-    {
-        const int maxRetries = 5;
-        var consecutiveErrors = 0;
-
-        while (consecutiveErrors < maxRetries)
-        {
-            NamedPipeServerStream? server = null;
-            try
-            {
-                server = new NamedPipeServerStream(
-                    ActivationEndpoint,
-                    PipeDirection.In,
-                    1,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous);
-
-                await server.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-                var lengthBuffer = new byte[4];
-                await server.ReadExactlyAsync(lengthBuffer.AsMemory(0, 4), cancellationToken).ConfigureAwait(false);
-
-                var length = BitConverter.ToInt32(lengthBuffer, 0);
-                if (length is <= 0 or > 1024 * 1024) // sanity check: max 1 MB
-                {
-                    Log.ForContext(typeof(Entrance)).Warning("Received invalid command length: {Length}", length);
-                    continue;
-                }
-
-                var buffer = new byte[length];
-                await server.ReadExactlyAsync(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
-
-                try
-                {
-                    var command = MessagePackSerializer.Deserialize<ApplicationMessage>(buffer);
-                    WeakReferenceMessenger.Default.Send(command);
-                }
-                catch (Exception ex)
-                {
-                    Log.ForContext(typeof(Entrance)).Error(ex, "Failed to deserialize host command.");
-                }
-
-                // Reset error counter on successful processing
-                consecutiveErrors = 0;
-            }
-            catch (EndOfStreamException)
-            {
-                // Client disconnected before sending complete data; not a server error, just retry
-                Log.ForContext(typeof(Entrance)).Warning("Pipe client disconnected prematurely.");
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Log.ForContext(typeof(Entrance)).Error(ex, "Host pipe server error.");
-
-                consecutiveErrors++;
-                await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                if (server != null)
-                {
-                    await server.DisposeAsync().ConfigureAwait(false);
-                }
-            }
-        }
-
-        if (!cancellationToken.IsCancellationRequested)
-        {
-            Log.ForContext(typeof(Entrance)).Error(
-                "Host pipe server stopped after {MaxRetries} consecutive errors.", maxRetries);
-        }
-    }
-
-    private static async Task<int> SendToHostAsync(ApplicationMessage message)
-    {
-        const int maxAttempts = 3;
-        const int connectTimeoutMs = 5000;
-
-        for (var attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            try
-            {
-                await using var client = new NamedPipeClientStream(".", ActivationEndpoint, PipeDirection.Out, PipeOptions.Asynchronous);
-                await client.ConnectAsync(connectTimeoutMs).ConfigureAwait(false);
-
-                var bytes = MessagePackSerializer.Serialize(message);
-                var lengthBytes = BitConverter.GetBytes(bytes.Length);
-
-                await client.WriteAsync(lengthBytes).ConfigureAwait(false);
-                await client.WriteAsync(bytes).ConfigureAwait(false);
-                await client.FlushAsync().ConfigureAwait(false);
-                return 0;
-            }
-            catch (Exception ex) when (attempt < maxAttempts)
-            {
-                Log.Error(ex, "Failed to send command to host instance (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
-                await Task.Delay(500 * attempt).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to send command to host instance after {MaxAttempts} attempts.", maxAttempts);
-
-                // Show message box if the command is ShowMainWindowCommand as a fallback.
-                if (message is ShowWindowMessage)
-                {
-                    NativeMessageBox.Show(
-                        LocaleResolver.Common_Info,
-                        LocaleResolver.Entrance_EverywhereAlreadyRunning,
-                        NativeMessageBoxButtons.Ok,
-                        NativeMessageBoxIcon.Information);
-                }
-            }
-        }
-
-        return 0;
+        InitializeRuntimeConstants();
+        Telemetry.Initialize();
+        InitializeLogger();
+        InitializeErrorHandling();
     }
 
     private static void InitializeRuntimeConstants()
@@ -301,97 +113,5 @@ public static class Entrance
                     activity.Id)
             );
         }
-    }
-}
-
-/// <summary>
-/// Owns the single-instance resources created during process bootstrap. A primary
-/// instance owns the named-object claim and activation pipe; a secondary instance owns only the
-/// asynchronous operation that forwards its activation request.
-/// </summary>
-public sealed class EntranceStartup : IAsyncDisposable
-{
-    public bool IsPrimary { get; }
-
-    private readonly Mutex? _instanceClaim;
-    private readonly CancellationTokenSource? _lifetime;
-    private readonly Task? _pipeServerTask;
-    private readonly Task<int>? _forwardTask;
-
-    private int _isDisposed;
-
-    private EntranceStartup(
-        bool isPrimary,
-        Mutex? instanceClaim = null,
-        CancellationTokenSource? lifetime = null,
-        Task? pipeServerTask = null,
-        Task<int>? forwardTask = null)
-    {
-        IsPrimary = isPrimary;
-        _instanceClaim = instanceClaim;
-        _lifetime = lifetime;
-        _pipeServerTask = pipeServerTask;
-        _forwardTask = forwardTask;
-    }
-
-    public Task<int> ForwardAsync() =>
-        _forwardTask ?? throw new InvalidOperationException("The primary instance has no forwarding operation.");
-
-    internal static EntranceStartup CreatePrimary() => new(true);
-
-    internal static EntranceStartup CreatePrimary(Mutex instanceClaim, CancellationTokenSource lifetime, Task pipeServerTask) =>
-        new(true, instanceClaim, lifetime, pipeServerTask);
-
-    internal static EntranceStartup CreateExit() => new(false, forwardTask: Task.FromResult(0));
-
-    internal static EntranceStartup CreateForward(Task<int> forwardTask) => new(false, forwardTask: forwardTask);
-
-    /// <summary>
-    /// Releases resources without waiting. This is used only when the synchronous
-    /// bootstrap sequence fails before the outer async lifetime can take ownership.
-    /// </summary>
-    internal void Abort()
-    {
-        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
-        {
-            return;
-        }
-
-        _lifetime?.Cancel();
-        ReleaseSingleInstanceClaim();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
-        {
-            return;
-        }
-
-        if (_lifetime is not null)
-        {
-            await _lifetime.CancelAsync().ConfigureAwait(false);
-            try
-            {
-                if (_pipeServerTask is not null)
-                {
-                    await _pipeServerTask.ConfigureAwait(false);
-                }
-            }
-            catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
-            {
-            }
-            finally
-            {
-                _lifetime.Dispose();
-            }
-        }
-
-        ReleaseSingleInstanceClaim();
-    }
-
-    internal void ReleaseSingleInstanceClaim()
-    {
-        _instanceClaim?.Dispose();
     }
 }

@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Everywhere.Automation;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -25,6 +24,8 @@ namespace Everywhere.Mac;
 
 public static class Program
 {
+    private const string ApplicationInstanceName = "com.sylinko.everywhere";
+
     [STAThread]
     public static int Main(string[] args)
     {
@@ -45,20 +46,7 @@ public static class Program
         {
             case ProcessRole.Main:
             {
-                var entrance = Entrance.Initialize(args);
-                try
-                {
-                    if (!entrance.IsPrimary)
-                    {
-                        return await entrance.ForwardAsync().ConfigureAwait(false);
-                    }
-
-                    return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
-                }
-                finally
-                {
-                    await entrance.DisposeAsync().ConfigureAwait(false);
-                }
+                return await RunApplicationAsync(args, peerVerifier).ConfigureAwait(false);
             }
             case ProcessRole.Input:
             {
@@ -75,6 +63,23 @@ public static class Program
                 throw new ArgumentOutOfRangeException(nameof(role), role, null);
             }
         }
+    }
+
+    private static async Task<int> RunApplicationAsync(string[] args, INamedPipePeerVerifier peerVerifier)
+    {
+        // Retain the previous named-object claim for direct executable and LaunchAgent starts.
+        // Do not acquire the mutex: the claim must outlive UI and asynchronous DI cleanup
+        // without being tied to the creating thread. Native application events handle activation.
+        using var instanceClaim = new Mutex(false, ApplicationInstanceName, out var isPrimary);
+        if (!isPrimary)
+        {
+            // Bundle activation is delivered by native events; direct secondary starts simply exit.
+            Console.WriteLine("Everywhere is already running.");
+            return 0;
+        }
+
+        Entrance.Initialize();
+        return await RunMainAsync(args, peerVerifier).ConfigureAwait(false);
     }
 
     private static Task<int> RunAutomationHostAsync(string[] args, INamedPipePeerVerifier peerVerifier)
@@ -150,7 +155,7 @@ public static class Program
                 #region Basic
 
                 .AddApplicationLogging()
-                .AddSingleton<INamedPipePeerVerifier>(peerVerifier)
+                .AddSingleton(peerVerifier)
                 .AddProcessIsolation()
                 .AddInputHostShortcutListener()
                 .AddSingleton<MacScreenSelectionService>()
