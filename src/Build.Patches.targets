@@ -50,6 +50,24 @@
                       OutputItemType="PatchAssembly"
                       PatchTargets="Microsoft.SemanticKernel.Abstractions"
                       GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.OllamaSharp\Everywhere.Patches.OllamaSharp.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="OllamaSharp"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.MicrosoftExtensionsAI.OpenAI\Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Microsoft.Extensions.AI.OpenAI"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.Anthropic\Everywhere.Patches.Anthropic.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Anthropic"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
   </ItemGroup>
 
   <Target Name="WeaveAssemblies" AfterTargets="ResolveAssemblyReferences" Condition="'$(DesignTimeBuild)' != 'true' and '@(PatchAssembly)' != ''">

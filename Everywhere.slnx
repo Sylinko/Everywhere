@@ -57,6 +57,9 @@
     <Project Path="patches/Everywhere.Patches.AvaloniaEdit/Everywhere.Patches.AvaloniaEdit.csproj" />
     <Project Path="patches/Everywhere.Patches.Contracts/Everywhere.Patches.Contracts.csproj" />
     <Project Path="patches/Everywhere.Patches.SemanticKernel/Everywhere.Patches.SemanticKernel.csproj" />
+    <Project Path="patches/Everywhere.Patches.OllamaSharp/Everywhere.Patches.OllamaSharp.csproj" />
+    <Project Path="patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj" />
+    <Project Path="patches/Everywhere.Patches.Anthropic/Everywhere.Patches.Anthropic.csproj" />
   </Folder>
   <Folder Name="/Targets/">
     <File Path="src/Build.Generate.Cloud.targets" />

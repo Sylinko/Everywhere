@@ -40,7 +40,23 @@ This evolution abandons runtime injection in favor of physically rewriting the t
 
 1.  **The Weaving Tool:** We introduced a lightweight, cross-platform CLI tool (`Everywhere.BuildTask.Patcher`).
 2.  **Declarative Patching:** Patch logic is now written as standard C\# in isolated Donor projects (e.g., `Everywhere.Patches.Avalonia.Controls`). Instead of Harmony's Prefix/Postfix, we utilize `[MonoModPatch]` and `[MonoModReplace]` attributes. Private members are safely mapped using `extern` or private declarations, eliminating the need for `[UnsafeAccessor]` or reflection.
-3.  **Pipeline Interception:** Within the main project's `.csproj`, we hook into the `ResolveAssemblyReferences` MSBuild target. The pipeline automatically resolves the official, unmodified NuGet DLLs, executes the Weaver tool to structurally fuse our custom IL into the target binaries, and dynamically swaps the `ReferencePath` in memory before compilation proceeds.
+3.  **Pipeline Interception:** [Build.Patches.targets](../src/Build.Patches.targets) runs after `ResolveAssemblyReferences`, resolves the official runtime DLLs (including `lib/` counterparts of `ref/` assemblies), and weaves the donor IL into intermediate output. It keeps `ReferencePath` unchanged for compilation, replaces `ReferenceCopyLocalPaths`, and replaces both `ResolvedFileToPublish` and `RuntimeCopyLocalItems` before publish postprocessing. Keeping these runtime and publish paths aligned allows ILLink to process the patched assemblies correctly. Donor projects are build dependencies rather than runtime references.
 
 **Outcomes:**
 This approach generates perfectly standard, statically modified binaries containing zero runtime hooking overhead. It is completely transparent to our GitHub Actions CI/CD workflows and fully compatible with global code-signing pipelines (Certum for Windows, Apple Codesign for macOS). The modified third-party libraries inherit the primary application's digital signature, permanently resolving all anti-virus false positives and cross-platform distribution blockers.
+
+The [MEAI OpenAI donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIClientExtensions.cs) is a wrapper rather than a replacement: MonoMod preserves the original method as `orig_ParseCallContent`, and the wrapper normalizes missing Responses streaming call IDs before invoking it. Such wrappers must not use `MonoModReplace`, which would discard the original implementation. The donor's rules validate the target signature, while real HTTP regressions verify parsing and outgoing tool-result pairing. See [SDKReview.md](LLMRequests/SDKReview.md#responses-call-ids) for its compatibility boundary.
+
+For replacement adapters, copy the complete implementation from the pinned upstream
+commit before making changes. Retain original cases, helper calls, ownership rules
+and useful comments; mark Everywhere modifications inline. Each `patch_` class
+documents why the patch exists and its overall approach, with a pinned source link
+where available, rather than repeating method-level details.
+
+The [Anthropic donor](../patches/Everywhere.Patches.Anthropic/patch_AnthropicClientWithRawResponse.cs)
+retains the original request loop and attaches selected headers when its terminal
+API exception is created. Its rules also restore original method flags after
+replacement: MonoModReplace otherwise copies the donor's flags and loses the
+implicit interface implementation. The [Responses conversion donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIResponsesChatClient.cs)
+retains all original stream cases while correcting incomplete/failed evidence.
+These changes preserve SDK policy; application retries belong to the request layer.
