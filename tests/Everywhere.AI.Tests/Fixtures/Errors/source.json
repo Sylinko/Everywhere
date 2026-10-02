@@ -1,0 +1,247 @@
+[
+  {
+    "id": "source-openai-401",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Mistral"
+    ],
+    "status": 401,
+    "body": {
+      "error": {
+        "type": "invalid_request_error",
+        "param": null,
+        "message": "Incorrect API key provided.",
+        "code": "invalid_api_key"
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+  },
+  {
+    "id": "source-openai-404",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Mistral"
+    ],
+    "status": 404,
+    "body": {
+      "error": {
+        "type": "invalid_request_error",
+        "param": null,
+        "message": "The model does not exist or you do not have access to it.",
+        "code": "model_not_found"
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+  },
+  {
+    "id": "source-openai-429",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Mistral"
+    ],
+    "status": 429,
+    "body": {
+      "error": {
+        "type": "requests",
+        "param": null,
+        "message": "Rate limit reached for requests.",
+        "code": "rate_limit_exceeded"
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+  },
+  {
+    "id": "source-openai-503",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "param": null,
+        "message": "The engine is currently overloaded, please try again later.",
+        "code": null
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+  },
+  {
+    "id": "source-openai-400",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Mistral"
+    ],
+    "status": 400,
+    "body": {
+      "error": {
+        "type": "invalid_request_error",
+        "param": "max_tokens",
+        "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+        "code": "unsupported_parameter"
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/chat.rs"
+  },
+  {
+    "id": "source-anthropic-402",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 402,
+    "body": {
+      "error": {
+        "message": "Your credit balance is too low to access the Anthropic API.",
+        "type": "billing_error"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-anthropic-403",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 403,
+    "body": {
+      "error": {
+        "message": "Your API key does not have permission to use the specified resource.",
+        "type": "permission_error"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-anthropic-413",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 413,
+    "body": {
+      "error": {
+        "message": "Request exceeds the maximum allowed number of bytes.",
+        "type": "request_too_large"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-anthropic-429",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 429,
+    "body": {
+      "error": {
+        "message": "Number of request tokens has exceeded your per-minute rate limit.",
+        "type": "rate_limit_error"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-anthropic-504",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 504,
+    "body": {
+      "error": {
+        "message": "Request timed out.",
+        "type": "timeout_error"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-anthropic-529",
+    "providers": [
+      "Anthropic"
+    ],
+    "status": 529,
+    "body": {
+      "error": {
+        "message": "Overloaded",
+        "type": "overloaded_error"
+      },
+      "type": "error",
+      "request_id": "req_fake1"
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+  },
+  {
+    "id": "source-gemini-429",
+    "providers": [
+      "Gemini"
+    ],
+    "status": 429,
+    "body": {
+      "error": {
+        "status": "RESOURCE_EXHAUSTED",
+        "message": "Resource has been exhausted (e.g. check quota).",
+        "code": 429
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+  },
+  {
+    "id": "source-gemini-503",
+    "providers": [
+      "Gemini"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "status": "UNAVAILABLE",
+        "message": "The model is overloaded. Please try again later.",
+        "code": 503
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+  },
+  {
+    "id": "source-gemini-504",
+    "providers": [
+      "Gemini"
+    ],
+    "status": 504,
+    "body": {
+      "error": {
+        "status": "DEADLINE_EXCEEDED",
+        "message": "Deadline expired before operation could complete.",
+        "code": 504
+      }
+    },
+    "provenance": "source",
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+  }
+]

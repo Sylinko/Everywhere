@@ -1,0 +1,40 @@
+name: LLM SDK integration
+
+on:
+  workflow_dispatch:
+#  pull_request:
+#    paths:
+#      - 'tests/Everywhere.AI.Tests/**'
+#      - 'tests/Directory.Packages.props'
+#      - '3rd/semantic-kernel-patch/**'
+#      - '3rd/semantic-kernel'
+#      - 'patches/**'
+#      - 'src/Build.Patches.targets'
+#      - 'Directory.*.props'
+#      - 'global.json'
+#      - 'tools/test_llm.ps1'
+#      - '.github/workflows/llm-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Initialize Semantic Kernel source
+        run: git submodule update --init --depth 1 3rd/semantic-kernel
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Run required SDK integration tests
+        shell: pwsh
+        run: ./tools/test_llm.ps1 -Runtime Docker -Configuration Release -ResultsDirectory artifacts/llm-tests/ci
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-sdk-results
+          path: artifacts/llm-tests/ci
