@@ -563,7 +563,12 @@ internal sealed class MistralClient
                         modelId: modelId,
                         encoding: chunk.GetEncoding(),
                         innerContent: chunk,
-                        metadata: chunk.GetMetadata());
+                        // Everywhere: preserve the original chunk metadata plus this choice's
+                        // finish reason. Do not infer completion from a normal HTTP end.
+                        metadata: new Dictionary<string, object?>(chunk.GetMetadata() ?? new Dictionary<string, object?>())
+                        {
+                            [nameof(MistralChatCompletionChoice.FinishReason)] = chunk.Choices?[i].FinishReason
+                        });
 
                     // Preserve the provider's reasoning-before-answer order in the item collection.
                     var reasoningContent = chunk.GetReasoningContent(i);

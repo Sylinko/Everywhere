@@ -14,6 +14,11 @@
   <Import Project="$(RepoRoot)\dotnet\src\InternalUtilities\src\InternalUtilities.props" />
 
   <ItemGroup>
+    <Compile Remove="$(RepoRoot)/dotnet/src/InternalUtilities/src/Http/HttpClientExtensions.cs" />
+    <Compile Include="../InternalUtilities/HttpClientExtensions.cs" Link="Http/HttpClientExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="$(ProjectRoot)\Core\ClientBase.cs">
       <Link>Core\ClientBase.cs</Link>
     </Compile>

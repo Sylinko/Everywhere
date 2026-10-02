@@ -17,6 +17,11 @@
   <Import Project="$(RepoRoot)\dotnet\src\InternalUtilities\src\InternalUtilities.props" />
 
   <ItemGroup>
+    <Compile Remove="$(RepoRoot)/dotnet/src/InternalUtilities/src/Http/HttpClientExtensions.cs" />
+    <Compile Include="../InternalUtilities/HttpClientExtensions.cs" Link="Http/HttpClientExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Client\ChatCompletionRequest.cs">
       <Link>Client\ChatCompletionRequest.cs</Link>
     </Compile>

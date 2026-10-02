@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),CS0436,CS0626,CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoMod.Patcher" />
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="all" />
+    <IgnoresAccessChecksTo Include="Anthropic" />
+  </ItemGroup>
+</Project>
