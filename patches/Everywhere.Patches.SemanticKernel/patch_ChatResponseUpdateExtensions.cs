@@ -22,7 +22,9 @@ internal static class patch_ChatResponseUpdateExtensions
             null)
         {
             InnerContent = update.RawRepresentation,
-            Metadata = update.AdditionalProperties,
+            Metadata = update.FinishReason is { } finishReason ?
+                new Dictionary<string, object?>(update.AdditionalProperties ?? []) { ["FinishReason"] = finishReason.ToString() } :
+                update.AdditionalProperties,
             ModelId = update.ModelId
         };
 
@@ -61,10 +63,9 @@ internal static class patch_ChatResponseUpdateExtensions
                 }
                 case UsageContent usageContent:
                 {
-                    content.Metadata = new Dictionary<string, object?>(update.AdditionalProperties ?? [])
-                    {
-                        ["Usage"] = usageContent
-                    };
+                    var usageMetadata = content.Metadata is { } currentMetadata ? new Dictionary<string, object?>(currentMetadata) : [];
+                    usageMetadata["Usage"] = usageContent;
+                    content.Metadata = usageMetadata;
                     continue;
                 }
                 default:

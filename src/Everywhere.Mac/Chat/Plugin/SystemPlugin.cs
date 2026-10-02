@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
-using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -149,7 +148,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing reminders.")),
+                    new UnauthorizedAccessException(consent.FormatReason("Approval denied consent for managing reminders.")),
                     new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageReminders_DenyMessage),
                     showDetails: false);
             }
@@ -334,7 +333,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing calendar.")),
+                    new UnauthorizedAccessException(consent.FormatReason("Approval denied consent for managing calendar.")),
                     new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageCalendar_DenyMessage),
                     showDetails: false);
             }
@@ -558,7 +557,7 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException(consent.FormatReason("User denied consent for managing notes.")),
+                new UnauthorizedAccessException(consent.FormatReason("Approval denied consent for managing notes.")),
                 new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ManageNotes_DenyMessage),
                 showDetails: false);
         }
@@ -666,11 +665,16 @@ public sealed class SystemPlugin : BuiltInChatPlugin
             null,
             new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_ScriptConsent_Header),
             detailBlock,
+            approvalScope: ToolApprovalScope.Create(
+                "Apple Script execution",
+                new ToolApprovalShellScope("/usr/bin/osascript", "Apple Script", script, description),
+                ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalShellScope),
             cancellationToken: cancellationToken);
+
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException(consent.FormatReason("User denied consent for AppleScript execution.")),
+                new UnauthorizedAccessException(consent.FormatReason("Approval denied consent for AppleScript execution.")),
                 new DynamicLocaleKey(LocaleKey.MacOS_BuiltInChatPlugin_System_ExecuteScript_DenyMessage),
                 showDetails: false);
         }

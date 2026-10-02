@@ -26,6 +26,13 @@ public sealed partial class SystemAssistantSettings(IServiceProvider serviceProv
     public SystemAssistant TitleGeneration { get; } = new(ModelSpecializations.TitleGeneration);
 
     [DynamicLocaleKey(
+        LocaleKey.SystemAssistantSettings_ToolApproval_Header,
+        LocaleKey.SystemAssistantSettings_ToolApproval_Description)]
+    [SettingsItems(IsExpandableBindingPath = $"!{nameof(ToolApproval)}.{nameof(SystemAssistant.AutoSelect)}")]
+    [SettingsTemplatedItem]
+    public SystemAssistant ToolApproval { get; } = new(ModelSpecializations.ToolApproval);
+
+    [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Header,
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Description)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(DefaultSubagent)}.{nameof(SystemAssistant.AutoSelect)}")]

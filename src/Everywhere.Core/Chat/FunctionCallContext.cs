@@ -27,6 +27,17 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
 
     public FunctionCallContent FunctionCallContent { get; }
 
+    public GenerationContext GenerationContext { get; }
+
+    /// <summary>Gets the approval mode captured before this tool started.</summary>
+    public ToolApprovalMode ApprovalMode { get; }
+
+    /// <summary>Gets whether a required consent was denied during this invocation.</summary>
+    public bool HasApprovalDenied { get; private set; }
+
+    /// <summary>Gets the latest automatic-review failure for invocation outcome reporting.</summary>
+    public ToolApprovalFailure? ApprovalFailure { get; private set; }
+
     /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
     public string InvocationId { get; }
 
@@ -54,9 +65,11 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// <remarks>
     /// Path-scoped approvals are evaluated separately by file-system operations and do not alter this value.
     /// </remarks>
-    public bool BypassesApproval => ToolBypassApprovalPolicy.BypassesApproval(ToolBypassApprovalRulesets, ChatPlugin, ChatFunction);
+    public bool BypassesApproval => ApprovalMode == ToolApprovalMode.FullAccess ||
+        ToolBypassApprovalPolicy.BypassesApproval(ToolBypassApprovalRulesets, ChatPlugin, ChatFunction);
 
     private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
+    private readonly Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> _reviewAsync;
 
     public FunctionCallContext(
         Kernel kernel,
@@ -65,7 +78,9 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         ChatFunction chatFunction,
         FunctionCallChatMessage functionCallChatMessage,
         FunctionCallContent functionCallContent,
-        ObservableToolRulesets toolBypassApprovalRulesets)
+        ObservableToolRulesets toolBypassApprovalRulesets,
+        GenerationContext generationContext,
+        Func<FunctionCallContext, ToolApprovalScope?, CancellationToken, Task<ToolApprovalResult>> reviewAsync)
     {
         if (functionCallContent.Id.IsNullOrEmpty())
         {
@@ -78,6 +93,9 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         ChatFunction = chatFunction;
         FunctionCallChatMessage = functionCallChatMessage;
         FunctionCallContent = functionCallContent;
+        GenerationContext = generationContext;
+        ApprovalMode = generationContext.ApprovalMode;
+        _reviewAsync = reviewAsync;
         InvocationId = functionCallContent.Id;
         ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
         DisplaySink = functionCallChatMessage.DisplaySink;
@@ -111,9 +129,13 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
+        ToolApprovalScope? approvalScope = null,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && BypassesApproval) return RequestConsentResult.Accept;
+        if (ApprovalMode == ToolApprovalMode.FullAccess || id.IsNullOrEmpty() && BypassesApproval)
+        {
+            return RequestConsentResult.Accept;
+        }
 
         var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
         ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isGloballyGranted);
@@ -121,6 +143,12 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         if (isGloballyGranted || isSessionGranted)
         {
             return RequestConsentResult.Accept;
+        }
+
+        if (ApprovalMode == ToolApprovalMode.Auto)
+        {
+            var review = await ReviewApprovalAsync(approvalScope, cancellationToken);
+            return review.IsAllowed ? RequestConsentResult.Accept : RequestConsentResult.Deny(review.FormatReason());
         }
 
         var consentDecision = await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
@@ -153,6 +181,7 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
             case ConsentDecisionKind.Deny:
             default:
             {
+                HasApprovalDenied = true;
                 return RequestConsentResult.Deny(consentDecision.Reason);
             }
         }
@@ -166,6 +195,28 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     }
 
     #endregion
+
+    /// <summary>Reviews this invocation's required consent without entering human-input wait state.</summary>
+    public async Task<ToolApprovalResult> ReviewApprovalAsync(ToolApprovalScope? scope, CancellationToken cancellationToken)
+    {
+        var previousPreview = ActivityPreview;
+        ActivityPreview = new ChatPluginTextActivityPreview(new DynamicLocaleKey(LocaleKey.ToolApproval_Reviewing));
+        try
+        {
+            var result = await _reviewAsync(this, scope, cancellationToken);
+            HasApprovalDenied |= !result.IsAllowed;
+            ApprovalFailure ??= result.Failure;
+            if (!result.IsAllowed)
+                FunctionCallChatMessage.ErrorMessageKey = result.Failure is null ?
+                    new DynamicLocaleKey(LocaleKey.ConsentDecision_Deny) :
+                    new FormattedDynamicLocaleKey(LocaleKey.ToolApproval_Failed, new DirectLocaleKey(result.FormatReason()));
+            return result;
+        }
+        finally
+        {
+            ActivityPreview = previousPreview;
+        }
+    }
 
     /// <summary>
     /// Runs an interaction inside this invocation's transient user-input wait state.
@@ -192,6 +243,8 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
     /// Ends the invocation-scoped presentation lifetime. Removing the stable slot cannot clear or
     /// overwrite state owned by another invocation in the same aggregate message.
     /// </summary>
-    public void Dispose() =>
+    public void Dispose()
+    {
         FunctionCallChatMessage.UnregisterActivityPresentation(InvocationId, _activityPresentationSlot);
+    }
 }

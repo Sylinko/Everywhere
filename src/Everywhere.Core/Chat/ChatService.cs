@@ -312,7 +312,13 @@ public sealed partial class ChatService : IChatService
                 try
                 {
                     await EnsureVisualContextResetNoticeAsync(chatContext, null, cancellationToken);
-                    generationContext = await CreateGenerationContextAsync(chatContext, assistant, null, cancellationToken);
+                    generationContext = await CreateGenerationContextAsync(
+                        chatContext,
+                        assistant,
+                        null,
+                        cancellationToken,
+                        isConversationTurn: false);
+                    chatContext.GenerationContext = generationContext;
                     await CompactContextAsync(
                         chatContext,
                         generationContext,
@@ -322,6 +328,7 @@ public sealed partial class ChatService : IChatService
                 }
                 finally
                 {
+                    if (ReferenceEquals(chatContext.GenerationContext, generationContext)) chatContext.GenerationContext = null;
                     generationContext?.KernelMixin.Dispose();
                 }
             },
@@ -452,10 +459,10 @@ public sealed partial class ChatService : IChatService
         builder.Services.AddSingleton(chatContext);
         builder.Services.AddSingleton(assistant);
         builder.Services.AddTransient<IChatPluginDisplaySink>(static x =>
-            x.GetRequiredService<ChatContext>().FunctionCallContext.Value?.DisplaySink ??
+            x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value?.DisplaySink ??
             throw new InvalidOperationException($"No {nameof(IChatPluginDisplaySink)} is available in current function call context."));
         builder.Services.AddTransient<IChatPluginUserInterface>(static x =>
-            x.GetRequiredService<ChatContext>().FunctionCallContext.Value ??
+            x.GetRequiredService<ChatContext>().GenerationContext?.FunctionCallContext.Value ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
         builder.Services.AddTransient<IStorageProvider>(_ =>
             _serviceProvider.GetService<ChatWindow>()?.StorageProvider ?? App.StorageProvider); // TODO: maybe we need a ITopLevelService
@@ -493,8 +500,10 @@ public sealed partial class ChatService : IChatService
         ChatContext chatContext,
         Assistant assistant,
         string? systemPromptOverride,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool isConversationTurn = true)
     {
+        var approvalState = chatContext.InheritedApprovalState ?? new GenerationApprovalState(_settings.Plugin.ApprovalMode);
         var kernelMixin = _kernelMixinFactory.Create(assistant);
         try
         {
@@ -531,7 +540,9 @@ public sealed partial class ChatService : IChatService
                 customAssistant is not null ?
                     ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold) :
                     ContextUsageSnapshot.DefaultCompressionThresholdPercentage,
-                customAssistant?.MaxContextRounds ?? -1);
+                customAssistant?.MaxContextRounds ?? -1,
+                approvalState,
+                isConversationTurn);
         }
         catch
         {
@@ -565,6 +576,7 @@ public sealed partial class ChatService : IChatService
         try
         {
             generationContext = await CreateGenerationContextAsync(chatContext, assistant, systemPromptOverride, cancellationToken);
+            chatContext.GenerationContext = generationContext;
             activity = _activitySource.StartChatActivity("chat", generationContext.KernelMixin.Configuration);
             activity?.SetTag("id", chatContext.Metadata.Id);
             var kernel = generationContext.Kernel;
@@ -717,6 +729,7 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
             assistantChatMessage.IsBusy = false;
 
+            if (ReferenceEquals(chatContext.GenerationContext, generationContext)) chatContext.GenerationContext = null;
             generationContext?.KernelMixin.Dispose();
             activity?.Dispose();
         }
@@ -1000,6 +1013,7 @@ public sealed partial class ChatService : IChatService
         return -1;
     }
 
+    // TODO
     private static bool IsCompressionSourceMessage(ChatMessage message) =>
         message is not VisualContextResetChatMessage &&
         (message is ContextCompressionChatMessage { HasSummary: true } ||
@@ -1443,8 +1457,10 @@ public sealed partial class ChatService : IChatService
                             chatFunction,
                             group.Message,
                             call,
-                            _settings.Plugin.ToolBypassApprovalRulesets);
-                        using var functionCallContextScope = chatContext.EnterFunctionCallContext(functionCallContext);
+                            _settings.Plugin.ToolBypassApprovalRulesets,
+                            chatContext.GenerationContext ?? throw new InvalidOperationException("No generation is active."),
+                            ReviewToolApprovalAsync);
+                        using var functionCallContextScope = functionCallContext.GenerationContext.EnterFunctionCallContext(functionCallContext);
 
                         // Display blocks provide the UI representation; AddCall/AddResult retain
                         // the corresponding structured invocation in the conversation history.
@@ -1465,7 +1481,7 @@ public sealed partial class ChatService : IChatService
                         cancellationToken.ThrowIfCancellationRequested();
 
                         if (resultContent.InnerContent is not Exception ex) continue;
-                        group.Message.ErrorMessageKey = ex.GetFriendlyMessage();
+                        group.Message.ErrorMessageKey ??= ex.GetFriendlyMessage();
                         // Stop the remaining calls in this function group; subsequent groups still run.
                         break;
                     }
@@ -1550,8 +1566,8 @@ public sealed partial class ChatService : IChatService
                 }
                 case ConsentDecisionKind.Deny:
                 {
-                    toolStatus = StatisticsToolInvocationStatus.Denied;
-                    return new FunctionResultContent(content, consentDecision.FormatReason("Tool execution denied by user."));
+                    toolStatus = context.ApprovalFailure is null ? StatisticsToolInvocationStatus.Denied : StatisticsToolInvocationStatus.Error;
+                    return new FunctionResultContent(content, consentDecision.FormatReason("Tool execution was denied by approval."));
                 }
                 case ConsentDecisionKind.Custom when
                     context.ChatPlugin is McpChatPlugin mcpPlugin &&
@@ -1567,12 +1583,19 @@ public sealed partial class ChatService : IChatService
             }
 
             resultContent = await content.InvokeAsync(context.Kernel, cancellationToken);
+            // A tool may return partial results after declining one of its internal operations.
+            if (context.ApprovalFailure is not null) toolStatus = StatisticsToolInvocationStatus.Error;
+            else if (context.HasApprovalDenied) toolStatus = StatisticsToolInvocationStatus.Denied;
         }
         catch (Exception ex)
         {
             toolStatus = ex is OperationCanceledException || cancellationToken.IsCancellationRequested ?
                 StatisticsToolInvocationStatus.Canceled :
-                StatisticsToolInvocationStatus.Error;
+                context.ApprovalFailure is not null ?
+                    StatisticsToolInvocationStatus.Error :
+                    context.HasApprovalDenied ?
+                        StatisticsToolInvocationStatus.Denied :
+                        StatisticsToolInvocationStatus.Error;
             ex = HandledFunctionInvokingException.Handle(ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Error invoking tool '{FunctionName}'", content.FunctionName);
@@ -1592,6 +1615,7 @@ public sealed partial class ChatService : IChatService
 
         Task<ConsentDecision> ProcessConsentAsync(string permissionKey)
         {
+            if (context.ApprovalMode == ToolApprovalMode.FullAccess) return Task.FromResult(ConsentDecision.AllowOnce);
             // Check if the permission is already granted in the current chat context
             if (!_settings.Plugin.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isPermissionGranted))
             {
@@ -1644,12 +1668,19 @@ public sealed partial class ChatService : IChatService
             }
 
             // The function requires permissions that are not granted.
+            if (context.ApprovalMode == ToolApprovalMode.Auto) return ReviewOuterConsentAsync();
             return context.WaitForUserInputAsync(() => context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
                 headerKey,
                 displayBlock,
                 RequestConsentRememberMasks.All,
                 customOptions,
                 cancellationToken));
+        }
+
+        async Task<ConsentDecision> ReviewOuterConsentAsync()
+        {
+            var review = await context.ReviewApprovalAsync(new ToolApprovalScope("Tool invocation"), cancellationToken);
+            return review.IsAllowed ? ConsentDecision.AllowOnce : ConsentDecision.Deny(review.FormatReason());
         }
     }
 
@@ -1847,16 +1878,6 @@ public sealed partial class ChatService : IChatService
     {
         BypassMcpServerApproval
     }
-
-    private sealed record GenerationContext(
-        Kernel Kernel,
-        KernelMixin KernelMixin,
-        ScopedPromptRenderer PromptRenderer,
-        string SystemPrompt,
-        Modalities InputModalities,
-        int ContextCompressionThreshold,
-        int MaxContextRounds
-    );
 
     private sealed record ModelInvocationResult(
         IReadOnlyList<FunctionCallContent> FunctionCalls,

@@ -1,10 +1,16 @@
 ﻿using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
+using Everywhere.Chat.Permissions;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Configuration;
 
-public sealed class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
+public sealed partial class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
+    /// <summary>Gets or sets the approval mode captured by newly started turns.</summary>
+    [ObservableProperty]
+    public partial ToolApprovalMode ApprovalMode { get; set; }
+
     /// <summary>
     /// Gets or sets exact plugin and function enablement overrides.
     /// </summary>

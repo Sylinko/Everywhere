@@ -14,10 +14,16 @@ public enum ModelSpecializations : uint
 {
     [JsonStringEnumMemberName("Default")]
     Default = 0x0,
+
     [JsonStringEnumMemberName("TitleGeneration")]
     TitleGeneration = 0x1,
+
     [JsonStringEnumMemberName("ContextCompression")]
     ContextCompression = 0x2,
+
     [JsonStringEnumMemberName("ImageUnderstanding")]
     ImageUnderstanding = 0x4,
+
+    [JsonStringEnumMemberName("ToolApproval")]
+    ToolApproval = 0x8,
 }

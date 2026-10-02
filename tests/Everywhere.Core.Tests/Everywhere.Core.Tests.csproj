@@ -29,4 +29,6 @@
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
   </ItemGroup>
 
+  <Import Project="..\..\src\Build.Patches.targets"/>
+
 </Project>

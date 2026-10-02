@@ -8,6 +8,20 @@ namespace Everywhere.Configuration;
 /// </summary>
 public class PersistentState(IKeyValueStorage storage) : ObservableObject
 {
+    /// <summary>Gets or sets whether the first-use automatic approval notice was accepted locally.</summary>
+    public bool HasAcknowledgedAutoApproval
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    /// <summary>Gets or sets whether the first-use full-access notice was accepted locally.</summary>
+    public bool HasAcknowledgedFullAccess
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     /// <summary>
     /// Used to popup welcome dialog on first launch and update.
     /// </summary>

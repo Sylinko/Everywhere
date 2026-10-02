@@ -22,6 +22,9 @@
               <Style Selector="shadui|ContentExpandControl#PART_ContentExpand">
                 <Setter Property="ClipToBounds" Value="False"/>
               </Style>
+              <Style Selector="Button.Compact">
+                <Setter Property="VerticalAlignment" Value="Stretch"/>
+              </Style>
             </Expander.Styles>
 
             <Expander.Header>
@@ -54,7 +57,7 @@
                 IsVisible="{TemplateBinding IsReasonInputVisible, Converter={x:Static BoolConverters.Not}}">
                 <shadui:ControlGroup
                   DockPanel.Dock="Left"
-                  CornerRadius="{DynamicResource FullCornerRadius}"
+                  CornerRadius="{DynamicResource XlCornerRadius}"
                   Orientation="Horizontal">
                   <Button
                     Classes="Primary Compact"
@@ -108,7 +111,7 @@
                 </shadui:ControlGroup>
 
                 <shadui:ControlGroup
-                  CornerRadius="{DynamicResource FullCornerRadius}"
+                  CornerRadius="{DynamicResource XlCornerRadius}"
                   Orientation="Horizontal">
                   <Button
                     Classes="Secondary Compact"

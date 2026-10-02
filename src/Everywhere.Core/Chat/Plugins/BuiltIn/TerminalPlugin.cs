@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
-using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -26,8 +25,6 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
     public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
     public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
     public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
-    // TODO: uncomment this after Agentic Approval is done
-    // public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _pluginSettings.SettingsItems;
 
     private readonly TerminalPluginSettings _pluginSettings;
@@ -116,25 +113,27 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell);
         }
 
-        if (!_pluginSettings.BypassesApproval)
-        {
-            var consent = await userInterface.RequestConsentAsync(
-                null,
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
-                new ChatPluginContainerDisplayBlock
-                {
-                    new ChatPluginTextDisplayBlock(description),
-                    new ChatPluginCodeBlockDisplayBlock(command, DetectLanguageHint(shellPath)),
-                },
-                RequestConsentRememberMasks.AllowOnce | RequestConsentRememberMasks.AllowSession,
-                cancellationToken: cancellationToken);
-            if (!consent)
+        var consent = await userInterface.RequestConsentAsync(
+            null,
+            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
+            new ChatPluginContainerDisplayBlock
             {
-                throw new HandledException(
-                    new UnauthorizedAccessException(
-                        consent.FormatReason("The user denied the shell-script execution approval request, so the command was not run.")),
-                    LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
-            }
+                new ChatPluginTextDisplayBlock(description),
+                new ChatPluginCodeBlockDisplayBlock(command, DetectLanguageHint(shellPath)),
+            },
+            RequestConsentRememberMasks.AllowOnce | RequestConsentRememberMasks.AllowSession,
+            approvalScope: ToolApprovalScope.Create(
+                "Shell execution",
+                new ToolApprovalShellScope(shellPath, shellType.ToString(), command, description),
+                ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalShellScope),
+            cancellationToken: cancellationToken);
+
+        if (!consent)
+        {
+            throw new HandledException(
+                new UnauthorizedAccessException(
+                    consent.FormatReason("Approval denied the shell-script execution approval request, so the command was not run.")),
+                LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
         }
 
         var terminalDimensions = TerminalDimensions.Default;

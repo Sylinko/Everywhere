@@ -270,13 +270,18 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             null,
             new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header),
             detailBlock,
+            approvalScope: ToolApprovalScope.Create(
+                "UI actions",
+                new ToolApprovalUiScope(description),
+                ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalUiScope),
             cancellationToken: cancellationToken);
+
         if (!consent)
         {
             throw new HandledException(
                 new UnauthorizedAccessException(
                     consent.FormatReason(
-                        "The user denied the visual-action approval request, so no visual actions were executed.")),
+                        "Approval denied the visual-action approval request, so no visual actions were executed.")),
                 LocaleKey.ConsentDecision_Deny);
         }
 
