@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Donor fields are initialized by the target's original constructors. -->
+    <NoWarn>$(NoWarn),CS0436,CS0626,CS0649,CS8618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoMod.Patcher" />
+    <PackageReference Include="OllamaSharp" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="all" />
+    <IgnoresAccessChecksTo Include="OllamaSharp" />
+  </ItemGroup>
+</Project>

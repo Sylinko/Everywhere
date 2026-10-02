@@ -5,7 +5,6 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
 using OpenAI.Responses;
-using FunctionCallContent = Microsoft.Extensions.AI.FunctionCallContent;
 
 namespace Everywhere.AI;
 
@@ -58,20 +57,12 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
             // cache the value to avoid property changes during enumeration
             await foreach (var update in base.GetStreamingResponseAsync(messages, options, cancellationToken))
             {
-                // Ensure that all FunctionCallContent items have a unique CallId.
-                for (var i = 0; i < update.Contents.Count; i++)
+                foreach (var content in update.Contents)
                 {
-                    var content = update.Contents[i];
-                    update.Contents[i] = content switch
-                    {
-                        FunctionCallContent { Name.Length: > 0, CallId: null or { Length: 0 } } missingIdContent =>
-                            // Generate a unique ToolCallId for the function call update.
-                            new FunctionCallContent(Guid.CreateVersion7().ToString("N"), missingIdContent.Name, missingIdContent.Arguments),
-                        ErrorContent errorContent => throw HandledChatException.FromErrorCode(
+                    if (content is ErrorContent errorContent)
+                        throw HandledChatException.FromErrorCode(
                             new Exception(errorContent.Message),
-                            errorContent.ErrorCode ?? errorContent.Message),
-                        _ => update.Contents[i]
-                    };
+                            errorContent.ErrorCode ?? errorContent.Message);
                 }
 
                 yield return update;

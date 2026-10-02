@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),CS0436,CS0626,MEAI001,OPENAICUA001,SCME0001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoMod.Patcher" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="IgnoresAccessChecksToGenerator" PrivateAssets="all" />
+    <IgnoresAccessChecksTo Include="Microsoft.Extensions.AI.OpenAI" />
+  </ItemGroup>
+</Project>
