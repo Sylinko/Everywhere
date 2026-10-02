@@ -1,0 +1,12 @@
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"id":"resp-test","object":"response","created_at":1,"status":"in_progress","model":"test-model","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":1,"output_index":0,"item":{"type":"function_call","id":"fc-test","call_id":"call-test","name":"read_file","arguments":"","status":"in_progress"}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":2,"output_index":0,"item":{"type":"function_call","id":"fc-test","call_id":"call-test","name":"read_file","arguments":"{\"path\":\"task.py\"}","status":"completed"}}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":3,"response":{"id":"resp-test","object":"response","created_at":1,"status":"completed","model":"test-model","output":[{"type":"function_call","id":"fc-test","call_id":"call-test","name":"read_file","arguments":"{\"path\":\"task.py\"}","status":"completed"}],"usage":{"input_tokens":12,"output_tokens":8,"total_tokens":20}}}
+
