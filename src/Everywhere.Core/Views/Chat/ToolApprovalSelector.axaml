@@ -1,0 +1,118 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  xmlns:vc="using:Everywhere.ValueConverters" xmlns:vm="using:Everywhere.ViewModels">
+  <ControlTheme
+    x:Key="{x:Type v:ToolApprovalSelector}"
+    TargetType="v:ToolApprovalSelector">
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:ToolApprovalSelector">
+        <Button
+          Classes="Ghost"
+          Height="{DynamicResource FontSize3Xl}"
+          HorizontalContentAlignment="Stretch"
+          Content="{TemplateBinding EffectiveItem}"
+          Focusable="False"
+          Foreground="{TemplateBinding Foreground}">
+          <Button.ContentTemplate>
+            <DataTemplate x:DataType="vm:ToolApprovalModeOption">
+              <DockPanel
+                HorizontalSpacing="6" IsHitTestVisible="False">
+                <LucideIcon
+                  DockPanel.Dock="Left" VerticalAlignment="Center"
+                  Kind="{Binding Icon}"
+                  Size="{DynamicResource FontSizeM}"/>
+                <TextBlock
+                  VerticalAlignment="Center" ClipToBounds="False"
+                  Text="{Binding NameKey^}"
+                  TextTrimming="CharacterEllipsis">
+                  <Interaction.Behaviors>
+                    <shadui:TextTrimmedToolTipBehavior/>
+                  </Interaction.Behaviors>
+                </TextBlock>
+              </DockPanel>
+            </DataTemplate>
+          </Button.ContentTemplate>
+
+          <Button.Flyout>
+            <Flyout Placement="Top">
+              <ItemsControl
+                Width="300" Margin="6"
+                ItemsSource="{Binding $parent[v:ToolApprovalSelector].ItemsSource}">
+                <ItemsControl.Styles>
+                  <Style Selector="Button.Selected">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
+                    <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor50}"/>
+                    <Setter Property="shadui:ButtonAssist.PressedBackground" Value="{DynamicResource PrimaryColor10}"/>
+                  </Style>
+                  <Style Selector="Button.Warning">
+                    <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                  </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="4"/>
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ToolApprovalModeOption">
+                    <Button
+                      Classes="Ghost" HorizontalContentAlignment="Stretch"
+                      Classes.Warning="{Binding IsDangerous}"
+                      Command="{Binding $parent[v:ToolApprovalSelector].SelectItemCommand}"
+                      CommandParameter="{Binding}"
+                      CornerRadius="{DynamicResource XlCornerRadius}"
+                      Focusable="False">
+                      <Classes.Selected>
+                        <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
+                          <Binding Path="."/>
+                          <Binding Path="$parent[v:ToolApprovalSelector].SelectedItem"/>
+                        </MultiBinding>
+                      </Classes.Selected>
+
+                      <Interaction.Behaviors>
+                        <ButtonHideFlyoutOnClickBehavior/>
+                      </Interaction.Behaviors>
+
+                      <DockPanel HorizontalSpacing="8">
+                        <LucideIcon
+                          DockPanel.Dock="Left" VerticalAlignment="Center"
+                          Kind="{Binding Icon}"
+                          Size="{DynamicResource FontSizeXl}"/>
+                        <LucideIcon
+                          DockPanel.Dock="Right" VerticalAlignment="Center"
+                          Kind="Check"
+                          Size="{DynamicResource FontSizeM}">
+                          <LucideIcon.IsVisible>
+                            <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
+                              <Binding Path="."/>
+                              <Binding Path="$parent[v:ToolApprovalSelector].SelectedItem"/>
+                            </MultiBinding>
+                          </LucideIcon.IsVisible>
+                        </LucideIcon>
+                        <StackPanel Spacing="2">
+                          <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{Binding NameKey^}"/>
+                          <TextBlock
+                            Classes="Caption" Opacity="0.75"
+                            Text="{Binding DescriptionKey^}"
+                            TextWrapping="Wrap"/>
+                        </StackPanel>
+                      </DockPanel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^.Warning">
+      <Setter Property="Foreground" Value="{DynamicResource WarningColor}"/>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

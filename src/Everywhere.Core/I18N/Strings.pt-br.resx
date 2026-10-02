@@ -2932,15 +2932,6 @@ Use a roda do mouse ou teclas numéricas para alternar o modo de seleção</valu
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡 Sinta-se à vontade para se juntar à nossa comunidade oficial na página &quot;Sobre&quot; para interagir conosco!</value>
     </data>
-    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value>Todas as chamadas de terminal ignorarão a aprovação. Chamadas inadequadas do assistente podem causar sérios crashes do sistema ou perda irreversível de arquivos. Assuma o risco.</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value>Ignorar Aprovação</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value>Uma vez ativado, todas as operações de terminal serão liberadas automaticamente, sem necessidade de aprovação manual. Chamadas inadequadas do assistente podem causar sérios crashes do sistema ou perda irreversível de arquivos. Ativar esta opção significa que você avaliou e está disposto a assumir o risco.</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Executar no Terminal</value>
     </data>

@@ -302,6 +302,23 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             };
         }
 
+        return await ReadContentAsync(context, offset, limit, cancellationToken);
+    }
+
+    /// <summary>Reads a review resource through the normal handlers without attachments or chat presentation.</summary>
+    public async Task<PromptNode> ReadForApprovalAsync(
+        string path,
+        string workingDirectory,
+        int offset,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var context = await _contextFactory.CreateAsync(path, workingDirectory, cancellationToken);
+        return await ReadContentAsync(context, offset, limit, cancellationToken);
+    }
+
+    private static async Task<PromptNode> ReadContentAsync(FileHandlerContext context, int offset, int limit, CancellationToken cancellationToken)
+    {
         var result = await context.Handler.ReadAsync(context, offset, limit, cancellationToken);
         return BuildReadOutput(context.Path, result);
     }
@@ -1395,7 +1412,7 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         throw new HandledException(
             new UnauthorizedAccessException(
                 consent.FormatReason(
-                    "The user denied the file-operation approval request, so the operation was not performed.")),
+                    "Approval denied the file-operation approval request, so the operation was not performed.")),
             LocaleKey.BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage);
     }
 
@@ -1414,12 +1431,13 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         CancellationToken cancellationToken,
         bool forceConsent = false)
     {
-        if (chatContext.FunctionCallContext.Value?.BypassesApproval is true) return RequestConsentResult.Accept;
+        if (chatContext.GenerationContext?.FunctionCallContext.Value?.BypassesApproval is true)
+        {
+            return RequestConsentResult.Accept;
+        }
 
         var workingDirectory = chatContext.EnsureWorkingDirectory();
-        var resolvedWorkingDirectory = PathUtilities.ResolvePath(
-            workingDirectory,
-            PathResolutionMode.FollowFinalComponent).ResolvedPath;
+        var resolvedWorkingDirectory = PathUtilities.ResolvePath(workingDirectory, PathResolutionMode.FollowFinalComponent).ResolvedPath;
         if (!forceConsent && paths.Length > 0 &&
             paths.AsValueEnumerable().All(path => Path.IsPathFullyQualified(path) &&
                 resolvedWorkingDirectory is not null &&
@@ -1428,7 +1446,10 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             return RequestConsentResult.Accept;
         }
 
-        if (!forceConsent && _fileSystemSettings.ArePathsApproved(paths)) return RequestConsentResult.Accept;
+        if (!forceConsent && _fileSystemSettings.ArePathsApproved(paths))
+        {
+            return RequestConsentResult.Accept;
+        }
 
         var content = contentFactory?.Invoke() ??
             new ChatPluginFileReferencesDisplayBlock(paths.AsValueEnumerable().Select(path => new ChatPluginFileReference(path)).ToArray())
@@ -1470,11 +1491,16 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
             content,
             RequestConsentRememberMasks.AllowOnce,
             customOptions,
+            approvalScope: ToolApprovalScope.Create(
+                "File operation",
+                new ToolApprovalFileScope(paths, forceConsent),
+                ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalFileScope),
             cancellationToken: cancellationToken);
 
-        if (!consent) return consent;
-
-        if (consent.CustomOption?.Key is not FileSystemConsentOption option) return consent;
+        if (!consent || consent.CustomOption?.Key is not FileSystemConsentOption option)
+        {
+            return consent;
+        }
 
         switch (option)
         {

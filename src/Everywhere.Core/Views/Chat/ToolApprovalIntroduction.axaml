@@ -1,0 +1,51 @@
+<UserControl
+  x:Class="Everywhere.Views.ToolApprovalIntroduction" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" x:DataType="v:ToolApprovalIntroduction">
+  <ScrollViewer
+    MaxHeight="520" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel
+      MaxWidth="520" Spacing="14">
+      <TextBlock
+        Text="{Binding IntroductionKey^}"
+        TextWrapping="Wrap"/>
+      <shadui:SmoothBorder
+        Padding="12"
+        Background="{DynamicResource LightCardBackgroundColor}"
+        CornerRadius="{DynamicResource 2XlCornerRadius}">
+        <ItemsControl ItemsSource="{Binding Cards}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="12"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="v:ToolApprovalIntroductionCard">
+              <DockPanel HorizontalSpacing="12">
+                <LucideIcon
+                  DockPanel.Dock="Left" VerticalAlignment="Center"
+                  Kind="{Binding Icon}"
+                  Size="{DynamicResource FontSizeXl}"/>
+                <StackPanel Spacing="4">
+                  <TextBlock
+                    FontWeight="SemiBold"
+                    Foreground="{DynamicResource ForegroundColor}"
+                    Text="{Binding TitleKey^}"/>
+                  <TextBlock
+                    Classes="Muted Caption"
+                    Text="{Binding BodyKey^}"
+                    TextWrapping="Wrap"/>
+                </StackPanel>
+              </DockPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </shadui:SmoothBorder>
+      <TextBlock
+        Classes="Caption Muted"
+        Text="{Binding NoteKey^}"
+        TextWrapping="Wrap"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

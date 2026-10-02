@@ -46,7 +46,8 @@ public enum StatisticsModelInvocationPurpose
     TopicGeneration,
     SubagentResponse,
     Backfill,
-    ContextCompression
+    ContextCompression,
+    ToolApproval
 }
 
 /// <summary>

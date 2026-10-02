@@ -2932,15 +2932,6 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡欢迎在关于页面加入官方社群与我们交流互动~</value>
     </data>
-    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value>所有终端调用都会绕过审批，助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失，请自行承担风险。</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value>绕过审批</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value>开启后，所有终端操作将自动放行，无需手动审批。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在终端中执行</value>
     </data>
@@ -4106,5 +4097,107 @@
     </data>
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>无法将请求发送到正在运行的 Everywhere。请打开 Everywhere 后重试。</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>工具审批</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>选择负责工具审批的助手。“自动选择”使用当前执行任务的助手。</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>正在审批…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>请求批准</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>帮我批准</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>完全访问权限</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>工具操作需要批准时，向你请求批准。</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>由助手决定是否批准；拒绝或审批失败时停止该操作。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>已启用的工具可无需批准执行操作。</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>本轮仍使用“{0}”，将在下个对话轮次切换到“{1}”。</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>立即切换</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>本轮或下轮已启用完全访问权限，工具可无需批准执行操作。</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>关闭提示</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>要开启“帮我批准”吗？</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>需要批准工具操作时，由审批助手根据你的任务和操作风险决定是否放行。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>选择谁来审批</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>“自动选择”使用当前执行任务的助手，也可以在“系统助手”设置中单独指定。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>结合任务内容判断</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>审批会使用对话上下文和操作内容，必要时读取相关文件。这些内容会发送给所选审批助手，可能包含任务中的敏感信息。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>拒绝高风险操作</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>被判定为敏感数据外泄等高风险的操作，即使你已授权也会被拒绝。审批拒绝或失败时，该操作不会继续执行，原因会反馈给当前助手。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>单独指定审批助手时，审批内容会由该助手使用的服务处理。AI 审批仍可能误判，你可以随时切换模式。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>开启帮我批准</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>要开启完全访问权限吗？</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere 将能够无需逐次批准，使用已启用的工具执行操作，范围取决于应用拥有的访问权限。这包括：</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>文件和文件夹</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>读取、创建、修改、上传或删除文件。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>终端命令</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>在权限允许的范围内运行命令、安装软件或更改系统设置。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>互联网和已连接的工具</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>访问网站、发送数据并使用已启用的插件和 MCP 连接。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>这可能带来数据丢失、泄露或提示注入等风险。你可以随时切换模式。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>开启完全访问权限</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>自动审批失败：{0}</value>
     </data>
 </root>

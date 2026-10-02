@@ -11,9 +11,8 @@
         <Button
           x:Name="PART_AssistantSelectionButton" Classes="Ghost"
           Height="{DynamicResource FontSize3Xl}"
-          VerticalAlignment="Center"
-          CornerRadius="{DynamicResource FullCornerRadius}"
-          Focusable="False" Grid.IsSharedSizeScope="True">
+          VerticalAlignment="Center" Focusable="False"
+          Grid.IsSharedSizeScope="True">
           <Button.Padding>
             <exp:ExpressionBinding Expression="thickness((A - B) / 2)">
               <DynamicResource ResourceKey="FontSize3Xl"/>

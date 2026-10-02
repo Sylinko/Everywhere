@@ -1078,6 +1078,40 @@
                 </DockPanel>
               </shadui:SmoothBorder>
 
+              <shadui:SmoothBorder
+                Margin="6,2" Padding="8,6"
+                Background="{DynamicResource WarningColor20}"
+                CornerRadius="{DynamicResource XlCornerRadius}"
+                IsVisible="{Binding IsFullAccessApprovalWarningVisible}">
+                <DockPanel HorizontalSpacing="8">
+                  <Button
+                    Classes="Ghost Compact" DockPanel.Dock="Right"
+                    Command="{Binding DismissFullAccessWarningCommand}"
+                    Content="{I18N {x:Static LocaleKey.ToolApproval_Dismiss}}"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    Text="{I18N {x:Static LocaleKey.ToolApproval_FullAccessWarning}}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+              </shadui:SmoothBorder>
+
+              <shadui:SmoothBorder
+                Margin="6,2" Padding="8,6"
+                Background="{DynamicResource LightCardBackgroundColor}"
+                CornerRadius="{DynamicResource XlCornerRadius}"
+                IsVisible="{Binding IsApprovalModeChangePending}">
+                <DockPanel HorizontalSpacing="8">
+                  <Button
+                    Classes="Ghost Compact" DockPanel.Dock="Right"
+                    Command="{Binding SwitchApprovalModeNowCommand}"
+                    Content="{I18N {x:Static LocaleKey.ToolApproval_SwitchNow}}"/>
+                  <TextBlock
+                    Classes="Caption" VerticalAlignment="Center"
+                    Text="{Binding PendingApprovalMessageKey^}"
+                    TextWrapping="Wrap"/>
+                </DockPanel>
+              </shadui:SmoothBorder>
+
               <shadui:SmoothBorder Background="{DynamicResource LightCardBackgroundColor}">
                 <v:ChatInputArea
                   x:Name="ChatInputArea" Margin="6"
@@ -1105,10 +1139,10 @@
                   </v:ChatInputArea.Transitions>
 
                   <v:ChatInputArea.ToolBarContent>
-                    <StackPanel
+                    <Grid
                       Grid.Row="2" Grid.Column="0"
-                      Orientation="Horizontal" Spacing="4">
-                      <StackPanel.Styles>
+                      ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                      <Grid.Styles>
                         <Style Selector="Button:flyout-open LayoutTransformControl">
                           <Style.Animations>
                             <Animation
@@ -1127,10 +1161,10 @@
                             </Animation>
                           </Style.Animations>
                         </Style>
-                      </StackPanel.Styles>
+                      </Grid.Styles>
 
                       <Button
-                        Classes="Ghost Rounded"
+                        Classes="Ghost Rounded" Grid.Column="0"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_AddAttachmentMenuItem_ToolTip}}">
                         <Button.Flyout>
                           <Flyout Placement="Top">
@@ -1192,13 +1226,23 @@
                       </Button>
 
                       <v:ChatCustomAssistantSelector
+                        Grid.Column="1"
                         ItemsSource="{Binding Settings.Model.CustomAssistants}"
                         SelectedItem="{Binding Settings.Model.SelectedCustomAssistant, Mode=TwoWay}"
                         ToolTip.Placement="Top"
                         ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CustomAssistantSelector_ToolTip}}"/>
 
+                      <v:ToolApprovalSelector
+                        Classes="Ghost" Grid.Column="2"
+                        Classes.Warning="{Binding EffectiveApprovalOption.IsDangerous}"
+                        EffectiveItem="{Binding EffectiveApprovalOption}"
+                        IsEnabled="{Binding !SelectApprovalModeCommand.IsRunning}"
+                        ItemsSource="{Binding ApprovalModeOptions}"
+                        SelectItemCommand="{Binding SelectApprovalModeCommand}"
+                        SelectedItem="{Binding SelectedApprovalOption, Mode=OneWay}"/>
+
                       <Button
-                        Classes="Ghost Rounded Update"
+                        Classes="Ghost Rounded Update" Grid.Column="3"
                         Command="{Binding PerformUpdateCommand}"
                         Focusable="False"
                         IsVisible="{Binding SoftwareUpdater?.LatestUpdate?.IsReady, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -1216,7 +1260,7 @@
                           Kind="ArrowBigUpDash"
                           Size="{DynamicResource FontSizeL}"/>
                       </Button>
-                    </StackPanel>
+                    </Grid>
                   </v:ChatInputArea.ToolBarContent>
 
                   <v:ChatInputArea.LeadingContentTemplate>

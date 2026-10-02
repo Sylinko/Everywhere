@@ -124,6 +124,9 @@ public readonly record struct RequestConsentResult(bool IsAccepted, string? Reas
 /// </summary>
 public interface IChatPluginUserInterface
 {
+    /// <summary>Gets the approval mode captured when this invocation entered its consent boundary.</summary>
+    ToolApprovalMode ApprovalMode { get; }
+
     /// <summary>
     /// Gets a display sink for the plugin to output content to the user interface.
     /// </summary>
@@ -142,7 +145,7 @@ public interface IChatPluginUserInterface
     ChatPluginActivityPreview? ActivityPreview { get; set; }
 
     /// <summary>
-    /// Requests user consent for a permission request.
+    /// Obtains required consent using the current invocation's approval mode and remembered rules.
     /// </summary>
     /// <remarks>
     /// Consent is grouped by plugin.function.id, so multiple calls with the same parameters will only prompt the user once (if they choose to remember their decision).
@@ -152,6 +155,7 @@ public interface IChatPluginUserInterface
     /// <param name="content"></param>
     /// <param name="rememberMasks"></param>
     /// <param name="customOptions"></param>
+    /// <param name="approvalScope">Optional semantic operation details for automatic review.</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<RequestConsentResult> RequestConsentAsync(
@@ -160,6 +164,7 @@ public interface IChatPluginUserInterface
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
         IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
+        ToolApprovalScope? approvalScope = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

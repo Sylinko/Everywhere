@@ -202,6 +202,7 @@ public sealed partial class ChatWindowViewModel :
                 .Subscribe(_ => UpdateCurrentContextUsageModel())
         );
 
+        InitializeToolApproval();
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 

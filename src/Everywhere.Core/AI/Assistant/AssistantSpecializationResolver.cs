@@ -11,7 +11,7 @@ public sealed class AssistantSpecializationResolver(AssistantCatalog catalog)
         if (!systemAssistant.AutoSelect) return systemAssistant;
 
         var specialization = systemAssistant.RequiredSpecializations;
-        if (specialization == ModelSpecializations.Default) return currentAssistant;
+        if (specialization is ModelSpecializations.Default or ModelSpecializations.ToolApproval) return currentAssistant;
 
         var sourceConfiguration = currentAssistant.Configuration;
         lock (sourceConfiguration)

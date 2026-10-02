@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
@@ -115,7 +115,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         // The subagent has its own ChatContext and FunctionCallContext. Do not let the parent
         // tool's ambient invocation context leak into nested kernel-service resolution while the
         // child generation is waiting for model output or user consent.
-        using var parentFunctionCallContextScope = chatContext.SuppressFunctionCallContext();
+        using var parentFunctionCallContextScope = chatContext.GenerationContext?.SuppressFunctionCallContext();
         await chatService.GenerateAsync(
             forkedChatContext,
             specializedAssistant,

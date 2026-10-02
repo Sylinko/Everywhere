@@ -1,8 +1,9 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reactive.Disposables.Fluent;
+using System.Text.Json.Serialization;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
@@ -102,26 +103,16 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     [IgnoreMember]
     public ToolPatternRulesets? ToolPatternRulesets { get; }
 
+    /// <summary>Gets the active non-serialized generation for this chat.</summary>
     [IgnoreMember]
-    public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
+    [JsonIgnore]
+    [ObservableProperty]
+    public partial GenerationContext? GenerationContext { get; internal set; }
 
-    /// <summary>
-    /// Enters one invocation context for the current asynchronous execution flow and restores the
-    /// previous value when the returned scope is disposed.
-    /// </summary>
-    /// <remarks>
-    /// Restoring the captured value, rather than assigning <see langword="null"/>, is essential for
-    /// nested tool execution. AsyncLocal then carries each invocation independently when sibling
-    /// operations are scheduled in separate execution contexts.
-    /// </remarks>
-    internal IDisposable EnterFunctionCallContext(FunctionCallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        var previous = FunctionCallContext.Value;
-        FunctionCallContext.Value = context;
-        return Disposable.Create(() => FunctionCallContext.Value = previous);
-    }
+    /// <summary>Gets the parent turn's mode state when this context is used by a child.</summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public GenerationApprovalState? InheritedApprovalState { get; private init; }
 
     [IgnoreMember]
     public IChatPluginUserInterfaceBroker UserInterfaceBroker { get; }
@@ -315,30 +306,13 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
                 }),
             UserInterfaceBroker)
         {
+            InheritedApprovalState = GenerationContext?.ApprovalState ?? InheritedApprovalState,
             Metadata =
             {
                 Topic = topic,
                 IsTemporary = true
             }
         };
-    }
-
-    /// <summary>
-    /// Temporarily clears the invocation context for a nested generation and restores it when the
-    /// generation completes.
-    /// </summary>
-    /// <remarks>
-    /// A subagent is generated from inside the parent tool invocation. The subagent owns a
-    /// different <see cref="ChatContext"/>, but the parent invocation still flows through the
-    /// current asynchronous execution context. Clearing this slot prevents dependency-injection
-    /// lookups made while starting the nested generation from accidentally resolving the parent
-    /// tool's user-interface context. The parent scope is restored before the outer tool resumes.
-    /// </remarks>
-    public IDisposable SuppressFunctionCallContext()
-    {
-        var previous = FunctionCallContext.Value;
-        FunctionCallContext.Value = null;
-        return Disposable.Create(() => FunctionCallContext.Value = previous);
     }
 
     /// <summary>

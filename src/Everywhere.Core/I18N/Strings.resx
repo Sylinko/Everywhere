@@ -2932,15 +2932,6 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡 Feel free to join our official community on the About page to interact with us~</value>
     </data>
-    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
-        <value>All terminal calls will bypass approval. Improper use by the assistant may lead to severe system crashes or irreversible file loss. Proceed at your own risk.</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
-        <value>Bypass Approval</value>
-    </data>
-    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
-        <value>When enabled, all terminal operations will be automatically approved without manual intervention. Improper use by the assistant may lead to severe system crashes or irreversible file loss. Enabling this option means you have assessed and are willing to assume the risk.</value>
-    </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Execute In Terminal</value>
     </data>
@@ -4108,5 +4099,107 @@ Delete &quot;{1}&quot; permanently?</value>
     </data>
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Could not deliver the request to the running Everywhere instance. Open Everywhere and try again.</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>Tool approval</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>Choose the assistant that reviews tool approvals. AutoSelect uses the assistant executing the task.</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>Reviewing approval…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>Request approval</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>Approve for me</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>Full access</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>Ask you when a tool operation needs approval.</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>Let an assistant decide required approvals. Denials and review failures stop the operation.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>Enabled tools can act without approval.</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>This turn still uses {0}. The next turn will use {1}.</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>Switch now</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>Full access is enabled for this or the next turn. Tools can act without approval.</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>Dismiss</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>Enable Approve for me?</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>When a tool operation requires approval, an approval assistant decides whether to allow it based on your task and the operation’s risk.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>Choose who reviews</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>AutoSelect uses the assistant executing the task. You can also choose one in System Assistant settings.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>Review in the context of your task</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>Review uses conversation context and operation details and may read relevant files. These inputs are sent to the selected approval assistant and may contain sensitive task information.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>Decline high-risk operations</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>Operations classified as high risk, such as sensitive-data disclosure, are denied even when authorized. A denial or review failure stops that operation and returns the reason to the executing assistant.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>If you choose a separate approval assistant, the service it uses processes the review inputs. AI approval can still make mistakes; you can change the mode at any time.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>Enable Approve for me</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>Enable full access?</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere can use enabled tools without asking you to approve each operation, within the access available to the application. This includes:</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>Files and folders</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>Read, create, modify, upload or delete files.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>Terminal commands</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>Run commands, install software or change system settings where permitted.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>Internet and connected tools</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>Access websites, send data and use enabled plugins and MCP connections.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>Actions may cause data loss, disclosure or effects induced by untrusted content. You can change the mode at any time.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>Enable full access</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>Automatic approval failed: {0}</value>
     </data>
 </root>

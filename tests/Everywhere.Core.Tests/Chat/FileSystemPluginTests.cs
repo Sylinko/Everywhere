@@ -1,6 +1,7 @@
 using System.Reflection;
 using Avalonia.Platform.Storage;
 using Everywhere.Chat;
+using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
@@ -393,6 +394,7 @@ public class FileSystemPluginTests
                 Arg.Any<ChatPluginDisplayBlock?>(),
                 Arg.Any<RequestConsentRememberMasks>(),
                 Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                    approvalScope: Arg.Any<ToolApprovalScope?>(),
                 cancellationToken: Arg.Any<CancellationToken>());
             Assert.Multiple(() =>
             {
@@ -429,6 +431,7 @@ public class FileSystemPluginTests
                     Arg.Any<ChatPluginDisplayBlock?>(),
                     Arg.Any<RequestConsentRememberMasks>(),
                     Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                    approvalScope: Arg.Any<ToolApprovalScope?>(),
                     cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(call =>
                 {
@@ -496,6 +499,7 @@ public class FileSystemPluginTests
                 Arg.Any<ChatPluginDisplayBlock?>(),
                 Arg.Any<RequestConsentRememberMasks>(),
                 Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                    approvalScope: Arg.Any<ToolApprovalScope?>(),
                 cancellationToken: Arg.Any<CancellationToken>());
             Assert.That(File.ReadAllText(path), Is.EqualTo("new\n"));
         }
@@ -527,6 +531,7 @@ public class FileSystemPluginTests
                     Arg.Any<ChatPluginDisplayBlock?>(),
                     Arg.Any<RequestConsentRememberMasks>(),
                     Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                    approvalScope: Arg.Any<ToolApprovalScope?>(),
                     cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(call =>
                 {
@@ -703,6 +708,7 @@ public class FileSystemPluginTests
                 Arg.Any<ChatPluginDisplayBlock?>(),
                 Arg.Any<RequestConsentRememberMasks>(),
                 Arg.Any<IReadOnlyList<RequestConsentCustomOption>?>(),
+                approvalScope: Arg.Any<ToolApprovalScope?>(),
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(call =>
             {
