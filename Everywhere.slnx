@@ -11,6 +11,7 @@
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/close-stale-issues.yml" />
     <File Path=".github/workflows/linux-release.yml" />
+    <File Path=".github/workflows/llm-integration.yml" />
     <File Path=".github/workflows/macos-release.yml" />
     <File Path=".github/workflows/sync-i18n.yml" />
     <File Path=".github/workflows/windows-release.yml" />
@@ -67,6 +68,7 @@
   <Folder Name="/tests/">
     <File Path="tests/Directory.Packages.props" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
+    <Project Path="tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj" />
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
     <Project Path="tests/Everywhere.Patches.SemanticKernel.Tests/Everywhere.Patches.SemanticKernel.Tests.csproj" />

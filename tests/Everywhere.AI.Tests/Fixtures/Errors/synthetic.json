@@ -1,0 +1,331 @@
+[
+  {
+    "id": "key-under-503",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Invalid API key provided",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "parameter-under-503",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Unsupported parameter: temperature",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "context-under-503",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Maximum context length exceeded",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "balance-under-503",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Insufficient account balance",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "invalid-upstream",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "invalid upstream response",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "model-unavailable",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "The model is temporarily unavailable",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "quota-under-429",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 429,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Insufficient quota",
+        "code": "insufficient_quota"
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "ambiguous-limit",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 429,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Resource limit reached",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "output-limit",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 400,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "max_tokens must be less than 8192",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "image-url",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 400,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "image_url must be a valid URL",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "authentication-signature",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 400,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Invalid signature for authentication token",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "quoted-parameter",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "Upstream unavailable. Request parameters: temperature=0.7",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "supported-temperature",
+    "providers": [
+      "OpenAI",
+      "Mistral"
+    ],
+    "status": 503,
+    "body": {
+      "error": {
+        "type": "server_error",
+        "message": "temperature is supported; upstream connection failed",
+        "code": null
+      }
+    },
+    "provenance": "synthetic",
+    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+  },
+  {
+    "id": "raw-empty",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Anthropic",
+      "Gemini",
+      "Mistral",
+      "Ollama"
+    ],
+    "status": 503,
+    "rawBody": "",
+    "contentType": "text/plain",
+    "provenance": "synthetic"
+  },
+  {
+    "id": "raw-plain",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Anthropic",
+      "Gemini",
+      "Mistral",
+      "Ollama"
+    ],
+    "status": 503,
+    "rawBody": "upstream unavailable",
+    "contentType": "text/plain",
+    "provenance": "synthetic"
+  },
+  {
+    "id": "raw-html",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Anthropic",
+      "Gemini",
+      "Mistral",
+      "Ollama"
+    ],
+    "status": 503,
+    "rawBody": "<html><body>upstream unavailable</body></html>",
+    "contentType": "text/html",
+    "provenance": "synthetic"
+  },
+  {
+    "id": "raw-malformed",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Anthropic",
+      "Gemini",
+      "Mistral",
+      "Ollama"
+    ],
+    "status": 503,
+    "rawBody": "{\"error\":",
+    "contentType": "text/plain",
+    "provenance": "synthetic"
+  },
+  {
+    "id": "raw-unicode",
+    "providers": [
+      "OpenAI",
+      "OpenAIResponses",
+      "Anthropic",
+      "Gemini",
+      "Mistral",
+      "Ollama"
+    ],
+    "status": 503,
+    "rawBody": "上游服务暂时不可用",
+    "contentType": "text/plain",
+    "provenance": "synthetic"
+  },
+  {
+    "id": "ollama-bad-request",
+    "providers": [
+      "Ollama"
+    ],
+    "status": 400,
+    "body": {
+      "error": "model not found"
+    },
+    "provenance": "synthetic"
+  },
+  {
+    "id": "ollama-no-tools",
+    "providers": [
+      "Ollama"
+    ],
+    "status": 400,
+    "body": {
+      "error": "model does not support tools"
+    },
+    "provenance": "synthetic"
+  },
+  {
+    "id": "ollama-busy",
+    "providers": [
+      "Ollama"
+    ],
+    "status": 429,
+    "body": {
+      "error": "server busy"
+    },
+    "provenance": "synthetic"
+  }
+]
