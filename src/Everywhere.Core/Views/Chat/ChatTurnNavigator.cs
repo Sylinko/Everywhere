@@ -127,7 +127,9 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     }
 
     private const double Pitch = 12;
-    private const double RailWidth = 40;
+    private const double IdleHitWidth = 8;
+    private const double ExpandedHitWidth = 60;
+
     private readonly ChatTurnPreviewPanel _previews;
     private readonly List<Wake> _wakes = [];
     private ChatTurnNavigationIndex? _index;
@@ -155,7 +157,7 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
     private Rect RailClip => new(
         Math.Min(LinePadding.Left, Bounds.Width),
         Math.Min(LinePadding.Top, Bounds.Height) + (RailAvailableHeight - RailHeight) / 2,
-        Math.Min(RailWidth, Math.Max(0, Bounds.Width - LinePadding.Left - LinePadding.Right)),
+        Math.Min(ExpandedHitWidth, Math.Max(0, Bounds.Width - LinePadding.Left - LinePadding.Right)),
         RailHeight);
 
     private Rect HitBounds
@@ -167,7 +169,9 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
             var lastY = firstY + (TurnCount - 1) * Pitch;
             var top = Math.Max(RailClip.Top, firstY - Pitch);
             var bottom = Math.Min(RailClip.Bottom, lastY + Pitch);
-            return new Rect(RailClip.Left, top, RailClip.Width, Math.Max(0, bottom - top));
+            // Hit bounds follow pointer state so fading previews release the conversation immediately.
+            var width = Math.Min(_isHovering ? ExpandedHitWidth : IdleHitWidth, RailClip.Width);
+            return new Rect(RailClip.Left, top, width, Math.Max(0, bottom - top));
         }
     }
 
@@ -453,7 +457,8 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
                 var isReading = i == _readingIndex;
                 var length = 4 + influence * 24;
                 var y = origin + i * Pitch;
-                var edge = (1 - topFade * (1 - Math.Clamp((y - top) / fadeLength, 0, 1))) * (1 - bottomFade * (1 - Math.Clamp((clip.Bottom - y) / fadeLength, 0, 1)));
+                var edge = (1 - topFade * (1 - Math.Clamp((y - top) / fadeLength, 0, 1))) *
+                    (1 - bottomFade * (1 - Math.Clamp((clip.Bottom - y) / fadeLength, 0, 1)));
                 using (context.PushOpacity((0.24 + 0.7 * Math.Max(influence, isReading ? 0.7 : 0)) * edge))
                 {
                     context.DrawLine(isReading ? readingPen : normalPen, new Point(clip.Left, y), new Point(clip.Left + length, y));
@@ -763,7 +768,8 @@ public sealed class ChatTurnNavigator : Decorator, ICustomHitTest
                     if (isFluid)
                     {
                         var renderScale = Math.Max(0.001, state.Scale);
-                        transform.Matrix = Matrix.CreateScale(renderScale, renderScale) * Matrix.CreateTranslation(PreviewLeft - (1 - presence) * 24, y);
+                        transform.Matrix = Matrix.CreateScale(renderScale, renderScale) *
+                            Matrix.CreateTranslation(PreviewLeft - (1 - presence) * 24, y);
                     }
                     else
                     {
