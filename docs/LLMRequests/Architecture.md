@@ -1,6 +1,6 @@
 # LLM Request Recovery and Diagnostics
 
-Status: architecture proposal, with confirmed product decisions recorded below. Runtime behavior has not been changed by this document. Source reviewed on 2026-10-02.
+Status: confirmed architecture, updated on 2026-10-03. Exception normalization and request execution are implemented; [RequestExecution.md](RequestExecution.md) records the current APIs and verification limits. Common read-idle configuration remains undecided.
 
 ## 1. Scope and terminology
 
@@ -15,7 +15,7 @@ This design covers request error classification, automatic request retries, prog
 ### Existing user actions
 
 - `ChatService.Retry` creates a branch at the selected assistant node. This is an explicit user action that regenerates from that branch point; it must not become the implementation of automatic request retry.
-- `ChatService.Continue` appends a new assistant message and resumes from the available history. Its purpose is best-effort preservation of progress within the turn, including tool results, useful partial output, and the effective compressed context.
+- `ChatService.Continue` resumes the latest assistant message in place from the available history. Any trailing compression node requires a new assistant after it; the work stays in the same logical turn. Its purpose is best-effort preservation of progress within the turn, including tool results, useful partial output, and the effective compressed context.
 - Automatic request retry repeats only the failed logical request. It does not create a branch, restart `GenerateAsync`, rebuild the entire turn, or replay executed tools.
 
 The same assistant message currently can contain several request/tool cycles. Therefore neither `ErrorMessageKey != null` nor a runtime exception is sufficient reason to exclude the entire message from context.
@@ -82,7 +82,7 @@ Snapshot retry settings when creating the request infrastructure, consistently w
 
 Proposed backoff: exponential growth with jitter, starting at one second and capping the local backoff at 30 seconds. Honor valid server `Retry-After` values without retrying before the stated time. This local cap does not shorten a longer server delay. Exact jitter constants are not product decisions yet.
 
-The cancellation token interrupts both request execution and delay. Distinguish caller cancellation from an attempt deadline; do not classify every `OperationCanceledException` as one or the other without token/deadline evidence. An attempt gets its own deadline lifecycle. Provider-specific first-response/stream-read timeout differences must be audited before describing the current single timeout setting as a universal end-to-end deadline.
+The cancellation token interrupts both request execution and delay. Distinguish caller cancellation from response-wait and read-idle timeouts using request-scoped evidence. There is no whole-generation or whole-turn deadline. Preserve the existing response-wait setting and introduce any common read-idle limit as a separately configurable, disableable policy whose default is still undecided. See [TimeoutAndCompletion.md](TimeoutAndCompletion.md) for phase boundaries, SDK coordination and compatible completion handling.
 
 Retries reset per logical request, not per tool call or entire turn. SDK retries must be explicitly reconciled with application retries so configured counts reflect actual requests. No retry counter reset merely because a failed stream yielded some content. A long-running `-1` loop must use bounded diagnostics and must not allocate one permanent UI row/message for every empty failure.
 
@@ -113,7 +113,7 @@ On terminal failure, remove the retry activity and use the normal `AssistantErro
 
 Confirmed direction: a user-stopped generation is a distinct persisted outcome, not an `AssistantErrorPresentationRow` containing `OperationCanceledException` text.
 
-- Store an explicit serializable cancellation marker on the owning `AssistantChatMessage`; a Boolean such as `IsCanceled` is sufficient unless another concrete persisted outcome needs a shared enum. Existing messages default to not canceled.
+- Persist an IsCanceled marker on assistant and compression messages. Runtime diagnostics remain non-serialized; cooperative cancellation displays a stopped row instead of an error row.
 - Project a dedicated cancellation/stopped row from this marker. Suggested text is `已停止`, with neutral styling and a Lucide icon. It remains visible after reloading the conversation without depending on a runtime exception or busy flag.
 - Preserve useful partial output, completed tools, and context-compression progress. Do not clear an entire turn when the user stops during streaming, tool execution, approval, compression, or retry backoff.
 - Preserve call/result pairing even when execution was interrupted. A tool's actual result or cancellation/unknown-outcome result remains part of protocol history. Removing a cancellation error banner does not remove required tool results.
@@ -121,7 +121,7 @@ Confirmed direction: a user-stopped generation is a distinct persisted outcome, 
 - An attempt timeout remains a request failure unless the caller actually canceled. An arbitrary SDK `OperationCanceledException` without caller-cancellation evidence is not sufficient to mark the conversation as user-stopped.
 - Remove live retry progress and discard its temporary failure records when the user cancels recovery. Do not flush those records as an exhausted-retry error after a deliberate stop. Existing unrelated errors remain intact.
 - Finalize busy/span timestamps and retain canceled usage/statistics through the existing cleanup path. Cancellation does not imply zero tokens or no tool side effects.
-- The latest stopped row can offer the existing Continue action under its normal ownership/read-only/busy guards. Continue appends normally; it does not erase the previous message's stop marker. Earlier stop rows remain process history and do not compete with the newest terminal action.
+- The latest stopped row can offer the existing Continue action under its normal ownership/read-only/busy guards. Continue clears the reused node's terminal error/stop state while preserving committed spans and tool results. Historical stop markers within the same logical turn are not projected as additional stopped rows. The process summary displays the current outcome; when it already says stopped, the terminal row only supplies the Continue action.
 - The projection must distinguish stopped, failed, successful-empty, and running states. In particular, stopping before any output must not also show `NoResponsePresentationRow` or a stale pending/retry row.
 
 The current broad `GenerateAsync` catch converts all exceptions into `ErrorMessageKey`; it needs a separate cooperative-cancellation path. Nested approval/compression/tool catches must preserve cancellation propagation and avoid generating a duplicate assistant error banner. This is targeted separation of canceled work from failure, not removal of all `OperationCanceledException` handling across the application. Do not infer new stop markers by matching previously persisted localized error strings.

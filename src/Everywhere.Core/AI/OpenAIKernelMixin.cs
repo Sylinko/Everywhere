@@ -44,11 +44,18 @@ public class OpenAIKernelMixin : KernelMixin
                 new OpenAIClientOptions
                 {
                     Endpoint = new Uri(Endpoint, UriKind.Absolute),
+                    RetryPolicy = new ClientRetryPolicy(0),
                     Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
                 }
             ).AsIChatClient(),
             this
         ).AsChatCompletionService();
+    }
+
+    /// <inheritdoc />
+    public override void ExtractExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        ChatExceptionEvidenceExtractor.ExtractOpenAI(evidence);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="../../src/Everywhere.Core/Everywhere.Core.csproj" />
     <PackageReference Include="Anthropic" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

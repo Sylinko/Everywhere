@@ -16,7 +16,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs",
+    "expectedType": "AuthenticationFailure.InvalidApiKey",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-openai-404",
@@ -35,7 +37,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs",
+    "expectedType": "InvalidConfiguration",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-openai-429",
@@ -54,7 +58,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs",
+    "expectedType": "RateLimited",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-openai-503",
@@ -73,7 +79,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/mod.rs",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-openai-400",
@@ -92,7 +100,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/chat.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/chat.rs",
+    "expectedType": "InvalidRequest",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-anthropic-402",
@@ -109,7 +119,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "QuotaExceeded",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-anthropic-403",
@@ -126,7 +138,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "PermissionDenied",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-anthropic-413",
@@ -143,7 +157,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "InvalidRequest",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "source-anthropic-429",
@@ -160,7 +176,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "RateLimited",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-anthropic-504",
@@ -177,7 +195,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "Timeout",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-anthropic-529",
@@ -194,7 +214,9 @@
       "request_id": "req_fake1"
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/anthropic/mod.rs",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-gemini-429",
@@ -210,7 +232,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs",
+    "expectedType": "RateLimited",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-gemini-503",
@@ -226,7 +250,9 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "source-gemini-504",
@@ -242,6 +268,8 @@
       }
     },
     "provenance": "source",
-    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs"
+    "source": "https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/gemini/mod.rs",
+    "expectedType": "Timeout",
+    "expectedRecovery": "Retry"
   }
 ]

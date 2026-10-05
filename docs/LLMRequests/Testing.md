@@ -1,12 +1,12 @@
 # LLM Request Integration Test Architecture
 
-Status: updated on 2026-10-03. The first-stage NUnit/MockServer harness and confirmed SDK repairs are implemented. The full Release suite passes 163 real-HTTP tests through WSL Containers, with zero skips; see [SDKReview.md](SDKReview.md#9-implemented-repairs-and-verification). The scenario matrix below includes planned coverage and is not a claim that every case is implemented.
+Status: updated on 2026-10-03. The NUnit/MockServer harness, confirmed SDK repairs, exception normalization, and logical request executor are implemented. The full Release suite passes 388 tests through WSL Containers: 286 real-HTTP SDK/application cases and 102 local normalization cases, with zero skips. A separate focused Core run passes 84 tests. See [SDKReview.md](SDKReview.md#9-implemented-repairs-and-verification) for first-stage verification and the verification sections below for current coverage. The scenario matrix below includes planned coverage and is not a claim that every case is implemented.
 
 ## Purpose and boundary
 
 Exercise the client path used by Everywhere against a controlled loopback HTTP server. Feed wire responses into real SDK parsers and the actual patched assemblies, then observe content, tool calls, completion metadata, exceptions, cancellation, physical request counts and request payloads. Do not manufacture the expected SDK exception in a fake completion service and call that a regression test of the SDK.
 
-The same server and protocol fixtures will support later KernelMixin and ChatService integration tests. First-stage tests establish transport and SDK behavior; they must not assert application retry, presentation, or continuation semantics that do not exist yet.
+The same server and protocol fixtures now support production KernelMixin request-execution tests. First-stage tests establish transport and SDK behavior; application tests separately assert retry and lifecycle semantics through their owning production entry points.
 
 ## Data reference, not framework migration
 
@@ -115,7 +115,7 @@ Routine tests and CI remain offline and require no real credentials. Live probes
 
 First-stage scope is HTTP/1.1 loopback streaming generation through the six listed client paths. Exclude WebSockets/Realtime, images/audio generation, embeddings, file/batch APIs, complete model capability tables, API business validation, proxy/TLS/DNS emulation, HTTP/2/3 conformance, load benchmarks, a standalone mock CLI/admin UI, production service access, and automatic corpus synchronization. Add a missing transport or endpoint only for an actual Everywhere caller or demonstrated regression.
 
-This stage fixes SDK defects and records supported behavior. It does not implement the application retry executor, classifier redesign, ChatService rollback/Continue, presentation rows, or a new timeout policy. Production SDK retry defaults remain until the replacement executor is connected. Normal protocol variation is characterized before deciding whether it is a defect: for example, a missing [DONE] marker with a valid finish reason is not automatically equivalent to an unfinished response.
+First-stage scope fixes SDK defects and records supported behavior independently of application policy. Subsequent implemented stages add exception normalization and the request executor described in [RequestExecution.md](RequestExecution.md), including production SDK retry suppression. The common read-idle timeout remains undecided. Normal protocol variation is characterized before deciding whether it is a defect: for example, a missing [DONE] marker with a valid finish reason is not automatically equivalent to an unfinished response.
 
 Complete the stage when the known defects are reproduced then repaired through real SDK entry points, the affected normal paths remain valid, the planned evidence survives to its boundary, all fixtures have provenance, and the suite/publish checks run without an external service. Classify each remaining behavior as repaired, intentionally characterized, or unresolved with a concrete reason; do not declare completeness solely from a test-count target.
 
@@ -145,7 +145,7 @@ Scripts are consumed deterministically per endpoint/scenario. An unexpected extr
 | Chat-read cancellation | Send a valid first event, then stall the next event or leave a partial line | Ollama's actual IChatClient streaming path cancels its pending read, without being mistaken for successful completion. |
 | Protocol error | HTTP 200 followed by the protocol's error event/object, before or after text | The client surfaces the error and retains its diagnostic content; Ollama does not map it to empty text. |
 | Broken transport | Emit part of a response and abort the body/connection | Observe SDK behavior and exception evidence; there is no overlapping abandoned read. |
-| Incomplete protocol | Complete HTTP framing normally but omit the evidence required for protocol completion | Record actual SDK behavior separately from transport interruption. A later normalized completion check must detect unfinished responses even if enumeration ends normally, while accepting supported variants that provide sufficient completion evidence through other fields. |
+| Incomplete protocol | Complete HTTP framing normally but omit terminal metadata/events | Record actual SDK behavior separately from transport interruption. Preserve available explicit incomplete/error evidence, but do not reject or retry solely because a compatible response lacks finish metadata or an exposed terminal marker. |
 | Framing | Split JSON, SSE delimiters and a multibyte UTF-8 character across body writes | Valid streams still parse; event boundaries are not assumed to equal network-read boundaries. |
 | Timeouts | Hold headers, then separately hold a post-header read | Characterize current SDK timeout ownership. Do not silently introduce the future application timeout contract. |
 | Built-in retry | Script retryable failures followed by success/exhaustion | Record current physical send counts, and verify supported zero-retry configuration independently. Production defaults are disabled only when the application executor replaces them. |
@@ -162,9 +162,11 @@ and failure/failure/success recovery. Each assertion records its applicable path
 the 163-case total is not a provider-by-scenario Cartesian product.
 
 Deliberately split UTF-8/event framing and separate header/read timeout probes still
-need targeted cases. Application classification, retry scheduling and continuation
-are outside this stage. Sanitized real-provider observations can extend the existing
-fixture corpus later without replacing the host or SDK entry points.
+need targeted cases. Stage-two normalization tests are implemented through the
+production entry point; see [ExceptionNormalization.md](ExceptionNormalization.md).
+The common timeout contract is specified in [TimeoutAndCompletion.md](TimeoutAndCompletion.md). Application
+retry scheduling and consumer recovery are described in [RequestExecution.md](RequestExecution.md). Sanitized real-provider
+observations can extend the existing fixture corpus without replacing the host or SDK entry points.
 
 ## Repair sequence and evidence
 
@@ -175,4 +177,49 @@ fixture corpus later without replacing the host or SDK entry points.
 5. Verify tests load the intended patched assembly and that publish replacement preserves it. A successful weave/build alone is insufficient.
 6. Document remaining SDK differences, their fixtures and any unresolved behavior before starting the application executor.
 
-Later stages reuse this foundation for failure/failure/success retries, Retry-After scheduling, bounded diagnostics, cancellation during backoff, output rollback, and unchanged request history. ChatService tests additionally verify that executed tools are not replayed, each accepted call has a result, and compression/subagent/approval state survives the appropriate retry boundary.
+Request-execution tests reuse this foundation for failure/failure/success retries, bounded diagnostics, cancellation during backoff, and unchanged request history. Headless ChatService tests cover provisional output rollback and retained earlier tool results. Native presentation interactions and full tool-driven subagent generation through compression still require application-level verification. The approval reviewer consumes the shared streaming request reader.
+
+## Exception normalization verification
+
+Before request execution was integrated, the 2026-10-03 Release run passed all 348 AI tests: the original 163 SDK boundary
+cases, 83 real-HTTP production classification cases, and 102 local normalization/
+observed-message cases (including 76 sanitized Sentry samples). Sentry records
+are issue-message examples without occurrence counts or original SDK/HTTP evidence.
+They are not counted as real HTTP tests.
+
+Classification tests reference Everywhere.Core rather than linking a copy of the
+classifier. The runner enables central package versions for the production graph,
+and CI initializes ShadUI/Motion source submodules alongside Semantic Kernel.
+No new NuGet dependency or mock framework is introduced.
+
+## Request execution verification
+
+The final 2026-10-03 Release run passed all 388 AI tests with zero skips. The 40
+additional real-HTTP cases instantiate all six production KernelMixin implementations
+and verify transient recovery, retry exhaustion, disabled retries, cancellation during
+backoff, early consumer disposal, unchanged request bodies, context-overflow recovery,
+and explicit output-limit completion where supported. Recorded physical sends confirm
+that production SDK retry defaults do not multiply the application budget.
+
+A separate focused Core run passed 84 tests across request recovery, presentation,
+compression, assistant configuration, function-call assembly, statistics, and attachment serialization. Request-recovery cases
+exercise the actual visible response consumer, retained earlier tool results,
+per-attempt statistics, stopped-message persistence, parent/child cancellation,
+consumer failure propagation, retry-row identity, output-cache pruning, and bounded
+diagnostic formatting. A compiled AXAML template case verifies worker-originated source
+updates to activity headers, previews, expansion and liveness without row forwarding
+notifications. They do not substitute for a full application tool/subagent
+scenario or native UI interaction.
+
+Windows Release build completed with zero errors and eight Watchdog AOT/trim warnings.
+All 13 localization files contain the eight new request-settings/status/detail keys.
+The owned WSL Containers test server was removed after the run.
+
+The retained request-recovery tests cover mutable activity identity, late worker
+disposal, explicit compression ownership, effective-output timing, SDK Activity
+parentage and per-attempt accounting. Footer aggregation, recursive usage ownership,
+usage backfill and persistent turn/storage changes are outside this batch.
+
+The verification totals above describe earlier runs. After separating this batch from
+later development, build checks are performed again; application E2E verification is
+run manually by the maintainer before committing.

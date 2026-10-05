@@ -26,7 +26,7 @@ public interface IChatService
     void Retry(ChatMessageNode node);
 
     /// <summary>
-    /// Continues generating a response for a given chat message node. This will create a branch in the chat history. This method is NOT thread safe.
+    /// Continues generating a response for a given chat message node. This appends to the current branch. This method is NOT thread safe.
     /// </summary>
     /// <param name="node"></param>
     void Continue(ChatMessageNode node);
@@ -47,7 +47,7 @@ public interface IChatService
     /// <param name="enableNotifications">Send notifications for function calls and other events during the generation process.</param>
     /// <param name="purpose">Statistics classification for model invocations produced by this generation.</param>
     /// <param name="cancellationToken"></param>
-    Task GenerateAsync(
+    Task<ChatGenerationResult> GenerateAsync(
         ChatContext chatContext,
         Assistant assistant,
         AssistantChatMessage assistantChatMessage,

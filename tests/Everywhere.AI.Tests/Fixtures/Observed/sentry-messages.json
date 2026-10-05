@@ -1,0 +1,310 @@
+[
+  {
+    "shortId": "SENTRY-20261005-001",
+    "errorMessage": "The response ended prematurely. (ResponseEnded)",
+    "expectedType": "NetworkError",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-001 (not a Sentry issue ID). 85 export rows / 84 distinct four-field rows; UTC dates 2026-07-11 to 2026-09-30. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-JT, EVERYWHERE-1FG, EVERYWHERE-1A2, EVERYWHERE-1BG, EVERYWHERE-1NT, EVERYWHERE-1M7."
+  },
+  {
+    "shortId": "SENTRY-20261005-002",
+    "errorMessage": "You have no credits remaining. Add credits to continue using the API at <service-url>",
+    "expectedType": "QuotaExceeded",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-002 (not a Sentry issue ID). 78 export rows / 65 distinct four-field rows; UTC dates 2026-08-09 to 2026-10-01. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1K9."
+  },
+  {
+    "shortId": "SENTRY-20261005-003",
+    "errorMessage": "Service request failed.",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-003 (not a Sentry issue ID). 70 export rows / 70 distinct four-field rows; UTC dates 2026-07-09 to 2026-09-15. Generic request-failure wording does not establish an HTTP cause or status. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-171."
+  },
+  {
+    "shortId": "SENTRY-20261005-004",
+    "errorMessage": "Unknown ChatFinishReason value. (Parameter 'value')",
+    "expectedType": "InvalidResponse.UnsupportedFormat",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-004 (not a Sentry issue ID). 68 export rows / 66 distinct four-field rows; UTC dates 2026-07-31 to 2026-09-22. SDK enum compatibility symptom, not a demonstrated HTTP error. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-155."
+  },
+  {
+    "shortId": "SENTRY-20261005-005",
+    "errorMessage": "Response status code does not indicate success: 404 (Not Found).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-005 (not a Sentry issue ID). 54 export rows / 54 distinct four-field rows; UTC dates 2026-07-09 to 2026-10-04. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1DR, EVERYWHERE-1M8."
+  },
+  {
+    "shortId": "SENTRY-20261005-006",
+    "errorMessage": "I/O exception",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-006 (not a Sentry issue ID). 41 export rows / 34 distinct four-field rows; UTC dates 2026-07-21 to 2026-10-05. Generic I/O wording does not establish an HTTP transport cause. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1CK, EVERYWHERE-1D3, EVERYWHERE-1NP, EVERYWHERE-1M2, EVERYWHERE-1JW, EVERYWHERE-1JV, EVERYWHERE-1F9, EVERYWHERE-1KD, EVERYWHERE-1KB."
+  },
+  {
+    "shortId": "SENTRY-20261005-007",
+    "errorMessage": "<assistant> does not support tools",
+    "expectedType": "UnsupportedCapability.Tools",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-007 (not a Sentry issue ID). 40 export rows / 40 distinct four-field rows; UTC dates 2026-07-14 to 2026-10-03. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1AE."
+  },
+  {
+    "shortId": "SENTRY-20261005-008",
+    "errorMessage": "The requested operation requires an element of type 'Object', but the target element has type 'String'.",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-008 (not a Sentry issue ID). 38 export rows / 29 distinct four-field rows; UTC dates 2026-07-10 to 2026-09-26. JSON type mismatch may be local parsing or SDK adaptation. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-18P."
+  },
+  {
+    "shortId": "SENTRY-20261005-009",
+    "errorMessage": "'web_fetch_requests' cannot be absent",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-009 (not a Sentry issue ID). 36 export rows / 36 distinct four-field rows; UTC dates 2026-08-18 to 2026-09-28. Missing-field validation may be local parsing or SDK adaptation. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1BV, EVERYWHERE-1EH."
+  },
+  {
+    "shortId": "SENTRY-20261005-010",
+    "errorMessage": "Unknown ReasoningStatus value. (Parameter 'value')",
+    "expectedType": "InvalidResponse.UnsupportedFormat",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-010 (not a Sentry issue ID). 32 export rows / 32 distinct four-field rows; UTC dates 2026-07-23 to 2026-09-07. SDK enum compatibility symptom, not a demonstrated HTTP error. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1D1."
+  },
+  {
+    "shortId": "SENTRY-20261005-011",
+    "errorMessage": "Our servers are currently overloaded. Please try again later.",
+    "expectedType": "ServiceUnavailable",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-011 (not a Sentry issue ID). 29 export rows / 28 distinct four-field rows; UTC dates 2026-08-02 to 2026-08-19. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-012",
+    "errorMessage": "Status Code: Unauthorized",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-012 (not a Sentry issue ID). 28 export rows / 19 distinct four-field rows; UTC dates 2026-07-21 to 2026-07-27. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-12Y, EVERYWHERE-143."
+  },
+  {
+    "shortId": "SENTRY-20261005-016",
+    "errorMessage": "Response status code does not indicate success: 402 (Payment Required).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-016 (not a Sentry issue ID). 12 export rows / 12 distinct four-field rows; UTC dates 2026-07-21 to 2026-10-05. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1J0."
+  },
+  {
+    "shortId": "SENTRY-20261005-017",
+    "errorMessage": "The SSL connection could not be established, see inner exception.",
+    "expectedType": "NetworkError.TlsError",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-017 (not a Sentry issue ID). 12 export rows / 12 distinct four-field rows; UTC dates 2026-07-08 to 2026-10-05. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1AX, EVERYWHERE-189, EVERYWHERE-1CZ."
+  },
+  {
+    "shortId": "SENTRY-20261005-018",
+    "errorMessage": "{\"error\":{\"code\":400,\"message\":\"Multimodal data provided, but model does not support multimodal requests.\",\"type\":\"invalid_request_error\"}}",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-018 (not a Sentry issue ID). 10 export rows / 10 distinct four-field rows; UTC dates 2026-08-07 to 2026-10-04. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Multimodal rejection is a real observed request diagnostic; its generic message-only classification currently remains Unknown."
+  },
+  {
+    "shortId": "SENTRY-20261005-019",
+    "errorMessage": "Response status code does not indicate success: 422 (Unprocessable Entity).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-019 (not a Sentry issue ID). 9 export rows / 9 distinct four-field rows; UTC dates 2026-09-16 to 2026-10-04. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-020",
+    "errorMessage": "Value cannot be an empty string. Arg_ParamName_Name, key",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-020 (not a Sentry issue ID). 9 export rows / 9 distinct four-field rows; UTC dates 2026-07-22 to 2026-08-17. Empty-key argument validation is not HTTP response evidence. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1KV, EVERYWHERE-1JX."
+  },
+  {
+    "shortId": "SENTRY-20261005-021",
+    "errorMessage": "net_http_message_not_success_statuscode_reason, 404, Not Found",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-021 (not a Sentry issue ID). 9 export rows / 9 distinct four-field rows; UTC dates 2026-07-12 to 2026-07-26. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-022",
+    "errorMessage": "Response status code does not indicate success: 429 (Too Many Requests).",
+    "expectedType": "RateLimited",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-022 (not a Sentry issue ID). 7 export rows / 7 distinct four-field rows; UTC dates 2026-07-12 to 2026-08-08. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-024",
+    "errorMessage": "Prompt was blocked due to Gemini API safety reasons.",
+    "expectedType": "ContentBlocked",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-024 (not a Sentry issue ID). 6 export rows / 6 distinct four-field rows; UTC dates 2026-07-23 to 2026-09-29. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1JZ."
+  },
+  {
+    "shortId": "SENTRY-20261005-025",
+    "errorMessage": "net_http_invalid_response_premature_eof (ResponseEnded)",
+    "expectedType": "NetworkError",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-025 (not a Sentry issue ID). 6 export rows / 6 distinct four-field rows; UTC dates 2026-07-19 to 2026-09-09. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1AN, EVERYWHERE-1MG."
+  },
+  {
+    "shortId": "SENTRY-20261005-028",
+    "errorMessage": "{\"error\":{\"code\":400,\"message\":\"request (5953 tokens) exceeds the available context size (4096 tokens), try increasing it\",\"type\":\"exceed_context_size_error\",\"n_prompt_tokens\":5953,\"n_ctx\":4096}}",
+    "expectedType": "InvalidRequest.ContextLengthExceeded",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-028 (not a Sentry issue ID). 5 export rows / 5 distinct four-field rows; UTC dates 2026-09-09 to 2026-09-09. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. This is one representative complete JSON title; the other numeric variants remain in the full candidate data."
+  },
+  {
+    "shortId": "SENTRY-20261005-031",
+    "errorMessage": "Received an invalid chunk extension: '76-65-6E-74-3A-20-6D-65-73-73-61-67-65-5F-73-74-61-72-74'. (InvalidResponse)",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-031 (not a Sentry issue ID). 4 export rows / 4 distinct four-field rows; UTC dates 2026-07-21 to 2026-07-21. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1JR."
+  },
+  {
+    "shortId": "SENTRY-20261005-032",
+    "errorMessage": "Response status code does not indicate success: 401 (Unauthorized).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-032 (not a Sentry issue ID). 4 export rows / 4 distinct four-field rows; UTC dates 2026-08-26 to 2026-09-26. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-033",
+    "errorMessage": "Response status code does not indicate success: 405 (Method Not Allowed).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-033 (not a Sentry issue ID). 4 export rows / 4 distinct four-field rows; UTC dates 2026-08-01 to 2026-09-22. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-037",
+    "errorMessage": "HTTP 524 (: )",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-037 (not a Sentry issue ID). 3 export rows / 3 distinct four-field rows; UTC dates 2026-09-06 to 2026-09-27. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1MX."
+  },
+  {
+    "shortId": "SENTRY-20261005-038",
+    "errorMessage": "Received an unexpected EOF or 0 bytes from the transport stream.",
+    "expectedType": "NetworkError",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-038 (not a Sentry issue ID). 3 export rows / 3 distinct four-field rows; UTC dates 2026-09-20 to 2026-09-23. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1NF."
+  },
+  {
+    "shortId": "SENTRY-20261005-039",
+    "errorMessage": "Response is too large to store. You can avoid this error by setting `store` to false in your request.",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-039 (not a Sentry issue ID). 3 export rows / 3 distinct four-field rows; UTC dates 2026-09-05 to 2026-09-09. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-041",
+    "errorMessage": "{\"error\":{\"code\":400,\"message\":\"request (34546 tokens) exceeds the available context size (32768 tokens), try increasing it\",\"type\":\"exceed_context_size_error\",\"n_prompt_tokens\":34546,\"n_ctx\":32768}}",
+    "expectedType": "InvalidRequest.ContextLengthExceeded",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-041 (not a Sentry issue ID). 3 export rows / 3 distinct four-field rows; UTC dates 2026-08-28 to 2026-08-28. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. This is one representative complete JSON title; the other numeric variants remain in the full candidate data."
+  },
+  {
+    "shortId": "SENTRY-20261005-043",
+    "errorMessage": "HTTP 529 (overloaded_error: )",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-043 (not a Sentry issue ID). 2 export rows / 2 distinct four-field rows; UTC dates 2026-08-27 to 2026-08-27. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. ExpectedType Unknown records the current message-only classification; the separate real-SDK HTTP 529 fixture expects ServiceUnavailable and Retry."
+  },
+  {
+    "shortId": "SENTRY-20261005-044",
+    "errorMessage": "Request headers must contain only ASCII characters.",
+    "expectedType": "InvalidRequest",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-044 (not a Sentry issue ID). 2 export rows / 2 distinct four-field rows; UTC dates 2026-07-12 to 2026-10-04. Request-header validation can fail locally before any HTTP request. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1JD."
+  },
+  {
+    "shortId": "SENTRY-20261005-045",
+    "errorMessage": "Response status code does not indicate success: 403 (Forbidden).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-045 (not a Sentry issue ID). 2 export rows / 2 distinct four-field rows; UTC dates 2026-07-14 to 2026-09-29. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-175."
+  },
+  {
+    "shortId": "SENTRY-20261005-050",
+    "errorMessage": "No such host is known. (<service-host>:443)",
+    "expectedType": "NetworkError.HostNotFound",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-050 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-10-02 to 2026-10-02. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1P1."
+  },
+  {
+    "shortId": "SENTRY-20261005-051",
+    "errorMessage": "Response status code does not indicate success: 400 (Bad Request).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-051 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-09-28 to 2026-09-28. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-052",
+    "errorMessage": "Response status code does not indicate success: 502 (Bad Gateway).",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-052 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-07-12 to 2026-07-12. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-053",
+    "errorMessage": "SSE error returned from server: '{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Requested token count exceeds the model's maximum context length of 393216 tokens. You requested a total of 396337 tokens: 12337 tokens from the input me...",
+    "expectedType": "InvalidRequest.ContextLengthExceeded",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-053 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-09-30 to 2026-09-30. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. The SSE title is visibly truncated and is retained verbatim; missing text/JSON is not reconstructed."
+  },
+  {
+    "shortId": "SENTRY-20261005-058",
+    "errorMessage": "The object or value could not be serialized. Path: $.",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-058 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-07-17 to 2026-07-17. Serialization failure is not HTTP response evidence. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1JN."
+  },
+  {
+    "shortId": "SENTRY-20261005-059",
+    "errorMessage": "The proxy tunnel request to proxy '<service-url>' failed with status code '400'.\"",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-059 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-09-20 to 2026-09-20. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text."
+  },
+  {
+    "shortId": "SENTRY-20261005-061",
+    "errorMessage": "net_http_message_not_success_statuscode_reason, 503, Service Unavailable",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. User-provided Sentry Discover CSV Discover_2026-October-05_178703.csv, imported 2026-10-06; local sample ID SENTRY-20261005-061 (not a Sentry issue ID). 1 export rows / 1 distinct four-field rows; UTC dates 2026-08-10 to 2026-08-10. The title contains an explicit request, transport, HTTP status or API-response diagnostic; the endpoint and original SDK cause are still unknown. No original SDK exception type, response object, headers or stack was exported; HTTP/JSON mentions remain message text. Also matches older issue-message samples: EVERYWHERE-1JC."
+  },
+  {
+    "shortId": "EVERYWHERE-18D",
+    "errorMessage": "Service request failed. Status: 451",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. Retained from the user-provided 90-day issue-message export imported 2026-10-03; older issue IDs: EVERYWHERE-18D. No event count, original SDK type, stack or structured HTTP response evidence. This message variant has no counterpart in the newer CSV; status numbers in text are not promoted to response metadata."
+  },
+  {
+    "shortId": "EVERYWHERE-137",
+    "errorMessage": "Service request failed. Status: 526",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. Retained from the user-provided 90-day issue-message export imported 2026-10-03; older issue IDs: EVERYWHERE-137. No event count, original SDK type, stack or structured HTTP response evidence. This message variant has no counterpart in the newer CSV; status numbers in text are not promoted to response metadata."
+  },
+  {
+    "shortId": "EVERYWHERE-1HS",
+    "errorMessage": "Service request failed. Status: 529 (status code 529)",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. Retained from the user-provided 90-day issue-message export imported 2026-10-03; older issue IDs: EVERYWHERE-1HS. No event count, original SDK type, stack or structured HTTP response evidence. This message variant has no counterpart in the newer CSV; status numbers in text are not promoted to response metadata."
+  },
+  {
+    "shortId": "EVERYWHERE-1J7",
+    "errorMessage": "Service request failed. Status: 530 (<none>)",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "request-diagnostic. Retained from the user-provided 90-day issue-message export imported 2026-10-03; older issue IDs: EVERYWHERE-1J7, EVERYWHERE-18H, EVERYWHERE-1K0. No event count, original SDK type, stack or structured HTTP response evidence. This message variant has no counterpart in the newer CSV; status numbers in text are not promoted to response metadata."
+  },
+  {
+    "shortId": "EVERYWHERE-1J6",
+    "errorMessage": "JsonElementHasWrongType, Array, Null",
+    "expectedType": "Unknown",
+    "provenance": "observed",
+    "notes": "contrast-control. Retained from the user-provided 90-day issue-message export imported 2026-10-03; older issue IDs: EVERYWHERE-1J6. No event count, original SDK type, stack or structured HTTP response evidence. This message variant has no counterpart in the newer CSV; status numbers in text are not promoted to response metadata."
+  }
+]

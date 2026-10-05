@@ -1,6 +1,5 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.ClientModel.Primitives;
-using Everywhere.Common;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -32,11 +31,18 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
                 new ResponsesClientOptions
                 {
                     Endpoint = new Uri(Endpoint, UriKind.Absolute),
+                    RetryPolicy = new ClientRetryPolicy(0),
                     Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
                 }
             ).AsIChatClient(Configuration.ModelId ?? string.Empty),
             this
         ).AsChatCompletionService();
+    }
+
+    /// <inheritdoc />
+    public override void ExtractExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        ChatExceptionEvidenceExtractor.ExtractOpenAI(evidence);
     }
 
     /// <summary>
@@ -60,9 +66,10 @@ public sealed class OpenAIResponsesKernelMixin : KernelMixin
                 foreach (var content in update.Contents)
                 {
                     if (content is ErrorContent errorContent)
-                        throw HandledChatException.FromErrorCode(
+                        throw ChatExceptionNormalizer.FromErrorCode(
                             new Exception(errorContent.Message),
-                            errorContent.ErrorCode ?? errorContent.Message);
+                            errorContent.ErrorCode ?? errorContent.Message,
+                            owner);
                 }
 
                 yield return update;

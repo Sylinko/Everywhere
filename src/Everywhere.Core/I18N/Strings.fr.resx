@@ -383,13 +383,13 @@
         <value>Erreur de requête HTTP ({0}) : {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>Mauvaise requête, peut-être en raison d'une clé API incorrecte ou d'un réseau/région non pris en charge.</value>
+        <value>Mauvaise requête.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>Requête non autorisée, peut-être en raison d'une clé API incorrecte ou d'un réseau/région non pris en charge.</value>
+        <value>Requête non autorisée.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>Requête interdite, peut-être en raison d'une clé API incorrecte ou d'un réseau/région non pris en charge.</value>
+        <value>Requête bloquée.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>Résultat non trouvé.</value>
@@ -937,16 +937,16 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>Temps total</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>La configuration du modèle est incorrecte, le fournisseur du modèle ou l'ID du modèle sont manquants ou invalides, ou le modèle actuel ne prend pas en charge l'entrée d'image/appels d'outils.</value>
+        <value>L’assistant sélectionné est indisponible. Vérifiez les paramètres du service et de l’assistant.</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>La clé API est manquante ou invalide.</value>
+        <value>L’authentification a échoué. Vérifiez la clé API ou reconnectez-vous.</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>Dépassement des quotas d'utilisation de l'API, ce qui indique généralement un solde insuffisant ou un manque de permissions d'accès pour le modèle actuel.</value>
+        <value>Le service indique un solde insuffisant ou un quota d’utilisation épuisé.</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>Requête trop fréquente, solde insuffisant ou réseau/région non pris en charge.</value>
+        <value>Le service limite actuellement les requêtes. Réessayez plus tard.</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>Le point de terminaison du service est inaccessible. Veuillez vérifier votre connexion réseau.</value>
@@ -958,22 +958,22 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>Le service a renvoyé une réponse vide, ce qui peut indiquer un problème de réseau ou de service.</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>Le modèle sélectionné ne prend pas en charge la fonctionnalité demandée.</value>
+        <value>L’assistant actuel ne prend pas en charge cette fonctionnalité.</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>Le modèle sélectionné ne prend pas en charge l'entrée d'image.</value>
+        <value>L’assistant actuel ne prend pas en charge les images en entrée.</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>La requête au service a expiré. Veuillez réessayer.</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>Une erreur réseau s'est produite. Veuillez vérifier vos paramètres réseau ou de proxy, ou votre fournisseur de services peut ne pas prendre en charge votre région.</value>
+        <value>La connexion au service a été interrompue ou n’a pas pu être établie.</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Le service est actuellement indisponible. Veuillez réessayer plus tard.</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>Une erreur inconnue s'est produite.</value>
+        <value>La requête n’a pas pu être terminée.</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>Schéma d'API du fournisseur de modèle non pris en charge.</value>
@@ -1072,7 +1072,7 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>Exécuter un script shell</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>La longueur du contexte dépasse la limite. Essayez de créer un nouveau chat ou de passer à un modèle avec un contexte plus long.</value>
+        <value>La conversation dépasse la capacité de contexte de l’assistant actuel.</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>Accéder au processus</value>
@@ -1145,7 +1145,7 @@ Mon intelligence est alimentée par un grand modèle de langage, et j'ai besoin 
         <value>L'opération a été annulée.</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>L'opération a expiré. Veuillez vérifier les performances de votre système et réessayer.</value>
+        <value>Le délai de l’opération a expiré. Réessayez.</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>Fichier spécifié introuvable. Veuillez vous assurer que le fichier existe et que le chemin est correct.</value>
@@ -2381,7 +2381,7 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
         <value>Le service ne prend pas en charge les demandes de votre région ou emplacement actuel.</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>Erreur lors de l'analyse de la réponse du serveur, ce qui signifie généralement un format ou un contenu JSON inattendu.</value>
+        <value>La réponse du service n’a pas pu être interprétée.</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>Rafraîchir</value>
@@ -2744,10 +2744,10 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
         <value>Entrez la raison du refus</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>Le modèle ne prend pas en charge le paramètre temperature, ou le paramètre est hors de portée. Rétablir la valeur par défaut peut résoudre ce problème.</value>
+        <value>Le service a refusé le paramètre temperature. Vérifiez les paramètres de l’assistant.</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>Le modèle ne prend pas en charge le paramètre top_p, ou le paramètre est hors de portée. Rétablir la valeur par défaut peut résoudre ce problème.</value>
+        <value>Le service a refusé le paramètre top_p. Vérifiez les paramètres de l’assistant.</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Sélectionnez un élément à gauche pour voir les détails</value>
@@ -3875,7 +3875,7 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Aucune réponse générée cette fois.</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Ouvrir le sous-agent</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,4 +4100,58 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Impossible d'envoyer la demande à l'instance en cours d'Everywhere. Veuillez ouvrir Everywhere et réessayer.</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>Le service a refusé l’accès à la ressource demandée.</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>La requête contient des paramètres non valides ou non pris en charge.</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>Le service a renvoyé des données que cette version d’Everywhere ne peut pas lire.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>Le service a bloqué cette requête ou réponse selon sa politique de contenu.</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>Nouvelles tentatives</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>Nombre maximal de tentatives après une erreur récupérable. 0 les désactive ; -1 réessaie jusqu’à l’arrêt.</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>Nouvelle tentative {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>Nouvelle tentative {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>Arrêté</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>Détails de l’erreur</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>Copier les détails</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>L’assistant a mis fin à la réponse prématurément.</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>Le serveur proxy a refusé d’établir la connexion. Vérifiez les paramètres du proxy et les informations d’authentification.</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>L’assistant actuel ne prend pas en charge les appels d’outils. Vérifiez la configuration ou choisissez un autre assistant.</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>Le service ne peut pas utiliser l’assistant sélectionné. Vérifiez les paramètres de l’assistant et les autorisations d’accès.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>L’authentification a échoué. Vérifiez les paramètres d’authentification ou reconnectez-vous.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>La clé API est invalide ou a expiré. Vérifiez et mettez à jour la clé API du service.</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>Le service a renvoyé un contenu invalide. La requête n’a pas pu être terminée.</value>
+  </data>
 </root>

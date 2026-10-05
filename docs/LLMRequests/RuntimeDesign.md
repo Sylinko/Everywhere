@@ -1,6 +1,6 @@
 # LLM Request Runtime Boundaries
 
-Status: technical design, not implemented. This refines the confirmed behavior in [Architecture.md](Architecture.md) and uses the rules in [ErrorClassification.md](ErrorClassification.md). Names below are proposed production API names, not existing symbols unless explicitly identified as current source. The intended result is one request/execution path used by existing features, not a retry wrapper surrounding all their historical exception and lifecycle behavior.
+Status: design baseline with runtime implementation on 2026-10-03. See [RequestExecution.md](RequestExecution.md) for the implemented contracts, approval integration, and verification limits. Common read-idle timing remains planned. This refines the confirmed behavior in [Architecture.md](Architecture.md) and uses the rules in [ErrorClassification.md](ErrorClassification.md). Earlier schematic names and examples below describe the design boundary; RequestExecution.md and current source identify the delivered API. The intended result is one request/execution path used by existing features, not a retry wrapper surrounding all their historical exception and lifecycle behavior.
 
 ## 1. Keep the existing conversation ownership
 
@@ -30,7 +30,7 @@ Image output references belong to removed spans too. Dropping an attempt removes
 
 ### Projection cleanup is part of rollback
 
-Current `ChatPresentation.ChatTurnPresentation.Rewire` prunes `_activityRows` for removed reasoning/tool sources. `_outputRows` also caches text/image rows by span and currently lacks an equivalent removal path. Request rollback makes this a recurring lifecycle event, so prune rows whose source spans are no longer in the turn, plus group identities made unreachable by removal. Dispose subscriptions through the existing ownership path and avoid double-disposing spans already handled by the source pipeline.
+Current `ChatPresentation.ChatTurnPresentation.Rewire` prunes `_activityRows` for removed reasoning/tool sources. `_outputRows` also caches text/image rows by span; the implementation now prunes removed span rows and unreachable group identities. Request rollback makes this a recurring lifecycle event, so prune rows whose source spans are no longer in the turn, plus group identities made unreachable by removal. Dispose subscriptions through the existing ownership path and avoid double-disposing spans already handled by the source pipeline.
 
 Do not rebuild surviving rows or reset the whole message to perform rollback. Infinite retry must not retain removed spans through row caches, subscriptions, closures, or temporary activities.
 
@@ -39,7 +39,7 @@ Do not rebuild surviving rows or reset the whole message to perform rollback. In
 Expose an instance method on KernelMixin, implemented in a partial file or a narrowly owned executor, with request state local to each enumeration:
 
 ```csharp
-public IAsyncEnumerable<ChatRequestUpdate> StreamAsync(
+public IAsyncEnumerable<ChatRequestUpdate> StreamRequestAsync(
     ChatHistory history,
     PromptExecutionSettings executionSettings,
     Kernel? kernel = null,
@@ -63,7 +63,7 @@ A typed record family keeps consumers exhaustive and avoids a mutable event bag 
 Example consumer shape (schematic, not a production implementation):
 
 ```csharp
-await foreach (var update in kernelMixin.StreamAsync(
+await foreach (var update in kernelMixin.StreamRequestAsync(
                    history, settings, kernel, cancellationToken: cancellationToken))
 {
     switch (update)
@@ -121,9 +121,11 @@ A shallow container copy addresses known append behavior. Treat content/settings
 
 The main consumer must validate completion before building/committing an executable tool batch. The reviewer rejects an incomplete approval decision; compression requires a usable summary without tool calls; topic generation requires usable text. These failures do not automatically become transport retries. A missing finish field alone is not failure, and a tool-only answer is not an empty response.
 
+Preserve current compatible-provider behavior when enumeration ends normally without explicit completion metadata. Retain unknown raw reasons for diagnostics instead of rejecting them through a new whitelist. SDK-internal terminal markers need not be exposed to the application. [TimeoutAndCompletion.md](TimeoutAndCompletion.md) defines the evidence boundary and records the Codex/DeepSeek comparisons; their stricter native-protocol checks are not adopted wholesale.
+
 ## 3. Classification and terminal diagnostics
 
-Refactor `HandledChatException.Handle` internally into evidence extraction and classification, retaining its external role and applying the documented heuristics. Request context supplies cancellation/timeout evidence; localized strings do not control policy. A classification record carries the semantic category, status/code, rule/evidence source, request ID and server delay when available.
+`ChatExceptionNormalizer.Handle` now separates evidence extraction and classification, retaining its external role and applying the documented heuristics. [ExceptionNormalization.md](ExceptionNormalization.md) records the implemented SDK/connection extension points. The executor and presentation baseline is implemented; [RequestExecution.md](RequestExecution.md) describes the current contract. Request context supplies cancellation/timeout evidence; localized strings do not control policy. Concrete nested exception types carry categories, default localization and recovery advice; diagnostics group raw status/code, rule/evidence source, request ID and server delay. The executor reads the concrete cause's `Recovery` property without a parallel classification record or policy layer.
 
 One failure record identifies an attempt, its time and normalized exception/evidence. Keep a last-10 queue inside the logical request and a total failure count. Do not store prior queues inside each record. The terminal wrapper can be a `ChatRequestException : HandledChatException` with bounded attempt records and total count, using the final failure's category/status as its primary semantics. This preserves existing `HandledChatException` checks for context overflow and avoids having callers inspect an AggregateException just to choose compression recovery.
 
@@ -131,40 +133,53 @@ The final wrapper's ordinary InnerException points to the final cause; its attem
 
 For the assistant message, prefer a runtime-only `Exception? Error` plus the existing persisted `ErrorMessageKey`. This can also hold unrelated generation exceptions. The dialog understands a request wrapper's bounded records and ordinary exception chains; no production constructor or custom failure hook should exist solely for tests.
 
-`HandledChatException.Handle` must preserve already-normalized terminal wrappers. Error details must not be reformatted/flattened repeatedly by each layer. Fail-closed approval can turn the final request failure into concise tool feedback as it does today; this is the tool's result contract, not an injected network-error message to the outer conversation.
+`ChatExceptionNormalizer.Handle` must preserve already-normalized terminal wrappers. Error details must not be reformatted/flattened repeatedly by each layer. Fail-closed approval can turn the final request failure into concise tool feedback as it does today; this is the tool's result contract, not an injected network-error message to the outer conversation.
 
 ## 4. Activity scope and UI ownership
 
-Add `RequestRetryActivityItemPresentationRow : ActivityItemPresentationRow`, using `ActivityMarker` with a localized Header and SecondaryHeader. Do not subclass the reasoning row or store retry text in reasoning spans.
+`ChatPresentation.SetBusyActivityAsync` returns `IBusyActivity`, with an explicit
+message owner and optional localized secondary header. Its implementation is the
+`BusyActivityItemPresentationRow` itself: one identity owns operation state, completion,
+placement and retention. The interface prevents request/plugin callers from depending
+on the concrete row. Templates observe the row directly.
 
-Use the existing `ChatContext.SetBusyActivityAsync`/ChatPresentation dispatcher boundary as the pattern, but a request retry needs an updateable scope and explicit owner. A small request-activity scope can expose an awaited update and asynchronous disposal. This is a dedicated production lifetime, not a general activity event bus.
+- Allocate the operation/row lazily on the first retry, not once per content delta.
+- Capture the actual owning message and anchor at creation. Manual compression supplies its action message; detached title generation has no visible retry row.
+- Store activities by owning message node. Assign the corresponding view to each `TurnDescriptor` during partitioning; materialized turns do not scan a global activity list.
+- Retain row identity while updating count and friendly headers. The row holds neither raw exceptions nor the diagnostics queue.
+- Let the materialized turn own completion subscriptions and its local structural refresh. Detach subscriptions at completion, source replacement or turn disposal. Header/icon updates flow only through bindings.
+- Complete the operation in the consumer's `finally`, including cancellation before/during delay. A one-shot callback removes transient members from context storage and the current descriptor independently of window visibility, without global repartition. Release the callback at completion or context disposal.
+- Keep the operation and presentation lifetimes distinct even though they share one object. A retained completed row can survive rematerialization; a finished operation cannot restart.
+- Keep the existing turn projection; no separate activity wrapper, retry scope, activity event bus or global current-retry property is needed.
+- A retry activity joins its owner's activity group. It must not make a completed unrelated assistant node appear busy.
+- Prune detached cache entries and suppress duplicate generic pending state while retrying.
 
-- Allocate the scope/row lazily on the first retry, not once per content delta.
-- Capture the actual owning message/tool/compression node and position explicitly. The current generic busy activity infers the last assistant node; that is insufficient for manual compression and nested requests.
-- Keep one stable row for the logical request; update count and friendly key on the UI dispatcher. The row should not hold raw exceptions or the diagnostics queue.
-- Use awaited updates so a disposed scope cannot be recreated by a delayed `IProgress<T>` callback. Clear/detach in the consumer's `finally`, including cancellation before/during delay.
-- Generalize the existing temporary-activity collection only enough to carry this second activity type and its anchor. Do not create a separate competing turn projection or put a global current-retry property on GenerationContext.
-- A retry activity joins its owner's activity group. Manual compression attaches to its compression presentation, while approval remains associated with its tool; detached title generation has no visible retry row. None should make a completed unrelated assistant node appear busy.
-- Preserve row/group identity during updates and prune cache entries when the temporary source is detached. Suppress duplicate generic pending state while retrying.
+
+Activity templates also bind directly to function-call messages and reasoning spans.
+Shared timing/liveness getters are retained for C# grouping, without forwarding source
+notifications. Expansion, group aggregation, Markdown rendering and animation remain
+presentation responsibilities; source updates do not refresh every activity row.
 
 On success, remove the row without leaving a completed retry item. On terminal failure, remove it before presenting the normal friendly error/details. On cancellation, remove it before presenting the persisted stopped state. Intermediate failure records are never serialized through the row.
 
 ## 5. Persisted cancellation and propagation
 
-Add observable `IsCanceled` to AssistantChatMessage with a new unused MessagePack key and default false. Keep `Error` runtime-only with explicit MessagePack/JSON ignores. Do not add a persisted multi-state generation enum merely to encode the already existing `IsBusy`, `ErrorMessageKey`, and completion timestamps.
+Assistant and compression messages persist an `IsCanceled` marker. Runtime busy state remains separate, and their original start/end timestamps remain in use.
 
-`AssistantCanceledPresentationRow` projects the marker. It participates in terminal and historical process presentation, with neutral `已停止` text and the normal Continue action only for an eligible latest stopped node. Its creation does not depend on an exception surviving in memory. The branch projector must handle this before the successful-empty branch so a canceled empty answer is not also "no response".
+An `AssistantCanceledPresentationRow` displays the persisted stopped state and offers
+Continue on the terminal assistant node. A canceled compression operation retains its
+own neutral stopped header without an error banner.
 
 At `GenerateAsync`, handle cooperative caller cancellation before the broad exception handler. Mark canceled and let normal finally blocks close spans, clear busy state, dispose GenerationContext, and record canceled usage. Do not set ErrorMessageKey or Error for ordinary caller cancellation. Existing genuine errors are not reclassified solely because the token became canceled later.
 
 ### Compression needs its own propagation fix
 
-Current `CompactContextAsync` catches any OperationCanceledException, calls `compressionMessage.Fail(...)`, and returns false. Some callers then return rather than propagate cancellation. Changing only GenerateAsync's catch is insufficient.
+Compression handles cooperative cancellation separately from failure and propagates it after recording the compression node's outcome. The previously completed assistant is not marked canceled again.
 
 Give ContextCompressionChatMessage an explicit canceled completion as well, because manual compression can run without an assistant message. Its existing persisted action node owns that outcome; do not create a fake assistant message. Its header/visibility can represent canceled work without an ErrorMessageKey or successful summary.
 
 - Compression marks itself canceled and rethrows cooperative cancellation to its actual operation owner.
-- Automatic compression cancellation propagates to GenerateAsync so the assistant turn receives the stopped marker; the compression row has neutral canceled status and no duplicate error banner.
+- Automatic compression cancellation propagates to GenerateAsync; the compression node retains its neutral stopped status without a duplicate error banner.
 - Manual compression handles cancellation at its manual entry point, finalizing its existing node without generating an assistant error message or routing expected cancellation to the generic error handler.
 - Update compression visibility and `NeedsAutomaticCompaction` deliberately: a canceled summary never replaces history, and the absence of ErrorMessageKey must not accidentally treat an unresolved context-overflow recovery as complete. A later Continue still evaluates context usage/overflow normally. Preserve existing failed-compression retry semantics independently of the new canceled state.
 
@@ -186,9 +201,9 @@ Keep fresh ChatUsageDetails per attempt and accumulate reported usage into the m
 
 The approval request already reconstructs a full response from streamed content. Extract one shared internal streaming response reader for approval/compression/topic, while keeping their validation and tool loops outside it. It returns the reconstructed response, accepted-attempt usage, and normalized completion. It owns fresh reconstruction per attempt and uses the same request accounting as the visible-chat consumer. Keep the visible chat consumer distinct because it incrementally writes spans. Share lifecycle/accounting through a small ChatService-owned attempt scope; neither duplicate it in every request path nor catch arbitrary consumer exceptions as request failures. The reader is a streamed implementation returning an assembled result, not a non-streaming SDK call.
 
-Factory construction captures RequestMaxRetries next to the current timeout snapshot. Keep policy data separate from credentials/endpoint data rather than turning ModelConnection into mutable request state. [SDKReview.md](SDKReview.md) verifies that the current OpenAI/System.ClientModel path retries three times and Anthropic retries twice; disable their transient retry policies explicitly. AttemptStarted counts an application-controlled SDK request attempt; the official authentication handler may still refresh credentials and resend once within it, so this is not a physical HTTP-send counter. The design does not silently redefine the existing 20-second timeout as a whole-stream deadline. Initial and post-header timeout behavior differ across these exact SDK versions and need an explicit contract before implementation. Ollama's pending line read and connector error-body reads also need cancellation fixes at their real transport/adapter boundaries.
+Factory construction captures RequestMaxRetries next to the current timeout snapshot. Keep policy data separate from credentials/endpoint data rather than turning ModelConnection into mutable request state. [SDKReview.md](SDKReview.md) verifies that the current OpenAI/System.ClientModel path retries three times and Anthropic retries twice; disable their transient retry policies explicitly when the application executor takes over. AttemptStarted counts an application-controlled SDK request attempt; the official authentication handler may still refresh credentials and resend once within it, so this is not a physical HTTP-send counter. Apply the response-wait/read-idle boundaries in [TimeoutAndCompletion.md](TimeoutAndCompletion.md), without a whole-stream deadline. The first-stage cancellation repairs are already implemented. Public SDK timeout options and the supplied HttpClient/response stream provide the remaining extension points; another SDK patch is not a prerequisite for this design.
 
-Use the repository's existing dependency patch mechanisms for these confirmed defects: a shared source replacement in the Google/Mistral mirror projects, and a narrow static IL donor patch for OllamaSharp. Remove the fabricated HTTP 400 at the connector boundary, preserve cooperative cancellation, and recognize Ollama chat protocol errors before mapping updates. These are part of the coordinated refactor, not permanent compatibility branches in ChatService or its retry executor. SDKReview.md records delivery boundaries and validation against the patched runtime assemblies. SDK settings that already expose the required behavior remain configuration changes.
+The delivered repairs use the repository's existing dependency patch mechanisms: a shared source replacement in the Google/Mistral mirror projects, and static IL donor patches for OllamaSharp and other affected SDK paths. They remove the fabricated HTTP 400 at the connector boundary, preserve cooperative cancellation, and recognize Ollama chat protocol errors before mapping updates. These fixes belong at the adapter boundaries, not in ChatService or its retry executor. SDKReview.md records delivery boundaries and validation against the patched runtime assemblies. SDK settings that already expose the required behavior remain configuration changes.
 
 ## 7. Refactor existing operation owners together
 
@@ -220,7 +235,7 @@ Change the generation contract to return a typed result containing the actual fi
 
 This runtime result does not require another persisted outcome enum. Existing persisted friendly error/cancellation fields serve presentation; the runtime result serves callers and can identify a terminal compression failure even if its detailed UI belongs to the compression action. Preserve the actual normalized cause and useful partial output without duplicating an error banner at every layer.
 
-Main UI entry points consume the same operation/result contract as subagents. Retry still creates the requested branch, Continue still appends, and these graph operations remain outside the request executor. Update IChatService and every caller together rather than retaining a compatibility overload that no production caller needs. Its current Continue XML documentation incorrectly says it creates a branch; update it with the actual append behavior.
+Main UI entry points consume the same operation/result contract as subagents. Retry creates a sibling branch at the first assistant of the logical turn, replacing the selected suffix while preserving the original branch. Continue reuses the latest assistant, clearing only its terminal error/cancellation properties and appending new spans. Every compression node is a chronological boundary: if generation continues, a new assistant is created after it. The previous assistant scope ends before compression; further work starts a new scope after it. Turn busy state remains owned by the context operation. Graph operations remain outside the request executor.
 
 ### Subagent result and cancellation
 
@@ -242,7 +257,7 @@ Move approval's request reconstruction onto the shared streamed reader and delet
 
 Move topic generation onto that reader as well. Keep title postprocessing, assistant selection and detached UI behavior local, but remove its independent SDK catch/stream/statistics lifecycle. Expected cancellation does not log as title-generation failure.
 
-Route connectivity through KernelMixin.StreamAsync with its deliberate no-retry/early-disposal policy. Provider IChatCompletionService or IChatClient implementations remain transport adapters; their SDK-required interface methods are not additional application generation paths. All application request callers use the shared streaming entry point.
+Route connectivity through KernelMixin.StreamRequestAsync with its deliberate no-retry/early-disposal policy. Provider IChatCompletionService or IChatClient implementations remain transport adapters; their SDK-required interface methods are not additional application generation paths. All application request callers use the shared streaming entry point.
 
 ### Superseded paths to remove
 

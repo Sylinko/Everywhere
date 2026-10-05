@@ -22,6 +22,12 @@ public sealed class OllamaKernelMixin : KernelMixin
         ChatCompletionService = _client.AsChatCompletionService();
     }
 
+    /// <inheritdoc />
+    public override void ExtractExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        ChatExceptionEvidenceExtractor.ExtractOllama(evidence);
+    }
+
     public override void Dispose()
     {
         _client.Dispose();

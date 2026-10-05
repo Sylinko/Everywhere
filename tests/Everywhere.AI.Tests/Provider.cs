@@ -20,8 +20,8 @@ public enum Provider
 
 public static class ProviderExtensions
 {
-    // Test attempts are physical SDK sends. Production SDK retry settings stay unchanged
-    // until the application retry executor takes ownership of the budget.
+    // Raw SDK tests choose their own budgets. Production mixins disable SDK transient
+    // retries because StreamRequestAsync owns the application budget.
     public static IChatCompletionService CreateService(this Provider provider, HttpClient client, int maxRetries = 0) => provider switch
     {
         Provider.OpenAI => new ChatClient("test-model", new ApiKeyCredential("test-key"), new OpenAIClientOptions

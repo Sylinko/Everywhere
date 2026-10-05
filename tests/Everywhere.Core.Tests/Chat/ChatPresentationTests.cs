@@ -1,6 +1,11 @@
 using System.Collections.Specialized;
+using System.Reflection;
+using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Headless.NUnit;
+using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
@@ -45,7 +50,7 @@ public class ChatPresentationTests
         Assert.Multiple(() =>
         {
             Assert.That(((ChatMessagePresentationRow)rows[1]).Node.Message, Is.SameAs(action));
-            Assert.That(functionItem.CallCount, Is.EqualTo(2));
+            Assert.That(functionItem.FunctionCall.Calls.Length, Is.EqualTo(2));
             Assert.That(ChatActivityStatistics.Calculate([functionItem]).ToolCallCount, Is.EqualTo(1));
             Assert.That(functionItem.IsRunning, Is.True);
         });
@@ -66,15 +71,15 @@ public class ChatPresentationTests
         assistant.AddSpan(final);
         using var context = Context(new UserChatMessage("Do work", []), assistant);
         var presentation = context.Presentation;
-        AssertRowTypes<ChatMessagePresentationRow, ReasoningActivityItemPresentationRow,
-            AssistantTextOutputPresentationRow, FunctionCallActivityItemPresentationRow,
+        AssertRowTypes<ChatMessagePresentationRow, ProcessSummaryPresentationRow,
             AssistantTextOutputPresentationRow, TurnFooterPresentationRow>(presentation.Rows);
+        presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single().IsExpanded = true;
 
         var outputs = presentation.Rows.OfType<AssistantTextOutputPresentationRow>().ToList();
         var finalRow = outputs[^1];
         Assert.Multiple(() =>
         {
-            Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
+            Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Has.Exactly(1).Items);
             Assert.That(presentation.Rows.OfType<ReasoningActivityItemPresentationRow>(), Has.Exactly(1).Items);
             Assert.That(presentation.Rows.OfType<FunctionCallActivityItemPresentationRow>(), Has.Exactly(1).Items);
             Assert.That(outputs[0].TextSpan, Is.SameAs(intermediate));
@@ -510,7 +515,7 @@ public class ChatPresentationTests
             Assert.That(collectionEvents, Is.Zero);
             Assert.That(presentation.Rows, Has.Count.EqualTo(before.Length));
             Assert.That(presentation.Rows.Zip(before).All(pair => ReferenceEquals(pair.First, pair.Second)), Is.True);
-            Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single().PreviewText,
+            Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single().FunctionCall.Content,
                 Is.EqualTo("A newer preview"));
         });
     }
@@ -535,7 +540,7 @@ public class ChatPresentationTests
         Assert.Multiple(() =>
         {
             Assert.That(item, Is.SameAs(group.Items.OfType<FunctionCallActivityItemPresentationRow>().Single()));
-            Assert.That(item.PreviewText, Is.EqualTo("worker preview"));
+            Assert.That(item.FunctionCall.Content, Is.EqualTo("worker preview"));
             Assert.That(presentation.Rows.OfType<ActivityGroupPresentationRow>().Single(), Is.SameAs(group));
         });
     }
@@ -615,38 +620,6 @@ public class ChatPresentationTests
         functionSpan.Add(FunctionMessage("Read final", 1, true));
         Assert.That(group.Items, Is.SameAs(items));
         Assert.That(group.Items, Has.Count.EqualTo(3));
-    }
-
-    [Test]
-    public void CompletedGroup_RemainsRunningWhileEarlierParallelActivityIsBusy()
-    {
-        var assistant = new AssistantChatMessage { IsBusy = false, FinishedAt = DateTimeOffset.UtcNow };
-        var earlierBusy = FunctionMessage("Earlier", 1, true);
-        var middleCompleted = FunctionMessage("Middle", 1, false);
-        var latestCompleted = FunctionMessage("Latest", 1, false);
-        assistant.AddSpan(new AssistantChatMessageFunctionCallSpan([
-            earlierBusy,
-            middleCompleted,
-            latestCompleted,
-        ]));
-        assistant.AddSpan(FinishedText("Done"));
-        using var context = Context(new UserChatMessage("Parallel calls", []), assistant);
-        var presentation = context.Presentation;
-
-        // Three items force the completed process segment to stay behind its summary row. Opening
-        // the summary exposes the same stable Group object whose latest item has already finished.
-        presentation.Rows.OfType<ProcessSummaryPresentationRow>().Single().IsExpanded = true;
-        var group = presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(group.LatestItem.Source, Is.SameAs(latestCompleted));
-            Assert.That(group.LatestItem.IsRunning, Is.False);
-            Assert.That(group.Items.OfType<FunctionCallActivityItemPresentationRow>()
-                .First().IsRunning, Is.True);
-            Assert.That(group.IsRunning, Is.True);
-            Assert.That(group.FinishedAt, Is.Null);
-        });
     }
 
     [AvaloniaTest]
@@ -813,34 +786,6 @@ public class ChatPresentationTests
         });
     }
 
-    [AvaloniaTest]
-    public void OverlappingUserInputWaits_KeepGroupWaiting_UntilTheFinalWaitCompletes()
-    {
-        var assistant = new AssistantChatMessage { IsBusy = true };
-        var function = FunctionMessage("Confirm", 1, true);
-        assistant.AddSpan(new AssistantChatMessageFunctionCallSpan(function));
-        using var context = Context(new UserChatMessage("Run", []), assistant);
-        var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
-        var slot = function.RegisterActivityPresentation("parallel-consent");
-
-        try
-        {
-            slot.EnterUserInputWait();
-            slot.EnterUserInputWait();
-            Assert.That(group.IsWaitingForUserInput, Is.True);
-
-            slot.ExitUserInputWait();
-            Assert.That(group.IsWaitingForUserInput, Is.True);
-
-            slot.ExitUserInputWait();
-            Assert.That(group.IsWaitingForUserInput, Is.False);
-        }
-        finally
-        {
-            function.UnregisterActivityPresentation("parallel-consent", slot);
-        }
-    }
-
     [Test]
     public void StructuredSubagentBlocks_DriveSubagentCount()
     {
@@ -856,7 +801,7 @@ public class ChatPresentationTests
         Assert.Multiple(() =>
         {
             Assert.That(presentation.Rows.OfType<ProcessSummaryPresentationRow>(), Is.Empty);
-            Assert.That(item.CallCount, Is.EqualTo(1));
+            Assert.That(item.FunctionCall.Calls.Length, Is.EqualTo(1));
             Assert.That(ChatActivityStatistics.Calculate([item]).SubagentCount, Is.EqualTo(1));
         });
     }
@@ -867,7 +812,7 @@ public class ChatPresentationTests
         var assistant = new AssistantChatMessage { IsBusy = true };
         using var context = Context(new UserChatMessage("Prepare tools", []), assistant);
         var presentation = context.Presentation;
-        var busyActivity = await context.SetBusyActivityAsync(
+        var busyActivity = await context.Presentation.SetBusyActivityAsync(
             LucideIconKind.Server,
             new DirectLocaleKey("Starting MCP"),
             removeAfterCompletion: false);
@@ -912,7 +857,7 @@ public class ChatPresentationTests
         var assistant = new AssistantChatMessage { IsBusy = true };
         using var context = Context(new UserChatMessage("Prepare tools", []), assistant);
         var presentation = context.Presentation;
-        var busyActivity = await context.SetBusyActivityAsync(
+        var busyActivity = await context.Presentation.SetBusyActivityAsync(
             LucideIconKind.Hammer,
             new DirectLocaleKey("Generating tool call"),
             removeAfterCompletion: true);
@@ -933,6 +878,138 @@ public class ChatPresentationTests
             Assert.That(presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Is.Empty);
             Assert.That(assistant.Spans, Is.Empty);
         });
+    }
+
+    [AvaloniaTest]
+    public async Task ActivityTemplates_WhenSourcesChange_UpdateWithoutRowForwarding()
+    {
+        using var function = FunctionMessage("Read", 1, true);
+        function.HeaderKey = null;
+        var previewSlot = function.RegisterActivityPresentation("preview");
+        var functionRow = new FunctionCallActivityItemPresentationRow(function, new DirectLocaleKey("Fallback"));
+        var functionMarker = BuildActivityMarker(functionRow);
+        var functionHeader = functionMarker.Header as TextBlock ?? throw new InvalidOperationException();
+        var assistant = new AssistantChatMessage { IsBusy = true };
+        var reasoning = new AssistantChatMessageReasoningSpan("Thinking");
+        var reasoningRow = new ReasoningActivityItemPresentationRow(assistant, reasoning, new DirectLocaleKey("Reasoning"));
+        var reasoningMarker = BuildActivityMarker(reasoningRow);
+        using var context = Context(new UserChatMessage("Work", []), assistant);
+        var activity = await context.Presentation.SetBusyActivityAsync(LucideIconKind.Server, new DirectLocaleKey("Starting"), false);
+        var busyRow = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single()
+            .Items.OfType<BusyActivityItemPresentationRow>().Single();
+        Assert.That(activity, Is.SameAs(busyRow));
+        var busyMarker = BuildActivityMarker(busyRow);
+        var busyHeader = busyMarker.Header as TextBlock ?? throw new InvalidOperationException();
+        var rowNotifications = 0;
+        functionRow.PropertyChanged += (_, _) => rowNotifications++;
+        reasoningRow.PropertyChanged += (_, _) => rowNotifications++;
+        var window = new Window { Content = new StackPanel { Children = { functionMarker, reasoningMarker, busyMarker } } };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            Assert.Multiple(() =>
+            {
+                Assert.That(functionHeader.Text, Is.EqualTo("Fallback"));
+                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(reasoningMarker.IsRunning, Is.True);
+                Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.True);
+                Assert.That(busyMarker.IsRunning, Is.True);
+                Assert.That(busyMarker.IsSecondaryHeaderVisible, Is.False);
+            });
+            await Task.Run(() =>
+            {
+                function.HeaderKey = new DirectLocaleKey("Updated");
+                previewSlot.Preview = new ChatPluginTextActivityPreview(new DirectLocaleKey("New preview"));
+                function.DisplaySink.AppendText("Result");
+            });
+            activity.HeaderKey = new DirectLocaleKey("Connecting");
+            activity.SecondaryHeaderKey = new DirectLocaleKey("Details");
+            Dispatcher.UIThread.RunJobs();
+            Assert.Multiple(() =>
+            {
+                Assert.That(functionHeader.Text, Is.EqualTo("Updated"));
+                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.True);
+                Assert.That(functionMarker.IsExpandable, Is.True);
+                Assert.That(busyHeader.Text, Is.EqualTo("Connecting"));
+                Assert.That(busyMarker.IsSecondaryHeaderVisible, Is.True);
+                Assert.That(rowNotifications, Is.Zero);
+            });
+            function.IsBusy = false;
+            assistant.IsBusy = false;
+            activity.Dispose();
+            Assert.Multiple(() =>
+            {
+                Assert.That(functionMarker.IsRunning, Is.False);
+                Assert.That(functionMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(reasoningMarker.IsRunning, Is.False);
+                Assert.That(reasoningMarker.IsSecondaryHeaderVisible, Is.False);
+                Assert.That(busyMarker.IsRunning, Is.False);
+                Assert.That(reasoning.FinishedAt, Is.Null);
+                Assert.That(rowNotifications, Is.Zero);
+            });
+        }
+        finally
+        {
+            function.UnregisterActivityPresentation("preview", previewSlot);
+            activity.Dispose();
+            window.Close();
+        }
+    }
+
+    [AvaloniaTest]
+    public async Task BusyActivities_WhenCompletedOutsideWindow_RemoveTransientAndRetainCompletedRow()
+    {
+        var (context, targets) = CreateTurnHistory(ChatPresentation.TurnBatchSize * 3);
+        using (context)
+        {
+            var presentation = context.Presentation;
+            var owner = (AssistantChatMessage)targets[^1].Node.Message;
+            owner.IsBusy = true;
+            var transient = await presentation.SetBusyActivityAsync(LucideIconKind.WifiSync, new DirectLocaleKey("Retry"), true, owner: owner);
+            var retained = await presentation.SetBusyActivityAsync(LucideIconKind.Server, new DirectLocaleKey("Startup"), false, owner: owner);
+            Assert.That(retained, Is.InstanceOf<BusyActivityItemPresentationRow>());
+            var first = targets[0];
+            Assert.That(await presentation.RevealAsync(first.Node, first.Span), Is.Not.Null);
+            Assert.That(presentation.Rows.OfType<TurnFooterPresentationRow>().Any(row => ReferenceEquals(row.AssistantMessage, owner)), Is.False);
+
+            await Task.Run(() =>
+            {
+                transient.Dispose();
+                retained.Dispose();
+                owner.IsBusy = false;
+            });
+            Dispatcher.UIThread.RunJobs();
+            // Verify storage cleanup while its turn is absent, rather than merely hiding a stale
+            // finished activity when the turn is later materialized.
+            var storage = typeof(ChatPresentation).GetField("_busyActivitiesByNode", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.GetValue(presentation) as Dictionary<ChatMessageNode, List<BusyActivityItemPresentationRow>>
+                ?? throw new InvalidOperationException();
+            Assert.That(storage[targets[^1].Node], Is.EqualTo(new[] { retained }));
+            Assert.That(await presentation.ShowLatestAsync(), Is.True);
+            var activities = presentation.Rows.OfType<ActivityGroupPresentationRow>().SelectMany(group => group.Items)
+                .Concat(presentation.Rows.OfType<ActivityItemPresentationRow>()).OfType<BusyActivityItemPresentationRow>().ToArray();
+            Assert.Multiple(() =>
+            {
+                Assert.That(activities, Is.EqualTo(new[] { retained }));
+                Assert.That(retained.IsRunning, Is.False);
+                Assert.That(retained.FinishedAt, Is.Not.Null);
+            });
+        }
+    }
+
+    private static ActivityMarker BuildActivityMarker(ActivityItemPresentationRow row)
+    {
+        var resource = new ResourceInclude(new Uri("avares://Everywhere.Core/"))
+        {
+            Source = new Uri("avares://Everywhere.Core/Views/Chat/ChatPresentationRowPresenter.axaml")
+        };
+        var theme = resource.Loaded[typeof(ChatPresentationRowPresenter)] as ControlTheme ?? throw new InvalidOperationException();
+        var templates = theme.Setters.OfType<Setter>().Single(setter => setter.Property == ShadUI.BindingAssist.DataTemplatesProperty)
+            .Value as IEnumerable<IDataTemplate> ?? throw new InvalidOperationException();
+        var marker = templates.Single(template => template.Match(row)).Build(row) as ActivityMarker ?? throw new InvalidOperationException();
+        marker.DataContext = row;
+        return marker;
     }
 
     private static void AssertRowTypes<T1, T2, T3, T4>(IEnumerable<ChatPresentationRow> rows) =>

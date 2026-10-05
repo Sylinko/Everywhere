@@ -383,13 +383,13 @@
         <value>HTTP isteği hatası ({0}): {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>Yanlış istek, muhtemelen hatalı bir API anahtarı veya desteklenmeyen ağ/bölge nedeniyle.</value>
+        <value>Yanlış istek.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>Yetkisiz istek, muhtemelen hatalı bir API anahtarı veya desteklenmeyen ağ/bölge nedeniyle.</value>
+        <value>Yetkisiz istek.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>İstek yasaklandı, muhtemelen hatalı bir API anahtarı veya desteklenmeyen ağ/bölge nedeniyle.</value>
+        <value>İstek engellendi.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>Sonuç bulunamadı.</value>
@@ -937,16 +937,16 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Toplam Süre</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>Model yapılandırması yanlış, model sağlayıcısı veya model kimliği eksik veya geçersiz, veya mevcut model görüntü girişi/araç çağrılarını desteklemiyor.</value>
+        <value>Seçilen asistan kullanılamıyor. Hizmet ve asistan ayarlarını kontrol edin.</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>API anahtarı eksik veya geçersiz.</value>
+        <value>Kimlik doğrulama başarısız oldu. API anahtarını kontrol edin veya yeniden oturum açın.</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>API kullanım kotalarını aşıyor, bu genellikle mevcut model için yetersiz bakiye veya erişim izinlerinin eksik olduğunu gösterir.</value>
+        <value>Hizmet, bakiyenin yetersiz olduğunu veya kullanım kotasının tükendiğini bildiriyor.</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>İstek çok sık, hesap bakiyesi yetersiz veya ağ/bölge desteklenmiyor.</value>
+        <value>Hizmet istekleri sınırlandırıyor. Daha sonra yeniden deneyin.</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>Servis uç noktası erişilebilir değil. Ağ bağlantınızı kontrol edin.</value>
@@ -958,22 +958,22 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Servis boş yanıt döndürdü; bu bir ağ veya hizmet sorunu gösterebilir.</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>Seçilen model istenen özelliği desteklemiyor.</value>
+        <value>Mevcut asistan bu özelliği desteklemiyor.</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>Seçilen model görüntü girişi desteklemiyor.</value>
+        <value>Mevcut asistan görüntü girdisini desteklemiyor.</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>Servise yapılan istek zaman aşımına uğradı. Lütfen tekrar deneyin.</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>Bir ağ hatası oluştu. Lütfen ağ veya proxy ayarlarınızı kontrol edin veya hizmet sağlayıcınız bölgenizi desteklemiyor olabilir.</value>
+        <value>Hizmet bağlantısı kesildi veya kurulamadı.</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Hizmet şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>Bilinmeyen bir hata oluştu.</value>
+        <value>İstek tamamlanamadı.</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>Desteklenmeyen model sağlayıcı API şeması.</value>
@@ -1072,7 +1072,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Kabuk Betiğini Çalıştır</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>Bağlam uzunluğu sınırı aşıldı. Yeni bir sohbet oluşturmayı veya daha uzun bir bağlamı olan bir modele geçmeyi deneyin.</value>
+        <value>Konuşma, mevcut asistanın bağlam kapasitesini aşıyor.</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>İşlem Erişimi</value>
@@ -1145,7 +1145,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>İşlem iptal edildi.</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>İşlem zaman aşımına uğradı. Sistem performansınızı kontrol edin ve tekrar deneyin.</value>
+        <value>İşlem zaman aşımına uğradı. Yeniden deneyin.</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>Belirtilen dosya bulunamadı. Dosyanın var olduğundan ve yolun doğru olduğundan emin olun.</value>
@@ -2381,7 +2381,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Hizmet, mevcut bölge veya konum için isteği desteklemiyor.</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>Sunucu yanıtını işlerken hata oluştu, genellikle beklenmeyen bir JSON formatı veya içeriği anlamına gelir.</value>
+        <value>Hizmetin yanıtı ayrıştırılamadı.</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>Yenile</value>
@@ -2744,10 +2744,10 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
         <value>Reddetme sebebini girin</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>Model, temperature parametresini desteklemiyor veya parametre modelin aralığını aşıyor. Varsayılan değere dönmek bu sorunu çözebilir.</value>
+        <value>Hizmet temperature ayarını reddetti. Asistan ayarlarını kontrol edin.</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>Model, top_p parametresini desteklemiyor veya parametre modelin aralığını aşıyor. Varsayılan değere dönmek bu sorunu çözebilir.</value>
+        <value>Hizmet top_p ayarını reddetti. Asistan ayarlarını kontrol edin.</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Ayrıntıları görüntülemek için soldan bir öğe seçin</value>
@@ -3875,7 +3875,7 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Bu turda yanıt üretilmedi.</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Alt Asistanı Aç</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,4 +4100,58 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Çalışan Everywhere'a istek gönderilemedi. Lütfen Everywhere'ı açıp tekrar deneyin.</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>Hizmet, istenen kaynağa erişimi reddetti.</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>İstek geçersiz veya desteklenmeyen ayarlar içeriyor.</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>Hizmet, Everywhere’in bu sürümünün okuyamadığı veriler döndürdü.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>Hizmet, içerik politikası gereği bu isteği veya yanıtı engelledi.</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>İstek yeniden denemeleri</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>Giderilebilir hatalar için en fazla yeniden deneme sayısı. 0 devre dışı bırakır; -1 durdurulana kadar yeniden dener.</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>Yeniden deneniyor {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>Yeniden deneniyor {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>Durduruldu</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>Hata ayrıntıları</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>Ayrıntıları kopyala</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>Asistan yanıtı erkenden sonlandırdı.</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>Mevcut asistan araç çağrılarını desteklemiyor. Yapılandırmayı kontrol edin veya başka bir asistan seçin.</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>Hizmet seçilen asistanı kullanamıyor. Asistan ayarlarını ve erişim izinlerini kontrol edin.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>Kimlik doğrulama başarısız oldu. Kimlik doğrulama ayarlarını kontrol edin veya yeniden oturum açın.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>API anahtarı geçersiz veya süresi dolmuş. Hizmetin API anahtarını kontrol edin ve güncelleyin.</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>Hizmet geçersiz içerik döndürdüğü için istek tamamlanamadı.</value>
+  </data>
 </root>

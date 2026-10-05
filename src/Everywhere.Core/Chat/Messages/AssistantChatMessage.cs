@@ -24,6 +24,17 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     [ObservableProperty]
     public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
 
+    /// <summary>Gets or sets the persisted user-stopped outcome.</summary>
+    [Key(12)]
+    [ObservableProperty]
+    public partial bool IsCanceled { get; set; }
+
+    /// <summary>Gets or sets runtime diagnostics; never serialized or included in prompts.</summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    [ObservableProperty]
+    public partial Exception? Error { get; set; }
+
     [Key(2)]
     public override DateTimeOffset CreatedAt { get; }
 
@@ -77,6 +88,7 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     [IgnoreMember] private readonly IDisposable _spansConnection;
     [IgnoreMember] private readonly IDisposable _spansPersistenceConnection;
 
+
     [SerializationConstructor]
     private AssistantChatMessage(
         string? obsoletedContent,
@@ -87,7 +99,8 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
         IEnumerable<LegacyAssistantChatMessageSpan>? legacySerializableSpans,
         MetadataDictionary metadata,
         IEnumerable<AssistantChatMessageSpan>? serializableSpans,
-        ChatUsageDetails? usageDetails)
+        ChatUsageDetails? usageDetails,
+        bool isCanceled)
     {
         if (!obsoletedContent.IsNullOrEmpty())
         {
@@ -95,6 +108,7 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
         }
 
         ErrorMessageKey = errorMessageKey;
+        IsCanceled = isCanceled;
         CreatedAt = createdAt;
         FinishedAt = finishedAt;
         Metadata = metadata;
@@ -176,7 +190,8 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
         legacySerializableSpans: null,
         metadata: MetadataDictionary.Empty,
         serializableSpans: null,
-        usageDetails: null)
+        usageDetails: null,
+        isCanceled: false)
     {
     }
 

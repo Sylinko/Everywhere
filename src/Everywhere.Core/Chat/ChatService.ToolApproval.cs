@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
@@ -168,7 +167,9 @@ partial class ChatService
         return JsonSerializer.Serialize(input, ToolApprovalInputJsonSerializerContext.ForPrompt.ToolApprovalInput);
     }
 
-    /// <summary>Runs one bounded approval conversation with only file reads and a decision tool.</summary>
+    /// <summary>
+    /// Runs one bounded approval conversation with only file reads and a decision tool.
+    /// </summary>
     private sealed class ToolApprovalReviewer(ChatService owner, FunctionCallContext context, KernelMixin mixin, FileSystemPlugin fileSystemPlugin)
     {
         private const string SystemPrompt =
@@ -231,7 +232,9 @@ partial class ChatService
             using available evidence; deny if it is insufficient. Another read batch will fail approval.
             """;
 
-        /// <summary>Runs the private request and tool loop with the owner's statistics and provider handling.</summary>
+        /// <summary>
+        /// Runs the private request and tool loop with the owner's statistics and provider handling.
+        /// </summary>
         public async Task<ToolApprovalResult> ReviewAsync(string input, CancellationToken cancellationToken)
         {
             var history = new ChatHistory();
@@ -249,14 +252,24 @@ partial class ChatService
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var response = await RequestAsync(history, kernel, cancellationToken);
-                if (response.Metadata?.TryGetValue("FinishReason", out var finishReason) is true && HasIncompleteFinishReason(finishReason))
+                var assembled = await owner.ReadResponseAsync(
+                    mixin,
+                    history,
+                    mixin.GetPromptExecutionSettings(FunctionChoiceBehavior.Auto(autoInvoke: false)),
+                    kernel,
+                    context.ChatContext.Metadata.Id,
+                    FindMessageNode(context.ChatContext, context.FunctionCallChatMessage)?.Id,
+                    StatisticsModelInvocationPurpose.ToolApproval,
+                    context.ChatContext,
+                    context.FunctionCallChatMessage,
+                    cancellationToken);
+                if (assembled.Completion.HasIncompleteOutput)
                 {
                     return ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval response did not complete.");
                 }
 
-                history.Add(response);
-                var calls = FunctionCallContent.GetFunctionCalls(response).ToArray();
+                history.Add(assembled.Message);
+                var calls = assembled.FunctionCalls.ToArray();
                 if (calls.Length == 0)
                 {
                     if (corrections++ >= 2)
@@ -340,148 +353,24 @@ partial class ChatService
             }
         }
 
-        private async Task<ChatMessageContent> RequestAsync(ChatHistory history, Kernel kernel, CancellationToken token)
-        {
-            var usage = new ChatUsageDetails();
-            var invocationId = Guid.CreateVersion7();
-            var startedAt = DateTimeOffset.UtcNow;
-            Exception? failure = null;
-
-            await owner._statisticsRecorder.StartModelInvocationAsync(
-                new StatisticsModelInvocationDraft(
-                    invocationId,
-                    owner._currentTurnEventId.Value,
-                    context.ChatContext.Metadata.Id,
-                    FindMessageNode(context.ChatContext, context.FunctionCallChatMessage)?.Id,
-                    StatisticsModelInvocationPurpose.ToolApproval,
-                    mixin.Configuration.ModelId,
-                    startedAt),
-                token);
-
-            try
-            {
-                var response = new ChatMessageContent(AuthorRole.Assistant, (string?)null);
-                var metadata = new Dictionary<string, object?>();
-                var segments = new List<(bool IsReasoning, StringBuilder Text, Dictionary<string, object?> Metadata)>();
-                var functionCalls = new FunctionCallContentBuilder();
-                // Some adapters append calls to their input history. The review loop owns the
-                // canonical history and adds only the complete, reconstructed response.
-                var requestHistory = new ChatHistory(history);
-                await foreach (var content in mixin.ChatCompletionService.GetStreamingChatMessageContentsAsync(
-                                   requestHistory,
-                                   mixin.GetPromptExecutionSettings(FunctionChoiceBehavior.Auto(autoInvoke: false)),
-                                   kernel,
-                                   token))
-                {
-                    if (content.ChoiceIndex != 0)
-                    {
-                        throw new InvalidOperationException("The approval assistant must return exactly one response.");
-                    }
-
-                    usage.Update(content);
-                    functionCalls.Append(content);
-                    if (content.Metadata is not null)
-                    {
-                        foreach (var (key, value) in content.Metadata)
-                        {
-                            metadata[key] = value;
-                        }
-                    }
-
-                    foreach (var item in content.Items)
-                    {
-                        switch (item)
-                        {
-                            case StreamingReasoningContent reasoning:
-                                AppendSegment(reasoning.Text, true, reasoning.Metadata);
-                                break;
-                            case StreamingTextContent text:
-                                AppendSegment(text.Text, false, text.Metadata);
-                                break;
-                            case StreamingChatMessageContent text:
-                                AppendSegment(text.Content, false, text.Metadata);
-                                break;
-                        }
-                    }
-                }
-
-                // Reconstruct private history only after the stream completes. Tool calls use the
-                // same assembler as normal generation; reasoning retains provider continuation data.
-                foreach (var segment in segments)
-                {
-                    response.Items.Add(
-                        segment.IsReasoning ?
-                            new ReasoningContent(segment.Text.ToString()) { Metadata = segment.Metadata } :
-                            new TextContent(segment.Text.ToString()) { Metadata = segment.Metadata });
-                }
-
-                var calls = functionCalls.Build();
-                if (calls.Count != functionCalls.Count)
-                {
-                    throw new InvalidOperationException("The approval stream contained incomplete tool calls.");
-                }
-                
-                foreach (var call in calls) response.Items.Add(call);
-                response.Metadata = metadata;
-                return response;
-
-                void AppendSegment(string? text, bool isReasoning, IReadOnlyDictionary<string, object?>? itemMetadata)
-                {
-                    if (segments.Count == 0 || segments[^1].IsReasoning != isReasoning)
-                    {
-                        segments.Add((isReasoning, new StringBuilder(), new Dictionary<string, object?>()));
-                    }
-
-                    var segment = segments[^1];
-                    segment.Text.Append(text);
-
-                    if (itemMetadata is not null)
-                    {
-                        foreach (var (key, value) in itemMetadata)
-                        {
-                            segment.Metadata[key] = value;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                failure = ex;
-                throw;
-            }
-            finally
-            {
-                var finishedAt = DateTimeOffset.UtcNow;
-                usage.TotalGenerationSeconds += (finishedAt - startedAt).TotalSeconds;
-                await owner._statisticsRecorder.CompleteModelInvocationAsync(
-                    invocationId,
-                    usage,
-                    finishedAt,
-                    failure is null,
-                    token.IsCancellationRequested,
-                    failure?.GetType().FullName,
-                    CancellationToken.None);
-                owner.RecordChatUsageMetrics(usage, mixin.Configuration.ModelId);
-            }
-        }
-
-        // TODO: use unified robust LLM error classification & retry mechanism instead of this ad-hoc list.
-        private static bool HasIncompleteFinishReason(object? reason) => reason?.ToString()?.ToLowerInvariant() is
-            "length" or "max_tokens" or "maxtokens" or "content_filter" or "contentfilter" or "incomplete" or "error" or
-            "safety" or "recitation" or "blocklist" or "prohibited_content" or "spii";
-
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
         private sealed class ReviewTools(FileSystemPlugin plugin, string directory)
         {
-            /// <summary>Whether the current response requested at least one file read.</summary>
+            /// <summary>
+            /// Whether the current response requested at least one file read.
+            /// </summary>
             public bool HasReadRequests { get; private set; }
 
-            /// <summary>Whether the reviewer has attempted a fifth file-read batch.</summary>
+            /// <summary>
+            /// Whether the reviewer has attempted a fifth file-read batch.
+            /// </summary>
             public bool IsReadLimitExceeded => _readBatches >= 5;
 
             private int _readBatches;
 
-            /// <summary>Starts a response without resetting the review's cumulative read budget.</summary>
+            /// <summary>
+            /// Starts a response without resetting the review's cumulative read budget.
+            /// </summary>
             public void BeginResponse() => HasReadRequests = false;
 
             [KernelFunction("read_file")]

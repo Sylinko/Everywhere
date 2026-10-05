@@ -383,13 +383,13 @@
         <value>Ошибка HTTP-запроса ({0}): {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>Некорректный запрос, возможно, из-за неправильного API-ключа или неподдерживаемой сети/региона.</value>
+        <value>Некорректный запрос.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>Несанкционированный запрос, возможно, из-за неправильного API-ключа или неподдерживаемой сети/региона.</value>
+        <value>Несанкционированный запрос.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>Запрос запрещен, возможно, из-за неправильного API-ключа или неподдерживаемой сети/региона.</value>
+        <value>Запрос заблокирован.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>Результат не найден.</value>
@@ -570,7 +570,7 @@
         <value>Должен начинаться с http:// или https://. Добавьте # в конце, чтобы избежать автоматического добавления суффикса версии.</value>
     </data>
     <data name="Assistant_ApiKey_Header" xml:space="preserve">
-        <value>API Key</value>
+        <value>API-ключ</value>
     </data>
     <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>Если это онлайн-модель, необходимо получить ключ от соответствующего официального источника, подробности смотрите в документации.</value>
@@ -937,16 +937,16 @@
         <value>Общее Время</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>Конфигурация модели неверна, поставщик модели или ID модели отсутствует или недействителен, или текущая модель не поддерживает ввод изображений/вызовы инструментов.</value>
+        <value>Выбранный ассистент недоступен. Проверьте настройки сервиса и ассистента.</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>Отсутствует или недействительный API ключ.</value>
+        <value>Не удалось пройти аутентификацию. Проверьте ключ API или войдите снова.</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>Превышены квоты использования API, что обычно указывает на недостаточный баланс или отсутствие прав доступа для текущей модели.</value>
+        <value>Сервис сообщил о недостаточном балансе или исчерпанной квоте использования.</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>Запрос слишком частый, недостаточный баланс счета или сеть/регион не поддерживается.</value>
+        <value>Сервис ограничивает запросы. Повторите попытку позже.</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>Сервисный конечный пункт недоступен. Пожалуйста, проверьте ваше сетевое подключение.</value>
@@ -958,22 +958,22 @@
         <value>Сервис вернул пустой ответ, что может указывать на проблему с сетью или сервисом.</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>Выбранная модель не поддерживает запрашиваемую функцию.</value>
+        <value>Текущий ассистент не поддерживает эту функцию.</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>Выбранная модель не поддерживает ввод изображений.</value>
+        <value>Текущий ассистент не поддерживает ввод изображений.</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>Запрос к сервису превысил время ожидания. Пожалуйста, попробуйте снова.</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>Произошла ошибка сети. Пожалуйста, проверьте свои сетевые или прокси-настройки, или ваш провайдер услуг может не поддерживать ваш регион.</value>
+        <value>Соединение с сервисом было прервано или не удалось его установить.</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Сервис временно недоступен. Пожалуйста, попробуйте позже.</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>Произошла неизвестная ошибка.</value>
+        <value>Не удалось завершить запрос.</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>Неподдерживаемая схема API провайдера модели.</value>
@@ -1072,7 +1072,7 @@
         <value>Выполнение shell-скрипта</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>Длина контекста превышает лимит. Попробуйте создать новый чат или переключиться на модель с более длинным контекстом.</value>
+        <value>Объём переписки превышает ёмкость контекста текущего ассистента.</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>Доступ к процессу</value>
@@ -1145,7 +1145,7 @@
         <value>Операция была отменена.</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>Время выполнения операции истекло. Пожалуйста, проверьте производительность системы и попробуйте снова.</value>
+        <value>Время ожидания операции истекло. Повторите попытку.</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>Указанный файл не найден. Пожалуйста, убедитесь, что файл существует и путь указан правильно.</value>
@@ -2381,7 +2381,7 @@
         <value>Сервис не поддерживает запросы из вашего региона или местоположения.</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>Ошибка при разборе ответа сервера, обычно это означает неожиданный формат или содержимое JSON.</value>
+        <value>Не удалось обработать ответ сервиса.</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>Обновить</value>
@@ -2744,10 +2744,10 @@
         <value>Введите причину отказа</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>Модель не поддерживает параметр temperature или параметр выходит за пределы диапазона модели. Восстановление до значения по умолчанию может решить эту проблему.</value>
+        <value>Сервис отклонил настройку temperature. Проверьте настройки ассистента.</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>Модель не поддерживает параметр top_p или параметр выходит за пределы диапазона модели. Восстановление до значения по умолчанию может решить эту проблему.</value>
+        <value>Сервис отклонил настройку top_p. Проверьте настройки ассистента.</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Выберите элемент слева для просмотра деталей</value>
@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Ответ не был сгенерирован в этом раунде.</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Открыть подассистента</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,4 +4100,58 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Не удалось отправить запрос в запущенный Everywhere. Пожалуйста, откройте Everywhere и попробуйте снова.</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>Сервис отказал в доступе к запрошенному ресурсу.</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>Запрос содержит недопустимые или неподдерживаемые настройки.</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>Сервис вернул данные, которые эта версия Everywhere не может прочитать.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>Сервис заблокировал этот запрос или ответ согласно своей политике контента.</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>Повторные попытки запроса</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>Максимум повторов при устранимых ошибках. 0 отключает повторы; -1 повторяет до остановки.</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>Повторная попытка {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>Повторная попытка {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>Остановлено</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>Подробности ошибки</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>Копировать подробности</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>Помощник преждевременно завершил ответ.</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>Текущий ассистент не поддерживает вызов инструментов. Проверьте настройки или выберите другого ассистента.</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>Сервис не может использовать выбранного ассистента. Проверьте настройки ассистента и права доступа.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>Не удалось пройти аутентификацию. Проверьте настройки аутентификации или войдите снова.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>Ключ API недействителен или срок его действия истёк. Проверьте и обновите ключ API сервиса.</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>Сервис вернул недопустимое содержимое, поэтому запрос не удалось завершить.</value>
+  </data>
 </root>
