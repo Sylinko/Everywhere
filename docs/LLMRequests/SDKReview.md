@@ -1,6 +1,6 @@
 # SDK Retry, Timeout and Cancellation Review
 
-Source review and SDK repairs: 2026-10-02/03. The source observations below describe the pinned upstream versions; section 9 records implemented repairs and real-HTTP verification. Application retry and presentation changes remain design work.
+Source review and SDK repairs: 2026-10-02/03. The source observations below describe the pinned upstream versions; section 9 records implemented repairs and real-HTTP verification. Application retries and presentation are implemented in [RequestExecution.md](RequestExecution.md).
 
 First-stage repairs use the real-HTTP harness described in [Testing.md](Testing.md), reproducing each defect before patching and verifying the same SDK entry point afterward. This supersedes the earlier plan to defer the mock server until application retry work.
 
@@ -21,7 +21,7 @@ Context7's official Anthropic C# documentation was consulted, but the checked-ou
 
 ## 2. OpenAI Chat and Responses
 
-Everywhere supplies endpoint and HttpClientPipelineTransport, without setting RetryPolicy or NetworkTimeout. Both OpenAI client paths construct a System.ClientModel ClientPipeline; their response-status classifiers delegate retry classification to its default rules. The inspected Microsoft.Extensions.AI.OpenAI Chat/Responses streaming adapters forward to SDK streaming calls without an additional retry loop.
+At the source-review baseline, Everywhere supplied endpoint and HttpClientPipelineTransport without setting RetryPolicy or NetworkTimeout. The production OpenAI mixins now set ClientRetryPolicy(0) for the shared executor; NetworkTimeout is unchanged. Both OpenAI client paths construct a System.ClientModel ClientPipeline; their response-status classifiers delegate retry classification to its default rules. The inspected Microsoft.Extensions.AI.OpenAI Chat/Responses streaming adapters forward to SDK streaming calls without an additional retry loop.
 
 At System.ClientModel 1.14.0:
 
@@ -88,13 +88,15 @@ Source: [OAuthCloudClient.CloudAuthenticationHandler](../../src/Everywhere.Cloud
 
 ## 7. Required design corrections
 
+This list records the original review findings. Section 9 records the delivered SDK repairs; [TimeoutAndCompletion.md](TimeoutAndCompletion.md) defines the subsequent timeout and completion contract. The common idle limit's default remains undecided.
+
 1. Disable SDK transient retries explicitly for both OpenAI client options and Anthropic before adding the application loop. With default application MaxRetries=5 left layered on current defaults, repeated eligible HTTP failures can produce **6 * 4 = 24** sends for OpenAI and **6 * 3 = 18** for Anthropic, even before separate authentication recovery.
 2. Preserve request-scoped HTTP evidence where exception types discard it. Status provenance, Retry-After, structured code and request ID must not rely on localized text or a shared last-response field. An observer must not itself retry or retain full response bodies unnecessarily.
 3. Resolve timeout ownership explicitly. Existing RequestTimeoutSeconds currently affects header/request waiting, while post-header behavior differs by SDK. Do not silently treat it as a total stream deadline or equate byte-read timeout with time to a meaningful assistant token.
 4. Keep initial integration behavior changes explicit: setting OpenAI NetworkTimeout to RequestTimeoutSeconds would also change its current 100-second read timeout, while imposing a new streaming idle limit on Anthropic/Google/Mistral/Ollama adds behavior they do not currently share. These require a deliberate timeout contract before implementation.
 5. Fix non-interruptible reads and uncancelable error-body reads in the actual adapter/transport boundaries. A reusable retry executor cannot repair these by merely passing CancellationToken again.
 6. Remove the connector's synthetic HTTP 400 wrapper through its maintained source replacement. Treat OpenAI's status-zero wrapper as transport evidence, not automatically an empty response.
-7. Keep completion/cancellation checks after enumeration. A normal iterator end can reflect token-checked exit or incomplete protocol termination rather than a valid completed response.
+7. Keep completion/cancellation evidence after enumeration. A normal iterator end can reflect token-checked exit or incomplete protocol termination rather than a valid completed response. Preserve explicit cancellation/failure evidence, but do not reject otherwise usable compatible responses solely for absent finish metadata.
 
 Static source analysis establishes the mechanisms above. Section 9 records runtime probes of selected paths; these do not establish the future application retry/timeout contract or every provider behavior.
 
@@ -120,7 +122,7 @@ Validate through the actual patched assemblies, following [the existing Semantic
 
 ## 9. Implemented repairs and verification
 
-Google/Mistral now use a shared mirror replacement that preserves transport exceptions, cancels error-body reads, disposes failed responses, and captures selected retry/request-ID headers in exception data. The OllamaSharp donor fixes pending reads in all three streaming readers, recognizes error objects, and preserves HTTP failure evidence. Production SDK retry defaults remain unchanged until the application executor owns the budget.
+Google/Mistral now use a shared mirror replacement that preserves transport exceptions, cancels error-body reads, disposes failed responses, and captures selected retry/request-ID headers in exception data. The OllamaSharp donor fixes pending reads in all three streaming readers, recognizes error objects, and preserves HTTP failure evidence. Stage one retained SDK defaults; the shared executor now owns the budget and production OpenAI/Anthropic transient retries are disabled.
 
 ### HTTP evidence and response ownership
 
@@ -161,7 +163,11 @@ donor's purpose; inline comments identify Everywhere modifications.
 A clean HTTP EOF without a terminal event still produces no explicit completion
 reason in the six tested paths. An interrupted HTTP body instead raises an error.
 The adapter does not infer success from EOF; a robust application completion check
-remains part of the later request executor. ChatService behavior is unchanged.
+remains part of the later request executor. That check preserves current acceptance
+of compatible streams with missing finish metadata, rather than treating absence
+alone as failure. See [TimeoutAndCompletion.md](TimeoutAndCompletion.md) for the
+2026-10-03 timeout/finish review and existing extension points; these mechanisms
+do not currently require further SDK patches. Stage-one repairs retained ChatService behavior; the later shared executor is described in RequestExecution.md.
 
 ### Responses call IDs
 

@@ -8,7 +8,6 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
@@ -26,7 +25,6 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
 
     private readonly SystemAssistantSettings _systemAssistantSettings;
     private readonly AssistantSpecializationResolver _assistantSpecializationResolver;
-    private readonly ILogger<EssentialPlugin> _logger;
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     private enum TodoAction
@@ -39,13 +37,11 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
 
     public EssentialPlugin(
         Settings settings,
-        AssistantSpecializationResolver assistantSpecializationResolver,
-        ILogger<EssentialPlugin> logger
+        AssistantSpecializationResolver assistantSpecializationResolver
     ) : base("essential")
     {
         _systemAssistantSettings = settings.SystemAssistant;
         _assistantSpecializationResolver = assistantSpecializationResolver;
-        _logger = logger;
 
         _functionsSource.Edit(list =>
         {
@@ -88,7 +84,7 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         // Fork a temporary chat context for the subagent
         var forkedChatContext = chatContext.ForkSubagent(title);
         forkedChatContext.Add(new UserChatMessage(prompt, []));
-        var assistantChatMessage = new AssistantChatMessage();
+        var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
         forkedChatContext.Add(assistantChatMessage);
 
         // Display the chat context in the UI
@@ -103,8 +99,12 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         };
         var specializedAssistant = specializations switch
         {
-            ModelSpecializations.ImageUnderstanding => _assistantSpecializationResolver.Resolve(_systemAssistantSettings.ImageUnderstanding, assistant),
-            _ => _assistantSpecializationResolver.Resolve(_systemAssistantSettings.DefaultSubagent, assistant)
+            ModelSpecializations.ImageUnderstanding => _assistantSpecializationResolver.Resolve(
+                _systemAssistantSettings.ImageUnderstanding,
+                assistant),
+            _ => _assistantSpecializationResolver.Resolve(
+                _systemAssistantSettings.DefaultSubagent,
+                assistant)
         };
         var systemPrompt = specializations switch
         {
@@ -116,24 +116,38 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         // tool's ambient invocation context leak into nested kernel-service resolution while the
         // child generation is waiting for model output or user consent.
         using var parentFunctionCallContextScope = chatContext.GenerationContext?.SuppressFunctionCallContext();
-        await chatService.GenerateAsync(
-            forkedChatContext,
-            specializedAssistant,
-            assistantChatMessage,
-            systemPromptOverride: systemPrompt,
-            enableNotifications: false,
-            purpose: StatisticsModelInvocationPurpose.SubagentResponse,
-            cancellationToken: cancellationToken);
-
-        if (assistantChatMessage.Count < 1)
+        var generationResult = default(ChatGenerationResult);
+        try
         {
-            _logger.LogWarning("Subagent did not return any messages for task '{Title}'", title);
-            return "The subagent did not return any response.";
+            await forkedChatContext.ExecuteAsync(
+                async childToken =>
+                {
+                    generationResult = await chatService.GenerateAsync(
+                        forkedChatContext,
+                        specializedAssistant,
+                        assistantChatMessage,
+                        systemPromptOverride: systemPrompt,
+                        enableNotifications: false,
+                        purpose: StatisticsModelInvocationPurpose.SubagentResponse,
+                        cancellationToken: childToken);
+                },
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(
+                "The subagent was stopped. Partial output: " +
+                forkedChatContext.Items.AsValueEnumerable().Select(node => node.Message).OfType<AssistantChatMessage>().LastOrDefault());
         }
 
-        // TODO: If subagent encounters an error, it should return a structured error message (with last available message) instead of a normal response.
-        var result = (assistantChatMessage.Items[^1] as AssistantChatMessageTextSpan)?.Content;
-        return result ?? string.Empty;
+        if (generationResult?.Error is { } error)
+        {
+            throw new HandledException(
+                new Exception("The subagent failed: " + error.Message + ". Partial output: " + generationResult.Output, error),
+                error.GetFriendlyMessage());
+        }
+
+        return generationResult?.Output ?? string.Empty;
     }
 
     [KernelFunction("manage_todo")]

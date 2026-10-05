@@ -58,8 +58,8 @@ public sealed class SdkErrorTests
             Assert.That(exception.Data["Everywhere.Http.Retry-After"], Is.EqualTo("1"));
             Assert.That(exception.Data["Everywhere.Http.x-request-id"], Is.EqualTo(fixture.Id));
         }
-        // Anthropic 12.45.0 exposes status/body only on its API exception. Header
-        // observation belongs at the application's request boundary in the next stage.
+        // Anthropic retains selected headers through its static donor; the production
+        // normalization tests also verify them at the common evidence entry point.
     }
 
     [TestCase(Provider.OpenAI)]

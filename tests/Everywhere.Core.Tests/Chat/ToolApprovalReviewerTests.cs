@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Avalonia.Headless.NUnit;
 using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Permissions;
@@ -176,6 +177,41 @@ public sealed class ToolApprovalReviewerTests
         });
     }
 
+    [AvaloniaTest]
+    public async Task ReviewAsync_WhenStreamRetries_DiscardsProvisionalDecisionAndPreservesCompletedReads()
+    {
+        var reviewer = CreateReviewer(1);
+        reviewer.StreamFailures.Enqueue(null);
+        reviewer.StreamFailures.Enqueue(new IOException("Stream disconnected."));
+        var discardedReasoning = new MEAI.TextReasoningContent("discarded") { ProtectedData = "discarded-signature" };
+        var result = await reviewer.ReviewAsync(
+            Response(Read()),
+            new MEAI.ChatMessage(MEAI.ChatRole.Assistant, [discardedReasoning, Decision("deny")]),
+            Response(Read()),
+            Response(Decision()));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsAllowed, Is.True);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(2));
+            Assert.That(reviewer.Requests, Has.Count.EqualTo(4));
+            foreach (var request in reviewer.Requests.Skip(1).Take(2))
+            {
+                Assert.That(request.SelectMany(message => message.Contents).OfType<MEAI.FunctionResultContent>().Count(), Is.EqualTo(1));
+                Assert.That(request.Count(message => message.Role == MEAI.ChatRole.User), Is.EqualTo(1));
+            }
+            Assert.That(reviewer.Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.FunctionCallContent>().Count(), Is.EqualTo(2));
+            Assert.That(reviewer.Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.TextReasoningContent>(), Is.Empty);
+        });
+        await reviewer.Recorder.Received(4).StartModelInvocationAsync(
+            Arg.Is<StatisticsModelInvocationDraft>(draft => draft.Purpose == StatisticsModelInvocationPurpose.ToolApproval),
+            Arg.Any<CancellationToken>());
+        await reviewer.Recorder.Received(3).CompleteModelInvocationAsync(
+            Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(), true, false, null, CancellationToken.None);
+        await reviewer.Recorder.Received(1).CompleteModelInvocationAsync(
+            Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(), false, false, Arg.Any<string>(), CancellationToken.None);
+    }
+
     private static MEAI.ChatMessage Response(params MEAI.FunctionCallContent[] calls) => new(MEAI.ChatRole.Assistant, [.. calls]);
 
     private static MEAI.FunctionCallContent Read() => new(Guid.NewGuid().ToString(), "read_file",
@@ -184,9 +220,9 @@ public sealed class ToolApprovalReviewerTests
     private static MEAI.FunctionCallContent Decision(string decision = "allow") => new(Guid.NewGuid().ToString(), "submit_approval",
         new Dictionary<string, object?> { ["decision"] = decision, ["reason"] = "scope checked" });
 
-    private ReviewHarness CreateReviewer()
+    private ReviewHarness CreateReviewer(int maxRetries = 0)
     {
-        var reviewer = new ReviewHarness();
+        var reviewer = new ReviewHarness(maxRetries);
         _harnesses.Add(reviewer);
         return reviewer;
     }
@@ -194,9 +230,11 @@ public sealed class ToolApprovalReviewerTests
     private sealed class ReviewHarness : IDisposable
     {
         public CountingFileHandler Handler { get; } = new();
+        public IStatisticsRecorder Recorder { get; } = Substitute.For<IStatisticsRecorder>();
         public List<MEAI.ChatMessage[]> Requests { get; } = [];
         public List<string[]> AdvertisedNames { get; } = [];
         public Exception? StreamFailure { get; set; }
+        public Queue<Exception?> StreamFailures { get; } = new();
         public IEnumerable<MEAI.FunctionResultContent> ToolResults => Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.FunctionResultContent>();
 
         private readonly MEAI.IChatClient _client = Substitute.For<MEAI.IChatClient>();
@@ -204,14 +242,14 @@ public sealed class ToolApprovalReviewerTests
         private readonly ChatService _owner;
         private readonly FunctionCallContext _context;
 
-        public ReviewHarness()
+        public ReviewHarness(int maxRetries)
         {
             _client.GetService(Arg.Any<Type>(), Arg.Any<object?>()).Returns((object?)null);
             _client.GetResponseAsync(Arg.Any<IEnumerable<MEAI.ChatMessage>>(), Arg.Any<MEAI.ChatOptions>(), Arg.Any<CancellationToken>())
                 .Returns(_ => Task.FromException<MEAI.ChatResponse>(new AssertionException("Approval must use the streaming API.")));
             var completion = _client.AsChatCompletionService();
             _mixin = Substitute.For<KernelMixin>(new AdvancedAssistantConfiguration { SupportsToolCall = true },
-                new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null));
+                new ModelConnection(ModelProviderSchema.OpenAI, "https://example.invalid", null, new HttpClient(), null, maxRetries));
             _mixin.ChatCompletionService.Returns(completion);
             _mixin.GetPromptExecutionSettings(Arg.Any<FunctionChoiceBehavior>()).Returns(call =>
                 new PromptExecutionSettings { FunctionChoiceBehavior = call.ArgAt<FunctionChoiceBehavior>(0) });
@@ -225,7 +263,7 @@ public sealed class ToolApprovalReviewerTests
             {
                 var type when type == typeof(Settings) => (object)settings,
                 var type when type == typeof(IChatPluginManager) => manager,
-                var type when type == typeof(IStatisticsRecorder) => Substitute.For<IStatisticsRecorder>(),
+                var type when type == typeof(IStatisticsRecorder) => Recorder,
                 var type when type == typeof(ILogger<ChatService>) => Substitute.For<ILogger<ChatService>>(),
                 _ => null
             }).ToArray());
@@ -266,7 +304,8 @@ public sealed class ToolApprovalReviewerTests
                     yield return new MEAI.ChatResponseUpdate { Role = message.Role, Contents = [content] };
                 }
             }
-            if (StreamFailure is { } failure) throw failure;
+            var failure = StreamFailures.Count > 0 ? StreamFailures.Dequeue() : StreamFailure;
+            if (failure is not null) throw failure;
             yield return new MEAI.ChatResponseUpdate
             {
                 Role = MEAI.ChatRole.Assistant,

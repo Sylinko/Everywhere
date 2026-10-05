@@ -545,6 +545,10 @@ public sealed partial class ChatMessageItemsControl : ItemsControl
             .Show();
     }
 
+    [RelayCommand]
+    private static void ShowErrorDetails(Exception error) =>
+        DialogManager.CreateCustomDialog(new ChatErrorDetailsView(error)).Dismissible().Show();
+
     protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey)
     {
         if (item is ChatPresentationRow)

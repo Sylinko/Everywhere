@@ -1,11 +1,8 @@
-using System.ClientModel;
 using System.Text.Json;
-using Anthropic.Exceptions;
 using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 
 namespace Everywhere.AI;
 
@@ -29,9 +26,12 @@ public sealed class KernelMixinFactory(
         AssistantConfiguration configuration;
         ModelSchemaOptions? schemaOptions;
         TimeSpan timeout;
+        int maxRetries;
+
         lock (sourceConfiguration)
         {
             configuration = AssistantSnapshotMapper.Copy(sourceConfiguration);
+            maxRetries = assistant.RequestMaxRetries;
             timeout = TimeSpan.FromSeconds(Math.Clamp(assistant.RequestTimeoutSeconds, 1, 24 * 60 * 60));
             schemaOptions = configuration.Schema switch
             {
@@ -46,12 +46,15 @@ public sealed class KernelMixinFactory(
 
         if (configuration.ModelId.IsNullOrWhiteSpace())
         {
-            throw new HandledChatException(
-                new InvalidOperationException("Model ID cannot be empty."),
-                HandledChatExceptionType.InvalidConfiguration);
+            throw new HandledChatException.InvalidConfiguration(new InvalidOperationException("Model ID cannot be empty."));
         }
 
-        var connection = ResolveConnection(configuration, timeout);
+        var connection = configuration switch
+        {
+            OfficialAssistantConfiguration => ResolveOfficialConnection(configuration, timeout, maxRetries),
+            _ => ResolveUserConnection(configuration, timeout, maxRetries)
+        };
+
         try
         {
             return (connection.Schema, schemaOptions) switch
@@ -83,9 +86,8 @@ public sealed class KernelMixinFactory(
                 (ModelProviderSchema.Ollama, _) => new OllamaKernelMixin(
                     configuration,
                     connection),
-                _ => throw new HandledChatException(
+                _ => throw new HandledChatException.InvalidConfiguration(
                     new NotSupportedException($"Model provider schema '{connection.Schema}' is not supported."),
-                    HandledChatExceptionType.InvalidConfiguration,
                     new DynamicLocaleKey(LocaleKey.KernelMixinFactory_UnsupportedModelProviderSchema))
             };
         }
@@ -97,26 +99,13 @@ public sealed class KernelMixinFactory(
     }
 
     /// <summary>
-    /// Resolves the <see cref="ModelConnection"/> and <see cref="HttpClient"/> for the given <see cref="CustomAssistant"/>.
-    /// For Official mode, the endpoint comes from the AI gateway,
-    /// and the API key is null (OAuth is handled by the named HttpClient).
-    /// For user-configured modes, endpoint/apiKey are read from the assistant configuration.
-    /// </summary>
-    private ModelConnection ResolveConnection(AssistantConfiguration configuration, TimeSpan timeout) =>
-        configuration is OfficialAssistantConfiguration ?
-            ResolveOfficialConnection(configuration, timeout) :
-            ResolveUserConnection(configuration, timeout);
-
-    /// <summary>
     /// Resolves connection for Official (cloud gateway) mode.
     /// </summary>
-    private ModelConnection ResolveOfficialConnection(AssistantConfiguration configuration, TimeSpan timeout)
+    private ModelConnection ResolveOfficialConnection(AssistantConfiguration configuration, TimeSpan timeout, int maxRetries)
     {
         var schema = configuration.Schema;
         var endpoint = schema.NormalizeEndpoint(CloudConstants.AIGatewayBaseUrl) ??
-            throw new HandledChatException(
-                new InvalidOperationException("AI Gateway base URL is not configured."),
-                HandledChatExceptionType.InvalidEndpoint);
+            throw new HandledChatException.InvalidConfiguration.InvalidEndpoint(new InvalidOperationException("AI Gateway base URL is not configured."));
 
         // Official mode uses OAuth via the named HttpClient — no user API key needed.
         // Some SDKs require a non-null credential, so we pass null and let each mixin handle it
@@ -124,25 +113,21 @@ public sealed class KernelMixinFactory(
         var httpClient = httpClientFactory.CreateClient(nameof(ICloudClient));
         httpClient.Timeout = timeout;
 
-        return new ModelConnection(schema, endpoint, ApiKey: null, httpClient, TransformOfficialException);
+        return new ModelConnection(schema, endpoint, ApiKey: null, httpClient, EnrichOfficialExceptionEvidence, maxRetries);
     }
 
     /// <summary>
     /// Resolves connection for user-configured (non-Official) modes.
     /// </summary>
-    private ModelConnection ResolveUserConnection(AssistantConfiguration configuration, TimeSpan timeout)
+    private ModelConnection ResolveUserConnection(AssistantConfiguration configuration, TimeSpan timeout, int maxRetries)
     {
         if (!Uri.TryCreate(configuration.Endpoint, UriKind.Absolute, out _))
         {
-            throw new HandledChatException(
-                new InvalidOperationException("Invalid endpoint URL."),
-                HandledChatExceptionType.InvalidEndpoint);
+            throw new HandledChatException.InvalidConfiguration.InvalidEndpoint(new InvalidOperationException("Invalid endpoint URL."));
         }
 
-        var endpoint = configuration.Schema.NormalizeEndpoint(configuration.Endpoint) ??
-            throw new HandledChatException(
-                new InvalidOperationException("Endpoint cannot be empty."),
-                HandledChatExceptionType.InvalidEndpoint);
+        var endpoint = configuration.Schema.NormalizeEndpoint(configuration.Endpoint)
+            ?? throw new HandledChatException.InvalidConfiguration.InvalidEndpoint(new InvalidOperationException("Endpoint cannot be empty."));
 
         var apiKey = ApiKey.GetKey(configuration.ApiKey);
 
@@ -151,55 +136,37 @@ public sealed class KernelMixinFactory(
         var httpClient = httpClientFactory.CreateClient();
         httpClient.Timeout = timeout;
 
-        return new ModelConnection(configuration.Schema, endpoint, apiKey, httpClient, null);
+        return new ModelConnection(configuration.Schema, endpoint, apiKey, httpClient, null, maxRetries);
     }
 
-    private Exception TransformOfficialException(Exception exception)
+    private static void EnrichOfficialExceptionEvidence(ChatExceptionEvidence evidence)
     {
+        if (evidence.ResponseBody is not { } body) return;
         try
         {
-            var payload = exception switch
-            {
-                ClientResultException clientResultException when clientResultException.GetRawResponse() is { } response =>
-                    response.BufferContent().ToObjectFromJson<ApiPayload>(ApiPayloadJsonSerializerContext.Default.ApiPayload.Options),
-                Anthropic5xxException { ResponseBody: { } responseBody } =>
-                    JsonSerializer.Deserialize<ApiPayload>(responseBody, ApiPayloadJsonSerializerContext.Default.ApiPayload),
-                HttpOperationException { ResponseContent: { } responseContent } =>
-                    JsonSerializer.Deserialize<ApiPayload>(responseContent, ApiPayloadJsonSerializerContext.Default.ApiPayload),
-                _ => null
-            };
-
-            if (payload is not { Success: false, Error: { } error })
-            {
-                return exception;
-            }
-
+            var payload = JsonSerializer.Deserialize(body, ApiPayloadJsonSerializerContext.Default.ApiPayload);
+            if (payload is not { Success: false, Error: { } error }) return;
             if (error.Upstream is { } upstream)
             {
-                return new HttpOperationException(
-                    upstream.StatusCode,
-                    upstream.Body?.RootElement.GetRawText() ?? "Upstream error with no body",
-                    "upstream_error",
-                    exception);
+                evidence.GatewayStatusCode = evidence.StatusCode;
+                evidence.StatusCode = upstream.StatusCode;
+                using var upstreamBody = upstream.Body;
+                evidence.ErrorCode = null;
+                evidence.ErrorType = null;
+                evidence.Parameter = null;
+                evidence.ErrorMessage = null;
+                ChatExceptionEvidenceExtractor.ExtractResponseBody(evidence, upstreamBody?.RootElement.GetRawText());
+                return;
             }
 
-            if (ParseOfficialErrorCode(error.Code) is { } errorMessageKey)
-            {
-                return new HandledException(
-                    exception,
-                    error.Message.IsNullOrWhiteSpace() ?
-                        errorMessageKey :
-                        new AggregateDynamicLocaleKey([errorMessageKey, new DirectLocaleKey(error.Message)], "\n"),
-                    showDetails: false);
-            }
-
-            return exception;
+            evidence.ConnectionErrorCode = error.Code;
+            evidence.FriendlyMessageKey = ParseOfficialErrorCode(error.Code);
+            // Keep gateway text as diagnostic evidence rather than appending it to the UI key.
+            evidence.ErrorMessage = error.Message;
         }
-        catch (Exception ex)
+        catch (JsonException)
         {
-            loggerFactory.CreateLogger(nameof(ICloudClient)).LogError(ex, "Failed to transform official exception. Returning original exception.");
-
-            return exception; // If any error occurs during transformation, return the original exception to avoid masking the issue.
+            // Non-gateway and malformed response bodies retain their SDK/HTTP evidence.
         }
     }
 

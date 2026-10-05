@@ -1,29 +1,33 @@
+using Everywhere.Common;
 ﻿using Everywhere.AI.Prompts;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Everywhere.AI;
 
-public abstract class KernelMixin(AssistantConfiguration configuration, ModelConnection connection) : IDisposable
+public abstract partial class KernelMixin(AssistantConfiguration configuration, ModelConnection connection) : IDisposable
 {
     /// <summary>
     /// Gets the model configuration snapshot used for this mixin's complete lifetime.
     /// </summary>
-    public AssistantConfiguration Configuration { get; } = configuration;
+    public AssistantConfiguration Configuration => configuration;
 
     /// <summary>
     /// Convenience accessor for the resolved endpoint (already normalized, never null).
     /// </summary>
-    protected string Endpoint { get; } = connection.Endpoint;
+    protected string Endpoint => connection.Endpoint;
 
     /// <summary>
     /// Convenience accessor for the resolved API key (null means no key needed / handled by HttpClient).
     /// </summary>
-    protected string? ApiKey { get; } = connection.ApiKey;
+    protected string? ApiKey => connection.ApiKey;
 
     public abstract IChatCompletionService ChatCompletionService { get; }
 
-    private readonly HttpClient _httpClient = connection.HttpClient;
+    /// <summary>
+    /// Gets the immutable retry budget captured with this connection.
+    /// </summary>
+    public int RequestMaxRetries => connection.RequestMaxRetries;
 
     public virtual bool IsPersistentMessageMetadataKey(string key) => false;
 
@@ -41,37 +45,48 @@ public abstract class KernelMixin(AssistantConfiguration configuration, ModelCon
 
     public async Task CheckConnectivityAsync(CancellationToken cancellationToken = default)
     {
-        var innerCancellationTokenSource = new CancellationTokenSource();
-        using var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            innerCancellationTokenSource.Token);
-
-        await foreach (var _ in ChatCompletionService.GetStreamingChatMessageContentsAsync(
+        var streamRequest = StreamRequestAsync(
             [
                 new ChatMessageContent(AuthorRole.System, "You're a helpful assistant."),
                 new ChatMessageContent(AuthorRole.User, DefaultPrompts.TestPrompt)
             ],
             GetPromptExecutionSettings(),
-            cancellationToken: linkedCancellationTokenSource.Token))
+            options: new ChatRequestOptions(0),
+            cancellationToken: cancellationToken);
+        await foreach (var update in streamRequest)
         {
-            // if we can get any response without exception, we consider the connectivity check passed, then we can cancel the request to avoid unnecessary cost.
-            await innerCancellationTokenSource.CancelAsync();
-            return;
+            // Leaving await foreach disposes the SDK stream, without a second request.
+            if (update is ChatRequestUpdate.Content) return;
         }
     }
 
     /// <summary>
-    /// Transform exceptions thrown by the chat completion service.
-    /// This allows us to convert exceptions from the underlying SDK into HandledChatException with specific types,
-    /// so that the UI can show more user-friendly error messages and take different actions based on the exception type.
+    /// Extracts SDK-specific error evidence without selecting classification or retry policy.
+    /// Overrides can use typed SDK fields or known protocol semantics. Connection evidence
+    /// is enriched separately so an API-compatible service is not mistaken for the SDK vendor.
     /// </summary>
-    /// <param name="exception"></param>
-    /// <returns></returns>
-    public Exception TransformChatException(Exception exception) => connection.ChatExceptionTransformer?.Invoke(exception) ?? exception;
+    /// <param name="evidence">The request-local evidence being collected.</param>
+    public virtual void ExtractExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        ChatExceptionEvidenceExtractor.ExtractSdkEvidence(evidence);
+    }
+
+    /// <summary>Recognizes a concrete SDK failure without re-encoding its cause as a category identifier.</summary>
+    /// <remarks>Return null when response evidence must be interpreted by the common normalizer.</remarks>
+    public virtual HandledChatException? NormalizeKnownException(ChatExceptionEvidence evidence) =>
+        ChatExceptionNormalizer.NormalizeKnownSdkException(evidence);
+
+    /// <summary>
+    /// Enriches connection-specific evidence after SDK extraction.
+    /// </summary>
+    public void EnrichConnectionExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        connection.ExceptionEvidenceEnricher?.Invoke(evidence);
+    }
 
     public virtual void Dispose()
     {
         GC.SuppressFinalize(this);
-        _httpClient.Dispose();
+        connection.Dispose();
     }
 }

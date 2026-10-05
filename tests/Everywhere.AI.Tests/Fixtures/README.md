@@ -3,7 +3,7 @@
 Error files contain arrays of typed `ErrorFixture` entries. `body` contains JSON;
 `rawBody` preserves empty, plain text, HTML, or malformed payloads. The same entry
 can name multiple compatible clients without duplicating payload data. Tests assert
-faithful status/body transport; application classification is a later stage.
+faithful status/body transport and production normalization. Each error entry also specifies expected category and recovery advice.
 
 `source` entries are transcribed from mockllm commit
 `4d4b1942ef8dc22c18f495f280109df1d621fdf6`. Attribution and the selected MIT license

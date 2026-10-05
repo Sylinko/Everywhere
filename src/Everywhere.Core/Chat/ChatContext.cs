@@ -15,7 +15,6 @@ using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Utilities;
 using Everywhere.Views;
-using Lucide.Avalonia;
 using MessagePack;
 using Serilog;
 
@@ -58,7 +57,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// <para>
     /// The companion is an Avalonia view-layer object and is therefore UI-thread-affine. UI code may
     /// access this property directly. Background chat work must use an explicit dispatcher boundary,
-    /// such as <see cref="SetBusyActivityAsync"/>; it must not force lazy construction on its worker
+    /// such as <see cref="ChatPresentation.SetBusyActivityAsync"/>; it must not force lazy construction on its worker
     /// thread.
     /// </para>
     /// </summary>
@@ -249,28 +248,45 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public bool TryExecute(Func<CancellationToken, Task> action, IExceptionHandler exceptionHandler)
     {
         Dispatcher.UIThread.VerifyAccess();
+        if (!BeginOperation()) return false;
+        RunOperationAsync(action, CancellationToken.None).Detach(exceptionHandler);
+        return true;
+    }
 
+    /// <summary>Runs awaited tool-started work using the same busy/cancellation owner as UI work.</summary>
+    public async Task ExecuteAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
+    {
+        var canBegin = await Dispatcher.UIThread.InvokeOnDemandAsync(BeginOperation);
+        if (!canBegin) throw new InvalidOperationException("The chat context already has an active operation.");
+        await RunOperationAsync(action, cancellationToken);
+    }
+
+    private bool BeginOperation()
+    {
+        Dispatcher.UIThread.VerifyAccess();
         if (IsBusy) return false;
-
         IsBusy = true;
         BusyChatContexts.Add(this);
-        var cancellationToken = _cancellationTokenSource.Token;
-
-        Task.Run(() => action(cancellationToken), cancellationToken)
-            .ContinueWith(
-                t =>
-                {
-                    Debug.Assert(Dispatcher.UIThread.CheckAccess());
-
-                    BusyChatContexts.Remove(this);
-                    IsBusy = false;
-                    if (t.Exception is { } exception) exceptionHandler.HandleException(exception.InnerException ?? exception);
-                },
-                CancellationToken.None,
-                TaskContinuationOptions.None,
-                TaskScheduler.FromCurrentSynchronizationContext());
-
         return true;
+    }
+
+    private async Task RunOperationAsync(Func<CancellationToken, Task> action, CancellationToken parentCancellationToken)
+    {
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(parentCancellationToken, _cancellationTokenSource.Token);
+        try
+        {
+            // Always enter the action, even if cancellation preceded scheduling, so its owner can
+            // persist the stopped outcome and run normal finally cleanup.
+            await Task.Run(() => action(linked.Token), CancellationToken.None);
+        }
+        finally
+        {
+            await Dispatcher.UIThread.InvokeOnDemandAsync(() =>
+            {
+                BusyChatContexts.Remove(this);
+                IsBusy = false;
+            });
+        }
     }
 
     /// <summary>
@@ -432,27 +448,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
                 node.DateModified);
         }
     }
-
-    /// <summary>
-    /// Adds a non-persisted activity to the current assistant turn for the lifetime of the returned
-    /// scope. Disposing the scope either completes and retains the activity or removes it from the
-    /// current in-memory chronology, according to <paramref name="removeAfterCompletion"/>.
-    /// </summary>
-    /// <remarks>
-    /// ChatPresentation owns DynamicData lists and Avalonia-facing row state. ChatService and
-    /// plugin startup normally call this method from worker tasks, so even lazy construction of
-    /// the presentation must be marshaled to the dispatcher; otherwise a context without an
-    /// attached view could create its projection on a worker and later bind it from the UI.
-    /// </remarks>
-    /// <param name="icon">The reliable icon describing the operation category.</param>
-    /// <param name="headerKey">The localized running activity title.</param>
-    /// <param name="removeAfterCompletion">
-    /// Whether disposing the scope removes this transient activity instead of retaining a completed
-    /// presentation row.
-    /// </param>
-    /// <returns>A scope whose disposal ends the runtime activity.</returns>
-    public Task<IDisposable> SetBusyActivityAsync(LucideIconKind icon, IDynamicLocaleKey headerKey, bool removeAfterCompletion) =>
-        Dispatcher.UIThread.InvokeOnDemandAsync(() => Presentation.SetBusyActivity(icon, headerKey, removeAfterCompletion));
 
     public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Connect(predicate);

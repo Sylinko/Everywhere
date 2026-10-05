@@ -383,13 +383,13 @@
         <value>HTTPリクエストエラー ({0}): {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>不正なリクエストです。APIキーが間違っているか、ネットワーク/地域がサポートされていない可能性があります。</value>
+        <value>不正なリクエストです。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>認証されていないリクエストです。APIキーが間違っているか、ネットワーク/地域がサポートされていない可能性があります。</value>
+        <value>認証されていないリクエストです。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>リクエストが禁止されています。APIキーが間違っているか、ネットワーク/地域がサポートされていない可能性があります。</value>
+        <value>リクエストがブロックされました。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>結果が見つかりません。</value>
@@ -937,16 +937,16 @@
         <value>総時間</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>モデル構成が正しくありません。モデルプロバイダーまたはモデルIDが欠落または無効であるか、現在のモデルが画像入力/ツール呼び出しをサポートしていません。</value>
+        <value>選択したアシスタントを利用できません。サービスとアシスタントの設定を確認してください。</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>APIキーが欠落しているか無効です。</value>
+        <value>認証に失敗しました。API キーを確認するか、再度ログインしてください。</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>API使用量の制限を超えています。これは通常、残高不足または現在のモデルへのアクセス権がないことを示しています。</value>
+        <value>サービスから残高不足または利用枠の上限に達したことが報告されました。</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>リクエストが頻繁すぎる、アカウント残高が不足している、またはネットワーク/地域がサポートされていない。</value>
+        <value>サービスがリクエストを制限しています。しばらくしてから再試行してください。</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>サービスエンドポイントに到達できません。ネットワーク接続を確認してください。</value>
@@ -958,22 +958,22 @@
         <value>サービスから空の応答が返されました。ネットワークまたはサービスの問題を示している可能性があります。</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>選択したモデルは要求された機能をサポートしていません。</value>
+        <value>現在のアシスタントはこの機能に対応していません。</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>選択したモデルは画像入力をサポートしていません。</value>
+        <value>現在のアシスタントは画像入力に対応していません。</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>サービスへのリクエストがタイムアウトしました。もう一度お試しください。</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>ネットワークエラーが発生しました。ネットワークまたはプロキシ設定を確認するか、サービスプロバイダーがあなたの地域をサポートしていない可能性があります。</value>
+        <value>サービスへの接続が中断されたか、接続を確立できませんでした。</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>サービスは現在利用できません。後でもう一度お試しください。</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>不明なエラーが発生しました。</value>
+        <value>リクエストを完了できませんでした。</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>サポートされていないモデルプロバイダーAPIスキーマです。</value>
@@ -1072,7 +1072,7 @@
         <value>シェルスクリプトを実行</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>コンテキストの長さが制限を超えています。新しいチャットを作成するか、より長いコンテキストを持つモデルに切り替えてください。</value>
+        <value>会話が現在のアシスタントのコンテキスト容量を超えています。</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>プロセスにアクセス</value>
@@ -1145,7 +1145,7 @@
         <value>操作がキャンセルされました。</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>操作がタイムアウトしました。システムのパフォーマンスを確認して再試行してください。</value>
+        <value>操作がタイムアウトしました。再試行してください。</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>指定されたファイルが見つかりません。ファイルが存在し、パスが正しいことを確認してください。</value>
@@ -2381,7 +2381,7 @@
         <value>サービスは現在の地域または位置でのリクエストをサポートしていません。</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>サーバーの応答を解析中にエラーが発生しました。通常、予期しないJSON形式または内容を意味します。</value>
+        <value>サービスからの応答を解析できませんでした。</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>更新</value>
@@ -2744,10 +2744,10 @@
         <value>拒否理由を入力</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>モデルはtemperatureパラメータをサポートしていないか、パラメータがモデルの範囲を超えています。デフォルト値に戻すことで解決できます。</value>
+        <value>サービスが temperature の設定を拒否しました。アシスタントの設定を確認してください。</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>モデルはtop_pパラメータをサポートしていないか、パラメータがモデルの範囲を超えています。デフォルト値に戻すことで解決できます。</value>
+        <value>サービスが top_p の設定を拒否しました。アシスタントの設定を確認してください。</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>左側から項目を選択して詳細を表示</value>
@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>このラウンドでは応答が生成されませんでした。</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>子助手を表示</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,4 +4100,58 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>実行中の Everywhere にリクエストを送信できませんでした。Everywhere を開いて再試行してください。</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>サービスが要求されたリソースへのアクセスを拒否しました。</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>リクエストに無効な設定または未対応の設定が含まれています。</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>サービスが返したデータは、このバージョンの Everywhere では読み取れません。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>サービスのコンテンツポリシーにより、このリクエストまたは応答がブロックされました。</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>リクエストの再試行回数</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>回復可能なエラーの最大再試行回数です。0 は無効、-1 は手動で停止するまで再試行します。</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>再試行中 {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>再試行中 {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>停止しました</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>エラーの詳細</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>詳細をコピー</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>アシスタントは応答を途中で打ち切りました。</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>現在のアシスタントはツール呼び出しに対応していません。設定を確認するか、別のアシスタントに切り替えてください。</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>このサービスでは選択したアシスタントを利用できません。アシスタントの設定とアクセス権限を確認してください。</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>認証に失敗しました。認証設定を確認するか、再度ログインしてください。</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>API キーが無効か、有効期限が切れています。サービスの API キーを確認して更新してください。</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>サービスから無効な内容が返されたため、リクエストを完了できませんでした。</value>
+  </data>
 </root>

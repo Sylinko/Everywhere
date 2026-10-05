@@ -35,7 +35,8 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
                     ApiKey = ApiKey,
                     HttpClient = connection.HttpClient,
                     BaseUrl = Endpoint,
-                    Timeout = connection.HttpClient.Timeout
+                    Timeout = connection.HttpClient.Timeout,
+                    MaxRetries = 0
                 }).AsIChatClient(),
             this);
         ChatCompletionService = _client.AsChatCompletionService();
@@ -43,8 +44,15 @@ public sealed partial class AnthropicKernelMixin : KernelMixin
 
     public override bool IsPersistentSpanMetadataKey(string key) => key == "ProtectedData";
 
+    /// <inheritdoc />
+    public override void ExtractExceptionEvidence(ChatExceptionEvidence evidence)
+    {
+        ChatExceptionEvidenceExtractor.ExtractAnthropic(evidence);
+    }
+
     public override void Dispose()
     {
+        base.Dispose();
         _client.Dispose();
     }
 

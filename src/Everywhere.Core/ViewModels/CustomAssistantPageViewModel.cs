@@ -151,7 +151,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         }
         catch (Exception ex)
         {
-            ex = HandledChatException.Handle(ex, kernelMixin);
+            ex = ChatExceptionNormalizer.Handle(ex, kernelMixin);
             Log.Logger.ForContext<CustomAssistantPageViewModel>().Error(
                 ex,
                 "Failed to check connectivity key for endpoint {ProviderId} and model {ModelId}",

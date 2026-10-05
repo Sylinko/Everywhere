@@ -24,8 +24,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - name: Initialize Semantic Kernel source
-        run: git submodule update --init --depth 1 3rd/semantic-kernel
+      - name: Initialize production dependency sources
+        run: git submodule update --init --depth 1 3rd/semantic-kernel 3rd/shad-ui 3rd/Motion.Avalonia
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json

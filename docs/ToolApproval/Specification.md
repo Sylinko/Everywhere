@@ -106,7 +106,7 @@ Input is frozen before requests. Arguments containing `prompt`, including delega
 
 ## 6. Streaming and host-controlled dispatch
 
-Approval uses SK streaming completion, ordinary automatic tool selection, and `autoInvoke: false`. There are no provider-specific required/named-tool controls.
+Approval uses `KernelMixin.StreamRequestAsync` through ChatService's shared response reader, ordinary automatic tool selection, and `autoInvoke: false`. There are no provider-specific required/named-tool controls.
 
 The entire stream completes before dispatch. Shared `FunctionCallContentBuilder` assembles calls; text, reasoning, and continuation metadata are reconstructed into private history. Finish reasons survive terminal/usage chunks. Incomplete responses and stream errors cannot authorize execution, even after a complete-looking allow chunk.
 
@@ -145,7 +145,7 @@ ReviewTools owns the cumulative read counter and response marker. The first vali
 
 Ordinary read errors become evidence, limited to 1,024 exception-text characters, and consume a batch. Binding/invalid arguments terminate review; cancellation propagates. New paths do not reset the budget.
 
-Tool-less responses receive corrective user messages at most twice per review. The third fails as `DecisionMissing`; reads do not reset the counter. Prose/JSON text is never a decision. Four nonterminal read batches plus two corrections permit at most seven completed response opportunities before decision or terminal failure. There is no additional generic reviewer retry loop.
+Tool-less responses receive corrective user messages at most twice per review. The third fails as `DecisionMissing`; reads do not reset the counter. Prose/JSON text is never a decision. Four nonterminal read batches plus two corrections permit at most seven completed response opportunities before decision or terminal failure. Transport retries follow the selected assistant's request budget and do not consume read batches or correction reminders; there is no additional reviewer retry loop.
 
 Initial or continuation context-limit errors fail as `ContextLimitExceeded`. Review does not compact, discard history, truncate evidence to retry, change assistants, or fall back to a human.
 
@@ -212,7 +212,7 @@ Global mode and System Assistant configuration persist in settings. Missing/unre
 
 Cancellation propagates separately. Outer denial can say the tool body did not run; internal denial identifies blocked work and preserves earlier effects. Outcomes return through normal tool results so the assistant can revise/explain rather than automatically ending the conversation.
 
-Each request records usage/latency under `StatisticsModelInvocationPurpose.ToolApproval`, linked to existing chat/turn/message identifiers. No new raw prompts, files, or arguments are persisted in metrics. Outer status is Denied for policy refusal, Error for review failure, and Canceled for cancellation. Agent explanations and localized UI keys remain separate.
+Each SDK attempt records independent usage/latency through `RequestStatistics` under `StatisticsModelInvocationPurpose.ToolApproval`, linked to existing chat/turn/message identifiers. No new raw prompts, files, or arguments are persisted in metrics. Outer status is Denied for policy refusal, Error for review failure, and Canceled for cancellation. Agent explanations and localized UI keys remain separate.
 
 ## 11. Verification boundary and discussion items
 

@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:v="using:Everywhere.Views"
+             x:Class="Everywhere.Views.ChatErrorDetailsView"
+             x:DataType="v:ChatErrorDetailsView"
+             MinWidth="400" MaxWidth="900">
+  <DockPanel Margin="16" VerticalSpacing="12">
+    <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold"
+               Text="{I18N {x:Static LocaleKey.ChatRequest_ErrorDetails}}"/>
+    <Button DockPanel.Dock="Bottom" HorizontalAlignment="Right"
+            Command="{Binding $parent[v:ChatErrorDetailsView].CopyDetailsCommand}"
+            Content="{I18N {x:Static LocaleKey.ChatRequest_CopyDetails}}"/>
+    <ScrollViewer MaxHeight="500">
+      <SelectableTextBlock TextWrapping="Wrap" FontFamily="monospace"
+                           Text="{Binding $parent[v:ChatErrorDetailsView].Details}"/>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

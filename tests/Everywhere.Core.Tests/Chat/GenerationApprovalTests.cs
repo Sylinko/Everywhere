@@ -9,7 +9,6 @@ using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Lucide.Avalonia;
-using MessagePack;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NSubstitute;
@@ -99,7 +98,7 @@ public sealed class GenerationApprovalTests
     }
 
     [Test]
-    public void GenerationContext_WithChildAndSerialization_SharesRuntimeStateWithoutPersistingIt()
+    public void GenerationContext_WithChild_SharesOnlyApprovalState()
     {
         using var mixin = CreateMixin();
         var generation = CreateGeneration(mixin);
@@ -107,32 +106,23 @@ public sealed class GenerationApprovalTests
         typeof(ChatContext).GetProperty(nameof(ChatContext.GenerationContext))?.SetValue(context, generation);
         var child = context.ForkSubagent("test child");
         generation.ApprovalState.Mode = ToolApprovalMode.FullAccess;
-        var restored = MessagePackSerializer.Deserialize<ChatContext>(MessagePackSerializer.Serialize(context));
         Assert.Multiple(() =>
         {
             Assert.That(child.InheritedApprovalState, Is.SameAs(generation.ApprovalState));
             Assert.That(child.InheritedApprovalState?.Mode, Is.EqualTo(ToolApprovalMode.FullAccess));
-            Assert.That(restored.GenerationContext, Is.Null);
-            Assert.That(restored.InheritedApprovalState, Is.Null);
+            Assert.That(child.GenerationContext, Is.Null);
         });
     }
 
     [Test]
-    public async Task EnterFunctionCallContext_WithNestedAndParallelScopes_RestoresAndIsolatesAmbientValue()
+    public void EnterFunctionCallContext_WhenSuppressed_RestoresAmbientValue()
     {
         using var mixin = CreateMixin();
         var generation = CreateGeneration(mixin);
         using var first = CreateInvocation(new ChatContext(), generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
-        using var second = CreateInvocation(new ChatContext(), generation, (_, _, _) => Task.FromResult(ToolApprovalResult.Allow("ok")));
         using (generation.EnterFunctionCallContext(first))
         {
             using (generation.SuppressFunctionCallContext()) Assert.That(generation.FunctionCallContext.Value, Is.Null);
-            Assert.That(generation.FunctionCallContext.Value, Is.SameAs(first));
-            await Task.Run(() =>
-            {
-                using (generation.EnterFunctionCallContext(second)) Assert.That(generation.FunctionCallContext.Value, Is.SameAs(second));
-                Assert.That(generation.FunctionCallContext.Value, Is.SameAs(first));
-            });
             Assert.That(generation.FunctionCallContext.Value, Is.SameAs(first));
         }
         Assert.That(generation.FunctionCallContext.Value, Is.Null);

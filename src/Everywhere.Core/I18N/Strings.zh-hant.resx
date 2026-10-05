@@ -383,13 +383,13 @@
         <value>HTTP 請求錯誤 ({0}): {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>錯誤的請求，可能是因為 API 金鑰不正確或不支援的網路/地區。</value>
+        <value>錯誤的請求。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>未授權的請求，可能是因為 API 金鑰不正確或不支援的網路/地區。</value>
+        <value>未授權的請求。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>請求被禁止，可能是因為 API 金鑰不正確或不支援的網路/地區。</value>
+        <value>請求被阻止。</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>找不到結果。</value>
@@ -570,7 +570,7 @@
         <value>以 http:// 或 https:// 開頭。在末尾添加 # 來避免自動添加版本號後綴。</value>
     </data>
     <data name="Assistant_ApiKey_Header" xml:space="preserve">
-        <value>API Key</value>
+        <value>API 金鑰</value>
     </data>
     <data name="Assistant_ApiKey_Description" xml:space="preserve">
         <value>如果是線上模型，需要從對應的官方獲取，詳情請參考文檔。</value>
@@ -937,16 +937,16 @@
         <value>總用時</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>模型配置不正確，模型提供商或模型 ID 缺失或無效，或當前模型不支持圖像輸入/工具調用。</value>
+        <value>目前選擇的助手無法使用，請檢查服務和助手設定。</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>API密鑰缺失或無效。</value>
+        <value>身分驗證失敗，請檢查 API 金鑰或重新登入。</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>超出 API 使用配額，這通常表示餘額不足或當前模型缺乏訪問權限。</value>
+        <value>服務提示餘額不足或可用額度已用盡。</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>請求過於頻繁、帳戶金額不足或者網路或地區不受支援。</value>
+        <value>服務正在限制請求，請稍後再試。</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>服務端點無法訪問。請檢查您的網絡連接。</value>
@@ -958,22 +958,22 @@
         <value>服務返回了空回應，這可能表示網絡或服務問題。</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>選擇的模型不支持請求的功能。</value>
+        <value>目前的助手不支援此功能。</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>選擇的模型不支持圖像輸入。</value>
+        <value>目前的助手不支援圖片輸入。</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>請求服務超時。請再試一次。</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>發生網絡錯誤。請檢查您的網絡或代理設置，或者您的服務提供商可能不支持您的地區。</value>
+        <value>連線服務時發生中斷或未能建立連線。</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>服務目前不可用。請稍後再試。</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>發生未知錯誤。</value>
+        <value>請求未能完成。</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>不支持的模型提供者 API 架構。</value>
@@ -1072,7 +1072,7 @@
         <value>執行 Shell 指令</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>上下文長度超出限制。請嘗試創建新的聊天或切換到具有更長上下文的模型。</value>
+        <value>對話內容超出了目前助手的上下文容量。</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>存取程序</value>
@@ -1145,7 +1145,7 @@
         <value>操作已取消。</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>操作超時。請檢查您的系統性能並重試。</value>
+        <value>操作逾時，請重試。</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>找不到指定的文件。請確保文件存在且路徑正確。</value>
@@ -2381,7 +2381,7 @@
         <value>服務不支持當前所在區域或位置的請求。</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>解析伺服器響應時出錯，通常意味著意料之外的 JSON 格式或內容。</value>
+        <value>無法解析服務傳回的資料。</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>刷新</value>
@@ -2744,10 +2744,10 @@
         <value>輸入拒絕原因</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>模型不支持 temperature 參數，或者參數超出模型範圍。恢復到默認值可以解決此問題。</value>
+        <value>服務拒絕了 temperature 設定，請檢查助手設定。</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>模型不支持 top_p 參數，或者參數超出模型範圍。恢復到默認值可以解決此問題。</value>
+        <value>服務拒絕了 top_p 設定，請檢查助手設定。</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>在左側選擇一個項目查看詳情</value>
@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>本輪未生成回覆。</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>查看子助手</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,4 +4100,58 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>無法將請求傳送至正在執行的 Everywhere。請開啟 Everywhere 後重試。</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>服務拒絕存取所請求的資源。</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>請求包含無效或不受支援的設定。</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>服務傳回了目前版本 Everywhere 無法讀取的資料。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>服務依據內容政策攔截了此次請求或回覆。</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>請求重試次數</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>請求遇到可恢復錯誤時的最大重試次數。0 表示關閉，-1 表示持續重試，直到手動停止。</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>正在重試 {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>正在重試 {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>已停止</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>錯誤詳情</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>複製詳情</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>助手提前終止了回應。</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>代理伺服器拒絕建立連線，請檢查代理設定和驗證資訊。</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>目前助手不支援工具呼叫，請檢查設定或更換助手。</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>目前服務無法使用所選助手，請檢查助手設定及存取權限。</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>身分驗證失敗，請檢查驗證設定或重新登入。</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>API 金鑰無效或已失效，請檢查並更新服務的 API 金鑰。</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>服務回傳的內容無效，無法完成此次請求。</value>
+  </data>
 </root>

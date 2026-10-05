@@ -49,8 +49,8 @@
         </DataTemplate>
 
         <DataTemplate x:DataType="v:ProcessSummaryPresentationRow">
-          <shadui:SmoothBorder
-            Margin="0,12" Padding="0,0,0,6"
+          <Border
+            Margin="0,12,0,0" Padding="0,0,0,6"
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="0,0,0,1">
             <ToggleButton
@@ -133,7 +133,7 @@
                 </LucideIcon>
               </v:TrimmingStackPanel>
             </ToggleButton>
-          </shadui:SmoothBorder>
+          </Border>
         </DataTemplate>
 
         <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
@@ -146,59 +146,33 @@
               CornerRadius="{DynamicResource XlCornerRadius}"
               IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
               <Expander.Header>
-                <Grid
-                  ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8"
-                  IsHitTestVisible="False">
-                  <Panel VerticalAlignment="Center">
-                    <shadui:Loading
-                      x:Name="PART_RunningIndicator"
-                      Classes.WaitingForUserInput="{Binding IsWaitingForUserInput}"
-                      IsVisible="{Binding IsRunning}">
-                      <shadui:Loading.Styles>
-                        <Style Selector="shadui|Loading#PART_RunningIndicator.WaitingForUserInput">
-                          <Setter Property="Opacity" Value="0"/>
-                        </Style>
-                      </shadui:Loading.Styles>
-                      <shadui:Loading.Transitions>
-                        <Transitions>
-                          <DoubleTransition
-                            Easing="CubicEaseOut" Property="Opacity"
-                            Duration="0:0:0.2"/>
-                        </Transitions>
-                      </shadui:Loading.Transitions>
-                    </shadui:Loading>
-                    <LucideIcon
-                      x:Name="PART_WaitingIndicator"
-                      Classes.WaitingForUserInput="{Binding IsWaitingForUserInput}"
-                      Foreground="{DynamicResource WarningColor}"
-                      IsVisible="{Binding IsRunning}"
-                      Kind="BadgeInfo"
-                      Size="{DynamicResource FontSizeL}">
-                      <LucideIcon.Styles>
-                        <Style Selector="LucideIcon#PART_WaitingIndicator">
-                          <Setter Property="Opacity" Value="0"/>
-                        </Style>
-                        <Style Selector="LucideIcon#PART_WaitingIndicator.WaitingForUserInput">
-                          <Setter Property="Opacity" Value="1"/>
-                        </Style>
-                      </LucideIcon.Styles>
-                      <LucideIcon.Transitions>
-                        <Transitions>
-                          <DoubleTransition
-                            Easing="CubicEaseOut" Property="Opacity"
-                            Duration="0:0:0.2"/>
-                        </Transitions>
-                      </LucideIcon.Transitions>
-                    </LucideIcon>
-                    <LucideIcon
-                      Foreground="{DynamicResource SuccessColor60}"
-                      IsVisible="{Binding !IsRunning}"
-                      Kind="CircleCheck" Size="18"/>
-                  </Panel>
+                <DockPanel
+                  HorizontalSpacing="8" IsHitTestVisible="False">
+                  <LucideIcon
+                    DockPanel.Dock="Left"
+                    Foreground="{DynamicResource SuccessColor60}"
+                    IsVisible="{Binding !IsRunning}"
+                    Kind="CircleCheck"
+                    Size="{DynamicResource FontSizeL}"/>
 
-                  <v:ConditionalContentControl
-                    Grid.Column="1"
-                    Condition="{Binding IsRunning, Mode=OneWay}">
+                  <TextBlock
+                    Classes="Muted Small" DockPanel.Dock="Right"
+                    VerticalAlignment="Center">
+                    <Interaction.Behaviors>
+                      <in:PeriodicRefreshTextBehavior IsEnabled="{Binding IsRunning}"/>
+                    </Interaction.Behaviors>
+
+                    <TextBlock.Text>
+                      <MultiBinding Converter="{x:Static vc:LiveElapsedConverters.ToDisplayText}">
+                        <Binding
+                          Mode="OneWay" Path="CreatedAt"/>
+                        <Binding
+                          Mode="OneWay" Path="FinishedAt"/>
+                      </MultiBinding>
+                    </TextBlock.Text>
+                  </TextBlock>
+
+                  <v:ConditionalContentControl Condition="{Binding IsRunning, Mode=OneWay}">
                     <v:ConditionalContentControl.TrueContent>
                       <DataTemplate x:DataType="v:ActivityGroupPresentationRow">
                         <Grid>
@@ -311,24 +285,7 @@
                       </DataTemplate>
                     </v:ConditionalContentControl.FalseContent>
                   </v:ConditionalContentControl>
-
-                  <TextBlock
-                    Classes="Muted Small" Grid.Column="2"
-                    VerticalAlignment="Center">
-                    <Interaction.Behaviors>
-                      <in:PeriodicRefreshTextBehavior IsEnabled="{Binding IsRunning}"/>
-                    </Interaction.Behaviors>
-
-                    <TextBlock.Text>
-                      <MultiBinding Converter="{x:Static vc:LiveElapsedConverters.ToDisplayText}">
-                        <Binding
-                          Mode="OneWay" Path="CreatedAt"/>
-                        <Binding
-                          Mode="OneWay" Path="FinishedAt"/>
-                      </MultiBinding>
-                    </TextBlock.Text>
-                  </TextBlock>
-                </Grid>
+                </DockPanel>
               </Expander.Header>
 
               <v:ConditionalContentControl Condition="{Binding IsExpanded}">
@@ -409,12 +366,19 @@
           <v:ActivityMarker
             Margin="4,0" HorizontalSpacing="8"
             IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-            IsRunning="{Binding IsRunning}"
             VerticalSpacing="2">
+            <v:ActivityMarker.IsRunning>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="Assistant.IsBusy"/>
+                <Binding
+                  Converter="{x:Static ObjectConverters.IsNull}"
+                  Path="ReasoningSpan.FinishedAt"/>
+              </MultiBinding>
+            </v:ActivityMarker.IsRunning>
             <v:ActivityMarker.Icon>
               <LucideIcon
                 shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
-                Kind="{Binding Icon}"
+                Kind="Brain"
                 Size="{DynamicResource FontSizeL}"/>
             </v:ActivityMarker.Icon>
 
@@ -429,7 +393,7 @@
               <TextBlock
                 Classes="Muted Caption" VerticalAlignment="Center"
                 IsHitTestVisible="False" MaxLines="1"
-                Text="{Binding PreviewText}"
+                Text="{Binding ReasoningSpan.ReasoningOutput}"
                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
             </v:ActivityMarker.SecondaryHeader>
 
@@ -437,8 +401,8 @@
               <MultiBinding Converter="{x:Static BoolConverters.And}">
                 <Binding
                   Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
-                  Path="PreviewText"/>
-                <Binding Path="IsRunning"/>
+                  Path="ReasoningSpan.ReasoningOutput"/>
+                <Binding Path="$self.IsRunning"/>
                 <Binding
                   Converter="{x:Static BoolConverters.Not}"
                   Path="IsExpanded"/>
@@ -471,23 +435,30 @@
         <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
           <v:ActivityMarker
             Margin="4,0" HorizontalSpacing="8"
-            IsExpandable="{Binding DisplayBlocks.Count, Converter={x:Static vc:Int32Converters.IsNotZero}}"
+            IsExpandable="{Binding FunctionCall.DisplayBlocks.Count, Converter={x:Static vc:Int32Converters.IsNotZero}}"
             IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-            IsRunning="{Binding IsRunning}"
+            IsRunning="{Binding FunctionCall.IsBusy}"
             VerticalSpacing="2">
             <v:ActivityMarker.Icon>
               <LucideIcon
                 shadui:Timeline.Anchor="{Binding $self.Bounds, Converter={x:Static shadui:TimelineConverters.HalfRect}}"
-                Kind="{Binding Icon}"
+                Kind="{Binding FunctionCall.Icon}"
                 Size="{DynamicResource FontSizeL}"/>
             </v:ActivityMarker.Icon>
 
             <v:ActivityMarker.Header>
               <TextBlock
-                VerticalAlignment="Center" FontWeight="SemiBold"
-                MaxLines="1"
-                Text="{Binding HeaderKey^}"
-                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                VerticalAlignment="Center" MaxLines="1"
+                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                <TextBlock.Text>
+                  <MultiBinding Converter="{x:Static shadui:BasicConverters.FirstNotNullOrEmpty}">
+                    <Binding
+                      FallbackValue="{x:Null}"
+                      Path="FunctionCall.HeaderKey^"/>
+                    <Binding Path="FallbackHeaderKey^"/>
+                  </MultiBinding>
+                </TextBlock.Text>
+              </TextBlock>
             </v:ActivityMarker.Header>
 
             <v:ActivityMarker.SecondaryHeader>
@@ -498,22 +469,29 @@
                   opted into the structured preview channel yet.
                 -->
                 <v:ChatActivityPreviewPresenter
-                  Content="{Binding ActivityPreview}"
-                  IsVisible="{Binding ActivityPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                  Content="{Binding FunctionCall.ActivityPreview}"
+                  IsVisible="{Binding FunctionCall.ActivityPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                 <TextBlock
                   Classes="Muted" VerticalAlignment="Center"
                   FontSize="{DynamicResource FontSizeS}"
-                  IsVisible="{Binding ActivityPreview, Converter={x:Static ObjectConverters.IsNull}}"
+                  IsVisible="{Binding FunctionCall.ActivityPreview, Converter={x:Static ObjectConverters.IsNull}}"
                   MaxLines="1"
-                  Text="{Binding PreviewText}"
+                  Text="{Binding FunctionCall.Content}"
                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
               </Grid>
             </v:ActivityMarker.SecondaryHeader>
 
             <v:ActivityMarker.IsSecondaryHeaderVisible>
               <MultiBinding Converter="{x:Static BoolConverters.And}">
-                <Binding Path="HasPreview"/>
-                <Binding Path="IsRunning"/>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                  <Binding
+                    Converter="{x:Static ObjectConverters.IsNotNull}"
+                    Path="FunctionCall.ActivityPreview"/>
+                  <Binding
+                    Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                    Path="FunctionCall.Content"/>
+                </MultiBinding>
+                <Binding Path="FunctionCall.IsBusy"/>
                 <Binding
                   Converter="{x:Static BoolConverters.Not}"
                   Path="IsExpanded"/>
@@ -528,7 +506,7 @@
             <v:ConditionalContentControl Condition="{Binding IsExpanded}">
               <v:ConditionalContentControl.TrueContent>
                 <DataTemplate x:DataType="v:FunctionCallActivityItemPresentationRow">
-                  <ItemsControl ItemsSource="{Binding DisplayBlocks}">
+                  <ItemsControl ItemsSource="{Binding FunctionCall.DisplayBlocks}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
                         <v:ChatPluginDisplayBlockPresenter
@@ -553,6 +531,7 @@
             Margin="4,0" HorizontalSpacing="10"
             IsExpandable="False"
             IsRunning="{Binding IsRunning}"
+            IsSecondaryHeaderVisible="{Binding SecondaryHeaderKey, Converter={x:Static ObjectConverters.IsNotNull}}"
             VerticalSpacing="2">
             <v:ActivityMarker.Icon>
               <LucideIcon
@@ -563,13 +542,16 @@
 
             <v:ActivityMarker.Header>
               <TextBlock
-                VerticalAlignment="Center"
-                FontSize="{DynamicResource FontSizeS}"
-                FontWeight="SemiBold" IsHitTestVisible="False"
-                MaxLines="1"
+                VerticalAlignment="Center" MaxLines="1"
                 Text="{Binding HeaderKey^}"
                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
             </v:ActivityMarker.Header>
+            <v:ActivityMarker.SecondaryHeader>
+              <TextBlock
+                Classes="Muted Caption"
+                Text="{Binding SecondaryHeaderKey^, FallbackValue={x:Null}}"
+                TextWrapping="Wrap"/>
+            </v:ActivityMarker.SecondaryHeader>
           </v:ActivityMarker>
         </DataTemplate>
 
@@ -600,30 +582,78 @@
             Margin="4,0" Spacing="4">
             <shadui:SmoothBorder
               Padding="12,8" HorizontalAlignment="Left"
-              Background="{DynamicResource ErrorColor20}"
-              CornerRadius="{DynamicResource XlCornerRadius}">
-              <StackPanel Spacing="4">
+              Background="{DynamicResource ErrorColor5}"
+              BorderBrush="{DynamicResource ErrorColor20}"
+              BorderThickness="1"
+              CornerRadius="{DynamicResource 2XlCornerRadius}">
+              <StackPanel Spacing="8">
                 <SelectableTextBlock
                   Text="{Binding Assistant.ErrorMessageKey^, FallbackValue={x:Null}}"
                   TextWrapping="Wrap"/>
 
-                <Button
-                  Classes="Secondary Compact" Padding="6,4"
-                  HorizontalAlignment="Right"
-                  Command="{Binding $parent[v:ChatMessageItemsControl].ContinueMessageNodeCommand}"
-                  CommandParameter="{Binding AssistantNode}"
-                  Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}"
-                  Focusable="False">
-                  <Button.IsVisible>
-                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                      <Binding Path="IsTerminal"/>
-                      <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
+                <StackPanel
+                  HorizontalAlignment="Right" Orientation="Horizontal"
+                  Spacing="6">
+                  <StackPanel.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                      <Binding Path="#ShowErrorDetailsButton.IsVisible"/>
+                      <Binding Path="#ContinueButton.IsVisible"/>
                     </MultiBinding>
-                  </Button.IsVisible>
-                </Button>
+                  </StackPanel.IsVisible>
+
+                  <Button
+                    x:Name="ShowErrorDetailsButton" Classes="Secondary Compact"
+                    shadui:ButtonAssist.Icon="{LucideIconContent Eye}"
+                    shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                    Command="{Binding $parent[v:ChatMessageItemsControl].ShowErrorDetailsCommand}"
+                    CommandParameter="{Binding Assistant.Error}"
+                    Content="{I18N {x:Static LocaleKey.ChatRequest_ErrorDetails}}"
+                    Focusable="False"
+                    IsVisible="{Binding Assistant.Error, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                  <Button
+                    x:Name="ContinueButton" Classes="Secondary Compact"
+                    HorizontalAlignment="Right"
+                    shadui:ButtonAssist.Icon="{LucideIconContent Play}"
+                    shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+                    Command="{Binding $parent[v:ChatMessageItemsControl].ContinueMessageNodeCommand}"
+                    CommandParameter="{Binding AssistantNode}"
+                    Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}"
+                    Focusable="False">
+                    <Button.IsVisible>
+                      <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="IsTerminal"/>
+                        <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
+                      </MultiBinding>
+                    </Button.IsVisible>
+                  </Button>
+                </StackPanel>
               </StackPanel>
             </shadui:SmoothBorder>
           </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="v:AssistantCanceledPresentationRow">
+          <DockPanel
+            HorizontalAlignment="Left" HorizontalSpacing="8">
+            <Button
+              Classes="Secondary Compact" DockPanel.Dock="Right"
+              shadui:ButtonAssist.Icon="{LucideIconContent Play}"
+              shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+              Command="{Binding $parent[v:ChatMessageItemsControl].ContinueMessageNodeCommand}"
+              CommandParameter="{Binding AssistantNode}"
+              Content="{I18N {x:Static LocaleKey.ChatMessageControl_ContinueButton_Content}}"
+              Focusable="False">
+              <Button.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="IsTerminal"/>
+                  <Binding Path="!$parent[v:ChatMessageItemsControl].IsReadonly"/>
+                </MultiBinding>
+              </Button.IsVisible>
+            </Button>
+            <TextBlock
+              Classes="Muted" VerticalAlignment="Center"
+              Text="{I18N {x:Static LocaleKey.ChatRequest_Stopped}}"/>
+          </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:DataType="v:NoResponsePresentationRow">

@@ -14,7 +14,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "AuthenticationFailure.InvalidApiKey",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "parameter-under-503",
@@ -31,7 +33,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "InvalidConfiguration.InvalidTemperature",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "context-under-503",
@@ -48,7 +52,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "InvalidRequest.ContextLengthExceeded",
+    "expectedRecovery": "RecoverContext"
   },
   {
     "id": "balance-under-503",
@@ -65,7 +71,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "QuotaExceeded",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "invalid-upstream",
@@ -82,7 +90,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "model-unavailable",
@@ -99,7 +109,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "quota-under-429",
@@ -116,7 +128,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "QuotaExceeded",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "ambiguous-limit",
@@ -133,7 +147,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "RateLimited",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "output-limit",
@@ -150,7 +166,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "InvalidRequest",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "image-url",
@@ -167,58 +185,9 @@
       }
     },
     "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
-  },
-  {
-    "id": "authentication-signature",
-    "providers": [
-      "OpenAI",
-      "Mistral"
-    ],
-    "status": 400,
-    "body": {
-      "error": {
-        "type": "server_error",
-        "message": "Invalid signature for authentication token",
-        "code": null
-      }
-    },
-    "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
-  },
-  {
-    "id": "quoted-parameter",
-    "providers": [
-      "OpenAI",
-      "Mistral"
-    ],
-    "status": 503,
-    "body": {
-      "error": {
-        "type": "server_error",
-        "message": "Upstream unavailable. Request parameters: temperature=0.7",
-        "code": null
-      }
-    },
-    "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
-  },
-  {
-    "id": "supported-temperature",
-    "providers": [
-      "OpenAI",
-      "Mistral"
-    ],
-    "status": 503,
-    "body": {
-      "error": {
-        "type": "server_error",
-        "message": "temperature is supported; upstream connection failed",
-        "code": null
-      }
-    },
-    "provenance": "synthetic",
-    "notes": "Gateway compatibility counterexample; classification is not asserted in the SDK stage."
+    "notes": "Gateway compatibility counterexample; classification is asserted through the production normalization entry point.",
+    "expectedType": "InvalidRequest",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "raw-empty",
@@ -233,7 +202,9 @@
     "status": 503,
     "rawBody": "",
     "contentType": "text/plain",
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "raw-plain",
@@ -248,7 +219,9 @@
     "status": 503,
     "rawBody": "upstream unavailable",
     "contentType": "text/plain",
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "raw-html",
@@ -263,7 +236,9 @@
     "status": 503,
     "rawBody": "<html><body>upstream unavailable</body></html>",
     "contentType": "text/html",
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "raw-malformed",
@@ -278,7 +253,9 @@
     "status": 503,
     "rawBody": "{\"error\":",
     "contentType": "text/plain",
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "raw-unicode",
@@ -293,7 +270,9 @@
     "status": 503,
     "rawBody": "上游服务暂时不可用",
     "contentType": "text/plain",
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "ServiceUnavailable",
+    "expectedRecovery": "Retry"
   },
   {
     "id": "ollama-bad-request",
@@ -304,7 +283,9 @@
     "body": {
       "error": "model not found"
     },
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "InvalidConfiguration",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "ollama-no-tools",
@@ -315,7 +296,9 @@
     "body": {
       "error": "model does not support tools"
     },
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "UnsupportedCapability",
+    "expectedRecovery": "Stop"
   },
   {
     "id": "ollama-busy",
@@ -326,6 +309,8 @@
     "body": {
       "error": "server busy"
     },
-    "provenance": "synthetic"
+    "provenance": "synthetic",
+    "expectedType": "RateLimited",
+    "expectedRecovery": "Retry"
   }
 ]

@@ -107,6 +107,13 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     [Key(9)]
     public int? DeclaredContextLimitBefore { get; }
 
+    /// <summary>Gets the persisted stopped outcome for manual and automatic compression.</summary>
+    [Key(10)]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HeaderKey))]
+    public partial bool IsCanceled { get; private set; }
+
+
     [IgnoreMember]
     public override AuthorRole Role => new("action");
 
@@ -123,9 +130,10 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     [IgnoreMember]
     [JsonIgnore]
     public IDynamicLocaleKey HeaderKey => new DynamicLocaleKey(
-        IsBusy ? LocaleKey.ContextCompression_Status_Compressing
-        : HasSummary ? LocaleKey.ContextCompression_Status_Compressed
-        : LocaleKey.ContextCompression_Status_Failed);
+        IsBusy ? LocaleKey.ContextCompression_Status_Compressing :
+        IsCanceled ? LocaleKey.ChatRequest_Stopped :
+        HasSummary ? LocaleKey.ContextCompression_Status_Compressed :
+        LocaleKey.ContextCompression_Status_Failed);
 
     /// <summary>
     /// Gets a value indicating whether a later model operation should retry automatic compression.
@@ -145,7 +153,8 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     /// </summary>
     [IgnoreMember]
     [JsonIgnore]
-    public override bool IsHidden => !IsBusy && !HasSummary && ErrorMessageKey is null;
+    public override bool IsHidden => !IsBusy && !HasSummary && ErrorMessageKey is null && !IsCanceled;
+
 
     /// <summary>
     /// Creates a running context compression attempt.
@@ -182,8 +191,10 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
         IDynamicLocaleKey? errorMessageKey,
         bool wasSourceHistoryTrimmed,
         long? reportedTotalTokensBefore,
-        int? declaredContextLimitBefore)
+        int? declaredContextLimitBefore,
+        bool isCanceled)
     {
+        IsCanceled = isCanceled;
         Summary = summary;
         CoveredThroughNodeId = coveredThroughNodeId;
         SourceModelId = sourceModelId;
@@ -205,6 +216,14 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
 
         Summary = summary;
         WasSourceHistoryTrimmed = wasSourceHistoryTrimmed;
+        FinishedAt = finishedAt;
+        IsBusy = false;
+    }
+
+    /// <summary>Completes cooperative cancellation without a failure banner or summary.</summary>
+    public void Cancel(DateTimeOffset finishedAt)
+    {
+        IsCanceled = true;
         FinishedAt = finishedAt;
         IsBusy = false;
     }

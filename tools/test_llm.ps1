@@ -69,7 +69,7 @@ try {
     $env:EVERYWHERE_REQUIRE_MOCKSERVER = '1'
     Write-Host "Running SDK integration tests against $MockServerUrl."
     & dotnet test (Join-Path $taskRoot 'tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj') `
-        --configuration $Configuration --filter $Filter --logger "trx;LogFileName=$taskResultName" --results-directory $ResultsDirectory --nologo `
+        --configuration $Configuration --filter $Filter --logger "trx;LogFileName=$taskResultName" --results-directory $ResultsDirectory --nologo -p:ManagePackageVersionsCentrally=true `
         2>&1 | Tee-Object -FilePath (Join-Path $ResultsDirectory 'console.log') | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "SDK integration tests failed. Results: $ResultsDirectory" }
     [xml]$taskResults = Get-Content -LiteralPath (Join-Path $ResultsDirectory $taskResultName)
@@ -77,7 +77,7 @@ try {
     if ([int]$taskCounters.executed -eq 0 -or [int]$taskCounters.notExecuted -ne 0) {
         throw 'A required integration run must execute tests and contain no skipped tests.'
     }
-    Write-Host "Passed $($taskCounters.passed) real HTTP SDK tests. Results: $ResultsDirectory"
+    Write-Host "Passed $($taskCounters.passed) AI tests. Results: $ResultsDirectory"
 }
 catch {
     if ($hasOwnedContainer) {

@@ -383,13 +383,13 @@
         <value>HTTP request error ({0}): {1}</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_BadRequest" xml:space="preserve">
-        <value>Bad request, possibly due to an incorrect API key or unsupported network/region.</value>
+        <value>Bad request.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Unauthorized" xml:space="preserve">
-        <value>Unauthorized request, possibly due to an incorrect API key or unsupported network/region.</value>
+        <value>Unauthorized request.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_Forbidden" xml:space="preserve">
-        <value>Request forbidden, possibly due to an incorrect API key or unsupported network/region.</value>
+        <value>Request blocked.</value>
     </data>
     <data name="FriendlyExceptionMessage_HttpRequest_NotFound" xml:space="preserve">
         <value>Result not found.</value>
@@ -937,16 +937,16 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Total Time</value>
     </data>
     <data name="HandledChatException_InvalidConfiguration" xml:space="preserve">
-        <value>Model configuration is incorrect, model provider or model ID is missing or invalid, or the current model does not support image input/tool calls.</value>
+        <value>The selected assistant is unavailable. Check the service and assistant settings.</value>
     </data>
     <data name="HandledChatException_InvalidApiKey" xml:space="preserve">
-        <value>API key is missing or invalid.</value>
+        <value>Authentication failed. Check the API key or sign in again.</value>
     </data>
     <data name="HandledChatException_QuotaExceeded" xml:space="preserve">
-        <value>Exceeding API usage quotas, which typically indicates insufficient balance or lack of access permissions for the current model.</value>
+        <value>The service reports insufficient balance or an exhausted usage quota.</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>Request too frequent, insufficient account balance, or network/region not supported.</value>
+        <value>The service is limiting requests. Try again later.</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>Service endpoint is not reachable. Please check your network connection.</value>
@@ -958,22 +958,22 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Service returned an empty response, which may indicate a network or service issue.</value>
     </data>
     <data name="HandledChatException_FeatureNotSupport" xml:space="preserve">
-        <value>Selected model does not support the requested feature.</value>
+        <value>The current assistant does not support this feature.</value>
     </data>
     <data name="HandledChatException_ImageNotSupport" xml:space="preserve">
-        <value>Selected model does not support image input.</value>
+        <value>The current assistant does not support image input.</value>
     </data>
     <data name="HandledChatException_Timeout" xml:space="preserve">
         <value>Request to the service timed out. Please try again.</value>
     </data>
     <data name="HandledChatException_NetworkError" xml:space="preserve">
-        <value>A network error has occurred. Please check your network or proxy settings, or your service provider may not support your region.</value>
+        <value>The connection to the service was interrupted or could not be established.</value>
     </data>
     <data name="HandledChatException_ServiceUnavailable" xml:space="preserve">
         <value>Service is currently unavailable. Please try again later.</value>
     </data>
     <data name="HandledChatException_Unknown" xml:space="preserve">
-        <value>An unknown error occurred.</value>
+        <value>The request could not be completed.</value>
     </data>
     <data name="KernelMixinFactory_UnsupportedModelProviderSchema" xml:space="preserve">
         <value>Unsupported model provider API schema.</value>
@@ -1072,7 +1072,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Execute Shell Script</value>
     </data>
     <data name="HandledChatException_ContextLengthExceeded" xml:space="preserve">
-        <value>The context length exceeds the limit. Try creating a new chat or switching to a model with a longer context.</value>
+        <value>The conversation exceeds the current assistant’s context capacity.</value>
     </data>
     <data name="ChatFunctionPermissions_ProcessAccess" xml:space="preserve">
         <value>Access Process</value>
@@ -1145,7 +1145,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>Operation was cancelled.</value>
     </data>
     <data name="HandledSystemException_Timeout" xml:space="preserve">
-        <value>Operation timed out. Please check your system performance and try again.</value>
+        <value>The operation timed out. Try again.</value>
     </data>
     <data name="HandledSystemException_FileNotFound" xml:space="preserve">
         <value>Specified file not found. Please ensure the file exists and the path is correct.</value>
@@ -2381,7 +2381,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Service does not support requests from current region or location.</value>
     </data>
     <data name="HandledChatException_JsonError" xml:space="preserve">
-        <value>An error occurred while parsing the response from the service, indicating an unexpected JSON format or content.</value>
+        <value>The service response could not be parsed.</value>
     </data>
     <data name="Common_Refresh" xml:space="preserve">
         <value>Refresh</value>
@@ -2744,10 +2744,10 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>Enter denial reason</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
-        <value>The model does not support the temperature parameter, or the parameter is out of range. Restoring to default value can resolve this issue.</value>
+        <value>The service rejected the temperature setting. Check the assistant settings.</value>
     </data>
     <data name="HandledChatException_TopPNotSupport" xml:space="preserve">
-        <value>The model does not support the top_p parameter, or the parameter is out of range. Restoring to default value can resolve this issue.</value>
+        <value>The service rejected the top_p setting. Check the assistant settings.</value>
     </data>
     <data name="CustomAssistantPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Select an item on the left to view details</value>
@@ -3875,7 +3875,7 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>No response was produced.</value>
     </data>
-    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Open subagent</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4202,4 +4202,58 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ToolApproval_Failed" xml:space="preserve">
         <value>Automatic approval failed: {0}</value>
     </data>
+    <data name="HandledChatException_PermissionDenied" xml:space="preserve">
+        <value>The service denied access to the requested resource.</value>
+    </data>
+    <data name="HandledChatException_InvalidRequest" xml:space="preserve">
+        <value>The request contains invalid or unsupported settings.</value>
+    </data>
+    <data name="HandledChatException_ResponseCompatibility" xml:space="preserve">
+        <value>The service returned data that this version of Everywhere cannot read.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked" xml:space="preserve">
+        <value>The service blocked this request or response under its content policy.</value>
+    </data>
+  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+    <value>Request retries</value>
+  </data>
+  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+    <value>Retry eligible failures up to this many times. 0 disables retries; -1 retries until stopped.</value>
+  </data>
+  <data name="ChatRequest_RetryCount" xml:space="preserve">
+    <value>Retrying {0}/{1}</value>
+  </data>
+  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+    <value>Retrying {0}</value>
+  </data>
+  <data name="ChatRequest_Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+    <value>Error details</value>
+  </data>
+  <data name="ChatRequest_CopyDetails" xml:space="preserve">
+    <value>Copy details</value>
+  </data>
+  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
+    <value>The assistant terminated the response early.</value>
+  </data>
+  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+    <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
+  </data>
+  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+    <value>The current assistant does not support tool calling. Check the configuration or choose another assistant.</value>
+  </data>
+  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+    <value>The service cannot use the selected assistant. Check the assistant settings and access permissions.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+    <value>Authentication failed. Check the authentication settings or sign in again.</value>
+  </data>
+  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+    <value>The API key is invalid or has expired. Check and update the service's API key.</value>
+  </data>
+  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+    <value>The service returned invalid content, so the request could not be completed.</value>
+  </data>
 </root>

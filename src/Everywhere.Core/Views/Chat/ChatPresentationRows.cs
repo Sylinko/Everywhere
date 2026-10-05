@@ -67,52 +67,31 @@ public sealed class ProcessSummaryPresentationRow(Action rowsChanged) : ChatPres
 }
 
 /// <summary>
-/// Base for stable activity rows. The owning turn invokes <see cref="Refresh"/> when a source value
-/// changes. Expansion is entirely local to the activity presenter: it creates or destroys detail
-/// content inside the current visual container and therefore never asks the outer chat projection
-/// to rebuild its virtualized row list.
+/// Base for stable activity rows. Templates bind directly to each row's observable source;
+/// shared getters supply the grouping algorithm with timing and liveness without forwarding
+/// source notifications. Expansion is presentation-only and belongs to the stable row.
 /// </summary>
 public abstract partial class ActivityItemPresentationRow : ChatPresentationRow
 {
     public abstract object Source { get; }
-    public abstract LucideIconKind Icon { get; }
-    public abstract IDynamicLocaleKey HeaderKey { get; }
+
     public abstract DateTimeOffset CreatedAt { get; }
+
     public abstract DateTimeOffset? FinishedAt { get; }
+
     public abstract bool IsRunning { get; }
 
-    /// <summary>
-    /// Gets whether this activity is currently blocked on explicit user interaction. Activity
-    /// kinds without an interactive surface remain false by default.
-    /// </summary>
+    /// <summary>Gets whether the activity is blocked on explicit user interaction.</summary>
     public virtual bool IsWaitingForUserInput => false;
 
-    public abstract string? PreviewText { get; }
     [ObservableProperty] public partial bool IsExpanded { get; set; }
-
-    /// <summary>
-    /// Raises changes for the source-backed properties shared by every activity kind. Derived rows
-    /// extend this method only for properties supplied by their own source type.
-    /// </summary>
-    public virtual void Refresh()
-    {
-        OnPropertyChanged(nameof(Icon));
-        OnPropertyChanged(nameof(HeaderKey));
-        OnPropertyChanged(nameof(FinishedAt));
-        OnPropertyChanged(nameof(IsRunning));
-        OnPropertyChanged(nameof(IsWaitingForUserInput));
-        OnPropertyChanged(nameof(PreviewText));
-    }
 }
 
-/// <summary>
-/// Projects one reasoning span as a compact, independently expandable activity.
-/// </summary>
+/// <summary>Projects one reasoning span as a compact, independently expandable activity.</summary>
 /// <remarks>
-/// A missing <see cref="AssistantChatMessageSpan.FinishedAt"/> value records only that the span did
-/// not persist a completion timestamp; it cannot by itself prove that work is still running after
-/// the application restarts. The owning assistant's runtime-only busy state provides that liveness
-/// boundary while the Group's continuation state independently covers gaps between model calls.
+/// A missing span completion time does not prove that work is still running after restart.
+/// The owning assistant supplies runtime liveness; the Group independently tracks waits
+/// between model calls. Templates observe both sources directly.
 /// </remarks>
 public sealed class ReasoningActivityItemPresentationRow(
     AssistantChatMessage assistant,
@@ -120,14 +99,19 @@ public sealed class ReasoningActivityItemPresentationRow(
     IDynamicLocaleKey headerKey
 ) : ActivityItemPresentationRow
 {
-    public override object Source => reasoning;
-    public override LucideIconKind Icon => LucideIconKind.Brain;
-    public override IDynamicLocaleKey HeaderKey => headerKey;
-    public override DateTimeOffset CreatedAt => reasoning.CreatedAt;
-    public override DateTimeOffset? FinishedAt => reasoning.FinishedAt;
-    public override bool IsRunning => assistant.IsBusy && reasoning.FinishedAt is null;
-    public override string? PreviewText => reasoning.ReasoningOutput;
-    public AssistantChatMessageReasoningSpan ReasoningSpan => reasoning;
+    public AssistantChatMessage Assistant { get; } = assistant;
+
+    public AssistantChatMessageReasoningSpan ReasoningSpan { get; } = reasoning;
+
+    public IDynamicLocaleKey HeaderKey { get; } = headerKey;
+
+    public override object Source => ReasoningSpan;
+
+    public override DateTimeOffset CreatedAt => ReasoningSpan.CreatedAt;
+
+    public override DateTimeOffset? FinishedAt => ReasoningSpan.FinishedAt;
+
+    public override bool IsRunning => Assistant.IsBusy && ReasoningSpan.FinishedAt is null;
 }
 
 /// <summary>Projects one function-call message while retaining its original display blocks.</summary>
@@ -136,72 +120,131 @@ public sealed class FunctionCallActivityItemPresentationRow(
     IDynamicLocaleKey fallbackHeader
 ) : ActivityItemPresentationRow
 {
-    public override object Source => functionCall;
-    public override LucideIconKind Icon => functionCall.Icon;
-    public override IDynamicLocaleKey HeaderKey => functionCall.HeaderKey ?? fallbackHeader;
-    public override DateTimeOffset CreatedAt => functionCall.CreatedAt;
-    public override DateTimeOffset? FinishedAt => functionCall.IsBusy ? null : functionCall.FinishedAt;
-    public override bool IsRunning => functionCall.IsBusy;
-    public override bool IsWaitingForUserInput => functionCall.IsWaitingForUserInput;
-    public override string? PreviewText => functionCall.Content;
-    public IDynamicLocaleKey? ErrorMessageKey => functionCall.ErrorMessageKey;
-    public int CallCount => functionCall.Calls.Length;
-    public ChatPluginActivityPreview? ActivityPreview => functionCall.ActivityPreview;
-    public bool HasPreview => ActivityPreview is not null || !string.IsNullOrEmpty(PreviewText);
-    public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => functionCall.DisplayBlocks;
+    public FunctionCallChatMessage FunctionCall { get; } = functionCall;
 
-    /// <inheritdoc/>
-    public override void Refresh()
-    {
-        base.Refresh();
-        OnPropertyChanged(nameof(ErrorMessageKey));
-        OnPropertyChanged(nameof(CallCount));
-        OnPropertyChanged(nameof(ActivityPreview));
-        OnPropertyChanged(nameof(HasPreview));
-        // DisplayBlocks is the same source-backed bindable list for the lifetime of the function
-        // call. Its own collection notifications update the lazy detail ItemsControl; raising
-        // PropertyChanged here would make that control rebind the identical list unnecessarily.
-    }
+    public IReadOnlyList<ChatPluginDisplayBlock> DisplayBlocks => FunctionCall.DisplayBlocks;
+
+    public IDynamicLocaleKey FallbackHeaderKey { get; } = fallbackHeader;
+
+    public override object Source => FunctionCall;
+
+    public override DateTimeOffset CreatedAt => FunctionCall.CreatedAt;
+
+    public override DateTimeOffset? FinishedAt => FunctionCall.IsBusy ? null : FunctionCall.FinishedAt;
+
+    public override bool IsRunning => FunctionCall.IsBusy;
+
+    public override bool IsWaitingForUserInput => FunctionCall.IsWaitingForUserInput;
 }
 
 /// <summary>
-/// Represents a short-lived, non-persisted operation reported directly by <see cref="ChatContext"/>.
-/// It intentionally exposes no expandable detail surface: its sole purpose is to let transient
-/// states such as MCP startup or tool-argument generation participate in the same running Group,
-/// iconography, elapsed-time display, and glow transition as persisted activities.
+/// Owns one non-persisted operation and its stable position in the activity chronology.
+/// Workers access the operation through <see cref="IBusyActivity"/>. Completion ends the
+/// operation, not the retained row or its delayed Group transition.
 /// </summary>
-public sealed class BusyActivityItemPresentationRow(
-    LucideIconKind icon,
-    IDynamicLocaleKey headerKey,
-    DateTimeOffset createdAt
-) : ActivityItemPresentationRow
+public sealed class BusyActivityItemPresentationRow : ActivityItemPresentationRow, IBusyActivity
 {
-    private DateTimeOffset? _finishedAt;
+    /// <inheritdoc />
+    public LucideIconKind Icon
+    {
+        get => _icon;
+        set
+        {
+            if (!IsRunning) return;
+            SetProperty(ref _icon, value);
+        }
+    }
 
+    /// <inheritdoc />
+    public IDynamicLocaleKey HeaderKey
+    {
+        get => _headerKey;
+        set
+        {
+            if (!IsRunning) return;
+            SetProperty(ref _headerKey, value);
+        }
+    }
+
+    /// <inheritdoc />
+    public IDynamicLocaleKey? SecondaryHeaderKey
+    {
+        get => _secondaryHeaderKey;
+        set
+        {
+            if (!IsRunning) return;
+            SetProperty(ref _secondaryHeaderKey, value);
+        }
+    }
+
+    /// <inheritdoc />
     public override object Source => this;
-    public override LucideIconKind Icon => icon;
-    public override IDynamicLocaleKey HeaderKey => headerKey;
-    public override DateTimeOffset CreatedAt => createdAt;
-    public override DateTimeOffset? FinishedAt => _finishedAt;
-    public override bool IsRunning => _finishedAt is null;
-    public override string? PreviewText => null;
+
+    /// <inheritdoc />
+    public override DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+
+    /// <inheritdoc />
+    public override DateTimeOffset? FinishedAt
+    {
+        get
+        {
+            var ticks = Interlocked.Read(ref _finishedAtUtcTicks);
+            return ticks == 0 ? null : new DateTimeOffset(ticks, TimeSpan.Zero);
+        }
+    }
+
+    /// <inheritdoc />
+    public override bool IsRunning => FinishedAt is null;
+
+    /// <summary>Gets the owning node, or null when the operation could not be attached.</summary>
+    internal ChatMessageNode? OwnerNode { get; }
+
+    /// <summary>Gets the last persisted span present when the operation began, used only as a placement anchor.</summary>
+    internal AssistantChatMessageSpan? AnchorSpan { get; }
+
+    internal bool RemoveAfterCompletion { get; }
+
+    private LucideIconKind _icon;
+    private IDynamicLocaleKey _headerKey;
+    private IDynamicLocaleKey? _secondaryHeaderKey;
+    private long _finishedAtUtcTicks;
+    private Action<BusyActivityItemPresentationRow>? _onCompleted;
 
     /// <summary>
-    /// Gets the assistant node and the last persisted span that existed when the temporary activity
-    /// began. The projection uses this pair only to place the row chronologically; neither value is
-    /// serialized or copied into the message graph.
+    /// Creates an operation with fixed placement and retention. A null owner represents an
+    /// unattached operation; completion cleanup is independent of a materialized turn.
     /// </summary>
-    internal ChatMessageNode? AssistantNode { get; set; }
-
-    internal AssistantChatMessageSpan? AnchorSpan { get; set; }
-
-    /// <summary>Completes the transient activity while preserving the stable row instance.</summary>
-    internal void Complete(DateTimeOffset finishedAt)
+    internal BusyActivityItemPresentationRow(
+        LucideIconKind icon,
+        IDynamicLocaleKey headerKey,
+        IDynamicLocaleKey? secondaryHeaderKey,
+        ChatMessageNode? ownerNode,
+        AssistantChatMessageSpan? anchorSpan,
+        bool removeAfterCompletion,
+        Action<BusyActivityItemPresentationRow>? onCompleted)
     {
-        if (_finishedAt is not null) return;
-        _finishedAt = finishedAt;
-        Refresh();
+        _icon = icon;
+        _headerKey = headerKey;
+        _secondaryHeaderKey = secondaryHeaderKey;
+        OwnerNode = ownerNode;
+        AnchorSpan = anchorSpan;
+        RemoveAfterCompletion = removeAfterCompletion;
+        _onCompleted = onCompleted;
     }
+
+    /// <summary>Completes the operation once; later updates cannot restart it.</summary>
+    public void Dispose()
+    {
+        if (Interlocked.CompareExchange(ref _finishedAtUtcTicks, DateTimeOffset.UtcNow.UtcDateTime.Ticks, 0) != 0) return;
+        // Release the storage callback before notifying materialized turns. The callback marshals
+        // membership cleanup to the dispatcher even when no turn currently observes this row.
+        Interlocked.Exchange(ref _onCompleted, null)?.Invoke(this);
+        OnPropertyChanged(nameof(FinishedAt));
+        OnPropertyChanged(nameof(IsRunning));
+    }
+
+    /// <summary>Releases the context reference without completing work still owned by a caller.</summary>
+    internal void DetachCompletion() => Interlocked.Exchange(ref _onCompleted, null);
 }
 
 /// <summary>
@@ -419,8 +462,10 @@ public abstract partial class AssistantOutputPresentationRow(ChatMessageNode ass
     [ObservableProperty] public partial bool IsFinal { get; set; }
 }
 
-public sealed class AssistantTextOutputPresentationRow(ChatMessageNode assistantNode, AssistantChatMessageTextSpan span)
-    : AssistantOutputPresentationRow(assistantNode)
+public sealed class AssistantTextOutputPresentationRow(
+    ChatMessageNode assistantNode,
+    AssistantChatMessageTextSpan span
+) : AssistantOutputPresentationRow(assistantNode)
 {
     public AssistantChatMessageTextSpan TextSpan { get; } = span;
 
@@ -471,8 +516,10 @@ public sealed class AssistantTextOutputPresentationRow(ChatMessageNode assistant
     }
 }
 
-public sealed class AssistantImageOutputPresentationRow(ChatMessageNode assistantNode, AssistantChatMessageImageSpan span)
-    : AssistantOutputPresentationRow(assistantNode)
+public sealed class AssistantImageOutputPresentationRow(
+    ChatMessageNode assistantNode,
+    AssistantChatMessageImageSpan span
+) : AssistantOutputPresentationRow(assistantNode)
 {
     public AssistantChatMessageImageSpan ImageSpan { get; } = span;
 }
@@ -481,14 +528,26 @@ public sealed class AssistantImageOutputPresentationRow(ChatMessageNode assistan
 public sealed class AssistantErrorPresentationRow(ChatMessageNode assistantNode, bool isTerminal) : ChatPresentationRow
 {
     public ChatMessageNode AssistantNode { get; } = assistantNode;
+
     public bool IsTerminal { get; } = isTerminal;
+
     public AssistantChatMessage Assistant => (AssistantChatMessage)AssistantNode.Message;
+}
+
+/// <summary>Projects a persisted stopped outcome independently of runtime diagnostics.</summary>
+public sealed class AssistantCanceledPresentationRow(ChatMessageNode assistantNode, bool isTerminal) : ChatPresentationRow
+{
+    public ChatMessageNode AssistantNode { get; } = assistantNode;
+
+    public bool IsTerminal { get; } = isTerminal;
 }
 
 /// <summary>Provides an explicit result for a successful turn without formal output.</summary>
 public sealed class NoResponsePresentationRow : ChatPresentationRow;
 
-/// <summary>Hosts statistics and the existing retry/copy operation surface for the latest invocation.</summary>
+/// <summary>
+/// Hosts statistics and the existing retry/copy operation surface for the latest invocation.
+/// </summary>
 public sealed class TurnFooterPresentationRow : ChatPresentationRow
 {
     public ChatMessageNode AssistantNode { get; }

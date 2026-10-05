@@ -1,6 +1,6 @@
 # LLM Request Error Classification
 
-Status: proposed deterministic heuristics and reference corpus; not implemented. Companion: [recovery architecture](Architecture.md).
+Status: evidence extraction and deterministic classification are implemented; retry execution and presentation remain later work. See [ExceptionNormalization.md](ExceptionNormalization.md) for ownership and delivery limits. Companion: [recovery architecture](Architecture.md).
 
 ## 1. Evidence and limitations
 
@@ -18,9 +18,9 @@ Source references at the inspected commit:
 - [Scripted message override](https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/core.rs), [answer controls](https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/answer.rs).
 - [OpenAI request validation](https://github.com/lihe07/mockllm/blob/4d4b1942ef8dc22c18f495f280109df1d621fdf6/src/openai/chat.rs).
 
-## 2. Current failure modes
+## 2. Failure modes addressed by the refactor
 
-The current [HandledChatException parser](../../src/Everywhere.Core/Common/HandledException.cs) mixes extraction, classification, and parser-chain termination:
+The previous HandledChatException parser mixed extraction, classification, and parser-chain termination:
 
 - The OpenAI `ClientResultException` parser checks message substrings before HTTP fallback. `Rate limit reached for requests.` matches `limit` and becomes QuotaExceeded; HTTP 429 is then skipped because classification already exists.
 - `quota`, `limit`, `exceeded`, `usage`, or `organization` independently imply quota exhaustion. These words also occur in rate limits and unrelated limits.
@@ -30,19 +30,20 @@ The current [HandledChatException parser](../../src/Everywhere.Core/Common/Handl
 - The Anthropic parser stops at 5xx/rate-limit exception subtypes, preventing more specific contradictory body evidence from being considered.
 - `HttpOperationExceptionParser` can terminate the chain even when its text lookup returns no category, losing an available HTTP fallback.
 
-Retain heuristics, but make evidence extraction, rule specificity, and conflict resolution explicit rather than relying on whichever parser returns first.
+Retain heuristics, but make evidence extraction and precedence explicit: recognized specific codes, scoped message rules, then HTTP/generic fallback.
 
-## 3. Proposed classification procedure
+## 3. Classification procedure
 
 1. Identify cooperative caller cancellation and concrete local transport failures first. Caller cancellation stops recovery and produces the persisted stopped outcome described in [Architecture.md](Architecture.md), not an assistant error banner or a diagnostic added to the retry-failure list. Distinguish a request deadline using its actual token/deadline context. A canceled token alone must not erase an unrelated concurrent failure.
 2. Extract bounded evidence without choosing a category: HTTP status, SDK type, structured error `code`/`type`/`status`/`param`, message, Retry-After and request ID when available. Keep original diagnostics separately.
-3. Establish an HTTP/transport baseline, distinguishing actual response status from SDK-generated wrapper status. The current SK helper fabricates HTTP 400 for transport failures; remove that behavior in the maintained connector source replacement rather than retaining a dedicated classifier workaround. OpenAI's ClientResultException with status zero remains transport evidence, not automatically an empty response (see [SDKReview.md](SDKReview.md)). Inspect origin/inner evidence before treating a wrapper as a server parameter rejection. For real responses, examples are 401 authentication, 403 permission, 429 rate/resource limiting, 503 unavailable, 504 timeout. Do not classify every 5xx as retryable (for example, explicit unsupported functionality differs from temporary overload).
+3. Establish an HTTP/transport baseline, distinguishing actual response status from SDK-generated wrapper status. The first-stage SK helper replacement already removed fabricated HTTP 400 transport failures. OpenAI's ClientResultException with status zero remains transport evidence, not automatically an empty response (see [SDKReview.md](SDKReview.md)). Inspect origin/inner evidence before treating a wrapper as a server parameter rejection. For real responses, examples are 401 authentication, 403 permission, 429 rate/resource limiting, 503 unavailable, 504 timeout. Do not classify every 5xx as retryable (for example, explicit unsupported functionality differs from temporary overload).
 4. Match recognized specific codes and concrete message patterns. Broad codes such as `server_error`, `api_error`, `invalid_request_error`, and `RESOURCE_EXHAUSTED` are baseline evidence rather than precise diagnoses.
-5. Resolve conflicts by specificity. A concrete permanent cause can refine or override a generic 503/500/429 baseline. A bare `invalid`, `token`, `model`, or `limit` cannot. Preserve competing evidence in diagnostics.
-6. If two equally specific causes genuinely conflict, do not manufacture certainty. Retain the status-family/ambiguous result; conservatively stop when a credible permanent failure conflicts with a transient interpretation. This conflict rule must remain explicit and testable.
-7. Apply retry policy to the resolved evidence. Do not infer retry eligibility from translated messages. Unknown text without status/transport evidence is not automatically transient; unknown text accompanying a normal retryable 503 can use the status baseline.
+5. Select one concrete cause directly. Specific code/type evidence precedes message rules; messages supply missing parameter details or a diagnosis for generic/unknown codes. A concrete cause can override a generic 503/500/429 baseline. A bare `invalid`, `token`, `model`, or `limit` cannot. Diagnostics retain the original code, message and status, not competing exception objects.
+6. Read recovery advice from the selected exception's `Recovery` property. Do not infer retry eligibility from translated messages. Unknown text without status/transport evidence is not automatically transient; unknown text accompanying a normal retryable 503 can use the status baseline.
 
 Classification evidence should include a matched rule identifier and source (code, message, status, transport, or fallback) for debugging. Qualitative specificity is sufficient; numerical confidence scores are not required.
+
+Request context distinguishes caller cancellation, response-wait timeout and read-idle timeout where the owner knows the cause; retain an unknown phase for opaque SDK timeouts. Completion evidence is independent of the failure category. Explicit limits/errors are meaningful, but normal EOF without finish metadata or with an unfamiliar reason must not itself become a new compatibility failure. See [TimeoutAndCompletion.md](TimeoutAndCompletion.md). Classification supplies recovery advice (retry unchanged input, caller recovery, or stop); the retry executor remains a separate stage.
 
 Text extraction should inspect the error message, not arbitrary echoed request bodies, headers, stack traces, or the entire serialized exception. Normalize case and whitespace for matching, but preserve the original diagnostic text. Use bounded parsing/scanning; failure to parse JSON must still allow plain-text classification. Token/phrase boundaries and subject/predicate combinations are preferable to unconstrained substring matching. Avoid expensive generic regex chains. Recognized local-language patterns can be added from real evidence; do not assume error messages are always English.
 
@@ -115,6 +116,8 @@ These are proposed classifier fixtures, not observations attributed to mockllm o
 | ClientResultException(status=0) wrapping a transport failure | Classify the inner transport cause; not automatically EmptyResponse |
 | HTTP 200 SSE error event with explicit error evidence | Classify the event; HTTP success does not imply request success |
 | Clean enumeration end with explicit output-length finish reason | Preserve useful partial output; no identical-input transport retry |
+| Clean enumeration end without a finish field or exposed terminal marker | Preserve existing compatible-provider acceptance and record unknown completion evidence; no failure/retry solely for the missing field |
+| Unrecognized finish reason on an otherwise usable response | Preserve the raw reason; do not reject through a new whitelist |
 
 Keep rejected alternatives in test expectations where useful: the bug is often a plausible but wrong category, not failure to recognize any error.
 
@@ -122,6 +125,6 @@ Keep rejected alternatives in test expectations where useful: the bug is often a
 
 The source-backed corpus feeds the real-HTTP harness described in [Testing.md](Testing.md). Build that harness alongside first-stage SDK repairs so these bodies pass through actual SDK parsers before the application classifier is refactored. The server preserves evidence; later classifier tests assert its interpretation. Do not copy mockllm's full model validation tables or infer capabilities from model names in error classification.
 
-When implementation begins, run fixtures through the real normalization entry point and representative SDK wrappers, not only an isolated string helper. Include missing bodies, malformed JSON, conflicting status/body, generic code values, and wrapper-chain behavior. This exposes early-return bugs that pure keyword tests miss. Request replay correctness and tool-result pairing require separate integration coverage; a correct error label does not establish safe recovery.
+When implementation begins, run fixtures through the real normalization entry point and representative SDK wrappers, not only an isolated string helper. Include missing bodies, malformed JSON, specific body evidence under generic HTTP status, generic code values, and wrapper-chain behavior. This exposes early-return bugs that pure keyword tests miss. Request replay correctness and tool-result pairing require separate integration coverage; a correct error label does not establish safe recovery.
 
 No claim is made that these heuristics cover all services. Future sanitized production examples should carry provenance and an expected outcome; rule changes should include a counterexample preventing the next overly broad match.
