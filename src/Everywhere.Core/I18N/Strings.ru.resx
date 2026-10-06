@@ -3023,7 +3023,7 @@
         <value>Стандартный Подассистент</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Когда выбранный в чате ассистент делегирует рутинные задачи с помощью инструмента "Назначить нового ассистента", субассистент по умолчанию обрабатывает их в независимом контексте и возвращает результаты. "Автоматический выбор" использует выбранного в чате ассистента.</value>
+        <value>Когда выбранный в чате ассистент делегирует рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, субассистент по умолчанию обрабатывает их в независимом контексте и возвращает результаты. &quot;Автоматический выбор&quot; использует выбранного в чате ассистента.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API-ключ (необязательно)</value>
@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Ответ не был сгенерирован в этом раунде.</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Открыть подассистента</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Не удалось отправить запрос в запущенный Everywhere. Пожалуйста, откройте Everywhere и попробуйте снова.</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>Одобрение Инструментов</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>Выберите помощника, ответственного за «Помоги мне одобрить», который должен поддерживать вызов инструментов. «Автовыбор» использует выбранного в чате помощника.</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>Одобрение…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>Запросить одобрение</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>Помоги мне одобрить</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>Полный доступ</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>Когда требуется одобрение для операций с инструментами, будет запрашиваться ваше одобрение.</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>Помощник решает, одобрить ли; операция останавливается в случае отказа или неудачи одобрения.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>Включенные инструменты могут выполнять операции без одобрения.</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>В этом раунде используется «{0}», в следующем раунде переключится на «{1}».</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>Переключить сейчас</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>В этом или следующем раунде включен полный доступ, инструменты могут выполнять операции без одобрения.</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>Закрыть уведомление</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>Хотите включить «Помоги мне одобрить»?</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>Когда требуется одобрение для операций с инструментами, помощник по одобрению решает, разрешить ли их в зависимости от ваших задач и рисков операций.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>Выберите, кто будет одобрять</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>По умолчанию используется помощник, выбранный в чате; также можно указать его отдельно в настройках «Системный помощник».</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>Оценка на основе содержания задачи</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>Одобрение будет использовать контекст диалога и содержание операций. Если в настройках разрешено чтение файлов, также может быть прочитано содержимое файлов. Эта информация будет отправлена выбранному помощнику по одобрению и может содержать конфиденциальные данные из задачи.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>Отказ от высокорисковых операций</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>Операции, определенные как высокорисковые, такие как утечка конфиденциальных данных, будут отклонены, даже если вы дали разрешение. В случае отказа или неудачи одобрения операция не будет продолжена, причина будет сообщена текущему помощнику.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>При указании отдельного помощника по утверждению, содержание утверждения будет обрабатываться службой, используемой этим помощником. AI-утверждение все еще может ошибаться, вы можете в любой момент переключить режим.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>Включить помощь в утверждении</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>Хотите включить полный доступ?</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere сможет выполнять действия с включенными инструментами без необходимости поэтапного утверждения, в зависимости от прав доступа приложения. Это включает в себя:</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>Файлы и папки</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>Чтение, создание, изменение, загрузка или удаление файлов.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>Команды терминала</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>Запуск команд, установка программного обеспечения или изменение системных настроек в пределах разрешенных прав.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>Интернет и подключенные инструменты</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>Доступ к веб-сайтам, отправка данных и использование включенных плагинов и соединений MCP.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>Это может привести к рискам потери данных, утечкам или инъекциям подсказок. Вы можете в любой момент переключить режим.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>Включить полный доступ</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>Автоматическое утверждение не удалось: {0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>Сервис отказал в доступе к запрошенному ресурсу.</value>
     </data>
@@ -4112,49 +4214,151 @@
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>Сервис заблокировал этот запрос или ответ согласно своей политике контента.</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>Повторные попытки запроса</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>Максимум повторов при устранимых ошибках. 0 отключает повторы; -1 повторяет до остановки.</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>Повторная попытка {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>Повторная попытка {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>Остановлено</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>Подробности ошибки</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>Копировать подробности</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>Текущий ассистент не поддерживает вызов инструментов. Проверьте настройки или выберите другого ассистента.</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>Сервис не может использовать выбранного ассистента. Проверьте настройки ассистента и права доступа.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>Не удалось пройти аутентификацию. Проверьте настройки аутентификации или войдите снова.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>Ключ API недействителен или срок его действия истёк. Проверьте и обновите ключ API сервиса.</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>Сервис вернул недопустимое содержимое, поэтому запрос не удалось завершить.</value>
-  </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-    <value></value>
-  </data>
-  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-    <value>По умолчанию используется помощник, выбранный в чате; также можно указать его отдельно в настройках «Системный помощник».</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>Повторные попытки запроса</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>Максимум повторов при устранимых ошибках. 0 отключает повторы; -1 повторяет до остановки.</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>Повторная попытка {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>Повторная попытка {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>Остановлено</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>Подробности ошибки</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>Копировать подробности</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>Текущий ассистент не поддерживает вызов инструментов. Проверьте настройки или выберите другого ассистента.</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>Сервис не может использовать выбранного ассистента. Проверьте настройки ассистента и права доступа.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>Не удалось пройти аутентификацию. Проверьте настройки аутентификации или войдите снова.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>Ключ API недействителен или срок его действия истёк. Проверьте и обновите ключ API сервиса.</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>Сервис вернул недопустимое содержимое, поэтому запрос не удалось завершить.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>Ответ достиг предела длины генерации и не был полностью сгенерирован.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>Ответ достиг предела контекстного окна в процессе генерации и не был полностью сгенерирован.</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>Служба прервала ответ или сообщила, что ответ не завершен.</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>Служба приостановила генерацию, требуется способ продолжения, который в настоящее время не поддерживается.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>Служба прервала ответ из-за ограничений на пересказ.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>Служба прервала ответ из-за неподдерживаемого языка.</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>Диагностическая информация</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>Сообщение службы</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>Технические детали</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>Категория ошибки</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP статус</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>Статус шлюза HTTP</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>Код службы</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>Тип службы</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>Идентификатор API помощника</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>Идентификатор запроса</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>Отклоненный параметр</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>Причина завершения</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>Исходная причина завершения службы</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>Стратегия восстановления</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>Правило классификации</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>Источник доказательства</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>Рекомендуемое время ожидания перед повторной попыткой</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>Этап таймаута</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>Ошибка сокета</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>Код ошибки соединения</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>Исходное содержимое ответа</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>Тип исключения</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>Сообщение об исключении</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>Стек вызовов</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>Диагностическое содержимое обрезано</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>Не удалось скопировать</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>Разрешить помощнику по утверждению чтение файлов</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>Помощник по утверждению может читать содержимое локальных файлов для помощи в принятии решений, например, для просмотра скриптов, ожидающих выполнения. Содержимое будет отправлено выбранному помощнику по утверждению и может содержать конфиденциальную информацию. При отключении утверждение будет основываться только на информации из диалога и действиях.</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>Слишком много запросов, сервис рекомендует подождать {0} секунд перед повторной попыткой.</value>
+    </data>
 </root>

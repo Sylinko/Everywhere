@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>本輪未生成回覆。</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>開啟子助手</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>無法將請求傳送至正在執行的 Everywhere。請開啟 Everywhere 後重試。</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>工具批准</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>選擇負責「幫我批准」的助手，此助手必須支持工具調用。「自動選擇」使用聊天所選的助手。</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>正在批准中…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>請求批准</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>幫我批准</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>完全訪問權限</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>當工具操作需要批准時，向你請求批准。</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>由助手決定是否批准；拒絕或批准失敗時停止該操作。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>已啟用的工具可無需批准執行操作。</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>本輪仍使用「{0}」，將在下個對話輪次切換到「{1}」。</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>立即切換</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>本輪或下輪已啟用完全訪問權限，工具可無需批准執行操作。</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>關閉提示</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>要開啟「幫我批准」嗎？</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>需要批准工具操作時，由批准助手根據你的任務和操作風險決定是否放行。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>選擇誰來批准</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>預設使用聊天所選的助手，也可以在「系統助手」設定中單獨指定。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>結合任務內容判斷</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>審批會使用對話上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>拒絕高風險操作</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>被判定為敏感數據外洩等高風險的操作，即使你已授權也會被拒絕。批准拒絕或失敗時，該操作不會繼續執行，原因會反饋給當前助手。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>單獨指定批准助手時，批准內容會由該助手使用的服務處理。AI 批准仍可能誤判，你可以隨時切換模式。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>開啟幫我批准</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>要開啟完全訪問權限嗎？</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere 將能夠無需逐次批准，使用已啟用的工具執行操作，範圍取決於應用擁有的訪問權限。這包括：</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>文件和文件夾</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>讀取、創建、修改、上傳或刪除文件。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>終端命令</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>在權限允許的範圍內運行命令、安裝軟件或更改系統設置。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>互聯網和已連接的工具</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>訪問網站、發送數據並使用已啟用的插件和 MCP 連接。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>這可能帶來數據丟失、泄露或提示注入等風險。你可以隨時切換模式。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>開啟完全訪問權限</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>自動審批失敗：{0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>服務拒絕存取所請求的資源。</value>
     </data>
@@ -4112,146 +4214,143 @@
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>服務依據內容政策攔截了此次請求或回覆。</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>請求重試次數</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>請求遇到可恢復錯誤時的最大重試次數。0 表示關閉，-1 表示持續重試，直到手動停止。</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>正在重試 {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>正在重試 {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>已停止</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>錯誤詳情</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>複製詳情</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>代理伺服器拒絕建立連線，請檢查代理設定和認證資料。</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>目前助手不支援工具調用，請檢查設定或更換助手。</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>目前服務無法使用所選助手，請檢查助手設定及存取權限。</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>身份驗證失敗，請檢查認證設定或重新登入。</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>API 密鑰無效或已失效，請檢查並更新服務的 API 密鑰。</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>服務傳回的內容無效，無法完成此次請求。</value>
-  </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>回覆達到生成長度限制，未能完整生成。</value>
-  </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>回覆在生成過程中達到上下文視窗上限，未能完整生成。</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>服務中止了回覆或報告回應未完成。</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>服務暫停了生成，需要目前尚不支援的繼續方式。</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>服務因複述限制中止了回覆。</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>服務因不支援該語言而中止了回覆。</value>
-  </data>
-  <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
-    <value>診斷資訊</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
-    <value>服務回傳的資訊</value>
-  </data>
-  <data name="ChatErrorDetails_Technical" xml:space="preserve">
-    <value>技術詳情</value>
-  </data>
-  <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
-    <value>HTTP {0}</value>
-  </data>
-  <data name="ChatErrorDetails_Category" xml:space="preserve">
-    <value>錯誤類別</value>
-  </data>
-  <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
-    <value>HTTP 狀態</value>
-  </data>
-  <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
-    <value>閘道 HTTP 狀態</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
-    <value>服務代碼</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
-    <value>服務類型</value>
-  </data>
-  <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
-    <value>助手 API 識別碼</value>
-  </data>
-  <data name="ChatErrorDetails_RequestId" xml:space="preserve">
-    <value>請求 ID</value>
-  </data>
-  <data name="ChatErrorDetails_Parameter" xml:space="preserve">
-    <value>遭拒絕的參數</value>
-  </data>
-  <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
-    <value>結束原因</value>
-  </data>
-  <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
-    <value>服務原始結束原因</value>
-  </data>
-  <data name="ChatErrorDetails_Recovery" xml:space="preserve">
-    <value>復原策略</value>
-  </data>
-  <data name="ChatErrorDetails_Rule" xml:space="preserve">
-    <value>分類規則</value>
-  </data>
-  <data name="ChatErrorDetails_Source" xml:space="preserve">
-    <value>證據來源</value>
-  </data>
-  <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
-    <value>服務建議的重試等待時間</value>
-  </data>
-  <data name="ChatErrorDetails_Timeout" xml:space="preserve">
-    <value>逾時階段</value>
-  </data>
-  <data name="ChatErrorDetails_SocketError" xml:space="preserve">
-    <value>通訊端錯誤</value>
-  </data>
-  <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
-    <value>連線錯誤代碼</value>
-  </data>
-  <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
-    <value>原始回應內容</value>
-  </data>
-  <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
-    <value>例外類型</value>
-  </data>
-  <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
-    <value>例外訊息</value>
-  </data>
-  <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
-    <value>呼叫堆疊</value>
-  </data>
-  <data name="ChatErrorDetails_Truncated" xml:space="preserve">
-    <value>診斷內容已截斷</value>
-  </data>
-  <data name="Common_CopyFailed" xml:space="preserve">
-    <value>複製失敗</value>
-  </data>
-    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
-        <value>審批會使用對話上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>請求重試次數</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>請求遇到可恢復錯誤時的最大重試次數。0 表示關閉，-1 表示持續重試，直到手動停止。</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>正在重試 {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>正在重試 {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>已停止</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>錯誤詳情</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>複製詳情</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>代理伺服器拒絕建立連線，請檢查代理設定和認證資料。</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>目前助手不支援工具調用，請檢查設定或更換助手。</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>目前服務無法使用所選助手，請檢查助手設定及存取權限。</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>身份驗證失敗，請檢查認證設定或重新登入。</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>API 密鑰無效或已失效，請檢查並更新服務的 API 密鑰。</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>服務傳回的內容無效，無法完成此次請求。</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>回覆達到生成長度限制，未能完整生成。</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>回覆在生成過程中達到上下文視窗上限，未能完整生成。</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>服務中止了回覆或報告回應未完成。</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>服務暫停了生成，需要目前尚不支援的繼續方式。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>服務因複述限制中止了回覆。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>服務因不支援該語言而中止了回覆。</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>診斷資訊</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>服務回傳的資訊</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>技術詳情</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>錯誤類別</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP 狀態</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>閘道 HTTP 狀態</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>服務代碼</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>服務類型</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>助手 API 識別碼</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>請求 ID</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>遭拒絕的參數</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>結束原因</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>服務原始結束原因</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>復原策略</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>分類規則</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>證據來源</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>服務建議的重試等待時間</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>逾時階段</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>通訊端錯誤</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>連線錯誤代碼</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>原始回應內容</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>例外類型</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>例外訊息</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>呼叫堆疊</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>診斷內容已截斷</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>複製失敗</value>
     </data>
     <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
         <value>允許審批助手讀取檔案</value>
@@ -4261,11 +4360,5 @@
     </data>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>請求過於頻繁，服務建議等待 {0} 秒後重試。</value>
-    </data>
-    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-        <value></value>
-    </data>
-    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>預設使用聊天所選的助手，也可以在「系統助手」設定中單獨指定。</value>
     </data>
 </root>

@@ -3023,7 +3023,7 @@
         <value>기본 서브 어시스턴트</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>채팅에서 선택한 어시스턴트가 "새 어시스턴트 할당" 도구를 통해 일상적인 작업을 위임하면, 기본 하위 에이전트가 독립적인 컨텍스트에서 이를 처리하고 결과를 반환합니다. "자동 선택"은 채팅에서 선택한 어시스턴트를 사용합니다.</value>
+        <value>채팅에서 선택한 어시스턴트가 &quot;새 어시스턴트 할당&quot; 도구를 통해 일상적인 작업을 위임하면, 기본 하위 에이전트가 독립적인 컨텍스트에서 이를 처리하고 결과를 반환합니다. &quot;자동 선택&quot;은 채팅에서 선택한 어시스턴트를 사용합니다.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 키 (선택 사항)</value>
@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>이번 라운드에 응답이 생성되지 않았습니다.</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>서브 에이전트 열기</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>실행 중인 Everywhere에 요청을 보낼 수 없습니다. Everywhere를 열고 다시 시도하세요.</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>도구 승인</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>‘도와줘 승인해줘’를 담당할 도우미를 선택하세요. 이 도우미는 도구 호출을 지원해야 합니다. ‘자동 선택’은 채팅에서 선택한 도우미를 사용합니다.</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>승인 중…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>승인 요청</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>도와줘 승인해줘</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>전체 접근 권한</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>도구 작업에 대한 승인이 필요할 때, 당신에게 승인을 요청합니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>도우미가 승인 여부를 결정합니다; 거부되거나 승인 실패 시 해당 작업이 중단됩니다.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>활성화된 도구는 승인 없이 작업을 수행할 수 있습니다.</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>이번 라운드에서는 여전히 ‘{0}’을 사용하며, 다음 대화 라운드에서 ‘{1}’로 전환됩니다.</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>지금 전환</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>이번 라운드 또는 다음 라운드에 전체 접근 권한이 활성화되어 있어, 도구는 승인 없이 작업을 수행할 수 있습니다.</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>알림 닫기</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>‘도와줘 승인해줘’를 활성화할까요?</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>도구 작업에 대한 승인이 필요할 때, 승인 도우미가 당신의 작업과 작업 위험을 고려하여 승인 여부를 결정합니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>누가 승인할지 선택</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>기본적으로 채팅에서 선택한 어시스턴트를 사용합니다. '시스템 어시스턴트' 설정에서 별도로 지정할 수도 있습니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>작업 내용을 고려하여 판단</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>승인은 대화 맥락과 작업 내용을 사용합니다. 설정에서 파일 읽기를 허용하면 파일 내용도 읽을 수 있습니다. 이러한 내용은 선택한 승인 도우미에게 전송되며, 작업 중 민감한 정보가 포함될 수 있습니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>고위험 작업 거부</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>민감한 데이터 유출 등 고위험으로 판단되는 작업은, 당신이 승인하더라도 거부됩니다. 승인 거부 또는 실패 시 해당 작업은 계속 진행되지 않으며, 이유는 현재 도우미에게 피드백됩니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>개별 승인 도우미를 지정할 경우, 승인 내용은 해당 도우미가 사용하는 서비스로 처리됩니다. AI 승인은 여전히 오판할 수 있으며, 언제든지 모드를 전환할 수 있습니다.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>승인 도와주기 활성화</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>완전 접근 권한을 활성화하시겠습니까?</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere는 승인 없이 활성화된 도구를 사용하여 작업을 수행할 수 있으며, 이는 애플리케이션이 가진 접근 권한에 따라 달라집니다. 포함되는 내용은:</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>파일 및 폴더</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>파일을 읽고, 생성하고, 수정하고, 업로드하거나 삭제합니다.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>터미널 명령</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>허용된 범위 내에서 명령을 실행하고, 소프트웨어를 설치하거나 시스템 설정을 변경합니다.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>인터넷 및 연결된 도구</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>웹사이트에 접근하고, 데이터를 전송하며, 활성화된 플러그인 및 MCP 연결을 사용합니다.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>이로 인해 데이터 손실, 유출 또는 프롬프트 주입 등의 위험이 발생할 수 있습니다. 언제든지 모드를 전환할 수 있습니다.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>완전 접근 권한 활성화</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>자동 승인이 실패했습니다: {0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>서비스에서 요청한 리소스에 대한 접근을 거부했습니다.</value>
     </data>
@@ -4112,49 +4214,151 @@
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>서비스의 콘텐츠 정책에 따라 이 요청 또는 응답이 차단되었습니다.</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>요청 재시도 횟수</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>복구 가능한 오류의 최대 재시도 횟수입니다. 0은 비활성화하고 -1은 중지할 때까지 재시도합니다.</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>재시도 중 {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>재시도 중 {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>중지됨</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>오류 세부 정보</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>세부 정보 복사</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>프록시 서버가 연결 수립을 거부했습니다. 프록시 설정과 인증 정보를 확인하세요.</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>현재 어시스턴트는 도구 호출을 지원하지 않습니다. 설정을 확인하거나 다른 어시스턴트로 변경하세요.</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>서비스에서 선택한 어시스턴트를 사용할 수 없습니다. 어시스턴트 설정과 접근 권한을 확인하세요.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>인증에 실패했습니다. 인증 설정을 확인하거나 다시 로그인하세요.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>API 키가 유효하지 않거나 만료되었습니다. 서비스의 API 키를 확인하고 업데이트하세요.</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>서비스가 유효하지 않은 내용을 반환하여 요청을 완료할 수 없습니다.</value>
-  </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-    <value></value>
-  </data>
-  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-    <value>기본적으로 채팅에서 선택한 어시스턴트를 사용합니다. '시스템 어시스턴트' 설정에서 별도로 지정할 수도 있습니다.</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>요청 재시도 횟수</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>복구 가능한 오류의 최대 재시도 횟수입니다. 0은 비활성화하고 -1은 중지할 때까지 재시도합니다.</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>재시도 중 {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>재시도 중 {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>중지됨</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>오류 세부 정보</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>세부 정보 복사</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>프록시 서버가 연결 수립을 거부했습니다. 프록시 설정과 인증 정보를 확인하세요.</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>현재 어시스턴트는 도구 호출을 지원하지 않습니다. 설정을 확인하거나 다른 어시스턴트로 변경하세요.</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>서비스에서 선택한 어시스턴트를 사용할 수 없습니다. 어시스턴트 설정과 접근 권한을 확인하세요.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>인증에 실패했습니다. 인증 설정을 확인하거나 다시 로그인하세요.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>API 키가 유효하지 않거나 만료되었습니다. 서비스의 API 키를 확인하고 업데이트하세요.</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>서비스가 유효하지 않은 내용을 반환하여 요청을 완료할 수 없습니다.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>응답이 생성 길이 제한에 도달하여 완전히 생성되지 않았습니다.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>응답이 생성 과정에서 컨텍스트 창 한도에 도달하여 완전히 생성되지 않았습니다.</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>서비스가 응답을 중단했거나 응답이 완료되지 않았습니다.</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>서비스가 생성을 일시 중지했으며, 현재 지원되지 않는 계속 방식이 필요합니다.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>서비스가 반복 제한으로 인해 응답을 중단했습니다.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>서비스가 해당 언어를 지원하지 않아 응답을 중단했습니다.</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>진단 정보</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>서비스에서 반환된 메시지</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>기술 세부정보</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>오류 범주</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP 상태</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>게이트웨이 HTTP 상태</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>서비스 코드</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>서비스 유형</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>어시스턴트 API 식별자</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>요청 ID</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>거부된 매개변수</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>종료 이유</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>서비스 원래 종료 이유</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>복구 전략</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>분류 규칙</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>증거 출처</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>서비스에서 제안하는 재시도 대기 시간</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>타임아웃 단계</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>소켓 오류</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>연결 오류 코드</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>원본 응답 내용</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>예외 유형</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>예외 메시지</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>호출 스택</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>진단 내용이 잘림</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>복사 실패</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>승인 도우미 파일 읽기 허용</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>승인 도우미가 본래 파일 내용을 읽어 판단을 돕습니다. 예를 들어 실행할 스크립트를 확인하는 경우입니다. 읽은 내용은 선택한 승인 도우미에게 전송되며, 민감한 정보가 포함될 수 있습니다. 비활성화 시 대화 및 작업 정보만으로 승인합니다.</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>요청이 너무 잦습니다. 서비스에서 {0} 초 후에 다시 시도할 것을 권장합니다.</value>
+    </data>
 </root>
