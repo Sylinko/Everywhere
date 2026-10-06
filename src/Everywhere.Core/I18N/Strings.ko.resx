@@ -2429,7 +2429,7 @@
         <value>시스템 어시스턴트</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>제목 요약, 컨텍스트 압축 등을 위한 Everywhere에 필요한 주요 어시스턴트를 구성합니다. 구성하지 않으면 Everywhere는 현재 최상의 모델을 사용합니다.</value>
+        <value>제목 요약, 도구 승인 등에 사용되는 Everywhere에 필요한 주요 어시스턴트를 구성합니다.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>언어, 테마, 글꼴 크기 등과 같이 Everywhere가 인터페이스 내용을 표시하는 방식을 구성합니다.</value>
@@ -3023,7 +3023,7 @@
         <value>기본 서브 어시스턴트</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>주 어시스턴트가 필요에 따라 호출하는 기본 어시스턴트입니다. 주 어시스턴트가 &quot;새 어시스턴트 할당&quot; 도구를 통해 일반 작업을 위임할 때, 기본적으로 독립적인 맥락에서 이를 처리하고 결과를 반환합니다. &quot;자동 선택&quot;은 주 어시스턴트와 동일한 서브 어시스턴트를 사용함을 의미합니다.</value>
+        <value>채팅에서 선택한 어시스턴트가 "새 어시스턴트 할당" 도구를 통해 일상적인 작업을 위임하면, 기본 하위 에이전트가 독립적인 컨텍스트에서 이를 처리하고 결과를 반환합니다. "자동 선택"은 채팅에서 선택한 어시스턴트를 사용합니다.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 키 (선택 사항)</value>
@@ -4151,22 +4151,10 @@
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>서비스가 유효하지 않은 내용을 반환하여 요청을 완료할 수 없습니다.</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>기본적으로 채팅에서 선택한 어시스턴트를 사용합니다. '시스템 어시스턴트' 설정에서 별도로 지정할 수도 있습니다.</value>
   </data>
 </root>

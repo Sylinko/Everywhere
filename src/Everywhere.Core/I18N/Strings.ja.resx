@@ -2429,7 +2429,7 @@
         <value>システムアシスタント</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>タイトルの要約、コンテキストの圧縮などに必要なEverywhereの主要アシスタントを設定します。設定しない場合、Everywhereは現在の最良モデルを必要なアシスタントとして使用します。</value>
+        <value>タイトルの要約、ツールの承認などに使用されるEverywhereに必要な主要アシスタントを設定します。</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>言語、テーマ、フォントサイズなど、Everywhereがインターフェースの内容を表示する方法を設定します。</value>
@@ -3023,7 +3023,7 @@
         <value>デフォルトサブアシスタント</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>主アシスタントが必要に応じて呼び出すデフォルトのアシスタントです。主アシスタントが「新しいアシスタントを割り当てる」ツールを使って一般的なタスクを委任する際、独立したコンテキストで処理し結果を返します。「自動選択」は主アシスタントと同じサブアシスタントを使用することを意味します。</value>
+        <value>チャットで選択されたアシスタントが「新しいアシスタントを割り当てる」ツールでルーティンタスクを委任すると、デフォルトのサブエージェントが独立したコンテキストで処理し、結果を返します。「自動選択」はチャットで選択されたアシスタントを使用します。</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>APIキー（任意）</value>
@@ -4151,22 +4151,10 @@
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>サービスから無効な内容が返されたため、リクエストを完了できませんでした。</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>既定では、チャットで選択したアシスタントを使用します。「システムアシスタント」設定で個別に指定することもできます。</value>
   </data>
 </root>

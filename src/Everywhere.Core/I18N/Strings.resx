@@ -946,7 +946,7 @@ My intelligence is powered by large language models, and I need your help to con
         <value>The service reports insufficient balance or an exhausted usage quota.</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>The service is limiting requests. Try again later.</value>
+        <value>Too many requests. Please try again later.</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>Service endpoint is not reachable. Please check your network connection.</value>
@@ -2429,7 +2429,7 @@ Use scroll wheel or number keys to switch selection mode</value>
         <value>System Assistant</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>Configure the key assistant required for Everywhere, used for title summarization, context compression, etc. If not configured, Everywhere will use the current best model as the required assistant.</value>
+        <value>Configure the key assistant required by Everywhere, used for title summarization, tool approval, etc.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>Configure how Everywhere displays interface content, such as language, theme, font size, etc.</value>
@@ -3023,7 +3023,7 @@ Release date: {2}</value>
         <value>Default Subagent</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>The default assistant called upon by the main assistant as needed. When the main assistant assigns routine tasks through the 'Assign New Assistant' tool, it is handled and results are returned by this assistant in an independent context. 'Auto-select' means using the same subagent as the main assistant.</value>
+        <value>When the assistant selected in the chat delegates routine tasks through the "Assign New Assistant" tool, the default subagent handles them in an independent context and returns the results. "Auto-select" uses the assistant selected in the chat.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API Key (Optional)</value>
@@ -4104,7 +4104,7 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Tool approval</value>
     </data>
     <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-        <value>Choose the assistant that reviews tool approvals. AutoSelect uses the assistant executing the task.</value>
+        <value></value>
     </data>
     <data name="ToolApproval_Reviewing" xml:space="preserve">
         <value>Reviewing approval…</value>
@@ -4149,13 +4149,13 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Choose who reviews</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>AutoSelect uses the assistant executing the task. You can also choose one in System Assistant settings.</value>
+        <value>By default, the assistant selected in the chat is used; you can also specify one separately in the "System Assistant" settings.</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
         <value>Review in the context of your task</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
-        <value>Review uses conversation context and operation details and may read relevant files. These inputs are sent to the selected approval assistant and may contain sensitive task information.</value>
+        <value>Review uses conversation context and operation details. If file reading is enabled in settings, it may also read files. These inputs are sent to the selected approval assistant and may contain sensitive task information.</value>
     </data>
     <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
         <value>Decline high-risk operations</value>
@@ -4352,4 +4352,13 @@ Delete &quot;{1}&quot; permanently?</value>
   <data name="Common_CopyFailed" xml:space="preserve">
     <value>Copy failed</value>
   </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>Allow approval assistant to read files</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>The approval assistant can read local files to assess operations, such as inspecting a script before execution. Read content is sent to the selected approval assistant and may contain sensitive information. When disabled, approval uses only conversation and operation information.</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>Too many requests. The service recommends waiting {0} seconds before trying again.</value>
+    </data>
 </root>

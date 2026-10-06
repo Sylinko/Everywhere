@@ -2429,7 +2429,7 @@ Rotella o tasti numerici per cambiare modalità di selezione</value>
         <value>Assistente di Sistema</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>Configura l'assistente chiave necessario per Everywhere, per riassunti di titoli, compressione del contesto, ecc. Se non configurato, Everywhere utilizzerà il miglior modello attuale come assistente richiesto.</value>
+        <value>Configura l'assistente chiave richiesto per Everywhere, utilizzato per il riepilogo dei titoli, l'approvazione degli strumenti, ecc.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>Configura come Everywhere visualizza i contenuti dell'interfaccia, come lingua, tema, dimensione del carattere, ecc.</value>
@@ -3023,7 +3023,7 @@ Data di rilascio: {2}</value>
         <value>Sottogruppo Predefinito</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Assistente predefinito chiamato dal principale assistente all'occorrenza. Quando il principale assistente delega compiti generali tramite lo strumento &quot;Assegna Nuovo Assistente&quot;, questo gestisce e restituisce i risultati in un contesto indipendente. &quot;Selezione Automatica&quot; indica l'uso dello stesso sottogruppo del principale assistente.</value>
+        <value>Quando l'assistente selezionato nella chat delega attività di routine tramite lo strumento "Assegna nuovo assistente", il subagente predefinito le gestisce in un contesto indipendente e restituisce i risultati. "Selezione automatica" usa l'assistente selezionato nella chat.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Chiave API (opzionale)</value>
@@ -4151,22 +4151,10 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>Il servizio ha restituito contenuti non validi e non è stato possibile completare la richiesta.</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>Per impostazione predefinita, viene usato l’assistente selezionato nella chat; puoi anche specificarne uno separatamente nelle impostazioni «Assistente di sistema».</value>
   </data>
 </root>

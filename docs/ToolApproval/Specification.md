@@ -70,7 +70,7 @@ Each required consent is reviewed independently. An outer allow does not authori
 
 The private nested `ToolApprovalReviewer` in [ChatService.ToolApproval.cs](../../src/Everywhere.Core/Chat/ChatService.ToolApproval.cs) owns one consent review: private history, kernel, streaming requests, statistics, and bounded dispatch loop. It directly reuses the owner's helpers, without a request delegate or general agent executor.
 
-Its kernel registers only `read_file` and `submit_approval`. Review does not call normal `GenerateAsync`, construct a subagent ChatContext, or load executing-assistant plugins/MCP servers. The executing prompt is supplied as constraints; the built-in reviewer system prompt governs review.
+Its kernel always registers `submit_approval` and registers `read_file` only when approval file access is enabled. Review does not call normal `GenerateAsync`, construct a subagent ChatContext, or load executing-assistant plugins/MCP servers. The executing prompt is supplied as constraints; the built-in reviewer system prompt governs review.
 
 Private messages, reasoning, and file results are transient and excluded from main-chat history. Only outcome and concise explanation return through normal tool results. Owning-operation cancellation propagates as cancellation, not policy denial.
 
@@ -126,6 +126,8 @@ The first successfully executed submission returns its typed `ToolApprovalResult
 | --- | --- |
 | `read_file` | `path`, `offset = 1`, `limit = 2000`; bounded evidence and continuation metadata. |
 | `submit_approval` | Exactly `allow` or `deny`, plus a nonempty concise `reason`; typed outcome. |
+
+`SystemAssistantSettings.AllowApprovalFileReads` is an independent, default-off permission for approval file access. Each review captures it when starting. When disabled, its kernel exposes only `submit_approval`; when enabled, `read_file` is also registered independently of the executing task's filtered tools. It can read resources accessible to the application, without operation-specific path authorization. File excerpts are sent to the selected approval assistant. The system and correction prompts do not advertise file reading; the read tool description supplies its usage and budget rules.
 
 ReviewTools owns the cumulative read counter and response marker. The first valid bound read consumes a batch; subsequent reads in that response share it. Parallel calls count once, though execution is currently sequential. Future concurrent dispatch must retain this boundary.
 

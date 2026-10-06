@@ -1,24 +1,21 @@
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
-using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Skills;
 using ShadUI;
-using ZLinq;
-using AbstractionsLocaleKey = Everywhere.Abstractions.I18N.LocaleKey;
 
 namespace Everywhere.ViewModels;
 
 public sealed partial class SkillPageViewModel : BusyViewModelBase
 {
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CopyMarkdownCommand))]
     public partial SkillDescriptorWrapper? SelectedSkillWrapper { get; set; }
 
     public string? SearchText
@@ -153,44 +150,19 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         }
     }
 
-    [RelayCommand]
-    private async Task CopySkillIdAsync()
-    {
-        if (SelectedSkillWrapper is null) return;
-        await CopyTextAsync(SelectedSkillWrapper.Id);
-    }
+    private bool CanCopyMarkdown => SelectedSkillWrapper?.Skill.MarkdownContent is { Length: > 0 };
 
-    [RelayCommand]
-    private async Task CopySkillFilePathAsync()
-    {
-        if (SelectedSkillWrapper is null) return;
-        await CopyTextAsync(SelectedSkillWrapper.Skill.FilePath);
-    }
-
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanCopyMarkdown))]
     private async Task CopyMarkdownAsync()
     {
         if (SelectedSkillWrapper?.Skill.MarkdownContent is not { Length: > 0 } markdown) return;
-        await CopyTextAsync(markdown);
+        await App.Clipboard.SetTextAsync(markdown);
     }
 
     protected override void OnIsBusyChanged()
     {
         base.OnIsBusyChanged();
         RefreshCommand.NotifyCanExecuteChanged();
-    }
-
-    private async static Task CopyTextAsync(string text)
-    {
-        try
-        {
-            await App.Clipboard.SetTextAsync(text);
-            ToastManager.Success(DynamicLocaleKey.Resolve(AbstractionsLocaleKey.Common_Copied));
-        }
-        catch (Exception ex)
-        {
-            ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
-        }
     }
 
     private void HandleSourceGroupsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

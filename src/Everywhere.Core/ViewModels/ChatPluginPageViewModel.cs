@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -390,16 +391,16 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             cancellationToken: cancellationToken);
     }
 
-    [RelayCommand]
+    private static bool CanCopyLogs([NotNullWhen(true)] IReadOnlyBindableList<McpChatPlugin.LogEntry>? logEntries)
+    {
+        return logEntries is { Count: > 0 };
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCopyLogs))]
     private async Task CopyLogsAsync(IReadOnlyBindableList<McpChatPlugin.LogEntry>? logEntries)
     {
-        if (logEntries is not { Count: > 0 }) return;
-
+        if (!CanCopyLogs(logEntries)) return;
         await App.Clipboard.SetTextAsync(string.Join('\n', logEntries));
-        ToastHost
-            .CreateToast("Logs copied to clipboard.")
-            .OnBottomRight()
-            .ShowSuccess();
     }
 
     protected override void OnIsBusyChanged()

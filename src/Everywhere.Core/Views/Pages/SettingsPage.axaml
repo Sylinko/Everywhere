@@ -30,7 +30,7 @@
               shadui:ButtonAssist.PressedBackground="{DynamicResource LightCardBackgroundColor}"
               Command="{Binding $parent[v:MainView].ViewModel.NavigateToCommand}"
               CommandParameter="{Binding Page}"
-              CornerRadius="{DynamicResource 2XlCornerRadius}">
+              CornerRadius="{DynamicResource 3XlCornerRadius}">
               <Grid
                 ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18"
                 RowDefinitions="Auto,*" RowSpacing="4">

@@ -11,7 +11,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_AuthenticationFailure;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_AuthenticationFailure);
 
         /// <summary>Represents InvalidApiKey failures within AuthenticationFailure.</summary>
         public sealed class InvalidApiKey(
@@ -20,7 +20,8 @@ public abstract partial class HandledChatException
         ) : AuthenticationFailure(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_AuthenticationFailure_InvalidApiKey;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey =>
+                new DynamicLocaleKey(LocaleKey.HandledChatException_AuthenticationFailure_InvalidApiKey);
         }
 
         /// <summary>Represents LoginRequired failures within AuthenticationFailure.</summary>
@@ -30,7 +31,7 @@ public abstract partial class HandledChatException
         ) : AuthenticationFailure(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledSystemException_UserNotLogin;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledSystemException_UserNotLogin);
         }
     }
 
@@ -41,7 +42,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_PermissionDenied;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_PermissionDenied);
 
         /// <summary>Represents RegionRestricted failures within PermissionDenied.</summary>
         public sealed class RegionRestricted(
@@ -50,7 +51,7 @@ public abstract partial class HandledChatException
         ) : PermissionDenied(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_RegionNotSupport;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_RegionNotSupport);
         }
     }
 
@@ -62,7 +63,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_Timeout;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_Timeout);
 
         /// <inheritdoc />
         public override ChatExceptionRecovery Recovery { get; } = new ChatExceptionRecovery.Retry(retryAfter);
@@ -76,7 +77,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_ServiceUnavailable;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_ServiceUnavailable);
 
         /// <inheritdoc />
         public override ChatExceptionRecovery Recovery { get; } = new ChatExceptionRecovery.Retry(retryAfter);
@@ -90,7 +91,12 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_RateLimit;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey =>
+            retryAfter is { Ticks: > 0 } delay ?
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.HandledChatException_RateLimit_RetryAfter,
+                    new DirectLocaleKey(Math.Ceiling(delay.TotalSeconds))) :
+                new DynamicLocaleKey(LocaleKey.HandledChatException_RateLimit);
 
         /// <inheritdoc />
         public override ChatExceptionRecovery Recovery { get; } = new ChatExceptionRecovery.Retry(retryAfter);
@@ -103,7 +109,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_QuotaExceeded;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_QuotaExceeded);
     }
 
     /// <summary>Represents ContentBlocked failures.</summary>
@@ -113,7 +119,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_ContentBlocked;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_ContentBlocked);
     }
 
     /// <summary>Represents Canceled failures.</summary>
@@ -123,7 +129,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_OperationCanceled;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_OperationCanceled);
 
         /// <summary>Represents ByCaller failures within Canceled.</summary>
         public sealed class ByCaller(
@@ -132,7 +138,7 @@ public abstract partial class HandledChatException
         ) : Canceled(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_OperationCanceled;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_OperationCanceled);
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.Canceled();
@@ -146,7 +152,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_Unknown;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_Unknown);
 
         /// <inheritdoc />
         public override bool IsExpected => false;

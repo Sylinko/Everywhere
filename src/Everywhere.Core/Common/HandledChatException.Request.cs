@@ -11,7 +11,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidRequest;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidRequest);
 
         /// <summary>Represents ContextLengthExceeded failures within InvalidRequest.</summary>
         public sealed class ContextLengthExceeded(
@@ -20,7 +20,7 @@ public abstract partial class HandledChatException
         ) : InvalidRequest(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_ContextLengthExceeded;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_ContextLengthExceeded);
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.RecoverContext();
@@ -33,7 +33,7 @@ public abstract partial class HandledChatException
         ) : InvalidRequest(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidThoughtSignature;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidThoughtSignature);
         }
 
         /// <summary>Represents InvalidReasoningContent failures within InvalidRequest.</summary>
@@ -43,7 +43,7 @@ public abstract partial class HandledChatException
         ) : InvalidRequest(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidReasoningContent;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidReasoningContent);
         }
     }
 
@@ -54,7 +54,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_FeatureNotSupport;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_FeatureNotSupport);
 
         /// <summary>Represents Tools failures within UnsupportedCapability.</summary>
         public sealed class Tools(
@@ -63,7 +63,7 @@ public abstract partial class HandledChatException
         ) : UnsupportedCapability(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_UnsupportedCapability_Tools;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_UnsupportedCapability_Tools);
         }
 
         /// <summary>Represents Images failures within UnsupportedCapability.</summary>
@@ -73,7 +73,7 @@ public abstract partial class HandledChatException
         ) : UnsupportedCapability(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_ImageNotSupport;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_ImageNotSupport);
         }
     }
 }

@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Messages;
 using Everywhere.Skills;
 using Everywhere.Views.Pages;
@@ -71,6 +70,7 @@ public sealed partial class PromptPageViewModel(
     [NotifyPropertyChangedFor(nameof(CanDeleteSelectedPrompt))]
     [NotifyCanExecuteChangedFor(nameof(EditSelectedPromptCommand))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedPromptCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CopyRenderedPreviewCommand))]
     public partial PromptItem? SelectedPromptItem { get; set; }
 
     [ObservableProperty]
@@ -78,6 +78,7 @@ public sealed partial class PromptPageViewModel(
         new FormattedDynamicLocaleKey(LocaleKey.PromptPage_CountText, new DirectLocaleKey(0));
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CopyRenderedPreviewCommand))]
     public partial string RenderedPreview { get; private set; } = string.Empty;
 
     [ObservableProperty]
@@ -230,25 +231,13 @@ public sealed partial class PromptPageViewModel(
             _ => LocaleKey.PromptPage_DeletePromptUsedByAssistants_Dialog_Message.I18N().Format(referenceCount, prompt.DisplayName)
         };
 
-    [RelayCommand]
+    private bool CanCopyRenderedPreview => SelectedPromptItem is not null && !string.IsNullOrEmpty(RenderedPreview);
+
+    [RelayCommand(CanExecute = nameof(CanCopyRenderedPreview))]
     private async Task CopyRenderedPreviewAsync()
     {
-        if (SelectedPromptItem is null || string.IsNullOrEmpty(RenderedPreview)) return;
-
-        try
-        {
-            await App.Clipboard.SetTextAsync(RenderedPreview);
-            ShowCopiedToast();
-        }
-        catch (Exception ex)
-        {
-            ToastHost
-                .CreateToast(
-                    LocaleKey.PromptPage_CopyFailedToast_Title.I18N(),
-                    HandledSystemException.Handle(ex).GetFriendlyMessage())
-                .DismissOnClick()
-                .ShowError();
-        }
+        if (!CanCopyRenderedPreview) return;
+        await App.Clipboard.SetTextAsync(RenderedPreview);
     }
 
     [RelayCommand]
@@ -444,14 +433,6 @@ public sealed partial class PromptPageViewModel(
         base.OnIsBusyChanged();
         OnPropertyChanged(nameof(CanDeleteSelectedPrompt));
         DeleteSelectedPromptCommand.NotifyCanExecuteChanged();
-    }
-
-    private void ShowCopiedToast()
-    {
-        ToastHost
-            .CreateToast(LocaleKey.Common_Copied.I18N())
-            .DismissOnClick()
-            .ShowSuccess();
     }
 
     /// <summary>

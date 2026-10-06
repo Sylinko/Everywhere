@@ -39,7 +39,7 @@ public static partial class ChatExceptionNormalizer
         var original = evidence.OriginalException;
         HandledChatException? error = value switch
         {
-            "length" or "max_tokens" or "max_output_tokens" or "maxoutputtokens" =>
+            "length" or "model_length" or "max_tokens" or "max_output_tokens" or "maxoutputtokens" =>
                 new HandledChatException.GenerationLimitExceeded(original),
             "model_context_window_exceeded" =>
                 new HandledChatException.GenerationLimitExceeded.ContextWindowExceeded(original),
@@ -65,6 +65,8 @@ public static partial class ChatExceptionNormalizer
             "other" or "image_other" when mixin?.Configuration.Schema == ModelProviderSchema.Google =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
             "aborted" =>
+                new HandledChatException.InvalidResponse.Incomplete(original),
+            "error" when mixin?.Configuration.Schema == ModelProviderSchema.Mistral =>
                 new HandledChatException.InvalidResponse.Incomplete(original),
             _ => hasExplicitFailure ?
                 new HandledChatException.InvalidResponse.Incomplete(original) :
