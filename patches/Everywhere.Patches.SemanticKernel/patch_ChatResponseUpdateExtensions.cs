@@ -95,7 +95,9 @@ internal static class patch_ChatResponseUpdateExtensions
 
             // Everywhere: carry per-item metadata through the conversion.
             resultContent.Metadata = Union(metadata, item.AdditionalProperties);
-            resultContent.InnerContent = item.RawRepresentation;
+            // A FunctionCallContent is an SDK-assembled call, unlike an incremental argument
+            // update. Retain it as explicit evidence for terminal tools such as approval.
+            resultContent.InnerContent = item is FunctionCallContent ? item : item.RawRepresentation;
             resultContent.ModelId = update.ModelId;
             content.Items.Add(resultContent);
         }

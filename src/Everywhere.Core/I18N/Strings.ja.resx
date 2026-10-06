@@ -4133,9 +4133,6 @@
   <data name="ChatRequest_CopyDetails" xml:space="preserve">
     <value>詳細をコピー</value>
   </data>
-  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
-    <value>アシスタントは応答を途中で打ち切りました。</value>
-  </data>
   <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
     <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
   </data>
@@ -4153,5 +4150,23 @@
   </data>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>サービスから無効な内容が返されたため、リクエストを完了できませんでした。</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+    <value>The reply reached a generation length limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+    <value>The reply reached the context window limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+    <value>The service interrupted the reply or reported an incomplete response.</value>
+  </data>
+  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+    <value>The service paused generation and requires a continuation that is not supported.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+    <value>The service stopped the reply because of recitation restrictions.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+    <value>The service stopped the reply because the language is unsupported.</value>
   </data>
 </root>

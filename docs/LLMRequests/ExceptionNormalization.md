@@ -63,8 +63,28 @@ Recovery is an abstract record with sealed nested Stop, Retry, RecoverContext an
 
 The request executor reads the concrete failure's `Recovery` and obtains the server delay from `Retry.RetryAfter`. Evidence retains the original delay for diagnostics. Telemetry and the details view identify the concrete CLR category. Persistent messages retain localized error keys while exception objects remain runtime-only, so this hierarchy change requires no database migration.
 
+## Generation termination
+
+The request boundary classifies explicit termination evidence from SK metadata and available raw SDK objects. Diagnostics retain normalized and provider finish reasons separately. Known OpenAI SDK enum-rejection exceptions use their structured ActualValue; arbitrary exception text is not interpreted as a finish reason. No raw SSE parser or success whitelist is added.
+
+| Evidence | Concrete failure and recovery |
+| --- | --- |
+| length / max_tokens / max_output_tokens / MAX_TOKENS | GenerationLimitExceeded; Stop |
+| Anthropic model_context_window_exceeded | GenerationLimitExceeded.ContextWindowExceeded; Stop, not input-context compression |
+| content_filter / refusal / safety and documented policy blocks | ContentBlocked; Stop |
+| recitation / language | ContentBlocked with a reason-specific localized message; Stop |
+| insufficient_system_resource | ServiceUnavailable; Retry |
+| pause_turn | InvalidResponse.ContinuationRequired; Stop: continuation is not implemented |
+| malformed function/response or unexpected/excessive tool calls | InvalidResponse; Stop |
+| missing_thought_signature | InvalidRequest.InvalidThoughtSignature; Stop |
+| no_image | InvalidResponse.EmptyResponse; Stop |
+| Google other/image_other, aborted, or explicit failed/incomplete status without a recognized reason | InvalidResponse.Incomplete; Stop |
+| Missing or unfamiliar reason alone | No failure; retain compatible behavior |
+
+Unsuccessful termination follows AttemptFailed and ChatRequestException, preserving reported usage and partial output. The ordinary chat error row identifies the concrete failure; consumers cannot accidentally ignore an incomplete-output flag. Successful enumeration exhaustion closes successful accounting without a Completed update. Approval may finish earlier when submit_approval successfully executes; later stream events are outside that business operation.
+
 ## Verification boundary
 
 Existing real-HTTP SDK, local normalization and sanitized Sentry cases are migrated to concrete type assertions. Fixture expectedType values name nested exception types; these test-data identifiers are not production classification codes. Parent assertions accept valid refinements.
 
-Earlier successful test/build totals do not apply to this rewrite. Verification is incremental; implementation stops when a new error or unsettled architectural decision is encountered. No additional SDK patch, timeout mechanism, storage migration or UI layout change is part of this rewrite.
+The termination refactor passed 58 existing real-HTTP request/SDK boundary tests and 30 focused Core request-recovery, approval, and tool-assembly tests, with zero failures or skips. Existing mock payloads were reused; no new fixture data was introduced. Live-provider E2E and native error-dialog interactions were not run. No timeout mechanism, storage migration or UI layout change is part of this refactor.

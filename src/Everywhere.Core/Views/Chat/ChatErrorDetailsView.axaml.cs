@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
-using Everywhere.AI;
 
 namespace Everywhere.Views;
 
@@ -58,6 +57,8 @@ public sealed partial class ChatErrorDetailsView : UserControl
                 {
                     Append($"HTTP: {(int?)evidence.StatusCode}; gateway: {(int?)evidence.GatewayStatusCode}; code: {evidence.ErrorCode}; type: {evidence.ErrorType}");
                     Append($"Request ID: {evidence.RequestId}; retry-after: {evidence.RetryAfter}; timeout: {evidence.TimeoutPhase}");
+                    if (evidence.FinishReason is not null || evidence.ProviderFinishReason is not null)
+                        Append($"Finish reason: {evidence.FinishReason}; provider finish reason: {evidence.ProviderFinishReason}");
                     Append(evidence.ResponseBody);
                 }
             }

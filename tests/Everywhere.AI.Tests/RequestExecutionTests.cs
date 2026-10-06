@@ -31,7 +31,7 @@ public sealed class RequestExecutionTests
             Assert.That(requests.Select(request => request.GetProperty("body").GetRawText()), Is.All.EqualTo(requests[0].GetProperty("body").GetRawText()));
             Assert.That(events.OfType<ChatRequestUpdate.AttemptStarted>().Select(start => start.AttemptNumber), Is.EqualTo(new[] { 1, 2, 3 }));
             Assert.That(events.OfType<ChatRequestUpdate.AttemptFailed>().ToArray(), Has.Length.EqualTo(2));
-            Assert.That(events.Last(), Is.TypeOf<ChatRequestUpdate.Completed>());
+            Assert.That(events.Last(), Is.TypeOf<ChatRequestUpdate.Content>());
             Assert.That(history, Has.Count.EqualTo(1));
         });
     }
@@ -150,15 +150,16 @@ public sealed class RequestExecutionTests
     [TestCase(Provider.Anthropic, "max_tokens")]
     [TestCase(Provider.Gemini, "length")]
     [TestCase(Provider.Mistral, "length")]
-    public async Task StreamRequest_WhenOutputLimitIsExplicit_CompletesWithoutTransportReplay(Provider provider, string stopReason)
+    public async Task StreamRequest_WhenOutputLimitIsExplicit_FailsWithoutTransportReplay(Provider provider, string stopReason)
     {
         await using var server = await MockServerSession.ConnectAsync();
         await server.CompleteAsync(provider, new { text = "partial", streaming = true, stopReason });
         using var mixin = CreateMixin(provider, server.CreateClient(), 5);
-        var completion = default(ChatResponseCompletion);
-        await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings()))
-            if (update is ChatRequestUpdate.Completed completed) completion = completed.Completion;
-        Assert.That(completion?.HasIncompleteOutput, Is.True);
+        var error = Assert.ThrowsAsync<ChatRequestException>(async () =>
+        {
+            await foreach (var update in mixin.StreamRequestAsync([new(AuthorRole.User, "hello")], mixin.GetPromptExecutionSettings())) { }
+        });
+        Assert.That(error?.FinalFailure, Is.InstanceOf<HandledChatException.GenerationLimitExceeded>());
         Assert.That(await server.RequestsAsync(), Has.Length.EqualTo(1));
     }
 

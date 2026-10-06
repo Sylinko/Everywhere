@@ -4133,9 +4133,6 @@
   <data name="ChatRequest_CopyDetails" xml:space="preserve">
     <value>Копировать подробности</value>
   </data>
-  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
-    <value>Помощник преждевременно завершил ответ.</value>
-  </data>
   <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
     <value>Прокси-сервер отказался устанавливать соединение. Проверьте настройки прокси и данные аутентификации.</value>
   </data>
@@ -4153,5 +4150,23 @@
   </data>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>Сервис вернул недопустимое содержимое, поэтому запрос не удалось завершить.</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+    <value>The reply reached a generation length limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+    <value>The reply reached the context window limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+    <value>The service interrupted the reply or reported an incomplete response.</value>
+  </data>
+  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+    <value>The service paused generation and requires a continuation that is not supported.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+    <value>The service stopped the reply because of recitation restrictions.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+    <value>The service stopped the reply because the language is unsupported.</value>
   </data>
 </root>

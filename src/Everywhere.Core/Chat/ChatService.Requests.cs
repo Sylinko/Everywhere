@@ -1,6 +1,7 @@
 using System.Text;
 using Avalonia.Threading;
 using Everywhere.AI;
+using Everywhere.Common;
 using Everywhere.Statistics;
 using Lucide.Avalonia;
 using Microsoft.SemanticKernel;
@@ -31,7 +32,8 @@ public sealed partial class ChatService
         StatisticsModelInvocationPurpose purpose,
         ChatContext? context,
         ChatMessage? message,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ToolApprovalReviewer? approvalReviewer = null)
     {
         var text = new StringBuilder();
         var metadata = new Dictionary<string, object?>();
@@ -46,7 +48,6 @@ public sealed partial class ChatService
             (message as AssistantChatMessage)?.UsageDetails);
 
         var retryActivity = default(IBusyActivity);
-        var completion = new ChatResponseCompletion(null);
         try
         {
             await foreach (var update in mixin.StreamRequestAsync(history, settings, kernel, cancellationToken: cancellationToken))
@@ -84,6 +85,14 @@ public sealed partial class ChatService
                                     break;
                             }
                         }
+                        // Only SDK-completed calls can end a review before stream exhaustion.
+                        // Argument fragments that merely parse as JSON are not completion evidence.
+                        if (approvalReviewer is not null && kernel is not null &&
+                            await approvalReviewer.TrySubmitAsync(content.Value, calls, kernel, cancellationToken))
+                        {
+                            await statistics.CompleteAsync();
+                            return new AssembledResponse(string.Empty, [], new ChatMessageContent(AuthorRole.Assistant, (string?)null));
+                        }
                         break;
                     }
                     case ChatRequestUpdate.AttemptFailed { RetryDelay: not null } failed:
@@ -98,13 +107,9 @@ public sealed partial class ChatService
                         }
                         break;
                     }
-                    case ChatRequestUpdate.Completed completed:
-                    {
-                        completion = completed.Completion;
-                        break;
-                    }
                 }
             }
+            await statistics.CompleteAsync();
         }
         catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
         {
@@ -129,11 +134,11 @@ public sealed partial class ChatService
         var functionCalls = calls.Build();
         if (functionCalls.Count != calls.Count)
         {
-            throw new InvalidOperationException("The response stream contained incomplete tool calls.");
+            throw new HandledChatException.InvalidResponse(new InvalidOperationException("The response stream contained incomplete tool calls."));
         }
 
         foreach (var call in functionCalls) response.Items.Add(call);
-        return new AssembledResponse(text.ToString(), functionCalls, completion, response);
+        return new AssembledResponse(text.ToString(), functionCalls, response);
 
         void AppendSegment(string? value, bool isReasoning, IReadOnlyDictionary<string, object?>? itemMetadata)
         {
@@ -216,11 +221,6 @@ public sealed partial class ChatService
                     await FinishAsync(false, false, failed.Failure.Exception.GetType().FullName);
                     break;
                 }
-                case ChatRequestUpdate.Completed:
-                {
-                    await FinishAsync(true, false, null);
-                    break;
-                }
             }
         }
 
@@ -246,6 +246,8 @@ public sealed partial class ChatService
                 errorType,
                 CancellationToken.None);
         }
+
+        public Task CompleteAsync() => FinishAsync(true, false, null);
 
         public Task CancelAsync() => FinishAsync(false, true, null);
 
@@ -289,6 +291,5 @@ public sealed partial class ChatService
         return activity;
     }
 
-    private sealed record AssembledResponse(
-        string Text, IReadOnlyList<FunctionCallContent> FunctionCalls, ChatResponseCompletion Completion, ChatMessageContent Message);
+    private readonly record struct AssembledResponse(string Text, IReadOnlyList<FunctionCallContent> FunctionCalls, ChatMessageContent Message);
 }
