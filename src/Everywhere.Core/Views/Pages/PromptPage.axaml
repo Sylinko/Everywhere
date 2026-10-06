@@ -1,9 +1,10 @@
 <UserControl
   x:Class="Everywhere.Views.Pages.PromptPage" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:prompts="clr-namespace:Everywhere.AI.Prompts"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
-  x:DataType="vm:PromptPageViewModel" ClipToBounds="False">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:prompts="clr-namespace:Everywhere.AI.Prompts" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self" x:DataType="vm:PromptPageViewModel"
+  ClipToBounds="False">
   <UserControl.Styles>
     <Style Selector="ListBox#PromptListBox">
       <Setter Property="Padding" Value="0"/>
@@ -146,15 +147,17 @@
           shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
           Command="{Binding CopyRenderedPreviewCommand}"
           Content="{I18N {x:Static LocaleKey.Common_Copy}}"
-          CornerRadius="{DynamicResource FullCornerRadius}"
-          ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_CopyRenderedButton_ToolTip}}"/>
+          ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_CopyRenderedButton_ToolTip}}">
+          <Interaction.Behaviors>
+            <in:CopiedButtonBehavior/>
+          </Interaction.Behaviors>
+        </Button>
         <Button
           Classes="Secondary" Grid.Column="2"
           VerticalAlignment="Center"
           shadui:ButtonAssist.Icon="{LucideIconContent Pencil}"
           Command="{Binding EditSelectedPromptCommand}"
           Content="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_Content}}"
-          CornerRadius="{DynamicResource FullCornerRadius}"
           IsEnabled="{Binding CanEditSelectedPrompt}"
           ToolTip.Tip="{I18N {x:Static LocaleKey.PromptPage_EditPromptButton_ToolTip}}"/>
         <Button

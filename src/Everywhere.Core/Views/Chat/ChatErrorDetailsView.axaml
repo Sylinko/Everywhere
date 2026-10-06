@@ -1,22 +1,138 @@
 <UserControl
   x:Class="Everywhere.Views.ChatErrorDetailsView" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="using:Everywhere.Views"
-  MinWidth="400" MaxWidth="900"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
+  MinWidth="400" MaxWidth="760"
   x:DataType="v:ChatErrorDetailsView">
+  <UserControl.Styles>
+    <Style Selector="SelectableTextBlock.Code">
+      <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="shadui|SmoothBorder.DetailCard">
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
+      <Setter Property="Background" Value="{DynamicResource LightCardBackgroundColor}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <ItemsPanelTemplate x:Key="FieldPanel">
+      <StackPanel Spacing="8"/>
+    </ItemsPanelTemplate>
+    <DataTemplate
+      x:Key="DiagnosticFieldTemplate" x:DataType="v:ChatErrorDetailField">
+      <Grid
+        ColumnDefinitions="160,*" ColumnSpacing="12">
+        <TextBlock
+          Classes="Muted"
+          Text="{Binding LabelKey^}"
+          TextWrapping="Wrap"/>
+        <SelectableTextBlock
+          Classes="Code" Grid.Column="1"
+          Text="{Binding Value}"/>
+      </Grid>
+    </DataTemplate>
+    <DataTemplate
+      x:Key="TechnicalFieldTemplate" x:DataType="v:ChatErrorDetailField">
+      <StackPanel Spacing="4">
+        <TextBlock
+          Classes="Muted Caption"
+          Text="{Binding LabelKey^}"
+          TextWrapping="Wrap"/>
+        <SelectableTextBlock
+          Classes="Code"
+          IsVisible="{Binding !IsNotice}"
+          Text="{Binding Value}"/>
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
   <DockPanel
-    Margin="16" VerticalSpacing="12">
+    Margin="16" VerticalSpacing="16">
     <TextBlock
-      DockPanel.Dock="Top" FontWeight="SemiBold"
+      Classes="h2" DockPanel.Dock="Top"
       Text="{I18N {x:Static LocaleKey.ChatRequest_ErrorDetails}}"/>
     <Button
-      DockPanel.Dock="Bottom" HorizontalAlignment="Right"
-      Command="{Binding $parent[v:ChatErrorDetailsView].CopyDetailsCommand}"
-      Content="{I18N {x:Static LocaleKey.ChatRequest_CopyDetails}}"/>
-    <ScrollViewer MaxHeight="500">
-      <SelectableTextBlock
-        FontFamily="monospace"
-        Text="{Binding $parent[v:ChatErrorDetailsView].Details}"
-        TextWrapping="Wrap"/>
+      Classes="Secondary" DockPanel.Dock="Bottom"
+      HorizontalAlignment="Right"
+      shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
+      shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
+      Command="{Binding CopyDetailsCommand}"
+      Content="{I18N {x:Static LocaleKey.ChatRequest_CopyDetails}}">
+      <Interaction.Behaviors>
+        <in:CopiedButtonBehavior/>
+      </Interaction.Behaviors>
+    </Button>
+
+    <ScrollViewer
+      MaxHeight="500" Margin="0,0,-12,0"
+      HorizontalScrollBarVisibility="Disabled">
+      <StackPanel
+        Margin="0,0,12,0" Spacing="16">
+        <SelectableTextBlock
+          FontWeight="SemiBold"
+          Text="{Binding SummaryKey^}"
+          TextWrapping="Wrap"/>
+        <WrapPanel IsVisible="{Binding HasSummaryBadges}">
+          <shadui:SmoothBorder
+            Margin="0,0,8,0" Padding="8,4"
+            Background="{DynamicResource LightCardBackgroundColor}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock
+              Classes="Caption"
+              Text="{Binding Category}"/>
+          </shadui:SmoothBorder>
+          <shadui:SmoothBorder
+            Padding="8,4"
+            Background="{DynamicResource LightCardBackgroundColor}"
+            CornerRadius="{DynamicResource FullCornerRadius}"
+            IsVisible="{Binding HttpStatusKey, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock
+              Classes="Caption"
+              Text="{Binding HttpStatusKey^}"/>
+          </shadui:SmoothBorder>
+        </WrapPanel>
+        <StackPanel
+          IsVisible="{Binding !!DiagnosticFields.Count}"
+          Spacing="8">
+          <TextBlock
+            Classes="h4"
+            Text="{I18N {x:Static LocaleKey.ChatErrorDetails_Diagnostics}}"/>
+          <shadui:SmoothBorder Classes="DetailCard">
+            <ItemsControl
+              ItemTemplate="{StaticResource DiagnosticFieldTemplate}"
+              ItemsPanel="{StaticResource FieldPanel}"
+              ItemsSource="{Binding DiagnosticFields}"/>
+          </shadui:SmoothBorder>
+        </StackPanel>
+        <StackPanel
+          IsVisible="{Binding ServiceMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+          Spacing="8">
+          <TextBlock
+            Classes="h4"
+            Text="{I18N {x:Static LocaleKey.ChatErrorDetails_ServiceMessage}}"/>
+          <shadui:SmoothBorder Classes="DetailCard">
+            <SelectableTextBlock
+              Classes="Code"
+              Text="{Binding ServiceMessage}"/>
+          </shadui:SmoothBorder>
+        </StackPanel>
+        <StackPanel
+          IsVisible="{Binding !!TechnicalFields.Count}"
+          Spacing="8">
+          <TextBlock
+            Classes="h4"
+            Text="{I18N {x:Static LocaleKey.ChatErrorDetails_Technical}}"/>
+          <shadui:SmoothBorder Classes="DetailCard">
+            <ItemsControl
+              ItemTemplate="{StaticResource TechnicalFieldTemplate}"
+              ItemsPanel="{StaticResource FieldPanel}"
+              ItemsSource="{Binding TechnicalFields}"/>
+          </shadui:SmoothBorder>
+        </StackPanel>
+      </StackPanel>
     </ScrollViewer>
   </DockPanel>
 </UserControl>

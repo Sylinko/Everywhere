@@ -4169,4 +4169,85 @@
   <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
     <value>服務因不支援該語言而中止了回覆。</value>
   </data>
+  <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+    <value>診斷資訊</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+    <value>服務回傳的資訊</value>
+  </data>
+  <data name="ChatErrorDetails_Technical" xml:space="preserve">
+    <value>技術詳情</value>
+  </data>
+  <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+    <value>HTTP {0}</value>
+  </data>
+  <data name="ChatErrorDetails_Category" xml:space="preserve">
+    <value>錯誤類別</value>
+  </data>
+  <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+    <value>HTTP 狀態</value>
+  </data>
+  <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+    <value>閘道 HTTP 狀態</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+    <value>服務代碼</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+    <value>服務類型</value>
+  </data>
+  <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+    <value>助手 API 識別碼</value>
+  </data>
+  <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+    <value>請求 ID</value>
+  </data>
+  <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+    <value>遭拒絕的參數</value>
+  </data>
+  <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+    <value>結束原因</value>
+  </data>
+  <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+    <value>服務原始結束原因</value>
+  </data>
+  <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+    <value>復原策略</value>
+  </data>
+  <data name="ChatErrorDetails_Rule" xml:space="preserve">
+    <value>分類規則</value>
+  </data>
+  <data name="ChatErrorDetails_Source" xml:space="preserve">
+    <value>證據來源</value>
+  </data>
+  <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+    <value>服務建議的重試等待時間</value>
+  </data>
+  <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+    <value>逾時階段</value>
+  </data>
+  <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+    <value>通訊端錯誤</value>
+  </data>
+  <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+    <value>連線錯誤代碼</value>
+  </data>
+  <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+    <value>原始回應內容</value>
+  </data>
+  <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+    <value>例外類型</value>
+  </data>
+  <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+    <value>例外訊息</value>
+  </data>
+  <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+    <value>呼叫堆疊</value>
+  </data>
+  <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+    <value>診斷內容已截斷</value>
+  </data>
+  <data name="Common_CopyFailed" xml:space="preserve">
+    <value>複製失敗</value>
+  </data>
 </root>

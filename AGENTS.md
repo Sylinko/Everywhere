@@ -21,13 +21,14 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 
 ## C# Style and Type Layout
 
+- Follow formatting rules in the applicable `.editorconfig`; inspect relevant sections rather than unrelated settings. Use nearby code for choices the configuration does not specify, and do not mechanically compact or expand code.
 - Follow standard .NET naming conventions, including .NET capitalization of acronyms.
 - Keep APIs open for future extensibility: prefer `public` when no concrete ownership, lifetime, or safety boundary requires `internal` or `private` visibility.
 - Use `var` for all local variable declarations.
 - Give Boolean properties, fields, parameters, and local variables a clear semantic prefix such as `Is`, `Has`, `Can`, or `Should`; private fields retain the underscore prefix, for example `_isDisposed` and `_hasCount`. Preserve established framework or API contract names whose Boolean semantics are already unambiguous, such as `Dispose(bool disposing)`.
-- Prefer expression-bodied (`=>`) for simple properties. Method is not required to be expression-bodied, but it is allowed when it improves readability.
-- Prefer guard clauses and early returns over unnecessary nesting.
-- Keep declarations, invocations, and expressions on one line when reasonably readable. Break only genuinely long code, and do not mechanically reflow existing code solely to enforce this preference.
+- Use expression-bodied members only when the complete declaration and expression fit readably on one line. If either the signature or expression spans multiple lines, use a block body. Prefer expression bodies for simple single-line properties. This rule does not apply to lambdas.
+- Prefer guard clauses and early returns over unnecessary nesting. This concerns control flow, not whether braces or line breaks should be omitted.
+- Keep simple declarations, invocations, and expressions on one line when readable. This preference does not extend to documentation or control-flow blocks. Follow configured brace rules and preserve clear visual grouping.
 - Within a type, normally order member categories as follows:
   1. properties;
   2. events;
@@ -45,13 +46,14 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 
 - Optimize for the application's real ownership, call paths, and lifetime. Do not design internal APIs as generic libraries for hypothetical consumers.
 - Match runtime argument validation to a real boundary. Within trusted, nullable-enabled solution code, rely on the type system and nullable analysis instead of repeating null or argument checks by default. Validate data that crosses external, serialization, reflection, plugin, native, or other boundaries where compile-time contracts do not apply.
-- Prefer fewer states, objects, synchronization mechanisms, and intermediate abstractions, but never at the cost of stable identity, incremental updates, correct lifetime, or readability.
+- Prefer fewer states, objects, synchronization mechanisms, and intermediate abstractions, but never at the cost of stable identity, incremental updates, correct lifetime, or readability. Judge simplicity by ownership and behavior, not line count.
 - Constructors must express a clear production purpose. Avoid ambiguous default parameters, forwarding-only constructor chains, and constructors added solely for tests.
 - Do not add production methods, constructors, properties, or other hooks solely to make tests easier. Tests should use normal production entry points, mocks, reflection, or `UnsafeAccessor` where appropriate. Reconsider tests that would materially distort the production design.
 
 ## Comments and Documentation
 
 - Write all code comments and XML documentation comments in English.
+- Prefer multiline XML `<summary>` comments.
 - Add necessary XML documentation to public APIs. Use `<inheritdoc />` for interface implementations and overrides when the inherited contract is sufficient.
 - Preserve useful existing comments during refactoring. Do not remove documentation merely because the surrounding implementation is being rewritten.
 - Document non-obvious lifetime rules, thread boundaries, state transitions, algorithms, and performance tradeoffs in enough detail for a future maintainer to understand why the design exists.

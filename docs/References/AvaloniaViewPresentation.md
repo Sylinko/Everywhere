@@ -25,6 +25,8 @@ Read this reference before modifying Avalonia controls, Views, Presentation obje
 
 ## Controls, Bindings, and Templates
 
+- Before creating or substantially redesigning AXAML, inspect similar controls in `Views/Chat` and `Views/Controls`, including their AXAML, code-behind, and relevant styles. Follow established resource, class, binding, and template patterns; verify binding ownership before reusing them.
+- For fixed presentation snapshots, omit absent items when constructing the data. Use `IsVisible` for optional sections and visibility that can change at runtime.
 - Give custom controls strongly typed Styled or Direct properties for their core input instead of relying on an ambiguous `DataContext`.
 - Continue to use `DataContext` where it is natural to Avalonia, including templates, `ItemsControl`, and ordinary binding scopes.
 - Prefer AXAML for controls with a visual tree, templates, or substantial styling. Pure C# is appropriate for layout algorithms, logic-only controls, or small controls that do not benefit from a template.

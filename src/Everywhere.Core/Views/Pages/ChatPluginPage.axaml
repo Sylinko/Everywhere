@@ -476,10 +476,14 @@
                         <Button
                           Classes="Ghost Compact" Grid.Column="2"
                           Width="32" HorizontalAlignment="Right"
+                          shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                           Command="{Binding #Self.ViewModel.CopyLogsCommand}"
                           CommandParameter="{Binding LogEntries}"
-                          Content="{LucideIconContent Copy, Size=16}"
-                          ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginPage_CopyLogsButton_ToolTip}}"/>
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginPage_CopyLogsButton_ToolTip}}">
+                          <Interaction.Behaviors>
+                            <in:CopiedButtonBehavior/>
+                          </Interaction.Behaviors>
+                        </Button>
                       </Grid>
                     </Border>
 
