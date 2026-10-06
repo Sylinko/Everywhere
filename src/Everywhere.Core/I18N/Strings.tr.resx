@@ -3023,7 +3023,7 @@ Yayın tarihi: {2}</value>
         <value>Varsayılan Alt Asistan</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Sohbette seçilen asistan, "Yeni Asistan Ata" aracılığıyla rutin görevleri devrettiğinde, varsayılan alt ajan bunları bağımsız bir bağlamda işler ve sonuçları döndürür. "Otomatik Seçim", sohbette seçilen asistanı kullanır.</value>
+        <value>Sohbette seçilen asistan, &quot;Yeni Asistan Ata&quot; aracılığıyla rutin görevleri devrettiğinde, varsayılan alt ajan bunları bağımsız bir bağlamda işler ve sonuçları döndürür. &quot;Otomatik Seçim&quot;, sohbette seçilen asistanı kullanır.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API Anahtarı (Opsiyonel)</value>
@@ -3875,7 +3875,7 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>Bu turda yanıt üretilmedi.</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Alt Asistanı Aç</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>Çalışan Everywhere'a istek gönderilemedi. Lütfen Everywhere'ı açıp tekrar deneyin.</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>Araç Onayı</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>‘Bana Onay Ver’ için sorumlu asistanı seçin, bu asistan araç çağrısını desteklemelidir. ‘Otomatik Seçim’ sohbet sırasında seçilen asistanı kullanır.</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>Onaylanıyor…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>Onay İste</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>Bana Onay Ver</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>Tam Erişim</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>Araç işlemleri onay gerektirdiğinde, onayınızı ister.</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>Asistan, onay verip vermeyeceğine karar verir; reddedildiğinde veya onay başarısız olduğunda işlem durur.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>Etkinleştirilen araçlar, onay olmadan işlem yapabilir.</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>Bu turda ‘{0}’ kullanılmaya devam edilecek, bir sonraki diyalog turunda ‘{1}’ olarak değiştirilecektir.</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>Şimdi Değiştir</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>Bu turda veya bir sonraki turda tam erişim yetkisi etkinleştirildi, araçlar onay olmadan işlem yapabilir.</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>Bildirimi Kapat</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>‘Bana Onay Ver’i açmak ister misiniz?</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>Araç işlemleri onay gerektirdiğinde, onay asistanı görevlerinizi ve işlem riskini göz önünde bulundurarak serbest bırakılıp bırakılmayacağına karar verir.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>Onaylayacak Kişiyi Seçin</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>Varsayılan olarak, sohbette seçilen asistan kullanılır. &quot;Sistem asistanı&quot; ayarlarında ayrıca bir asistan belirleyebilirsiniz.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>Görev İçeriği ile Değerlendirin</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>Onay, diyalog bağlamı ve işlem içeriği kullanılarak yapılacaktır. Ayarlarda dosya okuma izni varsa, dosya içeriği de okunabilir. Bu içerikler, seçilen onay asistanına gönderilecek ve görevdeki hassas bilgileri içerebilir.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>Yüksek Riskli İşlemleri Reddet</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>Hassas veri sızıntısı gibi yüksek riskli işlemler, yetki verilmiş olsa bile reddedilecektir. Onay reddedildiğinde veya başarısız olduğunda, işlem devam etmeyecek ve neden mevcut asistana bildirilecektir.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>Onay asistanını ayrı olarak belirttiğinizde, onay içeriği bu asistanın kullandığı hizmet tarafından işlenecektir. AI onayı hala yanlış değerlendirmeler yapabilir, istediğiniz zaman modları değiştirebilirsiniz.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>Bana Onay Ver</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>Tam erişim izni vermek istiyor musunuz?</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere, onayları tek tek almak yerine, etkinleştirilmiş araçları kullanarak işlemler gerçekleştirebilecektir; bu, uygulamanın sahip olduğu erişim izinlerine bağlıdır. Bu şunları içerir:</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>Dosyalar ve Klasörler</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>Dosyaları okuma, oluşturma, değiştirme, yükleme veya silme.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>Terminal Komutları</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>İzin verilen sınırlar içinde komut çalıştırma, yazılım yükleme veya sistem ayarlarını değiştirme.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>İnternet ve Bağlı Araçlar</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>Web sitelerine erişim, veri gönderme ve etkinleştirilmiş eklentiler ile MCP bağlantılarını kullanma.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>Bu, veri kaybı, sızıntı veya komut enjeksiyonu gibi riskler doğurabilir. İstediğiniz zaman modları değiştirebilirsiniz.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>Tam Erişim İznini Aç</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>Otomatik onay başarısız: {0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>Hizmet, istenen kaynağa erişimi reddetti.</value>
     </data>
@@ -4112,49 +4214,151 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>Hizmet, içerik politikası gereği bu isteği veya yanıtı engelledi.</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>İstek yeniden denemeleri</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>Giderilebilir hatalar için en fazla yeniden deneme sayısı. 0 devre dışı bırakır; -1 durdurulana kadar yeniden dener.</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>Yeniden deneniyor {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>Yeniden deneniyor {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>Durduruldu</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>Hata ayrıntıları</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>Ayrıntıları kopyala</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>Mevcut asistan araç çağrılarını desteklemiyor. Yapılandırmayı kontrol edin veya başka bir asistan seçin.</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>Hizmet seçilen asistanı kullanamıyor. Asistan ayarlarını ve erişim izinlerini kontrol edin.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>Kimlik doğrulama başarısız oldu. Kimlik doğrulama ayarlarını kontrol edin veya yeniden oturum açın.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>API anahtarı geçersiz veya süresi dolmuş. Hizmetin API anahtarını kontrol edin ve güncelleyin.</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>Hizmet geçersiz içerik döndürdüğü için istek tamamlanamadı.</value>
-  </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-    <value></value>
-  </data>
-  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-    <value>Varsayılan olarak, sohbette seçilen asistan kullanılır. "Sistem asistanı" ayarlarında ayrıca bir asistan belirleyebilirsiniz.</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>İstek yeniden denemeleri</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>Giderilebilir hatalar için en fazla yeniden deneme sayısı. 0 devre dışı bırakır; -1 durdurulana kadar yeniden dener.</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>Yeniden deneniyor {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>Yeniden deneniyor {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>Durduruldu</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>Hata ayrıntıları</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>Ayrıntıları kopyala</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>Proxy sunucusu bağlantı kurmayı reddetti. Proxy ayarlarını ve kimlik doğrulama bilgilerini kontrol edin.</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>Mevcut asistan araç çağrılarını desteklemiyor. Yapılandırmayı kontrol edin veya başka bir asistan seçin.</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>Hizmet seçilen asistanı kullanamıyor. Asistan ayarlarını ve erişim izinlerini kontrol edin.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>Kimlik doğrulama başarısız oldu. Kimlik doğrulama ayarlarını kontrol edin veya yeniden oturum açın.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>API anahtarı geçersiz veya süresi dolmuş. Hizmetin API anahtarını kontrol edin ve güncelleyin.</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>Hizmet geçersiz içerik döndürdüğü için istek tamamlanamadı.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>Yanıt, oluşturma uzunluk sınırına ulaştı, tam olarak oluşturulamadı.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>Yanıt, oluşturma sürecinde bağlam penceresi sınırına ulaştı, tam olarak oluşturulamadı.</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>Hizmet yanıtı durdurdu veya yanıt tamamlanmadı.</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>Hizmet oluşturmayı durdurdu, mevcut desteklenmeyen bir devam yöntemi gerekiyor.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>Hizmet, tekrar etme kısıtlaması nedeniyle yanıtı durdurdu.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>Hizmet, bu dili desteklemediği için yanıtı durdurdu.</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>Tanılama Bilgisi</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>Hizmetten dönen mesaj</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>Teknik detaylar</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>Hata kategorisi</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP durumu</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>Ağ geçidi HTTP durumu</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>Hizmet kodu</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>Hizmet türü</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>Asistan API kimliği</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>İstek ID</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>Reddedilen parametre</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>Tamamlanma nedeni</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>Hizmetin orijinal tamamlanma nedeni</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>Kurtarma stratejisi</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>Sınıflandırma kuralı</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>Kanıt kaynağı</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>Hizmetin önerdiği yeniden deneme bekleme süresi</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>Zaman aşımı aşaması</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>Socket hatası</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>Bağlantı hata kodu</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>Orijinal yanıt içeriği</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>İstisna türü</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>İstisna mesajı</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>Çağrı yığını</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>Tanı içeriği kesildi</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>Kopyalama başarısız</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>Onay Asistanının Dosya Okumasına İzin Ver</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>Onay asistanı, karar vermeye yardımcı olmak için yerel dosya içeriğini okuyabilir, örneğin yürütülmesi beklenen betikleri görüntülemek için. Okunan içerik seçilen onay asistanına gönderilecektir ve hassas bilgiler içerebilir. Kapalı olduğunda, yalnızca diyalog ve işlem bilgilerine dayanarak onay verilir.</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>İstekler çok sık yapılıyor, hizmet {0} saniye beklemenizi öneriyor.</value>
+    </data>
 </root>

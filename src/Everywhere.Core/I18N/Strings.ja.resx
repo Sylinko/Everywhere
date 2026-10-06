@@ -3875,7 +3875,7 @@
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>このラウンドでは応答が生成されませんでした。</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>子助手を表示</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>実行中の Everywhere にリクエストを送信できませんでした。Everywhere を開いて再試行してください。</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>ツール承認</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>「私に承認を手伝って」するアシスタントを選択します。このアシスタントはツール呼び出しをサポートする必要があります。「自動選択」は、チャットで選択したアシスタントを使用します。</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>承認中…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>承認をリクエスト</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>私に承認を手伝って</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>完全アクセス権</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>ツール操作に承認が必要な場合、あなたに承認をリクエストします。</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>アシスタントが承認するかどうかを決定します；拒否または承認失敗時にはその操作を停止します。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>有効なツールは承認なしで操作を実行できます。</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>今のラウンドでは「{0}」を使用し、次の対話ラウンドで「{1}」に切り替わります。</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>今すぐ切り替え</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>今のラウンドまたは次のラウンドで完全アクセス権が有効になっているため、ツールは承認なしで操作を実行できます。</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>通知を閉じる</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>「私に承認を手伝って」を開始しますか？</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>ツール操作の承認が必要な場合、承認アシスタントがあなたのタスクと操作リスクに基づいて放行するかどうかを決定します。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>承認者を選択</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>既定では、チャットで選択したアシスタントを使用します。「システムアシスタント」設定で個別に指定することもできます。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>タスク内容に基づいて判断</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>承認は対話のコンテキストと操作内容を使用します。設定でファイルの読み取りが許可されている場合、ファイル内容も読み取ることがあります。これらの内容は選択した承認アシスタントに送信され、タスク内の機密情報を含む可能性があります。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>高リスク操作を拒否</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>機密データ漏洩などの高リスクと見なされる操作は、あなたが許可しても拒否されます。承認が拒否または失敗した場合、その操作は続行されず、理由が現在のアシスタントにフィードバックされます。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>個別の承認アシスタントを指定した場合、そのアシスタントが使用するサービスによって承認内容が処理されます。AIによる承認は誤判断する可能性があるため、いつでもモードを切り替えることができます。</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>承認を手伝ってもらう</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>完全アクセス権を有効にしますか？</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhereは、逐次承認なしで、許可されたツールを使用して操作を実行できるようになります。範囲はアプリが持つアクセス権に依存します。これには以下が含まれます：</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>ファイルとフォルダー</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>ファイルの読み取り、作成、変更、アップロード、または削除。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>ターミナルコマンド</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>許可された範囲内でコマンドを実行したり、ソフトウェアをインストールしたり、システム設定を変更したりします。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>インターネットと接続されたツール</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>ウェブサイトにアクセスし、データを送信し、有効なプラグインやMCP接続を使用します。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>これによりデータの損失、漏洩、またはプロンプトの注入などのリスクが生じる可能性があります。いつでもモードを切り替えることができます。</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>完全アクセス権を有効にする</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>自動承認に失敗しました：{0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>サービスが要求されたリソースへのアクセスを拒否しました。</value>
     </data>
@@ -4112,49 +4214,151 @@
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>サービスのコンテンツポリシーにより、このリクエストまたは応答がブロックされました。</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>リクエストの再試行回数</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>回復可能なエラーの最大再試行回数です。0 は無効、-1 は手動で停止するまで再試行します。</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>再試行中 {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>再試行中 {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>停止しました</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>エラーの詳細</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>詳細をコピー</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>現在のアシスタントはツール呼び出しに対応していません。設定を確認するか、別のアシスタントに切り替えてください。</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>このサービスでは選択したアシスタントを利用できません。アシスタントの設定とアクセス権限を確認してください。</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>認証に失敗しました。認証設定を確認するか、再度ログインしてください。</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>API キーが無効か、有効期限が切れています。サービスの API キーを確認して更新してください。</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>サービスから無効な内容が返されたため、リクエストを完了できませんでした。</value>
-  </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-    <value></value>
-  </data>
-  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-    <value>既定では、チャットで選択したアシスタントを使用します。「システムアシスタント」設定で個別に指定することもできます。</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>リクエストの再試行回数</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>回復可能なエラーの最大再試行回数です。0 は無効、-1 は手動で停止するまで再試行します。</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>再試行中 {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>再試行中 {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>停止しました</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>エラーの詳細</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>詳細をコピー</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>プロキシサーバーが接続の確立を拒否しました。プロキシ設定と認証情報を確認してください。</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>現在のアシスタントはツール呼び出しに対応していません。設定を確認するか、別のアシスタントに切り替えてください。</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>このサービスでは選択したアシスタントを利用できません。アシスタントの設定とアクセス権限を確認してください。</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>認証に失敗しました。認証設定を確認するか、再度ログインしてください。</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>API キーが無効か、有効期限が切れています。サービスの API キーを確認して更新してください。</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>サービスから無効な内容が返されたため、リクエストを完了できませんでした。</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>返信が生成長の制限に達し、完全に生成できませんでした。</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>返信が生成中にコンテキストウィンドウの上限に達し、完全に生成できませんでした。</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>サービスが返信を中止したか、応答が未完成です。</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>サービスが生成を一時停止し、現在サポートされていない続行方法が必要です。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>サービスが再述の制限により返信を中止しました。</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>サービスがその言語をサポートしていないため、返信を中止しました。</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>診断情報</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>サービスからのメッセージ</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>技術的詳細</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>エラーの種類</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP ステータス</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>ゲートウェイ HTTP ステータス</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>サービスコード</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>サービスの種類</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>アシスタント API ID</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>リクエスト ID</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>拒否されたパラメータ</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>終了理由</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>サービスの元の終了理由</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>回復戦略</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>分類ルール</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>証拠の出所</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>サービスが推奨する再試行の待機時間</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>タイムアウト段階</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>ソケットエラー</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>接続エラーコード</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>原始レスポンス内容</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>例外タイプ</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>例外メッセージ</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>コールスタック</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>診断内容が切り詰められました</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>コピーに失敗しました</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>承認アシスタントによるファイル読み取りを許可</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>承認アシスタントは、実行待ちのスクリプトを確認するなど、判断を助けるためにローカルファイルの内容を読み取ることができます。読み取った内容は選択した承認アシスタントに送信され、機密情報が含まれる可能性があります。無効にすると、会話と操作情報に基づいてのみ承認されます。</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>リクエストが頻繁すぎます。サービスは {0} 秒後に再試行することをお勧めします。</value>
+    </data>
 </root>

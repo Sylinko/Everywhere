@@ -3023,7 +3023,7 @@ Release date: {2}</value>
         <value>Default Subagent</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>When the assistant selected in the chat delegates routine tasks through the "Assign New Assistant" tool, the default subagent handles them in an independent context and returns the results. "Auto-select" uses the assistant selected in the chat.</value>
+        <value>When the assistant selected in the chat delegates routine tasks through the &quot;Assign New Assistant&quot; tool, the default subagent handles them in an independent context and returns the results. &quot;Auto-select&quot; uses the assistant selected in the chat.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API Key (Optional)</value>
@@ -3875,7 +3875,7 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>No response was produced.</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Open subagent</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4104,7 +4104,7 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Tool approval</value>
     </data>
     <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-        <value></value>
+        <value>Select the assistant responsible for 'Help Me Approve'. This assistant must support tool invocation. 'Auto Select' uses the assistant chosen in chat.</value>
     </data>
     <data name="ToolApproval_Reviewing" xml:space="preserve">
         <value>Reviewing approval…</value>
@@ -4149,7 +4149,7 @@ Delete &quot;{1}&quot; permanently?</value>
         <value>Choose who reviews</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>By default, the assistant selected in the chat is used; you can also specify one separately in the "System Assistant" settings.</value>
+        <value>By default, the assistant selected in the chat is used; you can also specify one separately in the &quot;System Assistant&quot; settings.</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
         <value>Review in the context of your task</value>
@@ -4214,144 +4214,144 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>The service blocked this request or response under its content policy.</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>Request retries</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>Retry eligible failures up to this many times. 0 disables retries; -1 retries until stopped.</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>Retrying {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>Retrying {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>Stopped</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>Error details</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>Copy details</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>The current assistant does not support tool calling. Check the configuration or choose another assistant.</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>The service cannot use the selected assistant. Check the assistant settings and access permissions.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>Authentication failed. Check the authentication settings or sign in again.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>The API key is invalid or has expired. Check and update the service's API key.</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>The service returned invalid content, so the request could not be completed.</value>
-  </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
-  </data>
-  <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
-    <value>Diagnostic information</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
-    <value>Service message</value>
-  </data>
-  <data name="ChatErrorDetails_Technical" xml:space="preserve">
-    <value>Technical details</value>
-  </data>
-  <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
-    <value>HTTP {0}</value>
-  </data>
-  <data name="ChatErrorDetails_Category" xml:space="preserve">
-    <value>Error category</value>
-  </data>
-  <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
-    <value>HTTP status</value>
-  </data>
-  <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
-    <value>Gateway HTTP status</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
-    <value>Service code</value>
-  </data>
-  <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
-    <value>Service type</value>
-  </data>
-  <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
-    <value>Assistant API identifier</value>
-  </data>
-  <data name="ChatErrorDetails_RequestId" xml:space="preserve">
-    <value>Request ID</value>
-  </data>
-  <data name="ChatErrorDetails_Parameter" xml:space="preserve">
-    <value>Rejected parameter</value>
-  </data>
-  <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
-    <value>Finish reason</value>
-  </data>
-  <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
-    <value>Provider finish reason</value>
-  </data>
-  <data name="ChatErrorDetails_Recovery" xml:space="preserve">
-    <value>Recovery advice</value>
-  </data>
-  <data name="ChatErrorDetails_Rule" xml:space="preserve">
-    <value>Classification rule</value>
-  </data>
-  <data name="ChatErrorDetails_Source" xml:space="preserve">
-    <value>Evidence source</value>
-  </data>
-  <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
-    <value>Server retry delay</value>
-  </data>
-  <data name="ChatErrorDetails_Timeout" xml:space="preserve">
-    <value>Timeout phase</value>
-  </data>
-  <data name="ChatErrorDetails_SocketError" xml:space="preserve">
-    <value>Socket error</value>
-  </data>
-  <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
-    <value>Connection code</value>
-  </data>
-  <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
-    <value>Original response body</value>
-  </data>
-  <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
-    <value>Exception type</value>
-  </data>
-  <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
-    <value>Exception message</value>
-  </data>
-  <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
-    <value>Stack trace</value>
-  </data>
-  <data name="ChatErrorDetails_Truncated" xml:space="preserve">
-    <value>Diagnostic output truncated</value>
-  </data>
-  <data name="Common_CopyFailed" xml:space="preserve">
-    <value>Copy failed</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>Request retries</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>Retry eligible failures up to this many times. 0 disables retries; -1 retries until stopped.</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>Retrying {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>Retrying {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>Stopped</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>Error details</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>Copy details</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>The proxy server refused to establish a connection. Check the proxy settings and authentication details.</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>The current assistant does not support tool calling. Check the configuration or choose another assistant.</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>The service cannot use the selected assistant. Check the assistant settings and access permissions.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>Authentication failed. Check the authentication settings or sign in again.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>The API key is invalid or has expired. Check and update the service's API key.</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>The service returned invalid content, so the request could not be completed.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>The reply reached a generation length limit and could not finish.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>The reply reached the context window limit and could not finish.</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>The service interrupted the reply or reported an incomplete response.</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>The service paused generation and requires a continuation that is not supported.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>The service stopped the reply because of recitation restrictions.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>The service stopped the reply because the language is unsupported.</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>Diagnostic information</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>Service message</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>Technical details</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>Error category</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>HTTP status</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>Gateway HTTP status</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>Service code</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>Service type</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>Assistant API identifier</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>Request ID</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>Rejected parameter</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>Finish reason</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>Provider finish reason</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>Recovery advice</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>Classification rule</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>Evidence source</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>Server retry delay</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>Timeout phase</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>Socket error</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>Connection code</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>Original response body</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>Exception type</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>Exception message</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>Stack trace</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>Diagnostic output truncated</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>Copy failed</value>
+    </data>
     <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
         <value>Allow approval assistant to read files</value>
     </data>

@@ -3023,7 +3023,7 @@ Fecha de lanzamiento: {2}</value>
         <value>Asistente Predeterminado</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Cuando el asistente seleccionado en el chat delega tareas rutinarias mediante la herramienta "Asignar nuevo asistente", el subagente predeterminado las procesa en un contexto independiente y devuelve los resultados. "Selección automática" usa el asistente seleccionado en el chat.</value>
+        <value>Cuando el asistente seleccionado en el chat delega tareas rutinarias mediante la herramienta &quot;Asignar nuevo asistente&quot;, el subagente predeterminado las procesa en un contexto independiente y devuelve los resultados. &quot;Selección automática&quot; usa el asistente seleccionado en el chat.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Clave API (opcional)</value>
@@ -3875,7 +3875,7 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
         <value>No se generó respuesta en esta ronda.</value>
     </data>
-      <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
         <value>Abrir Subagente</value>
     </data>
     <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
@@ -4100,6 +4100,108 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="Entrance_ActivationFailed" xml:space="preserve">
         <value>No se puede enviar la solicitud a Everywhere en ejecución. Por favor, abre Everywhere y vuelve a intentarlo.</value>
     </data>
+    <data name="SystemAssistantSettings_ToolApproval_Header" xml:space="preserve">
+        <value>Aprobación de Herramientas</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value>Selecciona el asistente responsable de 'Ayúdame a aprobar', este asistente debe soportar llamadas a herramientas. 'Selección automática' utiliza el asistente seleccionado en el chat.</value>
+    </data>
+    <data name="ToolApproval_Reviewing" xml:space="preserve">
+        <value>Aprobando…</value>
+    </data>
+    <data name="ToolApproval_Ask" xml:space="preserve">
+        <value>Solicitar Aprobación</value>
+    </data>
+    <data name="ToolApproval_Auto" xml:space="preserve">
+        <value>Ayúdame a Aprobar</value>
+    </data>
+    <data name="ToolApproval_FullAccess" xml:space="preserve">
+        <value>Acceso Completo</value>
+    </data>
+    <data name="ToolApproval_AskDescription" xml:space="preserve">
+        <value>Cuando se requiere aprobación para operaciones de herramientas, se te solicitará aprobación.</value>
+    </data>
+    <data name="ToolApproval_AutoDescription" xml:space="preserve">
+        <value>El asistente decide si aprobar; si se rechaza o falla la aprobación, se detiene la operación.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDescription" xml:space="preserve">
+        <value>Las herramientas habilitadas pueden ejecutar operaciones sin necesidad de aprobación.</value>
+    </data>
+    <data name="ToolApproval_PendingChange" xml:space="preserve">
+        <value>Esta ronda seguirá usando '{0}', cambiará a '{1}' en la próxima ronda de conversación.</value>
+    </data>
+    <data name="ToolApproval_SwitchNow" xml:space="preserve">
+        <value>Cambiar Ahora</value>
+    </data>
+    <data name="ToolApproval_FullAccessWarning" xml:space="preserve">
+        <value>Se ha habilitado acceso completo en esta o la próxima ronda, las herramientas pueden ejecutar operaciones sin aprobación.</value>
+    </data>
+    <data name="ToolApproval_Dismiss" xml:space="preserve">
+        <value>Cerrar Notificación</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Title" xml:space="preserve">
+        <value>¿Activar 'Ayúdame a Aprobar'?</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Introduction" xml:space="preserve">
+        <value>Cuando se requiere aprobación para operaciones de herramientas, el asistente de aprobación decide si permitirlo según tus tareas y el riesgo de la operación.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerTitle" xml:space="preserve">
+        <value>Selecciona Quién Aprobará</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>De forma predeterminada, se usa el asistente seleccionado en el chat; también puedes especificar uno aparte en los ajustes de «Asistente del sistema».</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
+        <value>Evaluar Según el Contenido de la Tarea</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>La aprobación utilizará el contexto de la conversación y el contenido de la operación. Si se permite leer archivos en la configuración, también puede leer el contenido de los archivos. Esta información se enviará al asistente de aprobación seleccionado y puede contener información sensible de la tarea.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
+        <value>Rechazar Operaciones de Alto Riesgo</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_DecisionBody" xml:space="preserve">
+        <value>Las operaciones clasificadas como de alto riesgo, como la fuga de datos sensibles, serán rechazadas incluso si has dado autorización. Si la aprobación es rechazada o falla, la operación no continuará y se informará la razón al asistente actual.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Note" xml:space="preserve">
+        <value>Al especificar un asistente de aprobación por separado, el contenido de la aprobación será procesado por el servicio que utiliza ese asistente. La aprobación de AI aún puede errar, puedes cambiar de modo en cualquier momento.</value>
+    </data>
+    <data name="ToolApproval_AutoDialog_Enable" xml:space="preserve">
+        <value>Activar Ayuda para Aprobar</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Title" xml:space="preserve">
+        <value>¿Deseas activar el acceso completo?</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Introduction" xml:space="preserve">
+        <value>Everywhere podrá ejecutar acciones utilizando herramientas habilitadas sin necesidad de aprobación individual, dependiendo de los permisos de acceso que tenga la aplicación. Esto incluye:</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesTitle" xml:space="preserve">
+        <value>Archivos y Carpetas</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_FilesBody" xml:space="preserve">
+        <value>Leer, crear, modificar, subir o eliminar archivos.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalTitle" xml:space="preserve">
+        <value>Comandos de Terminal</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_TerminalBody" xml:space="preserve">
+        <value>Ejecutar comandos, instalar software o cambiar configuraciones del sistema dentro de los permisos permitidos.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsTitle" xml:space="preserve">
+        <value>Internet y Herramientas Conectadas</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_ConnectionsBody" xml:space="preserve">
+        <value>Acceder a sitios web, enviar datos y utilizar plugins habilitados y conexiones MCP.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Note" xml:space="preserve">
+        <value>Esto puede conllevar riesgos de pérdida de datos, filtraciones o inyecciones de mensajes. Puedes cambiar de modo en cualquier momento.</value>
+    </data>
+    <data name="ToolApproval_FullAccessDialog_Enable" xml:space="preserve">
+        <value>Activar Acceso Completo</value>
+    </data>
+    <data name="ToolApproval_Failed" xml:space="preserve">
+        <value>Fallo en la aprobación automática: {0}</value>
+    </data>
     <data name="HandledChatException_PermissionDenied" xml:space="preserve">
         <value>El servicio denegó el acceso al recurso solicitado.</value>
     </data>
@@ -4112,49 +4214,151 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="HandledChatException_ContentBlocked" xml:space="preserve">
         <value>El servicio bloqueó esta solicitud o respuesta según su política de contenido.</value>
     </data>
-  <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
-    <value>Reintentos de solicitud</value>
-  </data>
-  <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
-    <value>Máximo de reintentos para errores recuperables. 0 los desactiva; -1 reintenta hasta detenerlo.</value>
-  </data>
-  <data name="ChatRequest_RetryCount" xml:space="preserve">
-    <value>Reintentando {0}/{1}</value>
-  </data>
-  <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
-    <value>Reintentando {0}</value>
-  </data>
-  <data name="ChatRequest_Stopped" xml:space="preserve">
-    <value>Detenido</value>
-  </data>
-  <data name="ChatRequest_ErrorDetails" xml:space="preserve">
-    <value>Detalles del error</value>
-  </data>
-  <data name="ChatRequest_CopyDetails" xml:space="preserve">
-    <value>Copiar detalles</value>
-  </data>
-  <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
-    <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
-  </data>
-  <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
-    <value>El asistente actual no admite llamadas a herramientas. Revisa la configuración o cambia de asistente.</value>
-  </data>
-  <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
-    <value>El servicio no puede usar el asistente seleccionado. Revisa la configuración del asistente y los permisos de acceso.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
-    <value>La autenticación falló. Revisa la configuración de autenticación o vuelve a iniciar sesión.</value>
-  </data>
-  <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
-    <value>La clave API no es válida o ha caducado. Revisa y actualiza la clave API del servicio.</value>
-  </data>
-  <data name="HandledChatException_InvalidResponse" xml:space="preserve">
-    <value>El servicio devolvió contenido no válido y no se pudo completar la solicitud.</value>
-  </data>
-  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-    <value></value>
-  </data>
-  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-    <value>De forma predeterminada, se usa el asistente seleccionado en el chat; también puedes especificar uno aparte en los ajustes de «Asistente del sistema».</value>
-  </data>
+    <data name="Assistant_RequestMaxRetries_Header" xml:space="preserve">
+        <value>Reintentos de solicitud</value>
+    </data>
+    <data name="Assistant_RequestMaxRetries_Description" xml:space="preserve">
+        <value>Máximo de reintentos para errores recuperables. 0 los desactiva; -1 reintenta hasta detenerlo.</value>
+    </data>
+    <data name="ChatRequest_RetryCount" xml:space="preserve">
+        <value>Reintentando {0}/{1}</value>
+    </data>
+    <data name="ChatRequest_RetryUnlimited" xml:space="preserve">
+        <value>Reintentando {0}</value>
+    </data>
+    <data name="ChatRequest_Stopped" xml:space="preserve">
+        <value>Detenido</value>
+    </data>
+    <data name="ChatRequest_ErrorDetails" xml:space="preserve">
+        <value>Detalles del error</value>
+    </data>
+    <data name="ChatRequest_CopyDetails" xml:space="preserve">
+        <value>Copiar detalles</value>
+    </data>
+    <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
+        <value>El servidor proxy rechazó establecer la conexión. Revisa la configuración del proxy y los datos de autenticación.</value>
+    </data>
+    <data name="HandledChatException_UnsupportedCapability_Tools" xml:space="preserve">
+        <value>El asistente actual no admite llamadas a herramientas. Revisa la configuración o cambia de asistente.</value>
+    </data>
+    <data name="HandledChatException_InvalidConfiguration_ModelUnavailable" xml:space="preserve">
+        <value>El servicio no puede usar el asistente seleccionado. Revisa la configuración del asistente y los permisos de acceso.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure" xml:space="preserve">
+        <value>La autenticación falló. Revisa la configuración de autenticación o vuelve a iniciar sesión.</value>
+    </data>
+    <data name="HandledChatException_AuthenticationFailure_InvalidApiKey" xml:space="preserve">
+        <value>La clave API no es válida o ha caducado. Revisa y actualiza la clave API del servicio.</value>
+    </data>
+    <data name="HandledChatException_InvalidResponse" xml:space="preserve">
+        <value>El servicio devolvió contenido no válido y no se pudo completar la solicitud.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+        <value>La respuesta alcanzó el límite de longitud de generación y no se pudo completar.</value>
+    </data>
+    <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+        <value>La respuesta alcanzó el límite de la ventana de contexto durante la generación y no se pudo completar.</value>
+    </data>
+    <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+        <value>El servicio interrumpió la respuesta o el informe de respuesta no se completó.</value>
+    </data>
+    <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+        <value>El servicio pausó la generación y requiere un método de continuación que actualmente no es compatible.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+        <value>El servicio interrumpió la respuesta debido a restricciones de repetición.</value>
+    </data>
+    <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+        <value>El servicio interrumpió la respuesta debido a que el idioma no es compatible.</value>
+    </data>
+    <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+        <value>Información de diagnóstico</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+        <value>Mensaje del servicio</value>
+    </data>
+    <data name="ChatErrorDetails_Technical" xml:space="preserve">
+        <value>Detalles técnicos</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+        <value>HTTP {0}</value>
+    </data>
+    <data name="ChatErrorDetails_Category" xml:space="preserve">
+        <value>Categoría de error</value>
+    </data>
+    <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+        <value>Estado HTTP</value>
+    </data>
+    <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+        <value>Estado HTTP del gateway</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+        <value>Código del servicio</value>
+    </data>
+    <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+        <value>Tipo de servicio</value>
+    </data>
+    <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+        <value>Identificador de API del asistente</value>
+    </data>
+    <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+        <value>ID de solicitud</value>
+    </data>
+    <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+        <value>Parámetro rechazado</value>
+    </data>
+    <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+        <value>Razón de finalización</value>
+    </data>
+    <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+        <value>Razón de finalización original del servicio</value>
+    </data>
+    <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+        <value>Estrategia de recuperación</value>
+    </data>
+    <data name="ChatErrorDetails_Rule" xml:space="preserve">
+        <value>Regla de clasificación</value>
+    </data>
+    <data name="ChatErrorDetails_Source" xml:space="preserve">
+        <value>Fuente de evidencia</value>
+    </data>
+    <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+        <value>Tiempo de espera recomendado para reintentar por el servicio</value>
+    </data>
+    <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+        <value>Fase de tiempo de espera</value>
+    </data>
+    <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+        <value>Error de socket</value>
+    </data>
+    <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+        <value>Código de error de conexión</value>
+    </data>
+    <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+        <value>Contenido de respuesta original</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+        <value>Tipo de excepción</value>
+    </data>
+    <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+        <value>Mensaje de excepción</value>
+    </data>
+    <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+        <value>Pila de llamadas</value>
+    </data>
+    <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+        <value>Contenido de diagnóstico truncado</value>
+    </data>
+    <data name="Common_CopyFailed" xml:space="preserve">
+        <value>Error al copiar</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>Permitir que el asistente de aprobación lea archivos</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>El asistente de aprobación puede leer el contenido de archivos locales para ayudar en la evaluación, como revisar scripts pendientes de ejecución. El contenido leído se enviará al asistente de aprobación seleccionado y puede contener información sensible. Al desactivar, la aprobación se basará únicamente en la conversación y la información de operación.</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>Las solicitudes son demasiado frecuentes, el servicio sugiere esperar {0} segundos antes de reintentar.</value>
+    </data>
 </root>
