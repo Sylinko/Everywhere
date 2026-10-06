@@ -33,8 +33,9 @@ from the preceding attempt's provisional answer.
 
 ## Ordered streaming contract
 
-`ChatRequestUpdate` contains `AttemptStarted`, `Content`, `AttemptFailed`, and
-`Completed`. Contents retain the SDK `StreamingChatMessageContent` representation.
+`ChatRequestUpdate` contains `AttemptStarted`, `Content`, and `AttemptFailed`.
+Contents retain the SDK `StreamingChatMessageContent` representation. Normal
+enumeration exhaustion is success; there is no separate completion update.
 
 After `AttemptFailed` with a retry delay, the consumer closes statistics and resets
 its provisional output. The next enumeration move performs the delay before starting
@@ -46,11 +47,12 @@ Caller cancellation throws cancellation directly. Consumer abandonment disposes 
 SDK enumerator and never initiates recovery. Consumer/UI/blob/statistics errors are
 outside the SDK catch boundary and cannot cause an API replay.
 
-`Completed` is stream completion, not business approval. Explicit finish metadata is
-retained as `ChatResponseCompletion.RawReason`; missing/unfamiliar reasons retain
-compatible behavior. Known truncation/filter reasons suppress the main response's
-tool calls. Compression rejects an explicitly incomplete summary. No blanket finish
-reason whitelist or new raw SSE parser is introduced.
+Explicit unsuccessful provider termination becomes a `HandledChatException` at the
+request boundary and follows the same failure, recovery, statistics, and UI path as
+SDK exceptions. Output limits and policy blocks stop without replaying identical
+input; useful partial text remains visible with a localized error. Missing or
+unfamiliar finish fields alone retain compatible behavior. See
+[ExceptionNormalization.md](ExceptionNormalization.md#generation-termination) for classification.
 
 ## Retry policy
 
@@ -88,9 +90,11 @@ without accepting incomplete tool calls.
 The assembled consumer resets its text/tool builders before replay. Compression and
 topic generation use it instead of maintaining separate SDK loops. Compression only
 trims input after a context-overflow diagnosis; a network retry does not trim history.
-The current branch has no `ToolApprovalReviewer`; existing human consent remains the
-tool's workflow. A restored reviewer should use this reader and keep its file-read and
-missing-decision budgets outside transport attempts.
+The approval reviewer uses this reader and keeps file-read and missing-decision
+budgets outside transport attempts. A successfully invoked `submit_approval` is
+the business endpoint: the reader disposes the stream and ignores subsequent
+content or termination evidence. Only an explicitly SDK-completed tool call can
+trigger this before enumeration ends; argument fragments are insufficient.
 
 ## Attempt accounting
 

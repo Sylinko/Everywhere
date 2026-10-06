@@ -56,7 +56,6 @@ Use a small typed update family rather than a content stream that silently resta
 | `AttemptStarted` | One-based attempt number | A new SDK request is about to begin; initialize per-attempt state/statistics |
 | `Content` | Existing `StreamingChatMessageContent` | A delta from that attempt; no second content schema |
 | `AttemptFailed` | Failure record and nullable retry delay | This attempt ended; non-null delay means retry scheduled, null means terminal failure |
-| `Completed` | Normalized response completion information | Enumeration ended without a request error; callers still validate business output |
 
 A typed record family keeps consumers exhaustive and avoids a mutable event bag with unrelated nullable fields. Concrete representation should remain small; no extra observables or concurrent queues are needed. Normal delta consumption and lifecycle events are ordered on the same asynchronous enumeration.
 
@@ -82,11 +81,9 @@ await foreach (var update in kernelMixin.StreamRequestAsync(
                 await ShowRetryAsync(failed.Failure, delay);
             }
             break;
-        case ChatRequestUpdate.Completed completed:
-            await FinishCompletedAttemptAsync(completed);
-            break;
     }
 }
+await FinishSuccessfulAttemptAsync();
 ```
 
 The example's methods represent existing consumer work and proposed local factoring, not required interfaces or callback parameters.
@@ -100,7 +97,7 @@ AttemptStarted(1) -> Content* -> AttemptFailed(retry delay)
   await delay
 AttemptStarted(2) -> Content* -> AttemptFailed(retry delay)
   await delay
-AttemptStarted(3) -> Content* -> Completed
+AttemptStarted(3) -> Content* -> enumeration ends
 ```
 
 For terminal request failure, emit `AttemptFailed` with no retry delay, then throw the normalized terminal exception on continued enumeration. The failure update finalizes statistics; the existing outer exception path creates the error row once. It must not create a second error row in the update handler. Resolve the terminal cause once; a late cancellation must not overwrite an already-selected unrelated terminal failure.
@@ -117,11 +114,11 @@ A shallow container copy addresses known append behavior. Treat content/settings
 
 ### Completion and response validation
 
-`Completed` distinguishes transport completion from business validity. Carry normalized completion information such as normal stop, output limit, filtering, or unknown compatible-provider termination. Explicit provider error events become classified failures; protocol-specific interpretation remains in the provider/request boundary.
+Successful enumeration exhaustion is the only request-success signal. Explicit unsuccessful provider termination becomes a classified `HandledChatException` before exhaustion and follows the existing exception path. Consumers do not inspect a completion flag. Output limits and policy blocks retain partial text and show a localized error without transport replay.
 
-The main consumer must validate completion before building/committing an executable tool batch. The reviewer rejects an incomplete approval decision; compression requires a usable summary without tool calls; topic generation requires usable text. These failures do not automatically become transport retries. A missing finish field alone is not failure, and a tool-only answer is not an empty response.
+The main consumer builds an executable tool batch only after successful exhaustion. Compression still requires a usable summary without tool calls; topic generation requires usable text. Approval ends when `submit_approval` successfully executes, disposing the stream and ignoring later output/errors. An explicitly SDK-completed submission can execute during streaming; fragments cannot.
 
-Preserve current compatible-provider behavior when enumeration ends normally without explicit completion metadata. Retain unknown raw reasons for diagnostics instead of rejecting them through a new whitelist. SDK-internal terminal markers need not be exposed to the application. [TimeoutAndCompletion.md](TimeoutAndCompletion.md) defines the evidence boundary and records the Codex/DeepSeek comparisons; their stricter native-protocol checks are not adopted wholesale.
+Missing or unfamiliar finish fields alone remain compatible. An explicit failed/incomplete provider status is unsuccessful even without a recognized reason. [ExceptionNormalization.md](ExceptionNormalization.md#generation-termination) defines classification; [TimeoutAndCompletion.md](TimeoutAndCompletion.md) records the evidence boundary.
 
 ## 3. Classification and terminal diagnostics
 
@@ -187,7 +184,7 @@ The reviewer already rethrows OperationCanceledException when its caller token i
 
 ## 6. Statistics and caller integration
 
-The request executor owns retry scheduling; ChatService remains the owner of application statistics and parent/turn/message linkage. Use AttemptStarted to create one invocation record per actual SDK request and AttemptFailed/Completed to close it once. The consumer's finally closes an attempt interrupted by cancellation or a local consumer failure. Restore ambient invocation IDs using the existing ownership pattern.
+The request executor owns retry scheduling; ChatService remains the owner of application statistics and parent/turn/message linkage. Use AttemptStarted to create one invocation record per actual SDK request and AttemptFailed or successful enumeration exhaustion to close it once. The consumer's finally closes an attempt interrupted by cancellation or a local consumer failure. Restore ambient invocation IDs using the existing ownership pattern.
 
 Keep fresh ChatUsageDetails per attempt and accumulate reported usage into the message once at attempt end, including failed attempts. Do not use its additive `Accumulate` as a way to merge cumulative deltas from repeated attempts into one max-value accumulator. Missing usage is unknown, not a fabricated zero-cost request. Return only the accepted attempt's usage for context-usage/compression decisions; total accounting includes all attempts.
 

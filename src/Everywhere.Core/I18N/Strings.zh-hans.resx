@@ -4233,9 +4233,6 @@
   <data name="ChatRequest_CopyDetails" xml:space="preserve">
     <value>复制详情</value>
   </data>
-  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
-    <value>助手提前终止了响应。</value>
-  </data>
   <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
     <value>代理服务器拒绝建立连接，请检查代理设置和认证信息。</value>
   </data>
@@ -4253,5 +4250,23 @@
   </data>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>服务返回的内容无效，无法完成此次请求。</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+    <value>回复达到生成长度限制，未能完整生成。</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+    <value>回复在生成过程中达到上下文窗口上限，未能完整生成。</value>
+  </data>
+  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+    <value>服务中止了回复或报告响应未完成。</value>
+  </data>
+  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+    <value>服务暂停了生成，需要当前尚不支持的继续方式。</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+    <value>服务因复述限制中止了回复。</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+    <value>服务因不支持该语言而中止了回复。</value>
   </data>
 </root>

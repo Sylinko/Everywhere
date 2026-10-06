@@ -49,7 +49,7 @@ public abstract partial class KernelMixin
                 if (attemptActivity is not null) Activity.Current = attemptActivity;
 
                 var enumerator = default(IAsyncEnumerator<StreamingChatMessageContent>);
-                var finishReason = default(string);
+                var completionFailure = default(HandledChatException);
                 try
                 {
                     try
@@ -80,7 +80,7 @@ public abstract partial class KernelMixin
                         if (!hasNext) break;
                         var content = enumerator.Current;
                         attemptUsage.Update(content);
-                        finishReason = content.Metadata?.GetValueOrDefault("FinishReason")?.ToString() ?? finishReason;
+                        completionFailure ??= ChatExceptionNormalizer.FromCompletion(content, this);
 
                         yield return new ChatRequestUpdate.Content(content);
                         if (attemptActivity is not null) Activity.Current = attemptActivity;
@@ -102,10 +102,10 @@ public abstract partial class KernelMixin
                     }
                 }
 
+                error ??= completionFailure;
                 if (error is null)
                 {
                     hasClosedAttempt = true;
-                    yield return new ChatRequestUpdate.Completed(new ChatResponseCompletion(finishReason));
                     yield break;
                 }
 

@@ -34,6 +34,12 @@ public sealed class ChatExceptionEvidence(Exception originalException)
     /// </summary>
     public string? ErrorType { get; set; }
 
+    /// <summary>Gets or sets the explicit SDK-normalized generation finish reason.</summary>
+    public string? FinishReason { get; set; }
+
+    /// <summary>Gets or sets the provider finish reason before SDK normalization, when available.</summary>
+    public string? ProviderFinishReason { get; set; }
+
     /// <summary>
     /// Gets or sets the rejected request parameter, if reported.
     /// </summary>

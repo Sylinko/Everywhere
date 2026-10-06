@@ -44,15 +44,15 @@ Treat completion evidence separately from transport success and business validit
 | Observed evidence | Interpretation |
 | --- | --- |
 | Explicit normal stop or tool-call completion | Preserve the reason and let the caller validate its result. |
-| Explicit output limit | Preserve useful output and the limit reason; do not automatically resend identical input as a transport recovery. |
-| Explicit filtering, refusal or provider failure | Preserve the reported outcome and classify errors where appropriate. Missing diagnostic detail does not turn an explicit failure event into success. |
+| Explicit output limit | Raise GenerationLimitExceeded, preserve useful output with an error, and stop without replay. |
+| Explicit filtering, refusal or provider failure | Raise the classified failure. Missing diagnostic detail does not turn an explicit failure event into success. |
 | Actual transport exception or locally identified timeout | Normalize the failure using transport and request-context evidence. |
 | Normal enumeration end without a known finish field or observable terminal marker | Record missing/unknown completion evidence and retain current compatible-provider behavior. Absence alone does not trigger rejection or replay. |
 | Unrecognized finish reason | Retain the raw value for diagnosis. Do not add a whitelist that rejects an otherwise usable compatible response solely for a new value. |
 
 SDK parsers can consume terminal markers internally. A marker not exposed to Everywhere is not evidence that the server omitted it. Do not add raw SSE parsing, SDK patches or provider capability switches solely to demand completion fields that existing compatible services omit.
 
-Use the first-stage finish-reason/usage repairs, existing SDK content and available raw representations as normalization inputs. Tool arguments and business results still follow the existing validation path. Approval and compression can reject explicitly incomplete or unusable results under their own contracts; they do not gain a new blanket requirement for a finish field. Incomplete tool fragments must not become executable calls, but this stage does not introduce additional protocol-compliance checks over otherwise accepted results.
+Use the first-stage finish-reason/usage repairs, existing SDK content and available raw representations as normalization inputs. Tool arguments and business results still follow the existing validation path. Explicit unsuccessful termination is handled centrally through HandledChatException, not an optional consumer flag. Compression still validates summary usability. Successful execution of submit_approval ends review immediately; later provider output does not reverse that decision. No blanket requirement for a finish field is introduced. Incomplete tool fragments must not become executable calls, but this stage does not introduce additional protocol-compliance checks over otherwise accepted results.
 
 ## Reference implementations
 

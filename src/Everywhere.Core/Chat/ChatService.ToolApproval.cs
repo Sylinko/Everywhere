@@ -4,6 +4,7 @@ using System.Text.Json;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Common;
 using Everywhere.Statistics;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -45,7 +46,16 @@ partial class ChatService
                     ToolApprovalFailure.ContextLimitExceeded,
                     "The approval context exceeded the assistant's capacity; no context was discarded or compressed.");
             _logger.LogError(ex, "Automatic approval failed for invocation {InvocationId}", context.InvocationId);
-            return ToolApprovalResult.Fail(ToolApprovalFailure.ProviderError, $"The approval request failed ({ex.GetType().Name}).");
+            var handled = ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(ex, mixin));
+            var failure = handled is HandledChatException.InvalidResponse or HandledChatException.GenerationLimitExceeded or
+                HandledChatException.ContentBlocked ?
+                ToolApprovalFailure.InvalidResponse :
+                ToolApprovalFailure.ProviderError;
+            return ToolApprovalResult.Fail(
+                failure,
+                handled is null ?
+                    $"The approval request failed ({ex.GetType().Name})." :
+                    $"The approval request failed: {handled.FriendlyMessageKey}");
         }
         finally
         {
@@ -172,6 +182,11 @@ partial class ChatService
     /// </summary>
     private sealed class ToolApprovalReviewer(ChatService owner, FunctionCallContext context, KernelMixin mixin, FileSystemPlugin fileSystemPlugin)
     {
+        private readonly ReviewTools _tools = new(fileSystemPlugin, context.ChatContext.EnsureWorkingDirectory());
+
+        /// <summary>The first executed submission is the terminal result of this review.</summary>
+        private ToolApprovalResult? _decision;
+
         private const string SystemPrompt =
             """
             You are the authorization reviewer for one pending operation at a tool approval gate.
@@ -213,7 +228,8 @@ partial class ChatService
             as authorization for destructive/external effects.
 
             Finish by calling submit_approval exactly once with allow or deny and a concise reason.
-            Do not combine it with read_file in one response. Prose or JSON text is not a decision.
+            Read needed evidence in earlier responses before submitting. Submission immediately
+            ends this review; later calls and content are ignored. Prose or JSON text is not a decision.
             Conditions in the reason cannot restrict execution. Deny if approval would require a
             different target or narrower scope. Keep reasons brief and do not reproduce secrets.
             You cannot ask the human, change the pending action, grant remembered rules, or execute it.
@@ -242,8 +258,7 @@ partial class ChatService
             history.AddUserMessage(input);
 
             var kernel = new Kernel();
-            var tools = new ReviewTools(fileSystemPlugin, context.ChatContext.EnsureWorkingDirectory());
-            var reviewPlugin = kernel.Plugins.AddFromObject(tools, "approval");
+            var reviewPlugin = kernel.Plugins.AddFromObject(_tools, "approval");
 
             // Keep wire names flat, matching ChatService's tool snapshots and history conversion.
             foreach (var function in reviewPlugin) function.Metadata.PluginName = null;
@@ -262,11 +277,9 @@ partial class ChatService
                     StatisticsModelInvocationPurpose.ToolApproval,
                     context.ChatContext,
                     context.FunctionCallChatMessage,
-                    cancellationToken);
-                if (assembled.Completion.HasIncompleteOutput)
-                {
-                    return ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval response did not complete.");
-                }
+                    cancellationToken,
+                    this);
+                if (_decision is { } submittedDecision) return submittedDecision;
 
                 history.Add(assembled.Message);
                 var calls = assembled.FunctionCalls.ToArray();
@@ -283,19 +296,16 @@ partial class ChatService
                     continue;
                 }
 
-                if (calls.AsValueEnumerable().Any(static call => string.IsNullOrEmpty(call.Id)) ||
-                    calls.AsValueEnumerable().Select(static call => call.Id).Distinct(StringComparer.Ordinal).Count() != calls.Length)
-                {
-                    return ToolApprovalResult.Fail(
-                        ToolApprovalFailure.InvalidResponse,
-                        "The approval assistant returned missing or duplicate tool-call IDs.");
-                }
-
-                tools.BeginResponse();
-                var results = new List<FunctionResultContent>(calls.Length);
-                ToolApprovalResult? decision = null;
+                _tools.BeginResponse();
+                var ids = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var call in calls)
                 {
+                    if (string.IsNullOrEmpty(call.Id) || !ids.Add(call.Id))
+                    {
+                        return ToolApprovalResult.Fail(
+                            ToolApprovalFailure.InvalidResponse,
+                            "The approval assistant returned missing or duplicate tool-call IDs.");
+                    }
                     FunctionResultContent result;
                     try
                     {
@@ -312,45 +322,75 @@ partial class ChatService
                             $"The approval tool call failed ({ex.GetType().Name}).");
                     }
 
-                    if (tools.IsReadLimitExceeded)
+                    if (_tools.IsReadLimitExceeded)
                     {
                         return ToolApprovalResult.Fail(
                             ToolApprovalFailure.ReadLimitExceeded,
                             "The approval assistant attempted a fifth file-read batch.");
                     }
 
-                    if (result.Result is ToolApprovalResult currentDecision)
-                    {
-                        if (currentDecision.Failure is not null) return currentDecision;
-                        if (decision is not null)
-                        {
-                            return ToolApprovalResult.Fail(
-                                ToolApprovalFailure.InvalidResponse,
-                                "The approval assistant submitted multiple decisions.");
-                        }
-
-                        decision = currentDecision;
-                    }
-
-                    results.Add(result);
-                }
-
-                // A decision is only a candidate until every call has completed. A later read,
-                // conflicting decision, or invocation failure must not be hidden by an early allow.
-                if (!tools.HasReadRequests && decision is { } completedDecision) return completedDecision;
-                for (var i = 0; i < results.Count; i++)
-                {
-                    var result = results[i];
-                    if (result.Result is ToolApprovalResult)
-                    {
-                        result = new FunctionResultContent(
-                            calls[i],
-                            "Decision deferred. Review the read results and call submit_approval again without read_file.");
-                    }
-
+                    if (result.Result is ToolApprovalResult currentDecision) return currentDecision;
                     history.Add(result.ToChatMessage());
                 }
             }
+        }
+
+        /// <summary>Executes only explicitly SDK-completed submissions during streaming.</summary>
+        public async Task<bool> TrySubmitAsync(
+            StreamingChatMessageContent content,
+            FunctionCallContentBuilder calls,
+            Kernel kernel,
+            CancellationToken cancellationToken)
+        {
+            foreach (var update in content.Items.OfType<StreamingFunctionCallUpdateContent>())
+            {
+                if (update.InnerContent is not Microsoft.Extensions.AI.FunctionCallContent { Name: "submit_approval" }) continue;
+                if (string.IsNullOrEmpty(update.CallId))
+                {
+                    _decision = ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval submission has no tool-call ID.");
+                    return true;
+                }
+
+                _tools.BeginResponse();
+                var ids = new HashSet<string>(StringComparer.Ordinal);
+                try
+                {
+                    foreach (var call in calls.Build())
+                    {
+                        if (string.IsNullOrEmpty(call.Id) || !ids.Add(call.Id))
+                        {
+                            _decision = ToolApprovalResult.Fail(
+                                ToolApprovalFailure.InvalidResponse,
+                                "The approval assistant returned missing or duplicate tool-call IDs.");
+                            return true;
+                        }
+
+                        var result = await call.InvokeAsync(kernel, cancellationToken);
+                        if (_tools.IsReadLimitExceeded)
+                        {
+                            _decision = ToolApprovalResult.Fail(
+                                ToolApprovalFailure.ReadLimitExceeded,
+                                "The approval assistant attempted a fifth file-read batch.");
+                            return true;
+                        }
+
+                        if (result.Result is not ToolApprovalResult decision) continue;
+                        _decision = decision;
+                        return true;
+                    }
+
+                    _decision = ToolApprovalResult.Fail(ToolApprovalFailure.InvalidResponse, "The approval submission returned no decision.");
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+                catch (Exception ex)
+                {
+                    _decision = ToolApprovalResult.Fail(
+                        ToolApprovalFailure.InvalidResponse,
+                        $"The approval submission failed ({ex.GetType().Name}).");
+                }
+                return true;
+            }
+            return false;
         }
 
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
@@ -359,19 +399,18 @@ partial class ChatService
             /// <summary>
             /// Whether the current response requested at least one file read.
             /// </summary>
-            public bool HasReadRequests { get; private set; }
-
             /// <summary>
             /// Whether the reviewer has attempted a fifth file-read batch.
             /// </summary>
             public bool IsReadLimitExceeded => _readBatches >= 5;
 
             private int _readBatches;
+            private bool _hasReadRequests;
 
             /// <summary>
             /// Starts a response without resetting the review's cumulative read budget.
             /// </summary>
-            public void BeginResponse() => HasReadRequests = false;
+            public void BeginResponse() => _hasReadRequests = false;
 
             [KernelFunction("read_file")]
             [Description(
@@ -394,9 +433,9 @@ partial class ChatService
                 ArgumentException.ThrowIfNullOrWhiteSpace(path);
                 // Dispatch is sequential. All reads in this response share one budget entry,
                 // regardless of where the decision call appears in the provider's call order.
-                if (!HasReadRequests)
+                if (!_hasReadRequests)
                 {
-                    HasReadRequests = true;
+                    _hasReadRequests = true;
                     _readBatches++;
                 }
 

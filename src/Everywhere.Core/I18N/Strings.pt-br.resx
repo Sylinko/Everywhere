@@ -4133,9 +4133,6 @@ Deseja realmente excluir “{1}” permanentemente?</value>
   <data name="ChatRequest_CopyDetails" xml:space="preserve">
     <value>Copiar detalhes</value>
   </data>
-  <data name="ChatRequest_IncompleteOutput" xml:space="preserve">
-    <value>O assistente encerrou a resposta prematuramente.</value>
-  </data>
   <data name="HandledChatException_NetworkError_ProxyTunnelRejected" xml:space="preserve">
     <value>O servidor proxy recusou estabelecer a conexão. Verifique as configurações do proxy e os dados de autenticação.</value>
   </data>
@@ -4153,5 +4150,23 @@ Deseja realmente excluir “{1}” permanentemente?</value>
   </data>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>O serviço retornou conteúdo inválido e não foi possível concluir a solicitação.</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
+    <value>The reply reached a generation length limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
+    <value>The reply reached the context window limit and could not finish.</value>
+  </data>
+  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
+    <value>The service interrupted the reply or reported an incomplete response.</value>
+  </data>
+  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
+    <value>The service paused generation and requires a continuation that is not supported.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
+    <value>The service stopped the reply because of recitation restrictions.</value>
+  </data>
+  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
+    <value>The service stopped the reply because the language is unsupported.</value>
   </data>
 </root>

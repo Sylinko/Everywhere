@@ -880,8 +880,6 @@ public sealed partial class ChatService : IChatService
             chatContext,
             compressionMessage,
             cancellationToken);
-        if (response.Completion.HasIncompleteOutput)
-            throw new ContextCompressionOutputException("The assistant terminated the response early.", LocaleKey.ChatRequest_IncompleteOutput);
         if (response.FunctionCalls.Count > 0)
             throw new ContextCompressionOutputException("The model tried to call a tool while compacting context.", LocaleKey.ContextCompression_Error_ToolCallNotAllowed);
         var summary = response.Text.Trim();
@@ -1078,7 +1076,6 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.UsageDetails);
         var retryActivity = default(IBusyActivity);
 
-        var completion = new ChatResponseCompletion(null);
         try
         {
             var streamRequest = kernelMixin.StreamRequestAsync(
@@ -1123,11 +1120,6 @@ public sealed partial class ChatService : IChatService
                                 retryActivity,
                                 failed);
                         }
-                        continue;
-                    }
-                    case ChatRequestUpdate.Completed completed:
-                    {
-                        completion = completed.Completion;
                         continue;
                     }
                     case ChatRequestUpdate.Content content:
@@ -1216,6 +1208,7 @@ public sealed partial class ChatService : IChatService
                     }
                 }
             }
+            await statistics.CompleteAsync();
         }
         catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
         {
@@ -1229,8 +1222,8 @@ public sealed partial class ChatService : IChatService
             callingToolsActivity?.Dispose();
         }
 
-        // Explicitly truncated/filtered responses must never execute partial tool calls.
-        var functionCalls = completion.HasIncompleteOutput ? [] : functionCallContentBuilder.Build();
+        // Only a successfully exhausted request can dispatch tools.
+        var functionCalls = functionCallContentBuilder.Build();
         return new ModelInvocationResult(functionCalls, statistics.AttemptUsage, statistics.AttemptInvocationId);
 
         TSpan EnsureSpan<TSpan>(bool createNew) where TSpan : AssistantChatMessageSpan, new()

@@ -8,7 +8,7 @@ using OllamaSharp.Models.Exceptions;
 namespace Everywhere.AI;
 
 /// <summary>Normalizes original failures into concrete exception categories while retaining diagnostics.</summary>
-public static class ChatExceptionNormalizer
+public static partial class ChatExceptionNormalizer
 {
     /// <summary>Collects common, SDK and connection evidence once; already-handled exceptions retain identity.</summary>
     public static Exception Handle(Exception exception, KernelMixin? kernelMixin, ChatRequestFailureContext context = default)
@@ -81,6 +81,22 @@ public static class ChatExceptionNormalizer
         }
 
         var causes = ChatExceptionEvidenceExtractor.EnumerateCauses(original).ToArray();
+        foreach (var cause in causes)
+        {
+            // OpenAI's closed SDK enum can reject compatible-provider finish values before
+            // yielding content. Use its structured ActualValue, never parse a value from text.
+            if (cause is not ArgumentOutOfRangeException { ActualValue: string finishReason } rejected ||
+                !rejected.Message.Contains("Unknown ChatFinishReason value", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            evidence.ProviderFinishReason = finishReason;
+            if (ClassifyCompletion(evidence, kernelMixin, finishReason.Trim().ToLowerInvariant(), false) is { } completionError)
+            {
+                return completionError;
+            }
+        }
         if (causes.AsValueEnumerable().Any(cause => cause is AuthenticationException))
         {
             return Result(new HandledChatException.NetworkError.TlsError(original, message), evidence, "tls-failure", "transport");

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-02.
 
-This document describes the current architecture and product contracts. Source code is authoritative for implementation details. Verification history is recorded separately in [Implementation.md](Implementation.md); remaining design boundaries are collected in section 11.
+This document describes the current architecture and product contracts. Source code is authoritative for implementation details. Verification boundaries are collected in section 11.
 
 ## 1. Modes and boundaries
 
@@ -108,23 +108,17 @@ Input is frozen before requests. Arguments containing `prompt`, including delega
 
 Approval uses `KernelMixin.StreamRequestAsync` through ChatService's shared response reader, ordinary automatic tool selection, and `autoInvoke: false`. There are no provider-specific required/named-tool controls.
 
-The entire stream completes before dispatch. Shared `FunctionCallContentBuilder` assembles calls; text, reasoning, and continuation metadata are reconstructed into private history. Finish reasons survive terminal/usage chunks. Incomplete responses and stream errors cannot authorize execution, even after a complete-looking allow chunk.
+Shared `FunctionCallContentBuilder` assembles calls; text, reasoning, and continuation metadata are reconstructed into private history. Explicit unsuccessful termination uses the shared request exception pipeline. Before a decision, it cannot authorize execution. Successful execution of `submit_approval` ends review: subsequent calls, text, and provider errors are ignored.
+
+Where the SDK supplies an explicitly completed function call, the reader can dispatch the accumulated calls during streaming and dispose the stream after submission. Valid-looking JSON fragments alone do not establish completion. Other calls are dispatched after successful enumeration exhaustion.
 
 Each request receives a history copy because adapters may append calls to their input collection. Only the host records the reconstructed response in canonical history, preventing duplicate calls.
 
 Plugin metadata is cleared at registration to advertise bare names. The shared builder follows ChatService's flat-name contract. The approval loop has no separate plugin/function-name validator or handwritten router.
 
-For each completed response, the host:
+The host resets the current-response read marker and invokes calls sequentially through `FunctionCallContent.InvokeAsync`; SK handles lookup, parsing exceptions, binding, and invocation. Missing/duplicate IDs, unknown calls, invocation errors, or a fifth read batch fail review if encountered before submission. Reads in a response share one batch.
 
-1. Rejects incomplete finish reasons and missing/duplicate call IDs.
-2. Resets the tools' current-response read marker.
-3. Invokes calls sequentially through `FunctionCallContent.InvokeAsync`; SK handles lookup, parsing exceptions, binding, and invocation.
-4. Collects typed `ToolApprovalResult` candidates. Unknown calls, invocation errors, invalid decisions, or multiple decisions fail review.
-5. Accepts a candidate only after every call succeeds and no reads were requested. Otherwise, returns read results and replaces the decision result with a defer notice before continuing.
-
-Mixed reads/decisions are deferred regardless of emitted order and require resubmission after seeing evidence. Fifth-read failure overrides an earlier candidate. Earlier reads may complete before a later unknown call or conflict is discovered; invalid batches are not guaranteed zero reads, but never approve the operation.
-
-Accepted decisions end review without a closing-message request. Continuations use `FunctionResultContent.ToChatMessage` for result history.
+The first successfully executed submission returns its typed `ToolApprovalResult` immediately. Reads before it may finish; calls after it are ignored. Invalid decision arguments fail review. The host does not defer a submitted decision or require a closing-message request. Continuations without a decision use `FunctionResultContent.ToChatMessage` for result history.
 
 ## 7. Tools and bounded cost
 
@@ -206,9 +200,9 @@ Global mode and System Assistant configuration persist in settings. Missing/unre
 | `DecisionMissing` | No decision after two corrections. |
 | `ReadLimitExceeded` | Fifth read batch attempted. |
 | `ContextLimitExceeded` | Selected assistant's context capacity exceeded. |
-| `InvalidResponse` | Incomplete finish reason, invalid/conflicting calls or IDs, unavailable tool, binding error, or invalid decision. |
+| `InvalidResponse` | Classified unsuccessful output, invalid calls or IDs before submission, unavailable tool, binding error, or invalid decision. |
 | `AssistantUnavailable` | Configuration reports no tool support. |
-| `ProviderError` | Other request/configuration/provider exception; fallback feedback currently identifies exception type. |
+| `ProviderError` | Other request/configuration/provider exception; classified failures return their concrete friendly explanation to the requesting assistant. |
 
 Cancellation propagates separately. Outer denial can say the tool body did not run; internal denial identifies blocked work and preserves earlier effects. Outcomes return through normal tool results so the assistant can revise/explain rather than automatically ending the conversation.
 
@@ -216,7 +210,7 @@ Each SDK attempt records independent usage/latency through `RequestStatistics` u
 
 ## 11. Verification boundary and discussion items
 
-Latest focused verification in [Implementation.md](Implementation.md) records 32 passing cases through the real streaming IChatClient-to-SK adapter with application patches: names/history, reasoning metadata, finish reasons with usage, stream failure, budgets, mixed-call orders, unknown calls after allow, mode lifetime, settings, and UI commands. This is historical evidence, not a new test run during this documentation rewrite.
+Focused tests reuse the existing streaming IChatClient-to-SK adapter and mock responses to cover terminal submission, pre-decision errors, read/correction budgets, and attempt accounting. Existing real-HTTP SDK tests cover output-limit classification and finish-reason preservation. Test payloads are not a guarantee of live-provider classification quality.
 
 The user reported successful live E2E approval before the latest streaming/dispatch refactors. Those refactors have not been tested against a live provider here. Native macOS execution, native dialogs/layout, and classification quality have separate runtime verification boundaries; Windows builds and synthetic responses do not establish them.
 
@@ -224,6 +218,5 @@ The user reported successful live E2E approval before the latest streaming/dispa
 | --- | --- |
 | Restored modes and first-use acknowledgement | Selector commands enforce confirmation. Local/cloud settings restoration can select Auto/FullAccess without checking local acknowledgement. Should restoration also require acknowledgement on a device where the workflow has not been confirmed? No such gate is added here. |
 | macOS semantic scope | SystemPlugin routes modes and returns denial reasons but supplies no additional resolved consent details. Is original tool input sufficient, or should generated AppleScript/resolved reminder/calendar/note operations be supplied? |
-| Provider failure classification | Finish reasons use an explicit string list, overflow uses existing classification, and other request failures report exception type. This is not a unified taxonomy or precise diagnosis guarantee across providers; source contains a corresponding TODO. |
 
 These boundaries do not reopen mode snapshots, read/correction budgets, no-human-fallback behavior, or sensitive-data policy. They are recorded rather than described as implemented.

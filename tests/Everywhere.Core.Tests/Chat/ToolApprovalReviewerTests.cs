@@ -80,7 +80,7 @@ public sealed class ToolApprovalReviewerTests
     {
         var reviewer = CreateReviewer();
         var responses = Enumerable.Range(0, readBatches)
-            .Select(index => index == 4 ? Response(Decision(), Read()) : Response(Read())).Append(Response(Decision())).ToArray();
+            .Select(_ => Response(Read())).Append(Response(Decision())).ToArray();
         var result = await reviewer.ReviewAsync(responses);
         Assert.Multiple(() =>
         {
@@ -94,7 +94,7 @@ public sealed class ToolApprovalReviewerTests
 
     [TestCase(true)]
     [TestCase(false)]
-    public async Task ReviewAsync_WithParallelReads_CountsOneBatchAndDefersMixedDecision(bool isDecisionFirst)
+    public async Task ReviewAsync_WithMixedReadsAndDecision_CompletesAtSubmission(bool isDecisionFirst)
     {
         var reviewer = CreateReviewer();
         var mixedResponse = isDecisionFirst ?
@@ -104,9 +104,10 @@ public sealed class ToolApprovalReviewerTests
             mixedResponse, Response(Read()), Response(Read()), Response(Decision()));
         Assert.Multiple(() =>
         {
-            Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(6));
-            Assert.That(result.IsAllowed, Is.True);
-            Assert.That(reviewer.ToolResults.Any(content => content.Result?.ToString()?.StartsWith("Decision deferred") is true), Is.True);
+            Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(isDecisionFirst ? 0 : 4));
+            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(reviewer.Requests, Has.Count.EqualTo(1));
         });
     }
 
@@ -126,59 +127,59 @@ public sealed class ToolApprovalReviewerTests
     }
 
     [Test]
-    public async Task ReviewAsync_WithConflictingDecisions_FailsWithoutApproving()
+    public async Task ReviewAsync_WithConflictingDecisions_FirstSubmissionWins()
     {
         var reviewer = CreateReviewer();
         var result = await reviewer.ReviewAsync(Response(Read(), Decision(), Decision("deny")));
         Assert.Multiple(() =>
         {
-            Assert.That(result.Failure, Is.EqualTo(ToolApprovalFailure.InvalidResponse));
-            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(result.IsAllowed, Is.True);
             Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(1));
         });
     }
 
     [Test]
-    public async Task ReviewAsync_WithUnknownToolAfterDecision_FailsWithoutApproving()
+    public async Task ReviewAsync_WithUnknownToolAfterDecision_IgnoresLaterCall()
     {
         var reviewer = CreateReviewer();
         var unknownCall = new MEAI.FunctionCallContent(Guid.NewGuid().ToString(), "unknown_tool", new Dictionary<string, object?>());
         var result = await reviewer.ReviewAsync(Response(Decision(), unknownCall));
         Assert.Multiple(() =>
         {
-            Assert.That(result.Failure, Is.EqualTo(ToolApprovalFailure.InvalidResponse));
-            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(result.IsAllowed, Is.True);
             Assert.That(reviewer.Requests, Has.Count.EqualTo(1));
         });
     }
 
     [Test]
-    public async Task ReviewAsync_WithIncompleteDecision_Fails()
+    public async Task ReviewAsync_WithOutputLimitAfterSubmission_KeepsDecision()
     {
         var reviewer = CreateReviewer();
         var result = await reviewer.ReviewResponsesAsync(new MEAI.ChatResponse(Response(Decision())) { FinishReason = MEAI.ChatFinishReason.Length });
         Assert.Multiple(() =>
         {
-            Assert.That(result.Failure, Is.EqualTo(ToolApprovalFailure.InvalidResponse));
-            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(result.IsAllowed, Is.True);
         });
     }
 
     [Test]
-    public async Task ReviewAsync_WithStreamFailureAfterDecision_FailsWithoutApproving()
+    public async Task ReviewAsync_WithStreamFailureAfterDecision_KeepsDecision()
     {
         var reviewer = CreateReviewer();
         reviewer.StreamFailure = new IOException("Stream disconnected.");
         var result = await reviewer.ReviewAsync(Response(Decision()));
         Assert.Multiple(() =>
         {
-            Assert.That(result.Failure, Is.EqualTo(ToolApprovalFailure.ProviderError));
-            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.Null);
+            Assert.That(result.IsAllowed, Is.True);
         });
     }
 
     [AvaloniaTest]
-    public async Task ReviewAsync_WhenStreamRetries_DiscardsProvisionalDecisionAndPreservesCompletedReads()
+    public async Task ReviewAsync_WithSubmissionBeforeRetryableFailure_StopsWithoutReplay()
     {
         var reviewer = CreateReviewer(1);
         reviewer.StreamFailures.Enqueue(null);
@@ -191,25 +192,16 @@ public sealed class ToolApprovalReviewerTests
             Response(Decision()));
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsAllowed, Is.True);
+            Assert.That(result.IsAllowed, Is.False);
             Assert.That(result.Failure, Is.Null);
-            Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(2));
-            Assert.That(reviewer.Requests, Has.Count.EqualTo(4));
-            foreach (var request in reviewer.Requests.Skip(1).Take(2))
-            {
-                Assert.That(request.SelectMany(message => message.Contents).OfType<MEAI.FunctionResultContent>().Count(), Is.EqualTo(1));
-                Assert.That(request.Count(message => message.Role == MEAI.ChatRole.User), Is.EqualTo(1));
-            }
-            Assert.That(reviewer.Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.FunctionCallContent>().Count(), Is.EqualTo(2));
-            Assert.That(reviewer.Requests[^1].SelectMany(message => message.Contents).OfType<MEAI.TextReasoningContent>(), Is.Empty);
+            Assert.That(reviewer.Handler.ReadCount, Is.EqualTo(1));
+            Assert.That(reviewer.Requests, Has.Count.EqualTo(2));
         });
-        await reviewer.Recorder.Received(4).StartModelInvocationAsync(
+        await reviewer.Recorder.Received(2).StartModelInvocationAsync(
             Arg.Is<StatisticsModelInvocationDraft>(draft => draft.Purpose == StatisticsModelInvocationPurpose.ToolApproval),
             Arg.Any<CancellationToken>());
-        await reviewer.Recorder.Received(3).CompleteModelInvocationAsync(
+        await reviewer.Recorder.Received(2).CompleteModelInvocationAsync(
             Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(), true, false, null, CancellationToken.None);
-        await reviewer.Recorder.Received(1).CompleteModelInvocationAsync(
-            Arg.Any<Guid>(), Arg.Any<ChatUsageDetails>(), Arg.Any<DateTimeOffset>(), false, false, Arg.Any<string>(), CancellationToken.None);
     }
 
     private static MEAI.ChatMessage Response(params MEAI.FunctionCallContent[] calls) => new(MEAI.ChatRole.Assistant, [.. calls]);
