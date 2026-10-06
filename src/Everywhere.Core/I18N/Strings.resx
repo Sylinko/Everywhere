@@ -4271,4 +4271,85 @@ Delete &quot;{1}&quot; permanently?</value>
   <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
     <value>The service stopped the reply because the language is unsupported.</value>
   </data>
+  <data name="ChatErrorDetails_Diagnostics" xml:space="preserve">
+    <value>Diagnostic information</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceMessage" xml:space="preserve">
+    <value>Service message</value>
+  </data>
+  <data name="ChatErrorDetails_Technical" xml:space="preserve">
+    <value>Technical details</value>
+  </data>
+  <data name="ChatErrorDetails_HttpStatus" xml:space="preserve">
+    <value>HTTP {0}</value>
+  </data>
+  <data name="ChatErrorDetails_Category" xml:space="preserve">
+    <value>Error category</value>
+  </data>
+  <data name="ChatErrorDetails_HttpStatusLabel" xml:space="preserve">
+    <value>HTTP status</value>
+  </data>
+  <data name="ChatErrorDetails_GatewayStatus" xml:space="preserve">
+    <value>Gateway HTTP status</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceCode" xml:space="preserve">
+    <value>Service code</value>
+  </data>
+  <data name="ChatErrorDetails_ServiceType" xml:space="preserve">
+    <value>Service type</value>
+  </data>
+  <data name="ChatErrorDetails_AssistantApi" xml:space="preserve">
+    <value>Assistant API identifier</value>
+  </data>
+  <data name="ChatErrorDetails_RequestId" xml:space="preserve">
+    <value>Request ID</value>
+  </data>
+  <data name="ChatErrorDetails_Parameter" xml:space="preserve">
+    <value>Rejected parameter</value>
+  </data>
+  <data name="ChatErrorDetails_FinishReason" xml:space="preserve">
+    <value>Finish reason</value>
+  </data>
+  <data name="ChatErrorDetails_ProviderFinishReason" xml:space="preserve">
+    <value>Provider finish reason</value>
+  </data>
+  <data name="ChatErrorDetails_Recovery" xml:space="preserve">
+    <value>Recovery advice</value>
+  </data>
+  <data name="ChatErrorDetails_Rule" xml:space="preserve">
+    <value>Classification rule</value>
+  </data>
+  <data name="ChatErrorDetails_Source" xml:space="preserve">
+    <value>Evidence source</value>
+  </data>
+  <data name="ChatErrorDetails_RetryAfter" xml:space="preserve">
+    <value>Server retry delay</value>
+  </data>
+  <data name="ChatErrorDetails_Timeout" xml:space="preserve">
+    <value>Timeout phase</value>
+  </data>
+  <data name="ChatErrorDetails_SocketError" xml:space="preserve">
+    <value>Socket error</value>
+  </data>
+  <data name="ChatErrorDetails_ConnectionCode" xml:space="preserve">
+    <value>Connection code</value>
+  </data>
+  <data name="ChatErrorDetails_ResponseBody" xml:space="preserve">
+    <value>Original response body</value>
+  </data>
+  <data name="ChatErrorDetails_ExceptionType" xml:space="preserve">
+    <value>Exception type</value>
+  </data>
+  <data name="ChatErrorDetails_ExceptionMessage" xml:space="preserve">
+    <value>Exception message</value>
+  </data>
+  <data name="ChatErrorDetails_StackTrace" xml:space="preserve">
+    <value>Stack trace</value>
+  </data>
+  <data name="ChatErrorDetails_Truncated" xml:space="preserve">
+    <value>Diagnostic output truncated</value>
+  </data>
+  <data name="Common_CopyFailed" xml:space="preserve">
+    <value>Copy failed</value>
+  </data>
 </root>

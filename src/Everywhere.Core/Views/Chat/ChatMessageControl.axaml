@@ -126,7 +126,11 @@
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand}"
                       CommandParameter="{Binding Message, Mode=OneTime}"
                       Focusable="False"
-                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
+                      <Interaction.Behaviors>
+                        <in:CopiedButtonBehavior/>
+                      </Interaction.Behaviors>
+                    </Button>
                   </v:ChatMessageOperationPanel>
                 </DataTemplate>
               </v:ConditionalContentControl.FalseContent>
@@ -196,7 +200,11 @@
                       Command="{Binding $parent[v:ChatMessageItemsControl].CopyMessageCommand, Mode=OneTime}"
                       CommandParameter="{Binding Message, Mode=OneTime}"
                       Focusable="False"
-                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                      ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Copy}}">
+                      <Interaction.Behaviors>
+                        <in:CopiedButtonBehavior/>
+                      </Interaction.Behaviors>
+                    </Button>
                   </v:ChatMessageOperationPanel>
                 </DataTemplate>
               </v:ConditionalContentControl.FalseContent>

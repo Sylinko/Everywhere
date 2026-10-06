@@ -1,9 +1,10 @@
 <UserControl
   x:Class="Everywhere.Views.Pages.SkillPage" xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:skills="clr-namespace:Everywhere.Skills;assembly=Everywhere.Abstractions"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  x:Name="Self" x:DataType="vm:SkillPageViewModel">
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:skills="clr-namespace:Everywhere.Skills;assembly=Everywhere.Abstractions" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="vm:SkillPageViewModel">
   <UserControl.Styles>
     <Style Selector="ListBox#SkillListBox">
       <Setter Property="Padding" Value="0"/>
@@ -379,7 +380,11 @@
                         shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                         shadui:ButtonAssist.IconSize="{DynamicResource FontSizeM}"
                         Command="{Binding #Self.ViewModel.CopyMarkdownCommand}"
-                        Content="{I18N {x:Static LocaleKey.Common_Copy}}"/>
+                        Content="{I18N {x:Static LocaleKey.Common_Copy}}">
+                        <Interaction.Behaviors>
+                          <in:CopiedButtonBehavior/>
+                        </Interaction.Behaviors>
+                      </Button>
                     </StackPanel>
                   </Border>
 
