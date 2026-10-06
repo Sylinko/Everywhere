@@ -9,7 +9,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidConfiguration;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidConfiguration);
 
         /// <summary>Represents InvalidEndpoint failures within InvalidConfiguration.</summary>
         public sealed class InvalidEndpoint(
@@ -18,7 +18,7 @@ public abstract partial class HandledChatException
         ) : InvalidConfiguration(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidEndpoint;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidEndpoint);
         }
 
         /// <summary>Represents ModelUnavailable failures within InvalidConfiguration.</summary>
@@ -28,7 +28,7 @@ public abstract partial class HandledChatException
         ) : InvalidConfiguration(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_InvalidConfiguration_ModelUnavailable;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_InvalidConfiguration_ModelUnavailable);
         }
 
         /// <summary>Represents InvalidTemperature failures within InvalidConfiguration.</summary>
@@ -38,7 +38,7 @@ public abstract partial class HandledChatException
         ) : InvalidConfiguration(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_TemperatureNotSupport;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_TemperatureNotSupport);
         }
 
         /// <summary>Represents InvalidTopP failures within InvalidConfiguration.</summary>
@@ -48,7 +48,7 @@ public abstract partial class HandledChatException
         ) : InvalidConfiguration(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_TopPNotSupport;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_TopPNotSupport);
         }
     }
 }

@@ -16,6 +16,11 @@ namespace Everywhere.Interactions;
 /// Executes a copy button's command and temporarily displays successful completion.
 /// Ordinary Click handlers are suppressed; flyouts and handled-event listeners are unaffected.
 /// </summary>
+/// <remarks>
+/// Commands must complete only after clipboard writing succeeds and propagate failures to this
+/// behavior. Use CanExecute to reject unavailable content. Commands must not show their own copy
+/// feedback or swallow exceptions; asynchronous commands must implement IAsyncRelayCommand.
+/// </remarks>
 public sealed class CopiedButtonBehavior : Behavior<Button>
 {
     // The class handler runs before instance Click handlers. Store the owner on the button

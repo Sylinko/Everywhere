@@ -2429,7 +2429,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
         <value>Systemassistent</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>Konfigurieren Sie den benötigten Schlüsselassistenten für Everywhere, z. B. für Titelzusammenfassungen, Kontextkompression usw. Wenn nicht konfiguriert, verwendet Everywhere das derzeit beste Modell als benötigten Assistenten.</value>
+        <value>Konfigurieren Sie den für Everywhere erforderlichen Schlüsselassistenten, der für Titelzusammenfassungen, Tool-Genehmigungen usw. verwendet wird.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>Konfigurieren Sie, wie Everywhere die Benutzeroberfläche anzeigt, z. B. Sprache, Thema, Schriftgröße usw.</value>
@@ -3023,7 +3023,7 @@ Veröffentlichungsdatum: {2}</value>
         <value>Standard-Subassistent</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Der Standardassistent, der vom Hauptassistenten nach Bedarf aufgerufen wird. Wenn der Hauptassistent über das Werkzeug &quot;Neuen Assistenten zuweisen&quot; Routineaufgaben delegiert, wird dieser standardmäßig in einem unabhängigen Kontext bearbeitet und gibt Ergebnisse zurück. &quot;Automatische Auswahl&quot; bedeutet, dass der gleiche Subassistent wie der Hauptassistent verwendet wird.</value>
+        <value>Wenn der im Chat ausgewählte Assistent über das Werkzeug "Neuen Assistenten zuweisen" Routineaufgaben delegiert, bearbeitet der Standard-Subagent sie in einem unabhängigen Kontext und gibt die Ergebnisse zurück. "Automatische Auswahl" verwendet den im Chat ausgewählten Assistenten.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API-Schlüssel (optional)</value>
@@ -4151,22 +4151,10 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>Der Dienst hat ungültige Inhalte zurückgegeben. Die Anfrage konnte daher nicht abgeschlossen werden.</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>Standardmäßig wird der im Chat ausgewählte Assistent verwendet. Du kannst auch in den Einstellungen unter „Systemassistent“ einen eigenen festlegen.</value>
   </data>
 </root>

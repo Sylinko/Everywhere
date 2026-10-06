@@ -946,7 +946,7 @@
         <value>服務提示餘額不足或可用額度已用盡。</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>服務正在限制請求，請稍後再試。</value>
+        <value>請求過於頻繁，請稍後重試。</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>服務端點無法訪問。請檢查您的網絡連接。</value>
@@ -2429,7 +2429,7 @@
         <value>系統助手</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>配置 Everywhere 所需的關鍵助手，用於標題總結、上下文壓縮等。如果沒有配置，Everywhere 會使用當前最佳模型作為所需助手。</value>
+        <value>配置 Everywhere 所需的關鍵助手，用於標題總結、工具審批等。</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>配置 Everywhere 如何顯示界面內容，如語言、主題、字體大小等。</value>
@@ -3023,7 +3023,7 @@
         <value>默認子助手</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>供主助手按需調用的默認助手。當主助手通過“指派新助手”工具委派常規任務時，默認由它在獨立上下文中處理並返回結果。“自動選擇”表示使用和主助手一樣的子助手。</value>
+        <value>當聊天所選的助手透過「指派新助手」工具委派常規任務時，預設由它在獨立脈絡中處理並傳回結果。「自動選擇」使用聊天所選的助手。</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 密鑰 (選填)</value>
@@ -4250,4 +4250,22 @@
   <data name="Common_CopyFailed" xml:space="preserve">
     <value>複製失敗</value>
   </data>
+    <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
+        <value>審批會使用對話上下文和操作內容。如果在設定中允許讀取檔案，還可能讀取檔案內容。這些內容會傳送給所選審批助手，可能包含任務中的敏感資訊。</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>允許審批助手讀取檔案</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>審批助手可讀取本機檔案內容以輔助判斷，例如查看待執行的指令碼。讀取內容會傳送給所選審批助手，可能包含敏感資訊。關閉時，僅依據對話和操作資訊審批。</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>請求過於頻繁，服務建議等待 {0} 秒後重試。</value>
+    </data>
+    <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+        <value></value>
+    </data>
+    <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+        <value>預設使用聊天所選的助手，也可以在「系統助手」設定中單獨指定。</value>
+    </data>
 </root>

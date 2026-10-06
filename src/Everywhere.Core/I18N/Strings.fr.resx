@@ -2429,7 +2429,7 @@ Utilisez la molette ou les touches numériques pour changer de mode de sélectio
         <value>Assistant Système</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>Configurez l'assistant clé requis pour Everywhere, pour le résumé de titres, la compression de contexte, etc. Si non configuré, Everywhere utilisera le meilleur modèle actuel comme assistant requis.</value>
+        <value>Configurez l'assistant clé requis pour Everywhere, utilisé pour le résumé des titres, l'approbation des outils, etc.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>Configurez comment Everywhere affiche le contenu de l'interface, comme la langue, le thème, la taille de police, etc.</value>
@@ -3023,7 +3023,7 @@ Date de publication : {2}</value>
         <value>Sous-assistant par Défaut</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Sous-assistant par défaut à la demande du principal assistant. Lorsqu'il délègue des tâches courantes via l'outil &quot;Assigner un nouveau sous-assistant&quot;, il est traité et renvoyé par celui-ci dans un contexte indépendant. &quot;Sélection automatique&quot; signifie utiliser le même sous-assistant que le principal assistant.</value>
+        <value>Lorsque l'assistant sélectionné dans le chat délègue des tâches courantes via l'outil "Assigner un nouvel assistant", le sous-agent par défaut les traite dans un contexte indépendant et renvoie les résultats. "Sélection automatique" utilise l'assistant sélectionné dans le chat.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>Clé API (optionnelle)</value>
@@ -4151,22 +4151,10 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>Le service a renvoyé un contenu invalide. La requête n’a pas pu être terminée.</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>Par défaut, l’assistant sélectionné dans la discussion est utilisé ; vous pouvez aussi en spécifier un dans les paramètres « Assistant système ».</value>
   </data>
 </root>

@@ -479,6 +479,7 @@
                           shadui:ButtonAssist.Icon="{LucideIconContent Copy}"
                           Command="{Binding #Self.ViewModel.CopyLogsCommand}"
                           CommandParameter="{Binding LogEntries}"
+                          IsEnabled="{Binding !!LogEntries.Count}"
                           ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginPage_CopyLogsButton_ToolTip}}">
                           <Interaction.Behaviors>
                             <in:CopiedButtonBehavior/>

@@ -265,7 +265,7 @@ public static partial class ChatExceptionNormalizer
                 new HandledChatException.ServiceUnavailable(evidence.OriginalException, evidence.FriendlyMessageKey, evidence.RetryAfter),
             "timeout_error" or "deadline_exceeded" =>
                 new HandledChatException.Timeout(evidence.OriginalException, evidence.FriendlyMessageKey, evidence.RetryAfter),
-            "content_filter" or "content_policy_violation" =>
+            "content_filter" or "content_policy_violation" or "refusal" =>
                 new HandledChatException.ContentBlocked(evidence.OriginalException, evidence.FriendlyMessageKey),
             _ => null
         };

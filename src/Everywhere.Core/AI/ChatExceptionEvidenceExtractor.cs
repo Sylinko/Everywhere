@@ -47,8 +47,8 @@ public static class ChatExceptionEvidenceExtractor
                 case AuthenticationException authentication:
                     evidence.TransportException = authentication;
                     break;
-                case IOException io:
-                    evidence.TransportException ??= io;
+                case HttpIOException httpIO:
+                    evidence.TransportException ??= httpIO;
                     break;
                 case TimeoutException:
                     evidence.TimeoutPhase = context.TimeoutPhase == ChatRequestTimeoutPhase.None ?

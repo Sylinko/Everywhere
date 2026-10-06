@@ -13,10 +13,10 @@ public abstract partial class HandledChatException(
     public override bool IsExpected => true;
 
     /// <inheritdoc />
-    public override IDynamicLocaleKey FriendlyMessageKey => field ??= customFriendlyMessageKey ?? new DynamicLocaleKey(DefaultFriendlyMessageKey);
+    public override IDynamicLocaleKey FriendlyMessageKey => field ??= customFriendlyMessageKey ?? DefaultFriendlyMessageKey;
 
     /// <summary>Gets the default localization key supplied by the concrete category.</summary>
-    protected abstract string DefaultFriendlyMessageKey { get; }
+    protected abstract IDynamicLocaleKey DefaultFriendlyMessageKey { get; }
 
     /// <summary>Advises the caller how this failure can be recovered; does not schedule or execute recovery.</summary>
     public virtual ChatExceptionRecovery Recovery => new ChatExceptionRecovery.Stop();

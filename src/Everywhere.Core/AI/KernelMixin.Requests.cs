@@ -151,27 +151,21 @@ public abstract partial class KernelMixin
                 attemptActivity?.Dispose();
             }
 
-            // Long server delays are split because Task.Delay has a finite timer range.
-            var remaining = delay.GetValueOrDefault();
-            while (remaining > TimeSpan.Zero)
-            {
-                var segment = remaining > TimeSpan.FromDays(1) ? TimeSpan.FromDays(1) : remaining;
-                await Task.Delay(segment, cancellationToken);
-                remaining -= segment;
-            }
+            await Task.Delay(delay.GetValueOrDefault(), cancellationToken);
         }
     }
 
     /// <summary>
     /// Calculates the retry delay based on the retry number and any server-specified delay.
     /// Formula: min(30, 2^(min(retryNumber - 1, 5)) * (0.8 + random(0, 0.4))).
-    /// If the server delay is greater than the calculated delay, it will be used instead.
+    /// Honors a longer server delay up to 30 seconds. A larger server delay stops retrying.
     /// </summary>
     /// <param name="retryNumber"></param>
     /// <param name="serverDelay"></param>
     /// <returns></returns>
-    private static TimeSpan GetRetryDelay(int retryNumber, TimeSpan? serverDelay)
+    private static TimeSpan? GetRetryDelay(int retryNumber, TimeSpan? serverDelay)
     {
+        if (serverDelay > TimeSpan.FromSeconds(30)) return null;
         var local = TimeSpan.FromSeconds(Math.Min(30, Math.Pow(2, Math.Min(retryNumber - 1, 5)) * (0.8 + Random.Shared.NextDouble() * 0.4)));
         return serverDelay is { } delay && delay > local ? delay : local;
     }

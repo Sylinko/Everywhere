@@ -12,7 +12,7 @@ public abstract partial class HandledChatException
     ) : HandledChatException(originalException, customFriendlyMessageKey)
     {
         /// <inheritdoc />
-        protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_NetworkError;
+        protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_NetworkError);
 
         /// <inheritdoc />
         public override ChatExceptionRecovery Recovery { get; } = new ChatExceptionRecovery.Retry(retryAfter);
@@ -25,7 +25,7 @@ public abstract partial class HandledChatException
         ) : NetworkError(originalException, customFriendlyMessageKey, retryAfter)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledSystemException_HostNotFound;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledSystemException_HostNotFound);
         }
 
         /// <summary>Represents ConnectionRefused failures within NetworkError.</summary>
@@ -36,7 +36,7 @@ public abstract partial class HandledChatException
         ) : NetworkError(originalException, customFriendlyMessageKey, retryAfter)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledSystemException_ConnectionRefused;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledSystemException_ConnectionRefused);
         }
 
         /// <summary>Represents TlsError failures within NetworkError.</summary>
@@ -46,7 +46,7 @@ public abstract partial class HandledChatException
         ) : NetworkError(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledSystemException_SSLConnectionError;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledSystemException_SSLConnectionError);
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.Stop();
@@ -59,7 +59,7 @@ public abstract partial class HandledChatException
         ) : NetworkError(originalException, customFriendlyMessageKey)
         {
             /// <inheritdoc />
-            protected override string DefaultFriendlyMessageKey => LocaleKey.HandledChatException_NetworkError_ProxyTunnelRejected;
+            protected override IDynamicLocaleKey DefaultFriendlyMessageKey => new DynamicLocaleKey(LocaleKey.HandledChatException_NetworkError_ProxyTunnelRejected);
 
             /// <inheritdoc />
             public override ChatExceptionRecovery Recovery => new ChatExceptionRecovery.Stop();

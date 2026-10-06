@@ -946,7 +946,7 @@
         <value>服务提示余额不足或可用额度已用尽。</value>
     </data>
     <data name="HandledChatException_RateLimit" xml:space="preserve">
-        <value>服务正在限制请求，请稍后再试。</value>
+        <value>请求过于频繁，请稍后重试。</value>
     </data>
     <data name="HandledChatException_EndpointNotReachable" xml:space="preserve">
         <value>无法连接到服务端点，请检查您的网络连接。</value>
@@ -2429,7 +2429,7 @@
         <value>系统助手</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>配置 Everywhere 所需的关键助手，用于标题总结、上下文压缩等。如果没有配置，Everywhere 会使用当前最佳模型作为所需助手。</value>
+        <value>配置 Everywhere 所需的关键助手，用于标题总结、工具审批等。</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>配置 Everywhere 如何显示界面内容，如语言、主题、字体大小等。</value>
@@ -3023,7 +3023,7 @@
         <value>默认子助手</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>供主助手按需调用的默认助手。当主助手通过“指派新助手”工具委派常规任务时，默认由它在独立上下文中处理并返回结果。“自动选择”表示使用和主助手一样的子助手。</value>
+        <value>当聊天所选的助手通过“指派新助手”工具委派常规任务时，默认由它在独立上下文中处理并返回结果。“自动选择”使用聊天所选的助手。</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API 密钥 (选填)</value>
@@ -4102,7 +4102,7 @@
         <value>工具审批</value>
     </data>
     <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
-        <value>选择负责工具审批的助手。“自动选择”使用当前执行任务的助手。</value>
+        <value>选择负责“帮我批准”的助手，此助手必须要支持工具调用。“自动选择”使用聊天所选的助手。</value>
     </data>
     <data name="ToolApproval_Reviewing" xml:space="preserve">
         <value>正在审批…</value>
@@ -4147,13 +4147,13 @@
         <value>选择谁来审批</value>
     </data>
     <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
-        <value>“自动选择”使用当前执行任务的助手，也可以在“系统助手”设置中单独指定。</value>
+        <value>默认使用聊天所选的助手，你可以在“系统助手”设置中单独指定。</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextTitle" xml:space="preserve">
         <value>结合任务内容判断</value>
     </data>
     <data name="ToolApproval_AutoDialog_ContextBody" xml:space="preserve">
-        <value>审批会使用对话上下文和操作内容，必要时读取相关文件。这些内容会发送给所选审批助手，可能包含任务中的敏感信息。</value>
+        <value>审批会使用对话上下文和操作内容。如果在设置中允许读取文件，还可能读取文件内容。这些内容会发送给所选审批助手，可能包含任务中的敏感信息。</value>
     </data>
     <data name="ToolApproval_AutoDialog_DecisionTitle" xml:space="preserve">
         <value>拒绝高风险操作</value>
@@ -4350,4 +4350,13 @@
   <data name="Common_CopyFailed" xml:space="preserve">
     <value>复制失败</value>
   </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Header" xml:space="preserve">
+        <value>允许审批助手读取文件</value>
+    </data>
+    <data name="SystemAssistantSettings_AllowApprovalFileReads_Description" xml:space="preserve">
+        <value>审批助手可读取本机文件内容以辅助判断，例如查看待执行的脚本。读取内容会发送给所选审批助手，可能包含敏感信息。关闭时，仅依据对话和操作信息审批。</value>
+    </data>
+    <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
+        <value>请求过于频繁，服务建议等待 {0} 秒后重试。</value>
+    </data>
 </root>

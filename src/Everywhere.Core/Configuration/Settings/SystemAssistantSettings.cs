@@ -1,5 +1,6 @@
 ﻿using Everywhere.AI;
 using Lucide.Avalonia;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Everywhere.Configuration;
 
@@ -28,9 +29,20 @@ public sealed partial class SystemAssistantSettings(IServiceProvider serviceProv
     [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_ToolApproval_Header,
         LocaleKey.SystemAssistantSettings_ToolApproval_Description)]
+    [SettingsItem(Group = "_ToolApproval")]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(ToolApproval)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
     public SystemAssistant ToolApproval { get; } = new(ModelSpecializations.ToolApproval);
+
+    /// <summary>
+    /// Gets or sets whether newly started approval reviews can read file contents.
+    /// </summary>
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.SystemAssistantSettings_AllowApprovalFileReads_Header,
+        LocaleKey.SystemAssistantSettings_AllowApprovalFileReads_Description)]
+    [SettingsItem(Group = "_ToolApproval", IsExperimental = true)]
+    public partial bool AllowApprovalFileReads { get; set; }
 
     [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Header,

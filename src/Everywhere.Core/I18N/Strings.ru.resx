@@ -2429,7 +2429,7 @@
         <value>Системный помощник</value>
     </data>
     <data name="SettingsCategory_Settings_SystemAssistant_Description" xml:space="preserve">
-        <value>Настройте ключевого помощника для Everywhere, используемого для резюме заголовков, сжатия контекста и т.д. Если не настроен, Everywhere использует текущую лучшую модель в качестве необходимого помощника.</value>
+        <value>Настройте ключевого помощника, необходимого Everywhere, который используется для резюмирования заголовков, утверждения инструментов и т. д.</value>
     </data>
     <data name="SettingsCategory_Settings_Display_Description" xml:space="preserve">
         <value>Настройте, как Everywhere отображает содержимое интерфейса, например, язык, тему, размер шрифта и т.д.</value>
@@ -3023,7 +3023,7 @@
         <value>Стандартный Подассистент</value>
     </data>
     <data name="SystemAssistantSettings_DefaultSubagent_Description" xml:space="preserve">
-        <value>Стандартный ассистент, вызываемый по мере необходимости основным ассистентом. Когда основной ассистент назначает рутинные задачи с помощью инструмента &quot;Назначить нового ассистента&quot;, он обрабатывается и возвращается в независимом контексте. &quot;Автоматический выбор&quot; означает использование того же подассистента, что и у основного ассистента.</value>
+        <value>Когда выбранный в чате ассистент делегирует рутинные задачи с помощью инструмента "Назначить нового ассистента", субассистент по умолчанию обрабатывает их в независимом контексте и возвращает результаты. "Автоматический выбор" использует выбранного в чате ассистента.</value>
     </data>
     <data name="WebSearchEngineProvider_ApiKey_Header_Optional" xml:space="preserve">
         <value>API-ключ (необязательно)</value>
@@ -4151,22 +4151,10 @@
   <data name="HandledChatException_InvalidResponse" xml:space="preserve">
     <value>Сервис вернул недопустимое содержимое, поэтому запрос не удалось завершить.</value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded" xml:space="preserve">
-    <value>The reply reached a generation length limit and could not finish.</value>
+  <data name="SystemAssistantSettings_ToolApproval_Description" xml:space="preserve">
+    <value></value>
   </data>
-  <data name="HandledChatException_GenerationLimitExceeded_ContextWindow" xml:space="preserve">
-    <value>The reply reached the context window limit and could not finish.</value>
-  </data>
-  <data name="HandledChatException_IncompleteResponse" xml:space="preserve">
-    <value>The service interrupted the reply or reported an incomplete response.</value>
-  </data>
-  <data name="HandledChatException_ContinuationRequired" xml:space="preserve">
-    <value>The service paused generation and requires a continuation that is not supported.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Recitation" xml:space="preserve">
-    <value>The service stopped the reply because of recitation restrictions.</value>
-  </data>
-  <data name="HandledChatException_ContentBlocked_Language" xml:space="preserve">
-    <value>The service stopped the reply because the language is unsupported.</value>
+  <data name="ToolApproval_AutoDialog_ReviewerBody" xml:space="preserve">
+    <value>По умолчанию используется помощник, выбранный в чате; также можно указать его отдельно в настройках «Системный помощник».</value>
   </data>
 </root>

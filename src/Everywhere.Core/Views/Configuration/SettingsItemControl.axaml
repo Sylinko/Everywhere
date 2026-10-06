@@ -9,7 +9,7 @@
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="Background" Value="{DynamicResource SettingsItemBackgroundColor}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource BorderColor30}"/>
-    <Setter Property="CornerRadius" Value="{DynamicResource 2XlCornerRadius}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource 3XlCornerRadius}"/>
     <Setter Property="Template">
       <ControlTemplate>
         <shadui:SmoothBorder
