@@ -4361,4 +4361,13 @@
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Слишком много запросов, сервис рекомендует подождать {0} секунд перед повторной попыткой.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>Установленная служба принадлежит другой неопознанной копии Everywhere. При продолжении она будет перезаписана.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>Установленная служба принадлежит другой копии Everywhere:
+{0}
+
+Если продолжить, она будет перезаписана.</value>
+    </data>
 </root>

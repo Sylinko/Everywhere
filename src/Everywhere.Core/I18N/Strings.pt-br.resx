@@ -4361,4 +4361,13 @@ Deseja realmente excluir “{1}” permanentemente?</value>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Solicitações muito frequentes, o serviço recomenda aguardar {0} segundos antes de tentar novamente.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>O serviço instalado pertence a outra cópia do Everywhere não identificável. Se continuar, ela será substituída.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>O serviço instalado pertence a outra cópia do Everywhere:
+{0}
+
+Se continuar, ele será sobrescrito.</value>
+    </data>
 </root>

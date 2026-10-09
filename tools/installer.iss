@@ -1,21 +1,21 @@
-﻿#define AppName "Everywhere"
+#define AppName "Everywhere"
 #define AppPublisher "Sylinko"
 #define AppExeName "Everywhere.exe"
 #define AppVersion GetEnv("VERSION")
 
 [Setup]
-; --- Basic Application Information ---
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
-
-; --- Installer Settings ---
 DefaultDirName={code:GetDefaultInstallPath}
 DefaultGroupName={#AppName}
 OutputDir=..
 OutputBaseFilename=Everywhere-Windows-x64-Setup-v{#AppVersion}
 PrivilegesRequired=admin
 UsePreviousAppDir=no
+DisableDirPage=no
+DirExistsWarning=no
+AlwaysShowDirOnReadyPage=yes
 AllowUNCPath=no
 AllowNetworkDrive=no
 SetupMutex=Global\Everywhere.Setup.D66EA41B-8DEB-4E5A-9D32-AB4F8305F664
@@ -32,14 +32,11 @@ SignedUninstaller=yes
 SignToolRetryCount=3
 SignToolRetryDelay=2000
 #endif
-
-; --- UI and Icons ---
 WizardStyle=modern dynamic
 SetupIconFile=..\img\Everywhere.ico
 UninstallDisplayIcon={app}\{#AppExeName}
-
-; --- Registry ---
 UninstallDisplayName={#AppName}
+; Preserve the released AppId, including its second closing brace.
 AppId={{D66EA41B-8DEB-4E5A-9D32-AB4F8305F664}}
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -49,36 +46,16 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "zh"; MessagesFile: "ChineseSimplified.isl"
 
 [CustomMessages]
-en.HostsTaskInstallFailed=Everywhere was installed and can be used normally, but it cannot currently interact with applications running as administrator. You can try enabling "Install as a service" later in Settings > General > System interaction.
-zh.HostsTaskInstallFailed=Everywhere 已安装并可正常使用，但目前无法识别或操作以管理员身份运行的应用。你可以稍后前往“设置 → 通用 → 系统交互”，重新开启“以服务的方式安装”。
-en.InstallIdentityRegistrationFailed=Everywhere was installed, but Windows could not finish registering this installation. Service mode has not been enabled. Run Setup again to repair it.
-zh.InstallIdentityRegistrationFailed=Everywhere 已安装，但 Windows 未能完成安装信息注册，因此尚未启用服务模式。请重新运行安装程序进行修复。
-en.UnprotectedInstallDirectory=This folder is outside Program Files, so other software may be able to modify Everywhere more easily. We recommend installing under a Program Files folder on any fixed drive.%n%nDo you want to continue with this folder?
-zh.UnprotectedInstallDirectory=此文件夹不在 Program Files 下，其他软件可能更容易修改 Everywhere。建议安装到任意固定磁盘的 Program Files 文件夹中。%n%n仍要使用此文件夹吗？
-en.InstallDirectoryNotEmpty=This folder already contains files. To avoid overwriting your data, choose an empty folder.
-zh.InstallDirectoryNotEmpty=此文件夹中已有文件。为避免覆盖你的数据，请选择一个空文件夹。
-en.InstallDirectoryUnavailable=Windows could not read from and write to this folder. Check the folder permissions or choose another folder, then try again. Details have been written to the Setup log.
-zh.InstallDirectoryUnavailable=Windows 无法读取或写入此文件夹。请检查文件夹权限，或选择其他文件夹后重试。详细信息已写入安装日志。
-en.PreviousUninstallFailed=The previous version could not be removed. Close Everywhere and try again. The uninstaller returned code %1.
-zh.PreviousUninstallFailed=无法移除旧版本。请关闭 Everywhere 后重试。卸载程序返回了代码 %1。
-en.PreviousUninstallerMissing=The uninstaller for the previous version is missing. Reinstall that version to repair its uninstaller, then try again.
-zh.PreviousUninstallerMissing=找不到旧版本的卸载程序。请先重新安装旧版本以修复卸载程序，然后重试。
-en.InstallDirectoryStillNotEmpty=The previous version was removed, but some files remain in this folder. Check the remaining files or choose another empty folder, then try again.
-zh.InstallDirectoryStillNotEmpty=旧版本已移除，但此文件夹中仍有文件。请检查剩余文件，或选择其他空文件夹后重试。
-en.InstallDirectoryProtectionFailed=Windows could not protect the installation folder before copying Everywhere. Continuing may make service mode more vulnerable to tampering.%n%nDo you want to continue anyway? Details have been written to the Setup log.
-zh.InstallDirectoryProtectionFailed=Windows 无法在复制 Everywhere 前保护安装文件夹。继续安装可能使服务模式更容易受到恶意软件干扰。%n%n仍要继续吗？详细信息已写入安装日志。
-en.PreviousInstallCleanupFailed=Some background services from the previous installation could not be removed.%n%nYou can abort installation and try again later, retry now, or ignore this problem and continue. If you continue, Windows may retain background startup entries that need to be removed manually. Details have been written to the Setup log.
-zh.PreviousInstallCleanupFailed=旧版本的部分后台服务未能移除。%n%n你可以中止安装并稍后重试，也可以立即重试，或忽略此问题并继续。如果继续，Windows 中可能会留下需要手动清理的后台启动项。详细信息已写入安装日志。
-en.UninstallCleanupFailed=Some background services could not be removed.%n%nYou can abort and try again later, retry now, or ignore this problem and continue uninstalling. If you continue, Windows may retain background startup entries that need to be removed manually. Details have been written to the uninstall log.
-zh.UninstallCleanupFailed=部分后台服务未能移除。%n%n你可以中止并稍后重试，也可以立即重试，或忽略此问题并继续卸载。如果继续，Windows 中可能会留下需要手动清理的后台启动项。详细信息已写入卸载日志。
-en.CloseEverywhere=Everywhere needs to close before continuing. Any running tasks will stop.%n%nClick OK to close Everywhere and continue, or Cancel to leave it running.
-zh.CloseEverywhere=继续操作前需要关闭 Everywhere，正在进行的任务将停止。%n%n点击“确定”关闭 Everywhere 并继续，或点击“取消”保持运行。
+en.InstallDirectoryNotEmpty=This folder is not empty. Are you sure you want to continue installing?
+zh.InstallDirectoryNotEmpty=文件夹不是空的，你确定要继续安装吗？
 en.ClosingEverywhere=Closing Everywhere...
 zh.ClosingEverywhere=正在关闭 Everywhere…
-en.EverywhereStillRunning=Everywhere or one of its background processes is still running, or Windows could not verify that it has exited.%n%nExit Everywhere, including any instances in other signed-in Windows sessions, then click Retry. Cancel to stop without removing the existing installation. Details have been written to the log.
-zh.EverywhereStillRunning=Everywhere 或其后台进程仍在运行，或 Windows 无法确认它们已经退出。%n%n请退出 Everywhere（包括其他已登录 Windows 会话中的实例），然后点击“重试”。点击“取消”将停止操作，并保留现有安装。详细信息已写入日志。
-en.EverywhereShutdownRequired=Everywhere must exit before its installation can be changed. Close all instances and try again.
-zh.EverywhereShutdownRequired=更改安装前必须退出 Everywhere。请关闭所有实例后重试。
+en.RemovingPreviousVersion=Removing the previous version...
+zh.RemovingPreviousVersion=正在移除旧版本…
+en.PreviousUninstallFailed=The previous version could not be fully removed (code %1). Retry, ignore this problem and continue installing, or cancel Setup. Ignoring may leave old files. See the Setup log for details.
+zh.PreviousUninstallFailed=旧版本未能完整卸载（代码 %1）。你可以重试、忽略此问题并继续安装，或取消安装。忽略可能留下旧文件，详情请查看安装日志。
+en.InstallWillCloseEverywhere=Everywhere will close when installation starts.
+zh.InstallWillCloseEverywhere=安装开始时将关闭 Everywhere。
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -87,32 +64,85 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "{app}"; Flags: uninsalwaysuninstall
 
 [Files]
-; Copy all files from the publish directory to the installation directory {app}
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{autoprograms}\{#AppName}\Uninstall {#AppName}"; Filename: "{uninstallexe}"; Parameters: "/LOG"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
+; Final uninstall removes owned shortcuts explicitly; upgrade uninstall preserves them.
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Flags: uninsneveruninstall
+Name: "{autoprograms}\{#AppName}\Uninstall {#AppName}"; Filename: "{uninstallexe}"; Parameters: "/LOG"; Flags: uninsneveruninstall
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon; Flags: uninsneveruninstall
 
 [Code]
 const
-  DRIVE_FIXED = 3;
-  ERROR_FILE_NOT_FOUND = 2;
-  ERROR_PATH_NOT_FOUND = 3;
-  ERROR_NO_MORE_FILES = 18;
-  SE_FILE_OBJECT = 1;
-  OWNER_SECURITY_INFORMATION = $1;
-  DACL_SECURITY_INFORMATION = $4;
-  PROTECTED_DACL_SECURITY_INFORMATION = $80000000;
-  SDDL_REVISION_1 = 1;
-  EverywhereFileAttributeDirectory = $10;
-  EverywhereFileAttributeReparsePoint = $400;
-  EverywhereInvalidFileAttributes = $FFFFFFFF;
   InstallRegistryKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{D66EA41B-8DEB-4E5A-9D32-AB4F8305F664}}_is1';
+  LegacyRegistryKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\Everywhere';
+  WaitTimeout = 258;
+  CreateSuspended = $4;
+  CreateUnicodeEnvironment = $400;
+  CreateNoWindow = $08000000;
 
 type
-  TDirectoryInspection = (diMissing, diEmpty, diNotEmpty, diUnavailable);
+  { These records explicitly include the padding of the native x64 ABI. }
+  TNativeStartupInfo = record
+    Size: Cardinal;
+    Padding: Cardinal;
+    Reserved: NativeInt;
+    Desktop: NativeInt;
+    Title: NativeInt;
+    X: Cardinal;
+    Y: Cardinal;
+    XSize: Cardinal;
+    YSize: Cardinal;
+    XCountChars: Cardinal;
+    YCountChars: Cardinal;
+    FillAttribute: Cardinal;
+    Flags: Cardinal;
+    ShowWindow: Word;
+    ReservedSize: Word;
+    Padding2: Cardinal;
+    Reserved2: NativeInt;
+    StdInput: NativeInt;
+    StdOutput: NativeInt;
+    StdError: NativeInt;
+  end;
+  TNativeProcessInfo = record
+    Process: NativeInt;
+    Thread: NativeInt;
+    ProcessId: Cardinal;
+    ThreadId: Cardinal;
+  end;
+  TNativeMessage = record
+    Window: NativeInt;
+    Message: Cardinal;
+    Padding: Cardinal;
+    WParam: NativeInt;
+    LParam: NativeInt;
+    Time: Cardinal;
+    X: LongInt;
+    Y: LongInt;
+    PrivateData: Cardinal;
+  end;
+  TNativeJobLimits = record
+    ProcessTime: Int64;
+    JobTime: Int64;
+    Flags: Cardinal;
+    Padding: Cardinal;
+    MinimumWorkingSet: NativeInt;
+    MaximumWorkingSet: NativeInt;
+    ActiveProcessLimit: Cardinal;
+    Padding2: Cardinal;
+    Affinity: NativeInt;
+    Priority: Cardinal;
+    SchedulingClass: Cardinal;
+    IoCounters: array[0..5] of Int64;
+    MemoryLimits: array[0..3] of NativeInt;
+  end;
+  TNativeTokenUser = record
+    Sid: NativeInt;
+    Attributes: Cardinal;
+    Padding: Cardinal;
+    SidBuffer: array[0..67] of Byte;
+  end;
 
 var
   HasPreviousMachineInstall: Boolean;
@@ -121,63 +151,82 @@ var
   PreviousMachineInstallDirectory: String;
   PreviousMachineUninstaller: String;
   HasPreviousUserInstall: Boolean;
+  PreviousUserLayoutVersion: Cardinal;
+  PreviousUserShutdownProtocolVersion: Cardinal;
   PreviousUserInstallDirectory: String;
   PreviousUserUninstaller: String;
-  PreviousUserShutdownProtocolVersion: Cardinal;
-  ApprovedUnprotectedDirectory: String;
-  ShouldAllowIncompletePreviousCleanup: Boolean;
-  HasApprovedApplicationShutdown: Boolean;
-
-function WindowsGetDriveType(RootPathName: String): Cardinal;
-  external 'GetDriveTypeW@kernel32.dll stdcall';
-
-function WindowsGetFileAttributes(FileName: String): Cardinal;
-  external 'GetFileAttributesW@kernel32.dll stdcall';
-
-function WindowsConvertStringSecurityDescriptorToSecurityDescriptor(
-  StringSecurityDescriptor: String;
-  StringSDRevision: DWORD;
-  var SecurityDescriptor: NativeInt;
-  SecurityDescriptorSize: NativeInt): BOOL;
-  external 'ConvertStringSecurityDescriptorToSecurityDescriptorW@advapi32.dll stdcall';
-
-function WindowsGetSecurityDescriptorDacl(
-  SecurityDescriptor: NativeInt;
-  var DaclPresent: BOOL;
-  var Dacl: NativeInt;
-  var DaclDefaulted: BOOL): BOOL;
-  external 'GetSecurityDescriptorDacl@advapi32.dll stdcall';
-
-function WindowsGetSecurityDescriptorOwner(
-  SecurityDescriptor: NativeInt;
-  var Owner: NativeInt;
-  var OwnerDefaulted: BOOL): BOOL;
-  external 'GetSecurityDescriptorOwner@advapi32.dll stdcall';
-
-function WindowsSetNamedSecurityInfo(
-  ObjectName: String;
-  ObjectType: DWORD;
-  SecurityInfo: DWORD;
-  Owner: NativeInt;
-  Group: NativeInt;
-  Dacl: NativeInt;
-  Sacl: NativeInt): DWORD;
-  external 'SetNamedSecurityInfoW@advapi32.dll stdcall';
-
-function WindowsLocalFree(Memory: NativeInt): NativeInt;
-  external 'LocalFree@kernel32.dll stdcall';
+  DesktopUserToken: NativeInt;
+  DesktopUserHive: String;
+  DesktopUserDesktop: String;
+  DesktopUserPrograms: String;
+  ActiveControllerJob: NativeInt;
+  IsPreparingInstallation: Boolean;
+  HasPreparedInstallation: Boolean;
+  LaunchCheckBox: TNewCheckBox;
 
 function WindowsGetTickCount64(): Int64;
   external 'GetTickCount64@kernel32.dll stdcall';
+function WindowsCloseHandle(Handle: NativeInt): BOOL;
+  external 'CloseHandle@kernel32.dll stdcall';
+procedure WindowsExitProcess(ExitCode: Cardinal);
+  external 'ExitProcess@kernel32.dll stdcall';
+function WindowsGetShellWindow(): NativeInt;
+  external 'GetShellWindow@user32.dll stdcall';
+function WindowsGetWindowThreadProcessId(Window: NativeInt; var ProcessId: Cardinal): Cardinal;
+  external 'GetWindowThreadProcessId@user32.dll stdcall';
+function WindowsOpenProcess(Access: Cardinal; InheritHandle: BOOL; ProcessId: Cardinal): NativeInt;
+  external 'OpenProcess@kernel32.dll stdcall';
+function WindowsOpenProcessToken(Process: NativeInt; Access: Cardinal; var Token: NativeInt): BOOL;
+  external 'OpenProcessToken@advapi32.dll stdcall';
+function WindowsDuplicateTokenEx(Token: NativeInt; Access: Cardinal; Attributes: NativeInt; Level: Cardinal; TokenType: Cardinal; var NewToken: NativeInt): BOOL;
+  external 'DuplicateTokenEx@advapi32.dll stdcall';
+function WindowsGetTokenUser(Token: NativeInt; InformationClass: Cardinal; var User: TNativeTokenUser; Size: Cardinal; var ReturnedSize: Cardinal): BOOL;
+  external 'GetTokenInformation@advapi32.dll stdcall';
+function WindowsConvertSidToStringSid(Sid: NativeInt; var StringSid: NativeInt): BOOL;
+  external 'ConvertSidToStringSidW@advapi32.dll stdcall';
+function WindowsCopyString(Destination: String; Source: NativeInt; Size: Integer): NativeInt;
+  external 'lstrcpynW@kernel32.dll stdcall';
+function WindowsCreateProcess(ApplicationName: String; CommandLine: String; ProcessAttributes: NativeInt; ThreadAttributes: NativeInt; InheritHandles: BOOL; Flags: Cardinal; Environment: NativeInt; Directory: String; var Startup: TNativeStartupInfo; var ProcessInfo: TNativeProcessInfo): BOOL;
+  external 'CreateProcessW@kernel32.dll stdcall';
+function WindowsCreateProcessWithToken(Token: NativeInt; LogonFlags: Cardinal; ApplicationName: String; CommandLine: String; Flags: Cardinal; Environment: NativeInt; Directory: String; var Startup: TNativeStartupInfo; var ProcessInfo: TNativeProcessInfo): BOOL;
+  external 'CreateProcessWithTokenW@advapi32.dll stdcall';
+function WindowsCreateEnvironmentBlock(var Environment: NativeInt; Token: NativeInt; Inherit: BOOL): BOOL;
+  external 'CreateEnvironmentBlock@userenv.dll stdcall';
+function WindowsDestroyEnvironmentBlock(Environment: NativeInt): BOOL;
+  external 'DestroyEnvironmentBlock@userenv.dll stdcall';
+function WindowsCreateJobObject(Attributes: NativeInt; Name: NativeInt): NativeInt;
+  external 'CreateJobObjectW@kernel32.dll stdcall';
+function WindowsSetJobLimits(Job: NativeInt; InformationClass: Cardinal; var Limits: TNativeJobLimits; Size: Cardinal): BOOL;
+  external 'SetInformationJobObject@kernel32.dll stdcall';
+function WindowsAssignProcessToJob(Job: NativeInt; Process: NativeInt): BOOL;
+  external 'AssignProcessToJobObject@kernel32.dll stdcall';
+function WindowsTerminateProcess(Process: NativeInt; ExitCode: Cardinal): BOOL;
+  external 'TerminateProcess@kernel32.dll stdcall';
+function WindowsResumeThread(Thread: NativeInt): Cardinal;
+  external 'ResumeThread@kernel32.dll stdcall';
+function WindowsWaitForSingleObject(Handle: NativeInt; Milliseconds: Cardinal): Cardinal;
+  external 'WaitForSingleObject@kernel32.dll stdcall';
+function WindowsGetExitCodeProcess(Process: NativeInt; var ExitCode: Cardinal): BOOL;
+  external 'GetExitCodeProcess@kernel32.dll stdcall';
+function WindowsPeekMessage(var Message: TNativeMessage; Window: NativeInt; MinMessage: Cardinal; MaxMessage: Cardinal; Remove: Cardinal): BOOL;
+  external 'PeekMessageW@user32.dll stdcall';
+function WindowsTranslateMessage(var Message: TNativeMessage): BOOL;
+  external 'TranslateMessage@user32.dll stdcall';
+function WindowsDispatchMessage(var Message: TNativeMessage): NativeInt;
+  external 'DispatchMessageW@user32.dll stdcall';
+function WindowsLocalFree(Memory: NativeInt): NativeInt;
+  external 'LocalFree@kernel32.dll stdcall';
 
-function QueryPreviousInstall(RootKey: HKEY; var InstallDirectory: String; var Uninstaller: String): Boolean;
-var
-  HasInstallDirectory: Boolean;
-  HasUninstaller: Boolean;
+function IsSameDirectory(FirstPath: String; SecondPath: String): Boolean;
 begin
-  HasInstallDirectory := RegQueryStringValue(RootKey, InstallRegistryKey, 'InstallLocation', InstallDirectory);
-  HasUninstaller := RegQueryStringValue(RootKey, InstallRegistryKey, 'UninstallString', Uninstaller);
-  Result := HasInstallDirectory or HasUninstaller;
+  Result := (FirstPath <> '') and (SecondPath <> '') and
+    (CompareText(RemoveBackslashUnlessRoot(ExpandFileName(FirstPath)), RemoveBackslashUnlessRoot(ExpandFileName(SecondPath))) = 0);
+end;
+
+function IsSameFile(FirstPath: String; SecondPath: String): Boolean;
+begin
+  Result := (FirstPath <> '') and (SecondPath <> '') and
+    (CompareText(ExpandFileName(RemoveQuotes(FirstPath)), ExpandFileName(RemoveQuotes(SecondPath))) = 0);
 end;
 
 function ExtractCommandExecutable(CommandLine: String): String;
@@ -189,7 +238,6 @@ begin
   CommandLine := Trim(CommandLine);
   if CommandLine = '' then
     exit;
-
   if CommandLine[1] = '"' then
   begin
     ClosingQuote := Pos('"', Copy(CommandLine, 2, MaxInt));
@@ -197,7 +245,6 @@ begin
       Result := Copy(CommandLine, 2, ClosingQuote - 1);
     exit;
   end;
-
   Separator := Pos(' ', CommandLine);
   if Separator = 0 then
     Result := CommandLine
@@ -211,552 +258,401 @@ var
 begin
   Result := False;
   for Index := 1 to ParamCount do
-  begin
     if CompareText(ParamStr(Index), Parameter) = 0 then
     begin
       Result := True;
       exit;
     end;
+end;
+
+procedure CaptureDesktopUser();
+var
+  ProcessId: Cardinal;
+  Process: NativeInt;
+  Token: NativeInt;
+  User: TNativeTokenUser;
+  ReturnedSize: Cardinal;
+  StringSid: NativeInt;
+  Sid: String;
+begin
+  { GetShellWindow belongs to this desktop session, including alternate-credential
+    elevation. Keep its token rather than guessing the user from elevated HKCU. }
+  if WindowsGetWindowThreadProcessId(WindowsGetShellWindow(), ProcessId) = 0 then
+    exit;
+  Process := WindowsOpenProcess($1000, False, ProcessId);
+  if Process = 0 then
+    exit;
+  try
+    if not WindowsOpenProcessToken(Process, $E, Token) then
+      exit;
+    try
+      if not WindowsDuplicateTokenEx(Token, $B, 0, 2, 1, DesktopUserToken) then
+        exit;
+      if not WindowsGetTokenUser(Token, 1, User, SizeOf(User), ReturnedSize) then
+        exit;
+      if not WindowsConvertSidToStringSid(User.Sid, StringSid) then
+        exit;
+      try
+        Sid := StringOfChar(#0, 184);
+        WindowsCopyString(Sid, StringSid, Length(Sid));
+        DesktopUserHive := Copy(Sid, 1, Pos(#0, Sid) - 1) + '\';
+      finally
+        WindowsLocalFree(StringSid);
+      end;
+    finally
+      WindowsCloseHandle(Token);
+    end;
+  finally
+    WindowsCloseHandle(Process);
   end;
+  if DesktopUserHive <> '' then
+  begin
+    RegQueryStringValue(HKEY_USERS, DesktopUserHive + 'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders', 'Desktop', DesktopUserDesktop);
+    RegQueryStringValue(HKEY_USERS, DesktopUserHive + 'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders', 'Programs', DesktopUserPrograms);
+  end;
+end;
+
+function QueryPreviousInstall(RootKey: HKEY; Key: String; var InstallDirectory: String; var Uninstaller: String): Boolean;
+var
+  HasInstallDirectory: Boolean;
+  HasUninstaller: Boolean;
+begin
+  HasInstallDirectory := RegQueryStringValue(RootKey, Key, 'InstallLocation', InstallDirectory);
+  HasUninstaller := RegQueryStringValue(RootKey, Key, 'UninstallString', Uninstaller);
+  if not HasInstallDirectory then
+    RegQueryStringValue(RootKey, Key, 'Inno Setup: App Path', InstallDirectory);
+  if InstallDirectory = '' then
+    InstallDirectory := ExtractFileDir(ExtractCommandExecutable(Uninstaller));
+  Result := (InstallDirectory <> '') or HasUninstaller;
 end;
 
 function InitializeSetup(): Boolean;
 begin
-  HasPreviousMachineInstall := QueryPreviousInstall(HKEY_LOCAL_MACHINE, PreviousMachineInstallDirectory, PreviousMachineUninstaller);
+  CaptureDesktopUser();
+  HasPreviousMachineInstall := QueryPreviousInstall(HKEY_LOCAL_MACHINE, InstallRegistryKey, PreviousMachineInstallDirectory, PreviousMachineUninstaller);
   RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', PreviousMachineLayoutVersion);
   RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', PreviousMachineShutdownProtocolVersion);
-  HasPreviousUserInstall := QueryPreviousInstall(HKEY_CURRENT_USER, PreviousUserInstallDirectory, PreviousUserUninstaller);
-  RegQueryDWordValue(HKEY_CURRENT_USER, InstallRegistryKey, 'ShutdownProtocolVersion', PreviousUserShutdownProtocolVersion);
-  if HasPreviousMachineInstall and HasPreviousUserInstall and
-     (CompareText(PreviousUserUninstaller, PreviousMachineUninstaller) = 0) then
-    HasPreviousUserInstall := False;
+  if DesktopUserHive <> '' then
+  begin
+    HasPreviousUserInstall := QueryPreviousInstall(HKEY_USERS, DesktopUserHive + InstallRegistryKey, PreviousUserInstallDirectory, PreviousUserUninstaller);
+    RegQueryDWordValue(HKEY_USERS, DesktopUserHive + InstallRegistryKey, 'InstallLayoutVersion', PreviousUserLayoutVersion);
+    RegQueryDWordValue(HKEY_USERS, DesktopUserHive + InstallRegistryKey, 'ShutdownProtocolVersion', PreviousUserShutdownProtocolVersion);
+  end
+  else
+  begin
+    HasPreviousUserInstall := QueryPreviousInstall(HKEY_CURRENT_USER, InstallRegistryKey, PreviousUserInstallDirectory, PreviousUserUninstaller);
+    RegQueryDWordValue(HKEY_CURRENT_USER, InstallRegistryKey, 'InstallLayoutVersion', PreviousUserLayoutVersion);
+    RegQueryDWordValue(HKEY_CURRENT_USER, InstallRegistryKey, 'ShutdownProtocolVersion', PreviousUserShutdownProtocolVersion);
+    Log('The desktop user could not be resolved; using the current account for legacy installation discovery.');
+  end;
   Result := True;
 end;
 
 function GetDefaultInstallPath(Param: String): String;
 begin
-  if (PreviousMachineLayoutVersion = 2) and (PreviousMachineInstallDirectory <> '') then
-  begin
-    Result := RemoveBackslashUnlessRoot(PreviousMachineInstallDirectory);
-    exit;
-  end;
-
-  Result := ExpandConstant('{autopf}\{#AppName}');
+  if HasPreviousMachineInstall and (PreviousMachineLayoutVersion = 2) and (PreviousMachineInstallDirectory <> '') then
+    Result := RemoveBackslashUnlessRoot(PreviousMachineInstallDirectory)
+  else if HasPreviousUserInstall and (PreviousUserLayoutVersion = 2) and (PreviousUserInstallDirectory <> '') then
+    Result := RemoveBackslashUnlessRoot(PreviousUserInstallDirectory)
+  else
+    Result := ExpandConstant('{autopf}\{#AppName}');
 end;
 
-function IsSameDirectory(FirstPath: String; SecondPath: String): Boolean;
+function ShouldSkipPage(PageId: Integer): Boolean;
 begin
-  Result := (FirstPath <> '') and (SecondPath <> '') and
-    (CompareText(RemoveBackslashUnlessRoot(FirstPath), RemoveBackslashUnlessRoot(SecondPath)) = 0);
+  Result := (PageId = wpSelectDir) and (HasPreviousMachineInstall or HasPreviousUserInstall) and
+    ((not HasPreviousMachineInstall) or (PreviousMachineLayoutVersion = 2)) and
+    ((not HasPreviousUserInstall) or (PreviousUserLayoutVersion = 2));
 end;
 
-function IsSameFile(FirstPath: String; SecondPath: String): Boolean;
+procedure InitializeWizard();
 begin
-  Result := (FirstPath <> '') and (SecondPath <> '') and
-    (CompareText(ExpandFileName(RemoveQuotes(FirstPath)), ExpandFileName(RemoveQuotes(SecondPath))) = 0);
+  LaunchCheckBox := TNewCheckBox.Create(WizardForm);
+  LaunchCheckBox.Parent := WizardForm.FinishedPage;
+  LaunchCheckBox.SetBounds(WizardForm.RunList.Left, WizardForm.RunList.Top, WizardForm.RunList.Width, ScaleY(24));
+  LaunchCheckBox.Caption := ExpandConstant('{cm:LaunchProgram,{#AppName}}');
+  LaunchCheckBox.Checked := True;
+  LaunchCheckBox.Visible := False;
 end;
 
-function InspectDirectory(DirectoryPath: String; var ErrorDetail: String): TDirectoryInspection;
+procedure CurPageChanged(PageId: Integer);
+begin
+  if PageId = wpFinished then
+    LaunchCheckBox.Visible := (DesktopUserToken <> 0) and (not WizardSilent) and (not WizardForm.YesRadio.Visible);
+end;
+
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+begin
+  Result := MemoDirInfo + NewLine + MemoGroupInfo + NewLine + MemoTasksInfo;
+  if HasPreviousMachineInstall or HasPreviousUserInstall then
+    Result := Result + NewLine + NewLine + ExpandConstant('{cm:InstallWillCloseEverywhere}');
+end;
+
+function IsDirectoryNotEmpty(DirectoryPath: String): Boolean;
 var
-  Attributes: Cardinal;
-  ErrorCode: LongInt;
   FindRec: TFindRec;
-  HasEntry: Boolean;
-begin
-  ErrorDetail := '';
-  Attributes := WindowsGetFileAttributes(DirectoryPath);
-  if Attributes = EverywhereInvalidFileAttributes then
-  begin
-    ErrorCode := DLLGetLastError;
-    if (ErrorCode = ERROR_FILE_NOT_FOUND) or (ErrorCode = ERROR_PATH_NOT_FOUND) then
-      Result := diMissing
-    else
-    begin
-      ErrorDetail := Format('GetFileAttributes failed for "%s" with error %d.', [DirectoryPath, ErrorCode]);
-      Result := diUnavailable;
-    end;
-    exit;
-  end;
-
-  if (Attributes and EverywhereFileAttributeDirectory) = 0 then
-  begin
-    ErrorDetail := Format('The selected installation path is not a directory: %s', [DirectoryPath]);
-    Result := diUnavailable;
-    exit;
-  end;
-
-  HasEntry := False;
-  if FindFirst(AddBackslash(DirectoryPath) + '*', FindRec) then
-  begin
-    try
-      repeat
-        if (FindRec.Name <> '.') and (FindRec.Name <> '..') then
-          HasEntry := True;
-      until HasEntry or (not FindNext(FindRec));
-    finally
-      FindClose(FindRec);
-    end;
-  end
-  else
-  begin
-    ErrorCode := DLLGetLastError;
-    if (ErrorCode = ERROR_FILE_NOT_FOUND) or (ErrorCode = ERROR_PATH_NOT_FOUND) or
-       (ErrorCode = ERROR_NO_MORE_FILES) then
-    begin
-      Result := diEmpty;
-      exit;
-    end;
-
-    ErrorDetail := Format('Setup could not enumerate "%s": error %d.', [DirectoryPath, ErrorCode]);
-    Result := diUnavailable;
-    exit;
-  end;
-
-  if HasEntry then
-    Result := diNotEmpty
-  else
-    Result := diEmpty;
-end;
-
-function ValidateInstallDirectoryBeforeMutation(
-  DirectoryPath: String;
-  IsRecognizedPreviousDirectory: Boolean;
-  var ErrorDetail: String): Boolean;
-var
-  Inspection: TDirectoryInspection;
-  ProbePath: String;
-  WasCreated: Boolean;
 begin
   Result := False;
-  Inspection := InspectDirectory(DirectoryPath, ErrorDetail);
-  if Inspection = diUnavailable then
+  if not FindFirst(AddBackslash(DirectoryPath) + '*', FindRec) then
     exit;
-  if (Inspection = diNotEmpty) and (not IsRecognizedPreviousDirectory) then
-    exit;
-
-  WasCreated := Inspection = diMissing;
-  if WasCreated and (not ForceDirectories(DirectoryPath)) then
-  begin
-    ErrorDetail := Format('Setup could not create the selected installation folder: %s', [DirectoryPath]);
-    exit;
-  end;
-
-  ProbePath := AddBackslash(DirectoryPath) +
-    Format('.everywhere-install-probe-%d-%d.tmp', [WindowsGetTickCount64(), Random(1000000)]);
-  if not SaveStringToFile(ProbePath, '', False) then
-  begin
-    ErrorDetail := Format('Setup could not create an access probe in "%s".', [DirectoryPath]);
-    if WasCreated then
-      RemoveDir(DirectoryPath);
-    exit;
-  end;
-
-  if not DeleteFile(ProbePath) then
-  begin
-    ErrorDetail := Format('Setup could not remove its access probe from "%s".', [DirectoryPath]);
-    exit;
-  end;
-
-  if WasCreated and (not RemoveDir(DirectoryPath)) then
-    Log(Format('Setup left the newly created empty installation folder in place: %s', [DirectoryPath]));
-
-  Result := True;
-end;
-
-function WaitForDirectoryEmpty(DirectoryPath: String; var ErrorDetail: String): Boolean;
-var
-  Deadline: Int64;
-  Inspection: TDirectoryInspection;
-begin
-  Deadline := WindowsGetTickCount64() + 5000;
-  repeat
-    Inspection := InspectDirectory(DirectoryPath, ErrorDetail);
-    if (Inspection = diMissing) or (Inspection = diEmpty) then
-    begin
-      Result := True;
-      exit;
-    end;
-
-    if Inspection = diUnavailable then
-    begin
-      Result := False;
-      exit;
-    end;
-
-    Sleep(100);
-  until WindowsGetTickCount64() >= Deadline;
-
-  Inspection := InspectDirectory(DirectoryPath, ErrorDetail);
-  Result := (Inspection = diMissing) or (Inspection = diEmpty);
-end;
-
-function ProtectInstallDirectory(DirectoryPath: String; var ErrorDetail: String): Boolean;
-var
-  Attributes: Cardinal;
-  SecurityDescriptor: NativeInt;
-  Owner: NativeInt;
-  Dacl: NativeInt;
-  DaclPresent: BOOL;
-  OwnerDefaulted: BOOL;
-  DaclDefaulted: BOOL;
-  ErrorCode: DWORD;
-begin
-  Result := False;
-  ErrorDetail := '';
-  if not ForceDirectories(DirectoryPath) then
-  begin
-    ErrorDetail := Format('Windows could not create the installation folder: %s', [DirectoryPath]);
-    exit;
-  end;
-
-  Attributes := WindowsGetFileAttributes(DirectoryPath);
-  if Attributes = EverywhereInvalidFileAttributes then
-  begin
-    ErrorDetail := Format('Windows could not inspect the installation folder: %s', [DirectoryPath]);
-    exit;
-  end;
-  if (Attributes and EverywhereFileAttributeReparsePoint) <> 0 then
-  begin
-    ErrorDetail := Format('The installation folder is a reparse point: %s', [DirectoryPath]);
-    exit;
-  end;
-
-  SecurityDescriptor := 0;
-  if not WindowsConvertStringSecurityDescriptorToSecurityDescriptor(
-       'O:BAG:BAD:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;0x1200A9;;;BU)',
-       SDDL_REVISION_1,
-       SecurityDescriptor,
-       0) then
-  begin
-    ErrorDetail := Format('Windows could not create the installation security descriptor: error %d.', [DLLGetLastError]);
-    exit;
-  end;
-
   try
-    Owner := 0;
-    Dacl := 0;
-    DaclPresent := False;
-    OwnerDefaulted := False;
-    DaclDefaulted := False;
-    if not WindowsGetSecurityDescriptorOwner(SecurityDescriptor, Owner, OwnerDefaulted) then
-    begin
-      ErrorDetail := Format('Windows could not read the installation-folder owner descriptor: error %d.', [DLLGetLastError]);
-      exit;
-    end;
-    if not WindowsGetSecurityDescriptorDacl(SecurityDescriptor, DaclPresent, Dacl, DaclDefaulted) then
-    begin
-      ErrorDetail := Format('Windows could not read the installation-folder access descriptor: error %d.', [DLLGetLastError]);
-      exit;
-    end;
-
-    ErrorCode := WindowsSetNamedSecurityInfo(
-      RemoveBackslashUnlessRoot(DirectoryPath),
-      SE_FILE_OBJECT,
-      OWNER_SECURITY_INFORMATION or DACL_SECURITY_INFORMATION or PROTECTED_DACL_SECURITY_INFORMATION,
-      Owner,
-      0,
-      Dacl,
-      0);
-    if ErrorCode <> 0 then
-    begin
-      ErrorDetail := Format('Windows could not protect the installation folder: error %d.', [ErrorCode]);
-      exit;
-    end;
-
-    Result := True;
-  finally
-    WindowsLocalFree(SecurityDescriptor);
-  end;
-end;
-
-procedure PrepareInstallDirectory();
-var
-  ErrorDetail: String;
-begin
-  if ProtectInstallDirectory(WizardDirValue, ErrorDetail) then
-    exit;
-
-  Log(Format('Installation-directory protection failed: %s', [ErrorDetail]));
-
-  if WizardSilent then
-    RaiseException(ExpandConstant('{cm:InstallDirectoryProtectionFailed}'));
-
-  if MsgBox(
-       ExpandConstant('{cm:InstallDirectoryProtectionFailed}'),
-       mbError,
-       MB_YESNO or MB_DEFBUTTON2) <> IDYES then
-    Abort;
-
-  Log('The user chose to continue without verified installation-directory protection.');
-end;
-
-function IsProgramFilesDirectory(DirectoryPath: String): Boolean;
-var
-  ProgramFilesRoot: String;
-  NormalizedDirectory: String;
-begin
-  Result := False;
-  NormalizedDirectory := AddBackslash(RemoveBackslashUnlessRoot(DirectoryPath));
-
-  if (Length(NormalizedDirectory) < 3) or (NormalizedDirectory[2] <> ':') then
-    exit;
-
-  if WindowsGetDriveType(Copy(NormalizedDirectory, 1, 3)) <> DRIVE_FIXED then
-    exit;
-
-  ProgramFilesRoot := AddBackslash(Copy(NormalizedDirectory, 1, 3) + 'Program Files');
-  Result := CompareText(Copy(NormalizedDirectory, 1, Length(ProgramFilesRoot)), ProgramFilesRoot) = 0;
-end;
-
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  SelectedDirectory: String;
-  ErrorDetail: String;
-  IsRecognizedPreviousDirectory: Boolean;
-  Inspection: TDirectoryInspection;
-begin
-  Result := True;
-  if CurPageID <> wpSelectDir then
-    exit;
-
-  SelectedDirectory := WizardDirValue;
-  IsRecognizedPreviousDirectory := IsSameDirectory(SelectedDirectory, PreviousMachineInstallDirectory) or
-    IsSameDirectory(SelectedDirectory, PreviousUserInstallDirectory);
-  Inspection := InspectDirectory(SelectedDirectory, ErrorDetail);
-  if (Inspection = diUnavailable) or
-     ((Inspection = diNotEmpty) and (not IsRecognizedPreviousDirectory)) then
-  begin
-    Log(Format('Installation-directory validation failed: %s', [ErrorDetail]));
-    if ErrorDetail = '' then
-      MsgBox(ExpandConstant('{cm:InstallDirectoryNotEmpty}'), mbError, MB_OK)
-    else
-      MsgBox(ExpandConstant('{cm:InstallDirectoryUnavailable}'), mbError, MB_OK);
-    Result := False;
-    exit;
-  end;
-
-  if (not IsProgramFilesDirectory(SelectedDirectory)) and
-     (not IsSameDirectory(SelectedDirectory, ApprovedUnprotectedDirectory)) then
-  begin
-    if WizardSilent then
-    begin
-      Log(ExpandConstant('{cm:UnprotectedInstallDirectory}'));
-      ApprovedUnprotectedDirectory := SelectedDirectory;
-      exit;
-    end;
-
-    if MsgBox(ExpandConstant('{cm:UnprotectedInstallDirectory}'), mbConfirmation, MB_YESNO) <> IDYES then
-    begin
-      Result := False;
-      exit;
-    end;
-
-    ApprovedUnprotectedDirectory := SelectedDirectory;
-  end;
-end;
-
-function ValidatePreviousUninstaller(IsRegistered: Boolean; Uninstaller: String): Boolean;
-var
-  UninstallerPath: String;
-begin
-  if not IsRegistered then
-  begin
-    Result := True;
-    exit;
-  end;
-
-  UninstallerPath := ExtractCommandExecutable(Uninstaller);
-  Result := (UninstallerPath <> '') and FileExists(UninstallerPath);
-end;
-
-function RunPreviousUninstaller(IsRegistered: Boolean; Uninstaller: String; IsUserInstall: Boolean; var ResultCode: Integer): Boolean;
-var
-  UninstallerPath: String;
-  Parameters: String;
-  ExecutionContext: String;
-begin
-  if not IsRegistered then
-  begin
-    Result := True;
-    exit;
-  end;
-
-  UninstallerPath := ExtractCommandExecutable(Uninstaller);
-  Parameters := '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG';
-  if ShouldAllowIncompletePreviousCleanup then
-    Parameters := Parameters + ' /ALLOWINCOMPLETECLEANUP';
-  if IsUserInstall then
-    ExecutionContext := 'original user'
-  else
-    ExecutionContext := 'elevated installer';
-  Log(Format('Running previous Everywhere uninstaller: %s (%s)', [UninstallerPath, ExecutionContext]));
-  if IsUserInstall then
-    Result := ExecAsOriginalUser(UninstallerPath, Parameters, ExtractFileDir(UninstallerPath), SW_HIDE, ewWaitUntilTerminated, ResultCode)
-  else
-    Result := Exec(UninstallerPath, Parameters, ExtractFileDir(UninstallerPath), SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Result := Result and (ResultCode = 0);
-end;
-
-{ Query exact image paths across sessions. Never terminate by image name, and never
-  equate an inaccessible process or a failed query with an empty installation. }
-function QueryInstallationProcesses(InstallDirectory: String; var HasRunningProcesses: Boolean): Boolean;
-var
-  Locator: Variant;
-  Services: Variant;
-  Processes: Variant;
-  Item: Variant;
-  ImagePath: String;
-  Index: Integer;
-begin
-  Result := False;
-  HasRunningProcesses := False;
-  if InstallDirectory = '' then
-  begin
-    Result := True;
-    exit;
-  end;
-
-  try
-    Locator := CreateOleObject('WbemScripting.SWbemLocator');
-    Services := Locator.ConnectServer('', 'root\CIMV2');
-    Processes := Services.ExecQuery('SELECT ProcessId, ExecutablePath FROM Win32_Process WHERE Name = ''{#AppExeName}'' OR Name = ''Everywhere.Watchdog.exe''');
-    for Index := 0 to Processes.Count - 1 do
-    begin
-      Item := Processes.ItemIndex(Index);
-      if VarIsNull(Item.ExecutablePath) then
-      begin
-        Log(Format('Cannot verify the application image for process %d.', [Integer(Item.ProcessId)]));
-        exit;
-      end;
-      ImagePath := Item.ExecutablePath;
-      if Trim(ImagePath) = '' then
-      begin
-        Log(Format('The application image path is unavailable for process %d.', [Integer(Item.ProcessId)]));
-        exit;
-      end;
-      if IsSameFile(ImagePath, AddBackslash(InstallDirectory) + '{#AppExeName}') or
-         IsSameFile(ImagePath, AddBackslash(InstallDirectory) + 'Everywhere.Watchdog.exe') then
-      begin
-        HasRunningProcesses := True;
-        Log(Format('Installation process still running: %s (PID %d).', [ImagePath, Integer(Item.ProcessId)]));
-      end;
-    end;
-    Result := True;
-  except
-    Log('Could not inspect installation processes: ' + GetExceptionMessage);
-  end;
-end;
-
-function ConfirmInstallationShutdown(InstallDirectory: String; CanRequestShutdown: Boolean; IsUserInstall: Boolean; IsSilent: Boolean): Boolean;
-var
-  HasRunningProcesses: Boolean;
-  CanInspect: Boolean;
-  CanCloseApplications: Boolean;
-  ExecutablePath: String;
-  ResultCode: Integer;
-begin
-  Result := False;
-  if InstallDirectory = '' then
-  begin
-    Result := True;
-    exit;
-  end;
-
-  ExecutablePath := AddBackslash(InstallDirectory) + '{#AppExeName}';
-  CanCloseApplications := not HasCommandLineParameter('/NOCLOSEAPPLICATIONS');
-  repeat
-    CanInspect := QueryInstallationProcesses(InstallDirectory, HasRunningProcesses);
-    if CanInspect and (not HasRunningProcesses) then
-    begin
-      Result := True;
-      exit;
-    end;
-
-    if CanInspect and CanCloseApplications and CanRequestShutdown and FileExists(ExecutablePath) then
-    begin
-      if (not IsSilent) and (not HasApprovedApplicationShutdown) then
-      begin
-        if MsgBox(ExpandConstant('{cm:CloseEverywhere}'), mbConfirmation, MB_OKCANCEL) <> IDOK then
-          exit;
-        HasApprovedApplicationShutdown := True;
-      end;
-
-      ResultCode := -1;
-      if IsUninstaller then
-        UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}')
-      else
-        WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
-      { Run the installed image: runtime RPC intentionally requires the same build and path. }
-      if IsUserInstall then
-        ExecAsOriginalUser(ExecutablePath, '--hosts-control shutdown', InstallDirectory, SW_HIDE, ewWaitUntilTerminated, ResultCode)
-      else
-        Exec(ExecutablePath, '--hosts-control shutdown', InstallDirectory, SW_HIDE, ewWaitUntilTerminated, ResultCode);
-      Log(Format('Cooperative application shutdown returned code %d.', [ResultCode]));
-
-      { The controller's acknowledgement alone is not enough. This check also covers
-        other desktop sessions and Watchdog/Host processes after Main has exited. }
-      if QueryInstallationProcesses(InstallDirectory, HasRunningProcesses) and (not HasRunningProcesses) then
+    repeat
+      if (FindRec.Name <> '.') and (FindRec.Name <> '..') then
       begin
         Result := True;
         exit;
       end;
-    end;
-
-    if IsSilent then
-      exit;
-    if MsgBox(ExpandConstant('{cm:EverywhereStillRunning}'), mbError, MB_RETRYCANCEL) <> IDRETRY then
-      exit;
-  until False;
+    until not FindNext(FindRec);
+  finally
+    FindClose(FindRec);
+  end;
 end;
 
-function ConfirmPreviousApplicationShutdown(): Boolean;
+function NextButtonClick(PageId: Integer): Boolean;
+begin
+  Result := True;
+  if PageId <> wpSelectDir then
+    exit;
+  if IsSameDirectory(WizardDirValue, PreviousMachineInstallDirectory) or
+     IsSameDirectory(WizardDirValue, PreviousUserInstallDirectory) or
+     (not IsDirectoryNotEmpty(WizardDirValue)) then
+    exit;
+  Result := SuppressibleMsgBox(ExpandConstant('{cm:InstallDirectoryNotEmpty}'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDYES) = IDYES;
+end;
+
+function StartProgram(FileName: String; Parameters: String; IsDesktopUser: Boolean; Flags: Cardinal; var ProcessInfo: TNativeProcessInfo): Boolean;
+var
+  Startup: TNativeStartupInfo;
+  Environment: NativeInt;
+  ErrorCode: Cardinal;
 begin
   Result := False;
-  if HasPreviousMachineInstall and
-     (not ConfirmInstallationShutdown(PreviousMachineInstallDirectory, PreviousMachineShutdownProtocolVersion = 1, False, WizardSilent)) then
-    exit;
-  if HasPreviousUserInstall and (not IsSameDirectory(PreviousUserInstallDirectory, PreviousMachineInstallDirectory)) and
-     (not ConfirmInstallationShutdown(PreviousUserInstallDirectory, PreviousUserShutdownProtocolVersion = 1, True, WizardSilent)) then
-    exit;
-  Result := True;
+  Startup.Size := SizeOf(Startup);
+  Startup.Flags := 1;
+  Startup.ShowWindow := SW_HIDE;
+  if (Flags and CreateNoWindow) = 0 then
+    Startup.ShowWindow := SW_SHOWNORMAL;
+  if IsDesktopUser then
+  begin
+    if DesktopUserToken = 0 then
+      exit;
+    if not WindowsCreateEnvironmentBlock(Environment, DesktopUserToken, False) then
+      exit;
+    try
+      Result := WindowsCreateProcessWithToken(DesktopUserToken, 0, FileName, '"' + FileName + '" ' + Parameters,
+        Flags or CreateUnicodeEnvironment, Environment, ExtractFileDir(FileName), Startup, ProcessInfo);
+      ErrorCode := DLLGetLastError;
+    finally
+      WindowsDestroyEnvironmentBlock(Environment);
+    end;
+  end
+  else
+  begin
+    Result := WindowsCreateProcess(FileName, '"' + FileName + '" ' + Parameters, 0, 0, False,
+      Flags, 0, ExtractFileDir(FileName), Startup, ProcessInfo);
+    ErrorCode := DLLGetLastError;
+  end;
+  if not Result then
+    Log(Format('Could not start "%s": Windows error %d.', [FileName, ErrorCode]));
 end;
 
-function PrepareToInstall(var NeedsRestart: Boolean): String;
+procedure PumpMessages();
 var
-  ErrorDetail: String;
-  IsRecognizedPreviousDirectory: Boolean;
+  Message: TNativeMessage;
 begin
-  Result := '';
-
-  if not ValidatePreviousUninstaller(HasPreviousMachineInstall, PreviousMachineUninstaller) then
+  while WindowsPeekMessage(Message, 0, 0, 0, 1) do
   begin
-    Result := ExpandConstant('{cm:PreviousUninstallerMissing}');
+    WindowsTranslateMessage(Message);
+    WindowsDispatchMessage(Message);
+  end;
+end;
+
+function RunController(FileName: String; Parameters: String; IsDesktopUser: Boolean; TimeoutMilliseconds: Cardinal; var ResultCode: Integer): Boolean;
+var
+  ProcessInfo: TNativeProcessInfo;
+  Limits: TNativeJobLimits;
+  ExitCode: Cardinal;
+  WaitResult: Cardinal;
+  Deadline: Int64;
+begin
+  Result := False;
+  ResultCode := -1;
+  ActiveControllerJob := WindowsCreateJobObject(0, 0);
+  if ActiveControllerJob = 0 then
+    exit;
+  try
+    { Optional controllers have bounded waits. Start suspended so their children
+      belong to the kill-on-close job before any controller code executes. }
+    Limits.Flags := $2000;
+    if not WindowsSetJobLimits(ActiveControllerJob, 9, Limits, SizeOf(Limits)) then
+      exit;
+    if not StartProgram(FileName, Parameters, IsDesktopUser, CreateSuspended or CreateNoWindow, ProcessInfo) then
+      exit;
+    try
+      if not WindowsAssignProcessToJob(ActiveControllerJob, ProcessInfo.Process) then
+      begin
+        WindowsTerminateProcess(ProcessInfo.Process, 2);
+        exit;
+      end;
+      if WindowsResumeThread(ProcessInfo.Thread) = $FFFFFFFF then
+        exit;
+      Deadline := WindowsGetTickCount64() + TimeoutMilliseconds;
+      repeat
+        WaitResult := WindowsWaitForSingleObject(ProcessInfo.Process, 50);
+        PumpMessages();
+        if (WaitResult = WaitTimeout) and (WindowsGetTickCount64() >= Deadline) then
+        begin
+          Log('The optional controller timed out; stopping its process tree.');
+          exit;
+        end;
+      until WaitResult <> WaitTimeout;
+      if WaitResult <> 0 then
+        exit;
+      if not WindowsGetExitCodeProcess(ProcessInfo.Process, ExitCode) then
+        exit;
+      ResultCode := ExitCode;
+      Result := ResultCode = 0;
+    finally
+      WindowsCloseHandle(ProcessInfo.Thread);
+      WindowsCloseHandle(ProcessInfo.Process);
+    end;
+  finally
+    WindowsCloseHandle(ActiveControllerJob);
+    ActiveControllerJob := 0;
+  end;
+end;
+
+function ExecutePreviousUninstaller(FileName: String; Parameters: String; IsDesktopUser: Boolean; var ResultCode: Integer): Boolean;
+var
+  ProcessInfo: TNativeProcessInfo;
+  WaitResult: Cardinal;
+  ExitCode: Cardinal;
+begin
+  { Inno's original process waits until the actual uninstall work is complete.
+    Follow that native lifetime; no forced cancellation or process-tree job. }
+  Result := False;
+  ResultCode := -1;
+  if not IsDesktopUser then
+  begin
+    Result := Exec(FileName, Parameters, ExtractFileDir(FileName), SW_SHOWNORMAL, ewWaitUntilTerminated, ResultCode);
+    Result := Result and (ResultCode = 0);
     exit;
   end;
+  { Preserve the captured desktop identity for a user-scoped old installation,
+    including when Setup was elevated using another account's credentials. }
+  if not StartProgram(FileName, Parameters, True, 0, ProcessInfo) then
+    exit;
+  try
+    repeat
+      WaitResult := WindowsWaitForSingleObject(ProcessInfo.Process, 50);
+      PumpMessages();
+    until WaitResult <> WaitTimeout;
+    if WaitResult <> 0 then
+    begin
+      Log('Could not wait for the previous uninstaller; stopping Setup.');
+      WindowsExitProcess(7);
+    end;
+    if not WindowsGetExitCodeProcess(ProcessInfo.Process, ExitCode) then
+    begin
+      Log('Could not read the previous uninstall result; stopping Setup.');
+      WindowsExitProcess(7);
+    end;
+    ResultCode := ExitCode;
+    Result := ResultCode = 0;
+  finally
+    WindowsCloseHandle(ProcessInfo.Thread);
+    WindowsCloseHandle(ProcessInfo.Process);
+  end;
+end;
 
-  if not ValidatePreviousUninstaller(HasPreviousUserInstall, PreviousUserUninstaller) then
+procedure CancelButtonClick(PageId: Integer; var Cancel, Confirm: Boolean);
+begin
+  if not IsPreparingInstallation then
+    exit;
+  if not WizardForm.CancelButton.Enabled then
   begin
-    Result := ExpandConstant('{cm:PreviousUninstallerMissing}');
+    Cancel := False;
+    Confirm := False;
     exit;
   end;
+  { Outside old uninstall, cancellation stops preparation without entering
+    payload rollback. Optional controller children are stopped by their job. }
+  if ActiveControllerJob <> 0 then
+    WindowsCloseHandle(ActiveControllerJob);
+  WindowsExitProcess(2);
+end;
 
-  IsRecognizedPreviousDirectory := IsSameDirectory(WizardDirValue, PreviousMachineInstallDirectory) or
-    IsSameDirectory(WizardDirValue, PreviousUserInstallDirectory);
-  if not ValidateInstallDirectoryBeforeMutation(WizardDirValue, IsRecognizedPreviousDirectory, ErrorDetail) then
-  begin
-    Log(Format('Pre-install directory validation failed: %s', [ErrorDetail]));
-    if ErrorDetail = '' then
-      Result := ExpandConstant('{cm:InstallDirectoryNotEmpty}')
-    else
-      Result := ExpandConstant('{cm:InstallDirectoryUnavailable}');
+procedure CloseInstallation(InstallDirectory: String; CanRequestShutdown: Boolean; IsDesktopUser: Boolean);
+var
+  ResultCode: Integer;
+  FileName: String;
+begin
+  FileName := AddBackslash(InstallDirectory) + '{#AppExeName}';
+  if (InstallDirectory = '') or (not CanRequestShutdown) or (not FileExists(FileName)) then
     exit;
-  end;
+  if HasCommandLineParameter('/NOCLOSEAPPLICATIONS') then
+    exit;
+  WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
+  RunController(FileName, '--hosts-control shutdown', IsDesktopUser, 35000, ResultCode);
+  Log(Format('Cooperative shutdown returned code %d.', [ResultCode]));
+end;
 
-  { Inno's automatic Restart Manager shutdown occurs after ssInstall. Our previous
-    uninstaller runs in ssInstall, so application shutdown must complete here first. }
-  if not ConfirmPreviousApplicationShutdown() then
-    Result := ExpandConstant('{cm:EverywhereShutdownRequired}');
+function RunPreviousUninstaller(Uninstaller: String; IsDesktopUser: Boolean; IsUpgrade: Boolean): Boolean;
+var
+  FileName: String;
+  Parameters: String;
+  ResultCode: Integer;
+  Response: Integer;
+  ShouldShowUninstallProgress: Boolean;
+  WasCancelEnabled: Boolean;
+begin
+  Result := False;
+  ShouldShowUninstallProgress := not WizardSilent;
+  repeat
+    FileName := ExtractCommandExecutable(Uninstaller);
+    ResultCode := -1;
+    if (FileName <> '') and FileExists(FileName) then
+    begin
+      if ShouldShowUninstallProgress then
+        Parameters := '/SILENT'
+      else
+        Parameters := '/VERYSILENT';
+      Parameters := Parameters + ' /SUPPRESSMSGBOXES /NORESTART /LOG /ALLOWINCOMPLETECLEANUP';
+      if IsUpgrade then
+        Parameters := Parameters + ' /UPGRADE';
+      WizardForm.PreparingLabel.Caption := ExpandConstant('{cm:RemovingPreviousVersion}');
+      { Native uninstall cannot be cancelled once removal begins. Transfer the
+        visible UI to its progress window and restore Setup on every return. }
+      WasCancelEnabled := WizardForm.CancelButton.Enabled;
+      WizardForm.CancelButton.Enabled := False;
+      try
+        if ShouldShowUninstallProgress then
+          WizardForm.Hide;
+        Result := ExecutePreviousUninstaller(FileName, Parameters, IsDesktopUser, ResultCode);
+      finally
+        WizardForm.CancelButton.Enabled := WasCancelEnabled;
+        if ShouldShowUninstallProgress then
+        begin
+          WizardForm.Show;
+          WizardForm.BringToFront;
+        end;
+      end;
+      if Result then
+        exit;
+    end;
+    Log(Format('Previous uninstall did not complete: %s, code %d.', [FileName, ResultCode]));
+    { Unattended callers must opt in explicitly; suppressed dialogs never hang. }
+    if HasCommandLineParameter('/IGNOREUNINSTALLFAILURE') then
+      exit;
+    if WizardSilent or HasCommandLineParameter('/SUPPRESSMSGBOXES') then
+      WindowsExitProcess(7);
+    Response := MsgBox(FmtMessage(ExpandConstant('{cm:PreviousUninstallFailed}'), [IntToStr(ResultCode)]),
+      mbError, MB_ABORTRETRYIGNORE or MB_DEFBUTTON1);
+    if Response = IDIGNORE then
+      exit;
+    if Response = IDABORT then
+      WindowsExitProcess(2);
+  until False;
 end;
 
 procedure RegisterInstallResource(InstallDirectory: String; FileName: String);
@@ -869,11 +765,16 @@ begin
 end;
 
 function DeleteEverywhereAutorunAtRoot(RootKey: HKEY; Subkey: String; var ErrorDetail: String): Boolean;
+var
+  Command: String;
 begin
   Result := True;
   if not RegValueExists(RootKey, Subkey, '{#AppName}') then
     exit;
 
+  if not RegQueryStringValue(RootKey, Subkey, '{#AppName}', Command) or
+     (not IsSameFile(ExtractCommandExecutable(Command), ExpandConstant('{app}\{#AppExeName}'))) then
+    exit;
   if not RegDeleteValue(RootKey, Subkey, '{#AppName}') then
   begin
     ErrorDetail := Subkey;
@@ -917,250 +818,212 @@ begin
   end;
 end;
 
-function CleanupPreviousTasks(InstallDirectory: String; var ErrorDetail: String): Boolean;
+function ShouldInstallServiceMode(): Boolean;
 var
-  ExecutablePath: String;
-begin
-  if InstallDirectory = '' then
-  begin
-    Result := True;
-    exit;
-  end;
-
-  ExecutablePath := AddBackslash(RemoveBackslashUnlessRoot(InstallDirectory)) + '{#AppExeName}';
-  Result := CleanupOwnedTasks(ExecutablePath, ErrorDetail);
-end;
-
-function TryCleanupPreviousResources(var ErrorDetail: String): Boolean;
-var
-  ItemError: String;
-begin
-  ErrorDetail := '';
-  Result := True;
-  if not CleanupPreviousTasks(PreviousMachineInstallDirectory, ItemError) then
-  begin
-    AppendErrorDetail(ErrorDetail, 'machine-install tasks', ItemError);
-    Result := False;
-  end;
-  if (not IsSameDirectory(PreviousUserInstallDirectory, PreviousMachineInstallDirectory)) and
-     (not CleanupPreviousTasks(PreviousUserInstallDirectory, ItemError)) then
-  begin
-    AppendErrorDetail(ErrorDetail, 'user-install tasks', ItemError);
-    Result := False;
-  end;
-  if not CleanupEverywhereAutoruns(ItemError) then
-  begin
-    AppendErrorDetail(ErrorDetail, 'startup entries', ItemError);
-    Result := False;
-  end;
-end;
-
-procedure ConfirmPreviousResourceCleanup();
-var
-  ErrorDetail: String;
-  Response: Integer;
-begin
-  repeat
-    if TryCleanupPreviousResources(ErrorDetail) then
-      exit;
-
-    Log(Format('Previous installation resource cleanup failed: %s', [ErrorDetail]));
-    if WizardSilent then
-      RaiseException(ExpandConstant('{cm:PreviousInstallCleanupFailed}'));
-
-    Response := MsgBox(
-      ExpandConstant('{cm:PreviousInstallCleanupFailed}'),
-      mbError,
-      MB_ABORTRETRYIGNORE or MB_DEFBUTTON1);
-    if Response = IDABORT then
-      Abort;
-    if Response = IDIGNORE then
-    begin
-      ShouldAllowIncompletePreviousCleanup := True;
-      Log('The user chose to continue installation with incomplete previous-resource cleanup.');
-      exit;
-    end;
-  until False;
-end;
-
-procedure RemovePreviousInstallation();
-var
-  ResultCode: Integer;
-  ErrorDetail: String;
-begin
-  ConfirmPreviousResourceCleanup();
-
-  ResultCode := -1;
-  if not RunPreviousUninstaller(HasPreviousMachineInstall, PreviousMachineUninstaller, False, ResultCode) then
-    RaiseException(FmtMessage(ExpandConstant('{cm:PreviousUninstallFailed}'), [IntToStr(ResultCode)]));
-
-  ResultCode := -1;
-  if not RunPreviousUninstaller(HasPreviousUserInstall, PreviousUserUninstaller, True, ResultCode) then
-    RaiseException(FmtMessage(ExpandConstant('{cm:PreviousUninstallFailed}'), [IntToStr(ResultCode)]));
-
-  if not WaitForDirectoryEmpty(WizardDirValue, ErrorDetail) then
-  begin
-    Log(Format('The installation directory was not ready after removing the previous version: %s', [ErrorDetail]));
-    if ErrorDetail = '' then
-      RaiseException(ExpandConstant('{cm:InstallDirectoryStillNotEmpty}'))
-    else
-      RaiseException(ExpandConstant('{cm:InstallDirectoryUnavailable}'));
-  end;
-end;
-
-procedure CleanupLegacyRegistry();
-var
-  Identifier: String;
-  UserHives: TArrayOfString;
-  UserKey: String;
+  InstallDirectory: String;
+  ProgramFilesDirectory: String;
+  Scheduler: Variant;
+  Tasks: Variant;
   Index: Integer;
 begin
-  if RegQueryStringValue(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\Everywhere', 'Identifier', Identifier) and (Identifier = 'D66EA41B-8DEB-4E5A-9D32-AB4F8305F664') then
-  begin
-    RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\Everywhere');
-  end;
-
-  if not RegGetSubkeyNames(HKEY_USERS, '', UserHives) then
+  Result := False;
+  { Only a first installation under the system Program Files directory opts in.
+    Existing registrations represent the user's choice, including no task.
+    Directory permissions and redirection are the administrator's responsibility. }
+  if HasPreviousMachineInstall or HasPreviousUserInstall then
     exit;
-
-  for Index := 0 to GetArrayLength(UserHives) - 1 do
-  begin
-    UserKey := UserHives[Index] + '\Software\Microsoft\Windows\CurrentVersion\Uninstall\Everywhere';
-    if RegQueryStringValue(HKEY_USERS, UserKey, 'Identifier', Identifier) and (Identifier = 'D66EA41B-8DEB-4E5A-9D32-AB4F8305F664') then
-      RegDeleteKeyIncludingSubkeys(HKEY_USERS, UserKey);
-  end;
-end;
-
-function RegisterInstalledLayout(): Boolean;
-var
-  RegisteredLayoutVersion: Cardinal;
-begin
-  Result := RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', 1) and
-    RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', 2) and
-    RegQueryDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', RegisteredLayoutVersion) and
-    (RegisteredLayoutVersion = 2);
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ResultCode: Integer;
-begin
-  if CurStep = ssInstall then
-  begin
-    { Recheck before destructive work if the application was reopened after preparation. }
-    if not ConfirmPreviousApplicationShutdown() then
-      RaiseException(ExpandConstant('{cm:EverywhereShutdownRequired}'));
-    RemovePreviousInstallation();
-    PrepareInstallDirectory();
+  InstallDirectory := RemoveBackslashUnlessRoot(ExpandFileName(ExpandConstant('{app}')));
+  ProgramFilesDirectory := AddBackslash(ExpandFileName(ExpandConstant('{commonpf64}')));
+  if CompareText(Copy(InstallDirectory, 1, Length(ProgramFilesDirectory)), ProgramFilesDirectory) <> 0 then
     exit;
-  end;
-
-  if CurStep <> ssPostInstall then
-    exit;
-
-  { Inno recreates its uninstall key while saving uninstall information, so the layout marker must be written here. }
-  if not RegisterInstalledLayout() then
-  begin
-    Log('Failed to write or verify InstallLayoutVersion after Inno registered the installation.');
-    if not WizardSilent then
-      MsgBox(ExpandConstant('{cm:InstallIdentityRegistrationFailed}'), mbError, MB_OK);
-    exit;
-  end;
-
-  CleanupLegacyRegistry();
-  ResultCode := -1;
-  if (not Exec(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control install --replace-existing', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)) or (ResultCode <> 0) then
-  begin
-    Log(Format('Hosts task installation failed with exit code %d.', [ResultCode]));
-    if not WizardSilent then
-      MsgBox(ExpandConstant('{cm:HostsTaskInstallFailed}'), mbError, MB_OK);
-  end;
-end;
-
-function TryCleanupCurrentResources(var ErrorDetail: String): Boolean;
-var
-  ExecutablePath: String;
-  ResultCode: Integer;
-  IsControllerCleanupComplete: Boolean;
-  IsTaskCleanupComplete: Boolean;
-  IsAutorunCleanupComplete: Boolean;
-  ItemError: String;
-begin
-  ErrorDetail := '';
-  ExecutablePath := ExpandConstant('{app}\{#AppExeName}');
-
-  if FileExists(ExecutablePath) then
-  begin
-    ResultCode := -1;
-    IsControllerCleanupComplete := Exec(ExecutablePath, '--hosts-control uninstall', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
-    if not IsControllerCleanupComplete then
-      Log(Format('Hosts controller cleanup failed with exit code %d; using Task Scheduler COM fallback.', [ResultCode]));
-  end
-  else
-  begin
-    Log('Everywhere.exe is unavailable; using Task Scheduler COM fallback.');
-    IsControllerCleanupComplete := False;
-  end;
-
-  ErrorDetail := '';
-  IsTaskCleanupComplete := IsControllerCleanupComplete;
-  if not IsTaskCleanupComplete then
-  begin
-    IsTaskCleanupComplete := CleanupOwnedTasks(ExecutablePath, ItemError);
-    if not IsTaskCleanupComplete then
-      AppendErrorDetail(ErrorDetail, 'scheduled tasks', ItemError);
-  end;
-
-  IsAutorunCleanupComplete := CleanupEverywhereAutoruns(ItemError);
-  if not IsAutorunCleanupComplete then
-    AppendErrorDetail(ErrorDetail, 'startup entries', ItemError);
-
-  Result := IsTaskCleanupComplete and IsAutorunCleanupComplete;
-end;
-
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-var
-  ErrorDetail: String;
-  Response: Integer;
-begin
-  if CurUninstallStep <> usUninstall then
-    exit;
-
-  { This runs only after uninstall confirmation, before task cleanup or file removal.
-    ALLOWINCOMPLETECLEANUP never authorizes removing files from a running application. }
-  if not ConfirmInstallationShutdown(ExpandConstant('{app}'), True, False, UninstallSilent) then
-    Abort;
-
-  repeat
-    if TryCleanupCurrentResources(ErrorDetail) then
-      exit;
-
-    Log(Format('Uninstall resource cleanup failed: %s', [ErrorDetail]));
-    if UninstallSilent then
-    begin
-      if HasCommandLineParameter('/ALLOWINCOMPLETECLEANUP') then
-      begin
-        Log('Continuing silent uninstall because the calling Setup explicitly allowed incomplete cleanup.');
+  try
+    Scheduler := CreateOleObject('Schedule.Service');
+    Scheduler.Connect;
+    Tasks := Scheduler.GetFolder('\').GetTasks(1);
+    for Index := 1 to Tasks.Count do
+      if CompareText(Tasks.Item(Index).Name, 'Everywhere Hosts') = 0 then
         exit;
-      end;
-
-      Abort;
-    end;
-
-    Response := MsgBox(
-      ExpandConstant('{cm:UninstallCleanupFailed}'),
-      mbError,
-      MB_ABORTRETRYIGNORE or MB_DEFBUTTON1);
-    if Response = IDABORT then
-      Abort;
-    if Response = IDIGNORE then
-    begin
-      Log('The user chose to continue uninstalling with incomplete background-service cleanup.');
-      exit;
-    end;
-  until False;
-
+    Result := True;
+  except
+    Log('Could not query service-mode registration; preserving existing configuration: ' + GetExceptionMessage);
+  end;
 end;
 
-[Run]
-Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runasoriginaluser
+procedure RemovePreviousShortcut(Path: String; InstallDirectory: String; Uninstaller: String);
+var
+  Shell: Variant;
+  Shortcut: Variant;
+  Target: String;
+begin
+  if (Path = '') or (not FileExists(Path)) then
+    exit;
+  try
+    Shell := CreateOleObject('WScript.Shell');
+    Shortcut := Shell.CreateShortcut(Path);
+    Target := Shortcut.TargetPath;
+    if IsSameFile(Target, AddBackslash(InstallDirectory) + '{#AppExeName}') or
+       IsSameFile(Target, ExtractCommandExecutable(Uninstaller)) then
+      if not DeleteFile(Path) then
+        Log('Could not remove previous shortcut: ' + Path);
+  except
+    Log('Could not inspect previous shortcut: ' + GetExceptionMessage);
+  end;
+end;
+
+procedure CleanupPreviousShortcuts(InstallDirectory: String; Uninstaller: String);
+begin
+  if InstallDirectory = '' then
+    exit;
+  RemovePreviousShortcut(ExpandConstant('{commondesktop}\{#AppName}.lnk'), InstallDirectory, Uninstaller);
+  RemovePreviousShortcut(ExpandConstant('{commonprograms}\{#AppName}.lnk'), InstallDirectory, Uninstaller);
+  RemovePreviousShortcut(ExpandConstant('{commonprograms}\{#AppName}\Uninstall {#AppName}.lnk'), InstallDirectory, Uninstaller);
+  { Remove only an empty shortcut group; unrelated contents are preserved. }
+  RemoveDir(ExpandConstant('{commonprograms}\{#AppName}'));
+  if DesktopUserDesktop <> '' then
+    RemovePreviousShortcut(AddBackslash(DesktopUserDesktop) + '{#AppName}.lnk', InstallDirectory, Uninstaller);
+  if DesktopUserPrograms <> '' then
+  begin
+    RemovePreviousShortcut(AddBackslash(DesktopUserPrograms) + '{#AppName}.lnk', InstallDirectory, Uninstaller);
+    RemovePreviousShortcut(AddBackslash(DesktopUserPrograms) + '{#AppName}\Uninstall {#AppName}.lnk', InstallDirectory, Uninstaller);
+    RemoveDir(AddBackslash(DesktopUserPrograms) + '{#AppName}');
+  end;
+end;
+
+procedure CleanupLegacyRegistryAtRoot(RootKey: HKEY; Prefix: String);
+var
+  Identifier: String;
+begin
+  if RegQueryStringValue(RootKey, Prefix + LegacyRegistryKey, 'Identifier', Identifier) and
+     (Identifier = 'D66EA41B-8DEB-4E5A-9D32-AB4F8305F664') then
+    if not RegDeleteKeyIncludingSubkeys(RootKey, Prefix + LegacyRegistryKey) then
+      Log('Could not remove the legacy uninstall registration.');
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  HasRemovedMachine: Boolean;
+  HasRemovedUser: Boolean;
+  HasSharedPayload: Boolean;
+begin
+  Result := '';
+  if HasPreparedInstallation then
+    exit;
+  HasSharedPayload := HasPreviousMachineInstall and HasPreviousUserInstall and
+    (IsSameDirectory(PreviousUserInstallDirectory, PreviousMachineInstallDirectory) or
+     IsSameFile(ExtractCommandExecutable(PreviousUserUninstaller), ExtractCommandExecutable(PreviousMachineUninstaller)));
+  IsPreparingInstallation := True;
+  WizardForm.CancelButton.Enabled := True;
+  try
+    CloseInstallation(PreviousMachineInstallDirectory, PreviousMachineShutdownProtocolVersion = 1, DesktopUserToken <> 0);
+    if not IsSameDirectory(PreviousUserInstallDirectory, PreviousMachineInstallDirectory) then
+      CloseInstallation(PreviousUserInstallDirectory, PreviousUserShutdownProtocolVersion = 1, True);
+    if HasPreviousMachineInstall then
+      HasRemovedMachine := RunPreviousUninstaller(PreviousMachineUninstaller, False,
+        IsSameDirectory(PreviousMachineInstallDirectory, WizardDirValue));
+    if HasPreviousUserInstall then
+    begin
+      if HasSharedPayload then
+        HasRemovedUser := HasRemovedMachine
+      else
+        HasRemovedUser := RunPreviousUninstaller(PreviousUserUninstaller, True,
+          IsSameDirectory(PreviousUserInstallDirectory, WizardDirValue));
+    end;
+    { Ignoring failure is not proof of removal. Preserve the old repair entry and
+      shortcuts when its uninstaller did not complete. No preemptive cleanup. }
+    if HasRemovedMachine and (not IsSameDirectory(PreviousMachineInstallDirectory, WizardDirValue)) then
+      CleanupPreviousShortcuts(PreviousMachineInstallDirectory, PreviousMachineUninstaller);
+    if HasRemovedUser then
+    begin
+      if not IsSameDirectory(PreviousUserInstallDirectory, WizardDirValue) then
+        CleanupPreviousShortcuts(PreviousUserInstallDirectory, PreviousUserUninstaller);
+      if DesktopUserHive <> '' then
+      begin
+        RegDeleteKeyIncludingSubkeys(HKEY_USERS, DesktopUserHive + InstallRegistryKey);
+        CleanupLegacyRegistryAtRoot(HKEY_USERS, DesktopUserHive);
+      end
+      else
+      begin
+        RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, InstallRegistryKey);
+        CleanupLegacyRegistryAtRoot(HKEY_CURRENT_USER, '');
+      end;
+    end;
+    HasPreparedInstallation := True;
+  finally
+    IsPreparingInstallation := False;
+  end;
+end;
+
+procedure CurStepChanged(Step: TSetupStep);
+var
+  ResultCode: Integer;
+  ProcessInfo: TNativeProcessInfo;
+begin
+  if Step = ssPostInstall then
+  begin
+    { Inno recreates its uninstall key when saving uninstall information. }
+    if not (RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'ShutdownProtocolVersion', 1) and
+            RegWriteDWordValue(HKEY_LOCAL_MACHINE, InstallRegistryKey, 'InstallLayoutVersion', 2)) then
+    begin
+      Log('Could not register installation layout.');
+      exit;
+    end;
+    if not ShouldInstallServiceMode() then
+      exit;
+    if not RunController(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control install', False, 10000, ResultCode) then
+      Log(Format('Service installation failed with code %d.', [ResultCode]));
+  end
+  else if (Step = ssDone) and (not WizardSilent) and LaunchCheckBox.Visible and LaunchCheckBox.Checked then
+  begin
+    { Use the desktop shell's identity, even if Setup was launched elevated.
+      Never fall back to launching the interactive app with Setup's identity. }
+    if StartProgram(ExpandConstant('{app}\{#AppExeName}'), '', True, 0, ProcessInfo) then
+    begin
+      WindowsCloseHandle(ProcessInfo.Thread);
+      WindowsCloseHandle(ProcessInfo.Process);
+    end;
+  end;
+end;
+
+procedure DeinitializeSetup();
+begin
+  if DesktopUserToken <> 0 then
+    WindowsCloseHandle(DesktopUserToken);
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  CaptureDesktopUser();
+  Result := True;
+end;
+
+procedure DeinitializeUninstall();
+begin
+  if DesktopUserToken <> 0 then
+    WindowsCloseHandle(DesktopUserToken);
+end;
+
+procedure CurUninstallStepChanged(Step: TUninstallStep);
+var
+  ResultCode: Integer;
+  ErrorDetail: String;
+begin
+  if Step <> usUninstall then
+    exit;
+  { Uninstall shares best-effort resource cleanup with Setup. File-in-use errors
+    remain the native uninstaller's responsibility, not a second dialog flow. }
+  if FileExists(ExpandConstant('{app}\{#AppExeName}')) then
+  begin
+    UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
+    RunController(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control shutdown', False, 35000, ResultCode);
+    Log(Format('Uninstall shutdown returned code %d.', [ResultCode]));
+  end;
+  { Only same-directory replacement requests preservation. Older uninstallers
+    ignore this option; their historical state reset is intentionally accepted. }
+  if HasCommandLineParameter('/UPGRADE') then
+    exit;
+  CleanupPreviousShortcuts(ExpandConstant('{app}'), ExpandConstant('{uninstallexe}'));
+  if not CleanupOwnedTasks(ExpandConstant('{app}\{#AppExeName}'), ErrorDetail) then
+    Log('Uninstall task cleanup failed: ' + ErrorDetail);
+  if not CleanupEverywhereAutoruns(ErrorDetail) then
+    Log('Uninstall startup cleanup failed: ' + ErrorDetail);
+end;

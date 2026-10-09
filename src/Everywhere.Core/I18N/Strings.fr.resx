@@ -4361,4 +4361,13 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Les demandes sont trop fréquentes, le service recommande d'attendre {0} secondes avant de réessayer.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>Le service installé appartient à une autre copie d'Everywhere non identifiable. Si vous continuez, elle sera écrasée.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>Le service installé appartient à une autre copie d'Everywhere :
+{0}
+
+Si vous continuez, il sera écrasé.</value>
+    </data>
 </root>

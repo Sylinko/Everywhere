@@ -32,11 +32,9 @@ public sealed record HostStopResult(
 /// <summary>Describes one requested service-mode transition after any UI confirmation.</summary>
 /// <param name="ShouldInstall">Whether service mode should be installed rather than removed.</param>
 /// <param name="ShouldReplaceExisting">Whether another Everywhere copy may be replaced.</param>
-/// <param name="ShouldAuthorizePortable">Whether a portable copy was explicitly authorized.</param>
 public sealed record HostsServiceModeChangeRequest(
     bool ShouldInstall,
-    bool ShouldReplaceExisting = false,
-    bool ShouldAuthorizePortable = false
+    bool ShouldReplaceExisting = false
 );
 
 /// <summary>Reports a platform-level failure from a requested service-mode transition.</summary>
@@ -323,7 +321,7 @@ public sealed partial class HostProcessCoordinator(
         try
         {
             var result = request.ShouldInstall ?
-                await manager.RequestInstallAsync(request.ShouldReplaceExisting, request.ShouldAuthorizePortable) :
+                await manager.RequestInstallAsync(request.ShouldReplaceExisting) :
                 await manager.RequestUninstallAsync();
             _logger.Information(
                 "Hosts service-mode change completed: install={ShouldInstall}, state={State}, detail={Detail}.",

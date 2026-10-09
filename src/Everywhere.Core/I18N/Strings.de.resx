@@ -4361,4 +4361,13 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Anfragen sind zu häufig, der Dienst empfiehlt, {0} Sekunden zu warten, bevor Sie es erneut versuchen.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>Der installierte Dienst gehört zu einer anderen, nicht identifizierbaren Everywhere-Kopie. Wenn Sie fortfahren, wird er überschrieben.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>Der installierte Dienst gehört zu einer anderen Everywhere-Kopie:
+{0}
+
+Wenn Sie fortfahren, wird er überschrieben.</value>
+    </data>
 </root>

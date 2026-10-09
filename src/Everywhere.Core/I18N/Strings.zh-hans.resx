@@ -4359,4 +4359,13 @@
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>请求过于频繁，服务建议等待 {0} 秒后重试。</value>
     </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>已安装的服务属于另一个 Everywhere 副本：
+{0}
+
+如果继续将覆盖它。</value>
+    </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>已安装的服务属于另一个无法识别的 Everywhere 副本，如果继续将覆盖它。</value>
+    </data>
 </root>

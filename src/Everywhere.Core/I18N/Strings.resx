@@ -4361,4 +4361,13 @@ Delete &quot;{1}&quot; permanently?</value>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Too many requests. The service recommends waiting {0} seconds before trying again.</value>
     </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>The installed service belongs to another Everywhere copy:
+{0}
+
+If you continue, it will be overwritten.</value>
+    </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>The installed service belongs to another unrecognizable Everywhere copy. Continuing will overwrite it.</value>
+    </data>
 </root>

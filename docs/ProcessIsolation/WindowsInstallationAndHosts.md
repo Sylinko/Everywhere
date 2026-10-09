@@ -9,7 +9,7 @@ This document describes the implemented Windows service-mode and installer behav
 - Inno Setup 7.1 x64 remains the installer. It elevates explicitly and registers an all-users installation.
 - Setup EXE and portable ZIP remain supported release forms. Portable and Scoop copies launch ordinary Hosts until the user explicitly enables service mode.
 - Task Scheduler is an optional capability. Failure to create or start the task must not invalidate an otherwise usable installation.
-- An unprotected custom directory is allowed after a clear warning. The warning does not prohibit service-mode installation.
+- Setup accepts custom directories without changing their ACLs or showing capability warnings. Only a first installation under the system x64 Program Files directory attempts automatic service registration, and only when no Hosts task exists. Normal updates preserve the configured state when the previous uninstaller supports upgrade preservation; historical resets are accepted.
 - macOS does not expose this setting and always launches Hosts directly.
 
 “Install as a service” is product language for installing the scheduled elevated launcher. Everywhere does not install a Windows Service, and the controller does not remain resident.
@@ -27,7 +27,7 @@ The executable handles `--hosts-control` before Entrance, DI, Avalonia, or user 
 | `install` | Idempotently create or repair the task for the current executable |
 | `uninstall` | Remove the task only when its action belongs to the current executable |
 
-`install` alone accepts `--replace-existing` and `--authorize-portable`. They are explicit confirmations issued only after Main has shown the corresponding ownership or environment dialog. The controller never accepts an arbitrary executable path or arbitrary child-process arguments.
+`install` alone accepts `--replace-existing`, which authorizes replacement after Main has shown the task ownership or rebuild confirmation. Installed and portable copies use the same registration path; no environment authorization is required. The controller never accepts an arbitrary executable path or arbitrary child-process arguments.
 
 The stable exit codes are:
 
@@ -36,7 +36,7 @@ The stable exit codes are:
 | 0 | requested operation completed |
 | 1 | operation failed |
 | 2 | operation was unavailable or timed out |
-| 3 | ownership or portable-safety confirmation is required |
+| 3 | task replacement confirmation is required |
 | 10 | service launch failed; ordinary fallback started with reduced capability |
 | 11 | service launch failed; direct fallback is capability-equivalent because the controller already has an administrative token |
 
@@ -62,29 +62,33 @@ Input, and Automation endpoints. It has a 30-second deadline. An inaccessible en
 is not considered absent. A missing control pipe is successful only when all application
 endpoints are absent; it is not itself evidence that Main has exited.
 
-Setup also queries Windows process image paths through WMI for `Everywhere.exe` and
-`Everywhere.Watchdog.exe` in the exact installation directory. This catches remaining
-Hosts and other-session instances; it does not terminate processes by name. Query
-failures or unresolvable matching process images block destructive work. This is a
-product-process check; Restart Manager remains responsible for other file users.
+Setup writes ShutdownProtocolVersion=1 and sends shutdown only to installations
+advertising this protocol. The request uses the desktop identity when available.
+/NOCLOSEAPPLICATIONS skips it. No WMI process-exit gate or directory write probe is
+used; native uninstall and file replacement handle actual file-in-use errors.
 
-The installer writes `ShutdownProtocolVersion=1` beside its installed layout metadata.
-An upgrade invokes the command only when the old installation advertises that version.
-Legacy versions without the marker require manual exit rather than receiving an unknown
-command-line argument. The new uninstaller knows its own installed image supports the command.
+Opening Setup leaves Main running. On Install, Setup requests shutdown and attempts
+old uninstall, including during normal upgrades. Interactive Setup hides its wizard
+and uses /SILENT to show the old uninstaller's native progress without startup or
+completion confirmation. Silent Setup uses /VERYSILENT and shows no uninstall window.
+The wizard and its previous Cancel-button state are restored after each attempt,
+before payload installation or Abort/Retry/Ignore. Missing uninstallers never hide it.
 
-Opening Setup leaves Main running. After directory validation, `PrepareToInstall`
-asks once before cooperative shutdown and verifies exit before `ssInstall` can run
-the previous uninstaller. It rechecks before destructive work. Direct uninstall applies
-the same check after uninstall confirmation, before task cleanup and file removal.
-Interactive failure offers Retry/Cancel; silent failure stops without removing the old
-installation. `/NOCLOSEAPPLICATIONS` disables the cooperative request but not the exit
-check. `/ALLOWINCOMPLETECLEANUP` never bypasses this process check. No forced termination
-is performed. In-app Setup launch likewise leaves Main alive until Setup requests exit.
+During old uninstall, Setup's Cancel button is disabled. Native Inno removal cannot
+be gracefully cancelled once it begins; Setup adds no forced stop, automatic timeout,
+or kill-on-close job for the uninstaller. It waits for the original process, whose
+native Inno lifetime includes actual uninstall work. The temporary self-copy may
+still perform its own final cleanup after that process exits. A hanging uninstaller
+requires normal system-level intervention. Shutdown controllers retain a 35-second
+limit and optional service registration a 10-second limit, with controller-only
+kill-on-close jobs. No old-version rollback is promised.
 
-The completion page retains its ordinary-user launch option (`RestartApplications=no`);
-there is no second automatic restart route competing with it. Portable ZIP update behavior
-is outside this installer protocol.
+New uninstallers accept /UPGRADE for same-directory replacement: shutdown still runs,
+but startup entries, service tasks and shortcuts are preserved. Shortcuts are excluded
+from automatic uninstall deletion and removed explicitly on final uninstall. Final
+uninstall checks executable ownership before deleting startup values. Historical
+uninstallers do not understand /UPGRADE; their state resets, including historical
+cross-user startup cleanup, are explicitly accepted without snapshot/restore logic.
 
 ## Task Scheduler integration
 
@@ -131,17 +135,29 @@ Windows settings contains a System interaction group with:
 
 Each Host row is derived from that role's authenticated connection and recovery state. Starting uses a neutral progress presentation, connected uses green success, reduced-capability fallback uses orange warning, and unavailable uses red error. Status text is dynamically localized; explanatory tooltips identify the affected role without exposing raw exception data. The indexed state templates are created lazily.
 
-The switch reflects actual task ownership rather than a stored Boolean. Enabling it validates the task definition, performs ownership and portable-environment confirmation, then invokes the elevated controller. Disabling it removes only the current executable's task. Cancelling a dialog or UAC restores queried state without an error toast. A successful change restarts the Host generation; duplicate operations and retries are disabled while active.
+The switch reflects actual task ownership rather than a stored Boolean. Enabling it validates the task definition, requests confirmation when replacing another copy or an unidentified task, then invokes the elevated controller. Disabling it removes only the current executable's task. Cancelling a dialog or UAC restores queried state without an error toast. A successful change restarts the Host generation; duplicate operations and retries are disabled while active.
 
-## Installed and portable trust boundary
+## Installation identity and service-mode boundary
 
-Setup writes installation layout version 2 and registers the machine installation under HKLM. A copy counts as the current machine installation only when the registered `InstallLocation`, layout marker, and executable directory agree.
+Setup retains layout version 2 and shutdown protocol metadata for installation discovery
+and upgrade routing. Service registration does not depend on this identity. Installed,
+portable, and Scoop copies can all request service mode through the application setting.
 
-Before copying application files, Setup protects the installation directory. It assigns Administrators ownership, disables inherited modification rights, and grants SYSTEM and Administrators full control plus ordinary Users read/execute. Task registration relies on that installer-owned boundary; the controller does not rewrite installation ACLs. Writable application data remains outside the installation directory.
+The deployment environment is responsible for installation-directory permissions and
+redirection. Neither Setup nor Main audits directory ACLs, owners, ancestors, reparse
+points, or writability before service registration. System Program Files is the explicit
+administrator-managed location assumption for first-install automatic registration;
+its path is not treated as a proof of filesystem security.
 
-Portable authorization never rewrites the directory ACL. Main instead assesses the executable environment. A writable location, non-fixed volume, reparse point, or otherwise uncertain boundary produces a warning and requires explicit confirmation, but the user may continue.
+Main asks for confirmation only when replacing another copy's task or rebuilding an
+unidentified task, then requests elevation. Task modification permissions, fixed command
+arguments, and executable ownership remain application responsibilities. Host peer
+identity checks and pipe access controls are unchanged.
 
-The installation directory is the intended code trust boundary. Connected peers must also resolve to the same executable path, and Host pipes restrict which local identities can reach the handshake. This is a proportional product boundary, not a claim that same-path comparison replaces all operating-system trust decisions.
+Successful uninstall need not leave an empty directory. Unknown residual files are
+preserved without filename-specific handling. Ignoring uninstall failure allows
+overwrite installation and can leave old payload files. Migration does not clear the
+old directory; service mode must be enabled explicitly at the new location.
 
 ## Host pipe security
 
@@ -151,51 +167,88 @@ Task action path, working directory, task modification permissions, executable d
 
 ## Installer behavior
 
-The current Inno installer:
+The Inno Setup 7.1 x64 installer keeps the migration flow small:
 
-- requests administrative installation and writes all-users registration;
-- uses Inno Setup 7.1's native x64 installer and modern UI with automatic light/dark appearance;
-- defaults to `D:\Program Files\Everywhere` when D is a fixed drive, otherwise the system Program Files directory;
-- remembers only a recognized layout-2 machine installation as the next default path;
-- allows an empty custom directory and warns when it is outside a Program Files directory;
-- recognizes the current HKLM registration and legacy same-account HKCU registration;
-- writes and verifies the layout-2 identity after Inno has finalized its HKLM uninstall registration;
-- registers the previous Main and Watchdog executables with Restart Manager before replacement;
-- removes the product-wide `Run\Everywhere` startup value from the current and loaded user hives during migration and uninstall;
-- removes the released legacy `\Everywhere` elevated-Main task only when its action belongs to the installation being migrated;
-- runs recognized previous Inno uninstallers before copying and requires a successful exit;
-- requires the selected target to be empty after removal and rejects unrelated nonempty targets;
-- uses read-only checks while choosing and waiting for a directory, then performs one write probe before removing the previous version;
-- creates the selected directory and applies its protected DACL in-process before copying or executing application files;
-- keeps Inno's path-redirection guard enabled and allows an interactive user to explicitly continue when directory protection cannot be established;
-- installs or repairs service mode after copying, treating failure as a nonfatal degraded installation;
-- confirms application shutdown before uninstall and uses controller-based task removal, with ownership-aware Task Scheduler COM cleanup as a fallback;
-- performs uninstall cleanup only after the user confirms removal; if both cleanup paths fail, an interactive user may abort, retry, or continue with a clear residual-service warning, while silent uninstall fails unless its calling Setup propagates that explicit continue decision;
-- signs both the Setup executable and the generated Inno uninstaller through the release SignTool integration;
-- uses cooperative shutdown and exact-image process checks before changing an installation, and a global Setup mutex to prevent concurrent machine-wide Setup runs;
-- enables installation and uninstall logging, including logs from a previous Inno uninstaller invoked during migration;
-- preserves settings and databases stored outside the application directory.
+- requests administrative installation and writes machine registration;
+- preserves the released AppId and uses the modern light/dark wizard;
+- hides directory selection only when every discovered previous installation is layout 2, retaining its registered path;
+- shows directory selection for a first installation or a legacy layout, defaulting to the system Program Files directory unless an existing layout-2 path is available;
+- discovers the current desktop user's legacy installation through the shell process's SID, including alternate-credential elevation when that context is accessible;
+- accepts a nonempty recognized old directory without confirmation;
+- asks one ordinary Yes/No question for another nonempty directory, disabling Inno's redundant directory-exists warning;
+- attempts old uninstall during normal upgrades as well as migration, deduplicating shared payloads; interactive attempts display native uninstall progress while Setup is hidden;
+- offers Abort/Retry/Ignore when uninstall is missing, cannot start, or returns failure;
+- waits for the native uninstall process without requiring an empty directory or offering forced cancellation;
+- preserves unknown residual files;
+- preserves startup/service state and shortcuts when the old uninstaller supports /UPGRADE;
+- cleans retired shortcuts and user registration only after confirmed uninstall success;
+- does not preemptively clean startup entries or scheduled tasks during Setup;
+- uses a normalized, case-insensitive, separator-bounded comparison against the system x64 Program Files directory for first-install automatic service registration;
+- preserves any existing Hosts task during automatic registration and never passes --replace-existing; optional registration failures are logged;
+- enables Setup/uninstall logging and signs both the Setup executable and generated uninstaller;
+- retains a global Setup mutex and registers previous Main/Watchdog images with Restart Manager;
+- offers a completion-page launch checkbox and starts the app with the current desktop shell's token and environment, rather than Setup's elevated identity;
+- omits post-install launch when that identity is unavailable, installation is silent, or a restart is required.
 
-The startup value is intentionally treated as one product-level preference. Installed and portable copies can overwrite or remove each other's `Run\Everywhere` value; presenting one understandable startup switch is preferred over exposing copy ownership in the UI. Scheduled service-mode tasks retain strict executable ownership because they form a privileged execution boundary.
+Setup never authorizes task takeover. New same-directory upgrade uninstall preserves
+an owned service task or its absence. Older uninstallers can reset it; an upgrade is
+not reclassified as first install to re-enable service mode.
 
-Release automation downloads the pinned official Inno Setup 7.1.0 x64 asset and verifies its GitHub artifact attestation before compiling. Local packaging discovers the 64-bit compiler under Program Files or uses `INNO_SETUP_COMPILER` when explicitly configured. Application binaries are signed before packaging; Inno then uses the same authenticated signing session to sign both the final Setup executable and its embedded uninstaller.
+Release automation downloads the pinned official Inno Setup 7.1.0 x64 asset and verifies
+its GitHub artifact attestation before compiling. Local packaging discovers the compiler
+under Program Files or uses INNO_SETUP_COMPILER. Existing release signing remains unchanged.
 
-Post-install launch uses Inno's original-user option. This works for the ordinary interactive account in the normal elevation flow, but it cannot recover the desired ordinary account when Setup itself was initially launched under different administrator credentials.
+## Upgrade sequence and failure policy
 
-## Upgrade transaction
+1. Discover previous paths/layouts without closing the application.
+2. Keep the layout-2 upgrade directory fixed; directory selection remains for first installation and legacy migration.
+3. On Install, request cooperative shutdown and attempt old uninstall. Same-directory attempts pass /UPGRADE.
+4. On failure, retry, ignore and overwrite, or abort further installation. Missing uninstallers have the same recovery choices. Residual files are not failure.
+5. Silent or message-suppressed failure exits with code 7 unless /IGNOREUNINSTALLFAILURE explicitly authorizes continuing. No interactive retry loop is opened.
+6. Install files and write layout metadata. Only first installation under system x64 Program Files with no Hosts task attempts automatic registration.
+7. Offer launch as the desktop user after success.
 
-Every installed upgrade follows uninstall-then-install:
-
-1. Cache recognized installation metadata before destructive work.
-2. Coordinate shutdown and prevent new processes from taking installation files.
-3. Run the previous uninstaller silently, wait for it, and require a successful exit code.
-4. Use bounded checks for uninstaller self-deletion and directory readiness.
-5. Validate the now-empty target, create and protect the directory, then install the payload and reconcile the task. An interactive user may explicitly continue when directory protection fails; task registration remains a separate best-effort step.
-6. Persist the new layout metadata and optionally start Main as an ordinary user.
-
-Replacement of required files is not an optional capability. If processes cannot be stopped or the target cannot be made ready, the upgrade fails with an actionable message. A failed replacement after the old version was removed is reported and can be retried; the installer does not promise rollback of the previous application.
+Ignored failure is not successful retirement: old shortcuts and discovered user
+registration are not explicitly deleted. Same-scope registration may still be replaced
+by Inno's new registration. Actual write failures can prevent installation. Abort exits
+with code 2, leaving completed cleanup as-is. No transaction spans uninstall and
+installation; no historical preference backup/restore compatibility is implemented.
 
 ## Remaining validation and work
+
+Historical validation before the service-mode simplification used an isolated installer
+fixture with its own AppId and exercised missing uninstallers,
+nonzero uninstall exit codes, residual files, layout-1 migration, and a real Inno
+uninstaller. All continued successfully and preserved unrelated data. Native wizard
+checks covered both answers to the nonempty-directory question, the completion
+launch checkbox, and the former protected-versus-writable directory assessment.
+These historical results do not validate the current uninstall-first upgrade policy. Cancelling a
+hanging uninstaller stopped its child processes without entering rollback in the former forced-stop implementation; this behavior is no longer provided.
+
+The service-mode simplification was checked separately:
+
+- The Windows project built successfully with eight Watchdog AOT/trim warnings.
+- The production Inno script compiled successfully without emitting or signing an installer.
+- All 48 `ProcessRoleAndRpcTests` passed, including rejection of the removed portable authorization option.
+- An isolated native Inno probe executed extracted production preparation/routing code and the Program Files guard: 25 assertions covered first install, in-place update, migrations, duplicate registrations, repeat preparation, and path normalization/boundaries. Registry deletion, uninstall execution, and task cleanup were stubbed; this is branch validation, not an end-to-end installer test.
+- A separate native Inno probe executed the production automatic-registration eligibility function against the real Task Scheduler in read-only mode. It passed outside the sandbox; the sandbox could not access Task Scheduler COM.
+
+The uninstall-first refactor was checked separately with extracted production code:
+
+- The production Inno script compiles without emitting or signing a package.
+- A native policy probe passed 17 assertions covering uninstall success, retry, ignore, cancellation, missing uninstallers, silent failure/explicit ignore, duplicate payloads and retirement metadata. External effects and dialog choices are stubbed.
+- A native state probe passed 7 assertions for upgrade preservation, final cleanup, and old/new/empty directory confirmation, with external effects stubbed.
+- Before the native-progress simplification, a process probe passed 6 scenarios for successful and failed exit, descendant waiting, forced stop/retry and controller timeout. Its uninstall process-tree and forced-stop assertions describe the former implementation and do not validate the current UX.
+
+The native-progress simplification was checked separately:
+
+- The production script compiled successfully without emitting or signing a package, and the focused diff passed whitespace checks.
+- An isolated probe passed 45 assertions using extracted production uninstall/preparation code. Uninstall execution, dialogs and registry/shortcut changes were stubbed; assertions cover mode selection, disabled cancellation while waiting, restoration before retry/ignore/abort, missing uninstallers, silent failure/explicit ignore and upgrade routing.
+- A real isolated Inno uninstaller passed interactive and silent handoff checks: startup/completion prompts were skipped, progress-window visibility matched the selected mode, Setup waited for a delayed uninstall action and payload deletion, and its wizard and Cancel state were restored.
+- A native launch-failure probe confirmed that Setup restores the wizard and Cancel state when the existing executable cannot be launched and failure is ignored.
+- The fixture used a unique AppId, an isolated output directory and no uninstall registry registration. No Everywhere installation or scheduled task was modified.
+
+Real task creation/deletion, complete install/upgrade/uninstall flows, the application confirmation dialogs, alternate-credential uninstall launch, foreground/position transitions, and UAC cancellation still require native acceptance testing. No real application installation or task was modified by these probes.
 
 The following items are still open and must not be described as complete:
 
@@ -209,18 +262,17 @@ The following items are still open and must not be described as complete:
 ### Installation-wide shutdown
 
 The shutdown controller is scoped to the caller's user/session and exact build. Setup
-detects product processes from other sessions by exact image path and blocks until they
-exit, but does not cooperatively stop all logged-on sessions. Alternate-credential
+does not cooperatively stop all logged-on sessions or block on a separate process scan. Alternate-credential
 elevation may therefore require manual exit. Native checks must cover elevated Main,
-standard-user Main, unavailable WMI, and concurrent RDP sessions.
+standard-user Main and concurrent RDP sessions.
 
-Setup rechecks before destructive work but does not yet hold a replacement lock honored
-by every application launch. A new process starting after the last check remains a race.
-Restart Manager and directory readiness checks remain additional protection, not proof
+Setup does not hold a replacement lock honored
+by every application launch. A new process starting after shutdown remains a race.
+Restart Manager remains additional protection, not proof
 of an installation-wide exclusion interval. Legacy installs without the shutdown marker
 also require manual exit; no cross-version relaxation of the runtime RPC handshake is made.
 
-Alternate-credential elevation can hide the original user's HKCU legacy registration. A bootstrapper or explicit original-user discovery is required to migrate that case reliably.
+Setup resolves the current desktop shell token/SID instead of relying only on elevated HKCU. Alternate-credential elevation, unavailable Explorer, and concurrent RDP sessions still require native acceptance checks.
 
 ### Multiple installations and late candidates
 
