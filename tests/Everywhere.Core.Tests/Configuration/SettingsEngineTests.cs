@@ -945,6 +945,166 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
+    public async Task InitializeAsync_TavilyApiKeyChanges_PersistsSelectionAcrossReload()
+    {
+        using var file = TestSettingsFile("""{ "Version": "99.0.0" }""");
+        using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var settings = new Settings(serviceProvider);
+        var id = Guid.CreateVersion7();
+
+        using (var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance))
+        {
+            await engine.InitializeAsync(default);
+            settings.Plugin.WebSearchEngine.ApiKeys.Add(new ApiKey { Id = id, Name = "Tavily test" });
+            var tavily = (ApiKeyWebSearchEngineProvider)settings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
+            tavily.ApiKey = id;
+
+            Assert.That(engine.Diagnostics, Is.Empty);
+            var providers = Require(Require(Require(engine.Storage.CreateSnapshot()["Plugin"])["WebSearchEngine"])["Providers"]);
+            Assert.That(Require(Require(providers["Tavily"])["ApiKey"]).GetValue<Guid>(), Is.EqualTo(id));
+        }
+
+        var reloadedSettings = new Settings(serviceProvider);
+        using var reloadedEngine = new SettingsEngine(reloadedSettings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await reloadedEngine.InitializeAsync(default);
+
+        var reloadedTavily = (ApiKeyWebSearchEngineProvider)reloadedSettings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
+        Assert.Multiple(() =>
+        {
+            Assert.That(reloadedTavily.ApiKey, Is.EqualTo(id));
+            Assert.That(reloadedSettings.Plugin.WebSearchEngine.ApiKeys.Single().Id, Is.EqualTo(id));
+            Assert.That(reloadedEngine.Diagnostics, Is.Empty);
+        });
+    }
+
+    [TestCase(nameof(PolymorphicRoot.Dictionary))]
+    [TestCase(nameof(PolymorphicRoot.List))]
+    [TestCase(nameof(PolymorphicRoot.Array))]
+    [TestCase(nameof(PolymorphicRoot.InterfaceItem))]
+    [TestCase(nameof(PolymorphicRoot.AbstractItem))]
+    [TestCase(nameof(PolymorphicRoot.BaseItem))]
+    public void WriteObservedPath_PolymorphicMember_WritesRenamedRuntimeProperty(string propertyName)
+    {
+        using var file = TestSettingsFile("{}");
+        using var store = JsonSettingsStorage.Load(file.Path);
+        var binder = new SettingsPatchBinder();
+        var item = new DerivedSettingsItem { Id = Guid.CreateVersion7() };
+        var target = new PolymorphicRoot(item);
+        var segments = new List<DeepObserverPathSegment> { DeepObserverPathSegment.Property(propertyName) };
+        if (propertyName == nameof(PolymorphicRoot.Dictionary))
+        {
+            segments.Add(DeepObserverPathSegment.DictionaryKey("provider:key"));
+        }
+        else if (propertyName is nameof(PolymorphicRoot.List) or nameof(PolymorphicRoot.Array))
+        {
+            segments.Add(DeepObserverPathSegment.CollectionIndex(0));
+        }
+
+        segments.Add(DeepObserverPathSegment.Property(nameof(DerivedSettingsItem.Id)));
+        binder.WriteObservedPath(store, binder.GetDescriptor(typeof(PolymorphicRoot)), target, new DeepObserverPath(segments.ToArray()), item.Id);
+
+        var node = Require(store.CreateSnapshot()[propertyName]);
+        if (propertyName == nameof(PolymorphicRoot.Dictionary))
+        {
+            node = Require(node["provider:key"]);
+        }
+        else if (propertyName is nameof(PolymorphicRoot.List) or nameof(PolymorphicRoot.Array))
+        {
+            node = Require(node[0]);
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Require(node["api_key"]).GetValue<Guid>(), Is.EqualTo(item.Id));
+            Assert.That(node.AsObject().ContainsKey(nameof(DerivedSettingsItem.Id)), Is.False);
+            Assert.That(binder.Diagnostics, Is.Empty);
+        });
+    }
+
+    [TestCase(nameof(PolymorphicRoot.Transports))]
+    [TestCase(nameof(PolymorphicRoot.TransportList))]
+    [TestCase(nameof(PolymorphicRoot.Transport))]
+    public void WriteObservedPath_SerializedPolymorphicMember_PreservesWholeSubtreeAndDiscriminator(string propertyName)
+    {
+        using var file = TestSettingsFile("{}");
+        using var store = JsonSettingsStorage.Load(file.Path);
+        var binder = new SettingsPatchBinder();
+        var target = new PolymorphicRoot(new DerivedSettingsItem());
+        var transport = (StdioMcpTransportConfiguration)target.Transport;
+        transport.Command = "updated";
+        var segments = new List<DeepObserverPathSegment> { DeepObserverPathSegment.Property(propertyName) };
+        if (propertyName == nameof(PolymorphicRoot.Transports))
+        {
+            segments.Add(DeepObserverPathSegment.DictionaryKey("stdio"));
+        }
+        else if (propertyName == nameof(PolymorphicRoot.TransportList))
+        {
+            segments.Add(DeepObserverPathSegment.CollectionIndex(0));
+        }
+
+        segments.Add(DeepObserverPathSegment.Property(nameof(StdioMcpTransportConfiguration.Command)));
+        binder.WriteObservedPath(store, binder.GetDescriptor(typeof(PolymorphicRoot)), target, new DeepObserverPath(segments.ToArray()), transport.Command);
+
+        var node = Require(store.CreateSnapshot()[propertyName]);
+        if (propertyName == nameof(PolymorphicRoot.Transports))
+        {
+            node = Require(node["stdio"]);
+        }
+        else if (propertyName == nameof(PolymorphicRoot.TransportList))
+        {
+            node = Require(node[0]);
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Require(node["$type"]).GetValue<string>(), Is.EqualTo("stdio"));
+            Assert.That(Require(node["Command"]).GetValue<string>(), Is.EqualTo("updated"));
+            Assert.That(Require(node["Name"]).GetValue<string>(), Is.EqualTo("test transport"));
+            Assert.That(binder.Diagnostics, Is.Empty);
+        });
+    }
+
+    [TestCase("unknown")]
+    [TestCase("ignored")]
+    [TestCase("missing-key")]
+    [TestCase("missing-index")]
+    [TestCase("null-parent")]
+    public void WriteObservedPath_UnresolvablePath_ReportsFailureWithoutChangingDocument(string scenario)
+    {
+        using var file = TestSettingsFile("""{ "Unknown": true }""");
+        using var store = JsonSettingsStorage.Load(file.Path);
+        var binder = new SettingsPatchBinder();
+        var target = new PolymorphicRoot(new DerivedSettingsItem());
+        var path = scenario switch
+        {
+            "unknown" => ObservedPath(DeepObserverPathSegment.Property("Unknown")),
+            "ignored" => ObservedPath(DeepObserverPathSegment.Property(nameof(PolymorphicRoot.Ignored))),
+            "missing-key" => ObservedPath(
+                DeepObserverPathSegment.Property(nameof(PolymorphicRoot.Dictionary)),
+                DeepObserverPathSegment.DictionaryKey("missing"),
+                DeepObserverPathSegment.Property(nameof(DerivedSettingsItem.Id))),
+            "missing-index" => ObservedPath(
+                DeepObserverPathSegment.Property(nameof(PolymorphicRoot.List)),
+                DeepObserverPathSegment.CollectionIndex(1),
+                DeepObserverPathSegment.Property(nameof(DerivedSettingsItem.Id))),
+            "null-parent" => ObservedPath(
+                DeepObserverPathSegment.Property(nameof(PolymorphicRoot.NullableItem)),
+                DeepObserverPathSegment.Property(nameof(DerivedSettingsItem.Id))),
+            _ => throw new AssertionException("Unexpected scenario.")
+        };
+        var snapshot = store.CreateSnapshot();
+
+        binder.WriteObservedPath(store, binder.GetDescriptor(typeof(PolymorphicRoot)), target, path, Guid.CreateVersion7());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(binder.Diagnostics.Select(diagnostic => diagnostic.Kind), Is.EqualTo(new[] { SettingsEngineDiagnosticKind.WriteFailure }));
+            Assert.That(binder.Diagnostics.Single().Exception, Is.TypeOf<InvalidOperationException>());
+            Assert.That(JsonNode.DeepEquals(store.CreateSnapshot(), snapshot), Is.True);
+        });
+    }
+
+    [Test]
     public void Store_DistinguishesNumericObjectPropertyFromArrayIndex()
     {
         using var file = TestSettingsFile("{}");
@@ -1069,6 +1229,48 @@ public sealed class SettingsEngineTests
 
         [SettingsSerializedSubtree]
         public SerializedThing Serialized { get; set; } = new() { Value = 42 };
+    }
+
+    private sealed class PolymorphicRoot
+    {
+        public Dictionary<string, ISettingsItem> Dictionary { get; }
+        public ObservableCollection<ISettingsItem> List { get; }
+        public ISettingsItem[] Array { get; set; }
+        public ISettingsItem InterfaceItem { get; set; }
+        public AbstractSettingsItem AbstractItem { get; set; }
+        public BaseSettingsItem BaseItem { get; set; }
+        public ISettingsItem? NullableItem { get; set; }
+        public Dictionary<string, McpTransportConfiguration> Transports { get; }
+        public ObservableCollection<McpTransportConfiguration> TransportList { get; }
+        public McpTransportConfiguration Transport { get; set; }
+
+        [JsonIgnore]
+        public Guid Ignored { get; set; }
+
+        public PolymorphicRoot(DerivedSettingsItem item)
+        {
+            Dictionary = new Dictionary<string, ISettingsItem> { ["provider:key"] = item };
+            List = [item];
+            Array = [item];
+            InterfaceItem = item;
+            AbstractItem = item;
+            BaseItem = item;
+            Transport = new StdioMcpTransportConfiguration { Name = "test transport", Command = "original" };
+            Transports = new Dictionary<string, McpTransportConfiguration> { ["stdio"] = Transport };
+            TransportList = [Transport];
+        }
+    }
+
+    private interface ISettingsItem;
+
+    private abstract class AbstractSettingsItem;
+
+    private class BaseSettingsItem : AbstractSettingsItem;
+
+    private sealed class DerivedSettingsItem : BaseSettingsItem, ISettingsItem
+    {
+        [JsonPropertyName("api_key")]
+        public Guid Id { get; set; }
     }
 
     private sealed class TestSection
