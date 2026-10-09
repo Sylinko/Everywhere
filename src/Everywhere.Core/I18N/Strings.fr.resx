@@ -4368,6 +4368,6 @@ Voulez-vous toujours supprimer “{1}” de façon permanente ?</value>
         <value>Le service installé appartient à une autre copie d'Everywhere :
 {0}
 
-Si vous continuez, il sera écrasé.</value>
+Si vous continuez, l'autre copie désactivera le mode service.</value>
     </data>
 </root>

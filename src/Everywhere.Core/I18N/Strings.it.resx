@@ -4368,6 +4368,6 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
         <value>Il servizio installato appartiene a un'altra copia di Everywhere:
 {0}
 
-Se continui, verrà sovrascritto.</value>
+Se continui, l'altra copia disattiverà la modalità servizio.</value>
     </data>
 </root>

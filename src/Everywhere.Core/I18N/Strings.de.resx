@@ -4368,6 +4368,6 @@ Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
         <value>Der installierte Dienst gehört zu einer anderen Everywhere-Kopie:
 {0}
 
-Wenn Sie fortfahren, wird er überschrieben.</value>
+Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     </data>
 </root>
