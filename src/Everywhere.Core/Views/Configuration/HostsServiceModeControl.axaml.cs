@@ -15,7 +15,6 @@ namespace Everywhere.Views;
 /// </summary>
 public sealed partial class HostsServiceModeControl(
     HostProcessCoordinator coordinator,
-    IHostsServiceModeManager serviceModeManager,
     ILogger<HostsServiceModeControl> logger
 ) : TemplatedControl
 {
@@ -32,7 +31,7 @@ public sealed partial class HostsServiceModeControl(
             var status = await coordinator.RefreshServiceModeStatusAsync();
             sender.SetCurrentValue(ToggleButton.IsCheckedProperty, status.State == HostsServiceModeConfigurationState.CurrentExecutable);
 
-            var request = shouldInstall ? CreateInstallRequest(status) : CreateUninstallRequest(status);
+            var request = shouldInstall ? await CreateInstallRequestAsync(status) : CreateUninstallRequest(status);
             if (request is null) return;
 
             await coordinator.ChangeServiceModeAsync(request);
@@ -51,7 +50,7 @@ public sealed partial class HostsServiceModeControl(
         }
     }
 
-    private HostsServiceModeChangeRequest? CreateInstallRequest(HostsServiceModeStatus status)
+    private async Task<HostsServiceModeChangeRequest?> CreateInstallRequestAsync(HostsServiceModeStatus status)
     {
         if (status.State is HostsServiceModeConfigurationState.CurrentExecutable) return null;
         if (status.State is HostsServiceModeConfigurationState.Unavailable)
@@ -60,12 +59,20 @@ public sealed partial class HostsServiceModeControl(
             return null;
         }
 
-        var assessment = serviceModeManager.AssessEnvironment();
-        // if (!await ConfirmInstallationAsync(status, assessment)) return null;
-        return new HostsServiceModeChangeRequest(
-            true,
-            status.State is HostsServiceModeConfigurationState.OtherExecutable or HostsServiceModeConfigurationState.Invalid,
-            assessment.RequiresPortableAuthorization);
+        var shouldReplaceExisting = status.State is HostsServiceModeConfigurationState.OtherExecutable or HostsServiceModeConfigurationState.Invalid;
+        if (shouldReplaceExisting)
+        {
+            var message = status.State is HostsServiceModeConfigurationState.OtherExecutable ?
+                LocaleKey.HostsServiceModeControl_ReplaceConfirmation.I18N().Format(status.ConfiguredExecutablePath) :
+                LocaleKey.HostsServiceModeControl_RebuildConfirmation.I18N();
+            var result = await DialogManager.CreateDialog(message, LocaleKey.Common_Warning.I18N(), TopLevel.GetTopLevel(this))
+                .WithPrimaryButton(LocaleKey.Common_Yes.I18N())
+                .WithCancelButton(LocaleKey.Common_Cancel.I18N())
+                .ShowAsync();
+            if (result != DialogResult.Primary) return null;
+        }
+
+        return new HostsServiceModeChangeRequest(true, shouldReplaceExisting);
     }
 
     private static HostsServiceModeChangeRequest? CreateUninstallRequest(HostsServiceModeStatus status) =>

@@ -4361,4 +4361,13 @@ Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni 
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>İstekler çok sık yapılıyor, hizmet {0} saniye beklemenizi öneriyor.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>Yüklü hizmet, tanımlanamayan başka bir Everywhere kopyasına ait. Devam ederseniz üzerine yazılacaktır.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>Yüklü hizmet başka bir Everywhere kopyasına ait:
+{0}
+
+Devam ederseniz üzerine yazılır.</value>
+    </data>
 </root>

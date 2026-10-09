@@ -56,18 +56,16 @@ public class ProcessRoleAndRpcTests
     public void ParseHostsControl_InstallOptions_ReturnsValidatedCommand()
     {
         var command = ProcessRoleCommandLine.ParseHostsControl(
-            new[] { "--hosts-control", "install", "--replace-existing", "--authorize-portable" });
+            new[] { "--hosts-control", "install", "--replace-existing" });
 
         Assert.Multiple(() =>
         {
             Assert.That(command?.Operation, Is.EqualTo(HostsControlOperation.Install));
             Assert.That(command?.ShouldReplaceExisting, Is.True);
-            Assert.That(command?.ShouldAuthorizePortable, Is.True);
         });
     }
 
     [TestCase("--replace-existing")]
-    [TestCase("--authorize-portable")]
     public void ParseHostsControl_NonInstallOptions_Throws(string option)
     {
         Assert.Throws<ArgumentException>(() => ProcessRoleCommandLine.ParseHostsControl(

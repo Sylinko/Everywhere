@@ -37,29 +37,15 @@ public sealed record HostsServiceModeStatus(
             HostsServiceModeConfigurationState.Unavailable;
 }
 
-/// <summary>Limited safety assessment performed before a portable copy requests service mode.</summary>
-/// <param name="RequiresPortableAuthorization">Whether the elevated controller requires an explicit portable-copy authorization.</param>
-/// <param name="RequiresWarning">Whether Main should warn before requesting the authorization.</param>
-/// <param name="DiagnosticDetail">English assessment detail intended for logs.</param>
-public sealed record HostsServiceModeEnvironmentAssessment(
-    bool RequiresPortableAuthorization,
-    bool RequiresWarning,
-    string? DiagnosticDetail = null
-);
-
 /// <summary>Manages service-mode integration from the running Main process.</summary>
 public interface IHostsServiceModeManager
 {
     /// <summary>Queries the current configuration and its executable owner.</summary>
     HostsServiceModeStatus GetStatus();
 
-    /// <summary>Assesses whether enabling service mode needs a portable-installation warning.</summary>
-    HostsServiceModeEnvironmentAssessment AssessEnvironment();
-
     /// <summary>Requests elevated installation or repair through the early controller path.</summary>
     Task<HostsControlPlatformResult> RequestInstallAsync(
         bool shouldReplaceExisting,
-        bool shouldAuthorizePortable,
         CancellationToken cancellationToken = default);
 
     /// <summary>Requests elevated removal through the early controller path.</summary>

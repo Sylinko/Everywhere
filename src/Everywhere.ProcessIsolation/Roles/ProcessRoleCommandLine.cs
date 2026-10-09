@@ -27,11 +27,9 @@ public enum HostsControlOperation
 /// <summary>Validated command accepted by the short-lived Hosts controller.</summary>
 /// <param name="Operation">Fixed operation to execute.</param>
 /// <param name="ShouldReplaceExisting">Whether the caller has authorized replacement of another task owner.</param>
-/// <param name="ShouldAuthorizePortable">Whether the caller has authorized service mode for a portable copy.</param>
 public sealed record HostsControlCommand(
     HostsControlOperation Operation,
-    bool ShouldReplaceExisting = false,
-    bool ShouldAuthorizePortable = false
+    bool ShouldReplaceExisting = false
 );
 
 /// <summary>
@@ -150,7 +148,6 @@ public static class ProcessRoleCommandLine
         }
 
         var shouldReplaceExisting = false;
-        var shouldAuthorizePortable = false;
         for (var index = 0; index < args.Count; index++)
         {
             if (index == optionIndex || (separateValue && index == optionIndex + 1))
@@ -169,17 +166,6 @@ public static class ProcessRoleCommandLine
                 continue;
             }
 
-            if (string.Equals(args[index], "--authorize-portable", StringComparison.OrdinalIgnoreCase))
-            {
-                if (shouldAuthorizePortable)
-                {
-                    throw new ArgumentException("The --authorize-portable option may only be specified once.", nameof(args));
-                }
-
-                shouldAuthorizePortable = true;
-                continue;
-            }
-
             throw new ArgumentException($"The --hosts-control command contains an unsupported argument: {args[index]}", nameof(args));
         }
 
@@ -195,14 +181,14 @@ public static class ProcessRoleCommandLine
             _ => throw new ArgumentException("The --hosts-control value must be start, stop, shutdown, install, uninstall, or launch.", nameof(args))
         };
 
-        if (operation is not HostsControlOperation.Install && (shouldReplaceExisting || shouldAuthorizePortable))
+        if (operation is not HostsControlOperation.Install && shouldReplaceExisting)
         {
             throw new ArgumentException(
-                "The replacement and portable-authorization options are valid only with --hosts-control install.",
+                "The replacement option is valid only with --hosts-control install.",
                 nameof(args));
         }
 
-        return new HostsControlCommand(operation, shouldReplaceExisting, shouldAuthorizePortable);
+        return new HostsControlCommand(operation, shouldReplaceExisting);
     }
 
     /// <summary>

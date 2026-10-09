@@ -52,13 +52,6 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
                 $"Everywhere Hosts service mode is already configured by another copy: {status.ConfiguredExecutablePath ?? status.DiagnosticDetail ?? "unknown owner"}. Use --replace-existing only after the caller confirms the change.");
         }
 
-        var isInstalled = InstallationIdentity.IsCurrentMachineInstallation(executablePath);
-        if (!isInstalled && !command.ShouldAuthorizePortable)
-        {
-            return HostsControlPlatformResult.OwnershipConflict(
-                "This executable is not the registered machine installation. Portable service mode requires an explicit environment check and --authorize-portable.");
-        }
-
         var taskResult = TaskSchedulerHelper.CreateOrUpdateHostsTask(TaskName, executablePath);
         if (!taskResult.Succeeded)
         {
@@ -116,18 +109,8 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
     }
 
     /// <inheritdoc />
-    public HostsServiceModeEnvironmentAssessment AssessEnvironment()
-    {
-        var executablePath = GetExecutablePath();
-        return executablePath is null ?
-            new HostsServiceModeEnvironmentAssessment(true, true, "The current executable path is unavailable.") :
-            InstallationSecurity.AssessPortableEnvironment(executablePath);
-    }
-
-    /// <inheritdoc />
     public async Task<HostsControlPlatformResult> RequestInstallAsync(
         bool shouldReplaceExisting,
-        bool shouldAuthorizePortable,
         CancellationToken cancellationToken = default)
     {
         var executablePath = GetExecutablePath();
@@ -146,11 +129,6 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
         if (shouldReplaceExisting)
         {
             arguments.Add("--replace-existing");
-        }
-
-        if (shouldAuthorizePortable)
-        {
-            arguments.Add("--authorize-portable");
         }
 
         return await RunElevatedControllerAsync(executablePath, arguments, "installed or repaired", cancellationToken).ConfigureAwait(false);
@@ -204,7 +182,7 @@ internal sealed class WindowsHostsControlPlatform : IHostsControlPlatform, IHost
             {
                 HostsControlExitCodes.Success => HostsControlPlatformResult.Success($"Service mode was {successDescription}."),
                 HostsControlExitCodes.Conflict => HostsControlPlatformResult.OwnershipConflict(
-                    "The elevated controller found a service-mode ownership or safety conflict."),
+                    "The elevated controller found a service-mode ownership conflict."),
                 _ => HostsControlPlatformResult.Failure($"The elevated Hosts controller exited with code {process.ExitCode}.")
             };
         }

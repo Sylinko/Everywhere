@@ -4361,4 +4361,13 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Las solicitudes son demasiado frecuentes, el servicio sugiere esperar {0} segundos antes de reintentar.</value>
     </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>El servicio instalado pertenece a otra copia de Everywhere no identificable. Si continúas, se sobrescribirá.</value>
+    </data>
+    <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
+        <value>El servicio instalado pertenece a otra copia de Everywhere:
+{0}
+
+Si continúa, se sobrescribirá.</value>
+    </data>
 </root>
