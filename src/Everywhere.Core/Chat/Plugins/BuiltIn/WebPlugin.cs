@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.Text;
 using Everywhere.Chat.Permissions;
-using Everywhere.Cloud;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Prompting;
@@ -65,68 +64,7 @@ public sealed class WebPlugin : BuiltInChatPlugin
                 LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage);
         }
 
-        return provider switch
-        {
-            OfficialWebSearchEngineProvider official => new OfficialConnector(
-                _httpClientFactory.CreateClient(nameof(ICloudClient)),
-                official.Settings),
-            OptionalApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.AnySearch } anySearch =>
-                new AnySearchConnector(
-                    apiKey: anySearch.ApiKey != Guid.Empty ? EnsureApiKey(anySearch.ApiKey) : null,
-                    _httpClientFactory.CreateClient(),
-                    EnsureUri(anySearch.ActualEndPoint)),
-            // ReSharper disable once IdentifierTypo
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Bocha } bocha =>
-                new BoChaConnector(EnsureApiKey(bocha.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(bocha.ActualEndPoint)),
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Brave } brave =>
-                new BraveConnector(EnsureApiKey(brave.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(brave.ActualEndPoint)),
-            GoogleWebSearchEngineProvider google => new GoogleConnector(
-                EnsureApiKey(google.ApiKey),
-                google.SearchEngineId ??
-                throw new HandledException(
-                    new UnauthorizedAccessException(
-                        "Google web search requires a Search Engine ID. Ask the user to configure it in Settings > Web Search."),
-                    LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
-                _httpClientFactory.CreateClient(),
-                EnsureUri(google.ActualEndPoint)),
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Jina } jina =>
-                new JinaConnector(EnsureApiKey(jina.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(jina.ActualEndPoint)),
-            // ReSharper disable once InconsistentNaming
-            SearXNGWebSearchEngineProvider searXNG =>
-                new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.ActualEndPoint)),
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Serply } serply =>
-                new SerplyConnector(EnsureApiKey(serply.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(serply.ActualEndPoint)),
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Tavily } tavily =>
-                new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.ActualEndPoint)),
-            // ReSharper disable once IdentifierTypo
-            ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.UniFuncs } uniFuncs =>
-                new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.ActualEndPoint)),
-            _ => throw new HandledException(
-                new NotSupportedException(
-                    $"The configured web-search provider '{provider.Id}' is not supported by this build."),
-                LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage)
-        };
-
-        Uri EnsureUri(string? url)
-        {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not "http" and not "https")
-            {
-                throw new HandledException(
-                    new ArgumentException(
-                        $"The configured web-search endpoint '{url}' is not a valid absolute HTTP or HTTPS URL. Ask the user to correct it in Settings > Web Search."),
-                    LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage);
-            }
-
-            // Extract only the base URI without query parameters
-            return new UriBuilder(uri) { Query = string.Empty }.Uri;
-        }
-
-        string EnsureApiKey(Guid id) =>
-            ApiKey.GetKey(id) ??
-            throw new HandledException(
-                new UnauthorizedAccessException(
-                    "The API key required by the configured web-search provider is missing. Ask the user to configure it in Settings > Web Search."),
-                LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage);
+        return provider.CreateConnector(_httpClientFactory);
     }
 
     /// <summary>

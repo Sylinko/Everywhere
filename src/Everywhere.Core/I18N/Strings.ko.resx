@@ -768,7 +768,7 @@
         <value>프로그래머블 검색 엔진 ID를 제공합니다. 자세한 내용은 문서를 참조하세요.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>웹 브라우징</value>
+        <value>웹</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>웹을 탐색할 수 있는 기능을 제공합니다. 검색, 웹 콘텐츠 가져오기 등을 포함합니다.</value>

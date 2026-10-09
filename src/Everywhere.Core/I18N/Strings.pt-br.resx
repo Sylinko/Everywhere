@@ -768,7 +768,7 @@
         <value>Fornece um ID programável para o mecanismo de pesquisa. Consulte a documentação para mais detalhes.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Navegação na web</value>
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Fornece a capacidade de navegar na web, como pesquisar e recuperar conteúdo da web.</value>

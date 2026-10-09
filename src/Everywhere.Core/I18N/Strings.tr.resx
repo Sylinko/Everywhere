@@ -768,7 +768,7 @@
         <value>Programlanabilir arama motoru ID'si sağlayın, ayrıntılar için belgeleri kontrol edin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Web'de gezinme</value>
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Web'de gezinme yeteneği sağlar; arama, web içeriği alma vb.</value>

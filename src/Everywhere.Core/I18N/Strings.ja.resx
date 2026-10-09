@@ -768,7 +768,7 @@
         <value>プログラム可能な検索エンジンIDを提供します。詳細はドキュメントを参照してください。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>ウェブブラウジング</value>
+        <value>ウェブ</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>ウェブを閲覧する能力を提供します。検索やウェブコンテンツの取得などが含まれます。</value>

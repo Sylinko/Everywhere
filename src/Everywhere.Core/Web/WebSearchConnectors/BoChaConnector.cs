@@ -9,10 +9,10 @@ namespace Everywhere.Web;
 ///     BoCha Web Search API
 ///     https://bocha-ai.feishu.cn/wiki/RXEOw02rFiwzGSkd9mUcqoeAnNK
 /// </summary>
-public sealed partial class BoChaConnector(string apiKey, HttpClient httpClient, Uri uri)
-    : WebSearchClient<BoChaConnector.Response>(httpClient, new Range(1, 50))
+public sealed partial class BochaConnector(string apiKey, HttpClient httpClient, Uri uri)
+    : WebSearchClient<BochaConnector.Response>(httpClient, new Range(1, 50))
 {
-    protected override JsonTypeInfo<Response> JsonTypeInfo => BoChaJsonSerializerContext.Default.Response;
+    protected override JsonTypeInfo<Response> JsonTypeInfo => BochaJsonSerializerContext.Default.Response;
 
     protected override HttpRequestMessage CreateSearchRequest(string query, int count)
     {
@@ -22,13 +22,13 @@ public sealed partial class BoChaConnector(string apiKey, HttpClient httpClient,
             {
                 { "Authorization", $"Bearer {apiKey}" }
             },
-            Content = JsonContent.Create(new Request(query, count, true), BoChaJsonSerializerContext.Default.Request)
+            Content = JsonContent.Create(new Request(query, count, true), BochaJsonSerializerContext.Default.Request)
         };
     }
 
     [JsonSerializable(typeof(Request))]
     [JsonSerializable(typeof(Response))]
-    private partial class BoChaJsonSerializerContext : JsonSerializerContext;
+    private partial class BochaJsonSerializerContext : JsonSerializerContext;
 
     private sealed record Request(
         [property: JsonPropertyName("query")] string Query,

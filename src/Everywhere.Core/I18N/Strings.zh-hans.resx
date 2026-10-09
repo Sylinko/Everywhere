@@ -768,7 +768,7 @@
         <value>提供可编程搜索引擎 ID，详情请参考文档。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>网页浏览</value>
+        <value>网络</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>提供浏览网络的能力，如搜索、检索网页内容等。</value>

@@ -5,7 +5,9 @@ using System.Text.Json.Serialization;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Everywhere.Cloud;
 using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Views;
 using Everywhere.Web;
 
@@ -38,7 +40,7 @@ public interface IWebSearchEngineProvider
 
     SettingsItems SettingsItems { get; }
 
-    bool Validate();
+    IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory);
 }
 
 [GeneratedSettingsItems]
@@ -95,6 +97,9 @@ public sealed partial class OfficialWebSearchEngineProvider : ObservableObject, 
 
     public bool Validate() => true;
 
+    public IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new OfficialConnector(httpClientFactory.CreateClient(nameof(ICloudClient)), Settings);
+
     public override bool Equals(object? obj) => obj is IWebSearchEngineProvider provider && Id == provider.Id;
 
     public override int GetHashCode() => Id.GetHashCode();
@@ -126,155 +131,29 @@ public abstract class ThirdPartyWebSearchEngineProvider : ObservableValidator, I
         return !HasErrors;
     }
 
+    public abstract IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory);
+
+    protected static Uri EnsureUri(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not "http" and not "https")
+        {
+            throw new HandledException(
+                new ArgumentException(
+                    $"The configured web-search endpoint '{url}' is not a valid absolute HTTP or HTTPS URL. Ask the user to correct it in Settings > Web Search."),
+                LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage);
+        }
+
+        // Extract only the base URI without query parameters
+        return new UriBuilder(uri) { Query = string.Empty }.Uri;
+    }
+
     public override bool Equals(object? obj) => obj is IWebSearchEngineProvider provider && Id == provider.Id;
 
     public override int GetHashCode() => Id.GetHashCode();
 }
 
 [GeneratedSettingsItems]
-public sealed partial class GoogleWebSearchEngineProvider(ObservableCollection<ApiKey> apiKeys) : ThirdPartyWebSearchEngineProvider
-{
-    private const string DefaultEndPoint = "https://customsearch.googleapis.com";
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override WebSearchEngineProviderId Id => WebSearchEngineProviderId.Google;
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("Google");
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override string IconUrl => "avares://Everywhere.Core/Assets/Icons/google-color.svg";
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override string DocumentsUrl => "https://developers.google.com/custom-search/v1/overview";
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
-    [DynamicLocaleKey(
-        LocaleKey.WebSearchEngineProvider_EndPoint_Header,
-        LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
-    [SettingsItem(Group = "_")]
-    [DefaultValue(DefaultEndPoint)]
-    public partial string? EndPoint { get; set; }
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint;
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    [NotifyDataErrorInfo]
-    [CustomValidation(typeof(ApiKey), nameof(Configuration.ApiKey.Validate))]
-    public partial Guid ApiKey { get; set; }
-
-    [JsonIgnore]
-    [DynamicLocaleKey(
-        LocaleKey.WebSearchEngineProvider_ApiKey_Header,
-        LocaleKey.WebSearchEngineProvider_ApiKey_Description)]
-    [SettingsItem(Group = "_")]
-    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
-        new ApiKeyComboBox(apiKeys)
-        {
-            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
-                (GoogleWebSearchEngineProvider x) => x.ApiKey,
-                source: this,
-                mode: BindingMode.TwoWay)
-        });
-
-    [ObservableProperty]
-    [DynamicLocaleKey(
-        LocaleKey.WebSearchEngineProvider_SearchEngineId_Header,
-        LocaleKey.WebSearchEngineProvider_SearchEngineId_Description)]
-    [NotifyDataErrorInfo]
-    [CustomValidation(typeof(GoogleWebSearchEngineProvider), nameof(ValidateSearchEngineId))]
-    [SettingsItem(Group = "_")]
-    public partial string? SearchEngineId { get; set; }
-
-    public static ValidationResult? ValidateSearchEngineId(string? searchEngineId)
-    {
-        if (string.IsNullOrWhiteSpace(searchEngineId))
-        {
-            return new ValidationResult(LocaleKey.ValidationErrorMessage_Required.I18N());
-        }
-
-        return ValidationResult.Success;
-    }
-}
-
-[GeneratedSettingsItems]
-public sealed partial class ApiKeyWebSearchEngineProvider(
-    WebSearchEngineProviderId id,
-    IDynamicLocaleKey headerKey,
-    string iconUrl,
-    string? docsUrl,
-    string defaultEndPoint,
-    ObservableCollection<ApiKey> apiKeys
-) : ThirdPartyWebSearchEngineProvider
-{
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override WebSearchEngineProviderId Id { get; } = id;
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override IDynamicLocaleKey HeaderKey { get; } = headerKey;
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override string IconUrl { get; } = iconUrl;
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public override string? DocumentsUrl { get; } = docsUrl;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
-    [DynamicLocaleKey(
-        LocaleKey.WebSearchEngineProvider_EndPoint_Header,
-        LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
-    [SettingsItem(Group = "_", Modifier = nameof(ApplyEndPointDefaultValueItem))]
-    public partial string? EndPoint { get; set; }
-
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? defaultEndPoint : EndPoint;
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    [NotifyDataErrorInfo]
-    [CustomValidation(typeof(ApiKey), nameof(Configuration.ApiKey.Validate))]
-    public partial Guid ApiKey { get; set; }
-
-    [JsonIgnore]
-    [DynamicLocaleKey(
-        LocaleKey.WebSearchEngineProvider_ApiKey_Header,
-        LocaleKey.WebSearchEngineProvider_ApiKey_Description)]
-    [SettingsItem(Group = "_")]
-    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
-        new ApiKeyComboBox(apiKeys)
-        {
-            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
-                (ApiKeyWebSearchEngineProvider x) => x.ApiKey,
-                source: this,
-                mode: BindingMode.TwoWay)
-        });
-
-    private SettingsDefaultValueItem ApplyEndPointDefaultValueItem(SettingsStringItem item)
-    {
-        item.PlaceholderText = defaultEndPoint;
-        return new SettingsDefaultValueItem(item)
-        {
-            ResetCommand = new RelayCommand(() => EndPoint = null)
-        };
-    }
-}
-
-[GeneratedSettingsItems]
-public sealed partial class OptionalApiKeyWebSearchEngineProvider(
+public abstract partial class OptionalApiKeyWebSearchEngineProvider(
     WebSearchEngineProviderId id,
     IDynamicLocaleKey headerKey,
     string iconUrl,
@@ -339,6 +218,193 @@ public sealed partial class OptionalApiKeyWebSearchEngineProvider(
     }
 }
 
+public sealed class AnySearchWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : OptionalApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.AnySearch,
+    new DirectLocaleKey("AnySearch"),
+    "avares://Everywhere.Core/Assets/Icons/anysearch-color.png",
+    "https://www.anysearch.com",
+    "https://api.anysearch.com/v1/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory)
+    {
+        return new AnySearchConnector(
+            Configuration.ApiKey.GetKey(ApiKey), // can be null
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+    }
+}
+
+[GeneratedSettingsItems]
+public abstract partial class ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId id,
+    IDynamicLocaleKey headerKey,
+    string iconUrl,
+    string? docsUrl,
+    string defaultEndPoint,
+    ObservableCollection<ApiKey> apiKeys
+) : ThirdPartyWebSearchEngineProvider
+{
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override WebSearchEngineProviderId Id { get; } = id;
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override IDynamicLocaleKey HeaderKey { get; } = headerKey;
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override string IconUrl { get; } = iconUrl;
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    public override string? DocumentsUrl { get; } = docsUrl;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
+    [DynamicLocaleKey(
+        LocaleKey.WebSearchEngineProvider_EndPoint_Header,
+        LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
+    [SettingsItem(Group = "_", Modifier = nameof(ApplyEndPointDefaultValueItem))]
+    public partial string? EndPoint { get; set; }
+
+    [JsonIgnore]
+    [SettingsItemIgnore]
+    protected string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? defaultEndPoint : EndPoint;
+
+    [ObservableProperty]
+    [SettingsItemIgnore]
+    [NotifyDataErrorInfo]
+    [CustomValidation(typeof(ApiKey), nameof(Configuration.ApiKey.Validate))]
+    public partial Guid ApiKey { get; set; }
+
+    [JsonIgnore]
+    [DynamicLocaleKey(
+        LocaleKey.WebSearchEngineProvider_ApiKey_Header,
+        LocaleKey.WebSearchEngineProvider_ApiKey_Description)]
+    [SettingsItem(Group = "_")]
+    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(
+        new ApiKeyComboBox(apiKeys)
+        {
+            [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
+                (ApiKeyWebSearchEngineProvider x) => x.ApiKey,
+                source: this,
+                mode: BindingMode.TwoWay)
+        });
+
+    protected SettingsDefaultValueItem ApplyEndPointDefaultValueItem(SettingsStringItem item)
+    {
+        item.PlaceholderText = defaultEndPoint;
+        return new SettingsDefaultValueItem(item)
+        {
+            ResetCommand = new RelayCommand(() => EndPoint = null)
+        };
+    }
+
+    protected static string EnsureApiKey(Guid id) =>
+        Configuration.ApiKey.GetKey(id) ??
+        throw new HandledException(
+            new UnauthorizedAccessException(
+                "The API key required by the configured web-search provider is missing. Ask the user to configure it in Settings > Web Search."),
+            LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage);
+}
+
+public sealed class BochaWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Bocha,
+    new DynamicLocaleKey(LocaleKey.WebSearchEngineProvider_Bocha),
+    "avares://Everywhere.Core/Assets/Icons/bocha-color.png",
+    "https://open.bochaai.com",
+    "https://api.bocha.cn/v1/web-search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new BochaConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
+public sealed class BraveWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Brave,
+    new DirectLocaleKey("Brave"),
+    "avares://Everywhere.Core/Assets/Icons/brave-color.png",
+    "https://brave.com/search/api",
+    "https://api.search.brave.com/res/v1/web/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new BraveConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
+[GeneratedSettingsItems]
+public sealed partial class GoogleWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Google,
+    new DirectLocaleKey("Google"),
+    "avares://Everywhere.Core/Assets/Icons/google-color.svg",
+    "https://developers.google.com/custom-search/v1/overview",
+    "https://customsearch.googleapis.com",
+    apiKeys)
+{
+    [ObservableProperty]
+    [DynamicLocaleKey(
+        LocaleKey.WebSearchEngineProvider_SearchEngineId_Header,
+        LocaleKey.WebSearchEngineProvider_SearchEngineId_Description)]
+    [NotifyDataErrorInfo]
+    [CustomValidation(typeof(GoogleWebSearchEngineProvider), nameof(ValidateSearchEngineId))]
+    [SettingsItem(Group = "_")]
+    public partial string? SearchEngineId { get; set; }
+
+    public static ValidationResult? ValidateSearchEngineId(string? searchEngineId)
+    {
+        if (string.IsNullOrWhiteSpace(searchEngineId))
+        {
+            return new ValidationResult(LocaleKey.ValidationErrorMessage_Required.I18N());
+        }
+
+        return ValidationResult.Success;
+    }
+
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new GoogleConnector(
+            EnsureApiKey(ApiKey),
+            SearchEngineId ??
+            throw new HandledException(
+                new UnauthorizedAccessException(
+                    "Google web search requires a Search Engine ID. Ask the user to configure it in Settings > Web Search."),
+                LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
+public sealed class JinaWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Jina,
+    new DirectLocaleKey("Jina"),
+    "avares://Everywhere.Core/Assets/Icons/jina-light.svg",
+    "https://jina.ai",
+    "https://s.jina.ai",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new JinaConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
 [GeneratedSettingsItems]
 public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearchEngineProvider
 {
@@ -361,16 +427,67 @@ public sealed partial class SearXNGWebSearchEngineProvider : ThirdPartyWebSearch
     public override string DocumentsUrl => "https://docs.searxng.org";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ActualEndPoint))]
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineProvider_EndPoint_Header,
         LocaleKey.WebSearchEngineProvider_EndPoint_Description)]
     [DefaultValue(DefaultEndPoint)]
     public partial string? EndPoint { get; set; }
 
-    [JsonIgnore]
-    [SettingsItemIgnore]
-    public string ActualEndPoint => string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint;
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new SearxngConnector(
+            httpClientFactory.CreateClient(),
+            EnsureUri(string.IsNullOrEmpty(EndPoint) ? DefaultEndPoint : EndPoint));
+}
+
+public sealed class SerplyWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Serply,
+    new DirectLocaleKey("Serply"),
+    "avares://Everywhere.Core/Assets/Icons/serply-color.svg",
+    "https://serply.io/docs",
+    "https://api.serply.io/v1/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new SerplyConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
+public sealed class TavilyWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.Tavily,
+    new DirectLocaleKey("Tavily"),
+    "avares://Everywhere.Core/Assets/Icons/tavily-color.svg",
+    "https://tavily.com",
+    "https://api.tavily.com/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new TavilyConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
+}
+
+public sealed class UniFuncsWebSearchEngineProvider(
+    ObservableCollection<ApiKey> apiKeys
+) : ApiKeyWebSearchEngineProvider(
+    WebSearchEngineProviderId.UniFuncs,
+    new DirectLocaleKey("UniFuncs"),
+    "avares://Everywhere.Core/Assets/Icons/unifuncs-color.png",
+    "https://www.unifuncs.com",
+    "https://api.unifuncs.com/api/web-search/search",
+    apiKeys)
+{
+    public override IWebSearchEngineConnector CreateConnector(IHttpClientFactory httpClientFactory) =>
+        new UniFuncsConnector(
+            EnsureApiKey(ApiKey),
+            httpClientFactory.CreateClient(),
+            EnsureUri(ActualEndPoint));
 }
 
 [GeneratedSettingsItems]
@@ -390,7 +507,7 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
         LocaleKey.WebSearchEngineSettings_SelectedProvider_Description)]
     [SettingsItem(
         Group = LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header,
-        DocumentUrlBindingPath = nameof(SelectedProvider) + "." + nameof(IWebSearchEngineProvider.DocumentsUrl))]
+        DocumentUrlBindingPath = $"{nameof(SelectedProvider)}.{nameof(IWebSearchEngineProvider.DocumentsUrl)}")]
     [SettingsSelectionItem($"{nameof(Providers)}.Values", DataTemplateKey = typeof(IWebSearchEngineProvider))]
     [SettingsItems(IsExpanded = true)]
     public IWebSearchEngineProvider? SelectedProvider
@@ -412,78 +529,21 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
         ApiKeys = [];
         Providers = new ObservableImmutableDictionary<WebSearchEngineProviderId, IWebSearchEngineProvider>(
         [
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Official,
-                new OfficialWebSearchEngineProvider()),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.AnySearch,
-                new OptionalApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.AnySearch,
-                    new DirectLocaleKey("AnySearch"),
-                    "avares://Everywhere.Core/Assets/Icons/anysearch-color.png",
-                    "https://www.anysearch.com",
-                    "https://api.anysearch.com/v1/search",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Bocha,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.Bocha,
-                    new DynamicLocaleKey(LocaleKey.WebSearchEngineProvider_Bocha),
-                    "avares://Everywhere.Core/Assets/Icons/bocha-color.png",
-                    "https://open.bochaai.com",
-                    "https://api.bocha.cn/v1/web-search",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Brave,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.Brave,
-                    new DirectLocaleKey("Brave"),
-                    "avares://Everywhere.Core/Assets/Icons/brave-color.png",
-                    "https://brave.com/search/api",
-                    "https://api.search.brave.com/res/v1/web/search",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Google,
-                new GoogleWebSearchEngineProvider(ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Jina,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.Jina,
-                    new DirectLocaleKey("Jina"),
-                    "avares://Everywhere.Core/Assets/Icons/jina-light.svg",
-                    "https://jina.ai",
-                    "https://s.jina.ai",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.SearXNG,
-                new SearXNGWebSearchEngineProvider()),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Serply,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.Serply,
-                    new DirectLocaleKey("Serply"),
-                    "avares://Everywhere.Core/Assets/Icons/serply-color.svg",
-                    "https://serply.io/docs",
-                    "https://api.serply.io/v1/search",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.Tavily,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.Tavily,
-                    new DirectLocaleKey("Tavily"),
-                    "avares://Everywhere.Core/Assets/Icons/tavily-color.svg",
-                    "https://tavily.com",
-                    "https://api.tavily.com/search",
-                    ApiKeys)),
-            new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(
-                WebSearchEngineProviderId.UniFuncs,
-                new ApiKeyWebSearchEngineProvider(
-                    WebSearchEngineProviderId.UniFuncs,
-                    new DirectLocaleKey("UniFuncs"),
-                    "avares://Everywhere.Core/Assets/Icons/unifuncs-color.png",
-                    "https://www.unifuncs.com",
-                    "https://api.unifuncs.com/api/web-search/search",
-                    ApiKeys)),
+            MakeKeyValuePair(new OfficialWebSearchEngineProvider()),
+            MakeKeyValuePair(new AnySearchWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new BochaWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new BraveWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new GoogleWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new JinaWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new SearXNGWebSearchEngineProvider()),
+            MakeKeyValuePair(new SerplyWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new TavilyWebSearchEngineProvider(ApiKeys)),
+            MakeKeyValuePair(new UniFuncsWebSearchEngineProvider(ApiKeys)),
         ]);
+
+        static KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider> MakeKeyValuePair(IWebSearchEngineProvider provider)
+        {
+            return new KeyValuePair<WebSearchEngineProviderId, IWebSearchEngineProvider>(provider.Id, provider);
+        }
     }
 }

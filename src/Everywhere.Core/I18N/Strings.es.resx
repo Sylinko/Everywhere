@@ -768,7 +768,7 @@
         <value>Proporciona un ID de motor de búsqueda programable, consulte la documentación para más detalles.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Navegación web</value>
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Proporciona la capacidad de navegar por la web, como buscar y recuperar contenido web.</value>

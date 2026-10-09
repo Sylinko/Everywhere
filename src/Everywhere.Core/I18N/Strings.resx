@@ -768,7 +768,7 @@
         <value>Provides a programmable search engine ID. Please refer to the documentation for details.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Web Browsing</value>
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Provides the ability to browse the web, such as searching and retrieving web content.</value>

@@ -768,7 +768,7 @@
         <value>Bietet eine programmierbare Suchmaschinen-ID. Weitere Informationen finden Sie in der Dokumentation.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Header" xml:space="preserve">
-        <value>Webbrowsing</value>
+        <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
         <value>Bietet die Möglichkeit, im Web zu surfen, z. B. zu suchen und Webinhalte abzurufen.</value>
