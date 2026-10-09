@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
@@ -36,16 +38,28 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 {
     /// <inheritdoc />
     public PixelFormat Format => PixelFormat.Bgra8888;
+
     /// <inheritdoc />
     public AlphaFormat AlphaFormat => AlphaFormat.Premul;
+
     /// <inheritdoc />
     public nint Data { get; private set; }
+
     /// <inheritdoc />
     public PixelSize Size { get; private set; }
+
     /// <inheritdoc />
     public PixelRect Bounds { get; private set; }
+
     /// <inheritdoc />
     public int Stride { get; private set; }
+
+    private const uint ShutdownMessage = (uint)WINDOW_MESSAGE.WM_APP + 1;
+
+    private readonly Thread _thread;
+    private readonly TaskCompletionSource<DispatcherQueue?> _dispatcherReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _captureReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _threadExited = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private ID3D11Device? _d3D11Device;
     private IDirect3DDevice? _direct3DDevice;
@@ -58,14 +72,12 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     private GraphicsCaptureSession? _session;
 
     private ID3D11Texture2D? _stagingTexture;
-    private readonly TaskCompletionSource<DispatcherQueue?> _dispatcherReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource _captureReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource _threadExited = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly Thread _thread;
     private Direct3D11CaptureFrame? _pendingFrame;
+
     // The request flag is the only mutable state shared with the consumer; all native work stays on the STA.
     private int _isDisposeRequested;
     private bool _hasReceivedFrame;
+    private uint _threadId;
 
     private Direct3D11ScreenCapture(nint sourceHWnd, PixelPoint sourceOrigin, PixelRect relativeRect)
     {
@@ -82,6 +94,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 
     // https://blog.adeltax.com/dwm-thumbnails-but-with-idcompositionvisual/
     // https://gist.github.com/ADeltaX/aea6aac248604d0cb7d423a61b06e247
+    [MemberNotNull(nameof(_framePool), nameof(_session), nameof(_dCompositionDesktopDevice))]
     private void InitializeCapture(nint sourceHWnd, PixelPoint sourceOrigin, PixelRect relativeRect)
     {
         DwmpQueryWindowThumbnailSourceSize((HWND)sourceHWnd, false, out var srcSize).ThrowOnFailure();
@@ -115,11 +128,11 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
             // FromAbi retains its own reference; release the reference returned by the native factory.
             MarshalInterface<IDirect3DDevice>.DisposeAbi(pD3D11Device);
         }
-        _d2DDevice = D2D1.D2D1CreateDevice(dxgiDevice);
 
         // Create the composition device via InteropCompositor
         // Request IDCompositionDesktopDevice (standard IID, compatible with Win10 19041+)
         // Previously used a private/internal IID (e7894c70-...) that caused vtable mismatch on Win10
+        _d2DDevice = D2D1.D2D1CreateDevice(dxgiDevice);
         var interopCompositorFactory = Compositor.As<IInteropCompositorFactoryPartner>();
         var pInteropCompositor = interopCompositorFactory.CreateInteropCompositor(
             _d2DDevice.NativePointer,
@@ -184,10 +197,14 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 
     private unsafe void RunCaptureLoop(nint sourceHWnd, PixelPoint sourceOrigin, PixelRect relativeRect)
     {
-        DispatcherQueueController? controller = null;
+        DispatcherQueueController? controller;
+        IAsyncAction? shutdown = null;
         Exception? failure = null;
+        var hasStartedShutdown = false;
+
         try
         {
+            _threadId = PInvoke.GetCurrentThreadId();
             PInvoke.CreateDispatcherQueueController(
                 new DispatcherQueueOptions
                 {
@@ -198,27 +215,82 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
                 out controller).ThrowOnFailure();
             _dispatcherReady.SetResult(controller.DispatcherQueue);
 
-            if (Volatile.Read(ref _isDisposeRequested) == 0)
+            try
             {
-                InitializeCapture(sourceHWnd, sourceOrigin, relativeRect);
-                if (_framePool is null || _session is null || _dCompositionDesktopDevice is null)
-                    throw new InvalidOperationException("Capture session is not properly initialized.");
-
-                _framePool.FrameArrived += HandleFrameArrived;
-                _session.StartCapture();
-                _dCompositionDesktopDevice.Commit();
+                if (Volatile.Read(ref _isDisposeRequested) == 0)
+                {
+                    InitializeCapture(sourceHWnd, sourceOrigin, relativeRect);
+                    _framePool.FrameArrived += HandleFrameArrived;
+                    _session.StartCapture();
+                    _dCompositionDesktopDevice.Commit();
+                }
+                else
+                {
+                    BeginShutdown();
+                }
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+                _captureReady.TrySetException(exception);
+                BeginShutdown();
             }
 
-            PumpMessages();
+            // Initialization failures also enter this loop: current-thread queue shutdown needs message pumping.
+            while (true)
+            {
+                var message = default(MSG);
+                var result = PInvoke.GetMessage(&message, HWND.Null, 0, 0);
+                if (result < 0) throw new Win32Exception(Marshal.GetLastWin32Error(), "The capture message loop failed.");
+                if (result == 0) break;
+
+                if (message.hwnd.IsNull && message.message == ShutdownMessage)
+                {
+                    BeginShutdown();
+                    continue;
+                }
+
+                PInvoke.TranslateMessage(&message);
+                PInvoke.DispatchMessage(&message);
+            }
+
+            shutdown?.GetResults();
         }
         catch (Exception exception)
         {
-            failure = exception;
-            _dispatcherReady.TrySetResult(null);
+            failure ??= exception;
             _captureReady.TrySetException(exception);
         }
         finally
         {
+            _dispatcherReady.TrySetResult(null);
+            try
+            {
+                // Also cover failures before shutdown could start, such as queue creation or message-loop errors.
+                DisposeCore();
+            }
+            catch (Exception exception)
+            {
+                failure ??= exception;
+            }
+
+            if (failure is null)
+            {
+                _threadExited.TrySetResult();
+            }
+            else
+            {
+                _captureReady.TrySetException(failure);
+                _threadExited.TrySetException(failure);
+            }
+        }
+
+        void BeginShutdown()
+        {
+            if (hasStartedShutdown) return;
+            hasStartedShutdown = true;
+            Interlocked.Exchange(ref _isDisposeRequested, 1);
+
             try
             {
                 DisposeCore();
@@ -230,41 +302,17 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
 
             try
             {
-                if (controller is not null)
-                {
-                    // A current-thread queue must keep pumping until shutdown completes, before the STA exits.
-                    var threadId = PInvoke.GetCurrentThreadId();
-                    var shutdown = controller.ShutdownQueueAsync();
-                    shutdown.Completed = (_, _) => PInvoke.PostThreadMessage(threadId, (uint)WINDOW_MESSAGE.WM_QUIT, default, default);
-                    PumpMessages();
-                    shutdown.GetResults();
-                }
+                if (controller is null) throw new InvalidOperationException("The capture dispatcher controller is unavailable.");
+                shutdown = controller.ShutdownQueueAsync();
+                // Only queue completion ends the message loop. Dispose requests never post WM_QUIT.
+                shutdown.Completed = (_, _) => PInvoke.PostThreadMessage(_threadId, (uint)WINDOW_MESSAGE.WM_QUIT, default, default);
             }
             catch (Exception exception)
             {
                 failure ??= exception;
+                // If shutdown cannot start, report the failure and release the caller instead of waiting forever.
+                PInvoke.PostThreadMessage(_threadId, (uint)WINDOW_MESSAGE.WM_QUIT, default, default);
             }
-
-            if (failure is null)
-                _threadExited.TrySetResult();
-            else
-            {
-                _captureReady.TrySetException(failure);
-                _threadExited.TrySetException(failure);
-            }
-        }
-    }
-
-    private static unsafe void PumpMessages()
-    {
-        while (true)
-        {
-            var message = default(MSG);
-            var result = PInvoke.GetMessage(&message, HWND.Null, 0, 0);
-            if (result < 0) throw new Win32Exception(Marshal.GetLastWin32Error(), "The capture message loop failed.");
-            if (result == 0) return;
-            PInvoke.TranslateMessage(&message);
-            PInvoke.DispatchMessage(&message);
         }
     }
 
@@ -276,6 +324,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         {
             var frame = sender.TryGetNextFrame();
             if (frame is null) return;
+
             _pendingFrame = frame;
             _hasReceivedFrame = true;
 
@@ -296,6 +345,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     {
         Debug.Assert(Thread.CurrentThread == _thread);
         if (Volatile.Read(ref _isDisposeRequested) != 0) return;
+
         try
         {
             if (_pendingFrame is not { } frame || _d3D11Device is not { } device)
@@ -350,7 +400,7 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
     {
         // Drop producer resources before publishing the result. The staging texture and D3D device stay mapped
         // while the RPC stream reads its chunks, and are released by DisposeCore on this same thread.
-        if (_framePool is not null) _framePool.FrameArrived -= HandleFrameArrived;
+        _framePool?.FrameArrived -= HandleFrameArrived;
 
         DisposeHelper.DisposeToDefault(ref _pendingFrame);
         DisposeHelper.DisposeToDefault(ref _session);
@@ -375,7 +425,9 @@ public sealed partial class Direct3D11ScreenCapture : IVisualElementCapture
         if (Interlocked.Exchange(ref _isDisposeRequested, 1) == 0)
         {
             var queue = _dispatcherReady.Task.GetAwaiter().GetResult();
-            queue?.TryEnqueue(() => PInvoke.PostThreadMessage(PInvoke.GetCurrentThreadId(), (uint)WINDOW_MESSAGE.WM_QUIT, default, default));
+            // A thread message remains usable while DispatcherQueue is shutting down, and is processed only
+            // by our loop after initialization or the active callback returns.
+            if (queue is not null) PInvoke.PostThreadMessage(_threadId, ShutdownMessage, default, default);
         }
 
         // Callers own the result exclusively and must finish reading before disposal. Waiting also guarantees

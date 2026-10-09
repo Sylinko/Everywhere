@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
+using Windows.Foundation;
 using Windows.System;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -128,6 +129,41 @@ public sealed class Direct3D11ScreenCaptureTests
     }
 
     [Test]
+    public async Task Dispose_WhenCalledAgainDuringShutdown_WaitsForShutdownDeferral()
+    {
+        using var source = await CaptureSource.CreateAsync();
+        var capture = await CaptureAsync(source);
+        var queue = await GetField<TaskCompletionSource<DispatcherQueue?>>(capture, "_dispatcherReady").Task;
+        if (queue is null) throw new InvalidOperationException("The capture dispatcher was not created.");
+        var shutdownStarted = new TaskCompletionSource<Deferral>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var shutdownCount = 0;
+        queue.ShutdownStarting += (_, args) =>
+        {
+            Interlocked.Increment(ref shutdownCount);
+            shutdownStarted.SetResult(args.GetDeferral());
+        };
+
+        var disposal = Task.Run(capture.Dispose);
+        var deferral = await shutdownStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var repeatedDisposal = Task.Run(capture.Dispose);
+        try
+        {
+            Assert.ThrowsAsync<TimeoutException>(async () => await disposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
+            Assert.ThrowsAsync<TimeoutException>(async () => await repeatedDisposal.WaitAsync(TimeSpan.FromMilliseconds(100)));
+        }
+        finally
+        {
+            deferral.Complete();
+            await Task.WhenAll(disposal, repeatedDisposal).WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        Assert.Multiple(() =>
+        {
+            Assert.That(shutdownCount, Is.EqualTo(1));
+            Assert.That(GetField<Thread>(capture, "_thread").IsAlive, Is.False);
+        });
+    }
+
+    [Test]
     public async Task Capture_WhenCanceledDuringStartup_CleansUpBeforeReturning()
     {
         using var source = await CaptureSource.CreateAsync();
@@ -149,7 +185,7 @@ public sealed class Direct3D11ScreenCaptureTests
     }
 
     [Test]
-    public void Capture_WhenInitializationFails_ExitsItsOwnerThread()
+    public async Task Capture_WhenInitializationFails_ExitsItsOwnerThread()
     {
         // Use the production constructor to retain the failed instance for thread-lifetime assertions.
         var constructor = typeof(Direct3D11ScreenCapture).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic,
@@ -157,16 +193,26 @@ public sealed class Direct3D11ScreenCaptureTests
         if (constructor is null) throw new InvalidOperationException("The capture constructor was not found.");
         var capture = (Direct3D11ScreenCapture)constructor.Invoke([nint.Zero, default(PixelPoint), new PixelRect(0, 0, 64, 48)]);
         var completion = GetField<TaskCompletionSource>(capture, "_captureReady").Task;
-        Assert.CatchAsync<Exception>(async () => await completion.WaitAsync(TimeSpan.FromSeconds(5)));
-        try
+        var failure = Assert.CatchAsync<Exception>(async () => await completion.WaitAsync(TimeSpan.FromSeconds(5)));
+        var disposals = Enumerable.Range(0, 2).Select(_ => Task.Run<Exception?>(() =>
         {
-            capture.Dispose();
-        }
-        catch (Exception)
+            try
+            {
+                capture.Dispose();
+                return null;
+            }
+            catch (Exception exception)
+            {
+                return exception;
+            }
+        })).ToArray();
+        var disposalErrors = await Task.WhenAll(disposals).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Multiple(() =>
         {
-            // Dispose reports a native initialization/cleanup error only after releasing the thread.
-        }
-        Assert.That(GetField<Thread>(capture, "_thread").IsAlive, Is.False);
+            // Every waiting caller observes the original failure only after owner-thread shutdown.
+            foreach (var error in disposalErrors) Assert.That(error, Is.SameAs(failure));
+            Assert.That(GetField<Thread>(capture, "_thread").IsAlive, Is.False);
+        });
     }
 
     private static Task<IVisualElementCapture> CaptureAsync(CaptureSource source)
