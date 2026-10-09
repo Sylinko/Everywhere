@@ -4363,7 +4363,7 @@
         <value>已安装的服务属于另一个 Everywhere 副本：
 {0}
 
-如果继续将覆盖它。</value>
+如果继续，另一个副本将关闭服务模式。</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>已安装的服务属于另一个无法识别的 Everywhere 副本，如果继续将覆盖它。</value>

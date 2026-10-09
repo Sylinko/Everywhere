@@ -4368,6 +4368,6 @@ Deseja realmente excluir “{1}” permanentemente?</value>
         <value>O serviço instalado pertence a outra cópia do Everywhere:
 {0}
 
-Se continuar, ele será sobrescrito.</value>
+Se continuar, a outra cópia encerrará o modo de serviço.</value>
     </data>
 </root>

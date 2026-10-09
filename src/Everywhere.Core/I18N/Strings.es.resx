@@ -4368,6 +4368,6 @@ Después de eliminarla, esos asistentes usarán la palabra clave predeterminada 
         <value>El servicio instalado pertenece a otra copia de Everywhere:
 {0}
 
-Si continúa, se sobrescribirá.</value>
+Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
 </root>

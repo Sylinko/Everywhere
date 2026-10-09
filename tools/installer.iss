@@ -1014,7 +1014,7 @@ begin
   if FileExists(ExpandConstant('{app}\{#AppExeName}')) then
   begin
     UninstallProgressForm.StatusLabel.Caption := ExpandConstant('{cm:ClosingEverywhere}');
-    RunController(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control shutdown', False, 35000, ResultCode);
+    RunController(ExpandConstant('{app}\{#AppExeName}'), '--hosts-control shutdown', DesktopUserToken <> 0, 35000, ResultCode);
     Log(Format('Uninstall shutdown returned code %d.', [ResultCode]));
   end;
   { Only same-directory replacement requests preservation. Older uninstallers
