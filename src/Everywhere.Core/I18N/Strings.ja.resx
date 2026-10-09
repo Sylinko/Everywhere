@@ -4361,13 +4361,13 @@
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>リクエストが頻繁すぎます。サービスは {0} 秒後に再試行することをお勧めします。</value>
     </data>
-    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
-        <value>インストールされているサービスは、識別できない別の Everywhere コピーに属しています。続行すると上書きされます。</value>
-    </data>
     <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
         <value>インストールされているサービスは別の Everywhere コピーに属しています：
 {0}
 
 続行すると、もう一方のコピーがサービスモードを終了します。</value>
+    </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>インストールされているサービスは、識別できない別の Everywhere コピーに属しています。続行すると上書きされます。</value>
     </data>
 </root>

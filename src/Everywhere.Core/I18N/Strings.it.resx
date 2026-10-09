@@ -4361,13 +4361,13 @@ Vuoi comunque eliminare permanentemente “{1}”?</value>
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>Richiesta troppo frequente, il servizio consiglia di attendere {0} secondi prima di riprovare.</value>
     </data>
-    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
-        <value>Il servizio installato appartiene a un'altra copia di Everywhere non identificabile. Se si continua, verrà sovrascritta.</value>
-    </data>
     <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
         <value>Il servizio installato appartiene a un'altra copia di Everywhere:
 {0}
 
 Se continui, l'altra copia disattiverà la modalità servizio.</value>
+    </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>Il servizio installato appartiene a un'altra copia di Everywhere non identificabile. Se si continua, verrà sovrascritta.</value>
     </data>
 </root>
