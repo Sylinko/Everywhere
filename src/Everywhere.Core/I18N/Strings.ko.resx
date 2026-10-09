@@ -4361,13 +4361,13 @@
     <data name="HandledChatException_RateLimit_RetryAfter" xml:space="preserve">
         <value>요청이 너무 잦습니다. 서비스에서 {0} 초 후에 다시 시도할 것을 권장합니다.</value>
     </data>
-    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
-        <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
-    </data>
     <data name="HostsServiceModeControl_ReplaceConfirmation" xml:space="preserve">
         <value>설치된 서비스가 다른 Everywhere 복사본에 속해 있습니다:
 {0}
 
 계속하면 다른 복사본에서 서비스 모드를 종료합니다.</value>
+    </data>
+    <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
+        <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
     </data>
 </root>
