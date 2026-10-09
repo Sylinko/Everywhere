@@ -109,28 +109,30 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         [Description("Visual element ID in visual-context")] int target,
         CancellationToken cancellationToken = default)
     {
-        var operation = await _visualService.CaptureTargetAsync(chatContext.VisualState, target, cancellationToken);
-        using var pointer = operation.Value;
-        var bitmap = pointer.ToAvaloniaBitmap();
-        if (bitmap is null) return null;
+        var (visualContextId, pointer) = await _visualService.CaptureTargetAsync(chatContext.VisualState, target, cancellationToken);
 
         BlobEntity blob;
-        using (var stream = new MemoryStream())
+        using (pointer)
+        using (var bitmap = pointer.ToAvaloniaBitmap())
         {
-            bitmap.Save(stream, PngBitmapEncoderOptions.Default);
-            blob = await _blobStorage.StorageBlobAsync(stream, "image/png", cancellationToken: cancellationToken);
-            await _statisticsRecorder.RecordVisualContextAsync(
-                new StatisticsVisualContextDraft(
-                    null,
-                    chatContext.Metadata.Id,
-                    StatisticsVisualContextSource.ScreenCapture,
-                    ScreenshotCount: 1,
-                    ImageCount: 1),
-                CancellationToken.None);
+            if (bitmap is null) return null;
+            using (var stream = new MemoryStream())
+            {
+                bitmap.Save(stream, PngBitmapEncoderOptions.Default);
+                blob = await _blobStorage.StorageBlobAsync(stream, "image/png", cancellationToken: cancellationToken);
+                await _statisticsRecorder.RecordVisualContextAsync(
+                    new StatisticsVisualContextDraft(
+                        null,
+                        chatContext.Metadata.Id,
+                        StatisticsVisualContextSource.ScreenCapture,
+                        ScreenshotCount: 1,
+                        ImageCount: 1),
+                    CancellationToken.None);
+            }
         }
 
         return new VisualAttachmentFunctionResult(
-            operation.VisualContextId,
+            visualContextId,
             new FileAttachment(
                 new DynamicLocaleKey(string.Empty),
                 blob.LocalPath,

@@ -687,10 +687,28 @@ public class RemoteVisualContext : RpcSafeHandle
                 throw new InvalidDataException("The Automation capture stream contains a new header before completing the current capture.");
             }
 
+            var bytesPerPixel = header.PixelFormat switch
+            {
+                AutomationCapturePixelFormat.Bgra8888 or AutomationCapturePixelFormat.Rgba8888 or AutomationCapturePixelFormat.Rgb32 => 4,
+                AutomationCapturePixelFormat.Rgb565 => 2,
+                AutomationCapturePixelFormat.Alpha8 => 1,
+                _ => throw new InvalidDataException("The Automation capture header contains an unsupported pixel format."),
+            };
+
+            if (header.AlphaFormat is
+                not AutomationCaptureAlphaFormat.Opaque
+                and not AutomationCaptureAlphaFormat.Premultiplied
+                and not AutomationCaptureAlphaFormat.Unpremultiplied)
+            {
+                throw new InvalidDataException("The Automation capture header contains an unsupported alpha format.");
+            }
+
+            // Validate the source row layout before allocating or handing pixels to native image code.
+            // Use wide arithmetic so malformed strides cannot overflow the declared buffer length check.
             if (header.PixelWidth is <= 0 or > IVisualElementCapture.MaximumDimension ||
                 header.PixelHeight is <= 0 or > IVisualElementCapture.MaximumDimension ||
-                header.Stride <= 0 ||
-                header.DataLength != checked(header.Stride * header.PixelHeight))
+                header.Stride < (long)header.PixelWidth * bytesPerPixel ||
+                header.DataLength != (long)header.Stride * header.PixelHeight)
             {
                 throw new InvalidDataException("The Automation capture header contains inconsistent bitmap dimensions.");
             }

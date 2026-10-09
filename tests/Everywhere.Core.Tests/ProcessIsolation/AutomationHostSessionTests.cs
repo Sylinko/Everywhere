@@ -874,6 +874,121 @@ public sealed class AutomationHostSessionTests
         while (!predicate()) await Task.Delay(10, timeout.Token);
     }
 
+    [TestCase(AutomationCapturePixelFormat.Bgra8888, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgba8888, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgb32, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgb565, 2)]
+    [TestCase(AutomationCapturePixelFormat.Alpha8, 1)]
+    public void RemoteCapture_WhenStrideCannotContainOnePixelRow_RejectsHeader(
+        AutomationCapturePixelFormat format,
+        int bytesPerPixel)
+    {
+        var header = CreateCaptureHeader(format, width: 2, height: 2, stride: 2 * bytesPerPixel - 1);
+        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+    }
+
+    [TestCase(0, 2, 8, 16)]
+    [TestCase(4097, 2, 16388, 32776)]
+    [TestCase(2, 0, 8, 0)]
+    [TestCase(2, 4097, 8, 32776)]
+    [TestCase(2, 2, 0, 0)]
+    [TestCase(2, 2, -8, -16)]
+    [TestCase(2, 2, 8, 15)]
+    [TestCase(2, 2, int.MaxValue, -2)]
+    public void RemoteCapture_WhenDimensionsOrLengthAreInvalid_RejectsHeader(int width, int height, int stride, int dataLength)
+    {
+        var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, width, height, stride, dataLength);
+        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+    }
+
+    [Test]
+    public void RemoteCapture_WhenPixelFormatIsUnknown_RejectsHeader()
+    {
+        var header = CreateCaptureHeader((AutomationCapturePixelFormat)int.MaxValue, 2, 2, 8);
+        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+    }
+
+    [Test]
+    public void RemoteCapture_WhenAlphaFormatIsUnknown_RejectsHeader()
+    {
+        var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, 2, 2, 8,
+            alphaFormat: (AutomationCaptureAlphaFormat)int.MaxValue);
+        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, []));
+    }
+
+    [TestCase(AutomationCapturePixelFormat.Bgra8888, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgba8888, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgb32, 4)]
+    [TestCase(AutomationCapturePixelFormat.Rgb565, 2)]
+    [TestCase(AutomationCapturePixelFormat.Alpha8, 1)]
+    public async Task RemoteCapture_WhenRowsHavePadding_PreservesEntireBuffer(AutomationCapturePixelFormat format, int bytesPerPixel)
+    {
+        var header = CreateCaptureHeader(format, 2, 2, 2 * bytesPerPixel + 3);
+        var data = Enumerable.Range(0, header.DataLength).Select(value => (byte)value).ToArray();
+        using var capture = await ReceiveTestCaptureAsync(header, [data[..3], data[3..]]);
+        Assert.Multiple(() =>
+        {
+            Assert.That(capture.Stride, Is.EqualTo(header.Stride));
+            Assert.That(capture.Size, Is.EqualTo(new PixelSize(2, 2)));
+            Assert.That(ReadCapture(capture), Is.EqualTo(data));
+        });
+    }
+
+    [TestCase(0)]
+    [TestCase(15)]
+    [TestCase(17)]
+    public void RemoteCapture_WhenStreamLengthDiffersFromHeader_RejectsStream(int actualLength)
+    {
+        var header = CreateCaptureHeader(AutomationCapturePixelFormat.Bgra8888, 2, 2, 8);
+        Assert.ThrowsAsync<InvalidDataException>(async () => await ReceiveTestCaptureAsync(header, [new byte[actualLength]]));
+    }
+
+    private static AutomationCaptureHeader CreateCaptureHeader(
+        AutomationCapturePixelFormat format,
+        int width,
+        int height,
+        int stride,
+        int? dataLength = null,
+        AutomationCaptureAlphaFormat alphaFormat = AutomationCaptureAlphaFormat.Premultiplied)
+    {
+        return new AutomationCaptureHeader
+        {
+            BoundsX = 0,
+            BoundsY = 0,
+            BoundsWidth = width,
+            BoundsHeight = height,
+            PixelWidth = width,
+            PixelHeight = height,
+            Stride = stride,
+            PixelFormat = format,
+            AlphaFormat = alphaFormat,
+            DataLength = dataLength ?? checked(stride * height),
+        };
+    }
+
+    private static async Task<IVisualElementCapture> ReceiveTestCaptureAsync(AutomationCaptureHeader header, byte[][] chunks)
+    {
+        await using var pair = await TestConnectionPair.CreateAsync();
+        // Supply actual wire frames so malformed metadata is tested before native bitmap conversion.
+        pair.Server.RegisterRequestHandler<CreateAutomationContextRequest, Guid>(0x02000001,
+            (_, _) => ValueTask.FromResult(Guid.NewGuid()));
+        pair.Server.RegisterStreamHandler<CaptureAutomationVisualRequest, AutomationCaptureFrame>(0x02000009, ProduceCapture);
+        pair.Server.Start();
+        pair.Client.Start();
+        using var context = await new AutomationHostClient(pair.Client).CreateContextAsync();
+        return await context.CaptureTargetAsync(1);
+
+        async IAsyncEnumerable<AutomationCaptureFrame> ProduceCapture(
+            CaptureAutomationVisualRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return header;
+            foreach (var chunk in chunks) yield return new AutomationCaptureChunk { Data = chunk };
+        }
+    }
+
     private static byte[] ReadCapture(IVisualElementCapture capture)
     {
         var data = new byte[checked(capture.Stride * capture.Size.Height)];
