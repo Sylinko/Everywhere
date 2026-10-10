@@ -1237,6 +1237,7 @@
                         Classes.Warning="{Binding EffectiveApprovalOption.IsDangerous}"
                         EffectiveItem="{Binding EffectiveApprovalOption}"
                         IsEnabled="{Binding !SelectApprovalModeCommand.IsRunning}"
+                        IsVisible="{Binding Settings.Model.SelectedCustomAssistant?.Configuration.SupportsToolCall, TargetNullValue={x:False}}"
                         ItemsSource="{Binding ApprovalModeOptions}"
                         SelectItemCommand="{Binding SelectApprovalModeCommand}"
                         SelectedItem="{Binding SelectedApprovalOption, Mode=OneWay}"/>
