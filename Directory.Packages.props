@@ -140,7 +140,7 @@
     </PackageVersion>
   </ItemGroup>
   <ItemGroup Label="Sylinko forks">
-    <PackageVersion Include="OfficeCLI" Version="999.20261001.2" />
+    <PackageVersion Include="OfficeCLI" Version="999.20261010.4" />
     <PackageVersion Include="Porta.Pty" Version="999.20261001.1" />
     <PackageVersion Include="Porta.Pty.Native" Version="999.20261001.1" />
     <PackageVersion Include="EverythingNetCore" Version="999.20261001.3" />
