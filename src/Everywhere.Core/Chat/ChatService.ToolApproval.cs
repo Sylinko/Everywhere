@@ -38,17 +38,25 @@ partial class ChatService
             var reviewer = new ToolApprovalReviewer(this, context, mixin, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
             return await reviewer.ReviewAsync(BuildApprovalInput(context, scope), cancellationToken);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             if (IsContextLengthExceeded(ex, mixin))
+            {
                 return ToolApprovalResult.Fail(
                     ToolApprovalFailure.ContextLimitExceeded,
                     "The approval context exceeded the assistant's capacity; no context was discarded or compressed.");
+            }
+
             _logger.LogError(ex, "Automatic approval failed for invocation {InvocationId}", context.InvocationId);
             var handled = ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(ex, mixin));
-            var failure = handled is HandledChatException.InvalidResponse or HandledChatException.GenerationLimitExceeded or
-                HandledChatException.ContentBlocked ?
+            var failure = handled
+                is HandledChatException.InvalidResponse
+                or HandledChatException.GenerationLimitExceeded
+                or HandledChatException.ContentBlocked ?
                 ToolApprovalFailure.InvalidResponse :
                 ToolApprovalFailure.ProviderError;
             return ToolApprovalResult.Fail(
@@ -120,6 +128,7 @@ partial class ChatService
                     break;
                 }
                 case ContextCompressionChatMessage { HasSummary: true } summary:
+                {
                     history.Add(
                         new ToolApprovalHistoryEntry
                         {
@@ -127,6 +136,7 @@ partial class ChatService
                             Content = summary.ToString()
                         });
                     break;
+                }
                 case AssistantChatMessage assistant:
                 {
                     foreach (var span in assistant.Items.AsValueEnumerable().OfType<AssistantChatMessageFunctionCallSpan>())
@@ -185,7 +195,8 @@ partial class ChatService
         FunctionCallContext context,
         KernelMixin mixin,
         FileSystemPlugin fileSystemPlugin,
-        bool canReadFiles)
+        bool canReadFiles
+    )
     {
         private readonly ReviewTools _tools = new(fileSystemPlugin, context.ChatContext.EnsureWorkingDirectory());
 
@@ -258,7 +269,8 @@ partial class ChatService
             var kernel = new Kernel();
             var availableTools = KernelPluginFactory.CreateFromObject(_tools, "approval");
             var reviewPlugin = KernelPluginFactory.CreateFromFunctions(
-                "approval", availableTools.Where(function => canReadFiles || function.Name != "read_file"));
+                "approval",
+                availableTools.Where(function => canReadFiles || function.Name != "read_file"));
             kernel.Plugins.Add(reviewPlugin);
 
             // Keep wire names flat, matching ChatService's tool snapshots and history conversion.

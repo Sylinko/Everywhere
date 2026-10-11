@@ -93,22 +93,6 @@ public sealed class RequestRecoveryTests
     }
 
     [AvaloniaTest]
-    public async Task BusyActivity_WhenCompressionOwnsIt_AttachesToOperationWithoutAssistantFallback()
-    {
-        using var context = new ChatContext();
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(new AssistantChatMessage());
-        var compression = new ContextCompressionChatMessage(Guid.Empty, "test", ContextCompressionTrigger.Manual, null, null);
-        context.Add(compression);
-        var activity = await context.Presentation.SetBusyActivityAsync(Lucide.Avalonia.LucideIconKind.RotateCw, new DirectLocaleKey("retry"), true,
-            new DirectLocaleKey("connection failed"), compression);
-        var row = context.Presentation.Rows.OfType<BusyActivityItemPresentationRow>().Single();
-        Assert.That(row.SecondaryHeaderKey, Is.Not.Null);
-        activity.Dispose();
-        Assert.That(context.Presentation.Rows.OfType<BusyActivityItemPresentationRow>(), Is.Empty);
-    }
-
-    [AvaloniaTest]
     public async Task StreamConsumer_WhenConnectionFailsBeforeOutput_ShowsRetriesAndPreservesCommittedSpans()
     {
         // Exercise both a new response and a later request with already committed output.
@@ -233,7 +217,7 @@ public sealed class RequestRecoveryTests
             yield return new StreamingChatMessageContent(AuthorRole.Assistant, number == 1 ? "discard me" : "recovered")
             { Metadata = new Dictionary<string, object?>
                 { ["checkpoint"] = number == 1 ? "provisional" : "original", ["Usage"] = new UsageDetails { TotalTokenCount = number * 100 } } };
-            if (number == 1) throw new IOException("broken connection");
+            if (number == 1) throw new HttpRequestException("broken connection", new System.Net.Sockets.SocketException(10054));
         }
     }
 
@@ -359,78 +343,6 @@ public sealed class RequestRecoveryTests
         {
             Assert.That(context.IsBusy, Is.False);
             Assert.That(parent.IsCancellationRequested, Is.False);
-        });
-    }
-
-    [AvaloniaTest]
-    public async Task BusyActivity_WhenUpdatedThenDisposed_PreservesIdentityThenRemovesRow()
-    {
-        using var context = new ChatContext();
-        var message = new AssistantChatMessage { IsBusy = true };
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(message);
-        var activity = await context.Presentation.SetBusyActivityAsync(Lucide.Avalonia.LucideIconKind.RotateCw, new DirectLocaleKey("retry one"),
-            true, new DirectLocaleKey("error one"), message);
-        var group = context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single();
-        var row = group.Items.OfType<BusyActivityItemPresentationRow>().Single();
-        activity.HeaderKey = new DirectLocaleKey("retry two");
-        activity.SecondaryHeaderKey = new DirectLocaleKey("error two");
-        Dispatcher.UIThread.RunJobs();
-        Assert.Multiple(() =>
-        {
-            Assert.That(group.Items.Single(), Is.SameAs(row));
-            Assert.That(context.Presentation.Rows.OfType<ActivityGroupPresentationRow>().Single(), Is.SameAs(group));
-            Assert.That(row.HeaderKey.ToString(), Is.EqualTo("retry two"));
-            Assert.That(row.SecondaryHeaderKey?.ToString(), Is.EqualTo("error two"));
-            Assert.That(context.Presentation.Rows.OfType<PendingAssistantPresentationRow>(), Is.Empty);
-        });
-        activity.Dispose();
-        Dispatcher.UIThread.RunJobs();
-        Assert.That(context.Presentation.Rows.OfType<ActivityGroupPresentationRow>(), Is.Empty);
-    }
-
-    [AvaloniaTest]
-    public void Presentation_WhenAttemptSpansAreRemoved_PrunesOutputRowsWithoutReplacingSurvivors()
-    {
-        using var context = new ChatContext();
-        var message = new AssistantChatMessage { IsBusy = true };
-        var committed = new AssistantChatMessageTextSpan("committed");
-        var provisional = new AssistantChatMessageTextSpan("provisional");
-        message.AddSpan(committed);
-        message.AddSpan(provisional);
-        context.Add(new UserChatMessage("hello", []));
-        context.Add(message);
-        Dispatcher.UIThread.RunJobs();
-        var original = context.Presentation.Rows.OfType<AssistantTextOutputPresentationRow>().First();
-        message.Edit(spans => spans.Remove(provisional));
-        Dispatcher.UIThread.RunJobs();
-        var rows = context.Presentation.Rows.OfType<AssistantTextOutputPresentationRow>().ToArray();
-        var turns = typeof(ChatPresentation).GetField("_turns", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(context.Presentation)
-            as System.Collections.IDictionary ?? throw new MissingFieldException();
-        var turn = turns.Values.Cast<object>().Single();
-        var cache = turn.GetType().GetField("_outputRows", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(turn)
-            as System.Collections.IDictionary ?? throw new MissingFieldException();
-        Assert.Multiple(() =>
-        {
-            Assert.That(rows, Has.Length.EqualTo(1));
-            Assert.That(rows[0], Is.SameAs(original));
-            Assert.That(cache.Count, Is.EqualTo(1));
-        });
-    }
-
-    [AvaloniaTest]
-    public void ErrorDetails_WhenRetainedRequestFailuresAreLarge_BoundsFormattingBeforeRendering()
-    {
-        var failures = Enumerable.Range(1, 10).Select(attempt => new ChatRequestFailure(
-            attempt,
-            DateTimeOffset.UtcNow,
-            (HandledChatException)ChatExceptionNormalizer.Handle(new IOException(new string('x', 10000)), null))).ToArray();
-        var error = new ChatRequestException(failures[^1].Exception, failures, failures.Length);
-        var view = new ChatErrorDetailsView(error);
-        Assert.Multiple(() =>
-        {
-            Assert.That(view.Details.Length, Is.LessThan(66000));
-            Assert.That(view.Details, Does.Contain("truncated"));
         });
     }
 

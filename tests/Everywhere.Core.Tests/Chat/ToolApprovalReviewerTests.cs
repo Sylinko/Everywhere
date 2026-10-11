@@ -58,6 +58,21 @@ public sealed class ToolApprovalReviewerTests
     }
 
     [Test]
+    public async Task ReviewAsync_WhenFileReadsAreDisabled_DoesNotAdvertiseOrExecuteReadFile()
+    {
+        var reviewer = CreateReviewer(canReadFiles: false);
+        var result = await reviewer.ReviewAsync(Response(Read()));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(reviewer.AdvertisedNames.Single(), Is.EqualTo(new[] { "submit_approval" }));
+            Assert.That(reviewer.Handler.ReadCount, Is.Zero);
+            Assert.That(result.IsAllowed, Is.False);
+            Assert.That(result.Failure, Is.EqualTo(ToolApprovalFailure.InvalidResponse));
+        });
+    }
+
+    [Test]
     public async Task ReviewAsync_WithReadsBetweenProse_RemindsTwiceThenFails()
     {
         var reviewer = CreateReviewer();
@@ -212,9 +227,9 @@ public sealed class ToolApprovalReviewerTests
     private static MEAI.FunctionCallContent Decision(string decision = "allow") => new(Guid.NewGuid().ToString(), "submit_approval",
         new Dictionary<string, object?> { ["decision"] = decision, ["reason"] = "scope checked" });
 
-    private ReviewHarness CreateReviewer(int maxRetries = 0)
+    private ReviewHarness CreateReviewer(int maxRetries = 0, bool canReadFiles = true)
     {
-        var reviewer = new ReviewHarness(maxRetries);
+        var reviewer = new ReviewHarness(maxRetries, canReadFiles);
         _harnesses.Add(reviewer);
         return reviewer;
     }
@@ -234,7 +249,7 @@ public sealed class ToolApprovalReviewerTests
         private readonly ChatService _owner;
         private readonly FunctionCallContext _context;
 
-        public ReviewHarness(int maxRetries)
+        public ReviewHarness(int maxRetries, bool canReadFiles)
         {
             _client.GetService(Arg.Any<Type>(), Arg.Any<object?>()).Returns((object?)null);
             _client.GetResponseAsync(Arg.Any<IEnumerable<MEAI.ChatMessage>>(), Arg.Any<MEAI.ChatOptions>(), Arg.Any<CancellationToken>())
@@ -246,6 +261,7 @@ public sealed class ToolApprovalReviewerTests
             _mixin.GetPromptExecutionSettings(Arg.Any<FunctionChoiceBehavior>()).Returns(call =>
                 new PromptExecutionSettings { FunctionChoiceBehavior = call.ArgAt<FunctionChoiceBehavior>(0) });
             var settings = new Settings(Substitute.For<IServiceProvider>());
+            settings.SystemAssistant.AllowApprovalFileReads = canReadFiles;
             var plugin = new FileSystemPlugin(settings, new FileHandlerContextFactory([Handler]), Substitute.For<ILogger<FileSystemPlugin>>());
             var manager = Substitute.For<IChatPluginManager>();
             manager.BuiltInPlugins.Returns(new BindableList<BuiltInChatPlugin> { plugin });
