@@ -45,7 +45,7 @@ internal class patch_DirectCompositedWindow : IDisposable
         out double radius)
     {
         // ReSharper disable once SuspiciousTypeConversion.Global
-        if (windowInfo is IWindowCornerRadiusFeature feature)
+        if (windowInfo is IWindowCompositionFeature feature)
             return feature.TryGetEffectiveCornerRadius(out radius);
 
         radius = 0;

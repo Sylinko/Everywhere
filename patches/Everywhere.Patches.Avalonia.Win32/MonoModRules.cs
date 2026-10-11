@@ -16,7 +16,7 @@ internal static class MonoModRules
             modder = MonoModRulesManager.Modder;
             if (modder.Module.GetType("Avalonia.Win32.WindowImpl") is not { } windowImpl)
             {
-                modder.Log("[Everywhere] Avalonia.Win32.WindowImpl was not found; corner-radius bridge was not injected.");
+                modder.Log("[Everywhere] Avalonia.Win32.WindowImpl was not found; composition bridge was not injected.");
                 return;
             }
 
@@ -39,7 +39,7 @@ internal static class MonoModRules
 
             if (contractsModule?.Assembly?.Name is not { } contractsAssemblyName)
             {
-                modder.Log("[Everywhere] Everywhere.Patches.Contracts could not be resolved; corner-radius bridge was not injected.");
+                modder.Log("[Everywhere] Everywhere.Patches.Contracts could not be resolved; composition bridge was not injected.");
                 return;
             }
 
@@ -61,7 +61,7 @@ internal static class MonoModRules
 
             var feature = new TypeReference(
                 "Everywhere.Patches.Contracts.Interop",
-                "IWindowCornerRadiusFeature",
+                "IWindowCompositionFeature",
                 modder.Module,
                 contractsReference);
 
@@ -78,11 +78,11 @@ internal static class MonoModRules
             }
 
             interfaces.Add(new InterfaceImplementation(feature));
-            modder.Log("[Everywhere] Injected IWindowCornerRadiusFeature into Avalonia.Win32.WindowImpl.");
+            modder.Log("[Everywhere] Injected IWindowCompositionFeature into Avalonia.Win32.WindowImpl.");
         }
         catch (Exception exception)
         {
-            modder?.Log($"[Everywhere] Corner-radius bridge injection failed: {exception}");
+            modder?.Log($"[Everywhere] Composition bridge injection failed: {exception}");
             throw;
         }
     }

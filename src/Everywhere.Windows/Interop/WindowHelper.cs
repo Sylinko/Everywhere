@@ -6,8 +6,6 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Avalonia.Controls;
 using Everywhere.Interop;
-using Everywhere.Patches.Contracts.Interop;
-using Everywhere.Views;
 using DrawingPoint = System.Drawing.Point;
 
 namespace Everywhere.Windows.Interop;
@@ -305,35 +303,36 @@ public sealed class WindowHelper : IWindowHelper
 
     public double SetCornerRadius(Window window, double radius)
     {
-        // The arbitrary radius is owned by the compositor patch. Disabling DWM's fixed Windows 11
-        // radius also makes the fallback deterministic: an unavailable custom frame remains square.
-        Win32Properties.SetWindowCornerPreference(
-            window,
-            Win32Properties.WindowCornerPreference.DoNotRound);
-
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        // This is auto waved into Avalonia.Win32.WindowImpl by MonoMod in project `Everywhere.Patches.Avalonia.Win32`
-        if (window.PlatformImpl is IWindowCornerRadiusFeature feature)
+        if (!double.IsFinite(radius) || radius < 0)
         {
-            feature.SetCornerRadius(radius);
+            throw new ArgumentOutOfRangeException(nameof(radius));
+        }
+
+        radius = Math.Min(radius, 4096);
+        if (WindowShadow.Attach(window, radius))
+        {
+            // The arbitrary radius is owned by the compositor patch. Disabling DWM's fixed Windows 11
+            // radius prevents a second, independently rounded native outline.
+            Win32Properties.SetWindowCornerPreference(
+                window,
+                Win32Properties.WindowCornerPreference.DoNotRound);
+
             window.InvalidateVisual();
-            if (window is ChatWindow chatWindow)
-            {
-                ChatWindowShadow.Attach(chatWindow);
-            }
 
             return radius;
         }
 
-        return 0;
+        // DWM exposes a rounding preference, not a numeric radius. Eight logical pixels is the
+        // normal Windows 11 styling value; maximized/arranged states remain system-controlled.
+        var hasSystemCorners = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000) && radius > 0;
+        Win32Properties.SetWindowCornerPreference(
+            window,
+            hasSystemCorners ? Win32Properties.WindowCornerPreference.Round : Win32Properties.WindowCornerPreference.DoNotRound);
+        return hasSystemCorners ? 8 : 0;
     }
 
     public void InitializeWindow(Window window)
     {
-        if (window is ChatWindow chatWindow)
-        {
-            ChatWindowShadow.Attach(chatWindow);
-        }
     }
 
     private sealed class WindowPropertiesState

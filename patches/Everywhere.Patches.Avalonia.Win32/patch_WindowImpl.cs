@@ -1,3 +1,7 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Platform.Surfaces;
+using Avalonia.Win32.WinRT.Composition;
 using Everywhere.Patches.Contracts.Interop;
 using MonoMod;
 using static Avalonia.Win32.Interop.UnmanagedMethods;
@@ -5,11 +9,21 @@ using static Avalonia.Win32.Interop.UnmanagedMethods;
 namespace Everywhere.Patches.Avalonia.Win32;
 
 [MonoModPatch("Avalonia.Win32.WindowImpl")]
-internal class patch_WindowImpl : IWindowCornerRadiusFeature
+internal class patch_WindowImpl : IWindowCompositionFeature
 {
+    [MonoModIgnore]
+    private readonly IInputRoot? _owner = null;
+
+    [MonoModIgnore]
+    private readonly IPlatformRenderSurface? _glSurface = null;
+
+    // ReSharper disable once SuspiciousTypeConversion.Global
+    public bool IsCustomCornerRadiusSupported => _glSurface is WinUiCompositedWindowSurface;
+
     private long _everywhereCornerRadiusBits;
     private int _everywhereCornerRadiusConfigured;
     private int _everywhereCornerRadiusSuppressed;
+    private IWindowCompositionRenderer? _everywhereRenderer;
 
     public void SetCornerRadius(double radius)
     {
@@ -43,6 +57,57 @@ internal class patch_WindowImpl : IWindowCornerRadiusFeature
         var bits = Volatile.Read(ref _everywhereCornerRadiusBits);
         radius = BitConverter.Int64BitsToDouble(bits);
         return true;
+    }
+
+    public void SetCustomRenderer(IWindowCompositionRenderer? renderer)
+    {
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        if (_glSurface is not WinUiCompositedWindowSurface surface)
+        {
+            if (renderer is not null) throw new NotSupportedException("Custom rendering requires WinUI Composition.");
+            return;
+        }
+
+        // Use the same transaction lock as drawing, commits and surface disposal. After this
+        // returns, the UI thread can destroy the old renderer's HWND without an in-flight update.
+        lock (surface.SyncRoot)
+        {
+            if (ReferenceEquals(_everywhereRenderer, renderer)) return;
+            var previous = _everywhereRenderer;
+            _everywhereRenderer = null;
+            previous?.ReleaseResources();
+            _everywhereRenderer = renderer;
+        }
+    }
+
+    public void RequestCompositionFrame()
+    {
+        if (_owner?.FocusRoot is TopLevel topLevel)
+        {
+            // Invalidating an unchanged draw list can produce no pixel damage. RequestRedraw
+            // ensures BeginDraw runs, while InvalidateVisual schedules the usual async commit.
+            topLevel.Renderer.CompositionTarget.RequestRedraw();
+            topLevel.InvalidateVisual();
+        }
+    }
+
+    public void SynchronizeCornerClip()
+    {
+        // ReSharper disable once SuspiciousTypeConversion.Global
+        if (_glSurface is WinUiCompositedWindowSurface surface)
+            surface.SynchronizeCornerClip();
+    }
+
+    internal void UpdateEverywhereComposition(nint compositor, double scaling, float radius)
+    {
+        // Called only inside WinUiCompositedWindow's existing composition transaction.
+        _everywhereRenderer?.Update(compositor, scaling, radius);
+    }
+
+    internal void ReleaseEverywhereComposition()
+    {
+        // The caller holds the same shared lock. Retain registration for surface recreation.
+        _everywhereRenderer?.ReleaseResources();
     }
 
     private extern RECT orig_ClientRectToWindowRect(

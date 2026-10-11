@@ -14,7 +14,6 @@ GetAncestor
 IsWindowVisible
 GetWindowPlacement
 SetLayeredWindowAttributes
-UpdateLayeredWindow
 GetForegroundWindow
 SetForegroundWindow
 BringWindowToTop
@@ -30,6 +29,7 @@ IsWindowArranged
 SetFocus
 HWND_BOTTOM
 HWND_TOPMOST
+HWND_NOTOPMOST
 
 GetMessage
 TranslateMessage
@@ -139,3 +139,4 @@ FlashWindowEx
 
 SetProp
 RemoveProp
+WINDOWPOS

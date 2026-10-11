@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <IgnoresAccessChecksTo Include="Avalonia.Win32" />
+    <IgnoresAccessChecksTo Include="Avalonia.Base" />
+    <IgnoresAccessChecksTo Include="Avalonia.Controls" />
   </ItemGroup>
 
   <ItemGroup>
