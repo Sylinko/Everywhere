@@ -87,8 +87,8 @@ public sealed partial class ContextCompressionChatMessage : ChatMessage
     public partial IDynamicLocaleKey? ErrorMessageKey { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether one or more oldest conversation units were removed after
-    /// the compression request exceeded the provider context window.
+    /// Gets a value indicating whether source history was omitted by the round limit or removed
+    /// after the compression request exceeded the provider context window.
     /// </summary>
     [Key(7)]
     public bool WasSourceHistoryTrimmed { get; private set; }

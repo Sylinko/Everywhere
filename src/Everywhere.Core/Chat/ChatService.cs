@@ -112,10 +112,10 @@ public sealed partial class ChatService : IChatService
                 try
                 {
                     await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
-                    chatContext.Add(message);
+                    var userNode = chatContext.Add(message);
                     var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                         chatContext,
-                        FindMessageNode(chatContext, message),
+                        userNode,
                         StatisticsTurnKind.Send,
                         cancellationToken);
                     using var turnScope = BeginStatisticsTurn(turnEventId);
@@ -129,13 +129,14 @@ public sealed partial class ChatService : IChatService
                     await ProcessUserChatMessageAsync(chatContext, customAssistant, message, cancellationToken);
 
                     var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                    chatContext.Add(assistantChatMessage);
+                    var assistantNode = chatContext.Add(assistantChatMessage);
 
                     var systemPromptOverride = message.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
                     await GenerateAsync(
                         chatContext,
                         customAssistant,
-                        assistantChatMessage,
+                        assistantNode,
+                        CompressionBoundary.Before(userNode),
                         systemPromptOverride: systemPromptOverride,
                         cancellationToken: cancellationToken);
                 }
@@ -167,9 +168,10 @@ public sealed partial class ChatService : IChatService
                 {
                     await _visualService.AdvanceTurnAsync(chatContext.VisualState, cancellationToken);
                     chatContext.CreateBranchOn(oldNode, newMessage);
+                    var userNode = chatContext.Read(static list => list[^1]);
                     var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                         chatContext,
-                        FindMessageNode(chatContext, newMessage),
+                        userNode,
                         StatisticsTurnKind.Edit,
                         cancellationToken);
                     using var turnScope = BeginStatisticsTurn(turnEventId);
@@ -183,13 +185,14 @@ public sealed partial class ChatService : IChatService
                     await ProcessUserChatMessageAsync(chatContext, customAssistant, newMessage, cancellationToken);
 
                     var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                    chatContext.Add(assistantChatMessage);
+                    var assistantNode = chatContext.Add(assistantChatMessage);
 
                     var systemPromptOverride = newMessage.As<UserStrategyChatMessage>()?.Strategy.SystemPrompt;
                     await GenerateAsync(
                         chatContext,
                         customAssistant,
-                        assistantChatMessage,
+                        assistantNode,
+                        CompressionBoundary.Before(userNode),
                         systemPromptOverride: systemPromptOverride,
                         cancellationToken: cancellationToken);
                 }
@@ -225,16 +228,23 @@ public sealed partial class ChatService : IChatService
                 }
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                var userNode = FindPreviousUserNode(chatContext, node);
                 chatContext.CreateBranchOn(node, assistantChatMessage);
+                var assistantNode = chatContext.Read(static list => list[^1]);
 
                 var turnEventId = await _statisticsRecorder.RecordTurnAsync(
                     chatContext,
-                    FindPreviousUserNode(chatContext, node),
+                    userNode,
                     StatisticsTurnKind.Retry,
                     cancellationToken);
                 using var turnScope = BeginStatisticsTurn(turnEventId);
 
-                await GenerateAsync(chatContext, customAssistant, assistantChatMessage, cancellationToken: cancellationToken);
+                await GenerateAsync(
+                    chatContext,
+                    customAssistant,
+                    assistantNode,
+                    CompressionBoundary.Before(userNode ?? assistantNode),
+                    cancellationToken: cancellationToken);
 
                 static ChatMessageNode? FindPreviousUserNode(ChatContext chatContext, ChatMessageNode node)
                 {
@@ -279,12 +289,13 @@ public sealed partial class ChatService : IChatService
                 }
 
                 var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                chatContext.Add(assistantChatMessage);
+                var assistantNode = chatContext.Add(assistantChatMessage);
 
                 await GenerateAsync(
                     chatContext,
                     customAssistant,
-                    assistantChatMessage,
+                    assistantNode,
+                    CompressionBoundary.Through(node),
                     purpose: StatisticsModelInvocationPurpose.ContinueResponse,
                     cancellationToken: cancellationToken);
             },
@@ -323,7 +334,7 @@ public sealed partial class ChatService : IChatService
                         chatContext,
                         generationContext,
                         ContextCompressionTrigger.Manual,
-                        ResolveCompressionBoundary(chatContext),
+                        CompressionBoundary.Through(chatContext.Read(static list => list[^1])),
                         cancellationToken);
                 }
                 finally
@@ -556,7 +567,8 @@ public sealed partial class ChatService : IChatService
     /// </summary>
     /// <param name="chatContext"></param>
     /// <param name="assistant"></param>
-    /// <param name="assistantChatMessage"></param>
+    /// <param name="assistantNode">The current branch node containing the assistant response.</param>
+    /// <param name="compressionBoundary">The initial prefix eligible for compression before this response produces output.</param>
     /// <param name="systemPromptOverride"></param>
     /// <param name="enableNotifications"></param>
     /// <param name="purpose">Statistics classification for model invocations produced by this generation.</param>
@@ -564,12 +576,14 @@ public sealed partial class ChatService : IChatService
     public async Task<ChatGenerationResult> GenerateAsync(
         ChatContext chatContext,
         Assistant assistant,
-        AssistantChatMessage assistantChatMessage,
+        ChatMessageNode assistantNode,
+        CompressionBoundary compressionBoundary,
         string? systemPromptOverride = null,
         bool enableNotifications = true,
         StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,
         CancellationToken cancellationToken = default)
     {
+        var assistantChatMessage = (AssistantChatMessage)assistantNode.Message;
         Activity? activity = null;
         GenerationContext? generationContext = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
@@ -588,6 +602,8 @@ public sealed partial class ChatService : IChatService
 
             await EnsureVisualContextResetNoticeAsync(chatContext, assistantChatMessage, cancellationToken);
 
+            if (assistantChatMessage.HasOutputContent) compressionBoundary = CompressionBoundary.Through(assistantNode);
+
             if (ResolvePendingAutomaticCompressionTrigger(chatContext, generationContext.ContextCompressionThreshold) is { } compressionTrigger)
             {
                 hasAttemptedAutomaticCompaction = true;
@@ -595,7 +611,7 @@ public sealed partial class ChatService : IChatService
                     chatContext,
                     generationContext,
                     compressionTrigger,
-                    ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                    compressionBoundary,
                     cancellationToken);
                 if (!compacted.HasAppliedSummary && compressionTrigger == ContextCompressionTrigger.ContextLengthRecovery)
                     return new ChatGenerationResult(assistantChatMessage, compacted.Error);
@@ -649,23 +665,26 @@ public sealed partial class ChatService : IChatService
                 catch (Exception ex) when (!hasAttemptedContextLengthRecovery && IsContextLengthExceeded(ex, kernelMixin))
                 {
                     hasAttemptedContextLengthRecovery = true;
+                    // Streaming function calls are dispatched only after a successful request.
+                    // Any tool spans already on this node therefore belong to completed cycles.
+                    if (assistantChatMessage.HasOutputContent) compressionBoundary = CompressionBoundary.Through(assistantNode);
                     var compacted = await CompactContextAsync(
                         chatContext,
                         generationContext,
                         ContextCompressionTrigger.ContextLengthRecovery,
-                        ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                        compressionBoundary,
                         cancellationToken);
                     if (!compacted.HasAppliedSummary) return new ChatGenerationResult(assistantChatMessage, compacted.Error);
 
                     assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
                     assistantChatMessage.IsBusy = false;
                     assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                    chatContext.Add(assistantChatMessage);
+                    assistantNode = chatContext.Add(assistantChatMessage);
                     continue;
                 }
                 await chatContext.ReportContextUsageAsync(
                     invocationResult.Usage,
-                    kernelMixin.Configuration.ModelId!,
+                    kernelMixin.Configuration.ModelId,
                     kernelMixin.Configuration.ContextLimit);
 
                 _currentModelInvocationEventId.Value = invocationResult.InvocationId;
@@ -680,6 +699,9 @@ public sealed partial class ChatService : IChatService
                         cancellationToken);
                 }
 
+                // Advance only after all tool calls from this response have their results.
+                if (assistantChatMessage.HasOutputContent) compressionBoundary = CompressionBoundary.Through(assistantNode);
+
                 var shouldCompact = !hasAttemptedAutomaticCompaction &&
                     chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(
                         generationContext.ContextCompressionThreshold);
@@ -690,7 +712,7 @@ public sealed partial class ChatService : IChatService
                         chatContext,
                         generationContext,
                         ContextCompressionTrigger.Automatic,
-                        ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                        compressionBoundary,
                         cancellationToken);
                     if (!compacted.HasAppliedSummary) cancellationToken.ThrowIfCancellationRequested();
 
@@ -699,7 +721,7 @@ public sealed partial class ChatService : IChatService
                         assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
                         assistantChatMessage.IsBusy = false;
                         assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-                        chatContext.Add(assistantChatMessage);
+                        assistantNode = chatContext.Add(assistantChatMessage);
                     }
                 }
 
@@ -761,283 +783,9 @@ public sealed partial class ChatService : IChatService
         assistantChatMessage.AddSpan(new AssistantChatMessageVisualContextResetSpan(resetMessage));
     }
 
-    private async Task<CompressionResult> CompactContextAsync(
-        ChatContext chatContext,
-        GenerationContext context,
-        ContextCompressionTrigger trigger,
-        Guid coveredThroughNodeId,
-        CancellationToken cancellationToken)
-    {
-        var usageBefore = chatContext.ContextUsage.Snapshot;
-        var compressionMessage = new ContextCompressionChatMessage(
-            coveredThroughNodeId,
-            context.KernelMixin.Configuration.ModelId,
-            trigger,
-            usageBefore.TotalTokenCount,
-            context.KernelMixin.Configuration.ContextLimit > 0 ? context.KernelMixin.Configuration.ContextLimit : null);
-
-        await using var compactionScope = await chatContext.BeginContextCompactionAsync();
-        chatContext.Add(compressionMessage);
-        var compressionMessageNodeId = FindMessageNode(chatContext, compressionMessage)?.Id
-            ?? throw new InvalidOperationException("The context compression message was not added to the chat context.");
-
-        try
-        {
-            var sourceNodes = SelectCompressionSourceNodes(chatContext.Items, coveredThroughNodeId);
-            if (sourceNodes.Length == 0)
-            {
-                throw new ContextCompressionOutputException("There is no conversation history to compact.", LocaleKey.ContextCompression_Error_NoHistory);
-            }
-
-            var messages = ChatHistoryBuilder
-                .SelectContextMessages(sourceNodes, context.MaxContextRounds, context.KernelMixin.Configuration.ContextLimit)
-                .ToList();
-            var wasSourceHistoryTrimmed = false;
-            string summary;
-            while (true)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                try
-                {
-                    summary = await RequestCompressionSummaryAsync(
-                        chatContext,
-                        context,
-                        messages,
-                        compressionMessageNodeId,
-                        cancellationToken);
-                    break;
-                }
-                catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
-                {
-                    throw;
-                }
-                catch (ContextCompressionOutputException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    var handledException = ChatExceptionNormalizer.Handle(ex, context.KernelMixin, new ChatRequestFailureContext(cancellationToken));
-                    if (ChatExceptionNormalizer.GetFinalFailure(handledException) is not HandledChatException.InvalidRequest.ContextLengthExceeded || !TryTrimOldestConversationUnit(messages))
-                    {
-                        throw handledException;
-                    }
-
-                    wasSourceHistoryTrimmed = true;
-                }
-            }
-
-            compressionMessage.Complete(summary, wasSourceHistoryTrimmed, DateTimeOffset.UtcNow);
-            await chatContext.MarkContextCompactedAsync(
-                context.KernelMixin.Configuration.ModelId!,
-                context.KernelMixin.Configuration.ContextLimit);
-            return new CompressionResult(true, null);
-        }
-        catch (OperationCanceledException ex) when (IsCallerCancellation(ex, cancellationToken))
-        {
-            compressionMessage.Cancel(DateTimeOffset.UtcNow);
-            throw;
-        }
-        catch (ContextCompressionOutputException ex)
-        {
-            compressionMessage.Fail(new DynamicLocaleKey(ex.LocaleKey), DateTimeOffset.UtcNow);
-            _logger.LogWarning(ex, "Context compression returned an invalid response");
-            return new CompressionResult(false, ex);
-        }
-        catch (Exception ex)
-        {
-            ex = ChatExceptionNormalizer.Handle(ex, context.KernelMixin, new ChatRequestFailureContext(cancellationToken));
-            compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow);
-            _logger.LogError(ex, "Failed to compact chat context");
-            return new CompressionResult(false, ex);
-        }
-    }
-
-    private async Task<string> RequestCompressionSummaryAsync(
-        ChatContext chatContext,
-        GenerationContext context,
-        IReadOnlyList<ChatMessage> messages,
-        Guid compressionMessageNodeId,
-        CancellationToken cancellationToken)
-    {
-        var chatHistory = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
-            context.PromptRenderer,
-            context.SystemPrompt,
-            messages,
-            context.InputModalities,
-            cancellationToken);
-        chatHistory.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
-
-        var compressionMessage = chatContext.GetAllNodes().First(node => node.Id == compressionMessageNodeId).Message;
-        var response = await ReadResponseAsync(
-            context.KernelMixin,
-            chatHistory,
-            context.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None()),
-            context.Kernel,
-            chatContext.Metadata.Id,
-            compressionMessageNodeId,
-            StatisticsModelInvocationPurpose.ContextCompression,
-            chatContext,
-            compressionMessage,
-            cancellationToken);
-        if (response.FunctionCalls.Count > 0)
-            throw new ContextCompressionOutputException("The model tried to call a tool while compacting context.", LocaleKey.ContextCompression_Error_ToolCallNotAllowed);
-        var summary = response.Text.Trim();
-        if (summary.Length == 0) throw new ContextCompressionOutputException("The model returned an empty context summary.", LocaleKey.ContextCompression_Error_EmptyResponse);
-        return summary;
-    }
-
-    private static ContextCompressionTrigger? ResolvePendingAutomaticCompressionTrigger(ChatContext chatContext, int contextCompressionThreshold)
-    {
-        var latestCompression = chatContext.Items
-            .AsValueEnumerable()
-            .Select(static node => node.Message)
-            .OfType<ContextCompressionChatMessage>()
-            .LastOrDefault();
-        if (latestCompression is { NeedsAutomaticCompaction: true }) return latestCompression.Trigger;
-
-        return chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(contextCompressionThreshold) ?
-            ContextCompressionTrigger.Automatic :
-            null;
-    }
-
-    private static Guid ResolveCompressionBoundary(
-        ChatContext chatContext,
-        AssistantChatMessage? currentAssistantMessage = null)
-    {
-        var nodes = chatContext.Items;
-        var boundaryIndex = nodes.Count - 1;
-        if (currentAssistantMessage is not null)
-        {
-            boundaryIndex = FindMessageIndex(nodes, currentAssistantMessage);
-            if (boundaryIndex >= 0 && HasModelContent(currentAssistantMessage)) return nodes[boundaryIndex].Id;
-
-            boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex - 1);
-            if (boundaryIndex >= 0 && nodes[boundaryIndex].Message is UserChatMessage)
-            {
-                // Send/Edit/Retry add the current user turn before this empty assistant placeholder.
-                // Keep that instruction verbatim in the suffix rather than asking the compression
-                // model to interpret or rewrite it.
-                boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex - 1);
-            }
-        }
-        else
-        {
-            boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex);
-        }
-
-        return boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
-    }
-
-    private static int FindMessageIndex(IReadOnlyList<ChatMessageNode> nodes, ChatMessage message)
-    {
-        for (var i = nodes.Count - 1; i >= 0; i--)
-        {
-            if (ReferenceEquals(nodes[i].Message, message)) return i;
-        }
-
-        return -1;
-    }
-
-    private static int FindPreviousCompressionSourceIndex(IReadOnlyList<ChatMessageNode> nodes, int startIndex)
-    {
-        for (var i = Math.Min(startIndex, nodes.Count - 1); i >= 0; i--)
-        {
-            if (IsCompressionSourceMessage(nodes[i].Message)) return i;
-        }
-
-        return -1;
-    }
-
-    // TODO
-    private static bool IsCompressionSourceMessage(ChatMessage message) =>
-        message is not VisualContextResetChatMessage &&
-        (message is ContextCompressionChatMessage { HasSummary: true } ||
-            message.Role.Label == AuthorRole.Assistant.Label ||
-            message.Role.Label == AuthorRole.User.Label ||
-            message.Role.Label == AuthorRole.Developer.Label ||
-            message.Role.Label == AuthorRole.System.Label ||
-            message.Role.Label == AuthorRole.Tool.Label);
-
-    private static bool HasModelContent(AssistantChatMessage message) =>
-        message.Items.AsValueEnumerable().Any(static span => span is not AssistantChatMessageVisualContextResetSpan);
-
-    private static ChatMessageNode[] SelectCompressionSourceNodes(
-        IReadOnlyList<ChatMessageNode> nodes,
-        Guid coveredThroughNodeId)
-    {
-        if (coveredThroughNodeId == Guid.Empty) return [];
-
-        for (var i = 0; i < nodes.Count; i++)
-        {
-            if (nodes[i].Id == coveredThroughNodeId) return nodes.Take(i + 1).ToArray();
-        }
-
-        return [];
-    }
-
-    private static bool TryTrimOldestConversationUnit(List<ChatMessage> messages)
-    {
-        if (messages.Count <= 1) return false;
-
-        var compressionIndex = messages.FindLastIndex(static message => message is ContextCompressionChatMessage { HasSummary: true });
-        if (compressionIndex > 0)
-        {
-            // Retained user messages are intentionally placed before the prior summary. They are
-            // useful verbatim context, but are the first optional history to drop when the
-            // compression request itself exceeds the provider limit.
-            messages.RemoveAt(0);
-            return true;
-        }
-
-        var startIndex = compressionIndex + 1;
-        if (startIndex >= messages.Count)
-        {
-            messages.RemoveAt(compressionIndex);
-            return messages.Count > 0;
-        }
-
-        var firstUserIndex = messages.FindIndex(
-            startIndex,
-            static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
-        if (firstUserIndex < 0)
-        {
-            if (messages.Count - startIndex > 1)
-            {
-                messages.RemoveAt(startIndex);
-                return true;
-            }
-
-            if (compressionIndex < 0) return false;
-
-            messages.RemoveAt(compressionIndex);
-            return true;
-        }
-
-        if (firstUserIndex > startIndex)
-        {
-            messages.RemoveRange(startIndex, firstUserIndex - startIndex);
-            return true;
-        }
-
-        var nextUserIndex = messages.FindIndex(
-            firstUserIndex + 1,
-            static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
-        var removeCount = (nextUserIndex < 0 ? messages.Count : nextUserIndex) - firstUserIndex;
-        if (removeCount >= messages.Count - startIndex)
-        {
-            if (compressionIndex < 0) return false;
-
-            messages.RemoveAt(compressionIndex);
-            return true;
-        }
-
-        messages.RemoveRange(firstUserIndex, removeCount);
-        return true;
-    }
-
     private static bool IsContextLengthExceeded(Exception exception, KernelMixin kernelMixin) =>
-        ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(exception, kernelMixin)) is HandledChatException.InvalidRequest.ContextLengthExceeded;
+        ChatExceptionNormalizer.GetFinalFailure(ChatExceptionNormalizer.Handle(exception, kernelMixin))
+            is HandledChatException.InvalidRequest.ContextLengthExceeded;
 
     /// <summary>
     /// Gets streaming chat message contents from the chat completion service.
@@ -1792,18 +1540,11 @@ public sealed partial class ChatService : IChatService
         BypassMcpServerApproval
     }
 
-    private sealed record CompressionResult(bool HasAppliedSummary, Exception? Error);
-
     private sealed record ModelInvocationResult(
         IReadOnlyList<FunctionCallContent> FunctionCalls,
         ChatUsageDetails Usage,
         Guid InvocationId
     );
-
-    private sealed class ContextCompressionOutputException(string message, string localeKey) : Exception(message)
-    {
-        public string LocaleKey { get; } = localeKey;
-    }
 
     private sealed class ScopedPromptRenderer(
         IPromptPlaceholderSource promptPlaceholderSource,

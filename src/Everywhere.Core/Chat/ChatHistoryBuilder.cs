@@ -113,6 +113,20 @@ public static class ChatHistoryBuilder
         int maxContextRounds,
         int declaredContextLimit)
     {
+        return SelectContextMessages(chatNodes, maxContextRounds, declaredContextLimit, out _);
+    }
+
+    /// <summary>
+    /// Selects the active summary, optional retained user text, and the uncompressed suffix.
+    /// Reports whether the round limit omitted history from this selection, so compression can
+    /// distinguish a checkpoint of the active context from a summary of the entire prefix.
+    /// </summary>
+    public static IReadOnlyList<ChatMessage> SelectContextMessages(
+        IReadOnlyList<ChatMessageNode> chatNodes,
+        int maxContextRounds,
+        int declaredContextLimit,
+        out bool wasHistoryTrimmed)
+    {
         var compressionIndex = FindLastSuccessfulCompressionIndex(chatNodes, out var anchorIndex);
         if (compressionIndex < 0)
         {
@@ -122,6 +136,7 @@ public static class ChatHistoryBuilder
                 .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage)
                 .ToArray();
             var startIndex = ResolveStartIndex(messages, maxContextRounds, 0);
+            wasHistoryTrimmed = startIndex > 0;
             return messages.AsValueEnumerable().Skip(startIndex).ToArray();
         }
 
@@ -132,6 +147,7 @@ public static class ChatHistoryBuilder
             .Where(static message => message is not ContextCompressionChatMessage and not RootChatMessage)
             .ToArray();
         var suffixStartIndex = ResolveStartIndex(suffix, maxContextRounds, 0);
+        wasHistoryTrimmed = suffixStartIndex > 0;
         var retainedUserMessages = SelectRetainedUserMessages(chatNodes, anchorIndex, declaredContextLimit);
         var result = new List<ChatMessage>(retainedUserMessages.Count + suffix.Length - suffixStartIndex + 1);
         result.AddRange(retainedUserMessages);

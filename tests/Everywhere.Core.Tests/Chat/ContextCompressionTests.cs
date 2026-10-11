@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
@@ -237,17 +238,17 @@ public sealed class ContextCompressionTests
     }
 
     [Test]
-    public void ResolveCompressionBoundary_WhenNewUserPrecedesEmptyAssistant_LeavesNewUserInSuffix()
+    public void ResolveCompressionBoundary_WhenBeforeCurrentUser_LeavesNewUserInSuffix()
     {
         using var context = new ChatContext();
         context.Add(new UserChatMessage("old request", []));
         var oldAssistant = Assistant("old response");
         context.Add(oldAssistant);
-        context.Add(new UserChatMessage("new request", []));
+        var userNode = context.Add(new UserChatMessage("new request", []));
         var pendingAssistant = new AssistantChatMessage { IsBusy = true };
         context.Add(pendingAssistant);
 
-        var boundary = ResolveCompressionBoundary(context, pendingAssistant);
+        var boundary = ResolveCompressionBoundary(context, CompressionBoundary.Before(userNode));
         var oldAssistantNode = context.Items.Single(node => ReferenceEquals(node.Message, oldAssistant));
 
         Assert.That(boundary, Is.EqualTo(oldAssistantNode.Id));
@@ -429,11 +430,20 @@ public sealed class ContextCompressionTests
             context,
             contextCompressionThreshold);
 
-    private static Guid ResolveCompressionBoundary(ChatContext context, AssistantChatMessage assistantMessage) =>
-        InvokeResolveCompressionBoundary(null, context, assistantMessage);
+    private static Guid ResolveCompressionBoundary(ChatContext context, CompressionBoundary boundary)
+    {
+        var nodes = context.Items;
+        var boundaryIndex = InvokeResolveCompressionBoundary(null, nodes, boundary);
+        return boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
+    }
 
-    private static bool TryTrimOldestConversationUnit(List<ChatMessage> messages) =>
-        InvokeTryTrimOldestConversationUnit(null, messages);
+    private static bool TryTrimOldestConversationUnit(List<ChatMessage> messages)
+    {
+        // Match the local function without depending on the compiler's numeric name suffix.
+        var method = typeof(ChatService).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+            .Single(method => method.Name.StartsWith("<CompactContextAsync>g__TryTrimOldestConversationUnit|", StringComparison.Ordinal));
+        return method.Invoke(null, [messages]) is true;
+    }
 
     [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "ResolvePendingAutomaticCompressionTrigger")]
     private static extern ContextCompressionTrigger? InvokeResolvePendingAutomaticCompressionTrigger(
@@ -442,13 +452,8 @@ public sealed class ContextCompressionTests
         int contextCompressionThreshold);
 
     [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "ResolveCompressionBoundary")]
-    private static extern Guid InvokeResolveCompressionBoundary(
+    private static extern int InvokeResolveCompressionBoundary(
         ChatService? klass,
-        ChatContext context,
-        AssistantChatMessage? assistantMessage);
-
-    [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "TryTrimOldestConversationUnit")]
-    private static extern bool InvokeTryTrimOldestConversationUnit(
-        ChatService? klass,
-        List<ChatMessage> messages);
+        IReadOnlyList<ChatMessageNode> nodes,
+        CompressionBoundary boundary);
 }

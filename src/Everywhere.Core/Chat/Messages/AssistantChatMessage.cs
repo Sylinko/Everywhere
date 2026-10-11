@@ -82,6 +82,22 @@ public sealed partial class AssistantChatMessage : ChatMessage, IHaveChatAttachm
     public IEnumerable<ChatAttachment> Attachments => _spansSource.Items.OfType<IHaveChatAttachments>().SelectMany(s => s.Attachments);
 
     /// <summary>
+    /// Gets whether any span contains model output. Application-generated reset notices do not
+    /// count as output. This does not indicate whether tool execution has completed.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public bool HasOutputContent
+    {
+        get
+        {
+            var result = false;
+            _spansSource.Edit(list => result = list.AsValueEnumerable().Any(static span => span.HasOutputContent));
+            return result;
+        }
+    }
+
+    /// <summary>
     /// The private source for function calls.
     /// </summary>
     [IgnoreMember] private readonly SourceList<AssistantChatMessageSpan> _spansSource = new();

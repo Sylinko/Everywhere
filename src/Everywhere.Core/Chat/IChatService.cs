@@ -42,7 +42,8 @@ public interface IChatService
     /// </summary>
     /// <param name="chatContext"></param>
     /// <param name="assistant"></param>
-    /// <param name="assistantChatMessage"></param>
+    /// <param name="assistantNode">The current branch node containing the assistant response.</param>
+    /// <param name="compressionBoundary">The initial prefix eligible for compression before this response produces output.</param>
     /// <param name="systemPromptOverride"></param>
     /// <param name="enableNotifications">Send notifications for function calls and other events during the generation process.</param>
     /// <param name="purpose">Statistics classification for model invocations produced by this generation.</param>
@@ -50,7 +51,8 @@ public interface IChatService
     Task<ChatGenerationResult> GenerateAsync(
         ChatContext chatContext,
         Assistant assistant,
-        AssistantChatMessage assistantChatMessage,
+        ChatMessageNode assistantNode,
+        CompressionBoundary compressionBoundary,
         string? systemPromptOverride = null,
         bool enableNotifications = true,
         StatisticsModelInvocationPurpose purpose = StatisticsModelInvocationPurpose.ChatResponse,

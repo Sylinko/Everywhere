@@ -83,9 +83,9 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
     {
         // Fork a temporary chat context for the subagent
         var forkedChatContext = chatContext.ForkSubagent(title);
-        forkedChatContext.Add(new UserChatMessage(prompt, []));
+        var userNode = forkedChatContext.Add(new UserChatMessage(prompt, []));
         var assistantChatMessage = new AssistantChatMessage { IsBusy = true };
-        forkedChatContext.Add(assistantChatMessage);
+        var assistantNode = forkedChatContext.Add(assistantChatMessage);
 
         // Display the chat context in the UI
         userInterface.ActivityPreview = new ChatPluginSubagentActivityPreview(forkedChatContext);
@@ -125,7 +125,8 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
                     generationResult = await chatService.GenerateAsync(
                         forkedChatContext,
                         specializedAssistant,
-                        assistantChatMessage,
+                        assistantNode,
+                        CompressionBoundary.Before(userNode),
                         systemPromptOverride: systemPrompt,
                         enableNotifications: false,
                         purpose: StatisticsModelInvocationPurpose.SubagentResponse,

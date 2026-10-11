@@ -96,7 +96,7 @@ public sealed partial class ContextUsageState : ObservableObject
     [ObservableProperty]
     public partial ContextUsageSnapshot Snapshot { get; private set; } = ContextUsageSnapshot.NotMeasured;
 
-    internal void Report(ChatUsageDetails usage, string modelId, int contextLimit)
+    internal void Report(ChatUsageDetails usage, string? modelId, int contextLimit)
     {
         Snapshot = usage.HasUsage ?
             new ContextUsageSnapshot(
@@ -142,7 +142,7 @@ public sealed partial class ContextUsageState : ObservableObject
         };
     }
 
-    internal void MarkCompacted(string modelId, int contextLimit)
+    internal void MarkCompacted(string? modelId, int contextLimit)
     {
         Snapshot = new ContextUsageSnapshot(
             ContextUsageKind.Unavailable,

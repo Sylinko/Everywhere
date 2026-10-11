@@ -81,6 +81,12 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     [IgnoreMember]
     public IObservable<int> CountChanged => _branchNodesSourceList.CountChanged;
 
+    /// <summary>
+    /// Gets a snapshot of the current branch, including the hidden root node.
+    /// Each access locks the source list and copies its node references.
+    /// Reuse the snapshot within an operation; obtain a new one after branch mutations.
+    /// Nodes and messages remain mutable.
+    /// </summary>
     [IgnoreMember]
     public IReadOnlyList<ChatMessageNode> Items => _branchNodesSourceList.Items;
 
@@ -370,7 +376,8 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// <summary>
     /// Adds a message at the end of the current branch.
     /// </summary>
-    public void Add(ChatMessage message)
+    /// <returns>The node created for the message.</returns>
+    public ChatMessageNode Add(ChatMessage message)
     {
         using var _ = _graphMutationLock.EnterScope();
 
@@ -406,6 +413,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         afterNode.Add(newNode.Id);
 
         UpdateBranchAfterCore(index - 1, afterNode);
+        return newNode;
     }
 
     /// <summary>
@@ -463,10 +471,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         // require a corresponding change notification to re-evaluate the filter.
         _branchNodesSourceList.Connect(node => !node.Message.IsHidden);
 
-    public Task ReportContextUsageAsync(ChatUsageDetails usage, string modelId, int contextLimit) =>
+    public Task ReportContextUsageAsync(ChatUsageDetails usage, string? modelId, int contextLimit) =>
         Dispatcher.UIThread.InvokeOnDemandAsync(() => ContextUsage.Report(usage, modelId, contextLimit));
 
-    public Task MarkContextCompactedAsync(string modelId, int contextLimit) =>
+    public Task MarkContextCompactedAsync(string? modelId, int contextLimit) =>
         Dispatcher.UIThread.InvokeOnDemandAsync(() => ContextUsage.MarkCompacted(modelId, contextLimit));
 
     /// <summary>

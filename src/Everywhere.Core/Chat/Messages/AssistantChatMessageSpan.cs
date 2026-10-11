@@ -19,6 +19,14 @@ namespace Everywhere.Chat;
 [Union(4, typeof(AssistantChatMessageVisualContextResetSpan))]
 public abstract partial class AssistantChatMessageSpan : ObservableObject
 {
+    /// <summary>
+    /// Gets whether this span contains model output, independently of tool execution completion.
+    /// Application-generated notices do not count as model output.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public abstract bool HasOutputContent { get; }
+
     [Key(0)]
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ElapsedSeconds))]
@@ -41,6 +49,11 @@ public abstract partial class AssistantChatMessageSpan : ObservableObject
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageSpan, IDisposable
 {
+    /// <inheritdoc />
+    [IgnoreMember]
+    [JsonIgnore]
+    public override bool HasOutputContent => _contentMarkdownBuilder is { Length: > 0 };
+
     [IgnoreMember]
     [JsonIgnore]
     public ThreadSafeObservableStringBuilder ContentMarkdownBuilder => EnsureContentMarkdownBuilder();
@@ -90,6 +103,11 @@ public sealed partial class AssistantChatMessageTextSpan : AssistantChatMessageS
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class AssistantChatMessageFunctionCallSpan : AssistantChatMessageSpan, IHaveChatAttachments, ISourceList<FunctionCallChatMessage>
 {
+    /// <inheritdoc />
+    [IgnoreMember]
+    [JsonIgnore]
+    public override bool HasOutputContent => _functionCallsSource.Items.AsValueEnumerable().Any(static message => !message.Calls.IsEmpty);
+
     [IgnoreMember]
     [JsonIgnore]
     public IReadOnlyBindableList<FunctionCallChatMessage> FunctionCalls { get; }
@@ -196,6 +214,11 @@ public sealed partial class AssistantChatMessageFunctionCallSpan : AssistantChat
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMessageSpan, IDisposable
 {
+    /// <inheritdoc />
+    [IgnoreMember]
+    [JsonIgnore]
+    public override bool HasOutputContent => _reasoningMarkdownBuilder is { Length: > 0 };
+
     [IgnoreMember]
     public ThreadSafeObservableStringBuilder ReasoningMarkdownBuilder => EnsureReasoningMarkdownBuilder();
 
@@ -247,6 +270,11 @@ public sealed partial class AssistantChatMessageReasoningSpan : AssistantChatMes
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class AssistantChatMessageImageSpan : AssistantChatMessageSpan, IHaveChatAttachments
 {
+    /// <inheritdoc />
+    [IgnoreMember]
+    [JsonIgnore]
+    public override bool HasOutputContent => ImageOutput is not null;
+
     // TODO: if we want to support multiple images in a single span, we can change this to a list of FileAttachment and update the Attachments property accordingly.
     // TODO: video output and other media types can be added in the future as well, just rename `AssistantChatMessageImageSpan` to `AssistantChatMessageMediaSpan` and add a list of media attachments.
     [Key(3)]
@@ -265,6 +293,11 @@ public partial class AssistantChatMessageImageSpan : AssistantChatMessageSpan, I
 [MessagePackObject(OnlyIncludeKeyedMembers = true)]
 public sealed partial class AssistantChatMessageVisualContextResetSpan : AssistantChatMessageSpan
 {
+    /// <inheritdoc />
+    [IgnoreMember]
+    [JsonIgnore]
+    public override bool HasOutputContent => false;
+
     /// <summary>Gets the reset notice emitted at this boundary.</summary>
     [Key(3)]
     public VisualContextResetChatMessage Message { get; }
