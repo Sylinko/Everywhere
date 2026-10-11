@@ -1,7 +1,8 @@
 <ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="using:Everywhere.ValueConverters" xmlns:vm="using:Everywhere.ViewModels">
+  xmlns:exp="clr-namespace:ExpressionBinding.Avalonia;assembly=ExpressionBinding.Avalonia" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="using:Everywhere.ValueConverters"
+  xmlns:vm="using:Everywhere.ViewModels">
   <ControlTheme
     x:Key="{x:Type v:ToolApprovalSelector}"
     TargetType="v:ToolApprovalSelector">
@@ -12,28 +13,19 @@
           Classes="Ghost"
           Height="{DynamicResource FontSize3Xl}"
           HorizontalContentAlignment="Stretch"
-          Content="{TemplateBinding EffectiveItem}"
+          Content="{Binding EffectiveItem?.NameKey^, RelativeSource={RelativeSource TemplatedParent}}"
           Focusable="False"
           Foreground="{TemplateBinding Foreground}">
-          <Button.ContentTemplate>
-            <DataTemplate x:DataType="vm:ToolApprovalModeOption">
-              <DockPanel
-                HorizontalSpacing="6" IsHitTestVisible="False">
-                <LucideIcon
-                  DockPanel.Dock="Left" VerticalAlignment="Center"
-                  Kind="{Binding Icon}"
-                  Size="{DynamicResource FontSizeM}"/>
-                <TextBlock
-                  VerticalAlignment="Center" ClipToBounds="False"
-                  Text="{Binding NameKey^}"
-                  TextTrimming="CharacterEllipsis">
-                  <Interaction.Behaviors>
-                    <shadui:TextTrimmedToolTipBehavior/>
-                  </Interaction.Behaviors>
-                </TextBlock>
-              </DockPanel>
-            </DataTemplate>
-          </Button.ContentTemplate>
+          <Button.Padding>
+            <exp:ExpressionBinding Expression="thickness((A - B) / 2)">
+              <DynamicResource ResourceKey="FontSize3Xl"/>
+              <DynamicResource ResourceKey="FontSizeXl"/>
+            </exp:ExpressionBinding>
+          </Button.Padding>
+
+          <shadui:ButtonAssist.Icon>
+            <LucideIcon Kind="{Binding $parent[v:ToolApprovalSelector].EffectiveItem?.Icon}"/>
+          </shadui:ButtonAssist.Icon>
 
           <Button.Flyout>
             <Flyout Placement="Top">
@@ -80,17 +72,6 @@
                           DockPanel.Dock="Left" VerticalAlignment="Center"
                           Kind="{Binding Icon}"
                           Size="{DynamicResource FontSizeXl}"/>
-                        <LucideIcon
-                          DockPanel.Dock="Right" VerticalAlignment="Center"
-                          Kind="Check"
-                          Size="{DynamicResource FontSizeM}">
-                          <LucideIcon.IsVisible>
-                            <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                              <Binding Path="."/>
-                              <Binding Path="$parent[v:ToolApprovalSelector].SelectedItem"/>
-                            </MultiBinding>
-                          </LucideIcon.IsVisible>
-                        </LucideIcon>
                         <StackPanel Spacing="2">
                           <TextBlock
                             FontWeight="SemiBold"
