@@ -43,16 +43,14 @@ public abstract partial class Assistant : ObservableValidator
     [DynamicLocaleKey(
         LocaleKey.Assistant_RequestTimeoutSeconds_Header,
         LocaleKey.Assistant_RequestTimeoutSeconds_Description)]
-    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 0)]
-    [SettingsIntegerItem(IsSliderVisible = false)]
+    [SettingsIntegerItem(IsSliderVisible = false, Group = LocaleKey.Assistant_AdvancedSettings, Index = 0)]
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
     /// <summary>Maximum retries for eligible request failures; -1 allows unlimited retries.</summary>
     [ObservableProperty]
     [DynamicLocaleKey(LocaleKey.Assistant_RequestMaxRetries_Header, LocaleKey.Assistant_RequestMaxRetries_Description)]
-    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 1)]
-    [SettingsIntegerItem(Min = -1, IsSliderVisible = false)]
+    [SettingsIntegerItem(Min = -1, IsSliderVisible = false, Group = LocaleKey.Assistant_AdvancedSettings, Index = 1)]
     [DefaultValue(5)]
     public partial int RequestMaxRetries { get; set; } = 5;
 

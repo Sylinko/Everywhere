@@ -19,8 +19,14 @@ public sealed class GeneratedSettingsItemsAttribute : Attribute
 public class SettingsItemIgnoreAttribute : Attribute;
 
 /// <summary>
-/// Additional metadata for a settings item.
+/// Common presentation metadata for a single settings item.
+/// Use one declaration per property, either this attribute or a specialized derived attribute.
 /// </summary>
+/// <remarks>
+/// Binding paths are emitted as typed expressions rooted at the owning settings object.
+/// Boolean bindings also support !, &amp;&amp;, ||, and parentheses. Logical combinations
+/// use MultiBinding with compiled property bindings rather than a single lambda expression.
+/// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
 public class SettingsItemAttribute : Attribute
 {
@@ -73,38 +79,107 @@ public class SettingsItemAttribute : Attribute
     public int Index { get; set; } = int.MinValue;
 }
 
+/// <summary>
+/// Configures a string settings item and its common presentation metadata.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class SettingsStringItemAttribute : Attribute
+public class SettingsStringItemAttribute : SettingsItemAttribute
 {
+    /// <summary>
+    /// Gets or sets the placeholder text for the string input field in the UI.
+    /// </summary>
     public string? PlaceholderText { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum length of the string input field in the UI.
+    /// </summary>
     public int MaxLength { get; set; } = int.MaxValue;
+
+    /// <summary>
+    /// Gets or sets whether the string input field should support multiple lines in the UI.
+    /// </summary>
     public bool IsMultiline { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the string input field should be treated as a password field in the UI.
+    /// </summary>
     public bool IsPassword { get; set; }
+
+    /// <summary>
+    /// Gets or sets the width of the string input field in the UI. If not set, the default width will be used.
+    /// </summary>
     public double Height { get; set; } = double.NaN;
+
+    /// <summary>
+    /// Gets or sets the minimum width of the string input field in the UI. If not set, the default minimum width will be used.
+    /// </summary>
     public double MinWidth { get; set; } = 320d;
 }
 
+/// <summary>
+/// Configures an integer settings item and its common presentation metadata.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class SettingsIntegerItemAttribute : Attribute
+public class SettingsIntegerItemAttribute : SettingsItemAttribute
 {
+    /// <summary>
+    /// Gets or sets the minimum value for the slider and the integer input field in the UI.
+    /// </summary>
     public int Min { get; set; } = int.MinValue;
+
+    /// <summary>
+    /// Gets or sets the maximum value for the slider and the integer input field in the UI.
+    /// </summary>
     public int Max { get; set; } = int.MaxValue;
+
+    /// <summary>
+    /// Gets or sets whether the slider should be displayed in the UI. If false, only the integer input field will be shown.
+    /// </summary>
     public bool IsSliderVisible { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether the integer input field should be displayed as a text box in the UI. If false, only the slider will be shown.
+    /// </summary>
     public bool IsTextBoxVisible { get; set; } = true;
 }
 
+/// <summary>
+/// Configures a floating-point settings item and its common presentation metadata.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class SettingsDoubleItemAttribute : Attribute
+public class SettingsDoubleItemAttribute : SettingsItemAttribute
 {
+    /// <summary>
+    /// Gets or sets the minimum value for the slider and the double input field in the UI.
+    /// </summary>
     public double Min { get; set; } = double.NegativeInfinity;
+
+    /// <summary>
+    /// Gets or sets the maximum value for the slider and the double input field in the UI.
+    /// </summary>
     public double Max { get; set; } = double.PositiveInfinity;
+
+    /// <summary>
+    /// Gets or sets the step value for the slider and the double input field in the UI. This determines the increment/decrement amount when adjusting the value.
+    /// </summary>
     public double Step { get; set; } = 1.0d;
+
+    /// <summary>
+    /// Gets or sets whether the slider should be displayed in the UI. If false, only the double input field will be shown.
+    /// </summary>
     public bool IsSliderVisible { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether the double input field should be displayed as a text box in the UI. If false, only the slider will be shown.
+    /// </summary>
     public bool IsTextBoxVisible { get; set; } = true;
 }
 
+/// <summary>
+/// Configures a selection settings item and its common presentation metadata.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class SettingsSelectionItemAttribute(string itemsSourceBindingPath) : Attribute
+public class SettingsSelectionItemAttribute(string itemsSourceBindingPath) : SettingsItemAttribute
 {
     /// <summary>
     /// A binding path to the property that contains the items to select from.
@@ -132,7 +207,7 @@ public class SettingsSelectionItemAttribute(string itemsSourceBindingPath) : Att
 /// Indicates this Property is a single item that should use a DataTemplate for display
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class SettingsTemplatedItemAttribute : Attribute
+public class SettingsTemplatedItemAttribute : SettingsItemAttribute
 {
     /// <summary>
     /// An optional key to use for the DataTemplate to display the item.
@@ -149,7 +224,7 @@ public class SettingsTemplatedItemAttribute : Attribute
 }
 
 /// <summary>
-/// Indicates this Property should generate items
+/// Adds expandable child settings to a property. This composes with a single settings item declaration.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class SettingsItemsAttribute : Attribute

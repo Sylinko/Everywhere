@@ -25,7 +25,7 @@ internal static class Diagnostics
     public static readonly DiagnosticDescriptor MissingItemsSourceBindingPath = new(
         id: "STG004",
         title: "Missing ItemsSource Binding Path",
-        messageFormat: "Property '{0}' is a collection but has no ItemsSourceBindingPath specified in [SettingsItemsSource]",
+        messageFormat: "Property '{0}' has no ItemsSourceBindingPath specified in [SettingsSelectionItem]",
         category: Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -33,7 +33,7 @@ internal static class Diagnostics
     public static readonly DiagnosticDescriptor InvalidItemsSourceBindingPath = new(
         id: "STG005",
         title: "Invalid ItemsSource Binding Path",
-        messageFormat: "Property '{0}' has an invalid ItemsSourceBindingPath '{1}' specified in [SettingsItemsSource]",
+        messageFormat: "Property '{0}' has an invalid ItemsSourceBindingPath '{1}' specified in [SettingsSelectionItem]",
         category: Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -58,6 +58,22 @@ internal static class Diagnostics
         id: "STG008",
         title: "Invalid SettingsItem Modifier",
         messageFormat: "Property '{0}' has invalid SettingsItem modifier '{1}'",
+        category: Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor UnsupportedBindingExpression = new(
+        id: "STG009",
+        title: "Unsupported settings binding expression",
+        messageFormat: "Property '{0}' has unsupported binding expression '{1}'; use property paths, !, &&, ||, and parentheses",
+        category: Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor DuplicateSettingsItemDeclaration = new(
+        id: "STG010",
+        title: "Duplicate settings item declaration",
+        messageFormat: "Property '{0}' must have at most one SettingsItem attribute or specialized derived attribute; SettingsItems may be combined separately",
         category: Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

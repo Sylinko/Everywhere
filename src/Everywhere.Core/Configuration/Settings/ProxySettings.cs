@@ -28,8 +28,7 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
     [DynamicLocaleKey(
         LocaleKey.ProxySettings_Endpoint_Header,
         LocaleKey.ProxySettings_Endpoint_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
-    [SettingsStringItem(PlaceholderText = "http://127.0.0.1:7890")]
+    [SettingsStringItem(PlaceholderText = "http://127.0.0.1:7890", IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     public partial string? Endpoint { get; set; }
 
     [ObservableProperty]
@@ -43,8 +42,7 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
     [DynamicLocaleKey(
         LocaleKey.ProxySettings_BypassList_Header,
         LocaleKey.ProxySettings_BypassList_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
-    [SettingsStringItem(PlaceholderText = "www.example.com", IsMultiline = true, Height = 96)]
+    [SettingsStringItem(PlaceholderText = "www.example.com", IsMultiline = true, Height = 96, IsVisibleBindingPath = nameof(IsEnabled), Group = "_")]
     public partial string? BypassList { get; set; }
 
     [ObservableProperty]
@@ -65,7 +63,6 @@ public sealed partial class ProxySettings(IServiceProvider serviceProvider) : Se
     [DynamicLocaleKey(
         LocaleKey.ProxySettings_Password_Header,
         LocaleKey.ProxySettings_Password_Description)]
-    [SettingsItem(IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}", Group = "_")]
-    [SettingsStringItem(IsPassword = true)]
+    [SettingsStringItem(IsPassword = true, IsVisibleBindingPath = $"{nameof(IsEnabled)} && {nameof(UseAuthentication)}", Group = "_")]
     public partial string? Password { get; set; }
 }

@@ -20,16 +20,14 @@ public sealed partial class CompositeKeyboardShortcut : ObservableObject
     [DynamicLocaleKey(
         LocaleKey.CompositeKeyboardShortcut_Main_Header,
         LocaleKey.CompositeKeyboardShortcut_Main_Description)]
-    [SettingsItem(Group = "_")]
-    [SettingsTemplatedItem]
+    [SettingsTemplatedItem(Group = "_")]
     public partial KeyboardShortcut Main { get; set; }
 
     [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.CompositeKeyboardShortcut_Alternative_Header,
         LocaleKey.CompositeKeyboardShortcut_Alternative_Description)]
-    [SettingsItem(Group = "_")]
-    [SettingsTemplatedItem]
+    [SettingsTemplatedItem(Group = "_")]
     public partial KeyboardShortcut Alternative { get; set; }
 
     public static implicit operator CompositeKeyboardShortcut(KeyboardShortcut shortcut) => new() { Main = shortcut };

@@ -117,8 +117,7 @@ public sealed partial class CustomAssistant : Assistant
     [DynamicLocaleKey(
         LocaleKey.CustomAssistant_ContextCompressionThreshold_Header,
         LocaleKey.CustomAssistant_ContextCompressionThreshold_Description)]
-    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 2)]
-    [SettingsIntegerItem(Min = 5, Max = 95)]
+    [SettingsIntegerItem(Min = 5, Max = 95, Group = LocaleKey.Assistant_AdvancedSettings, Index = 2)]
     [Range(5, 95)]
     [DefaultValue(80)]
     public partial int ContextCompressionThreshold { get; set; } = 80;
@@ -127,8 +126,7 @@ public sealed partial class CustomAssistant : Assistant
     [DynamicLocaleKey(
         LocaleKey.CustomAssistant_MaxContextRounds_Header,
         LocaleKey.CustomAssistant_MaxContextRounds_Description)]
-    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 3)]
-    [SettingsIntegerItem(Min = -1, Max = 30)]
+    [SettingsIntegerItem(Min = -1, Max = 30, Group = LocaleKey.Assistant_AdvancedSettings, Index = 3)]
     [Range(-1, 30)]
     [DefaultValue(-1)]
     public partial int MaxContextRounds { get; set; } = -1;

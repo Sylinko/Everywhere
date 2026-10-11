@@ -29,9 +29,8 @@ public sealed partial class SystemAssistantSettings(IServiceProvider serviceProv
     [DynamicLocaleKey(
         LocaleKey.SystemAssistantSettings_ToolApproval_Header,
         LocaleKey.SystemAssistantSettings_ToolApproval_Description)]
-    [SettingsItem(Group = "_ToolApproval")]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(ToolApproval)}.{nameof(SystemAssistant.AutoSelect)}")]
-    [SettingsTemplatedItem]
+    [SettingsTemplatedItem(Group = "_ToolApproval")]
     public SystemAssistant ToolApproval { get; } = new(ModelSpecializations.ToolApproval);
 
     /// <summary>

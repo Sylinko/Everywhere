@@ -129,8 +129,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
     [DynamicLocaleKey(
         LocaleKey.DisplaySettings_FontSize_Header,
         LocaleKey.DisplaySettings_FontSize_Description)]
-    [SettingsItem(Group = "_")]
-    [SettingsIntegerItem(Min = -1, Max = 3, IsTextBoxVisible = false)]
+    [SettingsIntegerItem(Min = -1, Max = 3, IsTextBoxVisible = false, Group = "_")]
     public int FontSize
     {
         get;

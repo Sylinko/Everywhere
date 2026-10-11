@@ -505,10 +505,11 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
     [DynamicLocaleKey(
         LocaleKey.WebSearchEngineSettings_SelectedProvider_Header,
         LocaleKey.WebSearchEngineSettings_SelectedProvider_Description)]
-    [SettingsItem(
+    [SettingsSelectionItem(
+        $"{nameof(Providers)}.Values",
+        DataTemplateKey = typeof(IWebSearchEngineProvider),
         Group = LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header,
         DocumentUrlBindingPath = $"{nameof(SelectedProvider)}.{nameof(IWebSearchEngineProvider.DocumentsUrl)}")]
-    [SettingsSelectionItem($"{nameof(Providers)}.Values", DataTemplateKey = typeof(IWebSearchEngineProvider))]
     [SettingsItems(IsExpanded = true)]
     public IWebSearchEngineProvider? SelectedProvider
     {

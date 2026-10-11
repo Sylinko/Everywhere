@@ -12,3 +12,5 @@
  STG006  | Everywhere.Configuration.SourceGenerator | Warning  | Diagnostics
  STG007  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
  STG008  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
+ STG009  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics
+ STG010  | Everywhere.Configuration.SourceGenerator | Error    | Diagnostics

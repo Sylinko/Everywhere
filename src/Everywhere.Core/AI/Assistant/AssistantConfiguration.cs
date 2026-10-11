@@ -58,14 +58,12 @@ public abstract partial class AssistantConfiguration : ObservableValidator, IMod
 
     [ObservableProperty]
     [DynamicLocaleKey(LocaleKey.Assistant_ContextLimit_Header, LocaleKey.Assistant_ContextLimit_Description)]
-    [SettingsItem(Group = "_")]
-    [SettingsIntegerItem(IsSliderVisible = false)]
+    [SettingsIntegerItem(IsSliderVisible = false, Group = "_")]
     public partial int ContextLimit { get; set; }
 
     [ObservableProperty]
     [DynamicLocaleKey(LocaleKey.Assistant_OutputLimit_Header, LocaleKey.Assistant_OutputLimit_Description)]
-    [SettingsItem(Group = "_")]
-    [SettingsIntegerItem(IsSliderVisible = false)]
+    [SettingsIntegerItem(IsSliderVisible = false, Group = "_")]
     public partial int OutputLimit { get; set; }
 
     [ObservableProperty]
