@@ -79,7 +79,6 @@
     <TrimmerRootAssembly Include="Everywhere.I18N.Abstractions"/>
     <TrimmerRootAssembly Include="Anthropic"/>
     <TrimmerRootAssembly Include="CSharpMath.Avalonia"/>
-    <TrimmerRootAssembly Include="DirectWriteForwarder"/>
     <TrimmerRootAssembly Include="ExCSS"/>
     <TrimmerRootAssembly Include="MessagePack"/>
     <TrimmerRootAssembly Include="MicroCom.Runtime"/>
@@ -107,14 +106,9 @@
     <TrimmerRootAssembly Include="WinRT.Runtime"/>
   </ItemGroup>
 
-  <!-- Prune WPF/WinForms assemblies and localized resources natively without an external PowerShell script -->
+  <!-- Exclude debug symbols and XML documentation from the published application. -->
   <Target Name="FilterPublishOutput" AfterTargets="ComputeResolvedFilesToPublishList">
     <ItemGroup>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('Presentation'))"/>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('System.Windows.Forms'))"/>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsBase'))"/>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('WindowsFormsIntegration'))"/>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(FileName)').StartsWith('wpfgfx'))"/>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'"/>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.xml'"/>
     </ItemGroup>
