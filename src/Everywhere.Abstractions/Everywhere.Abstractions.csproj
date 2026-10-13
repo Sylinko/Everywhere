@@ -13,6 +13,7 @@
     <PackageReference Include="MessagePackAnalyzer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     <PackageReference Include="ObservableCollections"/>
+    <PackageReference Include="System.Reactive"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>
 
