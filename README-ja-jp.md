@@ -1,4 +1,4 @@
-<a id="readme-top"></a>
+﻿<a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README.md">English version »</a>
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">简体中文版本 »</a>
@@ -201,7 +201,7 @@
 
 ## 🤝 コントリビューション
 
-私たちはオープンソースを愛しており、皆さんの素晴らしいアイデアやコードの貢献（プルリクエスト）を歓迎します！コードスタイルのガイドラインとローカルでのコンパイル手順については [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+私たちはオープンソースを愛しており、皆さんの素晴らしいアイデアやコードの貢献（プルリクエスト）を歓迎します！コードスタイルのガイドラインとローカルでのコンパイル手順については [CONTRIBUTING.md](.github/CONTRIBUTING.md) をご覧ください。
 
 開発環境のセットアップとプロジェクトのローカルビルドの詳細な手順については、[ビルドガイド](docs/build.md)をご確認ください。
 
@@ -232,11 +232,11 @@
 
 <br/>
 
-<a href="https://star-history.dera.page/#Sylinko/Everywhere&type=date">
+<a href="https://www.star-history.com/?type=date&repos=Sylinko%2FEverywhere">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
  </picture>
 </a>
 
