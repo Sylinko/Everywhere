@@ -8,7 +8,6 @@
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <UseAppHost>true</UseAppHost>
     <CreateAppBundle>true</CreateAppBundle>

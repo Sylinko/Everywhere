@@ -69,7 +69,7 @@ jobs:
         security list-keychain -d user -s $KEYCHAIN_PATH
 
     - name: Install macOS workload
-      run: dotnet workload install macos
+      run: dotnet workload install macos --version 10.0.401
 
     - name: Restore
       run: |

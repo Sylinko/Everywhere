@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/.github/">
     <File Path=".github/FUNDING.yml" />
+    <File Path=".github/CONTRIBUTING.md" />
   </Folder>
   <Folder Name="/.github/issue_templates/">
     <File Path=".github/ISSUE_TEMPLATE/bug-report-zh.yml" />

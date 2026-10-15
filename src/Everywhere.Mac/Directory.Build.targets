@@ -1,0 +1,8 @@
+<Project>
+  <!-- The Apple SDK defines its deployment floor after the project body is evaluated.
+       Set the default here, before .NET falls back to the target platform version.
+       Local and CI builds share this policy; the SDK also writes it to the app manifest. -->
+  <PropertyGroup Condition="'$(SupportedOSPlatformVersion)' == ''">
+    <SupportedOSPlatformVersion>$(MinSupportedOSPlatformVersion)</SupportedOSPlatformVersion>
+  </PropertyGroup>
+</Project>
