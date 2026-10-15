@@ -24,4 +24,9 @@ public sealed record PluginInfo
     /// Gets lifecycle progress, not physical assembly collection status.
     /// </summary>
     public required PluginState State { get; init; }
+
+    /// <summary>
+    /// Gets the reason when State is Skipped; otherwise null.
+    /// </summary>
+    public PluginSkipReason? SkipReason { get; init; }
 }

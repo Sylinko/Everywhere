@@ -52,7 +52,17 @@ Invocations not yet entered capture immediate changes even if their calls were e
 
 ## 3. Two approval layers
 
-The outer gate in `ChatService.InvokeFunctionAsync` handles general plugin/function approval, including MCP tools. Built-in `OnPermissionConsent` callbacks can defer approval to a specific gate inside the tool.
+The outer gate in `ChatService.InvokeFunctionAsync` handles all tool groups through the same pipeline.
+PermissionConsentHook receives FunctionCallContext and a fresh PermissionConsentRequest when existing
+rules have not bypassed approval. Returning true allows, false denies, and null continues normal approval.
+The hook can customize HeaderKey, RememberMasks and CustomOptions; ChatService remains responsible for
+manual interaction, automatic review, cancellation and saving rules. Hooks run synchronously.
+
+McpChatFunction prepares its server-specific heading and ToolConsentOption.BypassPluginApproval option.
+That host-owned option saves approval against the current snapshot's stable plugin Key, including MCP
+snapshots that are not McpChatPlugin instances. No IsMcp branch is used for approval. Native tool groups
+can offer the same action. A null hook decision preserves the configured Ask/Auto mode; tools that handle
+more specific checks inside their implementation must return true explicitly to approve the outer gate.
 
 Tools resolve operations and decide when internal consent is needed: final paths, affected files, shell commands, and UI action batches. Shared `RequestConsentAsync` chooses how consent is obtained, using the invocation snapshot at both layers.
 

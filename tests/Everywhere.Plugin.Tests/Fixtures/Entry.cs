@@ -40,6 +40,7 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
 #endif
 
         var mode = GetMode(context);
+        if (mode == "native-probe") log("native:" + NativeProbe.Query());
 
         if (mode is "owned-io" or "owned-io-failure")
         {
@@ -59,12 +60,6 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
             resources.ReleaseAllResources();
         }
 #endif
-
-        if (mode == "dual-disposal")
-        {
-            context.Register(new DualResource(log));
-            context.Register((IDisposable)new DualResource(log));
-        }
 
         if (mode == "cleanup-failure")
         {
@@ -197,22 +192,6 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
     }
 
     /// <summary>
-    /// Exposes both methods to verify that the container always prefers asynchronous disposal.
-    /// </summary>
-    private sealed class DualResource(Action<string> log) : IDisposable, IAsyncDisposable
-    {
-        /// <inheritdoc />
-        public void Dispose() => log("dual:sync");
-
-        /// <inheritdoc />
-        public ValueTask DisposeAsync()
-        {
-            log("dual:async");
-            return ValueTask.CompletedTask;
-        }
-    }
-
-    /// <summary>
     /// Represents removal of a feature whose session also needs release during ordinary process exit.
     /// </summary>
     private sealed class IoReversal(Func<ValueTask> release, Action<string> log) : IAsyncDisposable
@@ -286,3 +265,20 @@ public static class DependencyApi
     public static int Value => 22;
 }
 #endif
+
+/// <summary>
+/// Imports a package-local native filename without eagerly loading it for other fixture scenarios.
+/// </summary>
+internal static class NativeProbe
+{
+    /// <summary>
+    /// Calls a harmless Windows version API against a nonexistent file.
+    /// </summary>
+    internal static uint Query() => GetFileVersionInfoSize("nonexistent-everywhere-fixture", out _);
+
+    /// <summary>
+    /// Uses a private filename so the test cannot accidentally bind the ordinary system module by name.
+    /// </summary>
+    [System.Runtime.InteropServices.DllImport("fixture_native", EntryPoint = "GetFileVersionInfoSizeW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern uint GetFileVersionInfoSize(string path, out uint handle);
+}

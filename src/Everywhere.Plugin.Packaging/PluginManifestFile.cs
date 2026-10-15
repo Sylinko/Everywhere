@@ -108,20 +108,20 @@ public static partial class PluginManifestFile
         }
 
         // Generated parameterized construction can bypass nullable checks on deferred setter assignments.
-        // Omitted dependencies keep the model's empty default; an explicit JSON null must still be rejected.
-        if (entry.Dependencies is null)
+        // Omitted dependency/asset collections keep their empty defaults; explicit JSON null is rejected.
+        if (entry.Dependencies is null || entry.NativeLibraries is null || entry.ContentFiles is null)
         {
-            throw new JsonException("The dependencies property cannot be null.");
+            throw new JsonException("Dependency and asset collections cannot be null.");
         }
 
-        var assemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var path in entry.Assemblies)
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in entry.Assemblies.Concat(entry.NativeLibraries).Concat(entry.ContentFiles))
         {
             PackagePath.ValidateRelative(path);
 
-            if (!assemblies.Add(path))
+            if (!paths.Add(path))
             {
-                throw new PluginValidationException("DuplicateAsset", $"Duplicate managed asset '{path}'.");
+                throw new PluginValidationException("DuplicateAsset", $"Duplicate selected asset '{path}'.");
             }
         }
 

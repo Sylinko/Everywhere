@@ -47,6 +47,17 @@ This approach generates perfectly standard, statically modified binaries contain
 
 The [MEAI OpenAI donor](../patches/Everywhere.Patches.MicrosoftExtensionsAI.OpenAI/patch_OpenAIClientExtensions.cs) is a wrapper rather than a replacement: MonoMod preserves the original method as `orig_ParseCallContent`, and the wrapper normalizes missing Responses streaming call IDs before invoking it. Such wrappers must not use `MonoModReplace`, which would discard the original implementation. The donor's rules validate the target signature, while real HTTP regressions verify parsing and outgoing tool-result pairing. See [SDKReview.md](LLMRequests/SDKReview.md#responses-call-ids) for its compatibility boundary.
 
+The Semantic Kernel donors also preserve upstream execution. The
+[Abstractions donor](../patches/Everywhere.Patches.SemanticKernel/patch_KernelFunction.cs) adds a weak
+function proxy and wraps the original invocation methods with activation leases, including post-filters
+and streaming disposal. Core calls the injected factory through UnsafeAccessor; compiler references
+remain the original NuGet assemblies. The
+[Core donor](../patches/Everywhere.Patches.SemanticKernel.Core/MonoModRules.cs) redirects the single
+GetConverter cache call to weak-key storage for collectible types. Its original factory delegate is
+unchanged: no parameter parser or result converter is copied into Everywhere. Both donors require
+review when SK 1.75.0 or the checked method shapes change. See the
+[plugin contract](PluginEngine/01-Specification.md#chat-tool-registration).
+
 For replacement adapters, copy the complete implementation from the pinned upstream
 commit before making changes. Retain original cases, helper calls, ownership rules
 and useful comments; mark Everywhere modifications inline. Each `patch_` class

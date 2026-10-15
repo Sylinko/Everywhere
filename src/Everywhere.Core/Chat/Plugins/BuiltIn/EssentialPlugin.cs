@@ -46,15 +46,15 @@ public sealed class EssentialPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     RunSubagentAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageTodo,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     AskUserQuestionAsync,
                     ChatFunctionPermissions.None));
         });

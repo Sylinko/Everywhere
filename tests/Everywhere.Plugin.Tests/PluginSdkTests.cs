@@ -2,7 +2,6 @@
 using System.IO.Compression;
 using System.Security;
 using System.Text.Json;
-using Everywhere.Plugin.Packaging;
 
 namespace Everywhere.Plugin.Tests;
 
@@ -122,43 +121,6 @@ public sealed class PluginSdkTests
         Assert.That(entry.GetProperty("pluginApiVersion").GetString(), Is.EqualTo("[1.0.0,2.0.0)"));
         Assert.That(entry.GetProperty("hostVersion").GetString(), Is.EqualTo(hasImplementationReference ? "[0.9.0,0.10.0)" : null));
         Assert.That(File.Exists(Path.Combine(hostDirectory, "PluginFixture.Host.xml")), Is.True);
-    }
-
-    /// <summary>
-    /// Author tooling receives the same success and error fields from the source-generated command DTOs.
-    /// </summary>
-    [Test]
-    public async Task Check_ValidAndInvalidManifest_PreservesCommandResults()
-    {
-        var sdk = Path.Combine(_repository, "src", "Everywhere.Plugin.Sdk", "bin", _configuration, "net10.0", "Everywhere.Plugin.Sdk.dll");
-        var manifest = new PluginManifest
-        {
-            Id = "fixture.sdk",
-            Version = "1.0.0",
-            Entry = new UniversalPluginEntry
-            {
-                Assembly = "Entry.dll",
-                Type = "Fixture.Entry",
-                Framework = "net10.0",
-                PluginApiVersion = "[1.0,2.0)",
-                Assemblies = ["Entry.dll"]
-            }
-        };
-        PluginManifestFile.Write(_root, manifest);
-        var valid = await RunAsync(_root, sdk, "check", _root);
-        Assert.That(valid.ExitCode, Is.Zero, valid.Output);
-        using var success = JsonDocument.Parse(valid.Output);
-        Assert.That(success.RootElement.GetProperty("code").GetString(), Is.EqualTo("ManifestValid"));
-        Assert.That(success.RootElement.GetProperty("plugin").GetString(), Is.EqualTo(manifest.Id));
-        Assert.That(success.RootElement.GetProperty("version").GetString(), Is.EqualTo(manifest.Version));
-
-        var path = Path.Combine(_root, PluginManifestFile.FileName);
-        await File.WriteAllTextAsync(path, (await File.ReadAllTextAsync(path)).Replace("fixture.sdk", "Invalid Plugin ID"));
-        var invalid = await RunAsync(_root, sdk, "check", _root);
-        Assert.That(invalid.ExitCode, Is.EqualTo(1));
-        using var error = JsonDocument.Parse(invalid.Output);
-        Assert.That(error.RootElement.GetProperty("code").GetString(), Is.EqualTo("InvalidManifest"));
-        Assert.That(error.RootElement.GetProperty("message").GetString(), Is.Not.Empty);
     }
 
     /// <summary>

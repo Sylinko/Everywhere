@@ -52,8 +52,6 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     /// </summary>
     public virtual IReadOnlyList<SettingsItem>? SettingsItems => null;
 
-    public abstract bool IsMcp { get; }
-
     private readonly SourceCache<ChatPluginWarning, string> _warningsSource = new(x => x.Key);
     private readonly IDisposable _warningsConnection;
 
@@ -150,23 +148,28 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
         _functionsConnection.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// Utility hook to bypass permission consent.
+    /// Used when a function needs to handle its own permission consent logic, or when the plugin is trusted and does not require user consent.
+    /// </summary>
+    /// <param name="context">The current tool invocation.</param>
+    /// <param name="request">The proposed consent request.</param>
+    /// <returns>Approval for this invocation.</returns>
+    protected static bool? BypassPermissionConsentHook(FunctionCallContext context, PermissionConsentRequest request) => true;
 }
 
 /// <summary>
-/// Chat kernel plugin implemented natively in Everywhere.
+/// Common implementation for in-process managed chat tools, whether built in or supplied by a plugin.
 /// </summary>
 /// <param name="name"></param>
-public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFunction>(name)
+public abstract class NativeChatPlugin(string name) : ChatPlugin<NativeChatFunction>(name)
 {
-    public override sealed string Key => $"builtin.{Name}";
-
     /// <summary>
     /// Indicates whether this plugin should be visible to users in the UI.
     /// Some plugins may be hidden but still enabled for internal use or by other plugins.
     /// </summary>
     public virtual bool IsVisible => true;
-
-    public override bool IsMcp => false;
 
     public bool HasVisibleFunctions
     {
@@ -177,6 +180,25 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
             return result;
         }
     }
+}
+
+/// <summary>
+/// An application-owned tool group with a stable built-in settings identity.
+/// </summary>
+public abstract class BuiltInChatPlugin(string name) : NativeChatPlugin(name)
+{
+    /// <inheritdoc />
+    public sealed override string Key => $"builtin.{Name}";
+}
+
+/// <summary>
+/// A plugin-supplied tool group. Register it with IChatPluginManager for revocable chat snapshots.
+/// Names must be unique among registered plugin tool groups and remain stable across activations.
+/// </summary>
+public abstract class PluginChatPlugin(string name) : NativeChatPlugin(name)
+{
+    /// <inheritdoc />
+    public sealed override string Key => $"plugin.{Name}";
 }
 
 /// <summary>
@@ -302,8 +324,6 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
     bool ILogger.IsEnabled(LogLevel logLevel) => true;
 
     IDisposable? ILogger.BeginScope<TState>(TState state) => null;
-
-    public override bool IsMcp => true;
 
     public override void Dispose()
     {

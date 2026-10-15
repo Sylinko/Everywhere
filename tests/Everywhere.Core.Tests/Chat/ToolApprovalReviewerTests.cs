@@ -264,7 +264,7 @@ public sealed class ToolApprovalReviewerTests
             settings.SystemAssistant.AllowApprovalFileReads = canReadFiles;
             var plugin = new FileSystemPlugin(settings, new FileHandlerContextFactory([Handler]), Substitute.For<ILogger<FileSystemPlugin>>());
             var manager = Substitute.For<IChatPluginManager>();
-            manager.BuiltInPlugins.Returns(new BindableList<BuiltInChatPlugin> { plugin });
+            manager.NativePlugins.Returns(new BindableList<NativeChatPlugin> { plugin });
             // Use the production constructor, substituting only services outside the review path.
             var constructor = typeof(ChatService).GetConstructors().Single();
             _owner = (ChatService)constructor.Invoke(constructor.GetParameters().Select(parameter => parameter.ParameterType switch

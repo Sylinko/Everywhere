@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -45,6 +46,86 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         InitializeNavigationBarItems();
 
         WeakReferenceMessenger.Default.Register(this);
+    }
+
+    /// <summary>
+    /// Adds a navigation contribution on the UI thread. Register the returned asynchronous resource
+    /// with the plugin context; disposal marshals removal and selection changes to the UI thread.
+    /// </summary>
+    public IAsyncDisposable RegisterNavigationItem(IMainViewNavigationTopLevelItem page)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+
+        var bindings = new CompositeDisposable();
+        var item = CreateNavigationItem(page, bindings);
+
+        if (page is IMainViewNavigationTopLevelItemWithSubItems factory)
+        {
+            foreach (var child in factory.CreateSubItems())
+            {
+                item.Children.Add(CreateNavigationItem(child, bindings));
+            }
+        }
+
+        _itemsSource.Edit(list =>
+        {
+            var index = list
+                .AsValueEnumerable()
+                .TakeWhile(existing => existing.Route is not IMainViewNavigationItem navigation || navigation.Index <= page.Index)
+                .Count();
+            list.Insert(index, item);
+        });
+
+        return new NavigationRegistration(() =>
+        {
+            _itemsSource.Edit(list =>
+            {
+                if (FindNavigationBarItem([item], candidate => ReferenceEquals(candidate, SelectedItem)) is not null)
+                {
+                    SelectedItem = FindNavigationBarItem(
+                        list.Where(candidate => candidate != item),
+                        candidate => candidate.Route is not null);
+                }
+
+                list.Remove(item);
+            });
+
+            bindings.Dispose();
+            ClearNavigationItem(item);
+        });
+
+        static NavigationBarItem CreateNavigationItem(IMainViewNavigationItem page, CompositeDisposable bindings)
+        {
+            var item = new NavigationBarItem { Icon = page.Icon, Tag = page.RouteKey, Route = page };
+            bindings.Add(item.Bind(ContentControl.ContentProperty, page.TitleKey.ToBinding()));
+            bindings.Add(item.Bind(NavigationBarItem.ToolTipProperty, page.TitleKey.ToBinding()));
+            return item;
+        }
+
+        static void ClearNavigationItem(NavigationBarItem item)
+        {
+            foreach (var child in item.Children) ClearNavigationItem(child);
+
+            item.Children.Clear();
+            item.Route = null;
+            item.Content = null;
+            item.Tag = null;
+        }
+    }
+
+    /// <summary>
+    /// Releases its removal callback after one use so a disposed token cannot retain plugin views.
+    /// </summary>
+    private sealed class NavigationRegistration(Action remove) : IAsyncDisposable
+    {
+        private Action? _remove = remove;
+
+        /// <inheritdoc />
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _remove, null) is not { } callback) return;
+            await Dispatcher.UIThread.InvokeAsync(callback);
+        }
     }
 
     protected override void Dispose(bool disposing)

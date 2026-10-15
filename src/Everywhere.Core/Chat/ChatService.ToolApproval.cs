@@ -34,7 +34,7 @@ partial class ChatService
                 return ToolApprovalResult.Fail(ToolApprovalFailure.AssistantUnavailable, "The configured approval assistant does not support tools.");
             }
 
-            var filePlugin = _chatPluginManager.BuiltInPlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
+            var filePlugin = _chatPluginManager.NativePlugins.AsValueEnumerable().OfType<FileSystemPlugin>().First();
             var reviewer = new ToolApprovalReviewer(this, context, mixin, filePlugin, _settings.SystemAssistant.AllowApprovalFileReads);
             return await reviewer.ReviewAsync(BuildApprovalInput(context, scope), cancellationToken);
         }

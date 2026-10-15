@@ -30,6 +30,12 @@ public sealed class PluginEngine : IAsyncDisposable
     private readonly ConcurrentDictionary<string, PluginInfo> _snapshots = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PluginActivation> _activations = new(StringComparer.Ordinal);
     private readonly HashSet<string> _unconfirmedOwners = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Retains native ownership after unconfirmed collection. These handles remain resident until process exit.
+    /// </summary>
+    private readonly List<AssemblyRetirement> _unconfirmedRetirements = [];
+
     private PluginLoadPlan? _plan;
 
     /// <summary>
@@ -179,7 +185,12 @@ public sealed class PluginEngine : IAsyncDisposable
 
         foreach (var (id, info) in _snapshots)
         {
-            _snapshots[id] = info with { IsEnabled = next.Plugins.ContainsKey(id) };
+            _snapshots[id] = info with
+            {
+                IsEnabled = next.RequestedPlugins.ContainsKey(id),
+                State = info.State == PluginState.Skipped ? PluginState.Inactive : info.State,
+                SkipReason = null
+            };
         }
 
         foreach (var plugin in next.Plugins.Values)
@@ -198,6 +209,11 @@ public sealed class PluginEngine : IAsyncDisposable
             var released = previous.AssemblyOrder.Reverse().Where(name => !retained.Contains(name)).ToArray();
 
             if (!await ReleaseAsync(released, diagnostics).ConfigureAwait(false)) return RequireRestart(diagnostics);
+        }
+
+        foreach (var plugin in next.RequestedPlugins.Values.Where(plugin => plugin.SkipReason is not null))
+        {
+            SetState(plugin, PluginState.Skipped, true);
         }
 
         _plan = next;
@@ -268,7 +284,8 @@ public sealed class PluginEngine : IAsyncDisposable
 
         var changedAssemblies = previous.Assemblies.Keys.Where(name =>
             !next.Assemblies.TryGetValue(name, out var artifact) || !artifact.HasSameContent(previous.Assemblies[name]) ||
-            !previous.AssemblyDependencies[name].SetEquals(next.AssemblyDependencies[name])).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            !previous.AssemblyDependencies[name].SetEquals(next.AssemblyDependencies[name]) ||
+            !previous.NativeResolvers[name].HasSameSources(next.NativeResolvers[name])).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var hasAssemblyChanges = true;
 
@@ -358,11 +375,16 @@ public sealed class PluginEngine : IAsyncDisposable
             GC.WaitForPendingFinalizers();
             GC.Collect();
 
-            if (references.All(reference => !reference.IsAlive)) return true;
+            if (references.All(reference => !reference.Context.IsAlive))
+            {
+                foreach (var reference in references) reference.NativeLibraries.ReleaseAfterCollection();
+                return true;
+            }
             await Task.Delay(_options.CollectionDelay).ConfigureAwait(false);
         }
 
         _unconfirmedOwners.UnionWith(names);
+        _unconfirmedRetirements.AddRange(references);
         diagnostics.Add(Diagnostic("CollectionUnconfirmed", $"Collection was not confirmed for released owners: {string.Join(", ", names)}."));
         return false;
     }
@@ -377,7 +399,8 @@ public sealed class PluginEngine : IAsyncDisposable
             Id = definition.Id,
             Version = definition.Installation.Manifest.Version,
             IsEnabled = isEnabled,
-            State = state
+            State = state,
+            SkipReason = state == PluginState.Skipped ? definition.SkipReason : null
         };
     }
 

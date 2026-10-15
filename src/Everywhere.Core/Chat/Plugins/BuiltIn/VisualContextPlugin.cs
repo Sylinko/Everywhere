@@ -44,29 +44,29 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ListWindowsAsync,
                     ChatFunctionPermissions.ScreenRead));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     CaptureVisualElementAsync,
                     ChatFunctionPermissions.ScreenRead));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     QueryVisual,
                     ChatFunctionPermissions.ScreenRead,
                     isExperimental: true));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ReadVisualTextAsync,
                     ChatFunctionPermissions.ScreenRead,
                     isExperimental: true));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ExecuteVisualActionsAsync,
                     ChatFunctionPermissions.ScreenAccess,
                     isExperimental: true,
-                    onPermissionConsent: _ => true)); // Always allow. Handled in tool
+                    permissionConsentHook: BypassPermissionConsentHook));
         });
     }
 

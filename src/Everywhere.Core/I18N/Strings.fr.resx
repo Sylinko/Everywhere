@@ -800,8 +800,8 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Erreur du système Windows. {0}</value>
     </data>
-    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
-        <value>Intégré</value>
+    <data name="ChatPluginPage_TabItem_Native_Header" xml:space="preserve">
+        <value>Outils de l’application</value>
     </data>
     <data name="ChatPluginPage_TabItem_Settings_Header" xml:space="preserve">
         <value>Paramètres</value>

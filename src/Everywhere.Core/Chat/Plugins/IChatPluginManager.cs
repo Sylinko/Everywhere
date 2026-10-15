@@ -6,19 +6,26 @@ using Everywhere.Common;
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Manages chat plugins, both built-in and MCP plugins.
+/// Manages chat plugins, built-in, plugin-supplied and MCP tools.
 /// </summary>
 public interface IChatPluginManager
 {
     /// <summary>
-    /// Gets the list of built-in chat plugins for Binding use in the UI.
+    /// Gets the combined list of built-in and plugin-supplied native chat tools for Binding use in the UI.
     /// </summary>
-    IReadOnlyBindableList<BuiltInChatPlugin> BuiltInPlugins { get; }
+    IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 
     /// <summary>
     /// Gets the list of MCP chat plugins for Binding use in the UI.
     /// </summary>
     IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
+
+    /// <summary>
+    /// Publishes the real plugin for discovery and creates weak, revocable functions for chat snapshots.
+    /// Close the returned registration before disposing the tool's native or managed resources.
+    /// Its disposal removes the contribution and waits for discovery, calls, filters and streams already in progress.
+    /// </summary>
+    IAsyncDisposable RegisterChatPlugin(NativeChatPlugin plugin);
 
     /// <summary>
     /// Creates a new MCP plugin based on the provided configuration.
