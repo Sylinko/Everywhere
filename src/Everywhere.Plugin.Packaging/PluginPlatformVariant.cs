@@ -41,6 +41,16 @@ public sealed record PluginPlatformVariant
     public required string[] Assemblies { get; init; }
 
     /// <summary>
+    /// Gets selected native libraries resolved by filename within this entry's managed owners.
+    /// </summary>
+    public string[] NativeLibraries { get; set; } = [];
+
+    /// <summary>
+    /// Gets supporting files, including executables, that are installed but never loaded as assemblies.
+    /// </summary>
+    public string[] ContentFiles { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets dependencies applicable to this platform entry only.
     /// </summary>
     public PluginDependency[] Dependencies { get; set; } = [];

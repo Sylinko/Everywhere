@@ -87,7 +87,7 @@ public sealed partial class EverythingPlugin : BuiltInChatPlugin
         };
 
         _functionsSource.Add(
-            new BuiltInChatFunction(
+            new NativeChatFunction(
                 SearchFilesAsync,
                 ChatFunctionPermissions.FileRead));
     }

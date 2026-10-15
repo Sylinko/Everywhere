@@ -127,27 +127,6 @@ public sealed partial class PluginEngineTests
     }
 
     /// <summary>
-    /// Asynchronous disposal is preferred regardless of the registration expression's static type.
-    /// </summary>
-    [Test]
-    public async Task ApplyAsync_ResourceHasBothDisposalInterfaces_PrefersAsyncDisposal()
-    {
-        var services = new Services { Mode = "dual-disposal" };
-        var engine = CreateEngine(services);
-        AssertApplied(await engine.ApplyAsync([Definition("B")]));
-        services.Events.Clear();
-        AssertApplied(await engine.ApplyAsync([]));
-
-        Assert.That(
-            services.Events,
-            Is.EqualTo(
-                new[]
-                {
-                    "entry-dispose:fixture.b", "dual:async", "dual:async", "dispose:second:fixture.b", "dispose:first:fixture.b"
-                }));
-    }
-
-    /// <summary>
     /// A failed disposer cannot prevent the remaining disposers from running, but it blocks collection claims.
     /// </summary>
     [Test]

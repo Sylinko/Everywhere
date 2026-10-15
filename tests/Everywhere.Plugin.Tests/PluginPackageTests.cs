@@ -84,8 +84,8 @@ public sealed class PluginPackageTests
     public async Task ImportSources_ZipOrFolder_ReusesCopiesAndKeepsUserData(bool isDirectory)
     {
         var sources = Path.Combine(_root, "profile", "plugins");
-        var data = Path.Combine(_root, "profile", "plugin-data");
-        var runtime = Path.Combine(_root, "app-data", "plugin-installations");
+        var data = Path.Combine(_root, "profile", "plugins-data");
+        var runtime = Path.Combine(_root, "app-data", "installed-plugins");
         var staging = Path.Combine(_root, "app-data", "cache", "plugin-staging");
         Directory.CreateDirectory(sources);
         var source = Path.Combine(sources, isDirectory ? "example" : "example.zip");
@@ -181,12 +181,12 @@ public sealed class PluginPackageTests
             }
         };
 
-        var selected = PluginPlatformSelector.Select(manifest, "win-x64");
+        var selected = PluginPlatformSelector.Select(manifest, "win-x64") ?? throw new AssertionException("Missing Windows entry.");
         var selectedRange = selected.HostVersion ?? throw new AssertionException("The specific entry lost its host range.");
 
         Assert.That(selectedRange, Is.EqualTo("[2.0,3.0)"));
         Assert.That(PluginCompatibility.IsSatisfied(selectedRange, "1.5.0"), Is.False);
-        Assert.That(PluginPlatformSelector.Select(manifest, "win-arm64").HostVersion, Is.EqualTo("[1.0,3.0)"));
+        Assert.That(PluginPlatformSelector.Select(manifest, "win-arm64")?.HostVersion, Is.EqualTo("[1.0,3.0)"));
     }
 
     /// <summary>

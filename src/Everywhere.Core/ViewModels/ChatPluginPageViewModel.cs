@@ -23,7 +23,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         set
         {
             if (!SetProperty(ref field, value)) return;
-            OnPropertyChanged(nameof(SelectedBuiltInPlugin));
+            OnPropertyChanged(nameof(SelectedNativePlugin));
             OnPropertyChanged(nameof(SelectedMcpPluginPresentation));
             OnPropertyChanged(nameof(SelectedMcpPlugin));
 
@@ -45,11 +45,11 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
     }
 
     /// <summary>
-    /// Helper property to get the selected plugin as a BuiltInChatPlugin.
+    /// Helper property to get the selected plugin as a NativeChatPlugin.
     /// </summary>
-    public ToolPluginPresentation? SelectedBuiltInPlugin
+    public ToolPluginPresentation? SelectedNativePlugin
     {
-        get => SelectedPlugin?.Plugin is BuiltInChatPlugin ? SelectedPlugin : null;
+        get => SelectedPlugin?.Plugin is NativeChatPlugin ? SelectedPlugin : null;
         set
         {
             if (value is not null)

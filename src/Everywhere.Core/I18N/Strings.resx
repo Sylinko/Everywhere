@@ -794,8 +794,8 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Windows system error. {0}</value>
     </data>
-    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
-        <value>Built-in</value>
+    <data name="ChatPluginPage_TabItem_Native_Header" xml:space="preserve">
+        <value>Application tools</value>
     </data>
     <data name="ChatPluginPage_TabItem_Settings_Header" xml:space="preserve">
         <value>Settings</value>

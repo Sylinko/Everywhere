@@ -25,7 +25,7 @@ public sealed class FdFindPlugin : BuiltInChatPlugin
     public FdFindPlugin() : base("fdfind")
     {
         _functionsSource.Add(
-            new BuiltInChatFunction(
+            new NativeChatFunction(
                 SearchFilesAsync,
                 ChatFunctionPermissions.FileRead));
     }

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
@@ -19,11 +19,11 @@ using ShadUI;
 
 namespace Everywhere.Chat.Plugins;
 
-public class ChatPluginManager : IChatPluginManager
+public partial class ChatPluginManager : IChatPluginManager, IDisposable
 {
     private const string McpRuntimeWarningKey = "mcp.runtime";
 
-    public IReadOnlyBindableList<BuiltInChatPlugin> BuiltInPlugins { get; }
+    public IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 
     public IReadOnlyBindableList<McpChatPlugin> McpPlugins { get; }
 
@@ -32,9 +32,11 @@ public class ChatPluginManager : IChatPluginManager
     private readonly IRuntimeManager _runtimeManager;
     private readonly ILogger<ChatPluginManager> _logger;
 
+    private bool _isDisposed;
+
     private readonly ConcurrentDictionary<Guid, ManagedMcpClient> _managedClients = [];
     private readonly CompositeDisposable _disposables = new(3);
-    private readonly SourceList<BuiltInChatPlugin> _builtInPluginsSource = new();
+    private readonly SourceList<NativeChatPlugin> _nativePluginsSource = new();
     private readonly SourceList<McpChatPlugin> _mcpPluginsSource = new();
 
     public ChatPluginManager(
@@ -45,7 +47,7 @@ public class ChatPluginManager : IChatPluginManager
         ILogger<ChatPluginManager> logger)
     {
         _serviceProvider = serviceProvider;
-        _builtInPluginsSource.AddRange(builtInPlugins);
+        _nativePluginsSource.AddRange(builtInPlugins);
         _settings = settings;
         _runtimeManager = runtimeManager;
         _logger = logger;
@@ -59,12 +61,12 @@ public class ChatPluginManager : IChatPluginManager
         Task.Run(InitializeMcpPlugins).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         _mcpPluginsSource.AddRange(mcpPlugins);
 
-        BuiltInPlugins = _builtInPluginsSource
+        NativePlugins = _nativePluginsSource
             .Connect()
             .Filter(p => p is { IsVisible: true, HasVisibleFunctions: true })
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
-        _disposables.Add(_builtInPluginsSource);
+        _disposables.Add(_nativePluginsSource);
 
         McpPlugins = _mcpPluginsSource
             .Connect()
@@ -398,12 +400,17 @@ public class ChatPluginManager : IChatPluginManager
 
         try
         {
-            foreach (var plugin in _builtInPluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
+            foreach (var plugin in _nativePluginsSource.Items.Cast<ChatPlugin>().Concat(_mcpPluginsSource.Items))
             {
                 var isPluginAllowed = toolRulesets?.GetPluginRule(plugin) ??
                     _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ??
                     plugin.IsDefaultEnabled;
                 if (!isPluginAllowed) continue;
+
+                var registration = plugin is NativeChatPlugin nativePlugin && _registrations.TryGetValue(nativePlugin, out var registered) ?
+                    registered :
+                    null;
+                using var discovery = registration?.EnterInvocation();
 
                 if (plugin is McpChatPlugin mcpChatPlugin)
                 {
@@ -430,12 +437,19 @@ public class ChatPluginManager : IChatPluginManager
                     }
                 }
 
-                var actualFunctions = (await plugin.GetAvailableFunctionsAsync(cancellationToken))
-                    .AsValueEnumerable()
-                    .Where(function => toolRulesets?.GetFunctionRule(plugin, function) ??
+                var availableFunctions = await plugin.GetAvailableFunctionsAsync(cancellationToken);
+                var actualFunctionQuery = availableFunctions
+                    .Where(function =>
+                        toolRulesets?.GetFunctionRule(plugin, function) ??
                         _settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ??
-                        function.IsDefaultEnabled)
-                    .ToArray();
+                        function.IsDefaultEnabled);
+                if (registration is not null)
+                {
+                    actualFunctionQuery = actualFunctionQuery
+                        .Select(ChatFunction (function) => registration.CreateFunction((NativeChatFunction)function));
+                }
+
+                var actualFunctions = actualFunctionQuery.ToArray();
                 if (actualFunctions.Length > 0 || plugin is McpChatPlugin)
                 {
                     resultPlugins.Add(new ChatPluginSnapshot(plugin, pluginNameDeduplicator, functionNameDeduplicator, actualFunctions));
@@ -492,6 +506,9 @@ public class ChatPluginManager : IChatPluginManager
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
+        _isDisposed = true;
         _runtimeManager.StatusChanged -= HandleRuntimeManagerStatusChanged;
         foreach (var mcpClient in _managedClients.Values)
         {
@@ -599,16 +616,14 @@ public class ChatPluginManager : IChatPluginManager
 
     private sealed class ChatPluginSnapshot : ChatPlugin
     {
-        public override string Key => _originalChatPlugin.Key;
-        public override IDynamicLocaleKey HeaderKey => _originalChatPlugin.HeaderKey;
-        public override IDynamicLocaleKey DescriptionKey => _originalChatPlugin.DescriptionKey;
-        public override LucideIconKind? Icon => _originalChatPlugin.Icon;
-        public override string? BeautifulIcon => _originalChatPlugin.BeautifulIcon;
+        public override string Key { get; }
+        public override IDynamicLocaleKey HeaderKey { get; }
+        public override IDynamicLocaleKey DescriptionKey { get; }
+        public override LucideIconKind? Icon { get; }
+        public override string? BeautifulIcon { get; }
         public override int FunctionCount => _actualFunctions.Length;
         public override IReadOnlyBindableList<ChatFunction> Functions => throw new NotSupportedException();
-        public override bool IsMcp => _originalChatPlugin.IsMcp;
 
-        private readonly ChatPlugin _originalChatPlugin;
         private readonly ChatFunction[] _actualFunctions;
         private readonly KernelFunction[] _kernelFunctions;
 
@@ -619,7 +634,12 @@ public class ChatPluginManager : IChatPluginManager
             IReadOnlyList<ChatFunction> actualFunctions
         ) : base(pluginNameDeduplicator.Deduplicate(originalChatPlugin.Name))
         {
-            _originalChatPlugin = originalChatPlugin;
+            // Snapshots outlive plugin activations. Copy host-owned display values, never the plugin subclass.
+            Key = originalChatPlugin.Key;
+            HeaderKey = originalChatPlugin.HeaderKey;
+            DescriptionKey = originalChatPlugin.DescriptionKey;
+            Icon = originalChatPlugin.Icon;
+            BeautifulIcon = originalChatPlugin.BeautifulIcon;
             _actualFunctions = [.. actualFunctions];
             _kernelFunctions = _actualFunctions.AsValueEnumerable().Select(CloneWithUniqueName).ToArray();
 

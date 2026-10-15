@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -41,14 +41,48 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
 
         _functionsSource.Edit(list =>
         {
-            list.Add(new BuiltInChatFunction(SearchFilesAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(GetFileInformationAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(SearchFileContentAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(ReadFileAsync, ChatFunctionPermissions.FileRead));
-            list.Add(new BuiltInChatFunction(TransferPathAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(DeletePathsAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(CreateDirectoryAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
-            list.Add(new BuiltInChatFunction(ApplyPatchAsync, ChatFunctionPermissions.FileAccess, onPermissionConsent: _ => true));
+            list.Add(
+                new NativeChatFunction(
+                    SearchFilesAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    GetFileInformationAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    SearchFileContentAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    ReadFileAsync,
+                    ChatFunctionPermissions.FileRead,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    TransferPathAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook,
+                    beforeCallHook: CreateFileTransferPreview));
+            list.Add(
+                new NativeChatFunction(
+                    DeletePathsAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook));
+            list.Add(
+                new NativeChatFunction(
+                    CreateDirectoryAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook,
+                    beforeCallHook: CreateFilePreview));
+            list.Add(
+                new NativeChatFunction(
+                    ApplyPatchAsync,
+                    ChatFunctionPermissions.FileAccess,
+                    permissionConsentHook: BypassPermissionConsentHook));
         });
     }
 
@@ -57,7 +91,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [KernelFunction("search_files")]
     [Description("Search for files and directories in a path matching a regex. Common build and hidden folders are ignored.")]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Header, LocaleKey.BuiltInChatPlugin_FileSystem_SearchFiles_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFilesAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
@@ -139,7 +172,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_GetFileInformation_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> GetFileInformationAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
@@ -161,7 +193,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_SearchFileContent_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<PromptNode> SearchFileContentAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
@@ -249,7 +280,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
         docx, xlsx, pptx are not supported. Use `officecli` instead.
         """)]
     [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Header, LocaleKey.BuiltInChatPlugin_FileSystem_ReadFile_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task<object> ReadFileAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] ChatContext chatContext,
@@ -330,7 +360,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_TransferPath_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileTransferRenderer))]
     private async Task TransferPathAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IStorageProvider storageProvider,
@@ -601,7 +630,6 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     [DynamicLocaleKey(
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Header,
         LocaleKey.BuiltInChatPlugin_FileSystem_CreateDirectory_Description)]
-    [FriendlyFunctionCallContentRenderer(typeof(FileRenderer))]
     private async Task CreateDirectoryAsync(
         [FromKernelServices] IChatPluginUserInterface userInterface,
         [FromKernelServices] IStorageProvider storageProvider,
@@ -1664,30 +1692,27 @@ public sealed class FileSystemPlugin : BuiltInChatPlugin
     /// <summary>
     /// Renders the path argument as a friendly file reference in the chat UI.
     /// </summary>
-    private sealed class FileRenderer : IFriendlyFunctionCallContentRenderer
+    private static ChatPluginDisplayBlock? CreateFilePreview(FunctionCallContent content)
     {
-        public ChatPluginDisplayBlock? Render(KernelArguments arguments) =>
-            arguments.TryGetValue("path", out var value) && value is string path ?
-                new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
-                null;
+        return content.Arguments?.TryGetValue("path", out var value) == true && value is string path ?
+            new ChatPluginFileReferencesDisplayBlock(new ChatPluginFileReference(path)) :
+            null;
     }
 
     /// <summary>
     /// Renders both endpoints and the requested direction of a file transfer.
     /// </summary>
-    private sealed class FileTransferRenderer : IFriendlyFunctionCallContentRenderer
+    private static ChatPluginDisplayBlock? CreateFileTransferPreview(FunctionCallContent content)
     {
-        public ChatPluginDisplayBlock? Render(KernelArguments arguments)
+        if (content.Arguments is not { } arguments ||
+            !arguments.TryGetValue("source", out var sourceValue) || sourceValue is not string source ||
+            !arguments.TryGetValue("destination", out var destinationValue) || destinationValue is not string destination ||
+            !arguments.TryGetValue("operation", out var operationValue) ||
+            !Enum.TryParse<FileTransferOperation>(operationValue?.ToString(), ignoreCase: true, out var operation))
         {
-            if (!arguments.TryGetValue("source", out var sourceValue) || sourceValue is not string source ||
-                !arguments.TryGetValue("destination", out var destinationValue) || destinationValue is not string destination ||
-                !arguments.TryGetValue("operation", out var operationValue) ||
-                !Enum.TryParse<FileTransferOperation>(operationValue?.ToString(), ignoreCase: true, out var operation))
-            {
-                return null;
-            }
-
-            return CreateFileTransferContent(source, destination, operation);
+            return null;
         }
+
+        return CreateFileTransferContent(source, destination, operation);
     }
 }

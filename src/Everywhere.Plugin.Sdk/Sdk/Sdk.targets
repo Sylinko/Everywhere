@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <Target Name="EverywhereImportHost" BeforeTargets="ResolveAssemblyReferences">
@@ -27,7 +27,9 @@
       <_EverywherePayloadList>$(IntermediateOutputPath)everywhere-payload.txt</_EverywherePayloadList>
     </PropertyGroup>
     <ItemGroup>
-      <_EverywherePayload Include="@(ReferenceCopyLocalPaths->'%(FullPath)|%(DestinationSubDirectory)%(Filename)%(Extension)')" />
+      <_EverywherePayload Include="@(ReferenceCopyLocalPaths->'%(FullPath)|%(DestinationSubDirectory)%(Filename)%(Extension)|%(AssetType)')" />
+      <_EverywherePayload Include="@(AllItemsFullPathWithTargetPath->'%(FullPath)|%(TargetPath)|%(AssetType)')" />
+      <_EverywherePayload Include="$(ProjectDepsFilePath)|$(TargetName).deps.json" Condition="Exists('$(ProjectDepsFilePath)')" />
       <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath->'%(FullPath)|%(TargetPath)')" />
     </ItemGroup>
     <WriteLinesToFile File="$(_EverywherePayloadList)" Lines="@(_EverywherePayload)" Overwrite="true" />

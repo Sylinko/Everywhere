@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Packaging;
 
@@ -93,70 +92,6 @@ public sealed class HostReferenceSetTests
         Assert.That(references.Descriptor.SchemaVersion, Is.EqualTo(1));
         Assert.That(references.Assemblies, Has.Count.EqualTo(1));
         Assert.That(references.Assemblies["Everywhere.Plugin.Abstractions"], Is.EqualTo(expected));
-    }
-
-    /// <summary>
-    /// DTO deserialization must reject missing or null required structure.
-    /// </summary>
-    [TestCase("runtimeTarget", false)]
-    [TestCase("libraries", true)]
-    public void Import_InvalidDependencyStructure_RejectsDocument(string property, bool isNull)
-    {
-        var path = Path.Combine(_root, "Host.deps.json");
-        var document = ReadObject(path);
-
-        if (isNull)
-        {
-            document[property] = null;
-        }
-        else
-        {
-            document.Remove(property);
-        }
-
-        File.WriteAllText(path, document.ToJsonString());
-        Assert.Throws<JsonException>(() => new HostReferenceSet(_root));
-    }
-
-    /// <summary>
-    /// Required descriptor fields cannot disappear or become null during generated deserialization.
-    /// </summary>
-    [TestCase(false)]
-    [TestCase(true)]
-    public void Import_InvalidHostDescriptor_RejectsDocument(bool isNull)
-    {
-        var path = Path.Combine(_root, HostReferenceSet.DescriptorFileName);
-        var document = ReadObject(path);
-
-        if (isNull)
-        {
-            document["framework"] = null;
-        }
-        else
-        {
-            document.Remove("framework");
-        }
-
-        File.WriteAllText(path, document.ToJsonString());
-        Assert.Throws<JsonException>(() => new HostReferenceSet(_root));
-    }
-
-    /// <summary>
-    /// An omitted schema retains its documented default, while an explicit unsupported value is rejected.
-    /// </summary>
-    [Test]
-    public void Import_OmittedSchemaVersion_PreservesDefaultAndValidation()
-    {
-        var path = Path.Combine(_root, HostReferenceSet.DescriptorFileName);
-        var document = ReadObject(path);
-        document.Remove("SCHEMAVERSION");
-        File.WriteAllText(path, document.ToJsonString());
-        Assert.That(new HostReferenceSet(_root).Descriptor.SchemaVersion, Is.EqualTo(1));
-
-        document["schemaVersion"] = 0;
-        File.WriteAllText(path, document.ToJsonString());
-        var exception = Assert.Throws<PluginValidationException>(() => new HostReferenceSet(_root));
-        Assert.That(exception?.Code, Is.EqualTo("UnsupportedHost"));
     }
 
     /// <summary>

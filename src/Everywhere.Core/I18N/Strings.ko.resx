@@ -794,8 +794,8 @@
     <data name="FriendlyExceptionMessage_Win32" xml:space="preserve">
         <value>Windows 시스템 오류. {0}</value>
     </data>
-    <data name="ChatPluginPage_TabItem_BuiltIn_Header" xml:space="preserve">
-        <value>내장</value>
+    <data name="ChatPluginPage_TabItem_Native_Header" xml:space="preserve">
+        <value>앱 도구</value>
     </data>
     <data name="ChatPluginPage_TabItem_Settings_Header" xml:space="preserve">
         <value>설정</value>

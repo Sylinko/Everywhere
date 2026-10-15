@@ -9,6 +9,7 @@ Read [Specification](01-Specification.md) for the runtime contract and [Validati
 | Implemented in the rewrite | Selected-file validation, lifecycle/context registration, coordinated replacement and collection checks |
 | Implemented and tested with collectible fixtures | Isolated optional methods and derived types in one DLL, controlled Assembly.Load(name), and rebuilding consumers when dependencies change |
 | Basic implementation; broader validation pending | Host imports, platform entries, RequiresPlugin and the Plugins catalog; simple generated manifests and ZIPs |
+| Implemented and Windows-tested | Platform `Skipped` status; preserved native/content output paths; on-demand native resolver and host-acquired handle release |
 | Implemented | Optional IDisposable/IAsyncDisposable on plugin entries; normal DI exit releases entries and skips registered reversal |
 | Implementation closure required | Complete schema/layout, SDK release, remaining dependency-selection policies and platform validation |
 
@@ -158,7 +159,7 @@ asynchronous disposal dispatches removal to the UI thread. Register the LocaleMa
 handle before creating localized controls. Use the existing I18N generator and dynamic keys. The
 [sample](../../plugins/samples/Everywhere.Plugin.Sample/README.md) demonstrates these registrations with
 compiled AXAML and RESX. Its entry needs no disposal interface because its contributions are registered reversals.
-For local validation, put the generated ZIP directly in `~/.everywhere/plugins`, or put an unpacked package folder there with `plugin.json` directly inside it. Keep one source per plugin. Start the newly built plugin-enabled application. Startup imports immutable runtime copies into the application data directory and reuses unchanged imports. Source additions, replacements and removal take effect on the next launch; no management page or live watcher is provided. On Windows, installation copies live in `%APPDATA%/Everywhere/plugin-installations`, temporary imports in `%APPDATA%/Everywhere/cache/plugin-staging`, and persistent plugin data remains under `~/.everywhere/plugin-data/{id}`. Do not edit generated runtime copies. The initial UI sample passed headless behavior and cleanup checks but returned `RestartRequired` on collection verification, so it does not establish support for hot-unloading Avalonia controls.
+For local validation, put the generated ZIP directly in `~/.everywhere/plugins`, or put an unpacked package folder there with `plugin.json` directly inside it. Keep one source per plugin. Start the newly built plugin-enabled application. Startup imports immutable runtime copies into the application data directory and reuses unchanged imports. Source additions, replacements and removal take effect on the next launch; no management page or live watcher is provided. On Windows, installation copies live in `%APPDATA%/Everywhere/installed-plugins`, temporary imports in `%APPDATA%/Everywhere/cache/plugin-staging`, and persistent plugin data remains under `~/.everywhere/plugins-data/{id}`. Do not edit generated runtime copies. The initial UI sample passed headless behavior and cleanup checks but returned `RestartRequired` on collection verification, so it does not establish support for hot-unloading Avalonia controls.
 
 ## 4. Owning resources and side effects
 
@@ -335,7 +336,7 @@ Active dependencies must form directed acyclic graphs. A -> B -> D and A -> C ->
 
 Package version, AssemblyVersion and file hash describe different things. Tooling will record the exact build selection, the author-declared allowed runtime range and the combinations actually tested separately. Matching a range is not proof that an untested future version works. Defaults for other-plugin and library dependency ranges still need implementation decisions; the host-range policy is defined in section 6.
 
-The current repository API uses a complete selected runtime file set and explicit required plugin IDs. It also derives relationships from references to other plugin entry assemblies and rejects any unresolved static dependency. It does not select package versions or implement the optional contracts below. Do not model several entrypoints in one DLL as separate plugins with this milestone; use one lifecycle entrypoint to coordinate them.
+The runtime accepts selected files and explicit required/optional dependency declarations. It implements the catalog, conditional entry validation, controlled name-based binding and whole-consumer reconstruction below. Missing undeclared references are rejected. It does not select package versions, generate all optional dependency declarations from author projects or provide complete conditional type-discovery/analyzer tooling.
 
 ### Declare optional dependencies in the project — agreed, not implemented
 
@@ -354,9 +355,9 @@ The agreed SDK authoring form is:
 
 Do not write generated manifest JSON. Change the source/project declaration and rebuild. Defaults for other-plugin dependency ranges remain undecided, so these examples specify a range explicitly.
 
-### Query whether another plugin is usable — agreed, not implemented
+### Query whether another plugin is usable — implemented
 
-`IPluginContext` will expose `IPluginCatalog Plugins { get; }` with these operations:
+`IPluginContext` exposes `IPluginCatalog Plugins { get; }` with these operations:
 
 ```csharp
 public interface IPluginCatalog
@@ -374,15 +375,15 @@ The signature uses NotNullWhen from System.Diagnostics.CodeAnalysis. The catalog
 | Can my plugin use B in this activation? | `Plugins.IsAvailable("B")`: B is a declared, compatible, selected dependency that finished initialization |
 | Does the host know B? | `Plugins.TryGetInfo("B", out var info)`: no loading or enablement side effect |
 | Did the user request B to be enabled? | `info.IsEnabled`: desired configuration, not successful initialization |
-| What is B doing? | `info.State`: inactive, initializing, active, stopping or failed; exact enum spelling is not finalized |
+| What is B doing? | `info.State`: `Inactive`, `Initializing`, `Active`, `Stopping`, `Failed` or `Skipped` |
 
-Use IsAvailable to guard calls. A plugin can be enabled but failed, or globally active but incompatible with your dependency range. Querying IsAvailable for an undeclared dependency is an error; use TryGetInfo for general information about arbitrary plugins. A declared optional dependency that is absent, disabled or incompatible returns false. Querying an unknown ID with TryGetInfo returns false.
+Use IsAvailable to guard calls. A plugin can be enabled but skipped for an unsupported platform or failed, or globally active but incompatible with your dependency range. Querying IsAvailable for an undeclared dependency is an error; use TryGetInfo for general information about arbitrary plugins. A declared optional dependency that is absent, disabled, platform-skipped or incompatible returns false. `TryGetInfo` exposes `SkipReason = UnsupportedPlatform`; skipping does not satisfy a required dependency. Querying an unknown ID with TryGetInfo returns false.
 
-PluginInfo will be an immutable snapshot containing identity, version and status information. It will not contain Assembly, Type, plugin instances, delegates or exception objects that could keep another plugin alive. A snapshot can become out of date and does not retain a dependency for you. There is no IsLoaded readiness flag: one plugin may have several assemblies, and a stopped plugin can still have uncollected assemblies. Physical residency belongs in engine diagnostics.
+PluginInfo is an immutable snapshot containing identity, version and status information. It does not contain Assembly, Type, plugin instances, delegates or exception objects that could keep another plugin alive. A snapshot can become out of date and does not retain a dependency for you. There is no IsLoaded readiness flag: one plugin may have several assemblies, and a stopped plugin can still have uncollected assemblies. Physical residency belongs in engine diagnostics.
 
-### Guard calls across a method boundary — agreed, not implemented
+### Guard calls across a method boundary — runtime supported, analyzers pending
 
-The following example assumes Acme.Translator provides TranslatorApi and is declared optional in the project. Everywhere.Plugin.Abstractions and RequiresPlugin are future contracts:
+The following example assumes Acme.Translator provides TranslatorApi and is declared optional in the project. Everywhere.Plugin.Abstractions and RequiresPlugin exist; SDK project declaration generation remains pending:
 
 ```csharp
 using System.Runtime.CompilerServices;
@@ -409,7 +410,7 @@ Each part has a different job: IsAvailable guards execution, NoInlining preserve
 
 All required plugin IDs must be declared in the project. Multiple RequiresPlugin attributes require every condition to be satisfied; they do not express alternatives. Source annotations do not override compatibility ranges.
 
-### Inherit from an optional plugin's type — agreed, not implemented
+### Inherit from an optional plugin's type — runtime supported, discovery tooling pending
 
 An optional derived type can stay in your ordinary entry DLL. A separate integration DLL is useful if you need a separate removal boundary, but is not mandatory. For example, assuming the dependency supplies PanelBase with a parameterless constructor and a Render method:
 
@@ -441,7 +442,7 @@ This example uses the same imports as the previous one. Real registered panels n
 
 Keep the ordinary entrypoint and unconditional code free of optional base classes, interfaces, field types, signatures and generic constraints. Do not enumerate the entire assembly with GetTypes and expect to filter afterwards. Third-party scanners may also cross this boundary. Planned SDK checks must cover common mistakes and generated code from async methods/lambdas, but a complete analyzer is not implemented and cannot prove arbitrary reflection safe.
 
-### What happens when the dependency changes — agreed, not implemented
+### What happens when the dependency changes — implemented
 
 Your available dependency set is chosen before InitializeAsync; selected dependencies initialize first. During normal execution, the host keeps that selection stable. If B is enabled, disabled or replaced, the engine can stop and reconstruct your entire plugin A. It also includes affected supporting libraries and consumers, while preserving unrelated plugins where possible. It does not change existing base types or detach bindings inside your surviving context.
 
@@ -483,7 +484,134 @@ The Windows and macOS host projects both emit `Everywhere.dll`. Compile each plu
 
 The loader selects the entry and applicable common/platform assets before dependency validation. Unselected platform files do not create active dependencies. `OperatingSystem.IsWindows()` guards execution but does not remove an AssemblyRef. Keep unavailable platform dependencies in separately selected artifacts or conditional builds. RequiresPlugin concerns another plugin's availability; it does not replace platform selection.
 
-The SDK preserves MSBuild output-relative paths, including satellite target paths. Resource-only satellites are identified by assembly metadata (name and culture), associated with their parent DLL, and loaded into that parent's collectible context. There is no hard-coded language list or language-folder discovery. ResourceManager provides normal parent-culture and neutral fallback. Multi-entry aggregation and native asset resolution remain incomplete; native lifetime safety is a separate concern. Platform selection and archive installation APIs exist, while full application package management does not.
+The SDK preserves MSBuild output-relative paths, including satellite target paths. Resource-only satellites are identified by assembly metadata (name and culture), associated with their parent DLL, and loaded into that parent's collectible context. There is no hard-coded language list or language-folder discovery. ResourceManager provides normal parent-culture and neutral fallback. The SDK also preserves dependency records, native assets and executable/content files. Native resolution is on demand as described below; multi-entry aggregation and cross-platform native validation remain incomplete. Platform selection and archive installation APIs exist, while full application package management does not.
+
+### Native libraries and executable content
+
+Use the normal build/RID output. The SDK copies its declared output paths and generates separate
+`assemblies`, `nativeLibraries` and `contentFiles` lists. You do not maintain these lists manually.
+Set the entry platform to the actual supported architecture, such as `win-x64`, when shipping an
+architecture-specific DLL. NuGet restore selects its runtime assets; the plugin loader does not
+download packages or recreate NuGet restore at activation time. Keep the generated `.deps.json`.
+
+A native DLL is resolved when P/Invoke or another supported request needs it. The host first uses
+the dependency resolver for the selected package and then declared copied-file paths. It does not
+preload every native DLL or inspect the whole native dependency tree. Unknown/system names return
+to normal runtime probing. A library's own DllImport resolver keeps precedence; raw path loads,
+OS calls and native transitive imports may bypass the host's tracking. Do not add an absolute-path
+resolver merely to find a packaged DLL when the host already resolves it.
+
+Sharing a managed wrapper also shares its native binding. Packages providing that wrapper must
+agree on the requested library, including its bytes. A provider that has no matching asset cannot
+borrow another package's private native DLL silently. Disagreement fails at the native request.
+Provider changes can require reloading all consumers. Use a different wrapper assembly identity
+when the bindings intentionally differ.
+
+Stop native calls, unregister callbacks, join threads and dispose native clients before entry
+disposal completes. The host releases only native loader references it acquired, after managed
+collection has been confirmed. It keeps them when cleanup/collection fails and requires restart.
+It cannot infer that a native thread is finished from managed collection alone. If you load a DLL
+yourself, you own its lifetime and must validate whether release is safe.
+
+Executables are content, not DLLs to preload. Launch only when needed and explicitly distinguish
+user-owned from plugin-owned processes. Mutable configuration/databases belong in DataDirectory;
+copy an executable there first if it writes beside itself. Native lifetime validation remains
+specific to each library and platform.
+
+### Register chat tools without retaining their implementation
+
+Derive your tool group from PluginChatPlugin and populate it with NativeChatFunction instances.
+BuiltInChatPlugin is reserved for application-owned tools; both share NativeChatPlugin. The manager
+exposes them together through NativePlugins. A group named `everything` has Key `plugin.everything`.
+Choose a stable group name that does not collide with another installed plugin's group. Key is used
+by persisted settings and approval rules, independently of names deduplicated for the model.
+
+Resolve `IChatPluginManager` from host services and call `RegisterChatPlugin(yourTool)`.
+Register its returned IAsyncDisposable handle with the context. For an entry that owns ongoing
+queries, signal its stop source, dispose the handle to revoke and drain calls, then dispose the
+underlying connection/tool in entry disposal. The handle supports repeated disposal, so subsequent
+hot-unload reversal is safe. This also releases queries on ordinary exit, when the general reversal
+queue is deliberately skipped.
+
+Discovery exposes your actual tool instance, including its settings, warnings and dynamic
+`GetAvailableFunctionsAsync` implementation. Each new chat scope uses that discovery and the normal
+enablement rules. Existing scopes retain their selected tools through weak, revocable function proxies.
+Use those scopes for chat execution; retaining the real instance from the discovery list retains the plugin.
+
+Closing the handle removes discovery, rejects new calls through old proxies and waits for admitted
+calls, post-invocation filters and streaming enumerators to finish or be disposed. Close it before
+disposing connections or the tool itself. A newly registered activation does not revive old proxies.
+Permission and friendly-rendering callbacks are also revoked. UI contributions still need their own
+removal/disposal; this registration does not make arbitrary controls or display objects collectible.
+
+Your methods keep the normal SK execution behavior: complex parameter binding, optional defaults,
+injected services, filters, cancellation and streaming. The host does not parse arguments, clone the
+kernel, convert result values or replace exceptions. It only changes FunctionResult.Function to refer
+to the proxy, so a stored result does not retain the original method through that property.
+
+Pass callbacks directly to NativeChatFunction using `permissionConsentHook` and `beforeCallHook`:
+
+- `PermissionConsentHook` receives FunctionCallContext and PermissionConsentRequest when existing
+  rules have not bypassed approval. Return true to allow, false to deny, or null to continue normal
+  approval. You may customize the request's HeaderKey, RememberMasks and CustomOptions. Obtain the
+  original call from `context.FunctionCallContent`. Use ToolConsentOption.BypassPluginApproval for
+  a host-handled option to remember approval for the current tool group; arbitrary option handlers
+  are not part of outer approval. The host owns dialogs, automatic review and rule persistence.
+- `BeforeCallHook` receives the original call before approval, even when Arguments is null or empty.
+  Return a ChatPluginDisplayBlock to display, or null. The call may still be denied, so do not execute
+  the tool operation here. Use host-owned display types and values that can outlive your plugin.
+
+Both hooks are synchronous and do not imply UI-thread execution. The host forwards registered hooks
+without retaining plugin delegates in chat snapshots and stops forwarding when registration closes.
+Consent requests can stay alive while a user decides: their titles, options and values must not keep
+plugin-defined objects alive. Existing FullAccess and bypass rules take precedence over the hook.
+Returning null in Auto mode requests the existing automatic reviewer rather than opening a dialog.
+
+The proxy exposes a persistent description, not the original CLR reflection surface. Names,
+descriptions, required flags and SK-generated schemas remain available; ParameterType and
+UnderlyingMethod do not. Serializer options are not copied into the description.
+Parameter metadata's `DefaultValue` is assigned directly, without a type whitelist, serialization or
+conversion. Reference-type defaults keep the original object reference, including mutable objects.
+If a default is a plugin-owned object or contains references to plugin objects or types, a retained
+chat snapshot can prevent unloading. You are responsible for these references; the host will not
+erase defaults to force collection, and unconfirmed collection results in `RestartRequired`.
+SK's ordinary method-derived defaults already use strings. Actual argument/default binding remains
+SK's job; setting description metadata does not add an optional parameter to the underlying method.
+
+Function metadata's `AdditionalProperties` is shallow-copied into a new host-owned dictionary for each
+proxy and clone. All keys and values are preserved without filtering or serialization. Changing which
+entries exist in the original dictionary does not change an existing snapshot, but objects stored as
+values are still shared. Strings and Boolean flags do not themselves retain your plugin. Plugin-owned
+objects, delegates, `Type` values and collections containing them can prevent unloading for as long as
+the chat snapshot is retained. You are responsible for these references; the host will not erase chat
+metadata to force collection. If collection cannot be confirmed, the result is `RestartRequired`.
+
+For complex plugin-owned parameter types, you can pass `jsonSerializerOptions` to NativeChatFunction.
+These options go directly to SK for schema generation and binding. For example:
+
+```csharp
+new NativeChatFunction(
+    Search,
+    ChatFunctionPermissions.FileRead,
+    jsonSerializerOptions: SearchJsonContext.Default.Options);
+```
+
+Use your normal System.Text.Json source-generated context or converters; include metadata for the
+parameter and return types SK needs. The host patches SK's strong parameter-converter cache to use
+weak keys for collectible types, without changing conversion behavior.
+
+Results remain the objects your method returns. Prefer host-owned result types, strings or a prebuilt
+JsonElement when chat history must survive plugin removal. A plugin-defined result, exception or
+metadata value held by history can still retain the plugin. Reflection-based serialization elsewhere
+can also retain type/accessor caches; generated serialization avoids that particular path. Existing
+chat persistence rules still apply. The proxy does not promise that every object graph can unload,
+and the engine reports RestartRequired when collection cannot be confirmed.
+
+Use host-owned locale keys and ordinary strings/numbers in persistent messages. Do not put a
+plugin enum, Type or custom object into a DirectLocaleKey. FormattedDynamicLocaleKey and
+AggregateDynamicLocaleKey copy the collection container, because a compiler-generated collection
+inside a plugin can otherwise retain its assembly even when each element is a host-owned key.
+That copy does not remove references inside plugin-defined elements.
 
 ### Distribution, installed files and plugin data
 
@@ -529,7 +657,7 @@ A universal entry uses `"$type": "universal"`, with `assembly`, `type` and any a
 
 Platform names use portable .NET RIDs: `win`, `win-x64`, `osx`, `osx-arm64`. Use `osx`, not `macos`, for the platform value. `win` does not mean x64: it allows compatible Windows process architectures subject to the actual assets' constraints. If both `win-x64` and `win` entries exist, a Windows x64 process selects the specific one. Matching follows the RID graph, not a prefix or array position. Duplicate platform declarations and unresolved ambiguity are errors.
 
-The loader selects the platform entry first, then validates its compatibility. It does not fall back from an incompatible `win-x64` entry to `win` just because the latter permits the installed Everywhere version. Only the selected entry's dependencies and common applicable assets participate. Record the minimum OS/runtime separately from RID where needed; generic platform spelling cannot make architecture-specific native files portable.
+When no platform entry matches, the plugin stays enabled but has `State = Skipped` and `SkipReason = UnsupportedPlatform`; it executes no entry code. This is a per-plugin status, not an activation failure. Malformed metadata and incompatible selected entries still fail validation. The loader selects the platform entry first, then validates its compatibility. It does not fall back from an incompatible `win-x64` entry to `win` just because the latter permits the installed Everywhere version. Only the selected entry's dependencies and common applicable assets participate. Record the minimum OS/runtime separately from RID where needed; generic platform spelling cannot make architecture-specific native files portable.
 
 ### Declare compatibility for the entry you build
 
@@ -570,6 +698,7 @@ Never repair unload problems by blindly clearing undocumented CLR or patch-libra
 
 | Result | What to do |
 |---|---|
+| Applied | The selected set was applied. Inspect individual snapshots: an enabled platform-specific plugin can be `Skipped`. |
 | Rejected | Fix the package, dependency or compatibility input. No activation started. |
 | ActivationFailed | The attempted activation failed, but new managed ownership was cleaned up and collected. Correct the cause and explicitly retry if appropriate. |
 | RestartRequired | Do not assume the plugin is disabled or its patch is removed. Further changes are blocked pending the application's save/restart workflow. |
