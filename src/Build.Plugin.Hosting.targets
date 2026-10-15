@@ -1,0 +1,28 @@
+<Project>
+  <!-- This descriptor supplements deps.json; it does not duplicate the host dependency graph. -->
+  <PropertyGroup>
+    <EverywherePluginApiVersion>1.0.0</EverywherePluginApiVersion>
+  </PropertyGroup>
+
+  <Target Name="EverywhereWritePluginHostDescriptor" AfterTargets="Build">
+    <PropertyGroup>
+      <_EverywhereDescriptorPath>$(TargetDir)plugin-host.json</_EverywhereDescriptorPath>
+      <_EverywhereHostVersion Condition="'$(SemanticVersion)' != ''">$(SemanticVersion)</_EverywhereHostVersion>
+      <_EverywhereHostVersion Condition="'$(SemanticVersion)' == ''">$(Version)</_EverywhereHostVersion>
+      <_EverywhereDescriptor>{&quot;schemaVersion&quot;:1,&quot;hostVersion&quot;:&quot;$(_EverywhereHostVersion)&quot;,&quot;pluginApiVersion&quot;:&quot;$(EverywherePluginApiVersion)&quot;,&quot;framework&quot;:&quot;$(TargetFramework)&quot;,&quot;runtimeIdentifier&quot;:&quot;$(RuntimeIdentifier)&quot;,&quot;entryAssembly&quot;:&quot;$(TargetFileName)&quot;}</_EverywhereDescriptor>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_EverywhereDescriptorPath)" Lines="$(_EverywhereDescriptor)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <Target Name="EverywhereExportPluginHost" DependsOnTargets="Build;EverywhereWritePluginHostDescriptor" Returns="@(_EverywhereHostDescriptor)">
+    <ItemGroup>
+      <_EverywhereHostDescriptor Include="$(_EverywhereDescriptorPath)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywherePublishPluginHostDescriptor" BeforeTargets="ComputeResolvedFilesToPublishList" DependsOnTargets="EverywhereWritePluginHostDescriptor">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(_EverywhereDescriptorPath)" RelativePath="plugin-host.json" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+</Project>

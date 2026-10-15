@@ -47,6 +47,7 @@
   </ItemGroup>
 
   <Import Project="..\Build.I18N.targets"/>
+  <Import Project="..\Build.Plugin.Hosting.targets"/>
 
   <ItemGroup>
     <None Include="..\..\img\Everywhere.ico">

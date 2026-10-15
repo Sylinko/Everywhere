@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <ProjectReference Include="../../src/Everywhere.Plugin.Hosting/Everywhere.Plugin.Hosting.csproj" />
+    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="Fixtures/A/PluginFixture.A.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures/B/PluginFixture.B.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures/Host/PluginFixture.Host.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/Everywhere.Plugin.Sdk/Everywhere.Plugin.Sdk.csproj" ReferenceOutputAssembly="false" />
+    <Compile Remove="Fixtures/**/*.cs" />
+    <ProjectReference Include="Fixtures/Resources/PluginFixture.Resources.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyPluginFixtures" AfterTargets="Build">
+    <ItemGroup>
+      <_PluginFixture Include="Fixtures/A/bin/$(Configuration)/$(TargetFramework)/PluginFixture.A.dll" />
+      <_PluginFixture Include="Fixtures/Resources/bin/$(Configuration)/$(TargetFramework)/PluginFixture.Resources.dll" />
+      <_PluginFixture Include="Fixtures/B/bin/$(Configuration)/$(TargetFramework)/PluginFixture.B.dll" />
+      <_PluginFixture Include="Fixtures/B/bin/$(Configuration)/$(TargetFramework)/fr/PluginFixture.B.resources.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PluginFixture)" DestinationFolder="$(OutDir)fixtures" />
+  </Target>
+
+</Project>
