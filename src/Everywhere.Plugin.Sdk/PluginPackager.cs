@@ -38,33 +38,23 @@ internal static class PluginPackager
             StringComparer.OrdinalIgnoreCase);
         var files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var managed = new List<string>();
+        var native = new List<string>();
+        var content = new List<string>();
         var hasHostImplementationReference = false;
         var contractName = typeof(Abstractions.IPlugin).Assembly.GetName().Name;
 
         foreach (var outputItem in File.ReadAllLines(payloadList).Append(assemblyPath + "|" + Path.GetFileName(assemblyPath))
                      .Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var parts = outputItem.Split('|', 2);
+            var parts = outputItem.Split('|');
             var path = parts[0];
             var name = parts[1].Replace('\\', '/');
             PackagePath.ValidateRelative(name);
             if (!File.Exists(path)) throw new PluginValidationException("MissingBuildOutput", path);
 
-            if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+            var identity = ReadManagedIdentity(path);
+            if (identity is not null)
             {
-                AssemblyName identity;
-
-                try
-                {
-                    identity = AssemblyName.GetAssemblyName(path);
-                }
-                catch (BadImageFormatException)
-                {
-                    throw new PluginValidationException(
-                        "NativePackagingPending",
-                        $"Native asset '{path}' requires the native asset implementation.");
-                }
-
                 if (!string.IsNullOrEmpty(identity.CultureName) && identity.Name is { } satelliteName &&
                     satelliteName.EndsWith(".resources", StringComparison.Ordinal) &&
                     hostAssemblies.ContainsKey(satelliteName[..^".resources".Length]))
@@ -102,6 +92,15 @@ internal static class PluginPackager
                     }
                 }
             }
+            else if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+                     parts.Length > 2 && parts[2] == "native" && !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                native.Add(name);
+            }
+            else
+            {
+                content.Add(name);
+            }
 
             if (!files.TryAdd(name, path) && files[name] != path)
             {
@@ -119,6 +118,11 @@ internal static class PluginPackager
         if (!string.IsNullOrWhiteSpace(hostRange) && !PluginCompatibility.IsSatisfied(hostRange, host.HostVersion))
         {
             throw new PluginValidationException("BuildHostOutsideRange", "The declared host range excludes the imported build host.");
+        }
+
+        if (native.Count != 0 && string.IsNullOrEmpty(platform))
+        {
+            throw new PluginValidationException("NativePlatformRequired", "Native assets require an explicit EverywherePluginPlatform and matching RuntimeIdentifier.");
         }
 
         var entryAssembly = Path.GetFileName(assemblyPath);
@@ -143,7 +147,9 @@ internal static class PluginPackager
                 Framework = framework,
                 PluginApiVersion = apiRange,
                 HostVersion = string.IsNullOrWhiteSpace(hostRange) ? null : hostRange,
-                Assemblies = [.. managed]
+                Assemblies = [.. managed.Distinct(StringComparer.OrdinalIgnoreCase)],
+                NativeLibraries = [.. native.Distinct(StringComparer.OrdinalIgnoreCase)],
+                ContentFiles = [.. content.Distinct(StringComparer.OrdinalIgnoreCase)]
             } :
             new PlatformPluginEntry
             {
@@ -157,7 +163,9 @@ internal static class PluginPackager
                         Framework = framework,
                         PluginApiVersion = apiRange,
                         HostVersion = string.IsNullOrWhiteSpace(hostRange) ? null : hostRange,
-                        Assemblies = [.. managed]
+                        Assemblies = [.. managed.Distinct(StringComparer.OrdinalIgnoreCase)],
+                        NativeLibraries = [.. native.Distinct(StringComparer.OrdinalIgnoreCase)],
+                        ContentFiles = [.. content.Distinct(StringComparer.OrdinalIgnoreCase)]
                     }
                 ]
             };
@@ -187,6 +195,23 @@ internal static class PluginPackager
         {
             Directory.Delete(staging, recursive: true);
             if (File.Exists(temporaryArchive)) File.Delete(temporaryArchive);
+        }
+    }
+
+    /// <summary>
+    /// Classifies DLLs by PE metadata, without treating executables or supporting content as managed assemblies.
+    /// </summary>
+    private static AssemblyName? ReadManagedIdentity(string path)
+    {
+        if (!path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) return null;
+
+        try
+        {
+            return AssemblyName.GetAssemblyName(path);
+        }
+        catch (BadImageFormatException)
+        {
+            return null;
         }
     }
 }

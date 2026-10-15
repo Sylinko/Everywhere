@@ -2,20 +2,28 @@
 
 ## Current regression coverage
 
-The current runtime separates registered reversal of application changes from optional entry
-disposal. IPlugin.ShutdownAsync and IAsyncShutdown have been removed. Normal DI disposal releases
-the engine and its entries, without draining registered reversal containers. The former fixed exit
-budget and ShutdownDiagnostics API are removed; no bounded managed-exit claim is made.
+The runtime separates registered reversal of application changes from optional entry disposal.
+Normal DI disposal releases the engine and its entries without draining registered reversal containers.
+No bounded managed-exit guarantee is made.
 
-On 2026-10-14, the complete Release suite passed all 65 cases, including the pending-initialization
-cancellation regression. The focused lifecycle/resource run passed all 30 cases. The four real RuntimeDetour
-cases passed in Release, and four focused Core application/DI/navigation cases passed in Debug.
-Windows and macOS entry projects passed managed compilation with zero warnings/errors using existing
-dependency outputs (`Compile`, `BuildProjectReferences=false`, `DesignTimeBuild=true`). This is not a
-full publish or native platform execution result.
+ChatPluginRegistrationTests and ChatPluginProxyTests cover admission closure, call/filter/stream
+draining, dynamic discovery, complex parameters, default binding, service injection, aliases and
+unchanged result values. Collectible functions and captured hooks must be collected while old chat
+snapshots, results and closed registration handles remain reachable. Replacement registration must
+not revive an old proxy. The fixture uses generated JSON metadata; unrelated reflective serializer
+caches are outside that guarantee. SK's collectible parameter-converter keys use weak storage while
+the converter factory and execution pipeline remain upstream code.
+
+ChatToolConsentTests exercise the production outer approval path with chat snapshots. They cover
+MCP tool-group approval persistence, customized requests, null/allow/deny hook results, automatic
+review and bypass precedence. The host applies rules by snapshot Key, not concrete plugin type.
+Registration tests cover forwarding and revocation of the expanded hook.
+
+The SK patch has also been validated from a published test output. This establishes patch copying
+and execution for that output, not a full signed desktop release or macOS runtime validation.
 
 The maintained suite is `tests/Everywhere.Plugin.Tests`. It exercises the current
-Hosting, Packaging and SDK implementations, rather than the retired experimental loader.
+Hosting, Packaging and SDK implementations.
 Coverage includes optional method/base-type availability and consumer reconstruction,
 controlled name-based assembly binding, initialization failure and retry, timeout handling,
 retained host roots, entry-disposal/reversal failure, resource disposal contracts, and satellite
@@ -31,12 +39,9 @@ collection and reload, cleanup after static-constructor/initializer failure, and
 owners after cleanup failure or timeout. Completing a timed-out disposer does not clear
 RestartRequired.
 
-The Windows Debug host also completed a full build with zero errors and eight existing
-Watchdog AOT/trimming warnings. The UI sample's Register call was migrated, but repackaging
-is currently blocked by an unrelated missing HandleClick method: SamplePage.axaml still
-references it while SamplePage.axaml.cs does not define it (AVLN3000). The existing
-WindowsBase reference-conflict warning also remains. The page was not changed in this
-resource-lifetime work, and no new packaged UI result is claimed.
+The UI sample cannot currently be repackaged: SamplePage.axaml references a missing HandleClick
+method in SamplePage.axaml.cs (AVLN3000). Packaged UI validation must be repeated once that sample
+builds. The existing WindowsBase reference-conflict warning is also unresolved.
 
 Lifecycle cases verify optional absent/synchronous/asynchronous entry disposal, asynchronous
 preference when both interfaces exist, repeated engine disposal, rejected later changes and
@@ -54,9 +59,8 @@ assembly collection, rather than treating RestartRequired as success.
 
 Four SDK cases build independent author projects through directory and source imports,
 with and without host implementation references. They check host-assembly exclusion and
-satellite output paths. The CLI check test verifies machine-readable success/failure output.
-Manifest and host-import tests retain format boundaries and asset-selection checks, without
-requiring JSON property order or inspecting the source catalog's private index layout.
+satellite output paths. Manifest tests cover omitted fields versus explicit null after source generation;
+host-import tests cover declared-asset selection and invalid binding/path checks.
 
 Run the maintained suite:
 
@@ -101,6 +105,20 @@ The macOS delegate still routes ordinary Quit through Avalonia and allows system
 through. Real Quit/Dock, logout, restart and shutdown remain platform validation gates; automated tests
 must not terminate the user's session.
 
+### Windows native loading
+
+The maintained platform/native tests cover unsupported-platform skipping before foreign code is
+inspected, optional availability, rejection of required skipped dependencies, and unused native
+files that do not need to be loadable. A real private copy of Windows `version.dll` is resolved only
+when invoked. Retirement must collect its managed owner and remove the module from the process.
+Shared-provider tests cover different native bytes, one provider missing the asset, identical assets,
+and reconstructing the remaining consumer when a provider disappears. Disagreement is checked at
+the actual native request; no native dependency graph or eager preload is introduced.
+
+The original native test showed that managed context collection alone left the DLL resident.
+The implementation now owns the references acquired by its resolver and frees them only after
+confirmed collection. This establishes the tested host path, not arbitrary native loader behavior.
+
 ### Avalonia cleanup evidence and limits
 
 On 2026-10-13, an isolated harness invoked the real packaged UI test with Avalonia 12.1.3,
@@ -126,10 +144,6 @@ engine state, or establish safe repeated in-process replacement. The production 
 must record and reverse the relevant framework registrations before its collection verdict.
 A general full-type scan is no longer the agreed approach; the probe's GetTypes call is
 suitable for this fixed fixture only.
-
-The temporary UI diagnosis remains at
-`tests/Everywhere.Plugin.Probes/artifacts/ui-unload` until production cleanup is integrated.
-Its performance measurements are not part of the supported behavior or a release threshold.
 
 ## Historical findings and their limits
 
@@ -276,7 +290,8 @@ Relevant sources: [property registry](https://github.com/AvaloniaUI/Avalonia/blo
   constraints and plugin-owned patch behavior.
 - Close current graph/lifetime coverage gaps and assess representative long-running workloads.
   Historical microbenchmarks do not establish a startup, memory or unload-latency guarantee.
-- Validate native asset ownership and application recovery behavior where support is claimed.
+- Extend native asset ownership and recovery validation to further libraries and platforms before
+  claiming their support.
 
 Unconfirmed collection requires `RestartRequired`; it must not be reported as a successful
 hot unload. Failed historical cases must not be converted into unsupported compatibility claims.

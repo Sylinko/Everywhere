@@ -269,7 +269,7 @@ public class ToolSettingsTests
         public TestPlugin(string name, bool isDefaultEnabled, params string[] functionNames) : base(name)
         {
             IsDefaultEnabled = isDefaultEnabled;
-            var functions = functionNames.Select(name => new BuiltInChatFunction(
+            var functions = functionNames.Select(name => new NativeChatFunction(
                     (Func<string>)(static () => string.Empty),
                     ChatFunctionPermissions.AllAccess,
                     functionName: name))

@@ -29,4 +29,9 @@ public enum PluginState
     /// An activation or shutdown operation failed.
     /// </summary>
     Failed,
+
+    /// <summary>
+    /// The desired plugin has no applicable entry on this host. No plugin code was loaded.
+    /// </summary>
+    Skipped
 }

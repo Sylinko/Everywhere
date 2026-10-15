@@ -66,8 +66,8 @@ public sealed class PluginNavigationTests
             Directory.CreateDirectory(sources);
             File.Copy(package, Path.Combine(sources, Path.GetFileName(package)));
             var store = new PluginPackageStore(
-                Path.Combine(root, "app-data", "plugin-installations"),
-                Path.Combine(root, "profile", "plugin-data"),
+                Path.Combine(root, "app-data", "installed-plugins"),
+                Path.Combine(root, "profile", "plugins-data"),
                 Path.Combine(root, "app-data", "cache", "plugin-staging"));
             var installations = await new PluginSourceCatalog(sources, store).ImportAsync();
             var installation = installations.Single();

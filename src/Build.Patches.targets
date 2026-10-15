@@ -58,6 +58,12 @@
                       PatchTargets="OllamaSharp"
                       GlobalPropertiesToRemove="RuntimeIdentifier" />
 
+    <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.SemanticKernel.Core\Everywhere.Patches.SemanticKernel.Core.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="PatchAssembly"
+                      PatchTargets="Microsoft.SemanticKernel.Core"
+                      GlobalPropertiesToRemove="RuntimeIdentifier" />
+
     <ProjectReference Include="$(PatchesBasePath)Everywhere.Patches.MicrosoftExtensionsAI.OpenAI\Everywhere.Patches.MicrosoftExtensionsAI.OpenAI.csproj"
                       ReferenceOutputAssembly="false"
                       OutputItemType="PatchAssembly"

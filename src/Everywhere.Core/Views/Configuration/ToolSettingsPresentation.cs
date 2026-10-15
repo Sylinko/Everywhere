@@ -168,7 +168,7 @@ public sealed class ToolSettingsPresentation : IDisposable
 {
     public IReadOnlyBindableList<ToolPluginPresentation> Plugins { get; }
 
-    public IReadOnlyBindableList<ToolPluginPresentation> BuiltInPlugins { get; }
+    public IReadOnlyBindableList<ToolPluginPresentation> NativePlugins { get; }
 
     public IReadOnlyBindableList<ToolPluginPresentation> McpPlugins { get; }
 
@@ -179,8 +179,8 @@ public sealed class ToolSettingsPresentation : IDisposable
     public ToolSettingsPresentation(IChatPluginManager manager, ToolSettingsContext context)
     {
         Context = context;
-        Plugins = manager.BuiltInPlugins
-            .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
+        Plugins = manager.NativePlugins
+            .ToObservableChangeSet<IReadOnlyBindableList<NativeChatPlugin>, NativeChatPlugin>()
             .Transform(ChatPlugin (plugin) => plugin)
             .Or(manager.McpPlugins
                 .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
@@ -189,9 +189,9 @@ public sealed class ToolSettingsPresentation : IDisposable
             .DisposeMany()
             .BindEx(_disposables);
 
-        BuiltInPlugins = Plugins
+        NativePlugins = Plugins
             .ToObservableChangeSet<IReadOnlyBindableList<ToolPluginPresentation>, ToolPluginPresentation>()
-            .Filter(static presentation => presentation.Plugin is BuiltInChatPlugin)
+            .Filter(static presentation => presentation.Plugin is NativeChatPlugin)
             .BindEx(_disposables);
         McpPlugins = Plugins
             .ToObservableChangeSet<IReadOnlyBindableList<ToolPluginPresentation>, ToolPluginPresentation>()

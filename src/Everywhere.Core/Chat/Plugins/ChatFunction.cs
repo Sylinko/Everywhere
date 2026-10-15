@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins.Mcp;
 using Lucide.Avalonia;
@@ -38,14 +39,22 @@ public abstract class ChatFunction
     public abstract KernelFunction KernelFunction { get; }
 
     /// <summary>
-    /// Converts the function call content to a user-friendly format for UI display.
+    /// Gets the optional callback that creates display content before approval and execution.
     /// </summary>
-    /// <param name="content"></param>
-    /// <returns></returns>
-    public virtual ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content) => null;
+    public virtual BeforeCallHook? BeforeCallHook => null;
+
+    /// <summary>
+    /// Gets the optional consent callback. A null result continues normal approval;
+    /// true allows the call and false denies it without requesting consent.
+    /// </summary>
+    public virtual PermissionConsentHook? PermissionConsentHook => null;
 }
 
-public sealed class BuiltInChatFunction : ChatFunction
+/// <summary>
+/// A managed tool function shared by application-owned and plugin-supplied tool groups.
+/// Registration supplies revocable wrappers when its implementation has a shorter lifetime than chat history.
+/// </summary>
+public sealed class NativeChatFunction : ChatFunction
 {
     public override IDynamicLocaleKey HeaderKey { get; }
 
@@ -55,18 +64,17 @@ public sealed class BuiltInChatFunction : ChatFunction
 
     public override KernelFunction KernelFunction { get; }
 
+    /// <inheritdoc/>
+    public override BeforeCallHook? BeforeCallHook { get; }
+
+    /// <inheritdoc/>
+    public override PermissionConsentHook? PermissionConsentHook { get; }
+
     /// <summary>
-    /// An optional predicate that can be used to inspect the function call content before prompting the user for permission consent.
-    /// This will be called only if the function call requires user consent and does not bypass approval.
-    /// If the predicate returns false, the function call will be **rejected** without prompting the user.
-    /// If the predicate returns true, the function call will be **approved** without prompting the user.
-    /// If the predicate is null or returns null, the user will be prompted for consent without additional checks (default behavior).
+    /// Creates a chat tool through SK's method factory using plugin-owned converters or generated
+    /// JSON metadata for schema generation and binding. Null options retain SK's default behavior.
     /// </summary>
-    public Func<FunctionCallContent, bool?>? OnPermissionConsent { get; init; }
-
-    private readonly IFriendlyFunctionCallContentRenderer? _renderer;
-
-    public BuiltInChatFunction(
+    public NativeChatFunction(
         Delegate method,
         ChatFunctionPermissions permissions,
         LucideIconKind? icon = null,
@@ -75,11 +83,13 @@ public sealed class BuiltInChatFunction : ChatFunction
         bool canBypassApproval = true,
         bool isExperimental = false,
         bool isVisible = true,
-        Func<FunctionCallContent, bool?>? onPermissionConsent = null,
+        BeforeCallHook? beforeCallHook = null,
+        PermissionConsentHook? permissionConsentHook = null,
         string? functionName = null,
         string? description = null,
         IDynamicLocaleKey? headerKey = null,
-        IDynamicLocaleKey? descriptionKey = null)
+        IDynamicLocaleKey? descriptionKey = null,
+        JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (headerKey is not null)
         {
@@ -118,35 +128,41 @@ public sealed class BuiltInChatFunction : ChatFunction
         CanBypassApproval = canBypassApproval;
         IsExperimental = isExperimental;
         IsVisible = isVisible;
-        OnPermissionConsent = onPermissionConsent;
+        BeforeCallHook = beforeCallHook;
+        PermissionConsentHook = permissionConsentHook;
 
-        KernelFunction = functionName.IsNullOrWhiteSpace() && description is null ?
-            KernelFunctionFactory.CreateFromMethod(method) :
-            KernelFunctionFactory.CreateFromMethod(
-                method,
-                new KernelFunctionFromMethodOptions
-                {
-                    FunctionName = functionName,
-                    Description = description
-                });
-
-        if (method.Method.GetCustomAttributes<FriendlyFunctionCallContentRendererAttribute>(false).FirstOrDefault() is
-            { RendererType: { } rendererType })
+        var options = new KernelFunctionFromMethodOptions
         {
-            if (!typeof(IFriendlyFunctionCallContentRenderer).IsAssignableFrom(rendererType))
-            {
-                throw new InvalidOperationException(
-                    $"The renderer type '{rendererType.FullName}' does not implement {nameof(IFriendlyFunctionCallContentRenderer)}.");
-            }
-
-            _renderer = Activator.CreateInstance(rendererType) as IFriendlyFunctionCallContentRenderer;
-        }
+            FunctionName = functionName.IsNullOrWhiteSpace() ? null : functionName,
+            Description = description
+        };
+        KernelFunction = jsonSerializerOptions is null ?
+            KernelFunctionFactory.CreateFromMethod(method, options) :
+            KernelFunctionFactory.CreateFromMethod(method, jsonSerializerOptions, options);
     }
 
-    public override ChatPluginDisplayBlock? GetFriendlyCallContent(FunctionCallContent content)
+    /// <summary>
+    /// Copies presentation and permissions for a host-owned invocation wrapper.
+    /// Callbacks supplied here resolve through the live registration rather than retaining plugin delegates.
+    /// </summary>
+    internal NativeChatFunction(
+        KernelFunction function,
+        NativeChatFunction source,
+        PermissionConsentHook? permissionConsentHook,
+        BeforeCallHook? beforeCallHook)
     {
-        if (content.Arguments is not { Count: > 0 } arguments) return base.GetFriendlyCallContent(content);
-        return _renderer?.Render(arguments) ?? base.GetFriendlyCallContent(content);
+        KernelFunction = function;
+        HeaderKey = source.HeaderKey;
+        DescriptionKey = source.DescriptionKey;
+        Permissions = source.Permissions;
+        Icon = source.Icon;
+        IsDefaultEnabled = source.IsDefaultEnabled;
+        IsDefaultBypassApproval = source.IsDefaultBypassApproval;
+        CanBypassApproval = source.CanBypassApproval;
+        IsExperimental = source.IsExperimental;
+        IsVisible = source.IsVisible;
+        PermissionConsentHook = permissionConsentHook;
+        BeforeCallHook = beforeCallHook;
     }
 }
 
@@ -155,6 +171,9 @@ public class McpChatFunction : ChatFunction
     public override ChatFunctionPermissions Permissions => ChatFunctionPermissions.MCP;
 
     public override KernelFunction KernelFunction => _kernelFunction;
+
+    /// <inheritdoc/>
+    public override PermissionConsentHook PermissionConsentHook => PermissionConsent;
 
     public string OriginalName { get; private set; }
 
@@ -171,5 +190,22 @@ public class McpChatFunction : ChatFunction
     {
         OriginalName = tool.ProtocolTool.Name;
         _kernelFunction = tool.AsKernelFunction();
+    }
+
+    /// <summary>
+    /// Prepares server-specific consent using snapshot values, without retaining the live MCP plugin.
+    /// The host handles the resulting tool-group approval like any other native or remote tool.
+    /// </summary>
+    private static bool? PermissionConsent(FunctionCallContext context, PermissionConsentRequest request)
+    {
+        request.HeaderKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_Header, context.ChatFunction.HeaderKey);
+        request.CustomOptions =
+        [
+            new RequestConsentCustomOption(
+                ToolConsentOption.BypassPluginApproval,
+                new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_BypassServerApproval_Header, context.ChatPlugin.HeaderKey),
+                null)
+        ];
+        return null;
     }
 }

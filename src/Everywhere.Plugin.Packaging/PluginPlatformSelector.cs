@@ -15,9 +15,9 @@ public static class PluginPlatformSelector
     public static bool IsKnownPlatform(string platform) => Imports.ContainsKey(platform);
 
     /// <summary>
-    /// Selects an entry before compatibility checks; host-range failure must not trigger a broader fallback.
+    /// Selects an entry, or returns null for an unsupported platform, before compatibility checks; host-range failure must not trigger a broader fallback.
     /// </summary>
-    public static UniversalPluginEntry Select(PluginManifest manifest, string runtimeIdentifier)
+    public static UniversalPluginEntry? Select(PluginManifest manifest, string runtimeIdentifier)
     {
         PluginManifestFile.Validate(manifest);
 
@@ -54,7 +54,7 @@ public static class PluginPlatformSelector
             }
         }
 
-        throw new PluginValidationException("UnsupportedPlatform", $"Plugin '{manifest.Id}' does not support '{runtimeIdentifier}'.");
+        return null;
     }
 
     /// <summary>
@@ -70,6 +70,8 @@ public static class PluginPlatformSelector
             PluginApiVersion = variant.PluginApiVersion,
             HostVersion = variant.HostVersion,
             Assemblies = variant.Assemblies,
+            NativeLibraries = variant.NativeLibraries,
+            ContentFiles = variant.ContentFiles,
             Dependencies = variant.Dependencies
         };
     }

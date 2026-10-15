@@ -15,7 +15,7 @@ namespace Everywhere.Plugins;
 /// The existing application startup drain completes before DI releases this service. Normal disposal
 /// releases plugin-owned resources without reversing application changes or requiring a live dispatcher.
 /// </remarks>
-public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncInitializer, IAsyncDisposable
+public sealed class PluginEngineManager(IServiceProvider services) : IAsyncInitializer, IAsyncDisposable
 {
     /// <summary>
     /// Gets the directory containing original ZIP packages and unpacked package folders.
@@ -23,7 +23,7 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
     public static string PluginDirectory => Path.Combine(RuntimeConstants.ConfigurationFolderPath, "plugins");
 
     /// <summary>
-    /// Gets the directory containing original ZIP packages and unpacked package folders.
+    /// Gets persistent user data, kept separate from installed code and temporary files.
     /// </summary>
     public static string PluginDataDirectory => Path.Combine(RuntimeConstants.ConfigurationFolderPath, "plugins-data");
 
@@ -41,7 +41,7 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
         try
         {
             var store = new PluginPackageStore(
-                RuntimeConstants.EnsureWritableDataFolderPath("plugin-installations"),
+                RuntimeConstants.EnsureWritableDataFolderPath("installed-plugins"),
                 PluginDataDirectory,
                 RuntimeConstants.EnsureCacheFolderPath("plugin-staging"));
             var installations = await new PluginSourceCatalog(PluginDirectory, store)
@@ -70,6 +70,10 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
             _engine = new PluginEngine(new HostAssemblyCatalog(references.Assemblies.Values), services, new PluginEngineOptions());
 
             LogResult("startup", await _engine.ApplyAsync(definitions, cancellationToken).ConfigureAwait(false));
+            foreach (var plugin in _engine.Plugins.Where(plugin => plugin.SkipReason is not null))
+            {
+                Log.ForContext<PluginEngineManager>().Information("Plugin {PluginId} skipped: {Reason}.", plugin.Id, plugin.SkipReason);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -78,7 +82,7 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
         catch (Exception exception)
         {
             // Keep diagnostic text, not exception objects that could retain a collectible assembly.
-            Log.ForContext<PluginEngineInitializer>().Error("Plugin startup failed: {Detail}", exception.ToString());
+            Log.ForContext<PluginEngineManager>().Error("Plugin startup failed: {Detail}", exception.ToString());
         }
     }
 
@@ -94,7 +98,7 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
         catch (Exception exception)
         {
             // Failure in an extension must not prevent DI from disposing the remaining host services.
-            Log.ForContext<PluginEngineInitializer>().Error("Plugin disposal failed: {Detail}", exception.ToString());
+            Log.ForContext<PluginEngineManager>().Error("Plugin disposal failed: {Detail}", exception.ToString());
         }
     }
 
@@ -103,7 +107,7 @@ public sealed class PluginEngineInitializer(IServiceProvider services) : IAsyncI
     /// </summary>
     private static void LogResult(string operation, PluginApplyResult result)
     {
-        var logger = Log.ForContext<PluginEngineInitializer>();
+        var logger = Log.ForContext<PluginEngineManager>();
         logger.Information("Plugin {Operation}: {Status}; active plugins: {Plugins}", operation, result.Status, result.ActivePluginIds);
 
         foreach (var diagnostic in result.Diagnostics)

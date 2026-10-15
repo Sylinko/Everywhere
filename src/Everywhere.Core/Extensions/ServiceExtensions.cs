@@ -91,7 +91,7 @@ public static class ServiceExtensions
         /// Registers the engine-owning initializer once; DI discovers its asynchronous disposal interface.
         /// </summary>
         public IServiceCollection AddPlugins() =>
-            services.AddSingleton<IAsyncInitializer, PluginApplicationService>();
+            services.AddSingleton<IAsyncInitializer, PluginEngineManager>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services

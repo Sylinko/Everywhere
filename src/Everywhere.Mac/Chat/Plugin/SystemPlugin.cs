@@ -30,31 +30,31 @@ public sealed class SystemPlugin : BuiltInChatPlugin
         _functionsSource.Edit(list =>
         {
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageRemindersAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageCalendarAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     SendEmailAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     OpenMapsAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ManageNotesAsync,
                     ChatFunctionPermissions.None));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     OpenUrlAsync,
                     ChatFunctionPermissions.NetworkAccess));
             list.Add(
-                new BuiltInChatFunction(
+                new NativeChatFunction(
                     ExecuteAppleScriptAsync,
                     ChatFunctionPermissions.ShellExecute));
         });
