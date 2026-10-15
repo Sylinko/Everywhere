@@ -1,0 +1,36 @@
+<Project>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <Target Name="EverywhereImportHost" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="'$(EverywhereHost)' == ''" Text="Specify EverywhereHost in Everywhere.local.props or as a build property." />
+    <PropertyGroup>
+      <_EverywhereHostReferences>$(IntermediateOutputPath)everywhere-host-references.txt</_EverywhereHostReferences>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; import &quot;$(EverywhereHost)&quot; &quot;$(_EverywhereHostReferences)&quot;" />
+    <ReadLinesFromFile File="$(_EverywhereHostReferences)">
+      <Output TaskParameter="Lines" ItemName="_EverywhereHostReference" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <Reference Include="@(_EverywhereHostReference)">
+        <HintPath>%(Identity)</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywherePack" DependsOnTargets="Build">
+    <Error Condition="'$(EverywherePluginId)' == '' OR '$(EverywherePluginEntryType)' == ''"
+           Text="EverywherePluginId and EverywherePluginEntryType must be declared in the project." />
+    <PropertyGroup>
+      <EverywherePluginPlatform Condition="'$(EverywherePluginPlatform)' == ''">universal</EverywherePluginPlatform>
+      <EverywherePluginPackagePath Condition="'$(EverywherePluginPackagePath)' == ''">$(OutputPath)$(EverywherePluginId)-$(Version).zip</EverywherePluginPackagePath>
+      <_EverywherePayloadList>$(IntermediateOutputPath)everywhere-payload.txt</_EverywherePayloadList>
+    </PropertyGroup>
+    <ItemGroup>
+      <_EverywherePayload Include="@(ReferenceCopyLocalPaths->'%(FullPath)|%(DestinationSubDirectory)%(Filename)%(Extension)')" />
+      <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath->'%(FullPath)|%(TargetPath)')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_EverywherePayloadList)" Lines="@(_EverywherePayload)" Overwrite="true" />
+    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; pack &quot;$(TargetPath)&quot; &quot;$(_EverywhereHostReferences)&quot; &quot;$(_EverywherePayloadList)&quot; &quot;$(EverywherePluginId)&quot; &quot;$(Version)&quot; &quot;$(EverywherePluginEntryType)&quot; &quot;$(TargetFramework)&quot; &quot;$(EverywhereHostVersion)&quot; &quot;$(EverywherePluginApiVersion)&quot; &quot;$(EverywherePluginPlatform)&quot; &quot;$(EverywherePluginPackagePath)&quot;" />
+  </Target>
+</Project>

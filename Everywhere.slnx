@@ -28,6 +28,9 @@
     <Project Path="3rd/semantic-kernel-patch/Connectors.Google/Connectors.Google.csproj" />
     <Project Path="3rd/semantic-kernel-patch/Connectors.MistralAI/Connectors.MistralAI.csproj" />
   </Folder>
+  <Folder Name="/plugins/samples/">
+    <Project Path="plugins/samples/Everywhere.Plugin.Sample/Everywhere.Plugin.Sample.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
@@ -73,6 +76,7 @@
     <File Path="tests/Directory.Packages.props" />
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
     <Project Path="tests/Everywhere.BuildTask.Patcher.Tests/Everywhere.BuildTask.Patcher.Tests.csproj" />
+    <Project Path="tests/Everywhere.Plugin.Tests/Everywhere.Plugin.Tests.csproj" />
     <Project Path="tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj" />
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
     <Project Path="tests/Everywhere.AvaloniaDesignerHost/Everywhere.AvaloniaDesignerHost.csproj" />
@@ -100,6 +104,10 @@
     <File Path="tools/visual_tree_debugger.html" />
   </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
+  <Project Path="src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
+  <Project Path="src/Everywhere.Plugin.Hosting/Everywhere.Plugin.Hosting.csproj" />
+  <Project Path="src/Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj" />
+  <Project Path="src/Everywhere.Plugin.Sdk/Everywhere.Plugin.Sdk.csproj" />
   <Project Path="src/Everywhere.Automation/Everywhere.Automation.csproj" />
   <Project Path="src/Everywhere.Cloud/Everywhere.Cloud.csproj" />
   <Project Path="src/Everywhere.Configuration.SourceGenerator/Everywhere.Configuration.SourceGenerator.csproj" />

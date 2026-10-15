@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Version>1.0.0-dev</Version>
+    <PackageType>MSBuildSdk</PackageType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Everywhere plugin project SDK and package tooling.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj"/>
+    <ProjectReference Include="../Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj"/>
+    <None Include="Sdk/**/*" Pack="true" PackagePath="Sdk"/>
+  </ItemGroup>
+
+  <Target Name="CollectSdkTools" BeforeTargets="_GetPackageFiles" DependsOnTargets="Build">
+    <ItemGroup>
+      <None Include="$(OutputPath)*.dll;$(OutputPath)*.json;$(OutputPath)*.xml"
+            Pack="true" PackagePath="tools/net10.0"/>
+    </ItemGroup>
+  </Target>
+
+</Project>

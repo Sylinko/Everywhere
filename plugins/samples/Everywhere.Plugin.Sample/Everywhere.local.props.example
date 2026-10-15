@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Copy to Everywhere.local.props; use an installation or a source-project path. -->
+    <EverywhereHost>PATH_TO_PLUGIN_ENABLED_HOST</EverywhereHost>
+    <!-- Read hostVersion from that build's plugin-host.json and choose a tested range. -->
+    <EverywhereHostVersion>[1.0.0]</EverywhereHostVersion>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,14 @@
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <SelfContained>false</SelfContained>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <EverywhereLocalConfiguration Condition="'$(EverywhereLocalConfiguration)' == ''">$(MSBuildProjectDirectory)/Everywhere.local.props</EverywhereLocalConfiguration>
+    <EverywherePluginToolsDirectory Condition="'$(EverywherePluginToolsDirectory)' == ''">$(MSBuildThisFileDirectory)../tools/net10.0</EverywherePluginToolsDirectory>
+  </PropertyGroup>
+
+  <Import Project="$(EverywhereLocalConfiguration)" Condition="Exists('$(EverywhereLocalConfiguration)')" />
+</Project>

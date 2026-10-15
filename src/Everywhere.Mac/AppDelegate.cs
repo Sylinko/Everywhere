@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
@@ -96,6 +96,41 @@ public partial class AppDelegate : NSApplicationDelegate
         _spaceChangeObserver = null;
     }
 
+    /// <summary>
+    /// Routes ordinary Quit through the Avalonia lifetime so the entry point can dispose DI afterward.
+    /// Does not perform cleanup inside the native callback or delay a system termination request.
+    /// Everywhere supplies its own delegate, so Avalonia's native termination callback is not installed.
+    /// </summary>
+    public override NSApplicationTerminateReply ApplicationShouldTerminate(NSApplication sender)
+    {
+        if (HasSystemQuitReason() || Avalonia.Application.Current is not App app)
+        {
+            return NSApplicationTerminateReply.Now;
+        }
+
+        app.Shutdown();
+        return NSApplicationTerminateReply.Cancel;
+    }
+
+    /// <summary>
+    /// Reads the current quit Apple event's reason before leaving the native callback.
+    /// A reason supplied by the system is allowed through, including reasons introduced by future macOS versions.
+    /// Ordinary application Quit commands have no reason descriptor.
+    /// </summary>
+    private static bool HasSystemQuitReason()
+    {
+        var appleEvent = NSAppleEventManager.SharedAppleEventManager.CurrentAppleEvent;
+        if (appleEvent is null || appleEvent.EventClass != AEEventClass.AppleEvent || appleEvent.EventID != AEEventID.QuitApplication)
+        {
+            return false;
+        }
+
+        // kAEQuitReason is not exposed as a named constant by the .NET macOS bindings.
+        var keyword = GetDescriptor("why?"u8);
+        using var reason = appleEvent.ParamDescriptorForKeyword(keyword) ?? appleEvent.AttributeDescriptorForKeyword(keyword);
+        return reason is not null;
+    }
+
     public override void WillFinishLaunching(NSNotification notification)
     {
         NSAppleEventManager.SharedAppleEventManager.SetEventHandler(
@@ -130,14 +165,16 @@ public partial class AppDelegate : NSApplicationDelegate
     [Export("handleGetURLEvent:withReplyEvent:")]
     private void HandleGetURLEvent(NSAppleEventDescriptor evt, NSAppleEventDescriptor replyEvt)
     {
-        var url = evt.ParamDescriptorForKeyword(GetDescriptor("----"))?.StringValue;
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme.Equals(
-                UrlProtocolCallbackMessage.Scheme,
-                StringComparison.OrdinalIgnoreCase))
+        var url = evt.ParamDescriptorForKeyword(GetDescriptor("----"u8))?.StringValue;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            uri.Scheme.Equals(UrlProtocolCallbackMessage.Scheme, StringComparison.OrdinalIgnoreCase))
         {
             WeakReferenceMessenger.Default.Send<ApplicationMessage>(new UrlProtocolCallbackMessage(url));
         }
-
-        static uint GetDescriptor(string s) => (uint)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
     }
+
+    /// <summary>
+    /// Encodes a four-character Apple event code as a 32-bit value.
+    /// </summary>
+    private static uint GetDescriptor(ReadOnlySpan<byte> value) => (uint)(value[0] << 24 | value[1] << 16 | value[2] << 8 | value[3]);
 }

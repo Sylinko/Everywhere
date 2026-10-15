@@ -1,4 +1,4 @@
-using Everywhere.AI;
+﻿using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
 using Everywhere.Automation;
@@ -13,6 +13,7 @@ using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Interop;
+using Everywhere.Plugins;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
@@ -85,6 +86,12 @@ public static class ServiceExtensions
                 .AddSingleton<IKeyValueStorage>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
                 .AddTransient<IAsyncInitializer>(sp => sp.GetRequiredService<PersistentKeyValueStorage>())
                 .AddSingleton<PersistentState>();
+
+        /// <summary>
+        /// Registers the engine-owning initializer once; DI discovers its asynchronous disposal interface.
+        /// </summary>
+        public IServiceCollection AddPlugins() =>
+            services.AddSingleton<IAsyncInitializer, PluginApplicationService>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services
