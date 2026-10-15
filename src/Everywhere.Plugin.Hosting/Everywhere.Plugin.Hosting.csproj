@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Package selection and collectible runtime for Everywhere plugins.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj"/>
+    <ProjectReference Include="../Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj"/>
+  </ItemGroup>
+
+</Project>

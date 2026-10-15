@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Version>0.9.2</Version>
+    <RuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
+  </ItemGroup>
+
+  <Import Project="../../../../src/Build.Plugin.Hosting.targets" />
+</Project>

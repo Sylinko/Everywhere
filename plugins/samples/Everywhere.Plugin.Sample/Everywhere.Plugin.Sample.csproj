@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Use the workspace SDK until its first NuGet release. EverywhereHost is machine-local. -->
+  <Import Project="../../../src/Everywhere.Plugin.Sdk/Sdk/Sdk.props"/>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EverywherePluginToolsDirectory>$(MSBuildThisFileDirectory)../../../src/Everywhere.Plugin.Sdk/bin/$(Configuration)/net10.0</EverywherePluginToolsDirectory>
+    <EverywherePluginId>everywhere.sample.navigation</EverywherePluginId>
+    <EverywherePluginEntryType>Everywhere.Plugin.Sample.NavigationPlugin</EverywherePluginEntryType>
+    <EverywhereI18NNamespace>Everywhere.Plugin.Sample.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia"/>
+    <ProjectReference Include="../../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+  </ItemGroup>
+
+  <Import Project="../../../src/Build.I18N.targets"/>
+  <Import Project="../../../src/Everywhere.Plugin.Sdk/Sdk/Sdk.targets"/>
+
+</Project>

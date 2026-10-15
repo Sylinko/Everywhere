@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Shared plugin manifests, host references and compatibility rules for Everywhere.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildSDKsPath)/../PortableRuntimeIdentifierGraph.json"
+                      LogicalName="Everywhere.Plugin.Packaging.PortableRuntimeIdentifierGraph.json"/>
+    <ProjectReference Include="../Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj"/>
+    <PackageReference Include="NuGet.Versioning"/>
+    <PackageReference Include="NuGet.Frameworks"/>
+  </ItemGroup>
+
+</Project>

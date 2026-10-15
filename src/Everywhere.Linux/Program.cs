@@ -84,6 +84,7 @@ public static class Program
             .AddWatchdogManager()
             .ConfigureNetwork()
             .AddViewsAndViewModels()
+            .AddPlugins()
             .AddDatabaseAndStorage()
             .AddChatEssentials()
 
