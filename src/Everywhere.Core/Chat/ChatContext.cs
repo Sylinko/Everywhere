@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reactive.Disposables.Fluent;
 using System.Text.Json.Serialization;
 using Avalonia.Threading;
@@ -629,13 +630,18 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     }
 
     /// <summary>
-    /// Get and ensures the working directory
+    /// Gets or creates this chat's persistent workspace using its UTC creation date and the last 12 hexadecimal ID characters.
     /// </summary>
-    /// <returns>
-    /// Usually a temporary directory path like C:\Users\[UserName]\AppData\Roaming\Everywhere\plugins\2025-12-30
-    /// </returns>
-    public string EnsureWorkingDirectory() =>
-        RuntimeConstants.EnsureWritableDataFolderPath("plugins", Metadata.DateCreated.ToString("yyyy-MM-dd"));
+    /// <remarks>
+    /// The path is stable across restarts and time zones. The shortened ID accepts a small collision risk within each date;
+    /// it is a directory name, not a replacement for the full chat ID. Historical shared workspaces are not moved here.
+    /// </remarks>
+    public string EnsureWorkingDirectory()
+    {
+        var date = Metadata.DateCreated.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        var directoryName = Metadata.Id.ToString("N")[^12..];
+        return RuntimeConstants.EnsureWritableDataFolderPath("workspaces", date, directoryName);
+    }
 
     public readonly record struct PersistenceNodeSnapshot(
         Guid Id,

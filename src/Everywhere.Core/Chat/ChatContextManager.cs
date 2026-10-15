@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reactive;
 using System.Reactive.Subjects;
-using System.Text.RegularExpressions;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -265,32 +264,58 @@ public sealed partial class ChatContextManager :
     }
 
     /// <summary>
-    /// Delete all directories in _runtimeConstantProvider.EnsureWritableDataFolderPath($"plugins") that named with date (yyyy-MM-dd)
+    /// Removes empty chat workspaces under UTC date directories older than three days, then removes empty date directories.
+    /// Nonempty workspaces and historical shared tool directories are preserved.
     /// </summary>
     private void CleanupUnusedWorkingDirectories()
     {
-        var regex = WorkingDirectoryRegex();
-        var pluginsDir = RuntimeConstants.EnsureWritableDataFolderPath("plugins");
-        foreach (var dir in Directory.GetDirectories(pluginsDir))
+        // TODO: Replace automatic startup scanning, whose cost grows with workspace count, with a unified
+        // storage usage and user-initiated cleanup entry point. Treat workspace outputs separately from disposable caches.
+        var workspacesDirectory = Path.Combine(RuntimeConstants.WritableFolderPath, "workspaces");
+        if (!Directory.Exists(workspacesDirectory)) return;
+
+        var cutoff = DateTime.UtcNow.AddDays(-3);
+        foreach (var dateDirectory in Directory.EnumerateDirectories(workspacesDirectory))
         {
-            var dirName = Path.GetFileName(dir);
-            if (!regex.IsMatch(dirName)) continue;
+            var dateName = Path.GetFileName(dateDirectory);
+            if (!DateTime.TryParseExact(dateName, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)) continue;
+            if (date >= cutoff) continue;
 
-            if (!DateTime.TryParseExact(dirName, "yyyy-MM-dd", null, DateTimeStyles.None, out var dirDate))
-                continue;
-
-            // If the directory is 3 days later and is empty, delete it
-            if ((DateTime.Now - dirDate).TotalDays > 3 && !Directory.EnumerateFileSystemEntries(dir).AsValueEnumerable().Any())
+            try
             {
-                try
+                // Do not follow a directory link into files outside the managed workspace tree.
+                if ((File.GetAttributes(dateDirectory) & FileAttributes.ReparsePoint) != 0) continue;
+
+                foreach (var workspaceDirectory in Directory.EnumerateDirectories(dateDirectory))
                 {
-                    Directory.Delete(dir); // do not use recursive delete
+                    CleanupEmptyWorkingDirectory(workspaceDirectory);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete unused working directory: {Directory}", dir);
-                }
+
+                CleanupEmptyWorkingDirectory(dateDirectory);
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(ex, "Failed to inspect workspace date directory: {Directory}", dateDirectory);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deletes one empty workspace directory without following links or recursively deleting files.
+    /// A concurrent write makes deletion fail safely and leaves the directory in place.
+    /// </summary>
+    private void CleanupEmptyWorkingDirectory(string directory)
+    {
+        try
+        {
+            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return;
+            if (Directory.EnumerateFileSystemEntries(directory).Any()) return;
+
+            Directory.Delete(directory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(ex, "Failed to delete unused working directory: {Directory}", directory);
         }
     }
 
@@ -1008,9 +1033,6 @@ public sealed partial class ChatContextManager :
     }
 
     private static bool IsEmptyContext([NotNullWhen(true)] ChatContext? chatContext) => chatContext is { Count: 1 };
-
-    [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}$")]
-    private static partial Regex WorkingDirectoryRegex();
 }
 
 public static class ChatContextManagerExtensions
