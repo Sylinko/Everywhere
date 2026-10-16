@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
-using Everywhere.ProcessIsolation.Automation;
 using Lucide.Avalonia;
 
 namespace Everywhere.Configuration;
@@ -68,19 +67,6 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
     [SettingsItem(Group = LocaleKey.ChatWindowSettings_Group_Attachment)]
     public partial bool AutomaticallyAddElement { get; set; } = true;
 
-    // TODO: Expose the retained text-selection settings from their dedicated settings page.
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial bool AutomaticallyAddTextSelection { get; set; }
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial bool IsTextSelectionFullscreenExcluded { get; set; } = true;
-
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial string? TextSelectionExcludedApplications { get; set; }
-
     /// <summary>
     /// When enabled, show chat statistics in the chat window.
     /// </summary>
@@ -131,17 +117,6 @@ public sealed partial class ChatWindowSettings : SettingsBase, ISettingsCategory
         Meter.CreateGauge<int>($"settings.{nameof(EnableVisualElementPickAnimation)}");
     private readonly Gauge<int> _enableVisualContextAnimationGauge =
         Meter.CreateGauge<int>($"settings.{nameof(EnableVisualContextAnimation)}");
-
-    /// <summary>Creates the complete native monitoring policy represented by the persisted settings.</summary>
-    public TextSelectionMonitoringConfiguration CreateTextSelectionMonitoringConfiguration() => new()
-    {
-        IsFullscreenApplicationExcluded = IsTextSelectionFullscreenExcluded,
-        // Newlines are the only portable separator because valid application paths may contain commas.
-        ExcludedApplications = TextSelectionExcludedApplications?
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray() ?? [],
-    };
 
     public ChatWindowSettings(IServiceProvider serviceProvider) : base(serviceProvider)
     {

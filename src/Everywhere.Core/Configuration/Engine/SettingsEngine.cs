@@ -161,6 +161,7 @@ public sealed class SettingsEngine : IAsyncInitializer, IDisposable
 
         services.AddTransient<SettingsMigration, _20260721120000_0_8_1_canary_20260721_14>();
         services.AddTransient<SettingsMigration, _20261001023708_0_9_0_canary_20261001_24>();
+        services.AddTransient<SettingsMigration, _20261016110032_0_9_0_canary_20261016_27>();
 
         return services.BuildServiceProvider();
     }

@@ -9,6 +9,17 @@ namespace Everywhere.Interop;
 public interface IScreenSelectionService
 {
     /// <summary>
+    /// Selects an application window with a process-name-only tooltip and no selection-mode switching.
+    /// Does not read or change the ordinary element picker's remembered mode.
+    /// </summary>
+    /// <param name="visualContext">Main-side Host Context that adopts the confirmed remote anchor.</param>
+    /// <param name="cancellationToken">Cancels the active interaction.</param>
+    /// <returns>The exact Host-retained window, or <see langword="null" /> when selection is canceled.</returns>
+    Task<RemoteVisualAnchor?> PickApplicationWindowAsync(
+        IHostedVisualContext visualContext,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Lets the user select a Host-owned visual element from the screen.
     /// </summary>
     /// <param name="visualContext">Main-side Host Context that adopts the confirmed remote anchor.</param>

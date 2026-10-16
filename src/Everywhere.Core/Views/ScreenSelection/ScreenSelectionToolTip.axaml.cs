@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
 using Avalonia.Controls.Primitives;
-using Everywhere.Interop;
 using Everywhere.Automation;
+using Everywhere.Interop;
 
 namespace Everywhere.Views;
 
-public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedModes) : TemplatedControl
+public class ScreenSelectionToolTip(INativeHelper nativeHelper, IEnumerable<ScreenSelectionMode> allowedModes) : TemplatedControl
 {
     public static readonly StyledProperty<IDynamicLocaleKey> HeaderProperty =
         AvaloniaProperty.Register<ScreenSelectionToolTip, IDynamicLocaleKey>(nameof(Header), DirectLocaleKey.Empty);
@@ -17,6 +17,19 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
     }
 
     public IEnumerable<ScreenSelectionMode> AllowedModes { get; } = allowedModes;
+
+    public static readonly StyledProperty<bool> IsApplicationWindowPickerProperty =
+        AvaloniaProperty.Register<ScreenSelectionToolTip, bool>(nameof(IsApplicationWindowPicker));
+
+    /// <summary>
+    /// Shows the application's friendly name and window-picking instructions.
+    /// Set before the session receives its first observation.
+    /// </summary>
+    public bool IsApplicationWindowPicker
+    {
+        get => GetValue(IsApplicationWindowPickerProperty);
+        set => SetValue(IsApplicationWindowPickerProperty, value);
+    }
 
     public static readonly StyledProperty<ScreenSelectionMode> ModeProperty =
         AvaloniaProperty.Register<ScreenSelectionToolTip, ScreenSelectionMode>(nameof(Mode));
@@ -32,7 +45,7 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
             nameof(TipText),
             o => o.TipText);
 
-    public IDynamicLocaleKey TipText => GetTipText(Mode);
+    public IDynamicLocaleKey TipText => GetTipText(Mode, IsApplicationWindowPicker);
 
     public static readonly StyledProperty<string?> SizeInfoProperty =
         AvaloniaProperty.Register<ScreenSelectionToolTip, string?>(nameof(SizeInfo));
@@ -43,25 +56,22 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         set => SetValue(SizeInfoProperty, value);
     }
 
-    /// <summary>Gets or sets the current scalar picker observation.</summary>
-    public VisualElementSnapshot? Snapshot
-    {
-        get => _snapshot;
-        set => SetObservation(value, null, null);
-    }
-
-    private readonly Dictionary<int, string> _processNameCache = new();
+    private readonly Dictionary<int, string> _applicationNameCache = new();
     private readonly DynamicLocaleKey _freeTipText = new(LocaleKey.ScreenSelectionToolTip_TipText_Free);
     private readonly DynamicLocaleKey _normalTipText = new(LocaleKey.ScreenSelectionToolTip_TipText_Normal);
-    private VisualElementSnapshot? _snapshot;
+    private readonly DynamicLocaleKey _applicationWindowTipText = new(LocaleKey.ScreenSelectionToolTip_TipText_ApplicationWindow);
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ModeProperty)
+        if (change.Property == ModeProperty || change.Property == IsApplicationWindowPickerProperty)
         {
-            var oldTipText = GetTipText((ScreenSelectionMode)change.OldValue!);
+            var oldMode = change.OldValue is ScreenSelectionMode mode ? mode : Mode;
+            var wasApplicationWindowPicker =
+                change.OldValue is bool isApplicationWindowPicker ? isApplicationWindowPicker : IsApplicationWindowPicker;
+            var oldTipText = GetTipText(oldMode, wasApplicationWindowPicker);
+
             if (!ReferenceEquals(oldTipText, TipText))
             {
                 RaisePropertyChanged(TipTextProperty, oldTipText, TipText);
@@ -75,7 +85,14 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
         VisualElementQueryFailureKind? failureKind,
         IDynamicLocaleKey? failureMessage)
     {
-        _snapshot = snapshot;
+        if (IsApplicationWindowPicker)
+        {
+            // A failed or cleared candidate must never leave the previous application's name visible.
+            var applicationName = failureKind is null && failureMessage is null ? GetApplicationName(snapshot) : null;
+            Header = string.IsNullOrEmpty(applicationName) ? DirectLocaleKey.Empty : new DirectLocaleKey(applicationName);
+            return;
+        }
+
         Header = failureMessage ?? GetElementDescription(snapshot, failureKind);
     }
 
@@ -96,40 +113,50 @@ public class ScreenSelectionToolTip(IEnumerable<ScreenSelectionMode> allowedMode
 
         if (snapshot is not { } observation) return new DynamicLocaleKey(LocaleKey.Common_None);
 
-        DynamicLocaleKey key;
         var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{observation.Type ?? VisualElementType.Unknown}");
-        var processId = observation.ProcessId.GetValueOrDefault(-1);
-        if (processId > 0)
-        {
-            if (!_processNameCache.TryGetValue(processId, out var processName))
-            {
-                try
-                {
-                    using var process = Process.GetProcessById(processId);
-                    processName = process.ProcessName;
-                }
-                catch
-                {
-                    processName = string.Empty;
-                }
-                _processNameCache[processId] = processName;
-            }
-
-            key = processName.IsNullOrWhiteSpace() ?
-                elementTypeKey :
-                new FormattedDynamicLocaleKey(
-                    LocaleKey.ScreenSelectionToolTip_ElementDescription,
-                    new DirectLocaleKey(processName),
-                    elementTypeKey);
-        }
-        else
-        {
-            key = elementTypeKey;
-        }
-
-        return key;
+        var applicationName = GetApplicationName(snapshot);
+        return string.IsNullOrWhiteSpace(applicationName) ?
+            elementTypeKey :
+            new FormattedDynamicLocaleKey(
+                LocaleKey.ScreenSelectionToolTip_ElementDescription,
+                new DirectLocaleKey(applicationName),
+                elementTypeKey);
     }
 
-    private DynamicLocaleKey GetTipText(ScreenSelectionMode mode) =>
-        mode is ScreenSelectionMode.Free ? _freeTipText : _normalTipText;
+    private string? GetApplicationName(VisualElementSnapshot? snapshot)
+    {
+        if (snapshot?.ProcessId is not ({ } processId and > 0))
+        {
+            return null;
+        }
+
+        if (_applicationNameCache.TryGetValue(processId, out var applicationName))
+        {
+            return applicationName;
+        }
+
+        try
+        {
+            applicationName = nativeHelper.GetApplicationInfo(processId)?.DisplayName;
+            if (string.IsNullOrWhiteSpace(applicationName))
+            {
+                return null;
+            }
+
+            _applicationNameCache[processId] = applicationName;
+            return applicationName;
+        }
+        catch (Exception exception) when
+            (exception is ArgumentException or InvalidOperationException or Win32Exception or IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private DynamicLocaleKey GetTipText(ScreenSelectionMode mode, bool isApplicationWindowPicker)
+    {
+        return isApplicationWindowPicker ? _applicationWindowTipText :
+            mode is ScreenSelectionMode.Free ?
+                _freeTipText : _normalTipText;
+    }
 }

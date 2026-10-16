@@ -441,6 +441,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                 phase = "clipboard fallback";
                 if (!selectedText.HasText &&
                     !ClipboardFallbackExcludedProcessNames.Contains(process.Value.ProcessName) &&
+                    !MatchesApplication(configuration.CopyFallbackExcludedApplications, process.Value) &&
                     !MatchesApplication(configuration.ExcludedApplications, process.Value) &&
                     (!configuration.IsFullscreenApplicationExcluded || !IsFullscreenTarget(hWnd, process.Value.ProcessId)) &&
                     ShouldProcessViaClipboard(controlType, process.Value.ProcessName, trigger.MouseDownCursor, trigger.MouseUpCursor))

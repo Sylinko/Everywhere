@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:automation="clr-namespace:Everywhere.Automation" xmlns:interop="clr-namespace:Everywhere.Interop"
+  xmlns:interop="clr-namespace:Everywhere.Interop" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
   xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <ControlTheme
     x:Key="{x:Type v:ScreenSelectionToolTip}"
@@ -9,56 +9,83 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border
-          Padding="8,6"
-          Background="{DynamicResource AcrylicWindowBackgroundColor}">
-          <Border.CornerRadius>
-            <OnPlatform
-              x:TypeArguments="CornerRadius" Linux="0"
-              Windows="0" macOS="10"/>
-          </Border.CornerRadius>
+          x:Name="LayoutRoot"
+          Margin="{DynamicResource PopupShadowMargin}"
+          BoxShadow="{DynamicResource PopupShadow}"
+          CornerRadius="{DynamicResource 2XlCornerRadius}">
+          <shadui:SmoothBorder
+            Padding="8"
+            Background="{DynamicResource PopupBackgroundColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="{DynamicResource PopupBorderThickness}"
+            ClipToBounds="True"
+            CornerRadius="{DynamicResource 2XlCornerRadius}">
+            <v:ConditionalContentControl
+              Condition="{Binding IsApplicationWindowPicker, RelativeSource={RelativeSource TemplatedParent}}"
+              ContentDataBinding="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+              <v:ConditionalContentControl.FalseContent>
+                <DataTemplate x:DataType="v:ScreenSelectionToolTip">
+                  <StackPanel Spacing="4">
+                    <TextBlock
+                      FontWeight="SemiBold"
+                      Foreground="{DynamicResource PrimaryColor}"
+                      IsVisible="{Binding Mode, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static interop:ScreenSelectionMode.Free}}"
+                      Text="{Binding Header^}"/>
+                    <TextBlock
+                      Classes="Caption"
+                      Foreground="{DynamicResource ForegroundColor}"
+                      Text="{Binding TipText^}"/>
+                    <TextBlock
+                      Classes="Caption"
+                      Foreground="{DynamicResource PrimaryColor}"
+                      IsVisible="{Binding SizeInfo, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Text="{Binding SizeInfo}"/>
 
-          <StackPanel Spacing="4">
-            <TextBlock
-              FontWeight="SemiBold"
-              Foreground="{DynamicResource PrimaryColor}"
-              IsVisible="{Binding Mode, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter={x:Static interop:ScreenSelectionMode.Free}}"
-              Text="{Binding Header^, RelativeSource={RelativeSource TemplatedParent}}"/>
-            <TextBlock
-              FontSize="12"
-              Foreground="{DynamicResource ForegroundColor}"
-              Text="{Binding TipText^, RelativeSource={RelativeSource TemplatedParent}}"/>
-            <TextBlock
-              FontSize="12"
-              Foreground="{DynamicResource PrimaryColor}"
-              IsVisible="{Binding SizeInfo, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
-              Text="{TemplateBinding SizeInfo}"/>
-
-            <ListBox
-              ItemsSource="{Binding AllowedModes, RelativeSource={RelativeSource TemplatedParent}}"
-              SelectedItem="{TemplateBinding Mode}">
-              <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <UniformGrid Rows="1"/>
-                </ItemsPanelTemplate>
-              </ListBox.ItemsPanel>
-              <ListBox.ItemContainerTheme>
-                <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
-                <ControlTheme
-                  BasedOn="{StaticResource TabListBoxItemTheme}"
-                  TargetType="ListBoxItem">
-                  <Setter Property="Padding" Value="3"/>
-                  <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                </ControlTheme>
-              </ListBox.ItemContainerTheme>
-              <ListBox.DataTemplates>
-                <DataTemplate DataType="interop:ScreenSelectionMode">
-                  <TextBlock
-                    HorizontalAlignment="Center"
-                    Text="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
+                    <ListBox
+                      ItemsSource="{Binding AllowedModes}"
+                      SelectedItem="{Binding Mode, Mode=OneWay}">
+                      <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <UniformGrid Rows="1"/>
+                        </ItemsPanelTemplate>
+                      </ListBox.ItemsPanel>
+                      <ListBox.ItemContainerTheme>
+                        <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
+                        <ControlTheme
+                          BasedOn="{StaticResource TabListBoxItemTheme}"
+                          TargetType="ListBoxItem">
+                          <Setter Property="Padding" Value="3"/>
+                          <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        </ControlTheme>
+                      </ListBox.ItemContainerTheme>
+                      <ListBox.DataTemplates>
+                        <DataTemplate DataType="interop:ScreenSelectionMode">
+                          <TextBlock
+                            HorizontalAlignment="Center"
+                            Text="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
+                        </DataTemplate>
+                      </ListBox.DataTemplates>
+                    </ListBox>
+                  </StackPanel>
                 </DataTemplate>
-              </ListBox.DataTemplates>
-            </ListBox>
-          </StackPanel>
+              </v:ConditionalContentControl.FalseContent>
+
+              <v:ConditionalContentControl.TrueContent>
+                <DataTemplate x:DataType="v:ScreenSelectionToolTip">
+                  <StackPanel Spacing="4">
+                    <TextBlock
+                      FontWeight="SemiBold"
+                      Foreground="{DynamicResource PrimaryColor}"
+                      Text="{Binding Header^}"/>
+                    <TextBlock
+                      Classes="Caption"
+                      Foreground="{DynamicResource ForegroundColor}"
+                      Text="{Binding TipText^}"/>
+                  </StackPanel>
+                </DataTemplate>
+              </v:ConditionalContentControl.TrueContent>
+            </v:ConditionalContentControl>
+          </shadui:SmoothBorder>
         </Border>
       </ControlTemplate>
     </Setter>
