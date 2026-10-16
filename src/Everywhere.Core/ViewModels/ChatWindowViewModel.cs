@@ -19,6 +19,7 @@ using Everywhere.Messages;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.Storage;
 using Everywhere.StrategyEngine;
+using Everywhere.TextSelection;
 using Everywhere.Utilities;
 using Microsoft.Extensions.Logging;
 
@@ -117,6 +118,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IStrategyEngine _strategyEngine;
     private readonly IGreetings _greetings;
     private readonly ChatVisualService _visualService;
+    private readonly TextSelectionToolbarService _toolbarService;
     private readonly ILogger<ChatWindowViewModel> _logger;
     private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
     private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
@@ -138,6 +140,7 @@ public sealed partial class ChatWindowViewModel :
         IStrategyEngine strategyEngine,
         IGreetings greetings,
         ChatVisualService visualService,
+        TextSelectionToolbarService toolbarService,
         ILogger<ChatWindowViewModel> logger)
     {
         Settings = settings;
@@ -153,6 +156,7 @@ public sealed partial class ChatWindowViewModel :
         _strategyEngine = strategyEngine;
         _greetings = greetings;
         _visualService = visualService;
+        _toolbarService = toolbarService;
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
@@ -163,6 +167,8 @@ public sealed partial class ChatWindowViewModel :
             .ObserveOnAvaloniaDispatcher()
             .BindEx(LifetimeDisposables);
         LifetimeDisposables.Add(_chatAttachmentsSource);
+        LifetimeDisposables.Add(_chatAttachmentsSource.Connect()
+            .Subscribe(_ => _toolbarService.ValidateChatSelection(_chatAttachmentsSource.Items)));
 
         // Initialize strategy commands
         LifetimeDisposables.Add(
@@ -853,6 +859,7 @@ public sealed partial class ChatWindowViewModel :
         Dispatcher.UIThread.PostOnDemand(() =>
         {
             var version = Interlocked.Increment(ref _textSelectionVersion);
+            _toolbarService.Hide();
             HandleTextSelectionAsync(data, version).Detach(_logger.ToExceptionHandler());
         });
     }
@@ -866,12 +873,6 @@ public sealed partial class ChatWindowViewModel :
             using (data)
             {
                 if (!data.IsCurrent || string.IsNullOrEmpty(data.Text)) return;
-
-                if (_chatAttachmentsSource.Count >= PersistentState.MaxChatAttachmentCount &&
-                    !_chatAttachmentsSource.Items.AsValueEnumerable().OfType<TextSelectionAttachment>().Any())
-                {
-                    return;
-                }
 
                 anchor = data.TakeSource();
                 if (anchor is null && data.Locator is { } locator)
@@ -894,21 +895,25 @@ public sealed partial class ChatWindowViewModel :
 
             if (version != Volatile.Read(ref _textSelectionVersion) || !data.IsCurrent) return;
 
-            _chatAttachmentsSource.Edit(list =>
+            var shouldAttach = Settings.TextSelection.IsAutomaticAttachmentEnabled &&
+                (_chatAttachmentsSource.Count < PersistentState.MaxChatAttachmentCount ||
+                 _chatAttachmentsSource.Items.OfType<TextSelectionAttachment>().Any());
+            if (shouldAttach)
             {
-                // Remove existing text selection attachment
-                foreach (var attachment in list.OfType<TextSelectionAttachment>().ToArray())
+                _chatAttachmentsSource.Edit(list =>
                 {
-                    list.Remove(attachment);
-                    attachment.Dispose();
-                }
+                    foreach (var attachment in list.OfType<TextSelectionAttachment>().ToArray())
+                    {
+                        list.Remove(attachment);
+                        attachment.Dispose();
+                    }
 
-                // ReSharper disable AccessToDisposedClosure
-                // ReSharper disable AccessToModifiedClosure
-                list.Insert(0, pendingAttachment);
-                // ReSharper restore AccessToDisposedClosure
-                // ReSharper restore AccessToModifiedClosure
-            });
+                    list.Insert(0, pendingAttachment);
+                });
+            }
+
+            // The toolbar borrows draft-owned attachments; otherwise it takes ownership until dismissed or invoked.
+            _toolbarService.Show(data, pendingAttachment, shouldAttach);
             pendingAttachment = null;
         }
         finally
@@ -923,7 +928,7 @@ public sealed partial class ChatWindowViewModel :
     #region Strategy Engine
 
     /// <summary>
-    /// Opens the chat window on a text selection and immediately runs <paramref name="strategy"/> against it.
+    /// Takes ownership of a text selection, opens the chat window and runs <paramref name="strategy"/> against it.
     /// </summary>
     /// <remarks>
     /// This is the entry point for the text selection toolbar, which resolves the strategy itself and
@@ -931,42 +936,47 @@ public sealed partial class ChatWindowViewModel :
     /// that path removes a primary <see cref="VisualElementAttachment"/> at index 0 when no target
     /// element is supplied, which would discard the very <see cref="TextSelectionAttachment"/> being added.
     /// </remarks>
-    public void RunStrategyOnTextSelection(TextSelectionData data, Strategy strategy)
+    public void RunStrategyOnTextSelection(TextSelectionAttachment selection, Strategy strategy)
     {
-        if (data.Text.IsNullOrEmpty()) return;
-
-        // Before touching attachments: CancelEditing restores the attachment snapshot taken when editing
-        // started, which would discard the selection if it were inserted first. Without this, SendMessage
-        // would take its edit branch and replace the message being edited instead of sending a new one.
-        CancelEditing();
-
-        if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
+        var isAdopted = false;
+        try
         {
-            ChatContextManager.CreateNewCommand.Execute(null);
-        }
+            // Detach a borrowed selection before cancelling edits or switching drafts can dispose it.
+            _chatAttachmentsSource.Remove(selection);
+            CancelEditing();
 
-        _chatAttachmentsSource.Edit(list =>
-        {
-            list.RemoveWhere(a => a is TextSelectionAttachment);
-
-            // The passive observer simply gives up when the list is full, but this is an explicit user
-            // action, so make room instead of silently doing nothing. The selection is what the action
-            // operates on, so it outranks the oldest attachments.
-            var maxCount = PersistentState.MaxChatAttachmentCount;
-            while (list.Count >= maxCount && list.Count > 0)
+            if (!IsOpened && Settings.ChatWindow.AlwaysStartNewChat && ChatContextManager.CreateNewCommand.CanExecute(null))
             {
-                list.RemoveAt(list.Count - 1);
+                ChatContextManager.CreateNewCommand.Execute(null);
             }
 
-            list.Insert(0, new TextSelectionAttachment(data.Text, data.Element));
-        });
+            _chatAttachmentsSource.Edit(list =>
+            {
+                foreach (var previous in list.OfType<TextSelectionAttachment>().ToArray())
+                {
+                    list.Remove(previous);
+                    if (!ReferenceEquals(previous, selection)) previous.Dispose();
+                }
 
-        SelectedStrategy = strategy;
+                while (list.Count >= PersistentState.MaxChatAttachmentCount && list.Count > 0)
+                {
+                    var removed = list[^1];
+                    list.RemoveAt(list.Count - 1);
+                    (removed as IDisposable)?.Dispose();
+                }
 
-        WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+                list.Insert(0, selection);
+                isAdopted = true;
+            });
 
-        // SendMessage accepts an empty message when a strategy is selected; the strategy carries the prompt.
-        SendMessageCommand.Execute(string.Empty);
+            SelectedStrategy = strategy;
+            WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(false));
+            if (SendMessageCommand.CanExecute(string.Empty)) SendMessageCommand.Execute(string.Empty);
+        }
+        finally
+        {
+            if (!isAdopted) selection.Dispose();
+        }
     }
 
     private void HandleChatAttachmentsChanged(IReadOnlyCollection<ChatAttachment> attachments)

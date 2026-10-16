@@ -1,0 +1,36 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.TextSelectionToolbarPreview" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="clr-namespace:Everywhere.Views"
+  x:Name="Self">
+  <Border
+    Margin="0,6,0,0" Padding="16"
+    Background="{DynamicResource LightCardBackgroundColor}"
+    CornerRadius="{DynamicResource XlCornerRadius}">
+    <Panel>
+      <StackPanel Spacing="6">
+        <TextBlock
+          Classes="h1" Text="🦄 About Everywhere"
+          TextWrapping="Wrap"/>
+        <Border
+          Height="0.5"
+          Background="{DynamicResource MutedColor}"/>
+
+        <TextBlock
+          Classes="Muted" Margin="4,0"
+          TextWrapping="Wrap">
+          <Run Text="Everywhere is an interactive AI assistant with context-aware capabilities, featuring a sleek, modern UI and powerful integrated functionality. Unlike traditional AI tools,"/>
+          <Run
+            Background="{DynamicResource PrimaryColor}"
+            Foreground="{DynamicResource PrimaryForegroundColor}"
+            Text="Everywhere instantly perceives and understands anything on your screen."/>
+          <Run Text="No need for screenshots, copying, or switching apps—just press a shortcut key to get the help you need right where you are, delivering seamless AI assistant support."/>
+        </TextBlock>
+      </StackPanel>
+
+      <v:TextSelectionToolbar
+        x:Name="PreviewToolbar" Margin="0,-10,0,10"
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        VisibleActionCount="{Binding #Self.Settings.VisibleActionCount}"/>
+    </Panel>
+  </Border>
+</UserControl>

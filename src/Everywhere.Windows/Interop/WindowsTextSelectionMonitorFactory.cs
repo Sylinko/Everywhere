@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using PixelPoint = Avalonia.PixelPoint;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
@@ -289,6 +290,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                 _pendingDetections.Writer.TryWrite(
                     new DetectionTrigger(
                         currentHwnd,
+                        new PixelPoint(mouseUpPos.X, mouseUpPos.Y),
                         _mouseDownCursor,
                         _mouseUpCursor,
                         _mouseDownClipboardSequence,
@@ -462,7 +464,11 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
                 if (selectedText.Text is { Length: > 0 } text)
                 {
                     phase = "notification publish";
-                    TextSelectionObservation? observation = new(_context, text, source, selectedText.IsIncomplete);
+                    TextSelectionObservation? observation = new(_context, text, source, selectedText.IsIncomplete)
+                    {
+                        PointerPosition = trigger.PointerPosition,
+                        ApplicationIdentity = process.Value.ExecutablePath
+                    };
                     source = null;
                     try
                     {
@@ -1117,6 +1123,7 @@ public sealed class WindowsTextSelectionMonitorFactory : ITextSelectionMonitorFa
 
         private readonly record struct DetectionTrigger(
             HWND WindowHandle,
+            PixelPoint PointerPosition,
             HCURSOR MouseDownCursor,
             HCURSOR MouseUpCursor,
             uint ClipboardSequence,

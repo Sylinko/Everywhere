@@ -1,21 +1,18 @@
-using Avalonia;
-
-namespace Everywhere.Interop;
+﻿namespace Everywhere.Interop;
 
 /// <summary>
-/// Observes global input to decide when a non-activating overlay should be dismissed.
+/// Observes global input and pointer positions for non-activating overlays.
 /// </summary>
 /// <remarks>
 /// <para>
 /// This exists because a non-activating overlay cannot rely on losing focus. Overlays that call
-/// <see cref="IWindowHelper.SetFocusable"/> with <c>false</c> never receive activation in the first
+/// <see cref="IWindowHelper.SetWindowProperties"/> with <c>focusable: false</c> never receive activation in the first
 /// place, so <c>Window.Deactivated</c> never fires and the usual "hide on blur" approach is
 /// unavailable. Dismissal has to be inferred from global input instead.
 /// </para>
 /// <para>
-/// Implementers must install OS hooks only while at least one watch is active, mirroring the
-/// subscriber-refcounting contract of <see cref="IVisualElementContext"/>, so that no input hook
-/// exists while no overlay is visible.
+/// Implementers must install OS hooks only while at least one watch is active, so that no
+/// dismissal hook exists while no overlay is visible.
 /// </para>
 /// <para>
 /// Callbacks may arrive on a hook thread. Callers are responsible for marshalling to the UI thread.
@@ -23,7 +20,7 @@ namespace Everywhere.Interop;
 /// reach the window underneath it.
 /// </para>
 /// </remarks>
-public interface IOverlayDismissWatcher
+public interface IOverlayInputWatcher
 {
     /// <summary>
     /// Whether this platform can observe global input. When false, <see cref="Watch"/> returns a
@@ -32,12 +29,23 @@ public interface IOverlayDismissWatcher
     bool IsSupported { get; }
 
     /// <summary>
+    /// Gets the latest pointer position while a watch is active, or null when unavailable.
+    /// Coordinates use the same screen space as Avalonia's PointToScreen and window Position:
+    /// physical pixels on Windows and desktop points on macOS.
+    /// </summary>
+    PixelPoint? PointerPosition { get; }
+
+    /// <summary>
     /// Begins watching for input that should dismiss an overlay occupying <paramref name="bounds"/>.
     /// </summary>
     /// <param name="bounds">
-    /// The overlay's bounds in physical screen pixels. Passed by value rather than read back from the
+    /// The overlay's bounds in Avalonia screen coordinates. Passed by value rather than read back from the
     /// window because the hit test runs on a hook thread, where touching window properties would
     /// cross the UI thread boundary on every mouse event. Re-arm with a new watch when the overlay moves.
+    /// </param>
+    /// <param name="onPointerMoved">
+    /// Invoked when the global pointer position changes, on an unspecified thread, including an initial
+    /// position when available. The same cheap, non-blocking and disposal guarantees as onDismiss apply.
     /// </param>
     /// <param name="onDismiss">
     /// Invoked at most once per arming, on an unspecified thread, when the overlay should be dismissed.
@@ -49,11 +57,11 @@ public interface IOverlayDismissWatcher
     /// </para>
     /// </param>
     /// <returns>A handle that stops watching when disposed. Disposal is idempotent.</returns>
-    IOverlayDismissWatch Watch(PixelRect bounds, Action onDismiss);
+    IOverlayInputWatch Watch(PixelRect bounds, Action onDismiss, Action<PixelPoint> onPointerMoved);
 }
 
 /// <summary>
-/// An active watch returned by <see cref="IOverlayDismissWatcher.Watch"/>.
+/// An active watch returned by <see cref="IOverlayInputWatcher.Watch"/>.
 /// </summary>
 /// <remarks>
 /// Exists so that an overlay which moves — for example a toolbar following a new text selection — can
@@ -61,11 +69,11 @@ public interface IOverlayDismissWatcher
 /// and reinstall the underlying OS hooks, which on Windows means tearing down and recreating a dedicated
 /// hook thread on every move and measurably delays all input while it happens.
 /// </remarks>
-public interface IOverlayDismissWatch : IDisposable
+public interface IOverlayInputWatch : IDisposable
 {
     /// <summary>
-    /// Updates the watched rectangle, in physical screen pixels, and re-arms the watch if it has already
-    /// fired. Cheap enough to call on every overlay move.
+    /// Updates the toolbar and optional menu rectangles, in Avalonia screen coordinates, and re-arms the watch if it has already
+    /// fired. While a menu is present, its clicks, scrolling, and navigation keys must not dismiss the toolbar.
     /// </summary>
-    void Update(PixelRect bounds);
+    void Update(PixelRect bounds, PixelRect? menuBounds = null);
 }

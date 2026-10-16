@@ -130,10 +130,10 @@
                                   Content="{I18N {x:Static LocaleKey.Common_Yes}}">
                                   <Interaction.Behaviors>
                                     <ButtonClickEventTriggerBehavior>
-                                      <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>
                                       <InvokeCommandAction
                                         Command="{Binding $parent[v:ManageApiKeyForm].DeleteApiKeyCommand}"
                                         CommandParameter="{Binding}"/>
+                                      <HideFlyoutAction Flyout="{Binding #DeleteApiKeyButton.Flyout}"/>
                                     </ButtonClickEventTriggerBehavior>
                                   </Interaction.Behaviors>
                                 </Button>

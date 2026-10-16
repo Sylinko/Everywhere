@@ -1,0 +1,158 @@
+﻿<UserControl
+  x:Class="Everywhere.Views.TextSelectionToolbar" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:ts="clr-namespace:Everywhere.TextSelection" xmlns:v="clr-namespace:Everywhere.Views"
+  x:Name="Self">
+  <UserControl.Transitions>
+    <Transitions>
+      <DoubleTransition
+        Easing="CubicEaseOut" Property="Opacity"
+        Duration="0:0:0.1"/>
+    </Transitions>
+  </UserControl.Transitions>
+
+  <!--  Reserve native window space for the protruding close button and its hit target.  -->
+  <shadui:SmoothBorder
+    Margin="10" Padding="4"
+    Background="{DynamicResource PopupBackgroundColor}"
+    BorderBrush="{DynamicResource BorderColor}"
+    BorderThickness="1"
+    BoxShadow="{DynamicResource PopupShadow}"
+    CornerRadius="{DynamicResource 2XlCornerRadius}">
+    <Panel Background="Transparent">
+      <Panel.Styles>
+        <Style Selector="Panel > Button#CloseButton">
+          <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="Panel:pointerover > Button#CloseButton">
+          <Setter Property="IsVisible" Value="True"/>
+        </Style>
+      </Panel.Styles>
+
+      <DockPanel MaxWidth="640">
+        <Button
+          x:Name="MoreButton" Classes="Ghost Compact"
+          DockPanel.Dock="Right" VerticalAlignment="Stretch"
+          Focusable="False"
+          ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_More}}">
+          <LucideIcon
+            Kind="EllipsisVertical"
+            Size="{DynamicResource FontSizeM}"/>
+          <Button.Flyout>
+            <MenuFlyout
+              Closed="HandleMenuClosed" HorizontalOffset="12"
+              Opened="HandleMenuOpened" Placement="BottomEdgeAlignedRight"
+              VerticalOffset="4">
+              <MenuFlyout.ItemsSource>
+                <shadui:CompositeCollection>
+                  <shadui:CompositeCollection ItemsSource="{Binding #Self.OverflowActions}">
+                    <shadui:CompositeCollection.ItemTemplate>
+                      <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+                        <MenuItem
+                          Click="HandleActionClick"
+                          FontSize="{DynamicResource FontSizeS}"
+                          Header="{Binding NameKey^}"
+                          ToolTip.Placement="Right">
+                          <MenuItem.Icon>
+                            <v:IconPresenter
+                              Background="{x:Null}"
+                              FontSize="{DynamicResource FontSizeM}"
+                              Foreground="{DynamicResource ForegroundColor}"
+                              Icon="{Binding DisplayIcon}"
+                              IconSize="{DynamicResource FontSizeM}"/>
+                          </MenuItem.Icon>
+                          <ToolTip.Tip>
+                            <StackPanel MaxWidth="240">
+                              <TextBlock Text="{Binding NameKey^}"/>
+                              <TextBlock
+                                Classes="Caption"
+                                IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Text="{Binding DescriptionKey^}"
+                                TextWrapping="Wrap"/>
+                            </StackPanel>
+                          </ToolTip.Tip>
+                        </MenuItem>
+                      </DataTemplate>
+                    </shadui:CompositeCollection.ItemTemplate>
+                  </shadui:CompositeCollection>
+                  <Separator IsVisible="{Binding #Self.OverflowActions.Count}"/>
+                  <MenuItem
+                    Click="HandleExcludeApplicationClick"
+                    FontSize="{DynamicResource FontSizeS}"
+                    Header="{I18N {x:Static LocaleKey.TextSelectionToolbar_ExcludeApplication}}"
+                    IsEnabled="{Binding #Self.CanExcludeApplication}">
+                    <MenuItem.Icon>
+                      <LucideIcon
+                        Kind="EyeOff"
+                        Size="{DynamicResource FontSizeM}"/>
+                    </MenuItem.Icon>
+                  </MenuItem>
+                </shadui:CompositeCollection>
+              </MenuFlyout.ItemsSource>
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+
+        <ItemsControl ItemsSource="{Binding #Self.VisibleActions}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+              <Button
+                Classes="Ghost Compact" Padding="6,4"
+                VerticalAlignment="Stretch" Click="HandleActionClick"
+                Focusable="False">
+                <ToolTip.Tip>
+                  <StackPanel MaxWidth="240">
+                    <TextBlock Text="{Binding NameKey^}"/>
+                    <TextBlock
+                      Classes="Caption"
+                      IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                      Text="{Binding DescriptionKey^}"
+                      TextWrapping="Wrap"/>
+                  </StackPanel>
+                </ToolTip.Tip>
+
+                <StackPanel
+                  Orientation="Horizontal" Spacing="4">
+                  <v:IconPresenter
+                    VerticalAlignment="Center"
+                    Background="{x:Null}"
+                    FontSize="{DynamicResource FontSizeM}"
+                    Foreground="{DynamicResource ForegroundColor}"
+                    Icon="{Binding DisplayIcon}"
+                    IconSize="{DynamicResource FontSizeM}"/>
+                  <TextBlock
+                    MaxWidth="120" VerticalAlignment="Center"
+                    IsVisible="{Binding IsLabelVisible}"
+                    Text="{Binding NameKey^}"
+                    TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </DockPanel>
+
+      <Button
+        x:Name="CloseButton" Classes="Outline Compact"
+        Width="20" Height="20"
+        MinWidth="0" MinHeight="0"
+        Margin="-6,-14,-14,-6" Padding="2"
+        HorizontalAlignment="Right" VerticalAlignment="Top"
+        Background="{DynamicResource PopupBackgroundColor}"
+        Click="HandleCloseClick"
+        CornerRadius="{DynamicResource FullCornerRadius}"
+        Focusable="False"
+        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbar_Close}}">
+        <LucideIcon
+          Kind="X"
+          Size="{DynamicResource FontSizeS}"/>
+      </Button>
+    </Panel>
+  </shadui:SmoothBorder>
+</UserControl>

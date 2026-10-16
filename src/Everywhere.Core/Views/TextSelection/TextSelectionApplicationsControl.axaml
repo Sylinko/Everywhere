@@ -8,13 +8,13 @@
         Classes="Secondary" DockPanel.Dock="Right"
         VerticalAlignment="Center"
         shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
-        Content="{I18N {x:Static LocaleKey.TextSelectionSettings_AddApplication}}"
+        Content="{I18N {x:Static LocaleKey.TextSelectionApplications_AddApplication}}"
         IsEnabled="{Binding !#Self.Presentation.IsBusy}">
         <Button.Flyout>
           <MenuFlyout>
             <MenuItem
               Click="HandleChooseApplication"
-              Header="{I18N {x:Static LocaleKey.TextSelectionSettings_ChooseApplication}}">
+              Header="{I18N {x:Static LocaleKey.TextSelectionApplications_ChooseApplication}}">
               <MenuItem.Icon>
                 <LucideIcon
                   Kind="FolderOpen"
@@ -23,7 +23,7 @@
             </MenuItem>
             <MenuItem
               Click="HandlePickWindow"
-              Header="{I18N {x:Static LocaleKey.TextSelectionSettings_PickWindow}}">
+              Header="{I18N {x:Static LocaleKey.TextSelectionApplications_PickWindow}}">
               <MenuItem.Icon>
                 <LucideIcon
                   Kind="AppWindow"
@@ -46,15 +46,17 @@
       <StackPanel Spacing="4">
         <StackPanel
           Orientation="Horizontal" Spacing="6">
-          <TextBlock Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ExcludedApplications}}"/>
+          <TextBlock Text="{Binding #Self.HeaderKey^, FallbackValue={x:Null}}"/>
           <LucideIcon
-            VerticalAlignment="Center" Kind="CircleQuestionMark"
+            VerticalAlignment="Center"
+            IsVisible="{Binding #Self.IsCompatibilityHintVisible}"
+            Kind="CircleQuestionMark"
             Size="{DynamicResource FontSizeS}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionSettings_CompatibilityHint}}"/>
+            ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionApplications_CompatibilityHint}}"/>
         </StackPanel>
         <TextBlock
           Classes="Muted Caption"
-          Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ExcludedApplicationsDescription}}"
+          Text="{Binding #Self.DescriptionKey^, FallbackValue={x:Null}}"
           TextWrapping="Wrap"/>
       </StackPanel>
     </DockPanel>
@@ -86,7 +88,7 @@
           Spacing="8">
           <Button
             Classes="Primary" Click="HandleConfirm"
-            Content="{I18N {x:Static LocaleKey.TextSelectionSettings_AddApplication}}"/>
+            Content="{I18N {x:Static LocaleKey.TextSelectionApplications_AddApplication}}"/>
           <Button
             Classes="Outline" Click="HandleCancel"
             Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
@@ -101,7 +103,7 @@
     <TextBlock
       Classes="Muted"
       IsVisible="{Binding #Self.Presentation.IsEmpty}"
-      Text="{I18N {x:Static LocaleKey.TextSelectionSettings_Empty}}"/>
+      Text="{I18N {x:Static LocaleKey.TextSelectionApplications_Empty}}"/>
     <ItemsControl
       Margin="4,0"
       ItemsSource="{Binding #Self.Presentation.Rows}">
@@ -115,9 +117,9 @@
               <Button
                 x:Name="RemoveApplicationButton" Classes="Ghost"
                 DockPanel.Dock="Right" VerticalAlignment="Center"
-                AutomationProperties.Name="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplication}}"
+                AutomationProperties.Name="{I18N {x:Static LocaleKey.TextSelectionApplications_RemoveApplication}}"
                 Tag="{Binding}"
-                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplication}}">
+                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionApplications_RemoveApplication}}">
                 <LucideIcon
                   Kind="Trash2"
                   Size="{DynamicResource FontSizeM}"/>
@@ -126,7 +128,7 @@
                     <StackPanel
                       Margin="12" Spacing="6">
                       <TextBlock
-                        Text="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplicationConfirmation}}"
+                        Text="{I18N {x:Static LocaleKey.TextSelectionApplications_RemoveApplicationConfirmation}}"
                         TextWrapping="Wrap"/>
                       <TextBlock
                         Classes="Muted Caption"

@@ -4431,104 +4431,95 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>已安装的服务属于另一个无法识别的 Everywhere 副本，如果继续将覆盖它。</value>
     </data>
-    <data name="TextSelectionSettings_Title" xml:space="preserve">
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
         <value>划词</value>
     </data>
-    <data name="TextSelectionSettings_Description" xml:space="preserve">
-        <value>自动获取选中文字与应用排除规则</value>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>划词工具栏、自动添加聊天与应用规则</value>
     </data>
-    <data name="TextSelectionSettings_Enable" xml:space="preserve">
-        <value>自动添加选中文字</value>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>自动添加到聊天</value>
     </data>
-    <data name="TextSelectionSettings_EnableDescription" xml:space="preserve">
-        <value>获取选中的文字并自动添加到聊天输入区。</value>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>自动将选中的文字和上下文添加到聊天窗口中作为附件</value>
     </data>
-    <data name="TextSelectionSettings_ExcludeFullscreen" xml:space="preserve">
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
         <value>在全屏应用中停用划词</value>
     </data>
-    <data name="TextSelectionSettings_ExcludeFullscreenDescription" xml:space="preserve">
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
         <value>全屏应用处于前台时，不自动获取选中文字。</value>
     </data>
-    <data name="TextSelectionSettings_AddApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
         <value>添加应用</value>
     </data>
-    <data name="TextSelectionSettings_ChooseApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
         <value>选择程序…</value>
     </data>
-    <data name="TextSelectionSettings_PickWindow" xml:space="preserve">
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
         <value>从屏幕选取窗口…</value>
     </data>
-    <data name="TextSelectionSettings_ExcludedApplications" xml:space="preserve">
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
         <value>停用划词的应用</value>
     </data>
-    <data name="TextSelectionSettings_ExcludedApplicationsDescription" xml:space="preserve">
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
         <value>不会自动获取这些应用中选中的文字。</value>
     </data>
-    <data name="TextSelectionSettings_CompatibilityHint" xml:space="preserve">
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
         <value>Everywhere 内置了一些兼容规则，避免在部分应用中模拟复制。这些规则不影响通过辅助功能直接读取文字。</value>
     </data>
-    <data name="TextSelectionSettings_Empty" xml:space="preserve">
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
         <value>尚未排除任何应用。</value>
     </data>
-    <data name="TextSelectionSettings_RemoveApplicationConfirmation" xml:space="preserve">
-        <value>从停用列表中移除此应用？</value>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>从排除列表中移除此应用？</value>
     </data>
-    <data name="TextSelectionSettings_ApplicationFile" xml:space="preserve">
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
         <value>应用程序</value>
     </data>
-    <data name="TextSelectionSettings_ResolveFailed" xml:space="preserve">
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
         <value>无法识别该程序。请尝试选择程序文件，或手动添加匹配标识。</value>
     </data>
-    <data name="TextSelectionSettings_InvalidIdentity" xml:space="preserve">
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
         <value>请输入有效的精确匹配标识，此处不支持路径或通配符。</value>
     </data>
-    <data name="TextSelectionSettings_Duplicate" xml:space="preserve">
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
         <value>该应用规则已在列表中。</value>
     </data>
-    <data name="TextSelectionSettings_AddProcessName" xml:space="preserve">
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
         <value>按进程名添加…</value>
     </data>
-    <data name="TextSelectionSettings_ProcessNameHint" xml:space="preserve">
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
         <value>包含 .exe 后缀，匹配所有安装位置的同名进程，不区分大小写，不支持通配符。</value>
     </data>
-    <data name="TextSelectionSettings_AddBundleId" xml:space="preserve">
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>按 Bundle ID 添加…</value>
     </data>
-    <data name="TextSelectionSettings_BundleIdHint" xml:space="preserve">
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
         <value>精确匹配应用的 Bundle ID，包括不同位置的同标识应用副本。区分大小写，不支持通配符。</value>
     </data>
-    <data name="TextSelectionSettings_RemoveApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
         <value>移除应用</value>
     </data>
-    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
-        <value>划词工具栏</value>
-    </data>
-    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
-        <value>在任意应用中选中文本时，显示悬浮操作工具栏</value>
-    </data>
-    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
         <value>启用划词工具栏</value>
     </data>
-    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
-        <value>全局监听划词操作，并在选中的文本旁显示小工具栏</value>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>最大工具数量</value>
     </data>
-    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
-        <value>最多显示操作数</value>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>工具栏透明度</value>
     </data>
-    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
-        <value>工具栏一次最多显示多少个操作按钮</value>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>根据光标距离调整透明度</value>
     </data>
-    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
-        <value>显示操作名称</value>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>光标远离时淡化工具栏，靠近时恢复。</value>
     </data>
-    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
-        <value>在每个图标旁显示名称。关闭后工具栏仅显示图标</value>
-    </data>
-    <data name="TextSelectionToolbarSettings_Actions_Header" xml:space="preserve">
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
         <value>工具管理</value>
     </data>
-    <data name="TextSelectionToolbarSettings_Actions_Description" xml:space="preserve">
-        <value>默认提供六个划词工具，也可以添加自定义提示词。拖动左侧抓手调整顺序，靠近列表顶部或底部可自动滚动。工具栏按顺序显示符合划词场景的已启用工具，数量不超过设置上限。</value>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>选择要显示的工具，拖动调整顺序，或添加自定义工具。</value>
     </data>
     <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
         <value>添加自定义工具</value>
@@ -4548,12 +4539,6 @@
     <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
         <value>选择图标</value>
     </data>
-    <data name="TextSelectionToolbarActions_MoveUp" xml:space="preserve">
-        <value>上移</value>
-    </data>
-    <data name="TextSelectionToolbarActions_MoveDown" xml:space="preserve">
-        <value>下移</value>
-    </data>
     <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
         <value>拖动调整顺序</value>
     </data>
@@ -4561,12 +4546,42 @@
         <value>符合划词场景时显示此工具</value>
     </data>
     <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
-        <value>恢复默认名称、图标和提示词</value>
+        <value>恢复默认名称、图标、提示词和名称显示方式</value>
     </data>
     <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
         <value>未命名工具</value>
     </data>
     <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
-        <value>确定删除自定义工具“{0}”吗？</value>
+        <value>确定删除此自定义工具吗？</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>划词工具栏</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>聊天窗口</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>高级</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>不显示划词工具栏的应用</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>不会在这些应用中显示工具栏，仍可自动将选中文字添加到聊天。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>在工具栏中显示名称</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>不在当前应用中显示</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>更多</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>关闭工具栏</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>工具栏预览</value>
     </data>
 </root>

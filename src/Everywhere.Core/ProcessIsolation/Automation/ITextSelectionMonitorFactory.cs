@@ -64,6 +64,14 @@ public sealed class TextSelectionObservation : IAsyncDisposable
     /// <summary>Gets the nonempty selected text.</summary>
     public string Text { get; }
 
+    /// <summary>Gets the pointer position captured with the selection gesture.</summary>
+    public PixelPoint? PointerPosition { get; init; }
+
+    /// <summary>
+    /// Gets the executable path on Windows or bundle identifier on macOS captured with this selection.
+    /// </summary>
+    public string? ApplicationIdentity { get; init; }
+
     /// <summary>Gets whether native or transport limits may have omitted trailing text.</summary>
     public bool IsTextIncomplete { get; }
 

@@ -1636,6 +1636,9 @@
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>Puppeteerブラウザの起動に失敗しました。</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>左クリックでアプリを選択、右クリックまたは Esc でキャンセル</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>左クリックで選択、右クリックまたはEscでキャンセル
 スクロールホイールまたは数字キーでピックモードを切り替え</value>
@@ -2166,6 +2169,9 @@
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>選択したテキストを自動追加</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>テキスト選択の自動検出</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>有効にすると、選択したテキストが自動的に添付ファイルとして追加されます。</value>
     </data>
@@ -2177,6 +2183,24 @@
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>自動選択の開始に失敗しました。再試行してください。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>全画面アプリを無視</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>使用中のアプリが画面全体を占有している間は、テキスト選択を検出しません。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>無視するアプリ</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>プロセス名、実行ファイルのパス、または macOS のバンドル ID を1行に1つ入力します。これらのアプリでのテキスト選択は無視されます。</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>コピー操作を再現しないアプリ</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>アプリの識別子を1行に1つ入力します。アクセシビリティ経由の読み取りは利用できますが、これらのアプリではコピー操作を再現しません。</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>ウィンドウを一覧表示</value>
@@ -4408,5 +4432,158 @@
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>インストールされているサービスは、識別できない別の Everywhere コピーに属しています。続行すると上書きされます。</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
+        <value>テキスト選択</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>選択ツールバー、チャットへの自動添付、アプリのルール</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>チャットに自動追加</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>選択したテキストとそのコンテキストを、添付ファイルとしてチャットウィンドウに自動追加します。</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
+        <value>全画面アプリでは無効にする</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
+        <value>全画面アプリがアクティブな間は、選択テキストを自動取得しません。</value>
+    </data>
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+        <value>アプリを追加</value>
+    </data>
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+        <value>アプリを選択…</value>
+    </data>
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
+        <value>画面上のウィンドウを選択…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
+        <value>テキスト選択を無効にするアプリ</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
+        <value>これらのアプリで選択したテキストは自動取得されません。</value>
+    </data>
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere には、一部のアプリでコピー操作の再現を防ぐ互換性ルールが組み込まれています。アクセシビリティ経由の直接読み取りには影響しません。</value>
+    </data>
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
+        <value>除外されたアプリはありません。</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>このアプリを除外リストから削除しますか？</value>
+    </data>
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+        <value>アプリケーション</value>
+    </data>
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
+        <value>アプリを識別できませんでした。アプリの実行ファイルを選択するか、識別子を手動で追加してください。</value>
+    </data>
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
+        <value>完全一致に使用する有効なアプリ識別子を入力してください。ここではパスやワイルドカードは使用できません。</value>
+    </data>
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
+        <value>このアプリのルールはすでにリストにあります。</value>
+    </data>
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+        <value>プロセス名で追加…</value>
+    </data>
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
+        <value>.exe 拡張子を含めてください。インストール先に関係なく、同名のすべてのプロセスに一致します。大文字と小文字は区別しません。ワイルドカードは使用できません。</value>
+    </data>
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+        <value>バンドル ID で追加…</value>
+    </data>
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+        <value>インストール先が異なるコピーも含め、アプリのバンドル ID と完全一致で照合します。大文字と小文字を区別し、ワイルドカードは使用できません。</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
+        <value>アプリを削除</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
+        <value>選択ツールバーを有効にする</value>
+    </data>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>ツールの最大数</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>ツールバーの不透明度</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>カーソルとの距離に応じて不透明度を調整</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>カーソルが離れるとツールバーが薄くなり、近づくと元の不透明度に戻ります。</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
+        <value>ツールの管理</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>表示するツールを選択し、ドラッグして並べ替えたり、カスタムツールを追加したりできます。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>カスタムツールを追加</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>ツールを編集</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>名前</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>プロンプト</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>選択したテキストは自動で添付されます。「選択したテキストを中国語に翻訳して」など、処理内容を入力してください。ツールをクリックするとチャットが開き、このプロンプトが送信されます。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>アイコンを選択</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>ドラッグして並べ替え</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>選択内容に適合する場合にこのツールを表示</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>名前、アイコン、プロンプト、名前の表示設定を初期値に戻す</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>名前のないツール</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>このカスタムツールを削除しますか？</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>選択ツールバー</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>チャットウィンドウ</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>詳細設定</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>選択ツールバーを表示しないアプリ</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>これらのアプリではツールバーを非表示にします。選択したテキストのチャットへの自動追加は引き続き利用できます。</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>ツールバーに名前を表示</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>このアプリでは表示しない</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>その他</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>ツールバーを閉じる</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>ツールバーのプレビュー</value>
     </data>
 </root>

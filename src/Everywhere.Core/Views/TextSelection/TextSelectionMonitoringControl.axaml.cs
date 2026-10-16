@@ -12,28 +12,66 @@ namespace Everywhere.Views;
 /// Changes automatic text-selection monitoring through an acknowledged Host transition.
 /// </summary>
 public sealed partial class TextSelectionMonitoringControl(
-    ITextSelectionWatcher watcher,
+    TextSelectionController controller,
     ILogger<TextSelectionMonitoringControl> logger
 ) : TemplatedControl
 {
     /// <summary>
     /// Gets the shared monitoring state and operation observed by every settings control.
     /// </summary>
-    public ITextSelectionWatcher Watcher => watcher;
+    public TextSelectionController Controller => controller;
+
+    /// <summary>
+    /// Gets or sets the consumer changed by this settings switch.
+    /// </summary>
+    public TextSelectionFeature Feature { get; init; }
+
+    public static readonly DirectProperty<TextSelectionMonitoringControl, bool> IsMonitoringEnabledProperty =
+        AvaloniaProperty.RegisterDirect<TextSelectionMonitoringControl, bool>(nameof(IsMonitoringEnabled), control => control.IsMonitoringEnabled);
+
+    public bool IsMonitoringEnabled
+    {
+        get;
+        private set => SetAndRaise(IsMonitoringEnabledProperty, ref field, value);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        controller.PropertyChanged += HandleControllerChanged;
+        UpdateMonitoringState();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        controller.PropertyChanged -= HandleControllerChanged;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void HandleControllerChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        UpdateMonitoringState();
+    }
+
+    private void UpdateMonitoringState()
+    {
+        IsMonitoringEnabled = Feature == TextSelectionFeature.Toolbar ? controller.IsToolbarEnabled : controller.IsAutomaticAttachmentEnabled;
+    }
 
     [RelayCommand]
     private async Task ChangeMonitoringAsync(ToggleSwitch sender)
     {
         var shouldEnable = sender.IsChecked ?? false;
-        sender.SetCurrentValue(ToggleButton.IsCheckedProperty, watcher.IsEnabled);
-        if (!watcher.SetEnabledCommand.CanExecute(shouldEnable))
+        sender.SetCurrentValue(ToggleButton.IsCheckedProperty, IsMonitoringEnabled);
+        var change = new TextSelectionFeatureChange(Feature, shouldEnable);
+        if (!controller.SetEnabledCommand.CanExecute(change))
         {
             return;
         }
 
         try
         {
-            await watcher.SetEnabledCommand.ExecuteAsync(shouldEnable);
+            await controller.SetEnabledCommand.ExecuteAsync(change);
         }
         catch (TextSelectionMonitoringRejectedException exception)
         {

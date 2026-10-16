@@ -110,6 +110,5 @@ public class TextConditionTests
         Assert.That(condition.Evaluate(StrategyContext.FromAttachments([])), Is.False);
     }
 
-    private static StrategyContext ContextFor(string text) =>
-        StrategyContext.FromAttachments([new TextSelectionAttachment(text, null)]);
+    private static StrategyContext ContextFor(string text) => StrategyContext.FromAttachments([new TextSelectionAttachment(text)]);
 }
