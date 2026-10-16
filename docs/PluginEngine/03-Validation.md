@@ -41,7 +41,8 @@ RestartRequired.
 
 The UI sample cannot currently be repackaged: SamplePage.axaml references a missing HandleClick
 method in SamplePage.axaml.cs (AVLN3000). Packaged UI validation must be repeated once that sample
-builds. The existing WindowsBase reference-conflict warning is also unresolved.
+builds. The WindowsBase reference-conflict warning is understood and remains an accepted limitation
+of runtime-directory imports; the Everything source ProjectReference build no longer produces it.
 
 Lifecycle cases verify optional absent/synchronous/asynchronous entry disposal, asynchronous
 preference when both interfaces exist, repeated engine disposal, rejected later changes and
@@ -58,8 +59,11 @@ release and verify that the reversal itself is skipped on exit. Hot/failure path
 assembly collection, rather than treating RestartRequired as success.
 
 Four SDK cases build independent author projects through directory and source imports,
-with and without host implementation references. They check host-assembly exclusion and
-satellite output paths. Manifest tests cover omitted fields versus explicit null after source generation;
+with and without host implementation references. Source cases use real ProjectReference compilation,
+including a transitive NuGet API. They check host-assembly/content/symbol exclusion, satellite output
+paths, and isolation of command-line plugin version/output overrides from the host and its transitive
+projects. Host runtime-pack ownership is checked separately from compilation-reference selection.
+Manifest tests cover omitted fields versus explicit null after source generation;
 host-import tests cover declared-asset selection and invalid binding/path checks.
 
 Run the maintained suite:

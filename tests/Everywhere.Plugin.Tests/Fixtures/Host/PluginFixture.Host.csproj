@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../../src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
+    <PackageReference Include="NuGet.Versioning" />
+    <Content Include="host-content.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Import Project="../../../../src/Build.Plugin.Hosting.targets" />

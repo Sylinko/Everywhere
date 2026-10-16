@@ -32,10 +32,13 @@ internal static class PluginPackager
             File.ReadAllText(referenceList + ".host.json"),
             SdkJsonSerializerContext.Default.PluginHostDescriptor)
             ?? throw new PluginValidationException("MissingHostImport", "The build has no host import record.");
-        var hostAssemblies = File.ReadAllLines(referenceList).ToDictionary(
+        var hostAssemblies = File.ReadAllLines(referenceList + ".runtime.txt").ToDictionary(
             path => AssemblyName.GetAssemblyName(path).Name ?? "",
             AssemblyName.GetAssemblyName,
             StringComparer.OrdinalIgnoreCase);
+        var hostImplementationNames = File.ReadAllLines(referenceList)
+            .Select(path => AssemblyName.GetAssemblyName(path).Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var managed = new List<string>();
         var native = new List<string>();
@@ -86,7 +89,7 @@ internal static class PluginPackager
                     var reference = metadata.GetAssemblyReference(handle);
                     var referenceName = metadata.GetString(reference.Name);
 
-                    if (referenceName != contractName && hostAssemblies.ContainsKey(referenceName))
+                    if (referenceName != contractName && hostImplementationNames.Contains(referenceName))
                     {
                         hasHostImplementationReference = true;
                     }

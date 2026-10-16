@@ -6,7 +6,8 @@ namespace Everywhere.Plugin.Packaging;
 
 /// <summary>
 /// Imports declared managed deployment assets without recursively discovering arbitrary installed DLLs.
-/// Source exports and installed applications use this same reference model.
+/// Source exports and installed applications share deployment ownership; only installation imports
+/// use the non-framework assemblies directly as compilation references.
 /// </summary>
 public sealed class HostReferenceSet
 {
@@ -29,6 +30,12 @@ public sealed class HostReferenceSet
     /// Gets application and third-party managed references, excluding framework runtime-pack implementations.
     /// </summary>
     public IReadOnlyDictionary<string, string> Assemblies { get; }
+
+    /// <summary>
+    /// Gets all declared managed runtime assemblies, including framework runtime packs.
+    /// Packaging uses this set to exclude host-provided runtime files without referencing them for compilation.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> RuntimeAssemblies { get; }
 
     private static readonly PackagingJsonSerializerContext DescriptorJsonContext = new(
         new JsonSerializerOptions(JsonSerializerDefaults.Web)
@@ -78,10 +85,11 @@ public sealed class HostReferenceSet
             throw new PluginValidationException("InvalidHostDependencies", "The host has no declared runtime target.");
         var target = dependencies.Targets[targetName];
         var assemblies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var runtimeAssemblies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (library, assets) in target)
         {
-            if (dependencies.Libraries.TryGetValue(library, out var origin) && origin.Type == "runtimepack") continue;
+            var isRuntimePack = dependencies.Libraries.TryGetValue(library, out var origin) && origin.Type == "runtimepack";
 
             foreach (var asset in assets.Runtime.Keys)
             {
@@ -98,12 +106,13 @@ public sealed class HostReferenceSet
 
                 var identity = AssemblyName.GetAssemblyName(path);
                 var name = identity.Name ?? throw new PluginValidationException("InvalidHostAsset", path);
-                if (assemblies.TryGetValue(name, out var existing) && existing != path)
+                if (runtimeAssemblies.TryGetValue(name, out var existing) && existing != path)
                 {
                     throw new PluginValidationException("AmbiguousHostAsset", $"Host assembly '{name}' resolves to different files.");
                 }
 
-                assemblies[name] = path;
+                runtimeAssemblies[name] = path;
+                if (!isRuntimePack) assemblies[name] = path;
             }
         }
 
@@ -114,5 +123,6 @@ public sealed class HostReferenceSet
         }
 
         Assemblies = assemblies;
+        RuntimeAssemblies = runtimeAssemblies;
     }
 }

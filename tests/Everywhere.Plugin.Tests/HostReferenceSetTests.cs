@@ -60,6 +60,7 @@ public sealed class HostReferenceSetTests
             }
             """);
         File.Copy(typeof(IPlugin).Assembly.Location, Path.Combine(_root, "Everywhere.Plugin.Abstractions.dll"));
+        File.Copy(typeof(object).Assembly.Location, Path.Combine(_root, "System.Private.CoreLib.dll"));
     }
 
     /// <summary>
@@ -92,6 +93,9 @@ public sealed class HostReferenceSetTests
         Assert.That(references.Descriptor.SchemaVersion, Is.EqualTo(1));
         Assert.That(references.Assemblies, Has.Count.EqualTo(1));
         Assert.That(references.Assemblies["Everywhere.Plugin.Abstractions"], Is.EqualTo(expected));
+        Assert.That(references.RuntimeAssemblies, Has.Count.EqualTo(2));
+        Assert.That(references.RuntimeAssemblies["System.Private.CoreLib"],
+            Is.EqualTo(Path.Combine(_root, "System.Private.CoreLib.dll")));
     }
 
     /// <summary>
