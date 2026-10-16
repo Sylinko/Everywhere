@@ -1,16 +1,64 @@
 ﻿<Project>
+  <PropertyGroup>
+    <_EverywhereIsSourceHost>$([System.String]::Copy('$(EverywhereHost)').EndsWith('.csproj', System.StringComparison.OrdinalIgnoreCase))</_EverywhereIsSourceHost>
+    <!-- Configuration and Platform keep normal project-reference semantics. Plugin identity,
+         output locations and deployment options must not override the host's own properties. -->
+    <_EverywhereHostPropertiesToRemove>RuntimeIdentifier;RuntimeIdentifiers;SelfContained;PublishSelfContained;PublishAot;PublishTrimmed;PublishSingleFile</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);OutputPath;OutDir;BaseOutputPath;IntermediateOutputPath;BaseIntermediateOutputPath;MSBuildProjectExtensionsPath;PublishDir</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);Version;PackageVersion;AssemblyVersion;FileVersion;InformationalVersion;AssemblyName;RootNamespace</_EverywhereHostPropertiesToRemove>
+    <_EverywhereHostPropertiesToRemove>$(_EverywhereHostPropertiesToRemove);EverywhereHost;EverywhereHostVersion;EverywherePluginApiVersion;EverywherePluginId;EverywherePluginEntryType;EverywherePluginPlatform;EverywherePluginPackagePath;EverywherePluginToolsDirectory;EverywhereLocalConfiguration;EverywhereI18NNamespace</_EverywhereHostPropertiesToRemove>
+  </PropertyGroup>
+
+  <!-- Keep compilation in the standard restore/project-reference graph. The host supplies runtime
+       dependencies; plugin-owned package references still contribute their own runtime assets. -->
+  <ItemGroup Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+    <ProjectReference Include="$(EverywhereHost)"
+                      Private="false"
+                      IncludeAssets="compile"
+                      IsEverywhereHostReference="true"
+                      GlobalPropertiesToRemove="$(_EverywhereHostPropertiesToRemove)" />
+  </ItemGroup>
+
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
-  <Target Name="EverywhereImportHost" BeforeTargets="ResolveAssemblyReferences">
+  <Target Name="EverywherePrepareHostProjectReferences" AfterTargets="IncludeTransitiveProjectReferences"
+          Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+    <MSBuild Projects="$(EverywhereHost)" Targets="EverywhereGetPluginHostProjectReferences"
+             RemoveProperties="TargetFramework;$(_EverywhereHostPropertiesToRemove)">
+      <Output TaskParameter="TargetOutputs" ItemName="_EverywhereHostProjectReference" />
+    </MSBuild>
+    <ItemGroup>
+      <ProjectReference Update="@(ProjectReference->WithMetadataValue('FullPath', '%(_EverywhereHostProjectReference.FullPath)'))">
+        <Private>false</Private>
+        <GlobalPropertiesToRemove>%(ProjectReference.GlobalPropertiesToRemove);$(_EverywhereHostPropertiesToRemove)</GlobalPropertiesToRemove>
+      </ProjectReference>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EverywhereImportHost" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true' Or '$(_EverywhereIsSourceHost)' != 'true'">
     <Error Condition="'$(EverywhereHost)' == ''" Text="Specify EverywhereHost in Everywhere.local.props or as a build property." />
     <PropertyGroup>
       <_EverywhereHostReferences>$(IntermediateOutputPath)everywhere-host-references.txt</_EverywhereHostReferences>
+      <_EverywhereHostDirectory Condition="'$(_EverywhereIsSourceHost)' != 'true'">$(EverywhereHost)</_EverywhereHostDirectory>
     </PropertyGroup>
-    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; import &quot;$(EverywhereHost)&quot; &quot;$(_EverywhereHostReferences)&quot;" />
-    <ReadLinesFromFile File="$(_EverywhereHostReferences)">
+    <!-- Reuse the resolved reference's framework/configuration and property isolation when reading
+         the host descriptor. Do not launch a separate dotnet build with different global properties. -->
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)"
+             Targets="EverywhereExportPluginHost"
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework)"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.IsEverywhereHostReference)' == 'true'">
+      <Output TaskParameter="TargetOutputs" ItemName="_EverywhereHostDescriptor" />
+    </MSBuild>
+    <PropertyGroup Condition="'$(_EverywhereIsSourceHost)' == 'true'">
+      <_EverywhereHostDirectory>@(_EverywhereHostDescriptor->'%(RootDir)%(Directory).')</_EverywhereHostDirectory>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; import &quot;$(_EverywhereHostDirectory)&quot; &quot;$(_EverywhereHostReferences)&quot;" />
+    <ReadLinesFromFile File="$(_EverywhereHostReferences)" Condition="'$(_EverywhereIsSourceHost)' != 'true'">
       <Output TaskParameter="Lines" ItemName="_EverywhereHostReference" />
     </ReadLinesFromFile>
-    <ItemGroup>
+    <ItemGroup Condition="'$(_EverywhereIsSourceHost)' != 'true'">
       <Reference Include="@(_EverywhereHostReference)">
         <HintPath>%(Identity)</HintPath>
         <Private>false</Private>
@@ -23,7 +71,7 @@
            Text="EverywherePluginId and EverywherePluginEntryType must be declared in the project." />
     <PropertyGroup>
       <EverywherePluginPlatform Condition="'$(EverywherePluginPlatform)' == ''">universal</EverywherePluginPlatform>
-      <EverywherePluginPackagePath Condition="'$(EverywherePluginPackagePath)' == ''">$(OutputPath)$(EverywherePluginId)-$(Version).zip</EverywherePluginPackagePath>
+      <EverywherePluginPackagePath Condition="'$(EverywherePluginPackagePath)' == ''">$([System.IO.Path]::Combine('$(OutputPath)', '$(EverywherePluginId)-$(Version).zip'))</EverywherePluginPackagePath>
       <_EverywherePayloadList>$(IntermediateOutputPath)everywhere-payload.txt</_EverywherePayloadList>
     </PropertyGroup>
     <ItemGroup>

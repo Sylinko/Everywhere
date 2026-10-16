@@ -20,6 +20,15 @@
     </ItemGroup>
   </Target>
 
+  <!-- The plugin SDK uses the restored project graph to apply host ownership to implicit
+       transitive ProjectReferences as well as the application entry. No compilation DLLs are exported. -->
+  <Target Name="EverywhereGetPluginHostProjectReferences" DependsOnTargets="IncludeTransitiveProjectReferences"
+          Returns="@(_EverywhereHostProjectReference)">
+    <ItemGroup>
+      <_EverywhereHostProjectReference Include="@(ProjectReference->'%(FullPath)')" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="EverywherePublishPluginHostDescriptor" BeforeTargets="ComputeResolvedFilesToPublishList" DependsOnTargets="EverywhereWritePluginHostDescriptor">
     <ItemGroup>
       <ResolvedFileToPublish Include="$(_EverywhereDescriptorPath)" RelativePath="plugin-host.json" CopyToPublishDirectory="PreserveNewest" />
