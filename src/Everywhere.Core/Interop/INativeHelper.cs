@@ -1,10 +1,28 @@
 ﻿using System.Runtime.Versioning;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
 
 namespace Everywhere.Interop;
 
 public interface INativeHelper
 {
+    /// <summary>
+    /// Resolves an absolute application path or saved native application identity without launching it.
+    /// Returns null when the application cannot be resolved.
+    /// </summary>
+    NativeApplicationInfo? GetApplicationInfo(string identityOrPath);
+
+    /// <summary>
+    /// Resolves the application owning a selected window's process. Does not fall back to a process-name rule.
+    /// </summary>
+    NativeApplicationInfo? GetApplicationInfo(int processId);
+
+    /// <summary>
+    /// Loads a platform application icon, or the platform default when the path is null or unavailable.
+    /// The caller owns and must dispose the returned bitmap.
+    /// </summary>
+    Bitmap? GetApplicationIcon(string? path);
+
     /// <summary>
     /// Check if the application is installed in the system.
     /// </summary>

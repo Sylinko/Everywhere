@@ -1,4 +1,5 @@
-﻿using Avalonia.Input;
+﻿using Bitmap = Avalonia.Media.Imaging.Bitmap;
+using Avalonia.Input;
 using Everywhere.Interop;
 using Network;
 using UserNotifications;
@@ -160,6 +161,69 @@ public sealed class NativeHelper : INativeHelper
         {
             NSWorkspace.SharedWorkspace.SelectFile(fullPath, directoryPath);
         }
+    }
+
+    /// <inheritdoc />
+    public NativeApplicationInfo? GetApplicationInfo(string identityOrPath)
+    {
+        var path = identityOrPath;
+        if (!Path.IsPathFullyQualified(path))
+        {
+            using var url = NSWorkspace.SharedWorkspace.UrlForApplication(identityOrPath);
+            if (url.Path is not { } applicationPath)
+            {
+                return null;
+            }
+
+            path = applicationPath;
+        }
+
+        if (!Directory.Exists(path) || !path.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        using var bundle = NSBundle.FromPath(path);
+        if (bundle?.BundleIdentifier is not { Length: > 0 } identifier)
+        {
+            return null;
+        }
+
+        var name = bundle.ObjectForInfoDictionary("CFBundleDisplayName")?.ToString() ??
+            bundle.ObjectForInfoDictionary("CFBundleName")?.ToString() ??
+            Path.GetFileNameWithoutExtension(path);
+        return new NativeApplicationInfo(identifier, name, path);
+    }
+
+    /// <inheritdoc />
+    public NativeApplicationInfo? GetApplicationInfo(int processId)
+    {
+        using var application = NSRunningApplication.GetRunningApplication(processId);
+        return application.BundleUrl?.Path is { } path ? GetApplicationInfo(path) : null;
+    }
+
+    /// <inheritdoc />
+    public Bitmap? GetApplicationIcon(string? path)
+    {
+        using var image = path is not null && Directory.Exists(path) ?
+            NSWorkspace.SharedWorkspace.IconForFile(path) :
+            NSWorkspace.SharedWorkspace.GetIcon(UniformTypeIdentifiers.UTTypes.ApplicationBundle);
+        using var tiff = image.AsTiff();
+        if (tiff is null)
+        {
+            return null;
+        }
+
+        using var representation = new NSBitmapImageRep(tiff);
+        using var properties = new NSDictionary();
+        using var png = representation.RepresentationUsingTypeProperties(NSBitmapImageFileType.Png, properties);
+        if (png is null)
+        {
+            return null;
+        }
+
+        using var stream = png.AsStream();
+        return new Bitmap(stream);
     }
 
     private class NotificationDelegate(TaskCompletionSource<bool> tcs) : UNUserNotificationCenterDelegate

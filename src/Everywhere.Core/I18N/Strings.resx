@@ -1630,6 +1630,9 @@ My intelligence is powered by large language models, and I need your help to con
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>Failed to launch the Puppeteer browser.</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>Left click to select an application, right click or Esc to cancel</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>Left click to select, Right click or Esc to cancel
 Scroll wheel or number keys to switch pick modes</value>
@@ -2160,6 +2163,9 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>Automatically Add Text Selection</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>Automatic Text Selection</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>When enabled, selected text will be automatically added as an attachment.</value>
     </data>
@@ -2171,6 +2177,24 @@ Use scroll wheel or number keys to switch selection mode</value>
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>Automatic text selection could not be started. Please try again.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>Ignore Fullscreen Applications</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>Do not detect text selections while the application you are using occupies the full display.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>Ignored Applications</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>One process name, executable path, or macOS bundle identifier per line. Text selections in these applications are ignored.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>Applications Without Copy Fallback</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>One application identity per line. Accessibility reads remain available, but Everywhere will not simulate Copy in these applications.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>List Windows</value>
@@ -4369,5 +4393,74 @@ If you continue, the other copy will shut down service mode.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>The installed service belongs to another unrecognizable Everywhere copy. Continuing will overwrite it.</value>
+    </data>
+    <data name="TextSelectionSettings_Title" xml:space="preserve">
+        <value>Text selection</value>
+    </data>
+    <data name="TextSelectionSettings_Description" xml:space="preserve">
+        <value>Automatic selection capture and application exclusions</value>
+    </data>
+    <data name="TextSelectionSettings_Enable" xml:space="preserve">
+        <value>Automatically attach selected text</value>
+    </data>
+    <data name="TextSelectionSettings_EnableDescription" xml:space="preserve">
+        <value>Monitor text selections and add them to the chat input.</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludeFullscreen" xml:space="preserve">
+        <value>Disable in fullscreen applications</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludeFullscreenDescription" xml:space="preserve">
+        <value>Do not capture selections while a fullscreen application is active.</value>
+    </data>
+    <data name="TextSelectionSettings_AddApplication" xml:space="preserve">
+        <value>Add application</value>
+    </data>
+    <data name="TextSelectionSettings_ChooseApplication" xml:space="preserve">
+        <value>Choose application…</value>
+    </data>
+    <data name="TextSelectionSettings_PickWindow" xml:space="preserve">
+        <value>Pick a window on screen…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications" xml:space="preserve">
+        <value>Applications with text selection disabled</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplicationsDescription" xml:space="preserve">
+        <value>Selected text in these applications will not be captured automatically.</value>
+    </data>
+    <data name="TextSelectionSettings_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere includes compatibility rules that prevent simulated copying in certain applications. These rules do not disable direct accessibility reading.</value>
+    </data>
+    <data name="TextSelectionSettings_Empty" xml:space="preserve">
+        <value>No applications excluded.</value>
+    </data>
+    <data name="TextSelectionSettings_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>Remove this application from the exclusion list?</value>
+    </data>
+    <data name="TextSelectionSettings_ApplicationFile" xml:space="preserve">
+        <value>Application</value>
+    </data>
+    <data name="TextSelectionSettings_ResolveFailed" xml:space="preserve">
+        <value>Could not identify the application. Try selecting its application file, or add its identity manually.</value>
+    </data>
+    <data name="TextSelectionSettings_InvalidIdentity" xml:space="preserve">
+        <value>Enter a valid exact application identity. Paths and wildcards are not supported here.</value>
+    </data>
+    <data name="TextSelectionSettings_Duplicate" xml:space="preserve">
+        <value>This application rule is already in the list.</value>
+    </data>
+    <data name="TextSelectionSettings_AddProcessName" xml:space="preserve">
+        <value>Add by process name…</value>
+    </data>
+    <data name="TextSelectionSettings_ProcessNameHint" xml:space="preserve">
+        <value>Include the .exe extension. Matches all processes with this name, regardless of installation location; ignores case. Wildcards are not supported.</value>
+    </data>
+    <data name="TextSelectionSettings_AddBundleId" xml:space="preserve">
+        <value>Add by bundle ID…</value>
+    </data>
+    <data name="TextSelectionSettings_BundleIdHint" xml:space="preserve">
+        <value>Matches the exact application bundle identifier, including all installed copies. Matching is case-sensitive; wildcards are not supported.</value>
+    </data>
+    <data name="TextSelectionSettings_RemoveApplication" xml:space="preserve">
+        <value>Remove application</value>
     </data>
 </root>

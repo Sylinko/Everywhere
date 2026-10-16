@@ -320,8 +320,8 @@ public sealed partial class AutomationHostSession
 
     private static void ValidateTextSelectionConfiguration(TextSelectionMonitoringConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
         ValidateApplications(configuration.ExcludedApplications);
+        ValidateApplications(configuration.CopyFallbackExcludedApplications);
         return;
 
         static void ValidateApplications(string[] applications)
@@ -339,8 +339,10 @@ public sealed partial class AutomationHostSession
                 {
                     throw new InvalidDataException("A text-selection application filter contains an invalid identity.");
                 }
+
                 totalLength = checked(totalLength + application.Length);
             }
+
             if (totalLength > 64 * 1024)
             {
                 throw new InvalidDataException("A text-selection application filter exceeds its size limit.");

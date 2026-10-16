@@ -1,15 +1,21 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Security;
 using System.Security.Principal;
 using Windows.Data.Xml.Dom;
 using Windows.Networking.Connectivity;
 using Windows.UI.Notifications;
 using Windows.Win32;
+using Windows.Win32.System.Threading;
 using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Avalonia.Input;
 using Everywhere.Extensions;
 using Everywhere.Interop;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
+using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace Everywhere.Windows.Interop;
 
@@ -140,5 +146,61 @@ public class NativeHelper : INativeHelper
         if (fullPath.IsNullOrWhiteSpace()) return;
         var args = $"/e,/select,\"{fullPath}\"";
         Process.Start(new ProcessStartInfo("explorer.exe", args) { UseShellExecute = true });
+    }
+
+    /// <inheritdoc />
+    public NativeApplicationInfo? GetApplicationInfo(string identityOrPath)
+    {
+        if (!Path.IsPathFullyQualified(identityOrPath) || !File.Exists(identityOrPath))
+        {
+            return null;
+        }
+
+        var path = Path.GetFullPath(identityOrPath);
+        var name = FileVersionInfo.GetVersionInfo(path).FileDescription;
+        return new NativeApplicationInfo(path, string.IsNullOrWhiteSpace(name) ? Path.GetFileName(path) : name, path);
+    }
+
+    /// <inheritdoc />
+    public NativeApplicationInfo? GetApplicationInfo(int processId)
+    {
+        if (processId <= 0)
+        {
+            return null;
+        }
+
+        using var process = new SafeProcessHandle(
+            PInvoke.OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION, false, (uint)processId),
+            true);
+        if (process.IsInvalid)
+        {
+            return null;
+        }
+
+        var buffer = new char[32_768].AsSpan();
+        var length = (uint)buffer.Length;
+        return PInvoke.QueryFullProcessImageName(process, PROCESS_NAME_FORMAT.PROCESS_NAME_WIN32, buffer, ref length) && length > 0 ?
+            GetApplicationInfo(new string(buffer[..(int)length])) :
+            null;
+    }
+
+    /// <inheritdoc />
+    public Bitmap? GetApplicationIcon(string? path)
+    {
+        try
+        {
+            using var icon = path is not null && Path.IsPathFullyQualified(path) && File.Exists(path) ?
+                Icon.ExtractAssociatedIcon(path) ?? (Icon)SystemIcons.Application.Clone() :
+                (Icon)SystemIcons.Application.Clone();
+            using var bitmap = icon.ToBitmap();
+            using var stream = new MemoryStream();
+            bitmap.Save(stream, ImageFormat.Png);
+            stream.Position = 0;
+            return new Bitmap(stream);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or Win32Exception)
+        {
+            return null;
+        }
     }
 }
