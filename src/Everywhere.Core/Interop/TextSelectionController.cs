@@ -66,6 +66,12 @@ public sealed class TextSelectionController : ObservableObject, IDisposable
         var isToolbarEnabled = change.Feature == TextSelectionFeature.Toolbar ? change.IsEnabled : IsToolbarEnabled;
         var shouldMonitor = isAttachmentEnabled || (isToolbarEnabled && _settings.TextSelection.IsToolbarSupported);
 
+        if (shouldMonitor == _watcher.IsEnabled)
+        {
+            Commit(change);
+            return;
+        }
+
         try
         {
             await _watcher.SetEnabledCommand.ExecuteAsync(shouldMonitor);
