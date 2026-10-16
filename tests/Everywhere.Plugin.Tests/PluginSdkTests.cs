@@ -41,7 +41,8 @@ public sealed class PluginSdkTests
     public void TearDown() => Directory.Delete(_root, recursive: true);
 
     /// <summary>
-    /// Both host inputs use the same metadata path and must exclude the host's contract and implementation DLLs.
+    /// Both compilation paths preserve plugin resources and exclude host assemblies and content.
+    /// Source references must also keep command-line plugin identity and output paths out of the host build.
     /// </summary>
     [TestCase(false, false)]
     [TestCase(false, true)]
@@ -85,7 +86,8 @@ public sealed class PluginSdkTests
         await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), project);
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.resx"), "<root><data name=\"Greeting\"><value>Hello</value></data></root>");
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.fr.resx"), "<root><data name=\"Greeting\"><value>Bonjour</value></data></root>");
-        var body = hasImplementationReference ? "GC.KeepAlive(PluginFixture.Host.HostApi.Name);" : "";
+        var body = hasImplementationReference ?
+            "GC.KeepAlive(PluginFixture.Host.HostApi.Name); GC.KeepAlive(NuGet.Versioning.NuGetVersion.Parse(\"1.0.0\"));" : "";
         await File.WriteAllTextAsync(
             Path.Combine(_root, "Entry.cs"),
             $$"""
@@ -100,19 +102,31 @@ public sealed class PluginSdkTests
                   }
               }
               """);
-        var result = await RunAsync(_root, "msbuild", "Plugin.csproj", "-restore", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+        var outputDirectory = Path.Combine(_root, "plugin-output");
+        var result = await RunAsync(
+            _root, "msbuild", "Plugin.csproj", "-restore", "-target:EverywherePack", "-nologo", "-verbosity:minimal",
+            "-property:Version=1.2.3", "-property:OutputPath=" + outputDirectory,
+            "-property:EverywhereHost=" + host);
         Assert.That(result.ExitCode, Is.Zero, result.Output);
         var packageResult = result.Output.Split('\n').Select(line => line.Trim())
             .Single(line => line.StartsWith("{\"code\":\"PackageCreated\"", StringComparison.Ordinal));
         using var packageDocument = JsonDocument.Parse(packageResult);
         Assert.That(packageDocument.RootElement.EnumerateObject().Select(property => property.Name), Is.EqualTo(new[] { "code", "path" }));
         Assert.That(packageDocument.RootElement.GetProperty("path").GetString(),
-            Is.EqualTo(Path.Combine(_root, "bin", "Debug", "net10.0", "fixture.sdk-1.0.0.zip")));
-        using var archive = ZipFile.OpenRead(Path.Combine(_root, "bin", "Debug", "net10.0", "fixture.sdk-1.0.0.zip"));
+            Is.EqualTo(Path.Combine(outputDirectory, "fixture.sdk-1.2.3.zip")));
+        using var archive = ZipFile.OpenRead(Path.Combine(outputDirectory, "fixture.sdk-1.2.3.zip"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("Plugin.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("fr/Plugin.resources.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Abstractions.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("PluginFixture.Host.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("NuGet.Versioning.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("host-content.txt"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Abstractions.pdb"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Abstractions.xml"));
+        using var importedHost = JsonDocument.Parse(await File.ReadAllTextAsync(
+            Path.Combine(_root, "obj", "Debug", "net10.0", "everywhere-host-references.txt.host.json")));
+        Assert.That(importedHost.RootElement.GetProperty("HostVersion").GetString(), Is.EqualTo("0.9.2"));
+        Assert.That(File.Exists(Path.Combine(outputDirectory, "plugin-host.json")), Is.False);
         var manifestEntry = archive.GetEntry("plugin.json") ?? throw new AssertionException("No generated manifest.");
         using var stream = manifestEntry.Open();
         using var manifest = JsonDocument.Parse(stream);

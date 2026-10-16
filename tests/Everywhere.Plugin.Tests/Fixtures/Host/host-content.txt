@@ -1,0 +1,1 @@
+Host-owned content must not be copied into a plugin package through ProjectReference.

@@ -33,18 +33,28 @@ The SDK will be distributed through NuGet as an MSBuild SDK, using the form `<Pr
 
 ### Choose a host input
 
-The first SDK will support two workflows through the same reference-import and packaging pipeline:
+The SDK design supports two compilation workflows with shared host ownership, compatibility and packaging rules:
 
 | Input | Intended workflow |
 |---|---|
-| An installed or extracted Everywhere application | Supply the application directory, or the macOS `.app` root. The SDK reads its declared references, host/platform identity and available XML documentation. |
-| An Everywhere source project | Supply the relevant `.csproj`. The SDK builds/exports the required reference set and applies the same ownership and packaging checks. |
+| An installed or extracted Everywhere application | A quick path for local development without a host checkout. Supply the application directory, or the macOS `.app` root. The SDK reads its declared runtime assemblies, host/platform identity and available XML documentation. |
+| An Everywhere source project | The preferred path for advanced development against host source. Supply the plugin-enabled host `.csproj`; the SDK uses standard ProjectReference resolution so MSBuild/NuGet select compilation assets and transitive dependencies, with the same host ownership and packaging checks. |
+
+**Implemented and Windows-tested:** source imports use ProjectReference rather than importing runtime DLLs as compilation references. The selected host project and its implicit transitive project references keep their own identity/version, output paths, RID and deployment settings when the plugin supplies command-line overrides. Configuration and Platform follow normal project-reference behavior; target frameworks must be compatible. The host descriptor is read from that same build. The SDK's internal `import` CLI accepts directories; source selection belongs to the MSBuild SDK through `EverywhereHost`.
+
+Only NuGet compile assets flow through the host reference. If your plugin needs a package's analyzers, source generators, build targets or runtime files of its own, declare that PackageReference explicitly. For example, an AXAML plugin declares Avalonia itself. The SDK does not apply the host's build tooling to every plugin. Host-owned project outputs and content are excluded, and the final package checks overlapping managed dependencies. This does not require a separate distribution of host reference assemblies.
 
 These workflows start with the first plugin-enabled Everywhere release. Older installations will receive a diagnostic; the SDK will not guess the host contract by collecting every DLL in their directories. A separate NuGet distribution of Everywhere host references is not required. References to third-party libraries and other plugins can still use ordinary NuGet packages.
 
 The host's `.deps.json`, runtime configuration and small amount of plugin-specific host metadata identify its declared files and roles. The SDK reads the listed assemblies' identities and references. It does not discover host ownership through filename prefixes or signing keys, and authors do not maintain a second host manifest.
 
 Host assemblies, including host-provided third-party libraries, stay out of your plugin payload. If you reference a NuGet library also provided by the host, tooling checks compatibility and shares the host copy or reports the conflict. Merely setting `Private=false` on a ProjectReference is insufficient because transitive host assemblies can still be copied. The SDK must inspect the resolved references and final package.
+
+### Known WindowsBase warning with runtime assembly imports
+
+Importing a Windows host containing System.Reactive 7.0 can produce MSB3277 for WindowsBase versions 4.0.0.0 and 8.0.0.0. Rx's Windows runtime DLL retains legacy WPF/WinForms APIs for binary compatibility, while its NuGet `ref` assembly omits those APIs. Importing the runtime DLL as a compilation reference exposes its WindowsBase 8 dependency alongside the .NET reference pack's WindowsBase 4 identity. The latter assembly version does not mean the plugin targets .NET Framework 4. See the [Rx package design](https://github.com/dotnet/reactive/blob/main/Rx.NET/Documentation/adr/0005-package-split.md).
+
+This warning alone does not mean WindowsDesktop has been added to the deployed application. The validated host output contains only the Microsoft.NETCore.App runtime framework, and the packaged Everything plugin passed real query and unload checks despite the warning. Using the legacy desktop APIs can still require additional framework references and cause compilation or runtime failures; this validation does not cover those APIs. Accept this known warning for the validated installation-import use case without suppressing it or adding a general workaround. The implemented ProjectReference path selects Rx's `ref` assembly; the Everything source-import build and package completed without this warning. This is not a promise that all dependencies are warning-free.
 
 ### Keep local paths outside shared project configuration
 
@@ -54,7 +64,7 @@ For example, the local file can associate a Windows host property with an instal
 
 ### Build and test the requested target
 
-Host-reference import does not run Everywhere or load its native libraries. A Windows developer can supply an extracted macOS application as a reference input. Source import may still require target-platform SDKs or workloads. The SDK should avoid unrelated packaging, signing and NativeAOT helper publishing when only managed references are needed, but it must not silently change target frameworks or omit required functionality.
+Host-reference import does not run Everywhere or load its native libraries. A Windows developer can supply an extracted macOS application as a reference input. Source import may still require target-platform SDKs or workloads. It currently runs the host's ordinary build prerequisites, including Watchdog publishing. A managed-reference-only build that avoids unrelated packaging, signing and NativeAOT helper publishing remains pending; the SDK must not silently change target frameworks or omit required functionality.
 
 Reference import, managed compilation, native builds, application bundling/signing and target-platform execution are separate capabilities. The SDK is intended to support cross-compilation where the toolchain permits it; the complete Everywhere matrix has not been validated. Having the source checkout does not automatically make every platform project buildable on every OS.
 
@@ -77,7 +87,7 @@ For trusted plugins that need internal host APIs, [IgnoresAccessChecksToGenerato
 </ItemGroup>
 ```
 
-It generates compilation references exposing internal members and adds the runtime access-check attribute to the caller. The host DLL is not modified. Generated compilation references must never be distributed as replacement runtime DLLs. Internal APIs remain host implementation APIs, so declare and test the appropriate host version range. The upstream tool requires CompileUsingReferenceAssemblies=false when operating on ordinary ProjectReference inputs; the Everywhere SDK normalizes host exports into references, and both import workflows still need generator integration tests.
+It generates compilation references exposing internal members and adds the runtime access-check attribute to the caller. The host DLL is not modified. Generated compilation references must never be distributed as replacement runtime DLLs. Internal APIs remain host implementation APIs, so declare and test the appropriate host version range. The upstream tool requires CompileUsingReferenceAssemblies=false when operating on ordinary ProjectReference inputs, including source-host imports. Installation imports use runtime DLL references. Both import workflows still need generator integration tests; the SDK does not enable this option globally.
 
 Access checks and inheritance restrictions are different. Ignoring access checks can permit use of an internal non-sealed base class; it does not permit deriving from a sealed class or overriding a non-virtual method. Use composition or an existing interface when it fits. If inheritance is an intended host extension point, that host class needs a deliberate source-level change and appropriate overridable members. A runtime method hook changes execution; it does not turn a class into a legal base class.
 
@@ -478,7 +488,7 @@ Acme.Clipboard/
   Mac/                          macOS entry project -> Common
 ```
 
-These are illustrative project paths, not required package paths. Both platform projects build the same plugin identity/version. Common must not reference the platform entry projects. Shared source compiled once per target is another valid approach. Use normal target framework, RID and minimum-OS settings where possible; plugin-specific settings cover additional intent. Do not choose cross-target source files solely from the build machine's OS.
+These are illustrative project paths, not required package paths. Both platform projects build the same plugin identity/version. Common must not reference the platform entry projects. Shared source compiled once per target is another valid approach. Each platform entry compilation must use a target framework compatible with the host projects it references: for example, a net10.0 project cannot directly reference a net10.0-windows10.0.19041.0 host project merely by setting RuntimeIdentifier to win-x64. Neutral code should reference neutral host projects. Use normal target framework, RID and minimum-OS settings where possible; plugin-specific settings cover additional intent. Do not choose cross-target source files solely from the build machine's OS.
 
 The Windows and macOS host projects both emit `Everywhere.dll`. Compile each plugin entry against its matching host set; do not add both host files to the same compilation. A neutral target framework alone does not prove that all APIs you use work on every OS.
 
