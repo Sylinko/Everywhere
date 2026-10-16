@@ -1,15 +1,12 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Automation;
-using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.ProcessIsolation.Automation;
 using Serilog;
@@ -21,9 +18,56 @@ namespace Everywhere.Views;
 /// </summary>
 public sealed partial class TextSelectionApplicationsControl : UserControl
 {
+    public static readonly StyledProperty<string[]> ApplicationsProperty =
+        AvaloniaProperty.Register<TextSelectionApplicationsControl, string[]>(nameof(Applications), []);
+
+    public static readonly StyledProperty<IDynamicLocaleKey?> HeaderKeyProperty =
+        AvaloniaProperty.Register<TextSelectionApplicationsControl, IDynamicLocaleKey?>(nameof(HeaderKey));
+
+    public static readonly StyledProperty<IDynamicLocaleKey?> DescriptionKeyProperty =
+        AvaloniaProperty.Register<TextSelectionApplicationsControl, IDynamicLocaleKey?>(nameof(DescriptionKey));
+
+    public static readonly StyledProperty<bool> IsCompatibilityHintVisibleProperty =
+        AvaloniaProperty.Register<TextSelectionApplicationsControl, bool>(nameof(IsCompatibilityHintVisible));
+
+    /// <summary>
+    /// Gets or sets the independently persisted application rules edited by this control.
+    /// </summary>
+    public string[] Applications
+    {
+        get => GetValue(ApplicationsProperty);
+        set => SetValue(ApplicationsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the localized heading for the bound exclusion list.
+    /// </summary>
+    public IDynamicLocaleKey? HeaderKey
+    {
+        get => GetValue(HeaderKeyProperty);
+        set => SetValue(HeaderKeyProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the localized explanation of the bound rules.
+    /// </summary>
+    public IDynamicLocaleKey? DescriptionKey
+    {
+        get => GetValue(DescriptionKeyProperty);
+        set => SetValue(DescriptionKeyProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the global capture compatibility hint is shown.
+    /// </summary>
+    public bool IsCompatibilityHintVisible
+    {
+        get => GetValue(IsCompatibilityHintVisibleProperty);
+        set => SetValue(IsCompatibilityHintVisibleProperty, value);
+    }
+
     public TextSelectionApplicationsPresentation Presentation { get; } = new();
 
-    private readonly TextSelectionApplicationSettings _settings;
     private readonly INativeHelper _nativeHelper;
     private readonly IScreenSelectionService _screenSelectionService;
     private readonly IWindowHelper _windowHelper;
@@ -32,13 +76,11 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
     private CancellationTokenSource? _lifetime;
 
     public TextSelectionApplicationsControl(
-        Settings settings,
         INativeHelper nativeHelper,
         IScreenSelectionService screenSelectionService,
         IWindowHelper windowHelper,
         ChatVisualService visualService)
     {
-        _settings = settings.TextSelection.Platform;
         _nativeHelper = nativeHelper;
         _screenSelectionService = screenSelectionService;
         _windowHelper = windowHelper;
@@ -51,13 +93,11 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
         base.OnAttachedToVisualTree(e);
 
         _lifetime = new CancellationTokenSource();
-        _settings.PropertyChanged += HandleSettingsChanged;
         ReconcileRows();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _settings.PropertyChanged -= HandleSettingsChanged;
         _lifetime?.Cancel();
         _lifetime?.Dispose();
         _lifetime = null;
@@ -71,23 +111,18 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
         base.OnDetachedFromVisualTree(e);
     }
 
-    private void HandleSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        if (e.PropertyName == nameof(TextSelectionApplicationSettings.ExcludedApplications))
+        base.OnPropertyChanged(change);
+        if (change.Property == ApplicationsProperty && _lifetime is not null)
         {
-            Dispatcher.UIThread.PostOnDemand(() =>
-            {
-                if (_lifetime is not null)
-                {
-                    ReconcileRows();
-                }
-            });
+            ReconcileRows();
         }
     }
 
     private void ReconcileRows()
     {
-        var identities = _settings.ExcludedApplications
+        var identities = Applications
             .AsValueEnumerable()
             .Where(identity => !string.IsNullOrWhiteSpace(identity))
             .Distinct(IdentityComparer)
@@ -231,11 +266,11 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
                 var files = await storage.OpenFilePickerAsync(
                     new FilePickerOpenOptions
                     {
-                        Title = LocaleKey.TextSelectionSettings_ChooseApplication.I18N(),
+                        Title = LocaleKey.TextSelectionApplications_ChooseApplication.I18N(),
                         AllowMultiple = false,
                         FileTypeFilter =
                         [
-                            new FilePickerFileType(LocaleKey.TextSelectionSettings_ApplicationFile.I18N())
+                            new FilePickerFileType(LocaleKey.TextSelectionApplications_ApplicationFile.I18N())
                             {
 #if WINDOWS
                                 Patterns = ["*.exe"],
@@ -261,7 +296,7 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
             cancellationToken.ThrowIfCancellationRequested();
             if (application is null)
             {
-                Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ResolveFailed);
+                Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ResolveFailed);
                 return;
             }
 
@@ -273,7 +308,7 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
         catch (Exception exception)
         {
             Log.Warning(exception, "Could not select an application for text-selection exclusions.");
-            Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ResolveFailed);
+            Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ResolveFailed);
         }
         finally
         {
@@ -305,13 +340,13 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
 
     private void AddApplication(string identity)
     {
-        if (_settings.ExcludedApplications.Contains(identity, IdentityComparer))
+        if (Applications.Contains(identity, IdentityComparer))
         {
-            Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_Duplicate);
+            Presentation.ErrorKey = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_Duplicate);
             return;
         }
 
-        _settings.ExcludedApplications = [.. _settings.ExcludedApplications, identity];
+        SetCurrentValue(ApplicationsProperty, [.. Applications, identity]);
         Presentation.IsEditing = false;
         Presentation.ErrorKey = null;
     }
@@ -346,10 +381,11 @@ public sealed partial class TextSelectionApplicationsControl : UserControl
             return;
         }
 
-        _settings.ExcludedApplications = _settings.ExcludedApplications
+        var applications = Applications
             .AsValueEnumerable()
             .Where(identity => !IdentityComparer.Equals(identity, row.Identity))
             .ToArray();
+        SetCurrentValue(ApplicationsProperty, applications);
     }
 
     private static StringComparer IdentityComparer
@@ -394,15 +430,15 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
     public bool HasError => ErrorKey is not null;
 
 #if MACOS
-    public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_AddBundleId);
+    public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_AddBundleId);
 
-    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_BundleIdHint);
+    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_BundleIdHint);
 
     public IDynamicLocaleKey ManualPlaceholder { get; } = new DirectLocaleKey("com.apple.TextEdit");
 #elif WINDOWS
-    public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_AddProcessName);
+    public IDynamicLocaleKey ManualLabel { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_AddProcessName);
 
-    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ProcessNameHint);
+    public IDynamicLocaleKey ManualHint { get; } = new DynamicLocaleKey(LocaleKey.TextSelectionApplications_ProcessNameHint);
 
     public IDynamicLocaleKey ManualPlaceholder { get; } = new DirectLocaleKey("Code.exe");
 #else
@@ -442,7 +478,7 @@ public sealed partial class TextSelectionApplicationsPresentation : ObservableVa
 #else
 #error Implement manual application identity validation for this platform.
 #endif
-        return isValid ? ValidationResult.Success : new ValidationResult(LocaleKey.TextSelectionSettings_InvalidIdentity.I18N());
+        return isValid ? ValidationResult.Success : new ValidationResult(LocaleKey.TextSelectionApplications_InvalidIdentity.I18N());
     }
 }
 

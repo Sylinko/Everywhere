@@ -1,4 +1,3 @@
-
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
@@ -53,11 +52,6 @@ public static class ServiceExtensions
                     sp.GetService<IHostsServiceModeManager>()))
                 .AddSingleton<IHostConnectionSource>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton(sp => new ChatVisualService(sp.GetRequiredService<IHostConnectionSource>()))
-                .AddSingleton<ITextSelectionWatcher>(sp => new AutomationTextSelectionWatcher(
-                    sp.GetRequiredService<IHostConnectionSource>(),
-                    sp.GetRequiredService<ChatVisualService>(),
-                    sp.GetRequiredService<Settings>(),
-                    sp.GetRequiredService<ILogger<AutomationTextSelectionWatcher>>()))
                 .AddSingleton(sp => new DebuggerVisualContext(sp.GetRequiredService<IHostConnectionSource>()))
                 .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(
                     sp.GetRequiredService<HostProcessCoordinator>(),
@@ -80,6 +74,8 @@ public static class ServiceExtensions
                 .AddTransient<HostsStatusControl>()
                 .AddTransient<TextSelectionMonitoringControl>()
                 .AddTransient<TextSelectionApplicationsControl>()
+                .AddTransient<TextSelectionToolbarActionsControl>()
+                .AddTransient<TextSelectionToolbarPreview>()
 #if WINDOWS
                 .AddTransient<HostsServiceModeControl>()
 #endif
@@ -187,6 +183,5 @@ public static class ServiceExtensions
                 .AddSingleton<BuiltInChatPlugin, WebPlugin>()
                 .AddSingleton<BuiltInChatPlugin, TerminalPlugin>()
                 .AddSingleton<BuiltInChatPlugin, OfficeCLIPlugin>();
-
     }
 }

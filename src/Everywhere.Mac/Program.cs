@@ -18,6 +18,7 @@ using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
+using Everywhere.TextSelection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Mac;
@@ -162,8 +163,7 @@ public static class Program
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<MacScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
-                // TODO: implement over CGEventListener, as the text selection detector already does.
-                .AddSingleton<IOverlayDismissWatcher, UnsupportedOverlayDismissWatcher>()
+                .AddSingleton<IOverlayInputWatcher, OverlayInputWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, MacUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
@@ -174,6 +174,7 @@ public static class Program
                 .AddCloudClient()
                 .AddChatEssentials()
                 .AddStrategyEngine()
+                .AddTextSelection()
 
                 #endregion
 
@@ -186,7 +187,6 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
                 .AddTransient<IAsyncInitializer, SoftwareUpdaterInitializer>()
 
             #endregion

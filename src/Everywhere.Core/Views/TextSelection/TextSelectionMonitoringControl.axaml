@@ -11,11 +11,11 @@
             HorizontalAlignment="Center" VerticalAlignment="Center"
             Command="{Binding ChangeMonitoringCommand, RelativeSource={RelativeSource TemplatedParent}}"
             CommandParameter="{Binding $self}"
-            IsChecked="{Binding Watcher.IsEnabled, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
-            IsVisible="{Binding !Watcher.SetEnabledCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
+            IsChecked="{Binding IsMonitoringEnabled, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+            IsVisible="{Binding !Controller.SetEnabledCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"/>
           <shadui:Loading
             HorizontalAlignment="Center" VerticalAlignment="Center"
-            IsVisible="{Binding Watcher.SetEnabledCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
+            IsVisible="{Binding Controller.SetEnabledCommand.IsRunning, RelativeSource={RelativeSource TemplatedParent}}"
             Size="{DynamicResource FontSizeM}"/>
         </Panel>
       </ControlTemplate>

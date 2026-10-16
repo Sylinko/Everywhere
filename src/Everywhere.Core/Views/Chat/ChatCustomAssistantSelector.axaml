@@ -613,5 +613,11 @@
         </Button>
       </ControlTemplate>
     </Setter>
+    <Style Selector="^.Compact /template/ TextBlock#AssistantName">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <Style Selector="^.Compact /template/ TextBlock#ReasoningEffort">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
   </ControlTheme>
 </ResourceDictionary>

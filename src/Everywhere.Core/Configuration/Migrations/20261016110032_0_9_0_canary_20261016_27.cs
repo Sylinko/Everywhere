@@ -21,7 +21,7 @@ public sealed class _20261016110032_0_9_0_canary_20261016_27 : SettingsMigration
 
         var selection = root["TextSelection"] as JsonObject ?? new JsonObject();
         var hasChanges = false;
-        Move("AutomaticallyAddTextSelection", "IsEnabled"); // TODO
+        Move("AutomaticallyAddTextSelection", "IsAutomaticAttachmentEnabled");
         Move("IsTextSelectionFullscreenExcluded", "IsFullscreenExcluded");
 
         if (hasChanges && selection.Parent is null)

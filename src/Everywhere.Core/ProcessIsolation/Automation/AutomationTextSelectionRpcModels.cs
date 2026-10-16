@@ -122,4 +122,16 @@ public sealed partial class TextSelectionObservedNotification
     /// <summary>Whether transport or native read limits may have omitted trailing text.</summary>
     [Key(7)]
     public bool IsTextIncomplete { get; init; }
+
+    /// <summary>Physical screen position captured with the selection gesture.</summary>
+    [Key(8)]
+    public int? PointerX { get; init; }
+
+    /// <summary>Vertical coordinate paired with <see cref="PointerX" />.</summary>
+    [Key(9)]
+    public int? PointerY { get; init; }
+
+    /// <summary>Application identity captured by the native detector, independent of source-anchor availability.</summary>
+    [Key(10)]
+    public string? ApplicationIdentity { get; init; }
 }

@@ -1636,6 +1636,9 @@
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>Puppeteer 브라우저를 시작하지 못했습니다.</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>왼쪽 클릭으로 앱 선택, 오른쪽 클릭 또는 Esc로 취소</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>왼쪽 클릭으로 선택, 오른쪽 클릭 또는 Esc로 취소
 스크롤 휠 또는 숫자 키로 선택 모드 전환</value>
@@ -2166,6 +2169,9 @@
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>텍스트 선택 자동 추가</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>자동 텍스트 선택 감지</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>활성화하면 선택한 텍스트가 자동으로 첨부됩니다.</value>
     </data>
@@ -2177,6 +2183,24 @@
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>자동 선택이 시작되지 않았습니다. 다시 시도하세요.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>전체 화면 앱 무시</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>사용 중인 앱이 전체 화면을 차지하는 동안 텍스트 선택을 감지하지 않습니다.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>무시할 앱</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>한 줄에 프로세스 이름, 실행 파일 경로 또는 macOS 번들 ID를 하나씩 입력하세요. 이 앱에서 선택한 텍스트는 무시됩니다.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>복사 방식으로 가져오지 않을 앱</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>한 줄에 앱 식별자를 하나씩 입력하세요. 접근성 기능을 통한 읽기는 계속 사용할 수 있지만, 이 앱에서는 Everywhere가 복사 동작을 모방하지 않습니다.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>창 목록</value>
@@ -4408,5 +4432,158 @@
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
+        <value>텍스트 선택</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>선택 도구 모음, 채팅 자동 첨부 및 앱 규칙</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>채팅에 자동 추가</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>선택한 텍스트와 관련 맥락을 채팅 창에 첨부 파일로 자동 추가합니다.</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
+        <value>전체 화면 앱에서 비활성화</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
+        <value>전체 화면 앱이 활성화된 동안 선택한 텍스트를 자동으로 가져오지 않습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+        <value>앱 추가</value>
+    </data>
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+        <value>앱 선택…</value>
+    </data>
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
+        <value>화면에서 창 선택…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
+        <value>텍스트 선택을 비활성화할 앱</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
+        <value>이 앱에서 선택한 텍스트는 자동으로 가져오지 않습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere에는 일부 앱에서 복사 동작을 모방하지 않도록 하는 호환성 규칙이 내장되어 있습니다. 이 규칙은 접근성 기능을 통한 직접 읽기에는 영향을 주지 않습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
+        <value>제외된 앱이 없습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>이 앱을 제외 목록에서 제거할까요?</value>
+    </data>
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+        <value>애플리케이션</value>
+    </data>
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
+        <value>앱을 식별할 수 없습니다. 앱의 실행 파일을 선택하거나 식별자를 직접 추가해 주세요.</value>
+    </data>
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
+        <value>정확히 일치시킬 유효한 앱 식별자를 입력하세요. 여기서는 경로나 와일드카드를 사용할 수 없습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
+        <value>이 앱 규칙이 이미 목록에 있습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+        <value>프로세스 이름으로 추가…</value>
+    </data>
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
+        <value>.exe 확장자를 포함하세요. 설치 위치와 관계없이 이름이 같은 모든 프로세스와 일치하며 대소문자를 구분하지 않습니다. 와일드카드는 지원하지 않습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+        <value>번들 ID로 추가…</value>
+    </data>
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+        <value>설치된 모든 복사본을 포함하여 앱의 번들 ID와 정확히 일치하는 항목을 찾습니다. 대소문자를 구분하며 와일드카드는 지원하지 않습니다.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
+        <value>앱 제거</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
+        <value>선택 도구 모음 활성화</value>
+    </data>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>최대 도구 수</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>도구 모음 불투명도</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>커서 거리에 따라 불투명도 조절</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>커서가 멀어지면 도구 모음이 흐려지고 가까워지면 원래 불투명도로 돌아옵니다.</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
+        <value>도구 관리</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>표시할 도구를 선택하고 드래그해 순서를 바꾸거나 사용자 지정 도구를 추가하세요.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>사용자 지정 도구 추가</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>도구 편집</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>이름</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>프롬프트</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>선택한 텍스트는 자동으로 첨부됩니다. “선택한 텍스트를 중국어로 번역해 줘”처럼 원하는 작업을 설명하세요. 도구를 클릭하면 채팅이 열리고 이 프롬프트가 전송됩니다.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>아이콘 선택</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>드래그하여 순서 변경</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>선택 내용과 일치할 때 이 도구 표시</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>이름, 아이콘, 프롬프트 및 이름 표시 설정을 기본값으로 복원</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>이름 없는 도구</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>이 사용자 지정 도구를 삭제할까요?</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>선택 도구 모음</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>채팅 창</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>고급</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>선택 도구 모음을 숨길 앱</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>이 앱에서는 도구 모음을 숨깁니다. 선택한 텍스트를 채팅에 자동 추가하는 기능은 계속 사용할 수 있습니다.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>도구 모음에 이름 표시</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>이 앱에서 표시하지 않기</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>더 보기</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>도구 모음 닫기</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>도구 모음 미리 보기</value>
     </data>
 </root>

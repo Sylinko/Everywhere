@@ -8,6 +8,11 @@ namespace Everywhere.Mac.Interop;
 
 internal static partial class CGInterop
 {
+    /// <summary>
+    /// Marks selection copy fallback input across Main and Automation Host without relying on process identity.
+    /// </summary>
+    public const long SelectionCopyEventTag = 0x455753454C434F50;
+
     // ReSharper disable once InconsistentNaming
     [field: AllowNull, MaybeNull]
     private static ConstructorInfo CGEventConstructorInfo =>

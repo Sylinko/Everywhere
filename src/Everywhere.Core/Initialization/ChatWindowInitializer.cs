@@ -65,7 +65,8 @@ public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
         _textSelectionWatcher = _serviceProvider.GetRequiredService<ITextSelectionWatcher>();
         _textSelectionSubscription = _textSelectionWatcher.Subscribe(chatWindowViewModel);
         _textSelectionWatcher.RestorationRejected += HandleTextSelectionRestorationRejected;
-        _textSelectionWatcher.RestoreState(_settings.TextSelection.IsEnabled, _settings.TextSelection.CreateMonitoringConfiguration());
+        var selectionController = _serviceProvider.GetRequiredService<TextSelectionController>();
+        _textSelectionWatcher.RestoreState(selectionController.IsMonitoringRequested, _settings.TextSelection.CreateMonitoringConfiguration());
 
         InitializeShortcut(
             _settings.Shortcut.ChatWindow,

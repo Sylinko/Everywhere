@@ -274,10 +274,9 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
     {
         lock (_stateGate)
         {
-            if (_isCommittedEnabled == isEnabled && _settings.TextSelection.IsEnabled == isEnabled) return;
+            if (_isCommittedEnabled == isEnabled) return;
             _isCommittedEnabled = isEnabled;
         }
-        _settings.TextSelection.IsEnabled = isEnabled;
         OnPropertyChanged(nameof(IsEnabled));
     }
 
@@ -577,7 +576,11 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
                 notification.Text,
                 notification.IsTextIncomplete,
                 anchor,
-                () => IsDeliveryCurrent(connection, notification.MonitorId, revision, subscription));
+                () => IsDeliveryCurrent(connection, notification.MonitorId, revision, subscription))
+            {
+                PointerPosition = notification.PointerX is { } x && notification.PointerY is { } y ? new PixelPoint(x, y) : null,
+                ApplicationIdentity = notification.ApplicationIdentity
+            };
             anchor = null;
             try
             {
