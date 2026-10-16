@@ -230,6 +230,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                 phase = "clipboard fallback";
                 if (!selectedText.HasText &&
                     !AccessibilityOnlyApplications.Contains(trigger.ApplicationId) &&
+                    !MatchesApplication(configuration.CopyFallbackExcludedApplications, trigger.ApplicationId) &&
                     !MatchesApplication(configuration.ExcludedApplications, trigger.ApplicationId) &&
                     (!configuration.IsFullscreenApplicationExcluded || !IsFullscreenTarget(GetFrontApp())) &&
                     IsCurrentTarget(trigger.ProcessId, trigger.ApplicationId))

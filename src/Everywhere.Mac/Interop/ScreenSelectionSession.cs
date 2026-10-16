@@ -30,6 +30,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
     protected ScreenSelectionSession(
         IWindowHelper windowHelper,
+        INativeHelper nativeHelper,
         IReadOnlyList<ScreenSelectionMode> allowedModes,
         ScreenSelectionMode initialMode)
     {
@@ -74,7 +75,7 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
         SetPlacement(_allScreenBounds, out _); // Place window to (0, 0) in avalonia way
 
-        ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
+        ToolTipWindow = new ScreenSelectionToolTipWindow(nativeHelper, allowedModes, initialMode);
         SetNsWindowPlacement(ToolTipWindow, null);
         windowHelper.SetWindowProperties(
             ToolTipWindow,
@@ -205,10 +206,18 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
         void SetMode(ScreenSelectionMode mode)
         {
             if (type != CGEventType.KeyDown) return;
-            if (!_allowedModes.Contains(mode)) return;
+            if (_allowedModes.Count <= 1 || !_allowedModes.Contains(mode))
+            {
+                return;
+            }
 
             Dispatcher.Post(() =>
             {
+                if (CurrentMode == mode)
+                {
+                    return;
+                }
+
                 CurrentMode = mode;
                 HandlePickModeChanged();
             });
@@ -222,6 +231,11 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
 
     private void OnMouseWheel(int delta)
     {
+        if (_allowedModes.Count <= 1 || delta == 0)
+        {
+            return;
+        }
+
         var newIndex = _allowedModes.IndexOf(CurrentMode) + (delta > 0 ? -1 : 1);
         if (newIndex < 0) newIndex = _allowedModes.Count - 1;
         else if (newIndex >= _allowedModes.Count) newIndex = 0;
@@ -349,5 +363,4 @@ internal abstract class ScreenSelectionSession : ScreenSelectionTransparentWindo
     {
         ToolTipWindow.ToolTip.SizeInfo = $"{rect.Width} x {rect.Height}";
     }
-
 }

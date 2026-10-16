@@ -1,0 +1,190 @@
+<UserControl
+  x:Class="Everywhere.Views.TextSelectionApplicationsControl" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" x:Name="Self">
+  <StackPanel Spacing="12">
+    <DockPanel HorizontalSpacing="12">
+      <Button
+        Classes="Secondary" DockPanel.Dock="Right"
+        VerticalAlignment="Center"
+        shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+        Content="{I18N {x:Static LocaleKey.TextSelectionSettings_AddApplication}}"
+        IsEnabled="{Binding !#Self.Presentation.IsBusy}">
+        <Button.Flyout>
+          <MenuFlyout>
+            <MenuItem
+              Click="HandleChooseApplication"
+              Header="{I18N {x:Static LocaleKey.TextSelectionSettings_ChooseApplication}}">
+              <MenuItem.Icon>
+                <LucideIcon
+                  Kind="FolderOpen"
+                  Size="{DynamicResource FontSizeL}"/>
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem
+              Click="HandlePickWindow"
+              Header="{I18N {x:Static LocaleKey.TextSelectionSettings_PickWindow}}">
+              <MenuItem.Icon>
+                <LucideIcon
+                  Kind="AppWindow"
+                  Size="{DynamicResource FontSizeL}"/>
+              </MenuItem.Icon>
+            </MenuItem>
+            <Separator/>
+            <MenuItem
+              Click="HandleManualEntry"
+              Header="{Binding #Self.Presentation.ManualLabel^}">
+              <MenuItem.Icon>
+                <LucideIcon
+                  Kind="TextCursorInput"
+                  Size="{DynamicResource FontSizeL}"/>
+              </MenuItem.Icon>
+            </MenuItem>
+          </MenuFlyout>
+        </Button.Flyout>
+      </Button>
+      <StackPanel Spacing="4">
+        <StackPanel
+          Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ExcludedApplications}}"/>
+          <LucideIcon
+            VerticalAlignment="Center" Kind="CircleQuestionMark"
+            Size="{DynamicResource FontSizeS}"
+            ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionSettings_CompatibilityHint}}"/>
+        </StackPanel>
+        <TextBlock
+          Classes="Muted Caption"
+          Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ExcludedApplicationsDescription}}"
+          TextWrapping="Wrap"/>
+      </StackPanel>
+    </DockPanel>
+
+    <shadui:Loading
+      HorizontalAlignment="Left"
+      IsVisible="{Binding #Self.Presentation.IsBusy}"
+      Size="{DynamicResource FontSizeM}"/>
+    <Border
+      Padding="12"
+      Background="{DynamicResource SecondaryColor50}"
+      CornerRadius="{DynamicResource XlCornerRadius}"
+      IsVisible="{Binding #Self.Presentation.IsEditing}"
+      KeyDown="HandleEditorKeyDown">
+      <StackPanel Spacing="8">
+        <TextBlock
+          Text="{Binding #Self.Presentation.ManualLabel^}"
+          TextWrapping="Wrap"/>
+        <TextBox
+          AutomationProperties.Name="{Binding #Self.Presentation.ManualLabel^}"
+          PlaceholderText="{Binding #Self.Presentation.ManualPlaceholder^}"
+          Text="{Binding #Self.Presentation.ManualInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBlock
+          Classes="Muted Caption"
+          Text="{Binding #Self.Presentation.ManualHint^}"
+          TextWrapping="Wrap"/>
+        <StackPanel
+          HorizontalAlignment="Right" Orientation="Horizontal"
+          Spacing="8">
+          <Button
+            Classes="Primary" Click="HandleConfirm"
+            Content="{I18N {x:Static LocaleKey.TextSelectionSettings_AddApplication}}"/>
+          <Button
+            Classes="Outline" Click="HandleCancel"
+            Content="{I18N {x:Static LocaleKey.Common_Cancel}}"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+    <TextBlock
+      Foreground="{DynamicResource DestructiveColor}"
+      IsVisible="{Binding #Self.Presentation.HasError}"
+      Text="{Binding #Self.Presentation.ErrorKey^, FallbackValue={x:Null}}"
+      TextWrapping="Wrap"/>
+    <TextBlock
+      Classes="Muted"
+      IsVisible="{Binding #Self.Presentation.IsEmpty}"
+      Text="{I18N {x:Static LocaleKey.TextSelectionSettings_Empty}}"/>
+    <ItemsControl
+      Margin="4,0"
+      ItemsSource="{Binding #Self.Presentation.Rows}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="v:TextSelectionApplicationRow">
+          <Border
+            Padding="0,10"
+            BorderBrush="{DynamicResource BorderColor30}"
+            BorderThickness="0,0,0,1">
+            <DockPanel HorizontalSpacing="12">
+              <Button
+                x:Name="RemoveApplicationButton" Classes="Ghost"
+                DockPanel.Dock="Right" VerticalAlignment="Center"
+                AutomationProperties.Name="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplication}}"
+                Tag="{Binding}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplication}}">
+                <LucideIcon
+                  Kind="Trash2"
+                  Size="{DynamicResource FontSizeM}"/>
+                <Button.Flyout>
+                  <Flyout>
+                    <StackPanel
+                      Margin="12" Spacing="6">
+                      <TextBlock
+                        Text="{I18N {x:Static LocaleKey.TextSelectionSettings_RemoveApplicationConfirmation}}"
+                        TextWrapping="Wrap"/>
+                      <TextBlock
+                        Classes="Muted Caption"
+                        Text="{Binding DisplayName}"
+                        TextWrapping="Wrap"/>
+                      <StackPanel
+                        Margin="0,2,0,0" HorizontalAlignment="Right"
+                        Orientation="Horizontal" Spacing="4">
+                        <Button
+                          Classes="Secondary Compact" MinWidth="48"
+                          Content="{I18N {x:Static LocaleKey.Common_Cancel}}">
+                          <Interaction.Behaviors>
+                            <ButtonClickEventTriggerBehavior>
+                              <HideFlyoutAction Flyout="{Binding #RemoveApplicationButton.Flyout}"/>
+                            </ButtonClickEventTriggerBehavior>
+                          </Interaction.Behaviors>
+                        </Button>
+                        <Button
+                          Classes="Destructive Compact" MinWidth="48"
+                          Click="HandleRemove"
+                          Content="{I18N {x:Static LocaleKey.Common_Delete}}"
+                          Tag="{Binding}">
+                          <Interaction.Behaviors>
+                            <ButtonClickEventTriggerBehavior>
+                              <HideFlyoutAction Flyout="{Binding #RemoveApplicationButton.Flyout}"/>
+                            </ButtonClickEventTriggerBehavior>
+                          </Interaction.Behaviors>
+                        </Button>
+                      </StackPanel>
+                    </StackPanel>
+                  </Flyout>
+                </Button.Flyout>
+              </Button>
+              <Panel
+                DockPanel.Dock="Left" Width="32"
+                Height="32" VerticalAlignment="Center">
+                <LucideIcon
+                  IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}"
+                  Kind="AppWindow"
+                  Size="{DynamicResource FontSize2Xl}"/>
+                <Image
+                  IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  Source="{Binding Icon}"
+                  Stretch="Uniform"/>
+              </Panel>
+              <StackPanel Spacing="2">
+                <TextBlock
+                  Text="{Binding DisplayName}"
+                  TextWrapping="Wrap"/>
+                <TextBlock
+                  Classes="Muted Caption"
+                  Text="{Binding Identity}"
+                  TextWrapping="Wrap"/>
+              </StackPanel>
+            </DockPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </StackPanel>
+</UserControl>

@@ -18,6 +18,7 @@ public sealed partial class MacScreenSelectionService
 
         public static async Task<Bitmap?> TakeAsync(
             IWindowHelper windowHelper,
+            INativeHelper nativeHelper,
             IHostedVisualContext visualContext,
             ScreenSelectionMode? initialMode,
             CancellationToken cancellationToken)
@@ -26,7 +27,7 @@ public sealed partial class MacScreenSelectionService
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var window = new ScreenshotSession(windowHelper, visualContext, initialMode ?? _previousMode, cancellationToken);
+            var window = new ScreenshotSession(windowHelper, nativeHelper, visualContext, initialMode ?? _previousMode, cancellationToken);
             window.Show();
             return await window._pickingPromise.Task;
         }
@@ -49,11 +50,13 @@ public sealed partial class MacScreenSelectionService
 
         private ScreenshotSession(
             IWindowHelper windowHelper,
+            INativeHelper nativeHelper,
             IHostedVisualContext visualContext,
             ScreenSelectionMode initialMode,
             CancellationToken cancellationToken)
             : base(
                 windowHelper,
+                nativeHelper,
                 [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element, ScreenSelectionMode.Free],
                 initialMode)
         {

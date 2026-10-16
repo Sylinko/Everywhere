@@ -53,7 +53,11 @@ public static class ServiceExtensions
                     sp.GetService<IHostsServiceModeManager>()))
                 .AddSingleton<IHostConnectionSource>(sp => sp.GetRequiredService<HostProcessCoordinator>())
                 .AddSingleton(sp => new ChatVisualService(sp.GetRequiredService<IHostConnectionSource>()))
-                // TODO: Re-register the text-selection Watcher when its dedicated settings page is ready.
+                .AddSingleton<ITextSelectionWatcher>(sp => new AutomationTextSelectionWatcher(
+                    sp.GetRequiredService<IHostConnectionSource>(),
+                    sp.GetRequiredService<ChatVisualService>(),
+                    sp.GetRequiredService<Settings>(),
+                    sp.GetRequiredService<ILogger<AutomationTextSelectionWatcher>>()))
                 .AddSingleton(sp => new DebuggerVisualContext(sp.GetRequiredService<IHostConnectionSource>()))
                 .AddSingleton<MainHostControlServer>(sp => MainHostControlServer.Create(
                     sp.GetRequiredService<HostProcessCoordinator>(),
@@ -74,6 +78,8 @@ public static class ServiceExtensions
                 .AddTransient<IAsyncInitializer, SettingsEngine>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
+                .AddTransient<TextSelectionMonitoringControl>()
+                .AddTransient<TextSelectionApplicationsControl>()
 #if WINDOWS
                 .AddTransient<HostsServiceModeControl>()
 #endif

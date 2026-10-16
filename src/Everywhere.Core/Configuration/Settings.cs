@@ -35,6 +35,8 @@ public sealed partial class Settings(IServiceProvider serviceProvider) : Setting
 
     public ChatWindowSettings ChatWindow { get; } = new(serviceProvider);
 
+    public TextSelectionSettings TextSelection { get; } = new(serviceProvider);
+
     public PluginSettings Plugin { get; } = new(serviceProvider);
 }
 

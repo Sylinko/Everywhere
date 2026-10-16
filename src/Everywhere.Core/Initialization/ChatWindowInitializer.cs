@@ -16,7 +16,7 @@ namespace Everywhere.Initialization;
 /// <summary>
 /// Initializes the chat window hotkey listener and preloads the chat window.
 /// </summary>
-public sealed class ChatWindowInitializer : IAsyncInitializer
+public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
 
@@ -26,6 +26,9 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
     private readonly ChatVisualService _chatVisualService;
     private readonly ILogger<ChatWindowInitializer> _logger;
     private readonly Lock _syncLock = new();
+
+    private IDisposable? _textSelectionSubscription;
+    private ITextSelectionWatcher? _textSelectionWatcher;
 
     /// <summary>
     /// Initializes the chat window hotkey listener and preloads the chat window.
@@ -59,6 +62,11 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
         // Preload ChatWindow to avoid delay on first open
         chatWindow.Initialize();
 
+        _textSelectionWatcher = _serviceProvider.GetRequiredService<ITextSelectionWatcher>();
+        _textSelectionSubscription = _textSelectionWatcher.Subscribe(chatWindowViewModel);
+        _textSelectionWatcher.RestorationRejected += HandleTextSelectionRestorationRejected;
+        _textSelectionWatcher.RestoreState(_settings.TextSelection.IsEnabled, _settings.TextSelection.CreateMonitoringConfiguration());
+
         InitializeShortcut(
             _settings.Shortcut.ChatWindow,
             (shortcut, ref subscription) => RegisterChatWindowShortcut(chatWindow, chatWindowHandle, shortcut, ref subscription));
@@ -73,6 +81,24 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
     }
 
     private delegate void CompositeKeyboardShortcutRegister(KeyboardShortcut shortcut, ref IDisposable? subscription);
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        DisposeHelper.DisposeToDefault(ref _textSelectionSubscription);
+
+        if (_textSelectionWatcher is not null)
+        {
+            _textSelectionWatcher.RestorationRejected -= HandleTextSelectionRestorationRejected;
+        }
+    }
+
+    private void HandleTextSelectionRestorationRejected(TextSelectionMonitoringControlResult result)
+    {
+        Dispatcher.UIThread.PostOnDemand(() => ShadUI.ToastManager.Error(
+            LocaleKey.Common_Error.I18N(),
+            result.Message?.ToString() ?? LocaleKey.ChatWindowSettings_TextSelectionMonitoring_SetupFailed.I18N()));
+    }
 
     private void InitializeShortcut(CompositeKeyboardShortcut shortcut, CompositeKeyboardShortcutRegister register)
     {

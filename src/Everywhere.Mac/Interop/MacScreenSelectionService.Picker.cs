@@ -14,8 +14,10 @@ public sealed partial class MacScreenSelectionService
 
         public static async Task<RemoteVisualAnchor?> PickAsync(
             IWindowHelper windowHelper,
+            INativeHelper nativeHelper,
             IHostedVisualContext visualContext,
             ScreenSelectionMode? initialMode,
+            bool isApplicationWindowPicker,
             CancellationToken cancellationToken)
         {
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, cancellationToken);
@@ -25,7 +27,8 @@ public sealed partial class MacScreenSelectionService
             var updateWorker = new VisualPickerUpdateWorker(visualContext, remotePicker);
             try
             {
-                var window = new PickerSession(windowHelper, updateWorker, initialMode ?? _previousMode, cancellationToken);
+                var mode = isApplicationWindowPicker ? ScreenSelectionMode.Window : initialMode ?? _previousMode;
+                var window = new PickerSession(windowHelper, nativeHelper, updateWorker, mode, isApplicationWindowPicker, cancellationToken);
                 window.Show();
                 return await window._pickingPromise.Task;
             }
@@ -39,19 +42,27 @@ public sealed partial class MacScreenSelectionService
         private readonly TaskCompletionSource<RemoteVisualAnchor?> _pickingPromise = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly CancellationTokenRegistration _cancellationRegistration;
         private readonly VisualPickerUpdateWorker _updateWorker;
+        private readonly bool _isApplicationWindowPicker;
         private RemoteVisualAnchor? _result;
         private bool _isConfirming;
 
         private PickerSession(
             IWindowHelper windowHelper,
+            INativeHelper nativeHelper,
             VisualPickerUpdateWorker updateWorker,
             ScreenSelectionMode initialMode,
+            bool isApplicationWindowPicker,
             CancellationToken cancellationToken
         ) : base(
             windowHelper,
-            [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element],
+            nativeHelper,
+            isApplicationWindowPicker ?
+                [ScreenSelectionMode.Window] :
+                [ScreenSelectionMode.Screen, ScreenSelectionMode.Window, ScreenSelectionMode.Element],
             initialMode)
         {
+            _isApplicationWindowPicker = isApplicationWindowPicker;
+            ToolTipWindow.ToolTip.IsApplicationWindowPicker = isApplicationWindowPicker;
             _updateWorker = updateWorker;
             _updateWorker.ObservationReceived += HandleObservationReceived;
             _updateWorker.UpdateFailed += HandleUpdateFailed;
@@ -77,7 +88,12 @@ public sealed partial class MacScreenSelectionService
 
         protected override void OnClosed(EventArgs e)
         {
-            _previousMode = CurrentMode;
+            // Application selection must not replace the user's last ordinary picker mode.
+            if (!_isApplicationWindowPicker)
+            {
+                _previousMode = CurrentMode;
+            }
+
             _cancellationRegistration.Dispose();
             _updateWorker.ObservationReceived -= HandleObservationReceived;
             _updateWorker.UpdateFailed -= HandleUpdateFailed;

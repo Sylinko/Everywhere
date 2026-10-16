@@ -28,7 +28,8 @@ public sealed partial class SettingsPage : UserControl, IMainViewNavigationTopLe
             MakeItem(settings.Shortcut),
             MakeItem(settings.Proxy),
             MakeItem(settings.ChatWindow),
-            MakeItem(settings.SystemAssistant)
+            MakeItem(settings.SystemAssistant),
+            MakeItem(settings.TextSelection),
         ];
 
         InitializeComponent();

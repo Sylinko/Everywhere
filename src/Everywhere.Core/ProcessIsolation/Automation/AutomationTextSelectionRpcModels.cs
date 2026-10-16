@@ -15,11 +15,16 @@ public sealed partial class TextSelectionMonitoringConfiguration
     [Key(1)]
     public required string[] ExcludedApplications { get; init; }
 
+    /// <summary>Gets application identities for which synthetic copy fallback is disabled.</summary>
+    [Key(2)]
+    public required string[] CopyFallbackExcludedApplications { get; init; }
+
     /// <summary>Creates the default safe monitoring policy.</summary>
     public static TextSelectionMonitoringConfiguration CreateDefault() => new()
     {
         IsFullscreenApplicationExcluded = true,
         ExcludedApplications = [],
+        CopyFallbackExcludedApplications = [],
     };
 }
 

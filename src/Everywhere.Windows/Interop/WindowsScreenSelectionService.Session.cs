@@ -41,6 +41,7 @@ public sealed partial class WindowsScreenSelectionService
 
         protected ScreenSelectionSession(
             IWindowHelper windowHelper,
+            INativeHelper nativeHelper,
             IReadOnlyList<ScreenSelectionMode> allowedModes,
             ScreenSelectionMode initialMode)
         {
@@ -74,7 +75,7 @@ public sealed partial class WindowsScreenSelectionService
             // Cover the entire virtual screen
             SetPlacement(allScreenBounds, out _);
 
-            ToolTipWindow = new ScreenSelectionToolTipWindow(allowedModes, initialMode);
+            ToolTipWindow = new ScreenSelectionToolTipWindow(nativeHelper, allowedModes, initialMode);
             windowHelper.SetWindowProperties(
                 ToolTipWindow,
                 focusable: false,
@@ -179,7 +180,11 @@ public sealed partial class WindowsScreenSelectionService
 
             void SetMode(ScreenSelectionMode mode)
             {
-                if (!_allowedModes.Contains(mode)) return;
+                if (_allowedModes.Count <= 1 || !_allowedModes.Contains(mode) || CurrentMode == mode)
+                {
+                    return;
+                }
+
                 CurrentMode = mode;
                 HandleModeChanged();
             }
@@ -201,6 +206,11 @@ public sealed partial class WindowsScreenSelectionService
 
         private void OnMouseWheel(int delta)
         {
+            if (_allowedModes.Count <= 1 || delta == 0)
+            {
+                return;
+            }
+
             var newIndex = _allowedModes.IndexOf(CurrentMode) + (delta > 0 ? -1 : 1);
             if (newIndex < 0) newIndex = _allowedModes.Count - 1;
             else if (newIndex >= _allowedModes.Count) newIndex = 0;

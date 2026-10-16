@@ -3,7 +3,6 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Everywhere.Automation;
 using Everywhere.Interop;
 
 namespace Everywhere.Views;
@@ -117,14 +116,16 @@ public sealed class ScreenSelectionToolTipWindow : ScreenSelectionWindow
 {
     public ScreenSelectionToolTip ToolTip { get; }
 
-    public ScreenSelectionToolTipWindow(IEnumerable<ScreenSelectionMode> allowedModes, ScreenSelectionMode mode)
+    public ScreenSelectionToolTipWindow(INativeHelper nativeHelper, IEnumerable<ScreenSelectionMode> allowedModes, ScreenSelectionMode mode)
     {
-        Content = ToolTip = new ScreenSelectionToolTip(allowedModes)
+        Content = ToolTip = new ScreenSelectionToolTip(nativeHelper, allowedModes)
         {
             Mode = mode
         };
         SizeToContent = SizeToContent.WidthAndHeight;
-        WindowDecorations = WindowDecorations.BorderOnly;
+        Background = Brushes.Transparent;
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        WindowDecorations = WindowDecorations.None;
         ExtendClientAreaToDecorationsHint = true;
     }
 }

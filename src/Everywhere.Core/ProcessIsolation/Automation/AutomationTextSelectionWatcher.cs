@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Threading.Channels;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -86,7 +86,7 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
         SetEnabledCommand = new AsyncRelayCommand<bool>(SetEnabledFromCommandAsync);
         _configurationDebounce = new DebounceExecutor<AutomationTextSelectionWatcher, DispatcherTimerImpl>(
             () => this,
-            static watcher => watcher.UpdateConfiguration(watcher._settings.ChatWindow.CreateTextSelectionMonitoringConfiguration()),
+            static watcher => watcher.UpdateConfiguration(watcher._settings.TextSelection.CreateMonitoringConfiguration()),
             TimeSpan.FromMilliseconds(300));
         _runTask = RunAsync();
     }
@@ -121,7 +121,8 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
         if (!_isRestored)
         {
             _isRestored = true;
-            _settings.ChatWindow.PropertyChanged += HandleSettingsChanged;
+            _settings.TextSelection.PropertyChanged += HandleSettingsChanged;
+            _settings.TextSelection.Platform.PropertyChanged += HandleSettingsChanged;
         }
         OnPropertyChanged(nameof(IsEnabled));
         SignalStateChanged();
@@ -209,7 +210,8 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
         if (Interlocked.Exchange(ref _isDisposed, 1) != 0) return;
         if (_isRestored)
         {
-            _settings.ChatWindow.PropertyChanged -= HandleSettingsChanged;
+            _settings.TextSelection.PropertyChanged -= HandleSettingsChanged;
+            _settings.TextSelection.Platform.PropertyChanged -= HandleSettingsChanged;
             _isRestored = false;
         }
         _configurationDebounce.Dispose();
@@ -260,8 +262,9 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
     private void HandleSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is
-            nameof(ChatWindowSettings.IsTextSelectionFullscreenExcluded) or
-            nameof(ChatWindowSettings.TextSelectionExcludedApplications))
+            nameof(TextSelectionSettings.IsFullscreenExcluded) or
+            nameof(TextSelectionApplicationSettings.ExcludedApplications) or
+            nameof(TextSelectionApplicationSettings.CopyFallbackExcludedApplications))
         {
             _configurationDebounce.Trigger();
         }
@@ -271,10 +274,10 @@ public sealed class AutomationTextSelectionWatcher : ObservableObject, ITextSele
     {
         lock (_stateGate)
         {
-            if (_isCommittedEnabled == isEnabled && _settings.ChatWindow.AutomaticallyAddTextSelection == isEnabled) return;
+            if (_isCommittedEnabled == isEnabled && _settings.TextSelection.IsEnabled == isEnabled) return;
             _isCommittedEnabled = isEnabled;
         }
-        _settings.ChatWindow.AutomaticallyAddTextSelection = isEnabled;
+        _settings.TextSelection.IsEnabled = isEnabled;
         OnPropertyChanged(nameof(IsEnabled));
     }
 

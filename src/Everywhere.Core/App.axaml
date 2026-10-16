@@ -63,6 +63,7 @@
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/PreviewEndpointTextBox.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/HostsStatusControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/HostsServiceModeControl.axaml"/>
+        <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/TextSelectionMonitoringControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsGroupPanel.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemControl.axaml"/>
         <ResourceInclude Source="avares://Everywhere.Core/Views/Configuration/SettingsItemsControl.axaml"/>

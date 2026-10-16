@@ -4,7 +4,7 @@
 
 This specification defines automatic text-selection monitoring on Windows and macOS: process ownership, asynchronous settings interaction, filtering, source lifetime, and clipboard fallback. Its acceptance criteria define required behavior, not a claim that native E2E verification is complete.
 
-The integration is currently dormant in production. Main does not register or subscribe the monitoring Watcher, and the related settings are not emitted into the settings UI. The RPC contracts, Watcher, Automation Host session support, platform monitor factories, attachment handling, and focused tests remain in the tree so the feature can be completed on its dedicated settings page without rebuilding the process-isolation path. Consequently, current builds do not start a text-selection monitor or produce automatic selection attachments.
+Windows and macOS expose monitoring on a dedicated Text selection settings page. Main registers the Watcher, subscribes the chat input as its single owning result consumer, and restores saved monitoring intent after settings load. Monitoring remains disabled by default. The toolbar and the accessibility-only application editor are outside the current UI scope.
 
 A successful observation adds or replaces a draft text-selection attachment. The attachment represents captured text prepared for sending, rather than a live mirror of another application's selection. Clicking elsewhere, clearing the external selection, disabling monitoring, or failing to read text preserves the attachment. Users remove it explicitly; ordinary draft submission and clearing retain their existing behavior. There is no automatic empty-selection clearing outcome in this feature.
 
@@ -38,14 +38,17 @@ Each monitor has one serial worker and one latest pending trigger. Capture targe
 
 ### 3.1 User Configuration
 
-The retained settings model stores these options for the future selection settings page and sends a complete configuration snapshot through the monitoring RPC control surface when the Watcher is registered. The production settings generator currently ignores these properties. Configuration describes the policy of an existing monitor; enablement remains a resource-lifecycle operation and is not a configuration field.
+`Settings.TextSelection` stores shared behavior and separate `Windows` and `Mac` application-rule subtrees. Both subtrees survive serialization on either platform; conditional compilation selects the current platform's UI and native policy. The settings entry and native application APIs are unconditional. Unsupported platform branches produce explicit compilation errors, so Linux support must implement these contracts rather than silently omit the feature. Configuration describes the policy of an existing monitor; enablement remains a resource-lifecycle operation and is not a configuration field. Copy-fallback exclusions remain persisted and effective, but have no editor in this release.
 
 | Option | Behavior |
 | --- | --- |
 | Skip fullscreen applications | Enabled by default. Skip the entire detection, including accessibility and synthetic copy, when the interaction target is identified as fullscreen. Preserve existing attachments. |
 | Applications excluded from automatic selection | Skip detection entirely for matching applications. |
+| Applications excluded from copy fallback | Permit accessibility reads, but send no synthetic copy gesture if those reads yield no text. |
 
-The retained setting stores one application identity per line for a future editor. Commas are not separators because they are valid in application paths. Windows user rules support exact process-name or full executable-path matching using Windows comparison semantics. macOS uses application identity such as bundle identifier. No regex or scripting language is required. Platform compatibility rules remain implementation-owned and combine with user rules; clearing user rules does not remove a platform safeguard.
+Each platform stores an array of application identities. Migration moves only the selection enablement and fullscreen-exclusion settings; the previously hidden application exclusion lists are not migrated. Windows user rules support exact executable-file-name or full executable-path matching, ignoring case. macOS matches case-sensitive bundle identifiers. File selection and window picking resolve a native identity and add it directly; failed resolution never silently broadens a rule to a process name. Manual entry accepts a Windows executable name or a macOS bundle ID. Removing an application requires confirmation in the delete button's flyout. No regex or scripting language is required. Complete exclusion takes precedence over copy-only exclusion. Platform compatibility rules remain implementation-owned and are explained by a tooltip; clearing user rules does not remove a platform safeguard.
+
+The application-list window action uses `IScreenSelectionService.PickApplicationWindowAsync` on Windows and macOS. It reuses the Host picker and exact-candidate confirmation, but allows only window selection. Mode shortcuts and mouse-wheel changes have no effect, and closing it never updates the ordinary picker's remembered mode. Its tooltip shows the current candidate's friendly application name from `INativeHelper.GetApplicationInfo` and clears that name when the candidate is unavailable. It includes dedicated instructions for selecting an application or cancelling. `ConditionalContentControl` omits the ordinary tooltip's mode list, dimensions, and mode-switching instructions from this picker. The settings page resolves the confirmed window's application and adds its native identity directly.
 
 Recognized terminals default to accessibility-only detection. Process identity cannot identify every embedded terminal, so users can exclude affected host applications. A missing executable in a hard-coded list is not proof that Ctrl+C is safe. Where copy fallback is permitted, retain useful cursor heuristics, delayed-copy handling, and Ctrl+Insert-before-Ctrl+C behavior. Unsuccessful or forbidden copy strategies do not authorize reading unchanged clipboard content.
 
@@ -67,7 +70,7 @@ Do not use Dock window names such as `Fullscreen Backdrop` or private Spaces API
 
 ## 4. Dormant Main Integration and Retained Control Contract
 
-There is currently no production control or startup restoration path. `AutomationTextSelectionWatcher` and `ITextSelectionWatcher` retain the following control contract, but neither is registered in Main's service collection. Re-enabling the feature requires a dedicated settings surface, production registration, one owning result subscription, and startup restoration; merely exposing the saved Boolean setting is insufficient.
+`ChatWindowInitializer` subscribes the chat consumer before restoring the saved state. `TextSelectionMonitoringControl` exposes the shared acknowledged command, and restoration rejections are reported through a toast. Platform exclusion edits and fullscreen-policy changes are observed independently of the enablement command.
 
 Use the existing authenticated Automation connection and generated contracts. The process-wide Watcher exposes one non-concurrent `IAsyncRelayCommand<bool>` and the confirmed `IsEnabled` state. Settings persist that confirmed state; controls only observe it. Every settings view sees the same `IsRunning` value and operation result, including views created while a transition is already running.
 
