@@ -60,6 +60,13 @@
             HorizontalAlignment="Right" Background="Transparent"
             Orientation="Vertical" Spacing="4">
             <StackPanel.Styles>
+              <Style Selector="shadui|SmoothBorder.Editing">
+                <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
+                <Setter Property="Opacity" Value="0.7"/>
+              </Style>
+            </StackPanel.Styles>
+
+            <StackPanel.Styles>
               <Style Selector="Border.Editing">
                 <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
                 <Setter Property="Opacity" Value="0.7"/>
@@ -74,25 +81,39 @@
                   <Binding Path="$parent[v:ChatMessageItemsControl].EditingMessageNode"/>
                 </MultiBinding>
               </Classes.Editing>
-              <md:MarkdownTextBlock>
-                <Interaction.Behaviors>
-                  <in:ChatTextSearchSurfaceBehavior
-                    Coordinator="{Binding $parent[v:ChatMessageItemsControl].TextSearch}"
-                    Host="{Binding $parent[v:ChatMessageItemsControl]}"
-                    Row="{Binding $parent[v:ChatPresentationRowPresenter].Content}"/>
-                </Interaction.Behaviors>
-                <InlineUIContainer BaselineAlignment="Center">
-                  <shadui:Badge
-                    VerticalAlignment="Center"
-                    Background="{DynamicResource PrimaryColor}">
-                    <TextBlock
-                      Text="{Binding Strategy.NameKey^}"
-                      TextWrapping="Wrap"/>
-                  </shadui:Badge>
-                </InlineUIContainer>
 
-                <Run Text="{Binding Content}"/>
-              </md:MarkdownTextBlock>
+              <v:ConditionalContentControl Condition="{Binding Content, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <v:ConditionalContentControl.TrueContent>
+                  <DataTemplate x:DataType="chat:UserStrategyChatMessage">
+                    <md:MarkdownTextBlock>
+                      <Interaction.Behaviors>
+                        <in:ChatTextSearchSurfaceBehavior
+                          Coordinator="{Binding $parent[v:ChatMessageItemsControl].TextSearch}"
+                          Host="{Binding $parent[v:ChatMessageItemsControl]}"
+                          Row="{Binding $parent[v:ChatPresentationRowPresenter].Content}"/>
+                      </Interaction.Behaviors>
+
+                      <InlineUIContainer BaselineAlignment="Center">
+                        <TextBlock
+                          Foreground="{DynamicResource PrimaryColor}"
+                          Text="{Binding Strategy.NameKey^}"
+                          TextTrimming="CharacterEllipsis"/>
+                      </InlineUIContainer>
+
+                      <Run Text="{Binding Content}"/>
+                    </md:MarkdownTextBlock>
+                  </DataTemplate>
+                </v:ConditionalContentControl.TrueContent>
+
+                <v:ConditionalContentControl.FalseContent>
+                  <DataTemplate x:DataType="chat:UserStrategyChatMessage">
+                    <TextBlock
+                      Foreground="{DynamicResource PrimaryColor}"
+                      Text="{Binding Strategy.NameKey^}"
+                      TextTrimming="CharacterEllipsis"/>
+                  </DataTemplate>
+                </v:ConditionalContentControl.FalseContent>
+              </v:ConditionalContentControl>
             </shadui:SmoothBorder>
 
             <v:ChatAttachmentItemsControl

@@ -1,0 +1,158 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:ts="clr-namespace:Everywhere.TextSelection"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:TextSelectionToolbarActionsControl}"
+    TargetType="v:TextSelectionToolbarActionsControl">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:TextSelectionToolbarActionsControl">
+        <StackPanel Spacing="12">
+          <DockPanel>
+            <Button
+              Classes="Secondary" DockPanel.Dock="Right"
+              VerticalAlignment="Center"
+              shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+              Command="{Binding AddActionCommand, RelativeSource={RelativeSource TemplatedParent}}"
+              Content="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Add}}"/>
+
+            <StackPanel Spacing="6">
+              <TextBlock Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ToolbarActions_Header}}"/>
+              <TextBlock
+                Classes="Muted Caption"
+                Text="{I18N {x:Static LocaleKey.TextSelectionSettings_ToolbarActions_Description}}"
+                TextWrapping="Wrap"/>
+            </StackPanel>
+          </DockPanel>
+          <ScrollViewer
+            MaxHeight="460" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl
+              Classes="Draggable"
+              ItemsSource="{Binding ActionsManager.Items, RelativeSource={RelativeSource TemplatedParent}}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="ts:TextSelectionToolbarAction">
+                  <shadui:SmoothBorder
+                    Classes="ActionRow" Padding="10,8"
+                    Background="Transparent"
+                    CornerRadius="{DynamicResource XlCornerRadius}">
+                    <DockPanel HorizontalSpacing="8">
+                      <ToggleSwitch
+                        DockPanel.Dock="Right" VerticalAlignment="Center"
+                        IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_IsEnabled}}"/>
+
+                      <StackPanel
+                        DockPanel.Dock="Right" VerticalAlignment="Center"
+                        Orientation="Horizontal" Spacing="2">
+                        <Button
+                          Classes="Ghost Compact"
+                          shadui:ButtonAssist.Icon="{LucideIconContent PencilLine}"
+                          Command="{Binding $parent[v:TextSelectionToolbarActionsControl].EditActionCommand}"
+                          CommandParameter="{Binding}"
+                          ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Edit}}"/>
+                        <ContentControl Content="{Binding}">
+                          <ContentControl.DataTemplates>
+                            <DataTemplate DataType="{x:Type ts:BuiltInTextSelectionToolbarAction}">
+                              <Button
+                                Classes="Ghost Compact"
+                                shadui:ButtonAssist.Icon="{LucideIconContent RotateCcw}"
+                                Command="{Binding ResetCommand}"
+                                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Reset}}"/>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type ts:CustomTextSelectionToolbarAction}">
+                              <Button
+                                x:Name="DeleteActionButton" Classes="Ghost Compact"
+                                shadui:ButtonAssist.Icon="{LucideIconContent Trash2}"
+                                AutomationProperties.Name="{I18N {x:Static LocaleKey.Common_Delete}}"
+                                ToolTip.Tip="{I18N {x:Static LocaleKey.Common_Delete}}">
+                                <Button.Flyout>
+                                  <Flyout>
+                                    <StackPanel
+                                      Margin="12" Spacing="6">
+                                      <TextBlock
+                                        Text="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_DeleteConfirmation}}"
+                                        TextWrapping="Wrap"/>
+                                      <TextBlock
+                                        Classes="Muted Caption"
+                                        Text="{Binding NameKey^}"
+                                        TextWrapping="Wrap"/>
+                                      <StackPanel
+                                        Margin="0,2,0,0" HorizontalAlignment="Right"
+                                        Orientation="Horizontal" Spacing="4">
+                                        <Button
+                                          Classes="Secondary Compact" MinWidth="48"
+                                          Content="{I18N {x:Static LocaleKey.Common_Cancel}}">
+                                          <Interaction.Behaviors>
+                                            <ButtonClickEventTriggerBehavior>
+                                              <HideFlyoutAction Flyout="{Binding #DeleteActionButton.Flyout}"/>
+                                            </ButtonClickEventTriggerBehavior>
+                                          </Interaction.Behaviors>
+                                        </Button>
+                                        <Button
+                                          Classes="Destructive Compact" MinWidth="48"
+                                          Content="{I18N {x:Static LocaleKey.Common_Delete}}">
+                                          <Interaction.Behaviors>
+                                            <ButtonClickEventTriggerBehavior>
+                                              <InvokeCommandAction
+                                                Command="{Binding $parent[v:TextSelectionToolbarActionsControl].DeleteActionCommand}"
+                                                CommandParameter="{Binding}"/>
+                                              <HideFlyoutAction Flyout="{Binding #DeleteActionButton.Flyout}"/>
+                                            </ButtonClickEventTriggerBehavior>
+                                          </Interaction.Behaviors>
+                                        </Button>
+                                      </StackPanel>
+                                    </StackPanel>
+                                  </Flyout>
+                                </Button.Flyout>
+                              </Button>
+                            </DataTemplate>
+                          </ContentControl.DataTemplates>
+                        </ContentControl>
+                      </StackPanel>
+
+                      <Border
+                        x:Name="DragHandle" DockPanel.Dock="Left"
+                        Padding="0,8" VerticalAlignment="Center"
+                        Background="Transparent" Cursor="SizeNorthSouth"
+                        ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_DragToReorder}}">
+                        <LucideIcon
+                          IsHitTestVisible="False" Kind="GripVertical"
+                          Size="18"/>
+                      </Border>
+
+                      <v:IconPresenter
+                        DockPanel.Dock="Left" VerticalAlignment="Center"
+                        FontSize="{DynamicResource FontSizeL}"
+                        Icon="{Binding DisplayIcon}"
+                        IconSize="{DynamicResource FontSizeL}"
+                        Size="{DynamicResource LineHeightXl}"/>
+
+                      <StackPanel
+                        VerticalAlignment="Center" Spacing="2">
+                        <TextBlock
+                          Text="{Binding NameKey^}"
+                          TextTrimming="CharacterEllipsis"/>
+                        <TextBlock
+                          Classes="Muted Caption"
+                          FontSize="{DynamicResource FontSizeS}"
+                          IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                          Text="{Binding DescriptionKey^, FallbackValue={x:Null}}"
+                          TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </shadui:SmoothBorder>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+
+              <ItemsControl.Styles>
+                <Style Selector="shadui|SmoothBorder.ActionRow:pointerover">
+                  <Setter Property="Background" Value="{DynamicResource GhostColor}"/>
+                </Style>
+              </ItemsControl.Styles>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

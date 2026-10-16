@@ -1630,6 +1630,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>Puppeteer tarayıcısını başlatma başarısız oldu.</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>Uygulama seçmek için sol tıklayın; iptal etmek için sağ tıklayın veya Esc tuşuna basın</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>Seçmek için sol tıklayın, iptal etmek için sağ tıklayın veya Esc tuşuna basın
 Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlarını kullanın</value>
@@ -2160,6 +2163,9 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>Metin Seçimini Otomatik Ekle</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>Otomatik metin seçimi</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>Etkinleştirildiğinde, seçili metin otomatik olarak ek olarak eklenir.</value>
     </data>
@@ -2171,6 +2177,24 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>Otomatik kelime ekleme başlatılamadı, lütfen tekrar deneyin.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>Tam ekran uygulamaları yoksay</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>Etkin uygulama ekranın tamamını kaplarken metin seçimlerini algılama.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>Yoksayılan uygulamalar</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>Her satıra bir işlem adı, yürütülebilir dosya yolu veya macOS paket kimliği girin. Bu uygulamalardaki metin seçimleri yoksayılır.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>Kopyalama taklidi yapılmayan uygulamalar</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>Her satıra bir uygulama kimliği girin. Erişilebilirlik üzerinden okuma kullanılabilir olmaya devam eder, ancak Everywhere bu uygulamalarda kopyalama işlemini taklit etmez.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>Pencereleri Listele</value>
@@ -4369,5 +4393,158 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Yüklü hizmet, tanımlanamayan başka bir Everywhere kopyasına ait. Devam ederseniz üzerine yazılacaktır.</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
+        <value>Metin seçimi</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>Seçim araç çubuğu, otomatik sohbet ekleri ve uygulama kuralları</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>Sohbete otomatik ekle</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>Seçilen metni ve bağlamını sohbet penceresine otomatik olarak ek şeklinde ekle.</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
+        <value>Tam ekran uygulamalarda devre dışı bırak</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
+        <value>Tam ekran bir uygulama etkinken metin seçimlerini yakalama.</value>
+    </data>
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+        <value>Uygulama ekle</value>
+    </data>
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+        <value>Uygulama seç…</value>
+    </data>
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
+        <value>Ekrandan bir pencere seç…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
+        <value>Metin seçiminin devre dışı olduğu uygulamalar</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
+        <value>Bu uygulamalarda seçilen metin otomatik olarak yakalanmaz.</value>
+    </data>
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere, bazı uygulamalarda kopyalama işleminin taklit edilmesini önleyen uyumluluk kuralları içerir. Bu kurallar, erişilebilirlik üzerinden doğrudan okumayı devre dışı bırakmaz.</value>
+    </data>
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
+        <value>Henüz hariç tutulan uygulama yok.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>Bu uygulama hariç tutma listesinden kaldırılsın mı?</value>
+    </data>
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+        <value>Uygulama</value>
+    </data>
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
+        <value>Uygulama tanımlanamadı. Uygulamanın yürütülebilir dosyasını seçin veya kimliğini elle ekleyin.</value>
+    </data>
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
+        <value>Tam eşleşme için geçerli bir uygulama kimliği girin. Burada dosya yolları ve joker karakterler desteklenmez.</value>
+    </data>
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
+        <value>Bu uygulama kuralı zaten listede.</value>
+    </data>
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+        <value>İşlem adına göre ekle…</value>
+    </data>
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
+        <value>.exe uzantısını ekleyin. Kurulum konumundan bağımsız olarak aynı ada sahip tüm işlemlerle eşleşir; büyük/küçük harf ayrımı yapmaz. Joker karakterler desteklenmez.</value>
+    </data>
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+        <value>Paket kimliğine göre ekle…</value>
+    </data>
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+        <value>Yüklü tüm kopyalar dahil olmak üzere uygulamanın paket kimliğiyle tam olarak eşleşir. Büyük/küçük harfe duyarlıdır; joker karakterler desteklenmez.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
+        <value>Uygulamayı kaldır</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
+        <value>Seçim araç çubuğunu etkinleştir</value>
+    </data>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>Maksimum araç sayısı</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>Araç çubuğu opaklığı</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>Opaklığı imleç mesafesine göre ayarla</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>İmleç uzaklaştığında araç çubuğunu soldurur, yaklaştığında opaklığını geri yükler.</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
+        <value>Araçları yönet</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>Gösterilecek araçları seçin, sıralamak için sürükleyin veya özel araçlar ekleyin.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>Özel araç ekle</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>Aracı düzenle</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>Ad</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>İstem</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>Seçilen metin otomatik olarak eklenir. Ne yapılacağını açıklayın; örneğin, “Seçilen metni Çinceye çevir.” Araca tıklandığında sohbet açılır ve bu istem gönderilir.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>Simge seç</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>Sıralamak için sürükleyin</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>Seçimle eşleştiğinde bu aracı göster</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>Varsayılan adı, simgeyi, istemi ve ad görünürlüğünü geri yükle</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>Adsız araç</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>Bu özel araç silinsin mi?</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>Seçim araç çubuğu</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>Sohbet penceresi</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>Gelişmiş</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>Seçim araç çubuğunun gizlendiği uygulamalar</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>Bu uygulamalarda araç çubuğunu gizle. Seçilen metin yine de sohbete otomatik olarak eklenebilir.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>Araç çubuğunda adı göster</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>Bu uygulamada gösterme</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>Diğer</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>Araç çubuğunu kapat</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>Araç Çubuğu Önizlemesi</value>
     </data>
 </root>

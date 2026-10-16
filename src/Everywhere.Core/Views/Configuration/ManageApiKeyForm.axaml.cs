@@ -4,12 +4,9 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Collections;
 using Everywhere.Configuration;
 using ShadUI;
-using ZLinq;
 
 namespace Everywhere.Views;
 

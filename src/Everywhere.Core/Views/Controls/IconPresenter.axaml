@@ -10,8 +10,8 @@
     x:Key="{x:Type v:IconPresenter}"
     TargetType="v:IconPresenter">
     <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
-    <Setter Property="Background" Value="{DynamicResource PrimaryColor}"/>
-    <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}"/>
+    <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
+    <Setter Property="Foreground" Value="{DynamicResource PrimaryColor}"/>
     <Setter Property="Template">
       <ControlTemplate>
         <Border CornerRadius="{TemplateBinding CornerRadius}">
@@ -29,6 +29,7 @@
           </Border.Background>
 
           <v:LazyIndexedContentControl
+            ClipToBounds="False"
             ContentDataBinding="{TemplateBinding Icon}"
             ItemIndex="{Binding Icon?.Type, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue=-1}">
             <ControlTemplate x:DataType="common:ColoredIcon">

@@ -270,6 +270,7 @@ public sealed class AutomationHostSessionTests
             Assert.That(notification.AnchorId, Is.LessThan(0));
             Assert.That(notification.MonitorId, Is.EqualTo(monitorId));
             Assert.That(notification.Text, Is.EqualTo("selected text"));
+            Assert.That(notification.ApplicationIdentity, Is.EqualTo("selection-source.exe"));
             Assert.That(snapshot.Name, Is.EqualTo("Root"));
             Assert.That(anchor.IsClosed, Is.True);
             Assert.That(movedAnchor.Context, Is.SameAs(destinationContext));
@@ -358,6 +359,8 @@ public sealed class AutomationHostSessionTests
         {
             Assert.That(data.Text, Is.EqualTo("selected text"));
             Assert.That(data.IsTextIncomplete, Is.False);
+            Assert.That(data.PointerPosition, Is.EqualTo(new Avalonia.PixelPoint(240, 180)));
+            Assert.That(data.ApplicationIdentity, Is.EqualTo("selection-source.exe"));
             Assert.That(anchor, Is.Not.Null);
             Assert.That(anchor!.Snapshot.Name, Is.EqualTo("Root"));
         });
@@ -1216,7 +1219,11 @@ public sealed class AutomationHostSessionTests
                                  throw new InvalidOperationException("The test Backend did not return its focused element.");
                     return new TextSelectionSource(retention, result);
                 });
-            await publish(new TextSelectionObservation(context, text, source), CancellationToken.None);
+            await publish(new TextSelectionObservation(context, text, source)
+            {
+                PointerPosition = new Avalonia.PixelPoint(240, 180),
+                ApplicationIdentity = "selection-source.exe"
+            }, CancellationToken.None);
         }
     }
 

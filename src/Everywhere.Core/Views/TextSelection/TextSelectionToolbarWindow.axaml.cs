@@ -1,28 +1,15 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Everywhere.Common;
+﻿using Avalonia.Controls;
+using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.StrategyEngine;
+using Everywhere.TextSelection;
+using TextSelectionToolbarAction = Everywhere.TextSelection.TextSelectionToolbarAction;
 
 namespace Everywhere.Views;
 
 /// <summary>
 /// A small floating toolbar shown next to text the user has just selected in another application.
 /// </summary>
-/// <remarks>
-/// <para>
-/// The window is created once and hidden between selections rather than being recreated, so control
-/// identity stays stable and there is no per-selection visual tree construction cost.
-/// </para>
-/// <para>
-/// It is non-activating: <see cref="IWindowHelper.SetFocusable"/> is applied with <c>false</c> so that
-/// showing it, and clicking its buttons, never deactivates the application the user is working in. A
-/// consequence is that this window never receives focus and therefore never raises
-/// <see cref="Window.Deactivated"/>, which is why dismissal is driven externally by
-/// <see cref="IOverlayDismissWatcher"/> rather than by a blur event.
-/// </para>
-/// </remarks>
 public partial class TextSelectionToolbarWindow : Window
 {
     /// <summary>
@@ -41,26 +28,31 @@ public partial class TextSelectionToolbarWindow : Window
     /// </summary>
     private static readonly PixelPoint OffScreenPosition = new(-32000, -32000);
 
-    public static readonly StyledProperty<bool> ShowActionLabelsProperty =
-        AvaloniaProperty.Register<TextSelectionToolbarWindow, bool>(nameof(ShowActionLabels), true);
+    /// <summary>Gets the shared presentation control.</summary>
+    public TextSelectionToolbar Toolbar => ToolbarRoot;
 
-    public bool ShowActionLabels
-    {
-        get => GetValue(ShowActionLabelsProperty);
-        set => SetValue(ShowActionLabelsProperty, value);
-    }
+    /// <summary>Raised as toolbar content or monitor scaling changes the native hit-test region.</summary>
+    public event Action<PixelRect>? BoundsChanged;
 
     /// <summary>
     /// Raised when the user picks an action. The toolbar does not act on the selection itself.
     /// </summary>
     public event Action<Strategy>? ActionInvoked;
 
-    public TextSelectionToolbarWindow()
+    private readonly IWindowHelper _windowHelper;
+
+    private PixelPoint _anchor;
+    private IReadOnlyList<TextSelectionToolbarItem> _items = [];
+
+    public TextSelectionToolbarWindow(IWindowHelper windowHelper)
     {
+        _windowHelper = windowHelper;
         InitializeComponent();
 
-        var windowHelper = ServiceLocator.Resolve<IWindowHelper>();
-        windowHelper.SetFocusable(this, false);
+        windowHelper.SetWindowProperties(this, focusable: false, layer: WindowLayer.Overlay);
+        ToolbarRoot.ActionInvoked += HandleActionInvoked;
+        SizeChanged += (_, _) => UpdateBounds();
+        ScalingChanged += (_, _) => UpdateBounds();
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)
@@ -75,14 +67,17 @@ public partial class TextSelectionToolbarWindow : Window
     }
 
     /// <summary>
-    /// Shows the toolbar with <paramref name="strategies"/>, positioned near <paramref name="anchor"/>.
+    /// Shows the toolbar with <paramref name="items"/>, positioned near <paramref name="anchor"/>.
     /// </summary>
-    /// <param name="strategies">Actions to offer. Must not be empty.</param>
+    /// <param name="items">Tools to offer. Must not be empty.</param>
     /// <param name="anchor">Anchor point in physical screen pixels, normally the mouse pointer.</param>
     /// <returns>The bounds the toolbar occupies, in physical screen pixels.</returns>
-    public PixelRect ShowFor(IReadOnlyList<Strategy> strategies, PixelPoint anchor)
+    public PixelRect ShowFor(IReadOnlyList<TextSelectionToolbarItem> items, PixelPoint anchor)
     {
-        ActionsItemsControl.ItemsSource = strategies;
+        _anchor = anchor;
+        _items = items;
+        ToolbarRoot.Actions = items.AsValueEnumerable().Select(item => item.Action).ToArray();
+        ToolbarRoot.CloseMenu();
 
         if (!IsVisible)
         {
@@ -100,31 +95,35 @@ public partial class TextSelectionToolbarWindow : Window
         // window, which is not guaranteed to have completed during the first layout pass after Show,
         // and DesktopScaling only reflects the target monitor once the window sits on it. Both make the
         // pre-move measurement unreliable, and the result is used as a hit-test rectangle by
-        // IOverlayDismissWatcher: too small a rectangle would classify a click on our own button as
+        // IOverlayInputWatcher: too small a rectangle would classify a click on our own button as
         // "outside" and dismiss the toolbar before the button ever sees it.
         var bounds = Reposition(anchor, MeasuredPixelSize());
-
-        ReassertTopmost();
+        _windowHelper.RaiseWindow(this);
 
         return bounds;
     }
 
-    /// <summary>
-    /// Forces the always-on-top state back onto the native window.
-    /// </summary>
-    /// <remarks>
-    /// The native topmost bit is lost the first time something else takes the foreground: the styles
-    /// callback installed by <see cref="IWindowHelper.SetFocusable"/> rewrites the extended style whenever
-    /// Avalonia recomputes it, and topmost is maintained separately rather than through that style, so the
-    /// rewrite drops it. <see cref="Window.Topmost"/> still reports true afterwards, which makes the
-    /// divergence invisible from managed code: the window is shown, reports itself visible, and renders
-    /// behind whatever the user is looking at. Assigning the same value is a no-op, so the property has to
-    /// be toggled to make Avalonia reissue the platform call.
-    /// </remarks>
-    private void ReassertTopmost()
+    private void HandleActionInvoked(TextSelectionToolbarAction action)
     {
-        Topmost = false;
-        Topmost = true;
+        // Execute the snapshot matched for this selection, not a strategy reconstructed from preview metadata.
+        var item = _items.FirstOrDefault(item => ReferenceEquals(item.Action, action));
+        if (item is not null)
+        {
+            ActionInvoked?.Invoke(item.Strategy);
+        }
+    }
+
+    private void UpdateBounds()
+    {
+        if (IsVisible) BoundsChanged?.Invoke(Reposition(_anchor, PixelSize.FromSize(Bounds.Size, DesktopScaling)));
+    }
+
+    /// <inheritdoc />
+    protected override void OnClosed(EventArgs e)
+    {
+        _items = [];
+        ToolbarRoot.Actions = null;
+        base.OnClosed(e);
     }
 
     /// <summary>
@@ -138,7 +137,7 @@ public partial class TextSelectionToolbarWindow : Window
 
         // Guard against a degenerate measurement: better to fall back to the natural size of the
         // content than to hand out an empty rectangle.
-        if (size.Width > 0 && size.Height > 0) return size;
+        if (size is { Width: > 0, Height: > 0 }) return size;
 
         ToolbarRoot.Measure(Size.Infinity);
         var desired = ToolbarRoot.DesiredSize;
@@ -172,13 +171,5 @@ public partial class TextSelectionToolbarWindow : Window
 
         Position = new PixelPoint(x, y);
         return new PixelRect(Position, size);
-    }
-
-    private void OnActionClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { DataContext: Strategy strategy })
-        {
-            ActionInvoked?.Invoke(strategy);
-        }
     }
 }

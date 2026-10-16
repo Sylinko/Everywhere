@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Everywhere.AI;
@@ -78,7 +78,7 @@ public static class Program
             .AddSingleton<IVisualElementContext, VisualElementContext>()
             .AddSingleton<IShortcutListener, ShortcutListener>()
             .AddSingleton<INativeHelper, NativeHelper>()
-            .AddSingleton<IOverlayDismissWatcher, UnsupportedOverlayDismissWatcher>()
+            .AddSingleton<IOverlayInputWatcher, UnsupportedOverlayInputWatcher>()
             .AddSingleton<IPlatformUpdateHandler, LinuxUpdateHandler>()
             .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
             .AddSettings()
@@ -114,7 +114,6 @@ public static class Program
             #region Initialize
 
             .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-            .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
             .AddTransient<IAsyncInitializer, UpdaterInitializer>()
 
         #endregion

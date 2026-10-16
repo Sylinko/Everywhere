@@ -1,3 +1,4 @@
+using PixelPoint = Avalonia.PixelPoint;
 using System.Threading.Channels;
 using Everywhere.Automation;
 using Everywhere.ProcessIsolation.Automation;
@@ -192,7 +193,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
 
             _detectionCancellation.Cancel();
             _pendingDetections.Writer.TryWrite(
-                new DetectionTrigger(pid, processName, _clipboardSequence, _detectionCancellation.Token));
+                new DetectionTrigger(pid, processName, new PixelPoint((int)_lastMouseUpPos.X, (int)_lastMouseUpPos.Y), _clipboardSequence, _detectionCancellation.Token));
         }
 
         private async Task ProcessDetectionsAsync()
@@ -245,7 +246,11 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
                 if (selectedText.Text is { Length: > 0 } text)
                 {
                     phase = "notification publish";
-                    TextSelectionObservation? observation = new(_context, text, source, selectedText.IsIncomplete);
+                    TextSelectionObservation? observation = new(_context, text, source, selectedText.IsIncomplete)
+                    {
+                        PointerPosition = trigger.PointerPosition,
+                        ApplicationIdentity = trigger.ApplicationId
+                    };
                     source = null;
                     try
                     {
@@ -416,9 +421,11 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
         {
             using var keyDownEvent = new CGEvent(null, (ushort)CGKeyCode.C, true);
             keyDownEvent.Flags |= CGEventFlags.Command;
+            keyDownEvent.SetValueField(CGEventField.EventSourceUserData, CGInterop.SelectionCopyEventTag);
 
             using var keyUpEvent = new CGEvent(null, (ushort)CGKeyCode.C, false);
             keyUpEvent.Flags |= CGEventFlags.Command;
+            keyUpEvent.SetValueField(CGEventField.EventSourceUserData, CGInterop.SelectionCopyEventTag);
 
             if (pid != 0)
             {
@@ -573,6 +580,7 @@ public sealed class MacTextSelectionMonitorFactory : ITextSelectionMonitorFactor
         private readonly record struct DetectionTrigger(
             int ProcessId,
             string ApplicationId,
+            PixelPoint PointerPosition,
             long ClipboardSequence,
             CancellationToken CancellationToken
         );

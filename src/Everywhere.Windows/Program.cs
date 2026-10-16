@@ -14,6 +14,7 @@ using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
+using Everywhere.TextSelection;
 using Everywhere.Windows.Automation;
 using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
@@ -116,7 +117,7 @@ public static class Program
                 .AddSingleton<IScreenSelectionService>(sp => sp.GetRequiredService<WindowsScreenSelectionService>())
                 .AddSingleton<INativeHelper, NativeHelper>()
                 .AddSingleton<IWindowHelper, WindowHelper>()
-                .AddSingleton<IOverlayDismissWatcher, OverlayDismissWatcher>()
+                .AddSingleton<IOverlayInputWatcher, OverlayInputWatcher>()
                 .AddSingleton<IPlatformUpdateHandler, WindowsUpdateHandler>()
                 .AddSingleton<ISoftwareUpdater, SoftwareUpdater>()
                 .AddSettings()
@@ -126,6 +127,8 @@ public static class Program
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()
+                .AddStrategyEngine()
+                .AddTextSelection()
 
                 #endregion
 
@@ -135,16 +138,9 @@ public static class Program
 
                 #endregion
 
-                #region Strategy Engine
-
-                .AddStrategyEngine()
-
-                #endregion
-
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, TextSelectionToolbarInitializer>()
                 .AddTransient<IAsyncInitializer, UpdaterInitializer>()
                 .AddTransient<IAsyncInitializer, ElevatedMainNotificationInitializer>()
 

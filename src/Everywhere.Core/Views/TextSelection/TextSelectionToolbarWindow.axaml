@@ -1,0 +1,10 @@
+﻿<Window
+  x:Class="Everywhere.Views.TextSelectionToolbarWindow" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:v="clr-namespace:Everywhere.Views"
+  Title="Everywhere" Background="Transparent"
+  CanResize="False" Focusable="False"
+  ShowActivated="False" ShowInTaskbar="False"
+  SizeToContent="WidthAndHeight" Topmost="True"
+  TransparencyLevelHint="Transparent" WindowDecorations="None">
+  <v:TextSelectionToolbar x:Name="ToolbarRoot"/>
+</Window>
