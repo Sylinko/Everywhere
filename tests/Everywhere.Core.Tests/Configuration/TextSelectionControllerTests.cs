@@ -18,9 +18,12 @@ public sealed class TextSelectionControllerTests
         var settings = new Settings(provider);
         var watcher = Substitute.For<ITextSelectionWatcher>();
         var effectiveStates = new List<bool>();
+        var isMonitoringEnabled = false;
+        watcher.IsEnabled.Returns(_ => isMonitoringEnabled);
         watcher.SetEnabledCommand.Returns(new AsyncRelayCommand<bool>(isEnabled =>
         {
             effectiveStates.Add(isEnabled);
+            isMonitoringEnabled = isEnabled;
             return Task.CompletedTask;
         }));
         using var controller = new TextSelectionController(settings, watcher);
@@ -35,12 +38,12 @@ public sealed class TextSelectionControllerTests
             Assert.That(controller.IsMonitoringRequested, Is.True);
             Assert.That(controller.IsAutomaticAttachmentEnabled, Is.EqualTo(secondFeature == TextSelectionFeature.AutomaticAttachment));
             Assert.That(controller.IsToolbarEnabled, Is.EqualTo(secondFeature == TextSelectionFeature.Toolbar));
-            Assert.That(effectiveStates, Is.EqualTo(new[] { true, true, true }));
+            Assert.That(effectiveStates, Is.EqualTo(new[] { true }));
         });
 
         await controller.SetEnabledCommand.ExecuteAsync(new(secondFeature, false));
         Assert.That(controller.IsMonitoringRequested, Is.False);
-        Assert.That(effectiveStates[^1], Is.False);
+        Assert.That(effectiveStates, Is.EqualTo(new[] { true, false }));
     }
 
     [Test]
