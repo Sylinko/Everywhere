@@ -339,7 +339,9 @@ public sealed class WindowHelper : IWindowHelper
     {
         // macOS has no equivalent of the Windows foreground lock: activating the application and ordering
         // the window front is enough.
+#pragma warning disable CA1422
         NSApplication.SharedApplication.ActivateIgnoringOtherApps(true);
+#pragma warning restore CA1422
         window.Activate();
         return true;
     }

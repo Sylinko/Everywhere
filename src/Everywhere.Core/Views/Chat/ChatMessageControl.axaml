@@ -64,9 +64,7 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
                 <Setter Property="Opacity" Value="0.7"/>
               </Style>
-            </StackPanel.Styles>
 
-            <StackPanel.Styles>
               <Style Selector="Border.Editing">
                 <Setter Property="BorderBrush" Value="{DynamicResource WarningColor60}"/>
                 <Setter Property="Opacity" Value="0.7"/>
@@ -93,13 +91,9 @@
                           Row="{Binding $parent[v:ChatPresentationRowPresenter].Content}"/>
                       </Interaction.Behaviors>
 
-                      <InlineUIContainer BaselineAlignment="Center">
-                        <TextBlock
-                          Foreground="{DynamicResource PrimaryColor}"
-                          Text="{Binding Strategy.NameKey^}"
-                          TextTrimming="CharacterEllipsis"/>
-                      </InlineUIContainer>
-
+                      <Run
+                        Foreground="{DynamicResource PrimaryColor}"
+                        Text="{Binding Strategy.NameKey^}"/>
                       <Run Text="{Binding Content}"/>
                     </md:MarkdownTextBlock>
                   </DataTemplate>
@@ -107,10 +101,9 @@
 
                 <v:ConditionalContentControl.FalseContent>
                   <DataTemplate x:DataType="chat:UserStrategyChatMessage">
-                    <TextBlock
+                    <Run
                       Foreground="{DynamicResource PrimaryColor}"
-                      Text="{Binding Strategy.NameKey^}"
-                      TextTrimming="CharacterEllipsis"/>
+                      Text="{Binding Strategy.NameKey^}"/>
                   </DataTemplate>
                 </v:ConditionalContentControl.FalseContent>
               </v:ConditionalContentControl>
