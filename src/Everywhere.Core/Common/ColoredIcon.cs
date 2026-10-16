@@ -12,6 +12,7 @@ public enum ColoredIconType
 /// <summary>
 /// Represents an icon.
 /// </summary>
+/// TODO: make this a messagepack object with polymorphism support for Lucide and Text types.
 public partial class ColoredIcon(ColoredIconType type, SerializableColor? foreground = null, SerializableColor? background = null) : ObservableObject
 {
     [ObservableProperty]

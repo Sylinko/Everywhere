@@ -74,6 +74,7 @@
     <Project Path="tests/Everywhere.Abstractions.Tests/Everywhere.Abstractions.Tests.csproj" />
     <Project Path="tests/Everywhere.AI.Tests/Everywhere.AI.Tests.csproj" />
     <Project Path="tests/Everywhere.Automation.Tests/Everywhere.Automation.Tests.csproj" />
+    <Project Path="tests/Everywhere.AvaloniaDesignerHost/Everywhere.AvaloniaDesignerHost.csproj" />
     <Project Path="tests/Everywhere.Core.Tests/Everywhere.Core.Tests.csproj" />
     <Project Path="tests/Everywhere.Patches.SemanticKernel.Tests/Everywhere.Patches.SemanticKernel.Tests.csproj" />
     <Project Path="tests/Everywhere.ProcessIsolation.Tests/Everywhere.ProcessIsolation.Tests.csproj" />

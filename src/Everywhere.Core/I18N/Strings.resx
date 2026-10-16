@@ -4394,104 +4394,95 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>The installed service belongs to another unrecognizable Everywhere copy. Continuing will overwrite it.</value>
     </data>
-    <data name="TextSelectionSettings_Title" xml:space="preserve">
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
         <value>Text selection</value>
     </data>
-    <data name="TextSelectionSettings_Description" xml:space="preserve">
-        <value>Automatic selection capture and application exclusions</value>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>Selection toolbar, automatic chat attachments, and application rules</value>
     </data>
-    <data name="TextSelectionSettings_Enable" xml:space="preserve">
-        <value>Automatically attach selected text</value>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>Automatically add to chat</value>
     </data>
-    <data name="TextSelectionSettings_EnableDescription" xml:space="preserve">
-        <value>Monitor text selections and add them to the chat input.</value>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>Automatically add selected text and its context to the chat window as attachments.</value>
     </data>
-    <data name="TextSelectionSettings_ExcludeFullscreen" xml:space="preserve">
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
         <value>Disable in fullscreen applications</value>
     </data>
-    <data name="TextSelectionSettings_ExcludeFullscreenDescription" xml:space="preserve">
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
         <value>Do not capture selections while a fullscreen application is active.</value>
     </data>
-    <data name="TextSelectionSettings_AddApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
         <value>Add application</value>
     </data>
-    <data name="TextSelectionSettings_ChooseApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
         <value>Choose application…</value>
     </data>
-    <data name="TextSelectionSettings_PickWindow" xml:space="preserve">
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
         <value>Pick a window on screen…</value>
     </data>
-    <data name="TextSelectionSettings_ExcludedApplications" xml:space="preserve">
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
         <value>Applications with text selection disabled</value>
     </data>
-    <data name="TextSelectionSettings_ExcludedApplicationsDescription" xml:space="preserve">
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
         <value>Selected text in these applications will not be captured automatically.</value>
     </data>
-    <data name="TextSelectionSettings_CompatibilityHint" xml:space="preserve">
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
         <value>Everywhere includes compatibility rules that prevent simulated copying in certain applications. These rules do not disable direct accessibility reading.</value>
     </data>
-    <data name="TextSelectionSettings_Empty" xml:space="preserve">
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
         <value>No applications excluded.</value>
     </data>
-    <data name="TextSelectionSettings_RemoveApplicationConfirmation" xml:space="preserve">
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
         <value>Remove this application from the exclusion list?</value>
     </data>
-    <data name="TextSelectionSettings_ApplicationFile" xml:space="preserve">
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
         <value>Application</value>
     </data>
-    <data name="TextSelectionSettings_ResolveFailed" xml:space="preserve">
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
         <value>Could not identify the application. Try selecting its application file, or add its identity manually.</value>
     </data>
-    <data name="TextSelectionSettings_InvalidIdentity" xml:space="preserve">
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
         <value>Enter a valid exact application identity. Paths and wildcards are not supported here.</value>
     </data>
-    <data name="TextSelectionSettings_Duplicate" xml:space="preserve">
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
         <value>This application rule is already in the list.</value>
     </data>
-    <data name="TextSelectionSettings_AddProcessName" xml:space="preserve">
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
         <value>Add by process name…</value>
     </data>
-    <data name="TextSelectionSettings_ProcessNameHint" xml:space="preserve">
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
         <value>Include the .exe extension. Matches all processes with this name, regardless of installation location; ignores case. Wildcards are not supported.</value>
     </data>
-    <data name="TextSelectionSettings_AddBundleId" xml:space="preserve">
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
         <value>Add by bundle ID…</value>
     </data>
-    <data name="TextSelectionSettings_BundleIdHint" xml:space="preserve">
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
         <value>Matches the exact application bundle identifier, including all installed copies. Matching is case-sensitive; wildcards are not supported.</value>
     </data>
-    <data name="TextSelectionSettings_RemoveApplication" xml:space="preserve">
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
         <value>Remove application</value>
     </data>
-    <data name="SettingsCategory_Settings_TextSelectionToolbar_Header" xml:space="preserve">
-        <value>Selection Toolbar</value>
-    </data>
-    <data name="SettingsCategory_Settings_TextSelectionToolbar_Description" xml:space="preserve">
-        <value>Show a floating action toolbar when you select text in any application</value>
-    </data>
-    <data name="TextSelectionToolbarSettings_IsEnabled_Header" xml:space="preserve">
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
         <value>Enable Selection Toolbar</value>
     </data>
-    <data name="TextSelectionToolbarSettings_IsEnabled_Description" xml:space="preserve">
-        <value>Watch for text selections system-wide and show a small toolbar next to the selected text</value>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>Maximum number of tools</value>
     </data>
-    <data name="TextSelectionToolbarSettings_MaxActionCount_Header" xml:space="preserve">
-        <value>Maximum Actions</value>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>Toolbar opacity</value>
     </data>
-    <data name="TextSelectionToolbarSettings_MaxActionCount_Description" xml:space="preserve">
-        <value>How many action buttons the toolbar may show at once</value>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>Adjust opacity based on pointer distance</value>
     </data>
-    <data name="TextSelectionToolbarSettings_ShowActionLabels_Header" xml:space="preserve">
-        <value>Show Action Labels</value>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>Fade the toolbar as the pointer moves away and restore it when the pointer approaches.</value>
     </data>
-    <data name="TextSelectionToolbarSettings_ShowActionLabels_Description" xml:space="preserve">
-        <value>Show the name next to each icon. When disabled, the toolbar shows icons only</value>
-    </data>
-    <data name="TextSelectionToolbarSettings_Actions_Header" xml:space="preserve">
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
         <value>Manage Actions</value>
     </data>
-    <data name="TextSelectionToolbarSettings_Actions_Description" xml:space="preserve">
-        <value>Start with six text selection actions or add your own prompts. Drag the handle on the left to reorder; hold near the top or bottom edge to scroll. Only enabled actions matching the selection are shown, up to the configured limit.</value>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>Choose which tools to show, drag to reorder, or add custom tools.</value>
     </data>
     <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
         <value>Add Custom Action</value>
@@ -4511,12 +4502,6 @@ If you continue, the other copy will shut down service mode.</value>
     <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
         <value>Choose Icon</value>
     </data>
-    <data name="TextSelectionToolbarActions_MoveUp" xml:space="preserve">
-        <value>Move Up</value>
-    </data>
-    <data name="TextSelectionToolbarActions_MoveDown" xml:space="preserve">
-        <value>Move Down</value>
-    </data>
     <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
         <value>Drag to reorder</value>
     </data>
@@ -4524,12 +4509,42 @@ If you continue, the other copy will shut down service mode.</value>
         <value>Show this action when it matches the selection</value>
     </data>
     <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
-        <value>Restore the default name, icon and prompt</value>
+        <value>Restore the default name, icon, prompt, and label visibility</value>
     </data>
     <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
         <value>Unnamed Action</value>
     </data>
     <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
-        <value>Delete the custom action “{0}”?</value>
+        <value>Delete this custom action?</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>Selection toolbar</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>Chat window</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>Advanced</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>Applications with the selection toolbar hidden</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>Hide the toolbar in these applications. Selected text can still be added to chat automatically.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>Show name on the toolbar</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>Don’t show in this application</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>More</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>Close toolbar</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>Toolbar Preview</value>
     </data>
 </root>

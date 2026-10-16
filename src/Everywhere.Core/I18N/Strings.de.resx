@@ -1630,6 +1630,9 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>Fehler beim Starten des Puppeteer-Browsers.</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>Linksklick zum Auswählen einer Anwendung, Rechtsklick oder Esc zum Abbrechen</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>Linksklick zum Auswählen, Rechtsklick oder Esc zum Abbrechen
 Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
@@ -2160,6 +2163,9 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>Textauswahl Automatisch Hinzufügen</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>Automatische Textauswahl</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>Wenn aktiviert, wird der ausgewählte Text automatisch als Anhang hinzugefügt.</value>
     </data>
@@ -2171,6 +2177,24 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>Das automatische Markieren konnte nicht gestartet werden, bitte versuchen Sie es erneut.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>Vollbildanwendungen ignorieren</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>Keine Textauswahl erkennen, während die aktive Anwendung den gesamten Bildschirm ausfüllt.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>Ignorierte Anwendungen</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>Pro Zeile einen Prozessnamen, einen Programmpfad oder eine macOS-Bundle-ID eingeben. Die Textauswahl in diesen Anwendungen wird ignoriert.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>Anwendungen ohne simuliertes Kopieren</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>Pro Zeile eine Anwendungskennung eingeben. Das Lesen über Bedienungshilfen bleibt möglich, Everywhere simuliert jedoch kein Kopieren in diesen Anwendungen.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>Fenster Auflisten</value>
@@ -4369,5 +4393,158 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Der installierte Dienst gehört zu einer anderen, nicht identifizierbaren Everywhere-Kopie. Wenn Sie fortfahren, wird er überschrieben.</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
+        <value>Textauswahl</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>Auswahl-Symbolleiste, automatische Chat-Anhänge und Anwendungsregeln</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>Automatisch zum Chat hinzufügen</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>Ausgewählten Text und seinen Kontext automatisch als Anhänge zum Chatfenster hinzufügen.</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
+        <value>In Vollbildanwendungen deaktivieren</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
+        <value>Keine Textauswahl erfassen, während eine Vollbildanwendung aktiv ist.</value>
+    </data>
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+        <value>Anwendung hinzufügen</value>
+    </data>
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+        <value>Anwendung auswählen…</value>
+    </data>
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
+        <value>Fenster auf dem Bildschirm auswählen…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
+        <value>Anwendungen mit deaktivierter Textauswahl</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
+        <value>Ausgewählter Text in diesen Anwendungen wird nicht automatisch erfasst.</value>
+    </data>
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere enthält Kompatibilitätsregeln, die simuliertes Kopieren in bestimmten Anwendungen verhindern. Das direkte Lesen über Bedienungshilfen bleibt möglich.</value>
+    </data>
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
+        <value>Keine Anwendungen ausgeschlossen.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>Diese Anwendung aus der Ausschlussliste entfernen?</value>
+    </data>
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+        <value>Anwendung</value>
+    </data>
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
+        <value>Die Anwendung konnte nicht erkannt werden. Wählen Sie ihre Programmdatei aus oder fügen Sie die Kennung manuell hinzu.</value>
+    </data>
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
+        <value>Geben Sie eine gültige, exakt abzugleichende Anwendungskennung ein. Pfade und Platzhalter werden hier nicht unterstützt.</value>
+    </data>
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
+        <value>Diese Anwendungsregel ist bereits in der Liste vorhanden.</value>
+    </data>
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+        <value>Über Prozessnamen hinzufügen…</value>
+    </data>
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
+        <value>Die Endung .exe angeben. Erfasst alle gleichnamigen Prozesse unabhängig vom Installationsort; Groß- und Kleinschreibung wird ignoriert. Platzhalter werden nicht unterstützt.</value>
+    </data>
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+        <value>Über Bundle-ID hinzufügen…</value>
+    </data>
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+        <value>Gleicht die Bundle-ID exakt ab, einschließlich aller installierten Kopien. Groß- und Kleinschreibung wird beachtet; Platzhalter werden nicht unterstützt.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
+        <value>Anwendung entfernen</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
+        <value>Auswahl-Symbolleiste aktivieren</value>
+    </data>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>Maximale Anzahl an Werkzeugen</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>Deckkraft der Symbolleiste</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>Deckkraft anhand des Zeigerabstands anpassen</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>Die Symbolleiste wird beim Entfernen des Zeigers transparenter und beim Annähern wieder deutlicher.</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
+        <value>Werkzeuge verwalten</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>Werkzeuge auswählen, per Ziehen neu anordnen oder eigene Werkzeuge hinzufügen.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>Eigenes Werkzeug hinzufügen</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>Werkzeug bearbeiten</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>Prompt</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>Der ausgewählte Text wird automatisch angehängt. Beschreiben Sie, was damit geschehen soll, z. B. „Übersetze den ausgewählten Text ins Chinesische.“ Ein Klick auf das Werkzeug öffnet den Chat und sendet diesen Prompt.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>Symbol auswählen</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>Zum Neuordnen ziehen</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>Dieses Werkzeug anzeigen, wenn es zur Textauswahl passt</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>Standardname, Symbol, Prompt und Namensanzeige wiederherstellen</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>Unbenanntes Werkzeug</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>Dieses eigene Werkzeug löschen?</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>Auswahl-Symbolleiste</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>Chatfenster</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>Erweitert</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>Anwendungen mit ausgeblendeter Auswahl-Symbolleiste</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>Die Symbolleiste in diesen Anwendungen ausblenden. Ausgewählter Text kann weiterhin automatisch zum Chat hinzugefügt werden.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>Namen in der Symbolleiste anzeigen</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>In dieser Anwendung nicht anzeigen</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>Mehr</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>Symbolleiste schließen</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>Symbolleistenvorschau</value>
     </data>
 </root>

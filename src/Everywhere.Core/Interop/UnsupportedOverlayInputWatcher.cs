@@ -1,9 +1,9 @@
-using Avalonia;
+﻿using Avalonia;
 
 namespace Everywhere.Interop;
 
 /// <summary>
-/// Placeholder <see cref="IOverlayDismissWatcher"/> for platforms where global input observation is
+/// Placeholder <see cref="IOverlayInputWatcher"/> for platforms where global input observation is
 /// not implemented yet.
 /// </summary>
 /// <remarks>
@@ -11,17 +11,19 @@ namespace Everywhere.Interop;
 /// disable themselves rather than showing an overlay the user would be unable to dismiss. This is
 /// preferred over throwing, which would surface as a crash at an unrelated call site.
 /// </remarks>
-public sealed class UnsupportedOverlayDismissWatcher : IOverlayDismissWatcher
+public sealed class UnsupportedOverlayInputWatcher : IOverlayInputWatcher
 {
     public bool IsSupported => false;
 
-    public IOverlayDismissWatch Watch(PixelRect bounds, Action onDismiss) => NoWatch.Instance;
+    public PixelPoint? PointerPosition => null;
 
-    private sealed class NoWatch : IOverlayDismissWatch
+    public IOverlayInputWatch Watch(PixelRect bounds, Action onDismiss, Action<PixelPoint> onPointerMoved) => NoWatch.Instance;
+
+    private sealed class NoWatch : IOverlayInputWatch
     {
         internal static readonly NoWatch Instance = new();
 
-        public void Update(PixelRect bounds) { }
+        public void Update(PixelRect bounds, PixelRect? menuBounds = null) { }
 
         public void Dispose() { }
     }

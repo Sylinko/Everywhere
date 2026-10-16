@@ -166,7 +166,7 @@ ul, ol { padding-left: 2em; }
   </Styles.Resources>
 
   <!--  ListBox  -->
-  <Style Selector=":is(ListBox).Draggable">
+  <Style Selector=":is(ListBox).Draggable, ItemsControl.Draggable">
     <Setter Property="ItemsPanel">
       <Setter.Value>
         <ItemsPanelTemplate>
@@ -176,7 +176,7 @@ ul, ol { padding-left: 2em; }
     </Setter>
   </Style>
 
-  <Style Selector=":is(ListBox).Draggable &gt; :is(ListBoxItem)">
+  <Style Selector=":is(ListBox).Draggable > :is(ListBoxItem), ItemsControl.Draggable > ContentPresenter">
     <Setter Property="ZIndex" Value="0"/>
     <Setter Property="(Interaction.Behaviors)">
       <BehaviorCollectionTemplate>
@@ -199,7 +199,7 @@ ul, ol { padding-left: 2em; }
     </Style>
   </Style>
 
-  <Style Selector=":is(ListBox).draggableVirtualizing &gt; :is(ListBoxItem):pressed">
+  <Style Selector=":is(ListBox).draggableVirtualizing > :is(ListBoxItem):pressed">
     <Setter Property="ZIndex" Value="1"/>
   </Style>
 

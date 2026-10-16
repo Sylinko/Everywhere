@@ -11,20 +11,16 @@ public static class StrategyEngineServiceCollectionExtensions
     /// <summary>
     /// Adds the Strategy Engine services to the service collection.
     /// </summary>
-    public static IServiceCollection AddStrategyEngine(this IServiceCollection services)
-    {
-        // Register core services
-        services.AddSingleton<IStrategyRegistry, StrategyRegistry>();
-        services.AddSingleton<IStrategyEngine, StrategyEngine>();
-        services.AddSingleton<TextSelectionToolbarActions>();
+    public static IServiceCollection AddStrategyEngine(this IServiceCollection services) =>
+        services
+            // Register core services
+            .AddSingleton<IStrategyRegistry, StrategyRegistry>()
+            .AddSingleton<IStrategyEngine, StrategyEngine>()
 
-        // Register built-in strategies
-        services.AddSingleton<IStrategyProvider, GlobalStrategyProvider>();
-        services.AddSingleton<IStrategyProvider, BrowserStrategyProvider>();
-        services.AddSingleton<IStrategyProvider, CodeEditorStrategyProvcider>();
-        services.AddSingleton<IStrategyProvider, TextSelectionStrategyProvider>();
-        services.AddSingleton<IStrategyProvider, FileStrategyProvider>();
-
-        return services;
-    }
+            // Register built-in strategies
+            .AddSingleton<IStrategyProvider, GlobalStrategyProvider>()
+            .AddSingleton<IStrategyProvider, BrowserStrategyProvider>()
+            .AddSingleton<IStrategyProvider, CodeEditorStrategyProvcider>()
+            .AddSingleton<IStrategyProvider, TextSelectionStrategyProvider>()
+            .AddSingleton<IStrategyProvider, FileStrategyProvider>();
 }

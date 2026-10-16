@@ -14,6 +14,14 @@ public sealed class TextSelectionData : IDisposable
     /// <summary>Gets whether native or transport limits may have omitted trailing text.</summary>
     public bool IsTextIncomplete { get; }
 
+    /// <summary>Gets the gesture position used to place the toolbar.</summary>
+    public PixelPoint? PointerPosition { get; init; }
+
+    /// <summary>
+    /// Gets the executable path on Windows or bundle identifier on macOS captured with this selection.
+    /// </summary>
+    public string? ApplicationIdentity { get; init; }
+
     /// <summary>Gets the legacy in-process locator used by platforms outside process isolation.</summary>
     public VisualElementLocator? Locator { get; }
 

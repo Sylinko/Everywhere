@@ -1630,6 +1630,9 @@ Mi inteligencia está impulsada por un modelo de lenguaje grande, y necesito que
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserLaunchError_ErrorMessage" xml:space="preserve">
         <value>No se pudo iniciar el navegador Puppeteer.</value>
     </data>
+    <data name="ScreenSelectionToolTip_TipText_ApplicationWindow" xml:space="preserve">
+        <value>Clic izquierdo para seleccionar una aplicación; clic derecho o Esc para cancelar</value>
+    </data>
     <data name="ScreenSelectionToolTip_TipText_Normal" xml:space="preserve">
         <value>Clic izquierdo para seleccionar, clic derecho o Esc para cancelar
 Rueda de desplazamiento o teclas numéricas para cambiar modos de selección</value>
@@ -2160,6 +2163,9 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Header" xml:space="preserve">
         <value>Agregar Selección de Texto Automáticamente</value>
     </data>
+    <data name="ChatWindowSettings_Group_TextSelection" xml:space="preserve">
+        <value>Selección automática de texto</value>
+    </data>
     <data name="ChatWindowSettings_AutomaticallyAddTextSelection_Description" xml:space="preserve">
         <value>Al habilitar, el texto seleccionado se añadirá automáticamente como un adjunto.</value>
     </data>
@@ -2171,6 +2177,24 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     </data>
     <data name="ChatWindowSettings_TextSelectionMonitoring_SetupFailed" xml:space="preserve">
         <value>No se pudo iniciar la selección automática de texto, por favor intenta de nuevo.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Header" xml:space="preserve">
+        <value>Ignorar aplicaciones a pantalla completa</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionSkipFullscreen_Description" xml:space="preserve">
+        <value>No detectar selecciones de texto mientras la aplicación activa ocupe toda la pantalla.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Header" xml:space="preserve">
+        <value>Aplicaciones ignoradas</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionExcludedApplications_Description" xml:space="preserve">
+        <value>Introduce un nombre de proceso, una ruta al ejecutable o un ID de paquete de macOS por línea. Se ignorará el texto seleccionado en estas aplicaciones.</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Header" xml:space="preserve">
+        <value>Aplicaciones sin copia simulada</value>
+    </data>
+    <data name="ChatWindowSettings_TextSelectionCopyExcludedApplications_Description" xml:space="preserve">
+        <value>Introduce un identificador de aplicación por línea. La lectura mediante accesibilidad seguirá disponible, pero Everywhere no simulará la acción de copiar en estas aplicaciones.</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_ListWindows_Header" xml:space="preserve">
         <value>Listar Ventanas</value>
@@ -4369,5 +4393,158 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>El servicio instalado pertenece a otra copia de Everywhere no identificable. Si continúas, se sobrescribirá.</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Header" xml:space="preserve">
+        <value>Selección de texto</value>
+    </data>
+    <data name="SettingsCategory_Settings_TextSelection_Description" xml:space="preserve">
+        <value>Barra de selección, adjuntos automáticos al chat y reglas de aplicaciones</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Header" xml:space="preserve">
+        <value>Añadir al chat automáticamente</value>
+    </data>
+    <data name="TextSelectionSettings_IsAutomaticAttachmentEnabled_Description" xml:space="preserve">
+        <value>Añadir automáticamente el texto seleccionado y su contexto como adjuntos a la ventana de chat.</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Header" xml:space="preserve">
+        <value>Desactivar en aplicaciones a pantalla completa</value>
+    </data>
+    <data name="TextSelectionSettings_IsFullscreenExcluded_Description" xml:space="preserve">
+        <value>No capturar selecciones mientras haya una aplicación a pantalla completa activa.</value>
+    </data>
+    <data name="TextSelectionApplications_AddApplication" xml:space="preserve">
+        <value>Añadir aplicación</value>
+    </data>
+    <data name="TextSelectionApplications_ChooseApplication" xml:space="preserve">
+        <value>Elegir aplicación…</value>
+    </data>
+    <data name="TextSelectionApplications_PickWindow" xml:space="preserve">
+        <value>Seleccionar una ventana en pantalla…</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Header" xml:space="preserve">
+        <value>Aplicaciones con la selección de texto desactivada</value>
+    </data>
+    <data name="TextSelectionSettings_ExcludedApplications_Description" xml:space="preserve">
+        <value>El texto seleccionado en estas aplicaciones no se capturará automáticamente.</value>
+    </data>
+    <data name="TextSelectionApplications_CompatibilityHint" xml:space="preserve">
+        <value>Everywhere incluye reglas de compatibilidad que evitan simular la copia en algunas aplicaciones. Estas reglas no impiden la lectura directa mediante accesibilidad.</value>
+    </data>
+    <data name="TextSelectionApplications_Empty" xml:space="preserve">
+        <value>No hay aplicaciones excluidas.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplicationConfirmation" xml:space="preserve">
+        <value>¿Quitar esta aplicación de la lista de exclusiones?</value>
+    </data>
+    <data name="TextSelectionApplications_ApplicationFile" xml:space="preserve">
+        <value>Aplicación</value>
+    </data>
+    <data name="TextSelectionApplications_ResolveFailed" xml:space="preserve">
+        <value>No se pudo identificar la aplicación. Selecciona su archivo ejecutable o añade su identificador manualmente.</value>
+    </data>
+    <data name="TextSelectionApplications_InvalidIdentity" xml:space="preserve">
+        <value>Introduce un identificador de aplicación válido para una coincidencia exacta. Aquí no se admiten rutas ni comodines.</value>
+    </data>
+    <data name="TextSelectionApplications_Duplicate" xml:space="preserve">
+        <value>Esta regla de aplicación ya está en la lista.</value>
+    </data>
+    <data name="TextSelectionApplications_AddProcessName" xml:space="preserve">
+        <value>Añadir por nombre de proceso…</value>
+    </data>
+    <data name="TextSelectionApplications_ProcessNameHint" xml:space="preserve">
+        <value>Incluye la extensión .exe. Coincide con todos los procesos del mismo nombre, independientemente de dónde estén instalados y sin distinguir mayúsculas y minúsculas. No se admiten comodines.</value>
+    </data>
+    <data name="TextSelectionApplications_AddBundleId" xml:space="preserve">
+        <value>Añadir por ID de paquete…</value>
+    </data>
+    <data name="TextSelectionApplications_BundleIdHint" xml:space="preserve">
+        <value>Coincide exactamente con el identificador de paquete de la aplicación, incluidas todas las copias instaladas. Distingue mayúsculas y minúsculas; no se admiten comodines.</value>
+    </data>
+    <data name="TextSelectionApplications_RemoveApplication" xml:space="preserve">
+        <value>Quitar aplicación</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarEnabled_Header" xml:space="preserve">
+        <value>Activar barra de selección</value>
+    </data>
+    <data name="TextSelectionSettings_VisibleActionCount_Header" xml:space="preserve">
+        <value>Número máximo de herramientas</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarOpacity_Header" xml:space="preserve">
+        <value>Opacidad de la barra</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Header" xml:space="preserve">
+        <value>Ajustar la opacidad según la distancia del cursor</value>
+    </data>
+    <data name="TextSelectionSettings_IsToolbarOpacityAdaptive_Description" xml:space="preserve">
+        <value>Atenúa la barra al alejar el cursor y restaura su opacidad al acercarlo.</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Header" xml:space="preserve">
+        <value>Gestionar herramientas</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarActions_Description" xml:space="preserve">
+        <value>Elige qué herramientas mostrar, arrástralas para reordenarlas o añade herramientas personalizadas.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Add" xml:space="preserve">
+        <value>Añadir herramienta personalizada</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Edit" xml:space="preserve">
+        <value>Editar herramienta</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Name" xml:space="preserve">
+        <value>Nombre</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Prompt" xml:space="preserve">
+        <value>Prompt</value>
+    </data>
+    <data name="TextSelectionToolbarActions_PromptHint" xml:space="preserve">
+        <value>El texto seleccionado se adjunta automáticamente. Describe qué hacer con él, por ejemplo: «Traduce el texto seleccionado al chino». Al pulsar la herramienta, se abre el chat y se envía este prompt.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_ChooseIcon" xml:space="preserve">
+        <value>Elegir icono</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DragToReorder" xml:space="preserve">
+        <value>Arrastrar para reordenar</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsEnabled" xml:space="preserve">
+        <value>Mostrar esta herramienta cuando corresponda a la selección</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Reset" xml:space="preserve">
+        <value>Restaurar el nombre, el icono, el prompt y la visibilidad del nombre predeterminados</value>
+    </data>
+    <data name="TextSelectionToolbarActions_Unnamed" xml:space="preserve">
+        <value>Herramienta sin nombre</value>
+    </data>
+    <data name="TextSelectionToolbarActions_DeleteConfirmation" xml:space="preserve">
+        <value>¿Eliminar esta herramienta personalizada?</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Toolbar" xml:space="preserve">
+        <value>Barra de selección</value>
+    </data>
+    <data name="TextSelectionSettings_Group_ChatWindow" xml:space="preserve">
+        <value>Ventana de chat</value>
+    </data>
+    <data name="TextSelectionSettings_Group_Advanced" xml:space="preserve">
+        <value>Avanzado</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Header" xml:space="preserve">
+        <value>Aplicaciones con la barra de selección oculta</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarExcludedApplications_Description" xml:space="preserve">
+        <value>Ocultar la barra en estas aplicaciones. El texto seleccionado podrá seguir añadiéndose al chat automáticamente.</value>
+    </data>
+    <data name="TextSelectionToolbarActions_IsLabelVisible" xml:space="preserve">
+        <value>Mostrar nombre en la barra</value>
+    </data>
+    <data name="TextSelectionToolbar_ExcludeApplication" xml:space="preserve">
+        <value>No mostrar en esta aplicación</value>
+    </data>
+    <data name="TextSelectionToolbar_More" xml:space="preserve">
+        <value>Más</value>
+    </data>
+    <data name="TextSelectionToolbar_Close" xml:space="preserve">
+        <value>Cerrar barra</value>
+    </data>
+    <data name="TextSelectionSettings_ToolbarPreview_Header" xml:space="preserve">
+        <value>Vista previa de la barra de herramientas</value>
     </data>
 </root>

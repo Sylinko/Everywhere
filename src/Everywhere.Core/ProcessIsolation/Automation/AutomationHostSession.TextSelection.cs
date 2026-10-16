@@ -191,6 +191,9 @@ public sealed partial class AutomationHostSession
                         AnchorId = anchorId,
                         Source = sourceResponse,
                         IsTextIncomplete = observation.IsTextIncomplete,
+                        PointerX = observation.PointerPosition?.X,
+                        PointerY = observation.PointerPosition?.Y,
+                        ApplicationIdentity = observation.ApplicationIdentity,
                     },
                     cancellationToken).ConfigureAwait(false);
             }

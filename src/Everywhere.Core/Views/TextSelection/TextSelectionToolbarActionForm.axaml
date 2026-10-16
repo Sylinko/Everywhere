@@ -1,0 +1,100 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:ts="clr-namespace:Everywhere.TextSelection"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:TextSelectionToolbarActionForm}"
+    TargetType="v:TextSelectionToolbarActionForm">
+    <Setter Property="MinWidth" Value="320"/>
+    <Setter Property="Width" Value="560"/>
+    <Setter Property="MaxWidth" Value="640"/>
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:TextSelectionToolbarActionForm">
+        <ScrollViewer
+          MaxHeight="560" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="16">
+            <DockPanel HorizontalSpacing="12">
+              <Button
+                DockPanel.Dock="Left" Width="48"
+                Height="48" Padding="0"
+                VerticalAlignment="Bottom"
+                CornerRadius="{DynamicResource FullCornerRadius}"
+                ToolTip.Tip="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_ChooseIcon}}">
+                <v:IconPresenter
+                  FontSize="30"
+                  Icon="{Binding Editor.DisplayIcon, RelativeSource={RelativeSource TemplatedParent}}"
+                  IconSize="30" Size="48"/>
+                <Button.Flyout>
+                  <Flyout>
+                    <v:IconEditor
+                      Width="360" Height="440"
+                      Margin="12"
+                      Icon="{Binding Editor.DisplayIcon, RelativeSource={RelativeSource TemplatedParent}}"/>
+                  </Flyout>
+                </Button.Flyout>
+              </Button>
+              <ContentControl
+                HorizontalContentAlignment="Stretch"
+                Content="{Binding Editor, RelativeSource={RelativeSource TemplatedParent}}">
+                <ContentControl.DataTemplates>
+                  <DataTemplate DataType="{x:Type ts:BuiltInTextSelectionToolbarAction}">
+                    <TextBox
+                      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Name}}"
+                      Text="{Binding NameOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                      <Interaction.Behaviors>
+                        <FocusOnAttachedBehavior/>
+                      </Interaction.Behaviors>
+                    </TextBox>
+                  </DataTemplate>
+                  <DataTemplate DataType="{x:Type ts:CustomTextSelectionToolbarAction}">
+                    <TextBox
+                      shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Name}}"
+                      Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                      <Interaction.Behaviors>
+                        <FocusOnAttachedBehavior/>
+                      </Interaction.Behaviors>
+                    </TextBox>
+                  </DataTemplate>
+                </ContentControl.DataTemplates>
+              </ContentControl>
+            </DockPanel>
+            <DockPanel HorizontalSpacing="6">
+              <ToggleSwitch
+                DockPanel.Dock="Right" VerticalAlignment="Center"
+                IsChecked="{Binding Editor.IsLabelVisible, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
+              <TextBlock
+                Classes="Muted Caption" VerticalAlignment="Center"
+                Text="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_IsLabelVisible}}"/>
+            </DockPanel>
+            <ContentControl
+              HorizontalContentAlignment="Stretch"
+              Content="{Binding Editor, RelativeSource={RelativeSource TemplatedParent}}">
+              <ContentControl.Styles>
+                <Style Selector="TextBox">
+                  <Setter Property="MinHeight" Value="200"/>
+                  <Setter Property="MaxHeight" Value="360"/>
+                  <Setter Property="shadui:ControlAssist.Label" Value="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_Prompt}}"/>
+                  <Setter Property="AcceptsReturn" Value="True"/>
+                  <Setter Property="TextWrapping" Value="Wrap"/>
+                  <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                </Style>
+              </ContentControl.Styles>
+              <ContentControl.DataTemplates>
+                <DataTemplate DataType="{x:Type ts:BuiltInTextSelectionToolbarAction}">
+                  <TextBox Text="{Binding PromptOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type ts:CustomTextSelectionToolbarAction}">
+                  <TextBox Text="{Binding Prompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </DataTemplate>
+              </ContentControl.DataTemplates>
+            </ContentControl>
+            <TextBlock
+              Classes="Muted Caption"
+              Text="{I18N {x:Static LocaleKey.TextSelectionToolbarActions_PromptHint}}"
+              TextWrapping="Wrap"/>
+          </StackPanel>
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
