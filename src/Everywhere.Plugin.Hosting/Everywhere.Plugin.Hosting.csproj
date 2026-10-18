@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ZLinq"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj"/>
     <ProjectReference Include="../Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj"/>
   </ItemGroup>

@@ -32,6 +32,11 @@ public enum PluginApplyStatus
 public sealed record PluginDiagnostic
 {
     /// <summary>
+    /// Gets the affected plugin, or null for a source or engine-wide failure.
+    /// </summary>
+    public string? PluginId { get; init; } // TODO: null?
+
+    /// <summary>
     /// Gets the stable code used by structured tools and application localization.
     /// </summary>
     public required string Code { get; init; }

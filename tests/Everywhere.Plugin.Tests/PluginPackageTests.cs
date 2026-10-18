@@ -1,5 +1,6 @@
 ﻿using System.IO.Compression;
 using System.Text;
+using System.Text.Json.Nodes;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Packaging;
 
@@ -102,10 +103,10 @@ public sealed class PluginPackageTests
 
         var store = new PluginPackageStore(runtime, data, staging);
         var catalog = new PluginSourceCatalog(sources, store);
-        var first = (await catalog.ImportAsync()).Single();
+        var first = (await catalog.ImportAsync()).Installations.Single();
         var persistent = store.GetDataDirectory(first);
         await File.WriteAllTextAsync(Path.Combine(persistent, "settings.json"), "saved");
-        var repeated = (await new PluginSourceCatalog(sources, store).ImportAsync()).Single();
+        var repeated = (await new PluginSourceCatalog(sources, store).ImportAsync()).Installations.Single();
         Assert.That(repeated.Directory, Is.EqualTo(first.Directory));
         Assert.That(first.Directory, Does.StartWith(runtime + Path.DirectorySeparatorChar));
         Assert.That(persistent, Is.EqualTo(Path.Combine(data, "acme.example")));
@@ -121,7 +122,7 @@ public sealed class PluginPackageTests
             await File.WriteAllBytesAsync(source, replacement.ToArray());
         }
 
-        var updated = (await catalog.ImportAsync()).Single();
+        var updated = (await catalog.ImportAsync()).Installations.Single();
         Assert.That(updated.Directory, Is.Not.EqualTo(first.Directory));
         Assert.That(File.ReadAllText(Path.Combine(first.Directory, "Entry.dll")), Is.EqualTo("first"));
         Assert.That(File.ReadAllText(Path.Combine(updated.Directory, "Entry.dll")), Is.EqualTo("second"));
@@ -130,7 +131,7 @@ public sealed class PluginPackageTests
         if (isDirectory) Directory.Move(source, Path.Combine(_root, "removed-source"));
         else File.Move(source, Path.Combine(_root, "removed.zip"));
 
-        Assert.That(await catalog.ImportAsync(), Is.Empty);
+        Assert.That((await catalog.ImportAsync()).Installations, Is.Empty);
         Assert.That(File.ReadAllText(Path.Combine(persistent, "settings.json")), Is.EqualTo("saved"));
     }
 
@@ -138,7 +139,7 @@ public sealed class PluginPackageTests
     /// A ZIP and folder for the same plugin must not select a winner by enumeration order.
     /// </summary>
     [Test]
-    public async Task ImportSources_DuplicateId_RejectsWithoutPublishingSelection()
+    public async Task ImportSources_DuplicateId_RejectsEveryProvider()
     {
         var sources = Path.Combine(_root, "sources");
         Directory.CreateDirectory(sources);
@@ -147,10 +148,80 @@ public sealed class PluginPackageTests
         ZipFile.ExtractToDirectory(package, Path.Combine(sources, "two"));
         var store = new PluginPackageStore(Path.Combine(_root, "runtime"), Path.Combine(_root, "data"), Path.Combine(_root, "cache"));
 
-        var exception = Assert.ThrowsAsync<PluginValidationException>(async () => await new PluginSourceCatalog(sources, store).ImportAsync());
-        Assert.That(exception?.Code, Is.EqualTo("DuplicatePlugin"));
-        Assert.That(File.Exists(Path.Combine(store.RootDirectory, "sources.json")), Is.False);
+        var result = await new PluginSourceCatalog(sources, store).ImportAsync();
+        Assert.That(result.Installations, Is.Empty);
+        Assert.That(result.Diagnostics.Single().Code, Is.EqualTo("DuplicatePlugin"));
+        Assert.That(File.Exists(Path.Combine(store.RootDirectory, "sources.json")), Is.True);
         Assert.That(File.Exists(Path.Combine(sources, "one.zip")), Is.True);
+    }
+
+    /// <summary>
+    /// A broken archive cannot hide a valid neighboring package, and can be repaired on the next import.
+    /// </summary>
+    [Test]
+    public async Task ImportSources_BrokenArchive_ImportsIndependentPackageAndAllowsRetry()
+    {
+        var sources = Path.Combine(_root, "sources");
+        Directory.CreateDirectory(sources);
+        using var package = CreatePackage("payload");
+        await File.WriteAllBytesAsync(Path.Combine(sources, "valid.zip"), package.ToArray());
+        var broken = Path.Combine(sources, "broken.zip");
+        await File.WriteAllTextAsync(broken, "Interrupted download");
+        var store = new PluginPackageStore(Path.Combine(_root, "runtime"), Path.Combine(_root, "data"), Path.Combine(_root, "cache"));
+        var catalog = new PluginSourceCatalog(sources, store);
+
+        var result = await catalog.ImportAsync();
+
+        Assert.That(result.Installations.Single().Manifest.Id, Is.EqualTo("acme.example"));
+        Assert.That(result.Diagnostics.Single().Detail, Does.Contain("broken.zip"));
+        File.Delete(broken);
+        var repeated = await catalog.ImportAsync();
+        Assert.That(repeated.Diagnostics, Is.Empty);
+        Assert.That(repeated.Installations.Single().InstallationId, Is.EqualTo(result.Installations.Single().InstallationId));
+    }
+
+    /// <summary>
+    /// Invalid language maps produce source diagnostics without hiding successful imports or preventing retry.
+    /// </summary>
+    [TestCase("name")]
+    [TestCase("description")]
+    [TestCase("readme")]
+    public async Task ImportSources_DuplicateLanguageTags_IsolatesInvalidManifestAndAllowsRepair(string propertyName)
+    {
+        var sources = Path.Combine(_root, "sources");
+        Directory.CreateDirectory(sources);
+        using var package = CreatePackage("payload");
+        await File.WriteAllBytesAsync(Path.Combine(sources, "a-valid.zip"), package.ToArray());
+        var invalid = Path.Combine(sources, "z-invalid");
+        ZipFile.ExtractToDirectory(package, invalid);
+        var manifestPath = Path.Combine(invalid, PluginManifestFile.FileName);
+        var manifest = JsonNode.Parse(await File.ReadAllTextAsync(manifestPath))?.AsObject()
+            ?? throw new AssertionException("Missing fixture manifest.");
+        manifest["id"] = "acme.invalid";
+        var translations = new JsonObject { ["en"] = "README.md", ["EN"] = "README.md" };
+        manifest[propertyName] = translations;
+        var original = manifest.ToJsonString();
+        await File.WriteAllTextAsync(manifestPath, original);
+        await File.WriteAllTextAsync(Path.Combine(invalid, "README.md"), "# Guide");
+        var store = new PluginPackageStore(Path.Combine(_root, "runtime"), Path.Combine(_root, "data"), Path.Combine(_root, "cache"));
+        var catalog = new PluginSourceCatalog(sources, store);
+
+        var result = await catalog.ImportAsync();
+
+        var valid = result.Installations.Single();
+        Assert.That(valid.Manifest.Id, Is.EqualTo("acme.example"));
+        Assert.That(result.Diagnostics.Single().Code, Is.EqualTo("DuplicateTranslation"));
+        Assert.That(result.Diagnostics.Single().Detail, Does.Contain(invalid));
+        Assert.That(File.ReadAllText(manifestPath), Is.EqualTo(original));
+
+        translations.Remove("EN");
+        await File.WriteAllTextAsync(manifestPath, manifest.ToJsonString());
+        var repaired = await catalog.ImportAsync();
+        Assert.That(repaired.Diagnostics, Is.Empty);
+        Assert.That(repaired.Installations.Select(installation => installation.Manifest.Id),
+            Is.EquivalentTo(new[] { "acme.example", "acme.invalid" }));
+        Assert.That(repaired.Installations.Single(installation => installation.Manifest.Id == "acme.example").InstallationId,
+            Is.EqualTo(valid.InstallationId));
     }
 
     /// <summary>

@@ -756,6 +756,18 @@ Platform names use portable .NET RIDs: `win`, `win-x64`, `osx`, `osx-arm64`. Use
 
 When no platform entry matches, the plugin stays enabled but has `State = Skipped` and `SkipReason = UnsupportedPlatform`; it executes no entry code. This is a per-plugin status, not an activation failure. Malformed metadata and incompatible selected entries still fail validation. The loader selects the platform entry first, then validates its compatibility. It does not fall back from an incompatible `win-x64` entry to `win` just because the latter permits the installed Everywhere version. Only the selected entry's dependencies and common applicable assets participate. Record the minimum OS/runtime separately from RID where needed; generic platform spelling cannot make architecture-specific native files portable.
 
+### Diagnose startup source imports
+
+Keep one ZIP or unpacked package folder per plugin ID under `~/.everywhere/plugins`. If a source
+cannot be read or validated, startup logs its path and diagnostic code and still imports the other
+valid sources. If several sources declare the same ID, none of those sources is selected; keep the
+one you intend to use and restart. Other plugin IDs are unaffected by this duplicate-source check.
+
+Fix or replace the broken source and restart to retry. Unchanged successful imports reuse their
+runtime copies, and plugin data is preserved. A package that imported successfully may still fail
+later compatibility, dependency or activation checks; source import success does not mean it started.
+Source discovery remains startup-only, without a live watcher or automatic runtime removal on failure.
+
 ### Declare compatibility for the entry you build
 
 Your plugin has one exact version across its entries. The SDK version identifies build tooling; the Plugin API requirement describes the host-owned abstraction contract. Everywhere's version is a separate constraint when your entry uses implementation APIs. Multiple host releases can share one Plugin API version.
