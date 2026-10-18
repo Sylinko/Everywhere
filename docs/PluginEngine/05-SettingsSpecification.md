@@ -85,6 +85,13 @@ existing ChatPlugin.SettingsItems property. A plugin-wide settings registry is p
 of chat tools; it is not part of this persistence implementation. Neither display route creates a
 second writer or changes the settings file's ownership.
 
+Custom control factories own dependency selection. `ISettingsControl.CreateControl()` and
+`SettingsControlItem.CreateControl()` do not receive a provider from the presenter. A plugin can
+construct `SettingsControl<TControl>` with its activation provider, an existing control, or a
+parameterless factory that captures its required dependencies. Displaying settings does not create
+or dispose a plugin service scope. Remove the host-held settings items and factory references before
+the activation service scope retires.
+
 ## Lifetime and final saving
 
 A plugin decides when settings edits affect its work and documents that boundary. The entry owns the

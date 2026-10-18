@@ -69,7 +69,7 @@ public sealed partial class OfficialWebSearchEngineSettings : ObservableObject
 }
 
 [GeneratedSettingsItems]
-public sealed partial class OfficialWebSearchEngineProvider : ObservableObject, IWebSearchEngineProvider
+public sealed partial class OfficialWebSearchEngineProvider(IServiceProvider serviceProvider) : ObservableObject, IWebSearchEngineProvider
 {
     [JsonIgnore]
     [SettingsItemIgnore]
@@ -93,7 +93,7 @@ public sealed partial class OfficialWebSearchEngineProvider : ObservableObject, 
     [DynamicLocaleKey(LocaleKey.Empty)]
     [SettingsItem(Classes = ["Ghost", "NoHeading"])]
     public SettingsControl<OfficialWebSearchProviderSettingsControl> SettingsControl =>
-        new(x => new OfficialWebSearchProviderSettingsControl(x, Settings));
+        new(() => new OfficialWebSearchProviderSettingsControl(serviceProvider, Settings));
 
     public bool Validate() => true;
 
@@ -525,12 +525,12 @@ public sealed partial class WebSearchEngineSettings : ObservableObject
     [SettingsItemIgnore]
     public partial ObservableCollection<ApiKey> ApiKeys { get; set; }
 
-    public WebSearchEngineSettings()
+    public WebSearchEngineSettings(IServiceProvider serviceProvider)
     {
         ApiKeys = [];
         Providers = new ObservableImmutableDictionary<WebSearchEngineProviderId, IWebSearchEngineProvider>(
         [
-            MakeKeyValuePair(new OfficialWebSearchEngineProvider()),
+            MakeKeyValuePair(new OfficialWebSearchEngineProvider(serviceProvider)),
             MakeKeyValuePair(new AnySearchWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new BochaWebSearchEngineProvider(ApiKeys)),
             MakeKeyValuePair(new BraveWebSearchEngineProvider(ApiKeys)),

@@ -11,8 +11,9 @@ namespace Everywhere.Configuration;
 /// </summary>
 [Serializable]
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed partial class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
+public sealed class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
+
     #region Common
 
     public CommonSettings Common { get; } = new(serviceProvider);

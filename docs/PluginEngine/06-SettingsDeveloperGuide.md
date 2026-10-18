@@ -25,8 +25,25 @@ If using a separately supplied generator DLL, add it through an explicit Analyze
 Importing a host installation supplies runtime API references, not this optional authoring tool.
 The generator is a compile-time dependency and must not be added to the plugin runtime payload.
 
-Use GeneratedSettingsItems or supply SettingsItems yourself if you need an editor. Persistence and
-presentation are independent: creating an editor must not open another writer for the same file.
+For a UI, use the existing GeneratedSettingsItems facility or provide SettingsItems yourself.
+Custom controls select dependencies at factory creation, for example:
+
+```csharp
+var control = new SettingsControl<MyControl>(context.Services);
+var factory = new SettingsControl<MyControl>(
+    () => new MyControl(context.Services.GetRequiredService<IMyService>()));
+```
+
+The first form requires a corresponding service registration. The second can construct the control
+directly. Both defer creation until presentation. The provider overload defaults to `isCacheEnabled: false`,
+so each presentation resolves the control according to its service registration. The delegate overload
+defaults to `true` and retains its first result. Pass `isCacheEnabled` explicitly to choose the other
+behavior. An existing-control overload always returns the supplied instance.
+The presenter calls `CreateControl()` and never
+supplies the application root. The factory borrows the provider; it must not dispose it. Remove UI
+contributions before activation retirement and stop using their factories afterward.
+Settings persistence and presentation remain separate: a plugin can save settings without providing
+a page, and opening a page must not create a second writer for the same file.
 
 The standard location is:
 

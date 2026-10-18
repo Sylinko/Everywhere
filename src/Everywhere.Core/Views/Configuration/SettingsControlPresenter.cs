@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Everywhere.Common;
 using Everywhere.Configuration;
 
 namespace Everywhere.Views;
@@ -45,6 +44,6 @@ public sealed class SettingsControlPresenter : Decorator
 
     private void ApplyItem()
     {
-        Child = _isAttached && Item is { } item ? item.CreateControl(ServiceLocator.Resolve<IServiceProvider>()) : null;
+        Child = _isAttached && Item is { } item ? item.CreateControl() : null;
     }
 }
