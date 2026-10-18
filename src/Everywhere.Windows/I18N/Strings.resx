@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere is running as administrator. Drag and drop from standard apps may not work, and actions performed by the assistant have broader access to your system.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>The update could not be completed. The previous version or its backup has been kept. Details and recovery files:
+{0}</value>
+    </data>
 </root>
