@@ -288,6 +288,11 @@ public sealed partial class PluginEngineTests
         internal List<string> Events { get; } = [];
 
         /// <summary>
+        /// Observes only host-owned lifecycle values from the collectible fixture.
+        /// </summary>
+        internal Action<Abstractions.PluginStopReason?>? ObserveStopReason { get; init; }
+
+        /// <summary>
         /// Gets or sets the next injected lifecycle behavior.
         /// </summary>
         internal string Mode { get; set; } = "normal";
@@ -316,6 +321,7 @@ public sealed partial class PluginEngineTests
         public object? GetService(Type serviceType)
         {
             if (serviceType == typeof(Action<string>)) return (Action<string>)Log;
+            if (serviceType == typeof(Action<Abstractions.PluginStopReason?>)) return ObserveStopReason;
             if (serviceType == typeof(string)) return Mode;
             if (serviceType == typeof(Func<string, string>)) return Modes;
             if (serviceType == typeof(TaskCompletionSource)) return Gate;

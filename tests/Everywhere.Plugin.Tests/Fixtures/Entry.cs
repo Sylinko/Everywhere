@@ -15,6 +15,11 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
     private IPluginContext? _context;
 
     /// <summary>
+    /// Observes the public stop reason at initialization, cancellation and entry disposal.
+    /// </summary>
+    private Action<PluginStopReason?>? _observeStopReason;
+
+    /// <summary>
     /// Holds real IO shared by ordinary disposal and a feature's reversal handle.
     /// </summary>
     private StreamWriter? _writer;
@@ -31,6 +36,13 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
         var log = (Action<string>?)context.Services.GetService(typeof(Action<string>))
             ?? throw new InvalidOperationException("Missing fixture log.");
         log("initialize:" + context.PluginId);
+        _observeStopReason = context.Services.GetService(typeof(Action<PluginStopReason?>)) as Action<PluginStopReason?>;
+        if (_observeStopReason is { } observeStopReason)
+        {
+            observeStopReason(context.StopReason);
+            context.Stopping.Register(() => observeStopReason(context.StopReason));
+        }
+
         context.Register(new Resource(() => log("dispose:first:" + context.PluginId)));
         context.Register(new Resource(() => log("dispose:second:" + context.PluginId)));
 
@@ -92,6 +104,7 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
         var log = (Action<string>?)context.Services.GetService(typeof(Action<string>))
             ?? throw new InvalidOperationException("Missing fixture log.");
         log("entry-dispose:" + context.PluginId);
+        _observeStopReason?.Invoke(context.StopReason);
 
         if (!context.Stopping.IsCancellationRequested)
         {

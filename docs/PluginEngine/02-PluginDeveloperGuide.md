@@ -1,4 +1,4 @@
-# Plugin Developer Guide
+﻿# Plugin Developer Guide
 
 Read [Specification](01-Specification.md) for the runtime contract and [Validation](03-Validation.md) for tested capabilities. This guide distinguishes existing repository APIs from the SDK and package interfaces that have not been released.
 
@@ -115,6 +115,7 @@ InitializeAsync receives an IPluginContext with these existing members:
 | PluginId | Logical identity of the activation |
 | Services | Host services used during normal operation; not a promise that services can be resolved during container disposal |
 | Stopping | Signal to stop accepting work and finish outstanding operations |
+| StopReason | Null while running; Unload or Exit is set before Stopping is signaled |
 | Register | Register a disposable handle that reverses an application change made by this activation |
 | Plugins | Activation-relative availability and host-owned plugin information |
 | InstallationDirectory | Installed package files, read-only by contract |
@@ -156,6 +157,11 @@ registered changes. Assembly registrations are reversed when their owners retire
 collection checks. Keep the state needed by removal handles usable after entry disposal. A patch or
 subscription may still be installed while the entry is disposing: reject new work and await existing
 callbacks before releasing what they use. The engine does not track those callbacks for you.
+
+Use context.StopReason to distinguish these paths: Unload covers live removal, replacement and
+cleanup after completed initialization failure; Exit marks ordinary process shutdown. The reason is
+available inside Stopping callbacks and entry disposal. If exit joins an unload already in progress,
+its reason remains Unload; the existing disposal operation is not restarted with different semantics.
 
 Ordinary application exit uses DI disposal after the UI lifetime ends. It signals Stopping and awaits
 entry disposal, but skips both reversal containers, assembly unloading and collection checks. Do not
