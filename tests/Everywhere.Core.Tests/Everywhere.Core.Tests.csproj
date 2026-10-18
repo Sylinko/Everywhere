@@ -1,5 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <EverywhereI18NNamespace>Everywhere.Core.Tests.Generated.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="I18N/Strings.resx" />
+    <ProjectReference Include="../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
@@ -27,6 +36,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Everywhere.Core\Everywhere.Core.csproj"/>
+    <ProjectReference Include="..\..\src\Everywhere.Configuration.SourceGenerator\Everywhere.Configuration.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
   </ItemGroup>
 
   <Import Project="..\..\src\Build.Patches.targets"/>
