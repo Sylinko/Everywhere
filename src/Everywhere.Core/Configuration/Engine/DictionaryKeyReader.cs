@@ -1,31 +1,35 @@
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 namespace Everywhere.Configuration.Engine;
 
+/// <summary>
+/// Shares type-only readers without retaining collectible key types or per-engine serializer options.
+/// </summary>
 internal static class DictionaryKeyReader
 {
-    private static readonly ConcurrentDictionary<Type, Func<string, object?>> Readers = [];
+    private static readonly ConditionalWeakTable<Type, Func<string, JsonSerializerOptions, object?>> Readers = new();
 
-    public static Func<string, object?> Create(Type keyType) =>
-        keyType == typeof(string) ?
-            static keyText => keyText :
-            Readers.GetOrAdd(keyType, CreateCore);
+    /// <summary>
+    /// Gets a reader whose caller supplies the current engine's serialization contract on every invocation.
+    /// </summary>
+    public static Func<string, JsonSerializerOptions, object?> Create(Type keyType)
+    {
+        return keyType == typeof(string) ? static (keyText, _) => keyText : Readers.GetValue(keyType, CreateCore);
+    }
 
-    private static Func<string, object?> CreateCore(Type keyType)
+    /// <summary>
+    /// Closes the generic reader over a key type without capturing options or plugin services.
+    /// </summary>
+    private static Func<string, JsonSerializerOptions, object?> CreateCore(Type keyType)
     {
         var readerType = typeof(DictionaryKeyReader<>).MakeGenericType(keyType);
-        var method = readerType.GetMethod(
-                nameof(DictionaryKeyReader<int>.ReadObject),
-                BindingFlags.Public | BindingFlags.Static) ??
-            throw new MissingMethodException(readerType.FullName, nameof(DictionaryKeyReader<int>.ReadObject));
-
-        return (Func<string, object?>)method.CreateDelegate(typeof(Func<string, object?>));
+        var method = readerType.GetMethod(nameof(DictionaryKeyReader<>.ReadObject), BindingFlags.Public | BindingFlags.Static) ??
+            throw new MissingMethodException(readerType.FullName, nameof(DictionaryKeyReader<>.ReadObject));
+        return method.CreateDelegate<Func<string, JsonSerializerOptions, object?>>();
     }
 }
 
@@ -55,11 +59,16 @@ internal static class DictionaryKeyReader
 /// public serializer to preserve dictionary-key semantics.
 /// </para>
 /// </remarks>
-internal static class DictionaryKeyReader<TKey>
+public static class DictionaryKeyReader<TKey>
 {
-    public static object? ReadObject(string keyText) =>
-        Read(keyText, SettingsEngineJson.SerializerOptions);
+    /// <summary>
+    /// Reads a key using the settings engine's explicitly supplied serialization metadata.
+    /// </summary>
+    public static object? ReadObject(string keyText, JsonSerializerOptions options) => Read(keyText, options);
 
+    /// <summary>
+    /// Applies STJ dictionary-key conversion with the current engine's options.
+    /// </summary>
     public static TKey Read(string keyText, JsonSerializerOptions options)
     {
         if (typeof(TKey) == typeof(string))
@@ -69,7 +78,6 @@ internal static class DictionaryKeyReader<TKey>
 
         var converter = GetDictionaryKeyConverter(options);
         var buffer = new ArrayBufferWriter<byte>();
-
         using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Encoder = options.Encoder }))
         {
             writer.WriteStartObject();
@@ -96,9 +104,9 @@ internal static class DictionaryKeyReader<TKey>
             var typeInfo = (JsonTypeInfo<TKey>)options.GetTypeInfo(typeof(TKey));
             return GetEffectiveConverter(typeInfo);
         }
-        catch (NotSupportedException)
+        catch (NotSupportedException) when (ReferenceEquals(options, SettingsEngineJson.SerializerOptions))
         {
-            // Test-only and plugin-provided settings types may be patched by
+            // Application and test settings types may be patched by
             // descriptors without being rooted in the generated serializer
             // context. STJ dictionary converters use KeyTypeInfo when it is
             // available. Calling JsonSerializerOptions.GetConverter() would

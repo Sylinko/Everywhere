@@ -8,7 +8,7 @@ Users who upgrade should not lose custom assistant prompts. Duplicate prompt bod
 
 ## 2. Preconditions
 
-SettingsEngine is assumed to own settings load/save and to run in the `AsyncInitializerIndex.Settings` phase.
+SettingsInitializer prepares application settings in the `AsyncInitializerIndex.Settings` phase and owns the `SettingsEngine<Settings>` persistence lifetime.
 
 Prompt Manager migration is a post-settings migration because prompt text moves from `settings.json` into `prompt.db`.
 
@@ -59,7 +59,7 @@ The product should avoid creating empty user prompt resources.
 
 Migration has two parts:
 
-1. SettingsEngine runs normal versioned settings migrations and patches the singleton `Settings` object.
+1. SettingsInitializer runs normal versioned settings migrations and patches the singleton `Settings` object.
 2. Prompt Manager runs a `Settings + 1` initializer that imports old `SystemPrompt` strings into `prompt.db`, updates `SystemPromptId`, and then removes the old JSON field.
 
 The old direct prompt field should remain available in the JSON document until the Prompt Manager importer has successfully committed the database changes and prompt references. Do not remove it in an earlier settings-only migration.

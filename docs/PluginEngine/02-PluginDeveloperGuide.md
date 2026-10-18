@@ -338,6 +338,13 @@ context.Register(
 
 This makes this particular subscription reversible; it does not remove unrelated registrations made by the control. A plugin-owned static field is not inherently an unload leak: the problematic path is a surviving host/framework object retaining a plugin type, delegate or instance. Do not clear shared framework tables through reflection or unregister host types as a generic workaround. Use the engine's collection result to determine whether the current process can safely continue changing plugins. Source-reviewed limits and experimentally confirmed behavior are separated in [Validation](03-Validation.md#avalonia-cleanup-evidence-and-limits).
 
+### Persist plugin settings
+
+Use context.OpenSettingsAsync to obtain SettingsEngine<TSettings> when the plugin needs application
+JSON patching, observation and migration behavior with its own document. Follow the [settings developer guide](06-SettingsDeveloperGuide.md)
+to declare metadata, open settings during initialization and save them during entry disposal.
+Presentation is independent; the optional plugin-wide registry is a separate integration.
+
 ## 5. Dependencies and conditional code
 
 Multiple plugins can share types because the loader selects one assembly instance per managed simple name. A conflicting dependency version is rejected rather than hidden in a private copy with incompatible type identity. Host assemblies and the lifecycle contract must not be shipped as competing plugin-owned DLLs.

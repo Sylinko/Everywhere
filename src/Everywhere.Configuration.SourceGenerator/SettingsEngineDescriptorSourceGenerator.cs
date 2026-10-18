@@ -3,17 +3,18 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 using Everywhere.SourceGeneration;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
 
 namespace Everywhere.Configuration.SourceGenerator;
 
 /// <summary>
-/// Generates SettingsEngine descriptor metadata for the application settings graph.
+/// Generates SettingsEngine descriptor metadata for application settings and explicitly declared plugin roots.
 /// </summary>
 /// <remarks>
 /// The generated provider mirrors <c>ReflectionSettingsDescriptorProvider</c>
-/// metadata without emitting reflection-based property accessors. It is only
-/// produced for the assembly that owns <c>Everywhere.Configuration.Settings</c>.
+/// metadata without emitting reflection-based property accessors. The application root is automatic;
+/// plugin providers opt in with <c>GeneratedSettingsDescriptorAttribute</c>.
 /// </remarks>
 [Generator(LanguageNames.CSharp)]
 public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenerator
@@ -44,7 +45,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var models = context.CompilationProvider.Select(static (compilation, token) =>
+        var host = context.CompilationProvider.Select(static (compilation, token) =>
         {
             if (compilation.GetTypeByMetadataName("Everywhere.Configuration.Engine.ISettingsDescriptorProvider") is null ||
                 compilation.GetTypeByMetadataName("Everywhere.Configuration.Settings") is not { } root ||
@@ -53,18 +54,71 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
                 return null;
             }
 
-            return new DescriptorModel(BuildModels(compilation, root, token));
+            return new ProviderModel("Settings.GeneratedDescriptorProvider.g.cs", null, null, BuildModels(compilation, root, token));
         }).WithTrackingName("HostDescriptorModel");
 
-        var sources = models.Select(static (model, token) => model is null ? null : GenerateSource(model.Types, token))
-            .WithTrackingName("HostDescriptorSource");
-        context.RegisterSourceOutput(sources, static (production, source) =>
+        var plugins = context.SyntaxProvider.ForAttributeWithMetadataName(
+            "Everywhere.Configuration.GeneratedSettingsDescriptorAttribute",
+            static (node, _) => node is TypeDeclarationSyntax,
+            static (attributeContext, token) => AnalyzeProvider(attributeContext, token));
+
+        context.RegisterSourceOutput(plugins, static (production, result) =>
         {
-            if (source is not null)
+            foreach (var diagnostic in result.Diagnostics)
             {
-                production.AddSource("Settings.GeneratedDescriptorProvider.g.cs", source);
+                production.ReportDiagnostic(diagnostic);
             }
         });
+
+        var pluginModels = plugins.Select(static (result, _) => result.Model).WithTrackingName("PluginDescriptorModel");
+        var hostSources = host.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("HostDescriptorSource");
+        var pluginSources = pluginModels.Select(static (model, token) => GenerateProvider(model, token)).WithTrackingName("PluginDescriptorSource");
+        context.RegisterSourceOutput(hostSources, static (production, source) => Emit(production, source));
+        context.RegisterSourceOutput(pluginSources, static (production, source) => Emit(production, source));
+    }
+
+    /// <summary>
+    /// Resolves an explicitly annotated provider without enumerating unrelated compilation types.
+    /// </summary>
+    private static AnalysisResult<ProviderModel> AnalyzeProvider(GeneratorAttributeSyntaxContext context, CancellationToken token)
+    {
+        var analysis = new AnalysisContext(token);
+        var compilation = context.SemanticModel.Compilation;
+        var type = (INamedTypeSymbol)context.TargetSymbol;
+        if (compilation.GetTypeByMetadataName("Everywhere.Configuration.Engine.ISettingsDescriptorProvider") is null ||
+            context.Attributes[0].ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol root)
+        {
+            return analysis.Complete<ProviderModel>(null);
+        }
+
+        if (!type.IsPartial(token) || type.ContainingType is not null || type.IsGenericType || type.IsStatic || type.TypeKind != TypeKind.Class)
+        {
+            analysis.ReportDiagnostic(Diagnostic.Create(Diagnostics.InvalidDescriptorProvider, type.Locations.FirstOrDefault(), type.Name));
+            return analysis.Complete<ProviderModel>(null);
+        }
+
+        return analysis.Complete(new ProviderModel(
+            type.ToDisplayString().Replace('.', '_') + ".SettingsDescriptors.g.cs",
+            type.GetNamespace(), type.Name, BuildModels(compilation, root, token)));
+    }
+
+    /// <summary>
+    /// Formats only providers whose value models changed.
+    /// </summary>
+    private static (string HintName, string Source)? GenerateProvider(ProviderModel? model, CancellationToken token)
+    {
+        return model is null ? null : (model.HintName, GenerateSource(model.Types, model.Namespace, model.Name, token));
+    }
+
+    /// <summary>
+    /// Adds one independently generated provider file.
+    /// </summary>
+    private static void Emit(SourceProductionContext context, (string HintName, string Source)? source)
+    {
+        if (source is { } value)
+        {
+            context.AddSource(value.HintName, value.Source);
+        }
     }
 
     private static EquatableArray<TypeModel> BuildModels(Compilation compilation, INamedTypeSymbol settingsType, CancellationToken token)
@@ -267,27 +321,33 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
             childType is null ? null : FormatType(childType));
     }
 
-    private static string GenerateSource(EquatableArray<TypeModel> models, CancellationToken token)
+    private static string GenerateSource(EquatableArray<TypeModel> models, string? providerNamespace, string? providerName, CancellationToken token)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
-        sb.Append("namespace ").Append(EngineNamespace).AppendLine(";");
+        if (providerNamespace != string.Empty)
+        {
+            sb.Append("namespace ").Append(providerNamespace ?? EngineNamespace).AppendLine(";");
+        }
         sb.AppendLine();
-        sb.AppendLine("internal static partial class SettingsDescriptorProviderFactory");
-        sb.AppendLine("{");
-        sb.Append("    static partial void TryCreateGenerated(ref ")
-            .Append(EngineGlobalPrefix)
-            .AppendLine(".ISettingsDescriptorProvider? provider)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        provider = new GeneratedSettingsDescriptorProvider();");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
-        sb.AppendLine();
-        sb.Append("internal sealed class GeneratedSettingsDescriptorProvider : ")
-            .Append(EngineGlobalPrefix)
-            .AppendLine(".ISettingsDescriptorProvider");
+        if (providerName is null)
+        {
+            sb.AppendLine("internal static partial class SettingsDescriptorProviderFactory");
+            sb.AppendLine("{");
+            sb.Append("    static partial void TryCreateGenerated(ref ")
+                .Append(EngineGlobalPrefix)
+                .AppendLine(".ISettingsDescriptorProvider? provider)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        provider = new GeneratedSettingsDescriptorProvider();");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        sb.Append(providerName is null ? "internal sealed class GeneratedSettingsDescriptorProvider" : "partial class " + providerName)
+            .Append(" : ").Append(EngineGlobalPrefix).AppendLine(".ISettingsDescriptorProvider");
         sb.AppendLine("{");
         sb.AppendLine("    private readonly global::System.Threading.Lock _gate = new();");
         sb.Append("    private readonly global::System.Collections.Generic.Dictionary<global::System.Type, ")
@@ -304,8 +364,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         sb.AppendLine("        return value is null ? default! : (T)value;");
         sb.AppendLine("    }");
         sb.AppendLine();
-        sb.AppendLine("    // Generated descriptors cover the known Settings graph; the fallback keeps");
-        sb.AppendLine("    // tests and future extension types working until the generator learns them.");
+        sb.AppendLine("    /// <inheritdoc />");
         sb.Append("    public ")
             .Append(EngineGlobalPrefix)
             .AppendLine(".ISettingsDescriptor GetDescriptor(global::System.Type type)");
@@ -398,7 +457,7 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
         var childDescriptor = property.ChildType is null ? "null" : $"GetDescriptor(typeof({property.ChildType}))";
         var dictionaryKeyReader = property.DictionaryKeyType is null ?
             "null" :
-            $"static keyText => {EngineGlobalPrefix}.DictionaryKeyReader<{property.DictionaryKeyType}>.ReadObject(keyText)";
+            $"static (keyText, options) => {EngineGlobalPrefix}.DictionaryKeyReader<{property.DictionaryKeyType}>.ReadObject(keyText, options)";
 
         sb.Append("                new ")
             .Append(EngineGlobalPrefix)
@@ -1015,7 +1074,12 @@ public sealed class SettingsEngineDescriptorSourceGenerator : IIncrementalGenera
     );
 
     /// <summary>
-    /// Compares the complete reachable settings graph before formatting the host provider.
+    /// Defines a complete provider output; nested arrays compare by content.
     /// </summary>
-    private sealed record DescriptorModel(EquatableArray<TypeModel> Types);
+    private sealed record ProviderModel(
+        string HintName,
+        string? Namespace,
+        string? Name,
+        EquatableArray<TypeModel> Types);
+
 }

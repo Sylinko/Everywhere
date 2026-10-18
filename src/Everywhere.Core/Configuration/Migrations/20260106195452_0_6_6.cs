@@ -10,9 +10,10 @@ namespace Everywhere.Configuration.Migrations;
 /// It has 1 changes:
 /// 1. Set Schema property of CustomAssistant to OpenAI if it is DeepSeek
 /// </summary>
-public class _20260106195452_0_6_6 : SettingsMigration
+public class _20260106195452_0_6_6 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 6, 6);
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 6, 6);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [

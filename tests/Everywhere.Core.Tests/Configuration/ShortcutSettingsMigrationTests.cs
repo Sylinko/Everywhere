@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
@@ -76,9 +77,12 @@ public sealed class ShortcutSettingsMigrationTests
 
     private static void Migrate(string path)
     {
+        using var services = new ServiceCollection()
+            .AddSettingsMigration<_20260614154350_0_8_0>()
+            .BuildServiceProvider();
         var migrator = new SettingsMigrator(
             path,
-            [new _20260614154350_0_8_0()],
+            services,
             Substitute.For<ILogger>());
 
         migrator.Migrate();

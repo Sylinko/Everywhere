@@ -6,15 +6,13 @@ The first SettingsEngine migration is a narrow cleanup, not a legacy string-to-t
 
 Existing `settings.json` files already store typed JSON values. The migration should only remove shapes that are known to be obsolete or unnecessarily verbose before the SettingsEngine binder reads the document.
 
-Settings migrations run during `SettingsEngine.InitializeAsync()`, not during service registration.
+SettingsInitializer runs settings migrations through its `IAsyncInitializer.InitializeAsync` implementation, not during service registration.
 
 ## 2. Version Gate
 
-Use the existing settings version gate:
-
-```text
-Settings.Version
-```
+Use the root `"Version"` field in settings.json as the migration version gate. It is document
+metadata, not a property of the runtime Settings model. Binding excludes it; normal saves preserve
+it in the stored document.
 
 Do not introduce a separate migration ledger for this cleanup. The migration must remain idempotent and should skip safely once the target version has been reached.
 
@@ -47,12 +45,12 @@ Some migrations need another local store, such as Prompt Manager moving old assi
 
 Use this lifecycle instead:
 
-1. SettingsEngine migrates and patches settings at `AsyncInitializerIndex.Settings`.
+1. SettingsInitializer migrates and patches settings at `AsyncInitializerIndex.Settings`.
 2. The feature owns a later initializer, usually `Settings + 1`, that reads the patched settings and any required preserved JSON fields.
 3. The feature commits its own database changes.
 4. Only after the feature commit succeeds, it edits the settings JSON through the internal document-editing infrastructure and flushes the result.
 
-The feature migration must be idempotent independently of `Settings.Version`. Version gating is useful but cannot be the only correctness check when a migration spans settings and a database.
+The feature migration must be idempotent independently of the document's `"Version"` metadata. Version gating is useful but cannot be the only correctness check when a migration spans settings and a database.
 
 ## 6. Tests
 

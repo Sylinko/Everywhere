@@ -11,9 +11,10 @@ namespace Everywhere.Configuration.Migrations;
 /// 1. Migrate API keys stored in Windows Credential Manager from "com.sylinko.everywhere.apikeys/[GUID]" to "com.sylinko.everywhere/[GUID]"
 /// 2. Flatten SystemPrompt property of CustomAssistant from a Customizable{string} to a simple string
 /// </summary>
-public class _20260106195452_0_5_9 : SettingsMigration
+public class _20260106195452_0_5_9 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 5, 9);
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 5, 9);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks =>
     [
