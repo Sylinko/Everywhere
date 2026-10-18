@@ -17,6 +17,9 @@ internal sealed class PluginContext(PluginDefinition definition, IServiceProvide
     public CancellationToken Stopping => _stopping.Token;
 
     /// <inheritdoc />
+    public PluginStopReason? StopReason { get; private set; }
+
+    /// <inheritdoc />
     public IPluginCatalog Plugins { get; } = plugins;
 
     /// <inheritdoc />
@@ -42,8 +45,9 @@ internal sealed class PluginContext(PluginDefinition definition, IServiceProvide
     /// <summary>
     /// Closes registration before cancellation callbacks run. Cancellation failures are reported by the caller.
     /// </summary>
-    internal void BeginStopping()
+    internal void BeginStopping(PluginStopReason reason)
     {
+        StopReason = reason;
         _resources.Close();
         _stopping.Cancel();
     }

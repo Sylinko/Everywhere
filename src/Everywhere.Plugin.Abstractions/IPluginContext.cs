@@ -22,6 +22,12 @@ public interface IPluginContext
     CancellationToken Stopping { get; }
 
     /// <summary>
+    /// Gets the reason assigned before Stopping is signaled, or null while the activation is running.
+    /// A disposal already started for unloading keeps its original reason when exit joins it.
+    /// </summary>
+    PluginStopReason? StopReason { get; }
+
+    /// <summary>
     /// Gets activation-relative availability and host-owned information snapshots.
     /// </summary>
     IPluginCatalog Plugins { get; }

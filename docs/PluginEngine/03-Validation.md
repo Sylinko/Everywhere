@@ -1,4 +1,4 @@
-# Plugin validation
+﻿# Plugin validation
 
 ## Current regression coverage
 
@@ -10,6 +10,10 @@ PluginPackageStore without loading plugin code. Metadata and packaging do not re
 
 DynamicLocaleKeyTests check case-insensitive language lookup, order-independent equality/hashing,
 JSON and MessagePack round trips, and parent/English fallback. Text values remain case-sensitive.
+
+Plugin stop-reason tests exercise real collectible entries during hot unload, completed
+initialization failure and ordinary exit, including a pending initializer. Cancellation callbacks and
+entry disposal observe the assigned reason, and exit joining timed-out retirement keeps Unload.
 
 The runtime separates registered reversal of application changes from optional entry disposal.
 Normal DI disposal releases the engine and its entries without draining registered reversal containers.

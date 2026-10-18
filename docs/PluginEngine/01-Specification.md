@@ -1,4 +1,4 @@
-# Plugin Engine Specification
+﻿# Plugin Engine Specification
 
 This document defines the product contract and architecture. [Plugin Developer Guide](02-PluginDeveloperGuide.md) describes author responsibilities and available APIs. [Validation](03-Validation.md) records the evidence, deployment measurements and remaining release gates. These documents replace chronological implementation reports.
 
@@ -217,6 +217,9 @@ repeat disposal or join an in-flight first call; the lifecycle owner must await 
 Host-managed container failures are converted to text before collection checks. Failed or timed-out
 assembly reversal blocks dependency cleanup and requires restart. Timeout does not abort code; retain
 unfinished operations and their owners. UI-bound reversal handles must dispatch their own cleanup.
+
+IPluginContext.StopReason is set before Stopping: Unload for hot retirement and initialization-failure
+cleanup, Exit for process shutdown. A retirement already in progress keeps its reason if exit joins it.
 
 Hot retirement proceeds in this order: close activation registration and signal Stopping, await
 optional entry disposal, reverse activation registrations, then reverse retiring assembly registrations

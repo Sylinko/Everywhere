@@ -101,7 +101,7 @@ internal sealed class PluginActivation(
             return new CallbackResult(false, "A lifecycle operation is still running.");
         }
 
-        _pending = _disposalTask ??= InvokeAsync(() => DisposeInstanceAsync(null));
+        _pending = _disposalTask ??= InvokeAsync(() => DisposeInstanceAsync(null, PluginStopReason.Unload));
         var result = await WaitForCallbackAsync(_pending, timeout).ConfigureAwait(false);
 
         if (!result.IsCompleted || result.Error is not null) return result;
@@ -126,7 +126,7 @@ internal sealed class PluginActivation(
         if (_disposalTask is null)
         {
             var initialization = _pending;
-            _disposalTask = InvokeAsync(() => DisposeInstanceAsync(initialization));
+            _disposalTask = InvokeAsync(() => DisposeInstanceAsync(initialization, PluginStopReason.Exit));
         }
         else if (_pending is { } pending)
         {
@@ -146,11 +146,11 @@ internal sealed class PluginActivation(
     /// fall back to IDisposable. Pending initialization is canceled before it is joined, but entry
     /// disposal never overlaps it. A throwing cancellation callback must not skip entry disposal.
     /// </summary>
-    private async Task DisposeInstanceAsync(Task<string?>? initialization)
+    private async Task DisposeInstanceAsync(Task<string?>? initialization, PluginStopReason reason)
     {
         try
         {
-            context.BeginStopping();
+            context.BeginStopping(reason);
         }
         finally
         {
