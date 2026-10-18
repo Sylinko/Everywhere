@@ -7,7 +7,6 @@ using Everywhere.ProcessIsolation.Automation;
 using Everywhere.TextSelection;
 using Everywhere.Views;
 using Lucide.Avalonia;
-using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
 
 namespace Everywhere.Configuration;
@@ -42,10 +41,10 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.TextSelectionSettings_IsToolbarEnabled_Header)]
     [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
-    public SettingsControl<AsyncToggleSwitch> ToolbarMonitoringControl { get; } = new(
-        sp =>
+    public SettingsControl<AsyncToggleSwitch> ToolbarMonitoringControl => new(
+        () =>
         {
-            var controller = sp.GetRequiredService<TextSelectionController>();
+            var controller = GetRequiredService<TextSelectionController>();
             var control = new AsyncToggleSwitch
             {
                 Command = controller.SetToolbarEnabledCommand,
@@ -67,7 +66,7 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
         IsVisibleBindingPath = nameof(IsToolbarEnabled),
         Classes = ["FullWidth", "NoHeading"],
         Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
-    public SettingsControl<TextSelectionToolbarPreview> ToolbarPreview { get; } = new();
+    public SettingsControl<TextSelectionToolbarPreview> ToolbarPreview => new(ServiceProvider);
 
     /// <summary>
     /// Gets or sets the toolbar opacity, from 0.1 to fully opaque.
@@ -132,7 +131,7 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
         IsVisibleBindingPath = nameof(IsToolbarEnabled),
         Classes = ["FullWidth", "NoHeading"],
         Group = LocaleKey.TextSelectionSettings_Group_Toolbar)]
-    public SettingsControl<TextSelectionToolbarActionsControl> ToolbarActionsControl { get; } = new();
+    public SettingsControl<TextSelectionToolbarActionsControl> ToolbarActionsControl => new(ServiceProvider);
 
     /// <summary>
     /// Gets or sets the last acknowledged automatic attachment intent.
@@ -146,10 +145,10 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
         LocaleKey.TextSelectionSettings_IsAutomaticAttachmentEnabled_Header,
         LocaleKey.TextSelectionSettings_IsAutomaticAttachmentEnabled_Description)]
     [SettingsItem(Group = LocaleKey.TextSelectionSettings_Group_ChatWindow)]
-    public SettingsControl<AsyncToggleSwitch> AutomaticAttachmentControl { get; } = new(
-        sp =>
+    public SettingsControl<AsyncToggleSwitch> AutomaticAttachmentControl => new(
+        () =>
         {
-            var controller = sp.GetRequiredService<TextSelectionController>();
+            var controller = GetRequiredService<TextSelectionController>();
             var control = new AsyncToggleSwitch
             {
                 Command = controller.SetAutomaticAttachmentEnabledCommand,
@@ -175,9 +174,9 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
     [SettingsItem(Classes = ["FullWidth", "NoHeading"], Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
-    public SettingsControl<TextSelectionApplicationsControl> ExcludedApplicationsControl => new(sp =>
+    public SettingsControl<TextSelectionApplicationsControl> ExcludedApplicationsControl => new(() =>
     {
-        var control = sp.GetRequiredService<TextSelectionApplicationsControl>();
+        var control = GetRequiredService<TextSelectionApplicationsControl>();
         control.HeaderKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ExcludedApplications_Header);
         control.DescriptionKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ExcludedApplications_Description);
         control.IsCompatibilityHintVisible = true;
@@ -194,9 +193,9 @@ public sealed partial class TextSelectionSettings(IServiceProvider serviceProvid
         IsVisibleBindingPath = nameof(IsToolbarEnabled),
         Classes = ["FullWidth", "NoHeading"],
         Group = LocaleKey.TextSelectionSettings_Group_Advanced)]
-    public SettingsControl<TextSelectionApplicationsControl> ToolbarExcludedApplicationsControl => new(sp =>
+    public SettingsControl<TextSelectionApplicationsControl> ToolbarExcludedApplicationsControl => new(() =>
     {
-        var control = sp.GetRequiredService<TextSelectionApplicationsControl>();
+        var control = GetRequiredService<TextSelectionApplicationsControl>();
         control.HeaderKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarExcludedApplications_Header);
         control.DescriptionKey = new DynamicLocaleKey(LocaleKey.TextSelectionSettings_ToolbarExcludedApplications_Description);
         control[!TextSelectionApplicationsControl.ApplicationsProperty] = CompiledBinding.Create(

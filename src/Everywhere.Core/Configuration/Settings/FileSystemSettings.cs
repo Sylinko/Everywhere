@@ -49,7 +49,7 @@ public sealed partial class FileSystemSettings : ObservableObject
     [JsonIgnore]
     [DynamicLocaleKey(LocaleKey.FileSystemSettings_ApprovalPaths_Header, LocaleKey.FileSystemSettings_ApprovalPaths_Description)]
     [SettingsItem(Classes = ["FullWidth"])]
-    public SettingsControl<FileSystemSettingsControl> ApprovalPathsControl => new(_ => new FileSystemSettingsControl(this));
+    public SettingsControl<FileSystemSettingsControl> ApprovalPathsControl => new(() => new FileSystemSettingsControl(this));
 
     /// <summary>
     /// Returns whether every supplied path is covered by at least one configured approval glob.

@@ -7,7 +7,9 @@ namespace Everywhere.Configuration;
 
 public sealed partial class PluginSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
 {
-    /// <summary>Gets or sets the approval mode captured by newly started turns.</summary>
+    /// <summary>
+    /// Gets or sets the approval mode captured by newly started turns.
+    /// </summary>
     [ObservableProperty]
     public partial ToolApprovalMode ApprovalMode { get; set; }
 
@@ -33,22 +35,22 @@ public sealed partial class PluginSettings(IServiceProvider serviceProvider) : S
     public ObservableDictionary<Guid, McpTransportConfiguration> McpChatPlugins { get; } = new();
 
     /// <summary>
-    /// Gets or sets the web search engine settings.
+    /// Gets the web search engine settings.
     /// </summary>
-    public WebSearchEngineSettings WebSearchEngine { get; set; } = new();
+    public WebSearchEngineSettings WebSearchEngine { get; } = new(serviceProvider);
 
     /// <summary>
     /// Gets the file-system path approval settings.
     /// </summary>
-    public FileSystemSettings FileSystem { get; set; } = new();
+    public FileSystemSettings FileSystem { get; } = new();
 
     /// <summary>
-    /// Gets or sets the web browser settings.
+    /// Gets the web browser settings.
     /// </summary>
-    public WebBrowserSettings WebBrowser { get; set; } = new();
+    public WebBrowserSettings WebBrowser { get; } = new(serviceProvider);
 
     /// <summary>
-    /// Gets or sets the terminal settings.
+    /// Gets the terminal settings.
     /// </summary>
-    public TerminalPluginSettings Terminal { get; set; } = new();
+    public TerminalPluginSettings Terminal { get; } = new();
 }

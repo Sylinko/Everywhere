@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using Avalonia.Data;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Views;
-using Microsoft.Extensions.DependencyInjection;
 using Riok.Mapperly.Abstractions;
 
 namespace Everywhere.AI;
@@ -13,7 +13,7 @@ public sealed partial class OfficialAssistantConfiguration
     [MapperIgnore]
     [DynamicLocaleKey(LocaleKey.Empty)]
     public SettingsControl<OfficialModelDefinitionSelector> ModelDefinitionSelector =>
-        new(serviceProvider => new OfficialModelDefinitionSelector(serviceProvider, this));
+        new(() => new OfficialModelDefinitionSelector(ServiceLocator.Resolve<IServiceProvider>(), this));
 }
 
 public sealed partial class PresetAssistantConfiguration
@@ -31,9 +31,7 @@ public sealed partial class PresetAssistantConfiguration
         LocaleKey.CustomAssistant_ModelProviderTemplate_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<PresetModelProviderSelector> ModelProviderSelector =>
-        new(serviceProvider => new PresetModelProviderSelector(
-            this,
-            serviceProvider.GetRequiredService<AssistantCatalog>()));
+        new(() => new PresetModelProviderSelector(this, ServiceLocator.Resolve<AssistantCatalog>()));
 
     [JsonIgnore]
     [MapperIgnore]
@@ -41,8 +39,8 @@ public sealed partial class PresetAssistantConfiguration
         LocaleKey.Assistant_ApiKey_Header,
         LocaleKey.Assistant_ApiKey_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(serviceProvider =>
-        new ApiKeyComboBox(serviceProvider.GetRequiredService<Settings>().Model.ApiKeys)
+    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(() =>
+        new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
             [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
                 (PresetAssistantConfiguration configuration) => configuration.ApiKey,
@@ -64,9 +62,9 @@ public sealed partial class PresetAssistantConfiguration
         LocaleKey.CustomAssistant_ModelDefinitionTemplate_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<PresetModelDefinitionSelector> ModelDefinitionSelector =>
-        new(serviceProvider => new PresetModelDefinitionSelector(
-            serviceProvider.GetRequiredService<IPresetModelProvider>(),
-            serviceProvider.GetRequiredService<AssistantCatalog>(),
+        new(() => new PresetModelDefinitionSelector(
+            ServiceLocator.Resolve<IPresetModelProvider>(),
+            ServiceLocator.Resolve<AssistantCatalog>(),
             this));
 }
 
@@ -76,7 +74,7 @@ public sealed partial class AdvancedAssistantConfiguration
     [MapperIgnore]
     [DynamicLocaleKey(LocaleKey.Assistant_Endpoint_Header, LocaleKey.Assistant_Endpoint_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<PreviewEndpointTextBox> PreviewEndpointControl => new(_ =>
+    public SettingsControl<PreviewEndpointTextBox> PreviewEndpointControl => new(() =>
         new PreviewEndpointTextBox
         {
             MinWidth = 320d,
@@ -94,8 +92,8 @@ public sealed partial class AdvancedAssistantConfiguration
     [MapperIgnore]
     [DynamicLocaleKey(LocaleKey.Assistant_ApiKey_Header, LocaleKey.Assistant_ApiKey_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(serviceProvider =>
-        new ApiKeyComboBox(serviceProvider.GetRequiredService<Settings>().Model.ApiKeys)
+    public SettingsControl<ApiKeyComboBox> ApiKeyControl => new(() =>
+        new ApiKeyComboBox(ServiceLocator.Resolve<Settings>().Model.ApiKeys)
         {
             [!ApiKeyComboBox.SelectedIdProperty] = CompiledBinding.Create(
                 (AdvancedAssistantConfiguration configuration) => configuration.ApiKey,
@@ -107,7 +105,7 @@ public sealed partial class AdvancedAssistantConfiguration
     [MapperIgnore]
     [DynamicLocaleKey(LocaleKey.Assistant_InputModalities_Header, LocaleKey.Assistant_InputModalities_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(_ =>
+    public SettingsControl<ModalitiesSelector> InputModalitiesSelector => new(() =>
         new ModalitiesSelector
         {
             [!ModalitiesSelector.ModalitiesProperty] = CompiledBinding.Create(
