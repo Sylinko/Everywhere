@@ -3,6 +3,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using Everywhere.Plugin.Packaging;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Loading;
 
@@ -81,9 +82,10 @@ internal sealed class AssemblyArtifact
             CultureName = reader.GetString(definition.Culture)
         };
         Identity.SetPublicKey(reader.GetBlobBytes(definition.PublicKey));
-        References = [.. reader.AssemblyReferences.Select(handle => ReadReference(reader, handle))];
+        References = reader.AssemblyReferences.AsValueEnumerable().Select(handle => ReadReference(reader, handle)).ToArray();
 
         if (definition.GetCustomAttributes()
+            .AsValueEnumerable()
             .Any(handle => GetAttributeName(reader, handle) == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute"))
         {
             throw new PluginValidationException("ReferenceAssembly", $"'{Path}' is a compile-time reference assembly.");
@@ -106,7 +108,7 @@ internal sealed class AssemblyArtifact
                 current = currentType.GetDeclaringType();
             }
 
-            requirements.Add(GetTypeName(reader, handle), conditions.Distinct(StringComparer.Ordinal).ToArray());
+            requirements.Add(GetTypeName(reader, handle), conditions.AsValueEnumerable().Distinct(StringComparer.Ordinal).ToArray());
             declaredRequirements.UnionWith(conditions);
 
             foreach (var methodHandle in type.GetMethods())
@@ -125,7 +127,8 @@ internal sealed class AssemblyArtifact
                 if (header.IsGeneric) signature.ReadCompressedInteger();
                 var parameterCount = signature.ReadCompressedInteger();
 
-                if (parameterCount == 0 && type.GetGenericParameters().Count == 0 &&
+                if (parameterCount == 0 &&
+                    type.GetGenericParameters().Count == 0 &&
                     (type.Attributes & TypeAttributes.Abstract) == 0 &&
                     (type.Attributes & TypeAttributes.VisibilityMask) == TypeAttributes.Public)
                 {
@@ -146,7 +149,9 @@ internal sealed class AssemblyArtifact
     {
         return Fingerprint == other.Fingerprint &&
             Satellites.Count == other.Satellites.Count &&
-            Satellites.All(pair => other.Satellites.TryGetValue(pair.Key, out var satellite) && satellite.Fingerprint == pair.Value.Fingerprint);
+            Satellites
+                .AsValueEnumerable()
+                .All(pair => other.Satellites.TryGetValue(pair.Key, out var satellite) && satellite.Fingerprint == pair.Value.Fingerprint);
     }
 
     /// <summary>

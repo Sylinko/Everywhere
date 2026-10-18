@@ -47,7 +47,7 @@ public sealed partial class PluginEngineTests
         var definition = ResourceDefinition("a", hasStaticConstructorFailure ? "FailedEntry" : "Entry");
         var failed = await engine.ApplyAsync([definition]);
 
-        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(failed));
+        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(failed));
         Assert.That(failed.ResidentAssemblyNames, Is.Empty);
         services.Mode = "normal";
         AssertApplied(await engine.ApplyAsync([ResourceDefinition("a")]));

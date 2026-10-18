@@ -168,7 +168,7 @@ public sealed partial class PluginEngineTests
 
         if (path == "failure")
         {
-            Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(result));
+            Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(result));
             Assert.That(result.ResidentAssemblyNames, Is.Empty);
         }
         else

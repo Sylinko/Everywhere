@@ -42,9 +42,7 @@ public sealed class HostReferenceSetTests
                 "net10.0/win-x64": {
                   "Everywhere.Plugin.Abstractions/1.0.0": {
                     "runtime": {
-                      "lib/net10.0/Everywhere.Plugin.Abstractions.dll": { "assemblyVersion": "1.0.0.0" },
-                      "fr/Everywhere.Plugin.Abstractions.resources.dll": {},
-                      "ignored.pdb": null
+                      "lib/net10.0/Everywhere.Plugin.Abstractions.dll": { "assemblyVersion": "1.0.0.0" }
                     },
                     "dependencies": { "Unused": "1.0.0" }
                   },

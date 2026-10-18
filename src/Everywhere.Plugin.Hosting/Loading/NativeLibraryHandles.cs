@@ -9,8 +9,7 @@ namespace Everywhere.Plugin.Hosting.Loading;
 internal sealed class NativeLibraryHandles
 {
     private readonly Lock _gate = new();
-    private readonly Dictionary<string, nint> _handles = new(
-        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    private readonly Dictionary<string, nint> _handles = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 
     /// <summary>
     /// Acquires one reference per resolved path even when simultaneous P/Invoke resolutions race.

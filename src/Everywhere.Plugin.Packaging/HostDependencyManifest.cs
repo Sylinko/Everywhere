@@ -44,6 +44,22 @@ internal sealed class HostDependencyManifest
         /// Libraries without managed runtime assets leave this dictionary empty.
         /// </summary>
         public Dictionary<string, JsonElement> Runtime { get; set; } = [];
+
+        /// <summary>
+        /// Gets declared satellite paths and their deployment locales, separately from compilation references.
+        /// </summary>
+        public Dictionary<string, ResourceAsset> Resources { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Describes the locale directory used when deploying a resource asset from a package.
+    /// </summary>
+    public sealed class ResourceAsset
+    {
+        /// <summary>
+        /// Gets the culture declared by the dependency manifest.
+        /// </summary>
+        public required string Locale { get; init; }
     }
 
     /// <summary>

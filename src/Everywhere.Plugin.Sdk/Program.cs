@@ -22,7 +22,7 @@ internal static class Program
                     var references = new HostReferenceSet(host);
                     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? ".");
                     await File.WriteAllLinesAsync(output, references.Assemblies.Values.Order(StringComparer.Ordinal));
-                    await File.WriteAllLinesAsync(output + ".runtime.txt", references.RuntimeAssemblies.Values.Order(StringComparer.Ordinal));
+                    await File.WriteAllLinesAsync(output + ".runtime.txt", references.RuntimeAssemblies.Values.Concat(references.ResourceAssemblies).Order(StringComparer.Ordinal));
                     await File.WriteAllTextAsync(
                         output + ".host.json",
                         JsonSerializer.Serialize(references.Descriptor, SdkJsonSerializerContext.Default.PluginHostDescriptor));

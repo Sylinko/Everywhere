@@ -75,7 +75,7 @@ public sealed partial class PluginEngineTests
         var engine = CreateEngine(services);
         var result = await engine.ApplyAsync([Definition("B")]);
 
-        Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(result));
+        Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(result));
         Assert.That(result.ResidentAssemblyNames, Is.Empty);
         Assert.That(engine.Plugins.Single().State, Is.EqualTo(Abstractions.PluginState.Failed));
         Assert.That(engine.Plugins.Single().IsEnabled, Is.True);

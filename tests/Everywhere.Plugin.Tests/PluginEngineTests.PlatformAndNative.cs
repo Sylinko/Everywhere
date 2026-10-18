@@ -39,7 +39,7 @@ public sealed partial class PluginEngineTests
         var consumer = Definition("A");
         consumer.Entry.Dependencies = [consumer.Entry.Dependencies[0] with { IsOptional = false }];
         var result = await engine.ApplyAsync([consumer, PlatformDefinition("osx-arm64")]);
-        Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.Rejected));
+        Assert.That(result.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors));
         Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Code), Does.Contain("MissingDependency"));
         Assert.That(services.Events, Is.Empty);
     }
@@ -97,7 +97,7 @@ public sealed partial class PluginEngineTests
 
         services.Mode = "native-probe";
         var failed = await engine.ApplyAsync([first, second]);
-        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(failed));
+        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(failed));
         Assert.That(Describe(failed), Does.Contain("providers disagree"));
         Assert.That(failed.ResidentAssemblyNames, Is.Empty);
     }

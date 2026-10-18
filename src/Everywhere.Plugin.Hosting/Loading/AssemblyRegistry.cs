@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Hosting.Lifecycle;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Loading;
 
@@ -28,18 +29,34 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
     /// <summary>
     /// Prepares missing owners synchronously, so creation order precedes consumer type materialization.
     /// </summary>
-    internal void Prepare(PluginLoadPlan plan)
+    internal Dictionary<string, string> Prepare(PluginLoadPlan plan)
     {
+        var failures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var name in plan.AssemblyOrder)
         {
             if (_owners.ContainsKey(name)) continue;
 
-            var artifact = plan.Assemblies[name];
-            var owner = new AssemblyOwner(name, this, plan.AssemblyDependencies[name], plan.NativeResolvers[name]);
-            PluginResource.Attach(owner, owner.Resources);
-            _owners[name] = owner;
-            owner.LoadInspected(artifact);
+            if (plan.AssemblyDependencies[name].AsValueEnumerable().Any(failures.ContainsKey))
+            {
+                failures.Add(name, "A selected assembly dependency failed preparation.");
+                continue;
+            }
+
+            try
+            {
+                var artifact = plan.Assemblies[name];
+                var owner = new AssemblyOwner(name, this, plan.AssemblyDependencies[name], plan.NativeResolvers[name]);
+                PluginResource.Attach(owner, owner.Resources);
+                _owners[name] = owner;
+                owner.LoadInspected(artifact);
+            }
+            catch (Exception exception)
+            {
+                failures.Add(name, exception.ToString());
+            }
         }
+
+        return failures;
     }
 
     /// <summary>

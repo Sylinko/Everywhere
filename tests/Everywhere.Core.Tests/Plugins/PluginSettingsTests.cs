@@ -59,7 +59,7 @@ public sealed class PluginSettingsTests
         var marker = Path.Combine(definition.DataDirectory, "fail-initialize");
         File.WriteAllText(marker, string.Empty);
         var failed = await harness.Engine.ApplyAsync([definition]);
-        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(failed));
+        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(failed));
         Assert.That(JsonNode.Parse(File.ReadAllText(file))?["Version"]?.GetValue<string>(), Is.EqualTo("2.0.0"));
         File.Delete(marker);
         AssertApplied(await harness.Engine.ApplyAsync([definition]));
@@ -80,7 +80,7 @@ public sealed class PluginSettingsTests
         File.WriteAllText(file, original);
 
         var failed = await harness.Engine.ApplyAsync([definition]);
-        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(failed));
+        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(failed));
         Assert.That(File.ReadAllText(file), Is.EqualTo(original));
         Assert.That(harness.Trace, Does.Not.Contain("opened:" + definition.Id));
     }

@@ -2,7 +2,7 @@
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Hosting.Lifecycle;
 using Everywhere.Plugin.Hosting.Loading;
-using Everywhere.Plugin.Packaging;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting;
 
@@ -65,7 +65,7 @@ public sealed class PluginEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Applies one desired set. Cancellation is honored while waiting and during preflight, but never abandons
+    /// Applies one desired set in retirement and activation stages. Cancellation is honored before mutation, but never abandons
     /// cleanup after mutation begins. Calls from plugin lifecycle callbacks are rejected before waiting.
     /// </summary>
     public async Task<PluginApplyResult> ApplyAsync(
@@ -85,20 +85,9 @@ public sealed class PluginEngine : IAsyncDisposable
             ObjectDisposedException.ThrowIf(_isDisposing, this);
             if (IsRestartRequired) return Result(PluginApplyStatus.RestartRequired, []);
 
-            PluginLoadPlan next;
-
-            try
-            {
-                next = new PluginLoadPlan(desired, _host);
-            }
-            catch (Exception exception) when (exception is PluginValidationException or IOException or BadImageFormatException)
-            {
-                var code = exception is PluginValidationException validation ? validation.Code : "PreflightFailed";
-                return Result(PluginApplyStatus.Rejected, [Diagnostic(code, exception.ToString())]);
-            }
-
+            var selection = new PluginSelection(desired, _host);
             cancellationToken.ThrowIfCancellationRequested();
-            return await ApplyValidatedAsync(next).ConfigureAwait(false);
+            return await ApplyChangesAsync(selection).ConfigureAwait(false);
         }
         finally
         {
@@ -176,155 +165,127 @@ public sealed class PluginEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Performs the non-cancellable mutation phase while preserving unaffected activations and shared owners.
+    /// Finishes the predetermined retirement scope before validating or loading new activations.
+    /// Explicit removals take effect even if the desired replacement graph is invalid. Survivors
+    /// constrain the new graph; a new conflict never starts another shutdown pass.
     /// </summary>
-    private async Task<PluginApplyResult> ApplyValidatedAsync(PluginLoadPlan next)
+    private async Task<PluginApplyResult> ApplyChangesAsync(PluginSelection selection)
     {
         var diagnostics = new List<PluginDiagnostic>();
-        var affected = FindAffected(next);
-
         foreach (var (id, info) in _snapshots)
         {
             _snapshots[id] = info with
             {
-                IsEnabled = next.RequestedPlugins.ContainsKey(id),
+                IsEnabled = selection.Requested.ContainsKey(id),
                 State = info.State == PluginState.Skipped ? PluginState.Inactive : info.State,
                 SkipReason = null
             };
         }
 
+        if (_plan is { } previous)
+        {
+            var retirement = new PluginRetirementPlan(selection, previous, _activations.Keys);
+            if (!await StopAsync(retirement.PluginOrder, diagnostics).ConfigureAwait(false) ||
+                !await ReleaseAsync(retirement.AssemblyOrder, diagnostics).ConfigureAwait(false))
+            {
+                return RequireRestart(diagnostics);
+            }
+        }
+
+        var next = new PluginLoadPlan(selection, _host, _plan, _activations.Keys.ToHashSet(StringComparer.Ordinal));
+        diagnostics.AddRange(next.Diagnostics);
         foreach (var plugin in next.Plugins.Values)
         {
             if (!_activations.ContainsKey(plugin.Id)) SetState(plugin, PluginState.Inactive, true);
         }
 
-        if (_plan is { } previous)
+        foreach (var plugin in next.RequestedPlugins.Values.AsValueEnumerable().Where(plugin => plugin.SkipReason is not null))
         {
-            if (!await StopAsync(previous.PluginOrder.Reverse().Where(affected.Contains), diagnostics).ConfigureAwait(false))
-            {
-                return RequireRestart(diagnostics);
-            }
-
-            var retained = _activations.Keys.SelectMany(id => previous.PluginAssemblies[id]).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var released = previous.AssemblyOrder.Reverse().Where(name => !retained.Contains(name)).ToArray();
-
-            if (!await ReleaseAsync(released, diagnostics).ConfigureAwait(false)) return RequireRestart(diagnostics);
+            if (!_activations.ContainsKey(plugin.Id)) SetState(plugin, PluginState.Skipped, true);
         }
 
-        foreach (var plugin in next.RequestedPlugins.Values.Where(plugin => plugin.SkipReason is not null))
+        foreach (var (id, state) in next.Failures)
         {
-            SetState(plugin, PluginState.Skipped, true);
+            if (!_activations.ContainsKey(id)) SetState(next.RequestedPlugins[id], state, true);
         }
 
         _plan = next;
-        var added = new List<string>();
-        var isActivationFailed = false;
-
-        try
+        var assemblyFailures = _registry.Prepare(next);
+        foreach (var id in next.PluginOrder)
         {
-            _registry.Prepare(next);
-
-            foreach (var id in next.PluginOrder)
+            if (_activations.ContainsKey(id)) continue;
+            var definition = next.Plugins[id];
+            var unavailable = next.Dependencies[id]
+                .AsValueEnumerable()
+                .Where(dependency => !_activations.TryGetValue(dependency, out var activation) || !activation.IsActive)
+                .ToArray();
+            if (unavailable.Length != 0)
             {
-                if (_activations.ContainsKey(id)) continue;
+                SetState(definition, PluginState.Blocked, true);
+                diagnostics.Add(Diagnostic("DependencyFailed", $"Selected dependencies are not active: {string.Join(", ", unavailable)}.", id));
+                continue;
+            }
 
-                var definition = next.Plugins[id];
-                var entry = next.GetEntry(definition);
-                var conditions = entry.TypeRequirements.GetValueOrDefault(definition.Entry.Type, []);
+            var failedAssemblies = next.PluginAssemblies[id].Where(assemblyFailures.ContainsKey).ToArray();
+            if (failedAssemblies.Length != 0)
+            {
+                SetState(definition, PluginState.Failed, true);
+                diagnostics.Add(
+                    Diagnostic(
+                        "AssemblyPreparationFailed",
+                        string.Join(
+                            Environment.NewLine,
+                            failedAssemblies.Select(name => name + ": " + assemblyFailures[name])),
+                        id));
+                continue;
+            }
 
-                if (conditions.Any(required => !next.Dependencies[id].Contains(required)))
-                {
-                    throw new PluginValidationException("UnavailableEntry", $"Entry '{definition.Entry.Type}' requires an unavailable plugin.");
-                }
-
-                var catalog = new PluginCatalog(definition.Entry.Dependencies.Select(d => d.Id), next.Dependencies[id], _snapshots);
-                var context = new PluginContext(definition, _services, catalog);
-                var activation = new PluginActivation(definition, context, _registry, entry.Identity.Name ?? "");
-                _activations.Add(id, activation);
-                added.Add(id);
-                SetState(definition, PluginState.Initializing, true);
-                var outcome = await activation.InitializeAsync(_options.CallbackTimeout).ConfigureAwait(false);
-
-                if (!outcome.IsCompleted || outcome.Error is not null)
-                {
-                    SetState(definition, PluginState.Failed, true);
-                    diagnostics.Add(Diagnostic("PluginInitializeFailed", $"{id}: {outcome.Error}"));
-
-                    if (!outcome.IsCompleted) return RequireRestart(diagnostics);
-                    isActivationFailed = true;
-                    break;
-                }
-
+            var outcome = await InitializeAsync(next, definition).ConfigureAwait(false);
+            if (outcome is { IsCompleted: true, Error: null })
+            {
                 SetState(definition, PluginState.Active, true);
+                continue;
+            }
+
+            SetState(definition, PluginState.Failed, true);
+            diagnostics.Add(Diagnostic("PluginInitializeFailed", outcome.Error ?? "Initialization timed out.", id));
+            if (!outcome.IsCompleted || !await StopAsync([id], diagnostics).ConfigureAwait(false))
+            {
+                return RequireRestart(diagnostics);
             }
         }
-        catch (Exception exception)
-        {
-            diagnostics.Add(Diagnostic("PluginActivationFailed", exception.ToString()));
-            isActivationFailed = true;
-        }
 
-        if (!isActivationFailed) return Result(PluginApplyStatus.Applied, diagnostics);
-        if (!await StopAsync(added.AsEnumerable().Reverse(), diagnostics).ConfigureAwait(false)) return RequireRestart(diagnostics);
-
-        var preserved = _activations.Keys.SelectMany(id => next.PluginAssemblies[id]).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var failedOwners = next.AssemblyOrder.Reverse().Where(name => !preserved.Contains(name)).ToArray();
-
-        if (!await ReleaseAsync(failedOwners, diagnostics).ConfigureAwait(false)) return RequireRestart(diagnostics);
-        return Result(PluginApplyStatus.ActivationFailed, diagnostics);
+        var retainedOwners = _activations.Keys.SelectMany(id => next.PluginAssemblies[id]).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var unusedOwners = next.AssemblyOrder.Reverse().Where(name => !retainedOwners.Contains(name)).ToArray();
+        if (!await ReleaseAsync(unusedOwners, diagnostics).ConfigureAwait(false)) return RequireRestart(diagnostics);
+        return Result(diagnostics.Count == 0 ? PluginApplyStatus.Applied : PluginApplyStatus.CompletedWithErrors, diagnostics);
     }
 
     /// <summary>
-    /// Includes changes to content and optional bindings, then expands through active logical consumers.
+    /// Contains activation setup and exception conversion outside the cleanup/collection stack.
+    /// The engine retains an activation before invoking any plugin code so partial initialization
+    /// always follows the same disposal path as a successful instance.
     /// </summary>
-    private HashSet<string> FindAffected(PluginLoadPlan next)
+    private async Task<PluginActivation.CallbackResult> InitializeAsync(PluginLoadPlan plan, PluginDefinition definition)
     {
-        var affected = new HashSet<string>(StringComparer.Ordinal);
-        if (_plan is not { } previous) return affected;
-
-        var changedAssemblies = previous.Assemblies.Keys.Where(name =>
-            !next.Assemblies.TryGetValue(name, out var artifact) || !artifact.HasSameContent(previous.Assemblies[name]) ||
-            !previous.AssemblyDependencies[name].SetEquals(next.AssemblyDependencies[name]) ||
-            !previous.NativeResolvers[name].HasSameSources(next.NativeResolvers[name])).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var hasAssemblyChanges = true;
-
-        while (hasAssemblyChanges)
+        try
         {
-            hasAssemblyChanges = false;
-
-            foreach (var (name, dependencies) in previous.AssemblyDependencies)
-            {
-                if (dependencies.Overlaps(changedAssemblies) && changedAssemblies.Add(name)) hasAssemblyChanges = true;
-            }
+            var entry = plan.GetEntry(definition);
+            var catalog = new PluginCatalog(
+                definition.Entry.Dependencies.Select(dependency => dependency.Id),
+                plan.Dependencies[definition.Id],
+                _snapshots);
+            var entryName = entry.Identity.Name ?? string.Empty;
+            var context = new PluginContext(definition, _services, catalog);
+            var activation = new PluginActivation(definition, context, _registry, entryName);
+            _activations.Add(definition.Id, activation);
+            SetState(definition, PluginState.Initializing, true);
+            return await activation.InitializeAsync(_options.CallbackTimeout).ConfigureAwait(false);
         }
-
-        foreach (var (id, activation) in _activations)
+        catch (Exception exception)
         {
-            if (!next.Plugins.TryGetValue(id, out var replacement) ||
-                activation.Definition.Installation.InstallationId != replacement.Installation.InstallationId ||
-                activation.Definition.Entry.Type != replacement.Entry.Type ||
-                activation.Definition.Entry.Assembly != replacement.Entry.Assembly ||
-                !previous.Dependencies[id].SetEquals(next.Dependencies[id]) ||
-                previous.PluginAssemblies[id].Overlaps(changedAssemblies))
-            {
-                affected.Add(id);
-            }
+            return new PluginActivation.CallbackResult(true, exception.ToString());
         }
-
-        var hasChanges = true;
-
-        while (hasChanges)
-        {
-            hasChanges = false;
-
-            foreach (var id in _activations.Keys)
-            {
-                if (previous.Dependencies[id].Overlaps(affected) && affected.Add(id)) hasChanges = true;
-            }
-        }
-
-        return affected;
     }
 
     /// <summary>
@@ -344,7 +305,7 @@ public sealed class PluginEngine : IAsyncDisposable
             if (!outcome.IsCompleted || outcome.Error is not null)
             {
                 SetState(activation.Definition, PluginState.Failed, isEnabled);
-                diagnostics.Add(Diagnostic("PluginRetirementFailed", $"{id}: {outcome.Error}"));
+                diagnostics.Add(Diagnostic("PluginRetirementFailed", outcome.Error ?? "Retirement timed out.", id));
                 return false;
             }
 
@@ -368,7 +329,9 @@ public sealed class PluginEngine : IAsyncDisposable
         }
 
         var references = _registry.Release(names);
+        if (references.Length == 0) return true;
 
+        // TODO: is this efficient enough? It may be better to use a single GC.Collect and then wait for a while, rather than doing multiple collections with delays.
         for (var attempt = 0; attempt < _options.CollectionAttempts; attempt++)
         {
             GC.Collect();
@@ -421,14 +384,26 @@ public sealed class PluginEngine : IAsyncDisposable
         return new PluginApplyResult
         {
             Status = status,
-            ActivePluginIds = _activations.Where(item => item.Value.IsActive).Select(item => item.Key).Order(StringComparer.Ordinal).ToArray(),
-            ResidentAssemblyNames = _registry.Names.Concat(_unconfirmedOwners).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.Ordinal).ToArray(),
-            Diagnostics = diagnostics.ToArray()
+            ActivePluginIds = _activations
+                .AsValueEnumerable()
+                .Where(item => item.Value.IsActive)
+                .Select(item => item.Key).Order(StringComparer.Ordinal)
+                .ToArray(),
+            ResidentAssemblyNames = _registry.Names
+                .AsValueEnumerable()
+                .Concat(_unconfirmedOwners)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+            Diagnostics = [.. diagnostics]
         };
     }
 
     /// <summary>
     /// Creates a diagnostic without retaining the original exception instance.
     /// </summary>
-    private static PluginDiagnostic Diagnostic(string code, string detail) => new() { Code = code, Detail = detail };
+    private static PluginDiagnostic Diagnostic(string code, string detail, string? pluginId = null)
+    {
+        return new PluginDiagnostic { PluginId = pluginId, Code = code, Detail = detail };
+    }
 }

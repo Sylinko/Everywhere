@@ -1,5 +1,6 @@
 ﻿using System.Runtime.Loader;
 using Everywhere.Plugin.Packaging;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Loading;
 
@@ -26,7 +27,8 @@ internal sealed class PluginNativeResolver
     /// </summary>
     internal bool HasSameSources(PluginNativeResolver other)
     {
-        if (!_sources.Values.Any(source => source.HasNativeAssets) && !other._sources.Values.Any(source => source.HasNativeAssets))
+        if (!_sources.Values.AsValueEnumerable().Any(source => source.HasNativeAssets) &&
+            !other._sources.Values.AsValueEnumerable().Any(source => source.HasNativeAssets))
         {
             return true;
         }
@@ -40,8 +42,8 @@ internal sealed class PluginNativeResolver
     /// </summary>
     internal string? Resolve(string name)
     {
-        var paths = _sources.Values.Select(source => source.Resolve(name)).ToArray();
-        var selected = paths.FirstOrDefault(path => path is not null);
+        var paths = _sources.Values.AsValueEnumerable().Select(source => source.Resolve(name)).ToArray();
+        var selected = paths.AsValueEnumerable().FirstOrDefault(path => path is not null);
         if (selected is null) return null;
 
         foreach (var path in paths)
@@ -90,9 +92,12 @@ internal sealed class PluginNativeResolver
             if (resolved is not null) return resolved;
 
             var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-            var matches = nativeFiles.Where(path =>
-                string.Equals(Path.GetFileName(path), name, comparison) ||
-                OperatingSystem.IsWindows() && string.Equals(Path.GetFileName(path), name + ".dll", comparison)).ToArray();
+            var matches = nativeFiles
+                .AsValueEnumerable()
+                .Where(path =>
+                    string.Equals(Path.GetFileName(path), name, comparison) ||
+                    OperatingSystem.IsWindows() && string.Equals(Path.GetFileName(path), name + ".dll", comparison))
+                .ToArray();
 
             return matches.Length switch
             {
