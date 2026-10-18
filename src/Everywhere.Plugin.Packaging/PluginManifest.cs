@@ -21,6 +21,36 @@ public sealed record PluginManifest
     public required string Version { get; init; }
 
     /// <summary>
+    /// Gets or sets localized display names; an empty map leaves the plugin ID as its display name.
+    /// Language tags compare without case; values retain their original spelling.
+    /// </summary>
+    public Dictionary<string, string> Name
+    {
+        get;
+        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+    } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Gets or sets localized short descriptions, independent of platform entries.
+    /// Language tags compare without case; values retain their original spelling.
+    /// </summary>
+    public Dictionary<string, string> Description
+    {
+        get;
+        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+    } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Gets or sets localized package-relative Markdown paths, readable without loading plugin code.
+    /// Language tags compare without case; values retain their original spelling.
+    /// </summary>
+    public Dictionary<string, string> Readme
+    {
+        get;
+        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+    } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Gets the universal or platform-selected entry declaration.
     /// </summary>
     public required PluginEntry Entry { get; init; }

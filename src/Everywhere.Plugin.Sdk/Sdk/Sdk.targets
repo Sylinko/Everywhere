@@ -73,6 +73,7 @@
       <EverywherePluginPlatform Condition="'$(EverywherePluginPlatform)' == ''">universal</EverywherePluginPlatform>
       <EverywherePluginPackagePath Condition="'$(EverywherePluginPackagePath)' == ''">$([System.IO.Path]::Combine('$(OutputPath)', '$(EverywherePluginId)-$(Version).zip'))</EverywherePluginPackagePath>
       <_EverywherePayloadList>$(IntermediateOutputPath)everywhere-payload.txt</_EverywherePayloadList>
+      <_EverywherePresentationDirectory>$(IntermediateOutputPath)everywhere-presentation</_EverywherePresentationDirectory>
     </PropertyGroup>
     <ItemGroup>
       <_EverywherePayload Include="@(ReferenceCopyLocalPaths->'%(FullPath)|%(DestinationSubDirectory)%(Filename)%(Extension)|%(AssetType)')" />
@@ -80,7 +81,19 @@
       <_EverywherePayload Include="$(ProjectDepsFilePath)|$(TargetName).deps.json" Condition="Exists('$(ProjectDepsFilePath)')" />
       <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath->'%(FullPath)|%(TargetPath)')" />
     </ItemGroup>
+    <ItemGroup>
+      <_EverywhereConventionalReadme Include="$(MSBuildProjectDirectory)/README.md" Condition="Exists('$(MSBuildProjectDirectory)/README.md')" />
+      <_EverywhereConventionalReadme Include="$(MSBuildProjectDirectory)/README.*.md" />
+    </ItemGroup>
+    <!-- Write author text as data through standard task item transforms. Property-function string
+         expressions cannot safely embed arbitrary translated text, including unmatched quotes. -->
+    <MakeDir Directories="$(_EverywherePresentationDirectory)" />
+    <WriteLinesToFile File="$(_EverywherePresentationDirectory)/localizations.txt" Lines="@(EverywherePluginLocalization)" Overwrite="true" Encoding="UTF-8" />
+    <WriteLinesToFile File="$(_EverywherePresentationDirectory)/%(EverywherePluginLocalization.Identity).name.txt" Lines="@(EverywherePluginLocalization->'%(Name)')" Overwrite="true" Encoding="UTF-8" />
+    <WriteLinesToFile File="$(_EverywherePresentationDirectory)/%(EverywherePluginLocalization.Identity).description.txt" Lines="@(EverywherePluginLocalization->'%(Description)')" Overwrite="true" Encoding="UTF-8" />
+    <WriteLinesToFile File="$(_EverywherePresentationDirectory)/%(EverywherePluginLocalization.Identity).readme.txt" Lines="@(EverywherePluginLocalization->'%(Readme)')" Overwrite="true" Encoding="UTF-8" />
+    <WriteLinesToFile File="$(_EverywherePresentationDirectory)/readmes.txt" Lines="@(_EverywhereConventionalReadme->'%(Filename)%(Extension)')" Overwrite="true" Encoding="UTF-8" />
     <WriteLinesToFile File="$(_EverywherePayloadList)" Lines="@(_EverywherePayload)" Overwrite="true" />
-    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; pack &quot;$(TargetPath)&quot; &quot;$(_EverywhereHostReferences)&quot; &quot;$(_EverywherePayloadList)&quot; &quot;$(EverywherePluginId)&quot; &quot;$(Version)&quot; &quot;$(EverywherePluginEntryType)&quot; &quot;$(TargetFramework)&quot; &quot;$(EverywhereHostVersion)&quot; &quot;$(EverywherePluginApiVersion)&quot; &quot;$(EverywherePluginPlatform)&quot; &quot;$(EverywherePluginPackagePath)&quot;" />
+    <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; pack &quot;$(TargetPath)&quot; &quot;$(_EverywhereHostReferences)&quot; &quot;$(_EverywherePayloadList)&quot; &quot;$(EverywherePluginId)&quot; &quot;$(Version)&quot; &quot;$(EverywherePluginEntryType)&quot; &quot;$(TargetFramework)&quot; &quot;$(EverywhereHostVersion)&quot; &quot;$(EverywherePluginApiVersion)&quot; &quot;$(EverywherePluginPlatform)&quot; &quot;$(EverywherePluginPackagePath)&quot; &quot;$(_EverywherePresentationDirectory)&quot; &quot;$(MSBuildProjectDirectory)&quot;" />
   </Target>
 </Project>

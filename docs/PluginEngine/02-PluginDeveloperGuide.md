@@ -630,6 +630,64 @@ AggregateDynamicLocaleKey copy the collection container, because a compiler-gene
 inside a plugin can otherwise retain its assembly even when each element is a host-owned key.
 That copy does not remove references inside plugin-defined elements.
 
+### Declare package names, descriptions and README files
+
+Add one project item for each language you supply. `Include` identifies the language; `Name`,
+`Description` and `Readme` are independently optional. An empty field is omitted. You may omit
+names entirely, in which case the management UI will use the plugin ID.
+
+```xml
+<ItemGroup>
+  <EverywherePluginLocalization Include="en">
+    <Name>Everything Search</Name>
+    <Description>Search local files and folders with Everything.</Description>
+    <Readme>README.md</Readme>
+  </EverywherePluginLocalization>
+  <EverywherePluginLocalization Include="zh-Hans">
+    <Name>Everything 搜索</Name>
+    <Description>通过 Everything 搜索本地文件和文件夹。</Description>
+    <Readme>README.zh-Hans.md</Readme>
+  </EverywherePluginLocalization>
+</ItemGroup>
+```
+
+Keep these items in a shared `.props` file when multiple entry projects build the same plugin.
+They describe the whole package, not one platform entry. Language tags ignore case; duplicate
+language items are rejected. These declarations do not require an I18N or UI assembly reference.
+Your runtime RESX resources and satellite assemblies remain a separate, ordinary .NET mechanism.
+
+README mappings can be omitted for conventional root-level files: the SDK packages `README.md`
+as English and `README.<language>.md` for that language. Explicit `Readme` metadata overrides the
+convention for its language and prevents the same source file from being inferred as another
+language, even when Link changes its package-relative path. For example, `<EverywherePluginLocalization Include="zh-Hans" Readme="README.md" />`
+supports a Chinese-only plugin. Existing names such as `README-zh-cn.md` work when explicitly mapped.
+If both `README.md` and `README.en.md` exist without an explicit English selection, packaging reports
+an ambiguous English README. No recursive README search is performed.
+
+`Readme` is a package-relative path. A mapping such as `Readme="docs/guide.md"` includes the project
+file at that path unless the normal build output already supplies it. To share a README between
+entry projects, use an ordinary content item such as
+`<Content Include="../shared/guide.md" Link="docs/guide.md" CopyToOutputDirectory="PreserveNewest" />`
+and declare `Readme="docs/guide.md"`. No additional SDK source-path mapping is needed.
+Add images and other attachments through normal content items, preserving the paths used by
+relative Markdown links:
+
+```xml
+<ItemGroup>
+  <Content Include="docs/images/**/*" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+```
+
+Each field falls back independently: current language, parent tags, English, then the first supplied
+value. A missing Chinese name can therefore use the English name alongside a Chinese description
+and README. Prefer `zh-Hans` for the application's Simplified Chinese locale and `zh-Hant` for
+Traditional Chinese. `zh-CN` and `zh-Hans` are different tags; case differences such as `ZH-hans`
+and `zh-Hans` are equivalent. The SDK generates lowercase keys in `plugin.json`; do not edit it.
+The host can read these declarations while the plugin is unloaded. The management page remains pending.
+
+The `README.<language>.md` convention follows [Standard Readme](https://github.com/RichardLitt/standard-readme/blob/main/spec.md).
+Language-tag case insensitivity follows [BCP 47](https://www.rfc-editor.org/rfc/rfc5646.html#section-2.1.1).
+
 ### Distribution, installed files and plugin data
 
 Before distributing a plugin:

@@ -278,6 +278,10 @@ public sealed partial class AggregateDynamicLocaleKey(IReadOnlyList<IDynamicLoca
     }
 }
 
+/// <summary>
+/// Stores localized values with case-insensitive language tags and case-sensitive text.
+/// Equality and hashing ignore insertion order and language-tag casing.
+/// </summary>
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
 [MessagePackFormatter(typeof(MessagePackFormatter))]
 public sealed partial class JsonDynamicLocaleKey : Dictionary<string, string>, IDynamicLocaleKey, IRecipient<LocaleChangedMessage>
@@ -312,11 +316,20 @@ public sealed partial class JsonDynamicLocaleKey : Dictionary<string, string>, I
         }
     }
 
-    public JsonDynamicLocaleKey() { }
+    /// <summary>
+    /// Creates an empty language map.
+    /// </summary>
+    public JsonDynamicLocaleKey() : base(StringComparer.OrdinalIgnoreCase) { }
 
-    public JsonDynamicLocaleKey(int capacity) : base(capacity) { }
+    /// <summary>
+    /// Creates a language map with the requested initial capacity.
+    /// </summary>
+    public JsonDynamicLocaleKey(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
 
-    public JsonDynamicLocaleKey(IEnumerable<KeyValuePair<string, string>> init) : base(init) { }
+    /// <summary>
+    /// Copies localized values while comparing language tags without case.
+    /// </summary>
+    public JsonDynamicLocaleKey(IEnumerable<KeyValuePair<string, string>> init) : base(init, StringComparer.OrdinalIgnoreCase) { }
 
     public override bool Equals(object? obj)
     {
@@ -333,9 +346,9 @@ public sealed partial class JsonDynamicLocaleKey : Dictionary<string, string>, I
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        foreach (var pair in this.OrderBy(pair => pair.Key, StringComparer.Ordinal))
+        foreach (var pair in this.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
         {
-            hash.Add(pair.Key, StringComparer.Ordinal);
+            hash.Add(pair.Key, StringComparer.OrdinalIgnoreCase);
             hash.Add(pair.Value, StringComparer.Ordinal);
         }
         return hash.ToHashCode();

@@ -2,6 +2,9 @@
 using System.IO.Compression;
 using System.Security;
 using System.Text.Json;
+using System.Xml.Linq;
+using Everywhere.Plugin.Hosting.Installation;
+using Everywhere.Plugin.Packaging;
 
 namespace Everywhere.Plugin.Tests;
 
@@ -48,7 +51,7 @@ public sealed class PluginSdkTests
     [TestCase(false, true)]
     [TestCase(true, false)]
     [TestCase(true, true)]
-    public async Task Pack_HostImport_ExcludesHostAssemblies(bool isSourceImport, bool hasImplementationReference)
+    public async Task Pack_HostImport_PreservesPresentationAndExcludesHostFiles(bool isSourceImport, bool hasImplementationReference)
     {
         var hostProject = Path.Combine(_repository, "tests", "Everywhere.Plugin.Tests", "Fixtures", "Host", "PluginFixture.Host.csproj");
         var sdk = Path.Combine(_repository, "src", "Everywhere.Plugin.Sdk");
@@ -80,10 +83,22 @@ public sealed class PluginSdkTests
                            <EverywherePluginEntryType>SdkFixture.Entry</EverywherePluginEntryType>
                            <EverywhereHostVersion>{(hasImplementationReference ? "[0.9.0,0.10.0)" : "")}</EverywhereHostVersion>
                          </PropertyGroup>
+                         <ItemGroup>
+                           <EverywherePluginLocalization Include="EN" Name="{(hasImplementationReference ? "Tools &amp; Search" : "")}" Description="A &amp; B | C; &quot;quoted&quot; &apos;text&apos; it&apos;s (fine)&#10;Second line" />
+                           <EverywherePluginLocalization Include="zh-Hans" Description="搜索本地文件" Readme="docs/中文指南.md" />
+                           <Content Include="shared/中文指南.md" Link="docs/中文指南.md" CopyToOutputDirectory="PreserveNewest" />
+                           <Content Include="docs/images/example.txt" CopyToOutputDirectory="PreserveNewest" />
+                         </ItemGroup>
                          <Import Project="{Escape(Path.Combine(sdk, "Sdk", "Sdk.targets"))}" />
                        </Project>
                        """;
         await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), project);
+        Directory.CreateDirectory(Path.Combine(_root, "docs", "images"));
+        Directory.CreateDirectory(Path.Combine(_root, "shared"));
+        await File.WriteAllTextAsync(Path.Combine(_root, "README.md"), "# English");
+        await File.WriteAllTextAsync(Path.Combine(_root, "README.zh-Hans.md"), "# Conventional Chinese");
+        await File.WriteAllTextAsync(Path.Combine(_root, "shared", "中文指南.md"), "# 中文\n![example](images/example.txt)");
+        await File.WriteAllTextAsync(Path.Combine(_root, "docs", "images", "example.txt"), "attachment");
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.resx"), "<root><data name=\"Greeting\"><value>Hello</value></data></root>");
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.fr.resx"), "<root><data name=\"Greeting\"><value>Bonjour</value></data></root>");
         var body = hasImplementationReference ?
@@ -137,6 +152,82 @@ public sealed class PluginSdkTests
         Assert.That(entry.GetProperty("pluginApiVersion").GetString(), Is.EqualTo("[1.0.0,2.0.0-0)"));
         Assert.That(entry.GetProperty("hostVersion").GetString(), Is.EqualTo(hasImplementationReference ? "[0.9.0,0.10.0)" : null));
         Assert.That(File.Exists(Path.Combine(hostDirectory, "PluginFixture.Host.xml")), Is.True);
+        Assert.Multiple(() =>
+        {
+            var names = manifest.RootElement.GetProperty("name");
+            Assert.That(names.EnumerateObject().Count(), Is.EqualTo(hasImplementationReference ? 1 : 0));
+            if (hasImplementationReference) Assert.That(names.GetProperty("en").GetString(), Is.EqualTo("Tools & Search"));
+            Assert.That(manifest.RootElement.GetProperty("description").GetProperty("en").GetString(),
+                Is.EqualTo("A & B | C; \"quoted\" 'text' it's (fine)\nSecond line"));
+            Assert.That(manifest.RootElement.GetProperty("readme").GetProperty("en").GetString(), Is.EqualTo("README.md"));
+            Assert.That(manifest.RootElement.GetProperty("readme").GetProperty("zh-hans").GetString(), Is.EqualTo("docs/中文指南.md"));
+            Assert.That(archive.GetEntry("README.md"), Is.Not.Null);
+            Assert.That(archive.GetEntry("README.zh-Hans.md"), Is.Null);
+            Assert.That(archive.GetEntry("docs/中文指南.md"), Is.Not.Null);
+            Assert.That(archive.GetEntry("docs/images/example.txt"), Is.Not.Null);
+        });
+
+        var store = new PluginPackageStore(Path.Combine(_root, "store"), Path.Combine(_root, "data"), Path.Combine(_root, "staging"));
+        using var packageStream = File.OpenRead(Path.Combine(outputDirectory, "fixture.sdk-1.2.3.zip"));
+        var installed = await store.ImportAsync(packageStream);
+        Assert.That(installed.Manifest.Description["ZH-HANS"], Is.EqualTo("搜索本地文件"));
+        Assert.That(File.ReadAllText(Path.Combine(installed.Directory, installed.Manifest.Readme["EN"])), Is.EqualTo("# English"));
+
+        if (!isSourceImport && !hasImplementationReference)
+        {
+            await File.WriteAllTextAsync(Path.Combine(_root, "README.en.md"), "# Other English");
+            var ambiguous = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+            Assert.That(ambiguous.ExitCode, Is.Not.Zero);
+            Assert.That(ambiguous.Output, Does.Contain("DuplicateTranslation"));
+
+            await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), project.Replace(
+                "Include=\"EN\" Name=", "Include=\"EN\" Readme=\"README.en.md\" Name=", StringComparison.Ordinal));
+            var explicitReadme = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+            Assert.That(explicitReadme.ExitCode, Is.Zero, explicitReadme.Output);
+
+            // A project with no localization declarations still packages its conventional READMEs.
+            File.Delete(Path.Combine(_root, "README.en.md"));
+            var plainProject = XDocument.Parse(project);
+            plainProject.Descendants("EverywherePluginLocalization").Remove();
+            await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), plainProject.ToString());
+            var plain = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+            Assert.That(plain.ExitCode, Is.Zero, plain.Output);
+            var defaultArchive = Path.Combine(_root, "bin", "Debug", "net10.0", "fixture.sdk-1.0.0.zip");
+            var plainDirectory = Path.Combine(_root, "plain");
+            ZipFile.ExtractToDirectory(defaultArchive, plainDirectory);
+            var plainManifest = PluginManifestFile.Read(plainDirectory);
+            Assert.That(plainManifest.Name, Is.Empty);
+            Assert.That(plainManifest.Description, Is.Empty);
+            Assert.That(plainManifest.Readme.Keys, Is.EquivalentTo(new[] { "en", "zh-hans" }));
+
+            // Explicitly mapping README.md to Chinese must not also infer an English mapping.
+            plainProject.Root?.Add(new XElement("ItemGroup",
+                new XElement("EverywherePluginLocalization", new XAttribute("Include", "zh-Hans"), new XAttribute("Readme", "README.md"))));
+            await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), plainProject.ToString());
+            var remapped = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+            Assert.That(remapped.ExitCode, Is.Zero, remapped.Output);
+            var remappedDirectory = Path.Combine(_root, "remapped");
+            ZipFile.ExtractToDirectory(defaultArchive, remappedDirectory);
+            var remappedManifest = PluginManifestFile.Read(remappedDirectory);
+            Assert.That(remappedManifest.Name, Is.Empty);
+            Assert.That(remappedManifest.Readme.Keys, Is.EquivalentTo(new[] { "zh-hans" }));
+            Assert.That(remappedManifest.Readme["zh-hans"], Is.EqualTo("README.md"));
+
+            // Link can rename the same source file inside the package without creating an English translation.
+            plainProject.Descendants("EverywherePluginLocalization").Single().SetAttributeValue("Readme", "docs/guide.md");
+            plainProject.Root?.Add(new XElement("ItemGroup",
+                new XElement("Content", new XAttribute("Include", "README.md"), new XAttribute("Link", "docs/guide.md"),
+                    new XAttribute("CopyToOutputDirectory", "PreserveNewest"))));
+            await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), plainProject.ToString());
+            var linked = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack", "-nologo", "-verbosity:minimal");
+            Assert.That(linked.ExitCode, Is.Zero, linked.Output);
+            var linkedDirectory = Path.Combine(_root, "linked");
+            ZipFile.ExtractToDirectory(defaultArchive, linkedDirectory);
+            var linkedManifest = PluginManifestFile.Read(linkedDirectory);
+            Assert.That(linkedManifest.Readme.Keys, Is.EquivalentTo(new[] { "zh-hans" }));
+            Assert.That(linkedManifest.Readme["zh-hans"], Is.EqualTo("docs/guide.md"));
+            Assert.That(File.ReadAllText(Path.Combine(linkedDirectory, "docs", "guide.md")), Is.EqualTo("# English"));
+        }
     }
 
     /// <summary>

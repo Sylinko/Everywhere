@@ -58,6 +58,26 @@ public static partial class PluginManifestFile
         }
 
         PluginCompatibility.ParseVersion(manifest.Version);
+        foreach (var translations in new[] { manifest.Name, manifest.Description, manifest.Readme })
+        {
+            foreach (var (language, value) in translations)
+            {
+                if (!LanguageTagPattern().IsMatch(language) || string.IsNullOrWhiteSpace(value))
+                {
+                    throw new PluginValidationException("InvalidLocalization", $"Invalid language tag or empty value for '{language}'.");
+                }
+            }
+        }
+
+        foreach (var path in manifest.Readme.Values)
+        {
+            PackagePath.ValidateRelative(path);
+            if (!path.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new PluginValidationException("InvalidReadme", "README declarations must reference Markdown files.");
+            }
+        }
+
         switch (manifest.Entry)
         {
             case UniversalPluginEntry universal:
@@ -149,6 +169,12 @@ public static partial class PluginManifestFile
             }
         }
     }
+
+    /// <summary>
+    /// Checks the portable language-tag spelling without restricting authors to the host's current languages.
+    /// </summary>
+    [GeneratedRegex("^[A-Za-z]{1,8}(?:-[A-Za-z0-9]{1,8})*$", RegexOptions.CultureInvariant)]
+    private static partial Regex LanguageTagPattern();
 
     /// <summary>
     /// Restricts plugin IDs to portable directory-safe logical identifiers.

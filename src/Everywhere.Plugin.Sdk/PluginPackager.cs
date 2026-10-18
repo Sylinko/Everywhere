@@ -26,7 +26,9 @@ internal static class PluginPackager
         string hostRange,
         string apiRange,
         string platform,
-        string outputPath)
+        string outputPath,
+        string presentationDirectory,
+        string projectDirectory)
     {
         var host = JsonSerializer.Deserialize(
             File.ReadAllText(referenceList + ".host.json"),
@@ -173,6 +175,7 @@ internal static class PluginPackager
                 ]
             };
         var manifest = new PluginManifest { Id = pluginId, Version = version, Entry = entry };
+        ApplyPresentation(manifest, presentationDirectory, projectDirectory, files);
         PluginManifestFile.Validate(manifest);
         var output = Path.GetFullPath(outputPath);
         var parent = Path.GetDirectoryName(output) ?? ".";
@@ -198,6 +201,93 @@ internal static class PluginPackager
         {
             Directory.Delete(staging, recursive: true);
             if (File.Exists(temporaryArchive)) File.Delete(temporaryArchive);
+        }
+    }
+
+    /// <summary>
+    /// Builds package-level display maps from author items and conventional README files.
+    /// Explicit mappings win before conventions are considered, independently of item ordering.
+    /// </summary>
+    private static void ApplyPresentation(
+        PluginManifest manifest,
+        string presentationDirectory,
+        string projectDirectory,
+        Dictionary<string, string> files)
+    {
+        var languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var explicitReadmes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var explicitSources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var tag in File.ReadAllLines(Path.Combine(presentationDirectory, "localizations.txt")))
+        {
+            var language = tag.ToLowerInvariant();
+            if (!languages.Add(language))
+            {
+                throw new PluginValidationException("DuplicateTranslation", $"Duplicate localization for language '{language}'.");
+            }
+
+            AddTranslation(manifest.Name, language, ReadPresentationField(presentationDirectory, tag, "name"));
+            AddTranslation(manifest.Description, language, ReadPresentationField(presentationDirectory, tag, "description"));
+            var readme = ReadPresentationField(presentationDirectory, tag, "readme").Replace('\\', '/');
+            if (string.IsNullOrWhiteSpace(readme)) continue;
+
+            AddReadme(manifest, language, readme, projectDirectory, files);
+            explicitReadmes.Add(language);
+            explicitSources.Add(Path.GetFullPath(files[readme]));
+        }
+
+        foreach (var path in File.ReadAllLines(Path.Combine(presentationDirectory, "readmes.txt")))
+        {
+            var stem = Path.GetFileNameWithoutExtension(path);
+            var language = stem.Equals("README", StringComparison.OrdinalIgnoreCase) ? "en" : stem["README.".Length..].ToLowerInvariant();
+            var source = files.TryGetValue(path, out var payloadSource) ? payloadSource : PackagePath.Resolve(projectDirectory, path);
+            if (explicitReadmes.Contains(language) || explicitSources.Contains(Path.GetFullPath(source))) continue;
+
+            AddReadme(manifest, language, path, projectDirectory, files);
+        }
+    }
+
+    /// <summary>
+    /// Reads a projected MSBuild metadata value, removing only the task's final line terminator.
+    /// </summary>
+    private static string ReadPresentationField(string directory, string language, string field)
+    {
+        var text = File.ReadAllText(Path.Combine(directory, language + "." + field + ".txt"));
+        return text.EndsWith(Environment.NewLine, StringComparison.Ordinal) ? text[..^Environment.NewLine.Length] : text;
+    }
+
+    /// <summary>
+    /// Leaves omitted project fields out of the manifest instead of blocking locale fallback.
+    /// </summary>
+    private static void AddTranslation(Dictionary<string, string> translations, string language, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)) translations.Add(language, value);
+    }
+
+    /// <summary>
+    /// Includes a README at its declared relative path and rejects ambiguous language/file mappings.
+    /// </summary>
+    private static void AddReadme(
+        PluginManifest manifest,
+        string language,
+        string path,
+        string projectDirectory,
+        Dictionary<string, string> files)
+    {
+        PackagePath.ValidateRelative(path);
+        // A normal Content item may already supply this package path, including a linked shared file.
+        // Otherwise the declaration includes a file at the same relative path in the author project.
+        if (!files.ContainsKey(path))
+        {
+            var source = PackagePath.Resolve(projectDirectory, path);
+            if (!File.Exists(source)) throw new PluginValidationException("MissingReadme", source);
+
+            files.Add(path, source);
+        }
+
+        if (!manifest.Readme.TryAdd(language, path))
+        {
+            throw new PluginValidationException("DuplicateTranslation", $"Multiple README files for language '{language}'. Specify Readme explicitly.");
         }
     }
 
