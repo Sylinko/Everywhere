@@ -28,7 +28,7 @@ Independent unloading is attempted when it can be confirmed. No promise is made 
 
 The official author workflow uses project declarations and build tooling to generate package metadata. Neither humans nor agents should maintain manifest JSON by hand. The SDK records build facts; authors declare permitted runtime compatibility; tests record the combinations actually checked. The loader validates constraints without claiming that a permitted version has been proven compatible.
 
-External dependencies are allowed when justified by functionality, maintenance, platform compatibility and runtime lifetime behavior. There is no dependency-free requirement. The rewrite uses the approved NuGet.Versioning and NuGet.Frameworks packages. Patch libraries are optional plugin dependencies, not SDK/runtime defaults.
+External dependencies are allowed when justified by functionality, maintenance, platform compatibility and runtime lifetime behavior. There is no dependency-free requirement. Framework compatibility uses NuGet.Frameworks. Host, Plugin API and logical plugin versions use Everywhere.Versioning. Patch libraries are optional plugin dependencies, not SDK/runtime defaults.
 
 ### Design references and attribution
 
@@ -78,7 +78,7 @@ Package version, AssemblyVersion and file content are not interchangeable. Sever
 
 For ordinary additions, preserve valid active selections. Choose new candidates deterministically and explain the choice. Do not select by directory enumeration order. Differing bytes under one name require an explicit provenance-based selection or an ambiguity error. The current selected-file API rejects that ambiguity; it does not implement candidate solving.
 
-**Agreed / pending implementation:** required versus optional dependencies, conditional code and availability queries are defined below; host-import, entry selection and host-range policies are defined in section 8. Full schema serialization, dependency-range defaults, prerelease handling and candidate ranking still require implementation decisions and tests. These unresolved details do not override the settled host-range policy. Agreed names do not imply that SDK targets or APIs already exist.
+**Agreed / pending implementation:** required versus optional dependencies, conditional code and availability queries are defined below; host-import, entry selection and host-range policies are defined in section 8. The shared version/range implementation and prerelease comparison are implemented. Complete schema coverage, dependency-range defaults and candidate ranking still require implementation decisions and tests. These unresolved details do not override the settled host-range policy. Agreed names do not imply that SDK targets or APIs already exist.
 
 ## 4. Graph and loading rules
 
@@ -353,7 +353,7 @@ Generic method patching, inlined callers, mixed Hook/ILHook chains, native targe
 | `Everywhere.Plugin.Packaging` | Shared manifest and host-descriptor models, JSON handling, package paths, host-reference import, version/framework compatibility and portable RID selection |
 | `Everywhere.Plugin.Hosting` | Source discovery and installation, runtime selection/validation, resolution, activation, cleanup and collection verification |
 
-`Everywhere.Plugin.Hosting` is the runtime project/assembly/namespace. Engine types such as `PluginEngine` retain their descriptive names. The public developer contracts belong in `Everywhere.Plugin.Abstractions`. The SDK references Packaging and Abstractions directly; it does not reference Hosting or carry the loader as a tooling dependency. Packaging references Abstractions and the approved NuGet.Versioning/NuGet.Frameworks libraries, and never references Hosting, Core or the SDK.
+`Everywhere.Plugin.Hosting` is the runtime project/assembly/namespace. Engine types such as `PluginEngine` retain their descriptive names. The public developer contracts belong in `Everywhere.Plugin.Abstractions`. The SDK references Packaging and Plugin.Abstractions directly; it does not reference Hosting or carry the loader as a tooling dependency. Packaging references Plugin.Abstractions, Everywhere.Versioning and NuGet.Frameworks, and never references Hosting, Core or the SDK. Everywhere.Abstractions also references Everywhere.Versioning. The version types have one assembly identity, with no linked-source copies or type forwarding layer.
 
 ```mermaid
 flowchart TD
@@ -363,7 +363,9 @@ flowchart TD
     SDK[Everywhere.Plugin.Sdk] --> Packaging
     SDK --> Abstractions
     Packaging --> Abstractions
-    Packaging --> NuGet[NuGet.Versioning / NuGet.Frameworks]
+    Packaging --> NuGet[NuGet.Frameworks]
+    Packaging --> Versioning[Everywhere.Versioning]
+    ApplicationAbstractions[Everywhere.Abstractions] --> Versioning
 ```
 
 Within Hosting, `Installation` owns `PluginSourceCatalog`, `PluginPackageStore` and `PluginInstallation`; `Loading` owns PE inspection, load planning and assembly contexts; `Lifecycle` owns activation, context resources and catalog views. Shared `PluginValidationException` belongs to Packaging so both build-time and runtime validation use the same diagnostic contract without a reverse dependency. Installation state is not part of the shared package declaration model.
@@ -388,9 +390,13 @@ Several Everywhere releases may provide the same Plugin API version. Direct use 
 
 `hostVersion` belongs to the concrete universal entry or each platform variant, not the plugin root. Different entries of one plugin may permit different Everywhere ranges. For entries that reference host implementation APIs, local development may omit the range while recording the exact imported host build; distribution packaging requires an explicit permitted range. Tooling may help authors declare the exact current version as a conservative starting point, but must not silently infer compatibility with future releases. If supporting this distinction proves impractical, requiring explicit ranges during development as well is an accepted fallback; update the tools and documentation together before merge. Contract-only plugins need a Plugin API requirement, not an artificial host-release restriction.
 
-The public Plugin API preserves backward compatibility within a major version. For a stable build contract such as 1.2.0, the SDK defaults to [1.2.0,2.0.0); authors may set EverywherePluginApiVersion to a tested range including the imported contract. Prerelease contracts default to an exact range. This promise applies to Everywhere.Plugin.Abstractions, not host implementation APIs or third-party packages. The stable default is tested; broader prerelease and override coverage remains a release gate.
+The public Plugin API preserves backward compatibility within a major version. For a stable build contract such as 1.2.0, the SDK defaults to [1.2.0,2.0.0-0); the upper bound excludes all prereleases of the next major as well as its stable release. Authors may set EverywherePluginApiVersion to a tested range including the imported contract. Prerelease contracts default to an exact range, such as [1.2.0-preview.2]. This promise applies to Everywhere.Plugin.Abstractions, not host implementation APIs or third-party packages. Both defaults are implemented and exercised through SDK packaging tests.
 
-Dependency package selection and CLR assembly binding are separate layers. Prefer NuGet's existing version syntax, restore outputs and resolution machinery rather than inventing alternative meanings for plain versions, ranges, floating versions or prerelease selection. How independent plugin graphs are combined with fixed host assemblies remains an implementation decision; do not describe a per-range prerelease filter or a custom file selector as equivalent to complete NuGet restore. Build commit or MVID can aid diagnostics, but neither replaces compatibility declarations. No additional signature or hash-lock workflow is required for ordinary development.
+Host, Plugin API and logical plugin compatibility use the same SemanticVersion and SemanticVersionRange implementation from Everywhere.Versioning (public namespace Everywhere.Common). See [the shared version contract](../Versioning.md). Version ordering never consults UpdateChannel. Unknown prerelease labels are valid; numeric label segments compare numerically, text segments compare ordinally without case, and metadata after + does not affect comparison, equality or exact ranges. Historical release tags and settings migration versions retain their order.
+
+Ranges support exact [v], bare inclusive minimum v, and open/closed intervals with optional bounds. There is no additional prerelease-admission filter: [1.0,2.0) includes 1.5.0-preview and 2.0.0-preview. Use an upper bound of 2.0.0-0 to exclude the entire next-major prerelease series. Empty declarations and floating expressions are rejected. A range expresses compatibility with an already selected installation; it does not select/download another version or retry an older provider.
+
+NuGet package restore and CLR assembly binding remain separate layers. PackageReference versions are interpreted by normal NuGet restore, not the Everywhere version parser; resolved assets supply build inputs. AssemblyVersion and AssemblyRef retain their numeric CLR identities. Build commit or MVID can aid diagnostics, but neither replaces compatibility declarations. No additional signature or hash-lock workflow is required for ordinary development.
 
 ### Two host-import workflows, shared ownership and packaging rules
 

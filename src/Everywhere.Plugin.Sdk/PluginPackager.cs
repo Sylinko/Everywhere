@@ -134,7 +134,7 @@ internal static class PluginPackager
             var apiVersion = PluginCompatibility.ParseVersion(host.PluginApiVersion);
             apiRange = apiVersion.IsPrerelease ?
                 $"[{apiVersion.ToNormalizedString()}]" :
-                $"[{apiVersion.ToNormalizedString()},{apiVersion.Major + 1}.0.0)";
+                $"[{apiVersion.ToNormalizedString()},{(long)apiVersion.Major + 1}.0.0-0)";
         }
 
         if (!PluginCompatibility.IsSatisfied(apiRange, host.PluginApiVersion))

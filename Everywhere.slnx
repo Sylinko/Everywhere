@@ -103,6 +103,7 @@
     <File Path="tools/visual_tree_debugger.html" />
   </Folder>
   <Project Path="src/Everywhere.Abstractions/Everywhere.Abstractions.csproj" />
+  <Project Path="src/Everywhere.Versioning/Everywhere.Versioning.csproj" />
   <Project Path="src/Everywhere.Plugin.Abstractions/Everywhere.Plugin.Abstractions.csproj" />
   <Project Path="src/Everywhere.Plugin.Hosting/Everywhere.Plugin.Hosting.csproj" />
   <Project Path="src/Everywhere.Plugin.Packaging/Everywhere.Plugin.Packaging.csproj" />

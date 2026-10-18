@@ -190,13 +190,16 @@ public sealed class PluginPackageTests
     }
 
     /// <summary>
-    /// A prerelease is not silently admitted by an ordinary stable compatibility declaration.
+    /// SDK and runtime checks use interval precedence, not an extra prerelease admission policy.
     /// </summary>
     [Test]
-    public void IsSatisfied_PrereleaseCandidate_RequiresExplicitPrereleaseBound()
+    public void IsSatisfied_PrereleaseCandidate_UsesVersionPrecedence()
     {
-        Assert.That(PluginCompatibility.IsSatisfied("[1.0,2.0)", "1.5.0-preview.1"), Is.False);
+        Assert.That(PluginCompatibility.IsSatisfied("[1.0,2.0)", "1.5.0-preview.1"), Is.True);
         Assert.That(PluginCompatibility.IsSatisfied("[1.0-preview.1,2.0)", "1.5.0-preview.1"), Is.True);
+        Assert.That(PluginCompatibility.IsSatisfied("[1.0,2.0)", "2.0.0-preview.1"), Is.True);
+        Assert.That(PluginCompatibility.IsSatisfied("[1.0,2.0-0)", "2.0.0-preview.1"), Is.False);
+        Assert.That(PluginCompatibility.IsSatisfied("[1.0-preview.2,1.0)", "1.0.0-preview.10"), Is.True);
     }
 
     /// <summary>

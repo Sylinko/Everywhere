@@ -625,6 +625,22 @@ That copy does not remove references inside plugin-defined elements.
 
 ### Distribution, installed files and plugin data
 
+Before distributing a plugin:
+
+1. Build against the host you intend to support. If the entry references host implementation APIs, set `EverywhereHostVersion` to an explicit tested range; packaging requires it and verifies that it includes the imported host.
+2. Review Plugin API compatibility. Keep the SDK default described below, or set `EverywherePluginApiVersion` to a tested range that includes the imported contract. Do not edit the generated manifest.
+3. Run `dotnet msbuild <plugin.csproj> -restore -target:EverywherePack` with the configured SDK and host input. This produces the distribution ZIP.
+4. Test that ZIP with the supported host versions before publishing it. A declared range is your compatibility claim, not evidence that every version in it works.
+
+> [!IMPORTANT]
+> **The SDK automatically supplies Plugin API compatibility when `EverywherePluginApiVersion` is omitted.**
+> A stable Plugin API `1.2.0` produces `[1.2.0,2.0.0-0)`: it accepts later compatible 1.x versions,
+> including prereleases above the lower bound, but excludes **all 2.0.0 prereleases and releases**.
+> A prerelease Plugin API `1.2.0-preview.2` produces the exact range `[1.2.0-preview.2]`.
+> These defaults concern the Plugin API, not the SDK package version or the Everywhere host version.
+> An explicit `[1.2.0,2.0.0)` has a different meaning: it includes `2.0.0-preview.1` because that version
+> precedes `2.0.0`. There is no additional prerelease filter. See [the version contract](../Versioning.md).
+
 The SDK produces a standard ZIP. The host extracts it once into a staging directory, validates it, and moves the complete directory to a unique final installation path before activation. Package-relative paths are preserved. It loads from that directory, not from the ZIP or a newly extracted temporary copy at each launch. Startup accepts either a ZIP or an equivalent unpacked package folder under ~/.everywhere/plugins. The original source is the user-facing installation unit; keep it there. Unchanged sources reuse their imported copies.
 
 Each installation gets its own directory, including rebuilds with the same plugin version. Treat package files as read-only while installed. Read bundled resources from `IPluginContext.InstallationDirectory` and write configuration/databases to `IPluginContext.DataDirectory`, the stable directory associated with your plugin ID. Updating or uninstalling code must not implicitly delete persistent data. Replace or remove original packages while the application is stopped. Source removal excludes the plugin on the next launch and preserves its data.
@@ -675,9 +691,15 @@ Your plugin has one exact version across its entries. The SDK version identifies
 
 Host compatibility belongs to the concrete entry, so Windows and macOS entries may declare different `hostVersion` ranges. For entries that reference host implementation APIs, local development can omit this range while tooling records the imported build. Distribution packaging requires an explicit permitted range; tooling may help you specify the exact imported version as a starting point. A broad range does not prove future versions work. Contract-only plugins need Plugin API compatibility without an unnecessary host-release restriction.
 
-The public Plugin API policy preserves backward compatibility within one major version. The SDK defaults a stable Plugin API 1.2.0 build to [1.2.0,2.0.0); set `EverywherePluginApiVersion` to override this with a tested range that includes the imported contract. Prerelease contracts default to an exact range. This API policy does not infer compatibility for internal host APIs or arbitrary NuGet packages.
+The public Plugin API policy preserves backward compatibility within one major version. The SDK implements the stable and prerelease defaults explained in the [distribution steps](#distribution-installed-files-and-plugin-data). This API policy does not infer compatibility for internal host APIs or arbitrary NuGet packages.
 
-If implementing separate development/package rules proves impractical, the accepted fallback is to require an explicit host range in development too. Any such change must appear in the actual SDK and these instructions before merge. Plugin API/dependency range defaults and their complete serialized form remain to be finalized; they must not silently mean unlimited compatibility.
+Host, Plugin API and plugin dependency ranges share [Everywhere's version rules](../Versioning.md). [1.2.0] means exact compatibility; bare 1.2.0 means an inclusive minimum; [1.2.0,2.0.0) includes the lower bound and excludes the upper bound. Parentheses exclude a bound, and either bound may be omitted. Floating versions such as 1.* are not supported in plugin metadata.
+
+Prerelease labels compare segment by segment, independently of update channels: `preview.10` follows `preview.2`, and a stable version follows prereleases with the same numeric components. Metadata such as `+commit` does not distinguish versions for compatibility checks, including exact ranges.
+
+Plugins that need to inspect versions can use Everywhere.Common.SemanticVersion and SemanticVersionRange through an Everywhere.Abstractions reference, or explicitly reference the host-provided Everywhere.Versioning assembly. The SDK's tool dependencies are not automatically plugin compilation references or package payload. Ordinary PackageReference dependencies still follow NuGet restore rules.
+
+Defaults for other-plugin dependency ranges remain undefined. Specify an explicit range when declaring such dependencies; do not interpret an omitted range as unlimited compatibility.
 
 SDK validation will cross-check dependency intent, RequiresPlugin annotations and final artifacts. Referenced metadata maps plugin IDs to package origins and assembly identities without making authors repeat them. Repair validation errors in source/project inputs and rebuild. Do not edit generated JSON to hide conflicts, widen ranges or add absolute host paths.
 

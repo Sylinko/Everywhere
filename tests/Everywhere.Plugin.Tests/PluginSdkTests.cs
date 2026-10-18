@@ -118,6 +118,8 @@ public sealed class PluginSdkTests
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("Plugin.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("fr/Plugin.resources.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Abstractions.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Versioning.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Packaging.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("PluginFixture.Host.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("NuGet.Versioning.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("host-content.txt"));
@@ -132,7 +134,7 @@ public sealed class PluginSdkTests
         using var manifest = JsonDocument.Parse(stream);
         var entry = manifest.RootElement.GetProperty("entry");
         Assert.That(entry.GetProperty("$type").GetString(), Is.EqualTo("universal"));
-        Assert.That(entry.GetProperty("pluginApiVersion").GetString(), Is.EqualTo("[1.0.0,2.0.0)"));
+        Assert.That(entry.GetProperty("pluginApiVersion").GetString(), Is.EqualTo("[1.0.0,2.0.0-0)"));
         Assert.That(entry.GetProperty("hostVersion").GetString(), Is.EqualTo(hasImplementationReference ? "[0.9.0,0.10.0)" : null));
         Assert.That(File.Exists(Path.Combine(hostDirectory, "PluginFixture.Host.xml")), Is.True);
     }
