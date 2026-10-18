@@ -2,8 +2,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
 using Everywhere.Plugin.Packaging;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Installation;
 
@@ -15,10 +15,10 @@ namespace Everywhere.Plugin.Hosting.Installation;
 public sealed partial class PluginSourceCatalog(string sourceDirectory, PluginPackageStore store)
 {
     /// <summary>
-    /// Imports the complete source set. Removed sources are not selected, and duplicate plugin IDs are rejected.
+    /// Imports independent sources, reporting failures and rejecting every duplicate plugin ID.
     /// Old installations remain available for deferred cleanup instead of deleting potentially retained files.
     /// </summary>
-    public async Task<IReadOnlyList<PluginInstallation>> ImportAsync(CancellationToken cancellationToken = default)
+    public async Task<PluginSourceImportResult> ImportAsync(CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(sourceDirectory);
         Directory.CreateDirectory(store.RootDirectory);
@@ -31,7 +31,7 @@ public sealed partial class PluginSourceCatalog(string sourceDirectory, PluginPa
             new Dictionary<string, ImportRecord>();
         var next = new Dictionary<string, ImportRecord>();
         var installations = new List<PluginInstallation>();
-        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var diagnostics = new List<PluginDiagnostic>();
 
         foreach (var source in Directory.EnumerateFileSystemEntries(sourceDirectory).Order(StringComparer.Ordinal))
         {
@@ -45,50 +45,75 @@ public sealed partial class PluginSourceCatalog(string sourceDirectory, PluginPa
             }
 
             var key = Path.GetFileName(source);
-            var fingerprint = await FingerprintAsync(source, isDirectory, cancellationToken);
-            PluginInstallation installation;
+            try
+            {
+                var fingerprint = await FingerprintAsync(source, isDirectory, cancellationToken);
+                PluginInstallation installation;
 
-            if (previous.TryGetValue(key, out var record) && record.Fingerprint == fingerprint &&
-                File.Exists(Path.Combine(PackagePath.Resolve(store.RootDirectory, record.RelativeDirectory), PluginManifestFile.FileName)))
-            {
-                var directory = PackagePath.Resolve(store.RootDirectory, record.RelativeDirectory);
-                installation = new PluginInstallation
+                if (previous.TryGetValue(key, out var record) && record.Fingerprint == fingerprint &&
+                    File.Exists(Path.Combine(PackagePath.Resolve(store.RootDirectory, record.RelativeDirectory), PluginManifestFile.FileName)))
                 {
-                    InstallationId = record.InstallationId,
-                    Directory = directory,
-                    Manifest = PluginManifestFile.Read(directory)
-                };
-            }
-            else
-            {
-                if (isDirectory)
-                {
-                    installation = await store.ImportDirectoryAsync(source, cancellationToken);
+                    var directory = PackagePath.Resolve(store.RootDirectory, record.RelativeDirectory);
+                    installation = new PluginInstallation
+                    {
+                        InstallationId = record.InstallationId,
+                        Directory = directory,
+                        Manifest = PluginManifestFile.Read(directory)
+                    };
                 }
                 else
                 {
-                    await using var stream = File.OpenRead(source);
-                    installation = await store.ImportAsync(stream, cancellationToken);
+                    if (isDirectory)
+                    {
+                        installation = await store.ImportDirectoryAsync(source, cancellationToken);
+                    }
+                    else
+                    {
+                        await using var stream = File.OpenRead(source);
+                        installation = await store.ImportAsync(stream, cancellationToken);
+                    }
+
+                    record = new ImportRecord
+                    {
+                        Fingerprint = fingerprint,
+                        InstallationId = installation.InstallationId,
+                        RelativeDirectory = Path.GetRelativePath(store.RootDirectory, installation.Directory).Replace('\\', '/')
+                    };
                 }
 
-                record = new ImportRecord
-                {
-                    Fingerprint = fingerprint,
-                    InstallationId = installation.InstallationId,
-                    RelativeDirectory = Path.GetRelativePath(store.RootDirectory, installation.Directory).Replace('\\', '/')
-                };
+                installations.Add(installation);
+                next.Add(key, record);
             }
-
-            if (!ids.Add(installation.Manifest.Id))
+            catch (Exception exception) when
+                (exception is PluginValidationException or IOException or UnauthorizedAccessException or JsonException or InvalidDataException)
             {
-                throw new PluginValidationException(
-                    "DuplicatePlugin",
-                    $"More than one source provides '{installation.Manifest.Id}'. Keep one ZIP or folder per plugin.");
+                diagnostics.Add(
+                    new PluginDiagnostic
+                    {
+                        Code = exception is PluginValidationException validation ? validation.Code : "SourceImportFailed",
+                        Detail = $"{source}: {exception}"
+                    });
             }
-
-            installations.Add(installation);
-            next.Add(key, record);
         }
+
+        var duplicates = installations
+            .AsValueEnumerable()
+            .GroupBy(installation => installation.Manifest.Id, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var id in duplicates)
+        {
+            diagnostics.Add(
+                new PluginDiagnostic
+                {
+                    PluginId = id,
+                    Code = "DuplicatePlugin",
+                    Detail = $"More than one source provides '{id}'. Keep one ZIP or folder per plugin."
+                });
+        }
+
+        installations.RemoveAll(installation => duplicates.Contains(installation.Manifest.Id));
 
         // Publish only after the complete source set is imported. This is import state, not activation success.
         Directory.CreateDirectory(store.StagingDirectory);
@@ -110,7 +135,7 @@ public sealed partial class PluginSourceCatalog(string sourceDirectory, PluginPa
             }
         }
 
-        return installations;
+        return new PluginSourceImportResult { Installations = installations, Diagnostics = diagnostics };
     }
 
     /// <summary>
@@ -121,7 +146,6 @@ public sealed partial class PluginSourceCatalog(string sourceDirectory, PluginPa
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var files = isDirectory ? PluginPackageStore.EnumerateSourceFiles(source) : [source];
-
         foreach (var file in files)
         {
             var name = isDirectory ? Path.GetRelativePath(source, file).Replace('\\', '/') : Path.GetFileName(file);

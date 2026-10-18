@@ -27,7 +27,7 @@ public sealed record PluginManifest
     public Dictionary<string, string> Name
     {
         get;
-        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+        set => field = NormalizeTranslations(value);
     } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -37,7 +37,7 @@ public sealed record PluginManifest
     public Dictionary<string, string> Description
     {
         get;
-        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+        set => field = NormalizeTranslations(value);
     } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -47,11 +47,28 @@ public sealed record PluginManifest
     public Dictionary<string, string> Readme
     {
         get;
-        set => field = new Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase);
+        set => field = NormalizeTranslations(value);
     } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets the universal or platform-selected entry declaration.
     /// </summary>
     public required PluginEntry Entry { get; init; }
+
+    /// <summary>
+    /// Copies a language map while reporting case-colliding tags as invalid package data.
+    /// </summary>
+    private static Dictionary<string, string> NormalizeTranslations(Dictionary<string, string> translations)
+    {
+        var normalized = new Dictionary<string, string>(translations.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var (language, value) in translations)
+        {
+            if (!normalized.TryAdd(language, value))
+            {
+                throw new PluginValidationException("DuplicateTranslation", $"Duplicate localization for language '{language}'.");
+            }
+        }
+
+        return normalized;
+    }
 }

@@ -69,8 +69,8 @@ public sealed class PluginNavigationTests
                 Path.Combine(root, "app-data", "installed-plugins"),
                 Path.Combine(root, "profile", "plugins-data"),
                 Path.Combine(root, "app-data", "cache", "plugin-staging"));
-            var installations = await new PluginSourceCatalog(sources, store).ImportAsync();
-            var installation = installations.Single();
+            var imported = await new PluginSourceCatalog(sources, store).ImportAsync();
+            var installation = imported.Installations.Single();
             var host = new HostReferenceSet(hostDirectory);
             using var services = CreateServices();
             var navigation = services.GetRequiredService<MainViewModel>();

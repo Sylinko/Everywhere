@@ -44,17 +44,22 @@ public sealed class PluginEngineManager(IServiceProvider services) : IAsyncIniti
                 RuntimeConstants.EnsureWritableDataFolderPath("installed-plugins"),
                 PluginDataDirectory,
                 RuntimeConstants.EnsureCacheFolderPath("plugin-staging"));
-            var installations = await new PluginSourceCatalog(PluginDirectory, store)
+            var imported = await new PluginSourceCatalog(PluginDirectory, store)
                 .ImportAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (installations.Count == 0) return;
+            foreach (var diagnostic in imported.Diagnostics)
+            {
+                Log.ForContext<PluginEngineManager>().Warning("Plugin source {Code}: {Detail}", diagnostic.Code, diagnostic.Detail);
+            }
+
+            if (imported.Installations.Count == 0) return;
 
             var references = new HostReferenceSet(AppContext.BaseDirectory);
             var host = references.Descriptor;
             var definitions = new List<PluginDefinition>();
 
-            foreach (var installation in installations)
+            foreach (var installation in imported.Installations)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 definitions.Add(
@@ -112,7 +117,7 @@ public sealed class PluginEngineManager(IServiceProvider services) : IAsyncIniti
 
         foreach (var diagnostic in result.Diagnostics)
         {
-            logger.Warning("Plugin {Code}: {Detail}", diagnostic.Code, diagnostic.Detail);
+            logger.Warning("Plugin {PluginId} {Code}: {Detail}", diagnostic.PluginId, diagnostic.Code, diagnostic.Detail);
         }
     }
 }

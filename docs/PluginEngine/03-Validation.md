@@ -15,6 +15,13 @@ Plugin stop-reason tests exercise real collectible entries during hot unload, co
 initialization failure and ordinary exit, including a pending initializer. Cancellation callbacks and
 entry disposal observe the assigned reason, and exit joining timed-out retirement keeps Unload.
 
+PluginPackageTests exercise ZIP/folder import reuse, same-version replacement and persistent data.
+A broken neighboring ZIP is reported without hiding a valid source; retry reuses the successful
+installation. Duplicate plugin IDs exclude every competing source rather than choosing a winner.
+Case-colliding tags in name, description and README maps report DuplicateTranslation per source;
+repairing the manifest permits retry while successful neighboring imports retain their installation IDs.
+The import result contains startup installations and diagnostics, not a live-update desired set.
+
 The runtime separates registered reversal of application changes from optional entry disposal.
 Normal DI disposal releases the engine and its entries without draining registered reversal containers.
 No bounded managed-exit guarantee is made.
