@@ -1,5 +1,5 @@
 ﻿using NuGet.Frameworks;
-using NuGet.Versioning;
+using Everywhere.Common;
 
 namespace Everywhere.Plugin.Packaging;
 
@@ -11,9 +11,9 @@ public static class PluginCompatibility
     /// <summary>
     /// Parses an exact semantic version at the package boundary.
     /// </summary>
-    public static NuGetVersion ParseVersion(string value)
+    public static SemanticVersion ParseVersion(string value)
     {
-        if (!NuGetVersion.TryParse(value, out var version))
+        if (!SemanticVersion.TryParse(value, out var version))
         {
             throw new PluginValidationException("InvalidVersion", $"Invalid plugin version '{value}'.");
         }
@@ -24,9 +24,9 @@ public static class PluginCompatibility
     /// <summary>
     /// Parses a non-floating range. Missing ranges are not interpreted as unlimited compatibility.
     /// </summary>
-    public static VersionRange ParseRange(string value)
+    public static SemanticVersionRange ParseRange(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || !VersionRange.TryParse(value, out var range) || range.IsFloating)
+        if (!SemanticVersionRange.TryParse(value, out var range))
         {
             throw new PluginValidationException("InvalidVersionRange", $"Invalid plugin version range '{value}'.");
         }
@@ -35,15 +35,13 @@ public static class PluginCompatibility
     }
 
     /// <summary>
-    /// Checks a runtime version, admitting prereleases only when a range bound explicitly names one.
+    /// Checks a runtime version using the same range semantics as SDK validation and host versions.
     /// </summary>
     public static bool IsSatisfied(string rangeText, string versionText)
     {
         var range = ParseRange(rangeText);
         var version = ParseVersion(versionText);
-        var allowsPrerelease = range.MinVersion?.IsPrerelease == true || range.MaxVersion?.IsPrerelease == true;
-
-        return (!version.IsPrerelease || allowsPrerelease) && range.Satisfies(version);
+        return range.Contains(version);
     }
 
     /// <summary>

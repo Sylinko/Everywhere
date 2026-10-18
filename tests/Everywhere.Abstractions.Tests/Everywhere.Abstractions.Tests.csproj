@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework"/>
+    <None Update="Common/HistoricalVersions.txt" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
   <ItemGroup>

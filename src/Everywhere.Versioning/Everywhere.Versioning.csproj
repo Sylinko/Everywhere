@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Everywhere.Common</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Version comparison and compatibility ranges shared by Everywhere and its plugin tools.</Description>
+  </PropertyGroup>
+
+</Project>
