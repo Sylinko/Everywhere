@@ -1,58 +1,73 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace Everywhere.Common;
 
 /// <summary>
-/// Represents metadata about an available software update, including version,
-/// release date, release notes, download asset, and download state.
+/// Identifies one immutable update release and its selected platform asset.
 /// </summary>
-public sealed partial class SoftwareUpdateMetadata(
-    SemanticVersion version,
-    DateTimeOffset publishedAt,
-    string? releaseNotes,
-    SoftwareUpdateMetadata.UpdateAsset? asset
-) : ObservableObject
+/// <param name="Channel">
+/// The release channel encoded by the semantic version.
+/// </param>
+/// <param name="Tag">
+/// The complete release tag used by fixed-detail and download requests.
+/// </param>
+/// <param name="Version">
+/// The parsed semantic version of the release.
+/// </param>
+/// <param name="PublishedAt">
+/// The release publication time used by automatic-download eligibility policy.
+/// </param>
+/// <param name="Asset">
+/// The platform-specific package selected for this release.
+/// </param>
+public sealed record SoftwareUpdateMetadata(
+    UpdateChannel Channel,
+    string Tag,
+    SemanticVersion Version,
+    DateTimeOffset PublishedAt,
+    SoftwareUpdateMetadata.UpdateAsset Asset)
 {
     /// <summary>
-    /// The latest version available for update.
+    /// Determines whether another metadata snapshot identifies the same downloadable package.
     /// </summary>
-    public SemanticVersion Version { get; } = version;
+    /// <param name="other">
+    /// The metadata snapshot to compare.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the release and package identity fields match; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
+    internal bool HasSamePackageIdentity(SoftwareUpdateMetadata? other)
+    {
+        return other is not null &&
+               Channel == other.Channel &&
+               Version == other.Version &&
+               string.Equals(Tag, other.Tag, StringComparison.Ordinal) &&
+               string.Equals(Asset.Name, other.Asset.Name, StringComparison.Ordinal) &&
+               Asset.Size == other.Asset.Size &&
+               string.Equals(Asset.Digest, other.Asset.Digest, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
-    /// The publication date of the release.
+    /// Represents the selected downloadable asset for a release.
     /// </summary>
-    public DateTimeOffset PublishedAt { get; } = publishedAt;
-
-    /// <summary>
-    /// The release notes (Markdown body) from the GitHub release, or <see langword="null"/> if unavailable.
-    /// </summary>
-    public string? ReleaseNotes { get; } = releaseNotes;
-
-    /// <summary>
-    /// The download asset associated with this update.
-    /// </summary>
-    public UpdateAsset? Asset { get; } = asset;
-
-    /// <summary>
-    /// Gets the download progress as a normalized value (0.0 to 1.0).
-    /// </summary>
-    [ObservableProperty]
-    public partial double DownloadProgress { get; set; }
-
-    /// <summary>
-    /// Gets whether the asset has been fully downloaded and is ready to install.
-    /// </summary>
-    [ObservableProperty]
-    public partial bool IsReady { get; set; }
-
-    /// <summary>
-    /// Represents a downloadable asset (installer or archive) for a release.
-    /// </summary>
+    /// <param name="Name">
+    /// The package file name.
+    /// </param>
+    /// <param name="Digest">
+    /// The package digest supplied by the release service.
+    /// </param>
+    /// <param name="Size">
+    /// The expected package size in bytes.
+    /// </param>
+    /// <param name="ProxyDownloadUrl">
+    /// The fixed-version download-center URL used as the primary source.
+    /// </param>
+    /// <param name="DirectDownloadUrl">
+    /// The fixed-tag upstream URL used as the fallback source.
+    /// </param>
     public sealed record UpdateAsset(
         string Name,
         string Digest,
         long Size,
         string ProxyDownloadUrl,
-        string DirectDownloadUrl
-    );
+        string DirectDownloadUrl);
 }

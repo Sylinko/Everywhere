@@ -115,6 +115,15 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
+    /// <summary>
+    /// Gets or sets the last successful update discovery time on this device.
+    /// </summary>
+    public DateTimeOffset? LastUpdateCheckTime
+    {
+        get => Get<DateTimeOffset?>();
+        set => Set(value);
+    }
+
     private T? Get<T>(T? defaultValue = default, [CallerMemberName] string key = "")
     {
         return storage.Get(key, defaultValue);

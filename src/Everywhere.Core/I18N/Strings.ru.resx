@@ -4370,4 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Установленная служба принадлежит другой неопознанной копии Everywhere. При продолжении она будет перезаписана.</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>Обновление отменено. Нажмите, чтобы повторить попытку.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>Проверка обновлений…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>Загрузка обновления {0}…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>Подготовка обновления…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>Обновление готово. Нажмите, чтобы установить.</value>
+    </data>
 </root>

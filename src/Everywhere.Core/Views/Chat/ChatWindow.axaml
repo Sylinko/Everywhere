@@ -1,13 +1,13 @@
 ﻿<v:ReactiveShadWindow
   x:Class="Everywhere.Views.ChatWindow" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI;assembly=Everywhere.Abstractions"
-  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:common="clr-namespace:Everywhere.Common;assembly=Everywhere.Abstractions"
-  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-  xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions" xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls"
-  xmlns:p="clr-namespace:Everywhere.Chat.Plugins" xmlns:se="clr-namespace:Everywhere.StrategyEngine"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  xmlns:chat="clr-namespace:Everywhere.Chat" xmlns:in="clr-namespace:Everywhere.Interactions"
+  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:notification="clr-namespace:Everywhere.Common.Notification;assembly=Everywhere.Abstractions"
+  xmlns:notifications="clr-namespace:Avalonia.Controls.Notifications;assembly=Avalonia.Controls" xmlns:p="clr-namespace:Everywhere.Chat.Plugins"
+  xmlns:se="clr-namespace:Everywhere.StrategyEngine" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:system="clr-namespace:System;assembly=System.Runtime" xmlns:v="clr-namespace:Everywhere.Views"
+  xmlns:vc="clr-namespace:Everywhere.ValueConverters" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:Name="Self"
   Title="{I18N {x:Static LocaleKey.ChatWindow_Title}}"
   MinWidth="400" MinHeight="300"
   x:DataType="vm:ChatWindowViewModel" x:TypeArguments="vm:ChatWindowViewModel"
@@ -81,12 +81,15 @@
           DockPanel.Dock="Right" VerticalAlignment="Center"
           Orientation="Horizontal" Spacing="2">
           <StackPanel.Styles>
-            <Style Selector=":is(Button).TitleBar">
-              <Setter Property="Focusable" Value="False"/>
+            <Style Selector=":is(Control).TitleBar">
               <Setter Property="Height" Value="28"/>
               <Setter Property="MinHeight" Value="28"/>
               <Setter Property="MinWidth" Value="28"/>
               <Setter Property="Width" Value="28"/>
+            </Style>
+
+            <Style Selector=":is(Button).TitleBar">
+              <Setter Property="Focusable" Value="False"/>
               <Setter Property="Padding" Value="0"/>
               <Setter Property="CornerRadius" Value="14"/>
               <Setter Property="BorderThickness" Value="0"/>
@@ -158,8 +161,13 @@
             </Style>
           </StackPanel.Styles>
 
+          <v:SoftwareUpdateButton
+            Classes="TitleBar" VerticalAlignment="Center"
+            SoftwareUpdater="{Binding SoftwareUpdater}"
+            WindowDecorationProperties.ElementRole="User"/>
+
           <ToggleButton
-            Classes="TitleBar" Margin="0,0,2,0"
+            Classes="TitleBar" Margin="2,0,1,0"
             IsChecked="{Binding ChatContextManager.Current.Metadata.IsTemporary, Mode=TwoWay}"
             IsVisible="{Binding ChatContextManager.Current.DisplayItems.Count, Converter={x:Static vc:Int32Converters.NotGreaterThan}, ConverterParameter=1}"
             ToolTip.Tip="{I18N {x:Static LocaleKey.ChatContext_TemporaryToggleButton_ToolTip}}"
@@ -1141,7 +1149,7 @@
                   <v:ChatInputArea.ToolBarContent>
                     <Grid
                       Grid.Row="2" Grid.Column="0"
-                      ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                      ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="4">
                       <Grid.Styles>
                         <Style Selector="Button:flyout-open LayoutTransformControl">
                           <Style.Animations>
@@ -1241,26 +1249,6 @@
                         ItemsSource="{Binding ApprovalModeOptions}"
                         SelectItemCommand="{Binding SelectApprovalModeCommand}"
                         SelectedItem="{Binding SelectedApprovalOption, Mode=OneWay}"/>
-
-                      <Button
-                        Classes="Ghost Rounded Update" Grid.Column="3"
-                        Command="{Binding PerformUpdateCommand}"
-                        Focusable="False"
-                        IsVisible="{Binding SoftwareUpdater?.LatestUpdate?.IsReady, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <ToolTip.Tip>
-                          <I18N Key="{x:Static LocaleKey.ChatInputArea_UpdateButton_ToolTip}">
-                            <Binding Source="{x:Static common:RuntimeConstants.Version}"/>
-                            <Binding Path="SoftwareUpdater?.LatestUpdate?.Version"/>
-                            <Binding
-                              Converter="{x:Static vc:CommonConverters.DateTimeOffsetToString}"
-                              Path="SoftwareUpdater?.LatestUpdate?.PublishedAt"/>
-                          </I18N>
-                        </ToolTip.Tip>
-
-                        <LucideIcon
-                          Kind="ArrowBigUpDash"
-                          Size="{DynamicResource FontSizeL}"/>
-                      </Button>
                     </Grid>
                   </v:ChatInputArea.ToolBarContent>
 

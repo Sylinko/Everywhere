@@ -4370,4 +4370,19 @@ Si vous continuez, l'autre copie désactivera le mode service.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Le service installé appartient à une autre copie d'Everywhere non identifiable. Si vous continuez, elle sera écrasée.</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>Mise à jour annulée. Cliquez pour réessayer.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>Recherche de mises à jour…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>Téléchargement de la mise à jour {0}…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>Préparation de la mise à jour…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>La mise à jour est prête. Cliquez pour installer.</value>
+    </data>
 </root>

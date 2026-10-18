@@ -787,9 +787,6 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private Task PerformUpdateAsync() => SoftwareUpdater.PerformUpdateAsync();
-
-    [RelayCommand]
     private static void Close()
     {
         WeakReferenceMessenger.Default.Send(new CloakChatWindowMessage(true));

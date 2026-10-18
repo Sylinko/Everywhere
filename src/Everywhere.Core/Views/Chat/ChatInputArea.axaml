@@ -14,10 +14,6 @@
       <Setter Property="Width" Value="{DynamicResource FontSize3Xl}"/>
       <Setter Property="Padding" Value="0"/>
       <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}"/>
-
-      <Style Selector="^.Update">
-        <Setter Property="Background" Value="{DynamicResource SuccessColor60}"/>
-      </Style>
     </Style>
 
     <Style Selector="^ /template/ MenuItem.Rounded">

@@ -43,7 +43,8 @@
 
         <ListBox
           Classes="Draggable" Grid.Row="1"
-          Padding="0" BorderThickness="0"
+          Margin="0,0,-12,0" Padding="0,0,12,0"
+          BorderThickness="0"
           ItemsSource="{Binding ReleaseInfos}"
           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
           SelectedItem="{Binding SelectedReleaseInfo, Mode=TwoWay}">
@@ -79,15 +80,27 @@
           </ListBox.DataTemplates>
         </ListBox>
 
-        <Button
-          Grid.Row="2" HorizontalAlignment="Stretch"
-          shadui:ButtonAssist.HoverBackground="{DynamicResource SuccessColor20}"
-          shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
-          Background="{DynamicResource SuccessColor60}"
-          Command="{Binding PerformUpdateCommand}"
-          Content="{I18N {x:Static LocaleKey.ChangeLogView_UpdateButton_Content}}"
-          FontWeight="Bold"
-          IsVisible="{Binding SoftwareUpdater.LatestUpdate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <StackPanel Grid.Row="2" Spacing="8">
+          <StackPanel IsVisible="{Binding IsUpdateInProgress}" Spacing="4">
+            <TextBlock Text="{Binding UpdateStatusKey^}" TextWrapping="Wrap"/>
+            <ProgressBar
+              Minimum="0" Maximum="1"
+              IsIndeterminate="{Binding IsUpdateProgressIndeterminate}"
+              Value="{Binding UpdateProgress}"/>
+            <TextBlock
+              HorizontalAlignment="Right"
+              IsVisible="{Binding !IsUpdateProgressIndeterminate}"
+              Text="{Binding UpdateProgress, StringFormat={}{0:P0}}"/>
+          </StackPanel>
+          <Button
+            HorizontalAlignment="Stretch"
+            shadui:ButtonAssist.HoverBackground="{DynamicResource SuccessColor20}"
+            shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
+            Background="{DynamicResource SuccessColor60}"
+            Command="{Binding PerformUpdateCommand}"
+            Content="{Binding UpdateButtonContent}"
+            IsVisible="{Binding IsUpdateButtonVisible}"/>
+        </StackPanel>
       </Grid>
     </shadui:NavigationView.PaneContent>
 

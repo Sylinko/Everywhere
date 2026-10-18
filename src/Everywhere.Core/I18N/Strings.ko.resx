@@ -4370,4 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>업데이트가 취소되었습니다. 클릭하여 다시 시도하세요.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>업데이트 확인 중…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>업데이트 {0} 다운로드 중…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>업데이트 준비 중…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>업데이트가 준비되었습니다. 클릭하여 설치하세요.</value>
+    </data>
 </root>

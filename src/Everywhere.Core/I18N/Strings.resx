@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Downloading update...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>Verifying update...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>Canceling update...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>Model ID</value>
     </data>
@@ -2698,6 +2704,15 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>Update to Latest Version</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>Download and install {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>Install {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>Install downloaded {0} (latest unconfirmed)</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Current</value>
     </data>
@@ -2988,6 +3003,30 @@ Use scroll wheel or number keys to switch selection mode</value>
 Current version: {0}
 Latest version: {1}
 Release date: {2}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>Checking for updates…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>Downloading update {0}…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>Preparing update…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Cancelling" xml:space="preserve">
+        <value>Canceling update...</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Installing" xml:space="preserve">
+        <value>Installing update...</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>Update is ready. Click to install.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Failed" xml:space="preserve">
+        <value>Update failed. Click to retry.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>Update canceled. Click to retry.</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>Continue and Retry</value>

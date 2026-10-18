@@ -4370,4 +4370,19 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Yüklü hizmet, tanımlanamayan başka bir Everywhere kopyasına ait. Devam ederseniz üzerine yazılacaktır.</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>Güncelleme iptal edildi. Yeniden denemek için tıklayın.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>Güncellemeler denetleniyor…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>Güncelleme {0} indiriliyor…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>Güncelleme hazırlanıyor…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>Güncelleme hazır. Yüklemek için tıklayın.</value>
+    </data>
 </root>

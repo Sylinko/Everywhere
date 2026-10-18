@@ -27,10 +27,6 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [SettingsItemIgnore]
     public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Description);
 
-    [ObservableProperty]
-    [SettingsItemIgnore]
-    public partial DateTimeOffset? LastUpdateCheckTime { get; set; }
-
     [JsonIgnore]
     [DynamicLocaleKey(
         LocaleKey.SoftwareSettings_SoftwareUpdate_Header,
