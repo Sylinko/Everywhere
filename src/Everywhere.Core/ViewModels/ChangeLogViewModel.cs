@@ -1,18 +1,19 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Configuration;
 using LiveMarkdown.Avalonia;
 using Microsoft.Extensions.Logging;
+using ShadUI;
 
 namespace Everywhere.ViewModels;
 
@@ -92,6 +93,16 @@ public sealed class VersionHistoryRelease
     // public int AssetCount { get; set; }
 }
 
+public enum UpdatePageAction
+{
+    Hidden,
+    DownloadAndInstall,
+    Install,
+    InstallFallback,
+    Retry,
+    Cancel
+}
+
 [JsonSerializable(typeof(VersionHistoryResponse))]
 [JsonSerializable(typeof(List<ReleaseInfo>))]
 public sealed partial class ChangeLogViewModelJsonSerializerContext : JsonSerializerContext;
@@ -111,9 +122,67 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
     [ObservableProperty]
     public partial ReleaseInfo? SelectedReleaseInfo { get; set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsUpdateButtonVisible))]
+    [NotifyPropertyChangedFor(nameof(UpdateButtonContent))]
+    public partial UpdatePageAction UpdateAction { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UpdateButtonContent))]
+    public partial SoftwareUpdateMetadata? UpdateTarget { get; private set; }
+
+    public bool IsUpdateButtonVisible => UpdateAction != UpdatePageAction.Hidden;
+
+    public string UpdateButtonContent => UpdateAction switch
+    {
+        UpdatePageAction.DownloadAndInstall => LocaleKey.ChangeLogView_DownloadAndInstallButton_Content.I18N().Format(UpdateTarget?.Version),
+        UpdatePageAction.Install => LocaleKey.ChangeLogView_InstallButton_Content.I18N().Format(UpdateTarget?.Version),
+        UpdatePageAction.InstallFallback => LocaleKey.ChangeLogView_InstallFallbackButton_Content.I18N().Format(UpdateTarget?.Version),
+        UpdatePageAction.Retry => LocaleKey.Common_Retry.I18N(),
+        UpdatePageAction.Cancel => LocaleKey.Common_Cancel.I18N(),
+        _ => LocaleKey.ChangeLogView_UpdateButton_Content.I18N()
+    };
+
+    /// <summary>
+    /// Gets whether shared update work is currently running, independently of page refreshes.
+    /// </summary>
+    public bool IsUpdateInProgress => SoftwareUpdater.CurrentOperation is { IsActive: true };
+
+    /// <summary>
+    /// Gets whether the current update stage has no measurable progress.
+    /// </summary>
+    public bool IsUpdateProgressIndeterminate => SoftwareUpdater.CurrentOperation?.IsIndeterminate != false;
+
+    /// <summary>
+    /// Gets normalized download progress for the page's progress bar.
+    /// </summary>
+    public double UpdateProgress
+    {
+        get
+        {
+            var progress = SoftwareUpdater.CurrentOperation?.Progress ?? 0d;
+            return double.IsFinite(progress) ? Math.Clamp(progress, 0d, 1d) : 0d;
+        }
+    }
+
+    /// <summary>
+    /// Gets the localized status of the active operation; views resolve the key at presentation time.
+    /// </summary>
+    public IDynamicLocaleKey UpdateStatusKey => SoftwareUpdater.CurrentOperation?.Stage switch
+    {
+        SoftwareUpdateOperationStage.Checking => new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text),
+        SoftwareUpdateOperationStage.Downloading => new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate),
+        SoftwareUpdateOperationStage.Validating => new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate),
+        SoftwareUpdateOperationStage.Cancelling => new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CancellingUpdate),
+        SoftwareUpdateOperationStage.Installing => new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_UpdatingTitle_Text),
+        _ => DirectLocaleKey.Empty
+    };
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ChangeLogViewModel> _logger;
     private readonly SourceCache<ReleaseInfo, string> _releaseInfosSource = new(r => r.Tag ?? string.Empty);
+    private UpdatePageAction _resolvedAction;
+    private SoftwareUpdateMetadata? _resolvedTarget;
 
     public ChangeLogViewModel(ISoftwareUpdater softwareUpdater, IHttpClientFactory httpClientFactory, ILogger<ChangeLogViewModel> logger)
     {
@@ -126,19 +195,27 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
             .SortAndBind(
                 out var releaseInfos,
                 SortExpressionComparer<ReleaseInfo>
-                    .Descending(r => r.PublishedDate)
-                    .ThenByDescending(r => SemanticVersion.TryParse(r.Tag?.TrimStart('v'), out var v) ? v : new SemanticVersion(0))
+                    .Descending(r => SemanticVersion.TryParse(r.Tag?.TrimStart('v', 'V'), out var v) ? v : new SemanticVersion(0))
+                    .ThenByDescending(r => r.PublishedDate)
             )
             .Subscribe()
             .AddTo(LifetimeDisposables);
         ReleaseInfos = releaseInfos.ToReadOnlyBindableList();
         LifetimeDisposables.Add(_releaseInfosSource);
+
+        softwareUpdater.PropertyChanged += HandleSoftwareUpdaterPropertyChanged;
+        LifetimeDisposables.Add(Disposable.Create(() => softwareUpdater.PropertyChanged -= HandleSoftwareUpdaterPropertyChanged));
     }
 
-    protected internal override Task ViewLoaded(CancellationToken cancellationToken) => ExecuteBusyTaskAsync(
+    protected internal override Task ViewLoaded(CancellationToken cancellationToken) => RefreshAsync(cancellationToken);
+
+    protected override void OnIsBusyChanged() => UpdateProjectedAction();
+
+    private Task RefreshAsync(CancellationToken cancellationToken) => ExecuteBusyTaskAsync(
         async token =>
         {
             var updateChannel = SoftwareUpdater.UpdateChannel;
+            SetResolvedAction(UpdatePageAction.Hidden, null);
             _releaseInfosSource.Clear();
             SelectedReleaseInfo = null;
 
@@ -154,6 +231,7 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                 {
                     ex = HandledSystemException.Handle(ex);
                     _logger.LogError(ex, "Failed to load local changelog.");
+                    SetRefreshFailureAction();
 
                     // ReSharper disable once PossibleIntendedRethrow
                     throw ex;
@@ -162,11 +240,41 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
 
             try
             {
-                var releases = await LoadRemoteVersionHistoryAsync(updateChannel, token);
+                // Explicit navigation must expose the cached fallback even without startup recovery.
+                await SoftwareUpdater.RecoverCachedPackageAsync(token);
+                var releases = (await LoadRemoteVersionHistoryAsync(updateChannel, token)).ToArray();
                 _releaseInfosSource.AddOrUpdate(releases);
                 SelectFirstReleaseInfo();
+
+                var newestRelease = releases
+                    .AsValueEnumerable()
+                    .Select(release => new
+                    {
+                        Release = release,
+                        Version = SemanticVersion.TryParse(release.Tag?.TrimStart('v', 'V'), out var version) ? version : null
+                    })
+                    .Where(item => item.Version is not null && item.Version > RuntimeConstants.Version)
+                    .OrderByDescending(item => item.Version)
+                    .FirstOrDefault();
+                if (newestRelease?.Release.Tag is not { } newestTag)
+                {
+                    SetResolvedAction(UpdatePageAction.Hidden, null);
+                    return;
+                }
+
+                var resolvedUpdate = await SoftwareUpdater.ResolveUpdateAsync(updateChannel, newestTag, token);
+                var action = SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(resolvedUpdate) == true ?
+                    UpdatePageAction.Install :
+                    UpdatePageAction.DownloadAndInstall;
+                SetResolvedAction(action, resolvedUpdate);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+            catch (SoftwareUpdateConsistencyException ex)
+            {
+                _logger.LogError(ex, "Version history and fixed release details are inconsistent.");
+                SetResolvedAction(UpdatePageAction.Retry, null);
+                throw;
+            }
             catch (TimeoutException ex)
             {
                 var handledException = new HandledSystemException(
@@ -174,14 +282,14 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
                     HandledSystemExceptionType.Timeout,
                     new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_HttpRequest_RequestTimeout));
                 _logger.LogError(handledException, "Failed to load version history.");
-
+                SetRefreshFailureAction();
                 throw handledException;
             }
             catch (Exception ex)
             {
                 ex = HandledSystemException.Handle(ex);
                 _logger.LogError(ex, "Failed to load version history.");
-
+                SetRefreshFailureAction();
                 // ReSharper disable once PossibleIntendedRethrow
                 throw ex;
             }
@@ -238,9 +346,11 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
     {
         using var httpClient = _httpClientFactory.CreateClient();
         var channelName = channel.ToString();
-        var response = await httpClient.GetAsync(
-            $"{UpdateServiceBaseUrl}/versions?product=everywhere&channel={channelName}&limit={VersionHistoryLimit}",
-            cancellationToken);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{UpdateServiceBaseUrl}/versions?product=everywhere&channel={channelName}&limit={VersionHistoryLimit}");
+        request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
+        using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         await using var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -262,12 +372,16 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
             throw new InvalidDataException("Version history releases field is missing.");
 
         return versionHistory.Releases
-            .Where(r =>
-                r.Channel?.Equals(channelName, StringComparison.OrdinalIgnoreCase) is true &&
-                !r.Version.IsNullOrWhiteSpace() &&
-                !r.TagName.IsNullOrWhiteSpace() &&
-                r.PublishedAt != default &&
-                r.ReleaseUrl != null)
+            .Where(release =>
+                release.Channel?.Equals(channelName, StringComparison.OrdinalIgnoreCase) is true &&
+                !release.Version.IsNullOrWhiteSpace() &&
+                !release.TagName.IsNullOrWhiteSpace() &&
+                release.PublishedAt != default &&
+                release.ReleaseUrl is not null &&
+                SemanticVersion.TryParse(release.Version, out var version) &&
+                SemanticVersion.TryParse(release.TagName.TrimStart('v', 'V'), out var tagVersion) &&
+                version == tagVersion &&
+                version.Channel == channel)
             .Select(r => new ReleaseInfo
             {
                 Tag = r.TagName,
@@ -288,35 +402,96 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
         SelectedReleaseInfo = ReleaseInfos.Count > 0 ? ReleaseInfos[0] : null;
     }
 
-    [RelayCommand]
+    private void HandleSoftwareUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(ISoftwareUpdater.CurrentOperation) or nameof(ISoftwareUpdater.ReadyUpdate))) return;
+
+        Dispatcher.UIThread.PostOnDemand(() =>
+        {
+            OnPropertyChanged(nameof(IsUpdateInProgress));
+            OnPropertyChanged(nameof(IsUpdateProgressIndeterminate));
+            OnPropertyChanged(nameof(UpdateProgress));
+            OnPropertyChanged(nameof(UpdateStatusKey));
+            UpdateProjectedAction();
+        });
+    }
+
+    private void SetRefreshFailureAction()
+    {
+        var readyUpdate = SoftwareUpdater.ReadyUpdate;
+        SetResolvedAction(
+            readyUpdate is not null && readyUpdate.Version > RuntimeConstants.Version ? UpdatePageAction.InstallFallback : UpdatePageAction.Retry,
+            readyUpdate);
+    }
+
+    private void SetResolvedAction(UpdatePageAction action, SoftwareUpdateMetadata? target)
+    {
+        _resolvedAction = action;
+        _resolvedTarget = target;
+        UpdateProjectedAction();
+    }
+
+    private void UpdateProjectedAction()
+    {
+        if (IsBusy)
+        {
+            UpdateTarget = null;
+            UpdateAction = UpdatePageAction.Hidden;
+            return;
+        }
+
+        if (SoftwareUpdater.CurrentOperation is
+            {
+                IsActive: true
+            } currentOperation)
+        {
+            UpdateTarget = currentOperation.Target ?? _resolvedTarget;
+            UpdateAction = currentOperation.CanCancel ? UpdatePageAction.Cancel : UpdatePageAction.Hidden;
+            return;
+        }
+
+        if (_resolvedAction == UpdatePageAction.Install &&
+            SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(_resolvedTarget) != true)
+        {
+            _resolvedAction = UpdatePageAction.DownloadAndInstall;
+        }
+        else if (_resolvedAction == UpdatePageAction.DownloadAndInstall &&
+                 SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(_resolvedTarget) == true)
+        {
+            _resolvedAction = UpdatePageAction.Install;
+        }
+
+        UpdateTarget = _resolvedTarget;
+        UpdateAction = _resolvedAction;
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task PerformUpdateAsync(CancellationToken cancellationToken)
     {
+        if (UpdateAction == UpdatePageAction.Cancel)
+        {
+            SoftwareUpdater.CancelCurrentOperation();
+            return;
+        }
+
+        if (UpdateAction == UpdatePageAction.Retry)
+        {
+            await RefreshAsync(cancellationToken);
+            return;
+        }
+
+        var target = UpdateTarget;
+        if (target is null) return;
+
         try
         {
-            if (SoftwareUpdater.LatestUpdate is not { IsReady: true })
-            {
-                var progress = new Progress<double>();
-                var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                ToastHost
-                    .CreateToast(LocaleKey.Common_Info.I18N())
-                    .WithContent(LocaleKey.CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate.I18N())
-                    .WithProgress(progress)
-                    .WithCancellationTokenSource(cancellationTokenSource)
-                    .OnBottomRight()
-                    .ShowInfo();
-                await SoftwareUpdater.PerformUpdateAsync(progress, cancellationTokenSource.Token);
-            }
-            else
-            {
-                await SoftwareUpdater.PerformUpdateAsync(cancellationToken: cancellationToken);
-            }
+            await SoftwareUpdater.PerformUpdateAsync(target, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to perform update.");
-
-            ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_UpdateFailed_Content));
-            ToastExceptionHandler.HandleException(ex);
+            ToastManager.Error(LocaleKey.Common_Error.I18N(), ex.GetFriendlyMessage());
         }
     }
 }

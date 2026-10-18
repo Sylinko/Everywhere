@@ -4370,4 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>已安裝的服務屬於另一個無法識別的 Everywhere 副本，如果繼續將覆蓋它。</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>更新已取消，點擊重試</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>正在檢查更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>正在下載更新 {0}…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>正在準備更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>更新已準備就緒，點擊安裝</value>
+    </data>
 </root>

@@ -8,12 +8,15 @@ using ShadUI;
 namespace Everywhere.Views;
 
 public partial class SoftwareUpdateControl(
-    Settings settings,
+    PersistentState persistentState,
     ISoftwareUpdater softwareUpdater,
     IServiceProvider serviceProvider
 ) : TemplatedControl
 {
-    public Settings Settings { get; } = settings;
+    /// <summary>
+    /// Gets the device-local state displayed by the update control.
+    /// </summary>
+    public PersistentState PersistentState { get; } = persistentState;
 
     public ISoftwareUpdater SoftwareUpdater { get; } = softwareUpdater;
 
@@ -30,16 +33,17 @@ public partial class SoftwareUpdateControl(
     private async Task UpdateOrCheckAsync(CancellationToken cancellationToken)
     {
         UpdateOrCheckTitle = new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_CheckingUpdateTitle_Text);
-        if (SoftwareUpdater.LatestUpdate is not null)
+        if (SoftwareUpdater.DisplayUpdate is not null)
         {
             serviceProvider.GetRequiredService<MainViewModel>().NavigateTo(serviceProvider.GetRequiredService<ChangeLogView>());
             return;
         }
-        
+
         try
         {
             await SoftwareUpdater.CheckForUpdatesAsync(true, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception ex)
         {
             ex = new HandledException(ex, new DynamicLocaleKey(LocaleKey.CommonSettings_SoftwareUpdate_Toast_CheckForUpdatesFailed_Content));

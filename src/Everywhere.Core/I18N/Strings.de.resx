@@ -4370,4 +4370,19 @@ Wenn Sie fortfahren, wird die andere Kopie den Dienstmodus beenden.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Der installierte Dienst gehört zu einer anderen, nicht identifizierbaren Everywhere-Kopie. Wenn Sie fortfahren, wird er überschrieben.</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>Update abgebrochen. Klicken Sie, um es erneut zu versuchen.</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>Suche nach Updates…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>Update {0} wird heruntergeladen…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>Update wird vorbereitet…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>Update ist bereit. Klicken Sie zum Installieren.</value>
+    </data>
 </root>

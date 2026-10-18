@@ -184,7 +184,7 @@ public static class Program
                 #region Initialize
 
                 .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-                .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+                .AddTransient<IAsyncInitializer, SoftwareUpdaterInitializer>()
 
             #endregion
 

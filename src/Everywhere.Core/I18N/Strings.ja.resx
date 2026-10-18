@@ -4370,4 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>インストールされているサービスは、識別できない別の Everywhere コピーに属しています。続行すると上書きされます。</value>
     </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>更新はキャンセルされました。クリックして再試行してください。</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>アップデートを確認しています…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>アップデート {0} をダウンロード中…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>アップデートを準備しています…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>アップデートの準備ができました。クリックしてインストール</value>
+    </data>
 </root>

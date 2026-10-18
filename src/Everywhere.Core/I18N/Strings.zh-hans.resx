@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>下载更新中...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>正在验证更新...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>正在取消更新...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>模型 ID</value>
     </data>
@@ -2698,6 +2704,15 @@
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>更新到最新版本</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>下载并安装 {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>安装 {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>安装已下载的 {0}（未能确认最新版本）</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>当前</value>
     </data>
@@ -2988,6 +3003,30 @@
 当前版本: {0}
 最新版本: {1}
 发布日期: {2}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+        <value>正在检查更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+        <value>正在下载更新 {0}…{1}</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+        <value>正在准备更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Cancelling" xml:space="preserve">
+        <value>正在取消更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Installing" xml:space="preserve">
+        <value>正在安装更新…</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+        <value>更新已准备就绪，点击安装</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Failed" xml:space="preserve">
+        <value>更新失败，点击重试</value>
+    </data>
+    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+        <value>更新已取消，点击重试</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>继续并重试</value>
