@@ -210,10 +210,10 @@ public sealed class PluginPackageStore(string rootDirectory, string dataDirector
         {
             UniversalPluginEntry universal => universal.Assemblies.Concat(universal.NativeLibraries).Concat(universal.ContentFiles),
             PlatformPluginEntry platform => platform.Variants.SelectMany(variant => variant.Assemblies.Concat(variant.NativeLibraries).Concat(variant.ContentFiles)),
-            _ => Array.Empty<string>()
+            _ => []
         };
 
-        foreach (var file in files)
+        foreach (var file in files.Concat(manifest.Readme.Values))
         {
             if (!File.Exists(PackagePath.Resolve(directory, file)))
             {

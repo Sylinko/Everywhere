@@ -10,5 +10,12 @@
     <EverywherePluginToolsDirectory Condition="'$(EverywherePluginToolsDirectory)' == ''">$(MSBuildThisFileDirectory)../tools/net10.0</EverywherePluginToolsDirectory>
   </PropertyGroup>
 
+  <ItemDefinitionGroup>
+    <!-- Localization identities are language tags, not files in the project tree. -->
+    <EverywherePluginLocalization>
+      <Visible>false</Visible>
+    </EverywherePluginLocalization>
+  </ItemDefinitionGroup>
+
   <Import Project="$(EverywhereLocalConfiguration)" Condition="Exists('$(EverywhereLocalConfiguration)')" />
 </Project>

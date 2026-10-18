@@ -479,6 +479,43 @@ Do not equate the Windows SDK used for compilation with a runtime minimum OS ver
 
 A neutral package remains a simple folder or standard ZIP containing its entry DLL, ordinary dependencies and generated metadata. Multi-platform packages add declared subdirectories. Directory names alone do not select files, and the loader does not load every DLL recursively. The initial SDK preserves MSBuild's copy-local destination paths and generated satellite target paths. The runtime validates satellite metadata and lets ResourceManager perform culture fallback. The SDK uses the selected MSBuild output, records managed DLLs in `assemblies`, native libraries in `nativeLibraries`, and other output files in `contentFiles`. It preserves dependency records, satellites, native paths and executable content. These are generated file inventories, not author-maintained loading instructions. Native assets require a platform entry. Multi-entry aggregation and cross-platform native validation remain incomplete; this is not a new implementation of NuGet restore. ZIP/folder imports, staged installation and a startup reuse index exist; persisted disablement and pending restart selections do not.
 
+### Localized package information
+
+Package-level `name`, `description` and `readme` are optional language-to-string maps, shared by all
+platform entries. Name and description values are display text; README values are package-relative
+Markdown paths. Language tags compare with `OrdinalIgnoreCase`, while text and paths keep their
+original case. Empty maps are valid. A missing name displays the plugin ID; a missing description
+or README leaves that part of the details view empty. Package validation does not require a name.
+
+The SDK accepts one `EverywherePluginLocalization` item per language. Its `Include` is the language
+tag; optional `Name`, `Description` and `Readme` metadata declare the corresponding values. Empty
+project fields are omitted. Duplicate language declarations, ignoring case, are errors. Authors
+never maintain the generated `plugin.json` by hand.
+
+`Readme` identifies a package-relative Markdown path. An ordinary content item may supply that path,
+including a shared source file mapped with MSBuild `Link`. Otherwise the SDK includes the file at
+the same relative path in the author project. Package paths must stay within the package; this does
+not restrict the source locations of ordinary MSBuild content items. Explicit mappings take precedence over conventions.
+At packaging time the SDK also discovers root-level `README.md` (English) and `README.<language>.md`.
+It does not infer a second language for a source file already mapped explicitly, including when Link
+changes its package-relative path. An explicit mapping for a language suppresses convention-based
+mappings for that language. Otherwise, ambiguous conventions
+such as both `README.md` and `README.en.md` are errors. SDK-generated language keys are lowercase;
+file names and paths are preserved. README attachments use ordinary content items and keep their
+relative directories; the SDK does not parse Markdown to discover assets.
+
+Display selects each field independently using the current locale, successively shorter language
+tags, English, then the first available value. For example, `zh-Hant-HK` tries `zh-Hant-HK`, `zh-Hant`,
+`zh`, `en`, then the first value. Case variants are equivalent; `zh-CN` is not automatically an alias
+for `zh-Hans`. This is the existing `JsonDynamicLocaleKey` fallback contract. Packaging and Hosting
+store ordinary string maps without referencing Avalonia; the application presentation layer wraps
+these maps in `JsonDynamicLocaleKey`. Preserve dynamic keys until presentation so language changes
+refresh the displayed text and README selection.
+
+Metadata and README files are readable without executing plugin code, including for disabled,
+platform-skipped and failed plugins. Installation validates declared README paths and file existence
+independently of entry selection. The management page and its Markdown presentation remain pending.
+
 ### Native resolution and lifetime
 
 **Implemented for the selected package environment; Windows validated.** Native dependencies are

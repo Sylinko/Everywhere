@@ -38,7 +38,7 @@ internal static class Program
                 case
                 [
                     "pack", var assembly, var referencesPath, var payload, var id, var version, var type,
-                    var framework, var hostRange, var apiRange, var platform, var archive
+                    var framework, var hostRange, var apiRange, var platform, var archive, var presentation, var projectDirectory
                 ]:
                 {
                     PluginPackager.Pack(
@@ -52,7 +52,9 @@ internal static class Program
                         hostRange,
                         apiRange,
                         platform == "universal" ? "" : platform,
-                        archive);
+                        archive,
+                        presentation,
+                        projectDirectory);
                     var result = new PackageCreationResult { Path = Path.GetFullPath(archive) };
                     Console.WriteLine(JsonSerializer.Serialize(result, SdkJsonSerializerContext.Default.PackageCreationResult));
                     return 0;
@@ -60,7 +62,7 @@ internal static class Program
                 default:
                 {
                     await Console.Error.WriteLineAsync(
-                        "Usage: Everywhere.Plugin.Sdk import <host-directory> <reference-list> | check <package-directory> | pack <assembly> <reference-list> <payload-list> <id> <version> <entry-type> <framework> <host-range> <api-range> <platform|universal> <archive>");
+                        "Usage: Everywhere.Plugin.Sdk import <host-directory> <reference-list> | check <package-directory> | pack <assembly> <reference-list> <payload-list> <id> <version> <entry-type> <framework> <host-range> <api-range> <platform|universal> <archive> <presentation-directory> <project-directory>");
                     return 2;
                 }
             }

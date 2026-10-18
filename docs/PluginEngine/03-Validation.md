@@ -2,9 +2,14 @@
 
 ## Current regression coverage
 
-SettingsItemsAliasTests compile type, namespace and attribute aliases against keys emitted by the
-I18N generator in the same build, including reordered and mixed constructor arguments, descriptions
-and enum-option metadata.
+Package localization tests use real author projects with both source and installation host imports.
+They check omitted names and whole localization declarations, independent descriptions, Unicode README
+paths, content attachments, convention discovery and explicit overrides, including Chinese-only README
+remapping and ambiguous English README rejection. The generated maps are read back through
+PluginPackageStore without loading plugin code. Metadata and packaging do not require the I18N/UI APIs.
+
+DynamicLocaleKeyTests check case-insensitive language lookup, order-independent equality/hashing,
+JSON and MessagePack round trips, and parent/English fallback. Text values remain case-sensitive.
 
 The runtime separates registered reversal of application changes from optional entry disposal.
 Normal DI disposal releases the engine and its entries without draining registered reversal containers.
