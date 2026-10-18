@@ -2,6 +2,10 @@
 
 ## Current regression coverage
 
+SettingsItemsAliasTests compile type, namespace and attribute aliases against keys emitted by the
+I18N generator in the same build, including reordered and mixed constructor arguments, descriptions
+and enum-option metadata.
+
 The runtime separates registered reversal of application changes from optional entry disposal.
 Normal DI disposal releases the engine and its entries without draining registered reversal containers.
 No bounded managed-exit guarantee is made.

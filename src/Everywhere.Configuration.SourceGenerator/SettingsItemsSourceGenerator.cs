@@ -32,12 +32,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             {
                 foreach (var t in tuple.Right.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>())
                 {
-                    EmitForType(spc, t);
+                    EmitForType(spc, tuple.Left, t);
                 }
             });
     }
 
-    private static void EmitForType(SourceProductionContext ctx, INamedTypeSymbol type)
+    private static void EmitForType(SourceProductionContext ctx, Compilation compilation, INamedTypeSymbol type)
     {
         if (!type.IsPartial())
         {
@@ -64,7 +64,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             .OfType<IPropertySymbol>()
             .Where(p => p is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
             .Where(p => !p.IsHiddenItem())
-            .Select(p => BuildPropertyMetadata(ctx, type, p, p, p.Name))
+            .Select(p => BuildPropertyMetadata(ctx, compilation, type, p, p, p.Name))
             .OrderBy(static metadata => metadata.Index)
             .ToImmutableArray();
 
@@ -88,6 +88,9 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         sb.AppendLine("{");
         using (sb.Indent())
         {
+            sb.AppendLine("/// <summary>");
+            sb.AppendLine("/// Gets the lazily created settings items bound to this model.");
+            sb.AppendLine("/// </summary>");
             sb.AppendLine("[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]");
             sb.AppendLine("[global::System.Text.Json.Serialization.JsonIgnore]");
             sb.AppendLine("[field: global::System.Diagnostics.CodeAnalysis.AllowNull, global::System.Diagnostics.CodeAnalysis.MaybeNull]");
@@ -139,7 +142,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
                             foreach (var meta in g)
                             {
-                                EmitItemRecursive(ctx, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, childrenVar);
+                                EmitItemRecursive(ctx, compilation, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, childrenVar);
                             }
 
                             sb.AppendLine($"{groupVar}.Children = {childrenVar};");
@@ -150,7 +153,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                         {
                             foreach (var meta in g)
                             {
-                                EmitItemRecursive(ctx, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, "field");
+                                EmitItemRecursive(ctx, compilation, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, "field");
                             }
                         }
                     }
@@ -170,6 +173,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// A settings item may be nested, so we use recursion here.
     /// </summary>
     /// <param name="ctx"></param>
+    /// <param name="compilation">The author compilation used to resolve file-local aliases.</param>
     /// <param name="sb"></param>
     /// <param name="metadata"></param>
     /// <param name="itemName"></param>
@@ -177,6 +181,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// <param name="parentCollection"></param>
     private static void EmitItemRecursive(
         in SourceProductionContext ctx,
+        Compilation compilation,
         IndentedStringBuilder sb,
         PropertyMetadata metadata,
         string itemName,
@@ -366,7 +371,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         ApplySettingsItemAttributes(ctx, sb, itemName, metadata);
 
         // Apply type-specific properties from attributes (e.g., MaxLength)
-        ApplyTypeSpecificMetadata(sb, itemName, metadata);
+        ApplyTypeSpecificMetadata(compilation, sb, itemName, metadata);
 
         // Handle nested items via [SettingsItems]
         ApplySettingsItems(ctx, sb, itemName, metadata, bindingPath);
@@ -438,18 +443,39 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// Matches DynamicLocaleKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
-    /// DynamicLocaleKey(
-    ///     LocaleKey.CustomAssistant_Icon_Header,
-    ///     LocaleKey.CustomAssistant_Icon_Description)
+    /// Preserves locale-key expressions across generated files without depending on file-local aliases.
+    /// Resolved constants become literals. Keys emitted by another generator retain their expression,
+    /// with aliases expanded in the original semantic context.
     /// </summary>
-    /// <remarks>
-    /// We need to parse the syntax ourselves because sometimes the attribute arguments are also SourceGenerated,
-    /// and thus we cannot rely on ConstantValue of the attribute data.
-    /// </remarks>
-    private static readonly Regex DynamicLocaleKeyRegex = new(
-        @"DynamicLocaleKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+    private static string? GetLocaleKeyExpression(Compilation compilation, AttributeData? attribute, int index)
+    {
+        if (attribute is null)
+        {
+            return null;
+        }
+
+        if (attribute.ConstructorArguments.Length > index && attribute.ConstructorArguments[index].Value is string value)
+        {
+            return ToLiteral(value);
+        }
+
+        if (attribute.ApplicationSyntaxReference?.GetSyntax() is not AttributeSyntax { ArgumentList: { } arguments } syntax)
+        {
+            return null;
+        }
+
+        var parameterName = index == 0 ? "headerKey" : "descriptionKey";
+        var positionalArgument = arguments.Arguments.ElementAtOrDefault(index);
+        var argument = arguments.Arguments.FirstOrDefault(a => a.NameColon?.Name.Identifier.ValueText == parameterName)
+            ?? (positionalArgument is { NameEquals: null, NameColon: null } ? positionalArgument : null);
+        if (argument is null)
+        {
+            return null;
+        }
+
+        var model = compilation.GetSemanticModel(syntax.SyntaxTree);
+        return new LocaleKeyExpressionRewriter(model).Visit(argument.Expression).ToString();
+    }
 
     /// <summary>
     /// Matches group name in SettingsItem(Group = LocaleKey.SomeGroup)
@@ -460,6 +486,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
     private static PropertyMetadata BuildPropertyMetadata(
         SourceProductionContext ctx,
+        Compilation compilation,
         INamedTypeSymbol rootType,
         ISymbol symbol,
         ISymbol attributeOwner,
@@ -470,10 +497,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         var settingsItemAttribute = ResolveSettingsItemAttribute(ctx, attributeOwner);
         var kind = Classify(type, settingsItemAttribute);
         var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicLocaleKey);
-        var code = dynamicResourceKeyAttribute?.ApplicationSyntaxReference?.GetSyntax().ToString();
-        var match = code is not null ? DynamicLocaleKeyRegex.Match(code) : null;
-        var headerKey = match?.Groups["headerKey"].Value.Trim() ?? string.Empty;
-        var descriptionKey = match?.Groups["descriptionKey"].Success == true ? match.Groups["descriptionKey"].Value.Trim() : null;
+        var headerKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 0) ?? string.Empty;
+        var descriptionKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 1);
         var index = settingsItemAttribute?.GetNamedArgument("Index") switch
         {
             { IsNull: false, Value: int value } => value,
@@ -507,7 +532,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             group);
     }
 
-    private static void ApplyTypeSpecificMetadata(IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
+    private static void ApplyTypeSpecificMetadata(Compilation compilation, IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
     {
         switch (metadata.Kind)
         {
@@ -561,21 +586,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     {
                         var memberAccess = $"{enumTypeStr}.{member.Name}";
                         // Check for [DynamicLocaleKey] on the enum member
-                        string? headerKey = null;
-                        if (member.GetAttribute(KnownAttributes.DynamicLocaleKey) is { } attr)
-                        {
-                            var code = attr.ApplicationSyntaxReference?.GetSyntax().ToString();
-                            if (code is not null)
-                            {
-                                var match = DynamicLocaleKeyRegex.Match(code);
-                                headerKey = match.Groups["headerKey"].Value.Trim();
-                            }
-                            else if (attr.ConstructorArguments.Length > 0 &&
-                                     attr.ConstructorArguments[0].Value?.ToString() is { Length: > 0 } headerKeyValue)
-                            {
-                                headerKey = $"\"{headerKeyValue}\"";
-                            }
-                        }
+                        var headerKey = GetLocaleKeyExpression(compilation, member.GetAttribute(KnownAttributes.DynamicLocaleKey), 0);
 
                         var resourceKeyExpr = headerKey is not null ?
                             $"new global::Everywhere.I18N.DynamicLocaleKey({headerKey})" :
@@ -1082,6 +1093,31 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             { TypeKind: TypeKind.Enum } => ItemKind.Enum,
             _ => ItemKind.Unknown
         };
+    }
+
+    /// <summary>
+    /// Expands aliases and known type/namespace prefixes without requiring a generated key to exist yet.
+    /// </summary>
+    private sealed class LocaleKeyExpressionRewriter(SemanticModel model) : CSharpSyntaxRewriter
+    {
+        /// <inheritdoc />
+        public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            var symbol = model.GetAliasInfo(node)?.Target ?? model.GetSymbolInfo(node).Symbol;
+            if (symbol is INamespaceOrTypeSymbol type)
+            {
+                return SyntaxFactory.ParseName(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).WithTriviaFrom(node);
+            }
+
+            return base.VisitIdentifierName(node);
+        }
+
+        /// <inheritdoc />
+        public override SyntaxNode VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+        {
+            // Only the receiver can be expanded to a qualified name; the member remains a simple name.
+            return node.WithExpression((ExpressionSyntax)Visit(node.Expression));
+        }
     }
 
     private sealed class IndentedStringBuilder
