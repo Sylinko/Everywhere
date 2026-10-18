@@ -1,36 +1,63 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Security;
 using System.Text;
 using System.Xml.Linq;
+using Everywhere.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+using AnalysisContext = Everywhere.SourceGeneration.AnalysisContext;
 
 namespace Everywhere.I18N.SourceGenerator;
 
+/// <summary>
+/// Generates localization constants and documentation from the neutral resource file.
+/// </summary>
 [Generator]
 public sealed class I18NSourceGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Register the additional file provider for RESX files
-        var resxFiles = context.AdditionalTextsProvider
-            .Where(file =>
-            {
-                var fileName = Path.GetFileName(file.Path);
-                return fileName.Equals("Strings.resx", StringComparison.OrdinalIgnoreCase);
-            })
-            .Collect();
-
-        var options = context.AnalyzerConfigOptionsProvider.Select(static (provider, _) => BuildOptions(provider));
+        // Only the first neutral resource defines the strongly typed key API.
+        var resources = context.AdditionalTextsProvider
+            .Where(static file => Path.GetFileName(file.Path).Equals("Strings.resx", StringComparison.OrdinalIgnoreCase))
+            .Collect()
+            .Select(static (files, _) => files.FirstOrDefault())
+            .Select(static (file, token) => ReadResource(file, token));
 
         context.RegisterSourceOutput(
-            resxFiles.Combine(options),
-            static (context, tuple) =>
-                GenerateI18NCode(context, tuple.Left, tuple.Right));
+            resources,
+            static (production, result) =>
+            {
+                foreach (var diagnostic in result.Diagnostics)
+                {
+                    production.ReportDiagnostic(diagnostic);
+                }
+            });
+
+        var models = resources.Select(static (result, _) => result.Model).WithTrackingName("I18NModel");
+        var options = context.AnalyzerConfigOptionsProvider.Select(static (provider, _) => GetNamespace(provider));
+        var sources = models.Combine(options)
+            .Select(static (input, token) =>
+                input.Left is { } model ? GenerateLocaleKeyClass(input.Right, model.FileName, model.Entries, token) : null)
+            .WithTrackingName("I18NSource");
+
+        context.RegisterSourceOutput(
+            sources,
+            static (production, source) =>
+            {
+                if (source is not null)
+                {
+                    production.AddSource("LocaleKey.g.cs", SourceText.From(source, Encoding.UTF8));
+                }
+            });
     }
 
-    private static GeneratorOptions BuildOptions(AnalyzerConfigOptionsProvider provider)
+    /// <summary>
+    /// Projects build options to the only value that affects generated source.
+    /// </summary>
+    private static string GetNamespace(AnalyzerConfigOptionsProvider provider)
     {
         var globalOptions = provider.GlobalOptions;
         globalOptions.TryGetValue("build_property.EverywhereI18NNamespace", out var configuredNamespace);
@@ -43,81 +70,66 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
             !string.IsNullOrWhiteSpace(rootNamespace) ? rootNamespace! + ".I18N" :
             "Everywhere.I18N.Generated";
 
-        return new GeneratorOptions(baseNamespace);
+        return baseNamespace;
     }
 
-    private static void GenerateI18NCode(SourceProductionContext context, ImmutableArray<AdditionalText> resxFiles, GeneratorOptions options)
+    /// <summary>
+    /// Reads resource values before namespace options are combined, so option changes do not reparse XML.
+    /// </summary>
+    private static AnalysisResult<ResourceModel> ReadResource(AdditionalText? file, CancellationToken token)
     {
-        if (resxFiles.Length == 0)
+        var analysis = new AnalysisContext(token);
+        if (file is null)
         {
-            return;
+            return analysis.Complete<ResourceModel>(null);
         }
 
         try
         {
-            // Only neutral resources define the strongly typed key API.
-            var defaultResxFile = resxFiles.FirstOrDefault(f => Path.GetFileName(f.Path).Equals("Strings.resx", StringComparison.OrdinalIgnoreCase));
-            if (defaultResxFile == null)
+            var content = file.GetText(token)?.ToString();
+            if (content is not { Length: > 0 })
             {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        new DiagnosticDescriptor(
-                            "I18N001",
-                            "Missing Default RESX File",
-                            "Could not find the default Strings.resx file",
-                            "I18N",
-                            DiagnosticSeverity.Error,
-                            isEnabledByDefault: true),
-                        Location.None));
-                return;
+                return analysis.Complete<ResourceModel>(null);
             }
 
-            // Parse the default RESX to get all keys
-            var defaultContent = defaultResxFile.GetText(context.CancellationToken)?.ToString();
-            if (defaultContent is not { Length: > 0 })
-            {
-                return;
-            }
-
-            // Parse default RESX for keys and values
-            var defaultEntries = ParseResxEntries(defaultContent);
-            if (defaultEntries.Count == 0)
-            {
-                return;
-            }
-
-            context.AddSource(
-                "LocaleKey.g.cs",
-                SourceText.From(GenerateLocaleKeyClass(options.Namespace, defaultResxFile.Path, defaultEntries), Encoding.UTF8));
+            var entries = ParseResxEntries(content, token);
+            return analysis.Complete(
+                entries.Count == 0 ?
+                    null :
+                    new ResourceModel(
+                        Path.GetFileName(file.Path),
+                        new EquatableArray<KeyValuePair<string, string>>(entries.ToImmutableArray())));
         }
-        catch (Exception ex)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            context.ReportDiagnostic(
+            analysis.ReportDiagnostic(
                 Diagnostic.Create(
                     new DiagnosticDescriptor(
                         "I18N002",
                         "I18N Generation Error",
-                        $"Error generating I18N code: {ex.Message}",
+                        $"Error generating I18N code: {exception.Message}",
                         "I18N",
                         DiagnosticSeverity.Error,
                         isEnabledByDefault: true),
                     Location.None));
+            return analysis.Complete<ResourceModel>(null);
         }
     }
 
-    private static Dictionary<string, string> ParseResxEntries(string resxContent)
+    private static Dictionary<string, string> ParseResxEntries(string resxContent, CancellationToken token)
     {
         var entries = new Dictionary<string, string>();
 
         try
         {
+            token.ThrowIfCancellationRequested();
             var doc = XDocument.Parse(resxContent);
             var dataNodes = doc.Root?.Elements("data");
-
             if (dataNodes == null) return entries;
 
             foreach (var dataNode in dataNodes)
             {
+                token.ThrowIfCancellationRequested();
                 var nameAttr = dataNode.Attribute("name");
                 var valueNode = dataNode.Element("value");
 
@@ -127,7 +139,7 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
                 }
             }
         }
-        catch
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // Silently fail and return an empty dictionary
             return new Dictionary<string, string>();
@@ -136,7 +148,11 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
         return entries;
     }
 
-    private static string GenerateLocaleKeyClass(string ns, string resxPath, Dictionary<string, string> entries)
+    private static string GenerateLocaleKeyClass(
+        string ns,
+        string resxPath,
+        EquatableArray<KeyValuePair<string, string>> entries,
+        CancellationToken token)
     {
         var sb = new StringBuilder();
 
@@ -162,6 +178,7 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
 
         foreach (var entry in entries)
         {
+            token.ThrowIfCancellationRequested();
             AppendSummary(sb, entry.Value);
             var escapedKey = EscapeVariableName(entry.Key);
             sb.AppendLine($"    public const string {escapedKey} = {ToCSharpString(entry.Key)};");
@@ -210,13 +227,28 @@ public sealed class I18NSourceGenerator : IIncrementalGenerator
             .Replace("\n", "\\n") + "\"";
     }
 
-    private sealed class GeneratorOptions
+    /// <summary>
+    /// Contains only resource values that affect generated constants and their documentation.
+    /// </summary>
+    private sealed class ResourceModel(string fileName, EquatableArray<KeyValuePair<string, string>> entries) : IEquatable<ResourceModel>
     {
-        public GeneratorOptions(string ns)
-        {
-            Namespace = ns;
-        }
+        /// <summary>
+        /// Gets the resource name used in the generated file header.
+        /// </summary>
+        public string FileName { get; } = fileName;
 
-        public string Namespace { get; }
+        /// <summary>
+        /// Gets keys and values in their original output order.
+        /// </summary>
+        public EquatableArray<KeyValuePair<string, string>> Entries { get; } = entries;
+
+        /// <inheritdoc />
+        public bool Equals(ResourceModel? other) => other is not null && FileName == other.FileName && Entries.Equals(other.Entries);
+
+        /// <inheritdoc />
+        public override bool Equals(object? obj) => obj is ResourceModel other && Equals(other);
+
+        /// <inheritdoc />
+        public override int GetHashCode() => unchecked(FileName.GetHashCode() * 31 + Entries.GetHashCode());
     }
 }

@@ -1,7 +1,8 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Everywhere.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,64 +12,91 @@ namespace Everywhere.Configuration.SourceGenerator;
 [Generator(LanguageNames.CSharp)]
 public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Find classes annotated with [GeneratedSettingsItems]
-        var candidates = context.SyntaxProvider.CreateSyntaxProvider(
-                static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
-                static (ctx, _) =>
-                {
-                    if (ctx.SemanticModel.GetDeclaredSymbol((ClassDeclarationSyntax)ctx.Node) is not { } symbol) return null;
-                    return symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == KnownAttributes.GeneratedSettingsItems) ?
-                        symbol :
-                        null;
-                })
-            .Where(static s => s is not null);
-
-        var grouped = context.CompilationProvider.Combine(candidates.Collect());
+        var analyses = context.SyntaxProvider.ForAttributeWithMetadataName(
+            KnownAttributes.GeneratedSettingsItems,
+            static (node, _) => node is ClassDeclarationSyntax,
+            static (attributeContext, token) => AnalyzeType(attributeContext, token));
         context.RegisterSourceOutput(
-            grouped,
-            static (spc, tuple) =>
+            analyses,
+            static (production, result) =>
             {
-                foreach (var t in tuple.Right.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>())
+                foreach (var diagnostic in result.Diagnostics)
                 {
-                    EmitForType(spc, tuple.Left, t);
+                    production.ReportDiagnostic(diagnostic);
+                }
+            });
+
+        var models = analyses.Select(static (result, _) => result.Model).WithTrackingName("SettingsItemsModel");
+        var sources = models
+            .Select(static (model, token) =>
+                model is null ? ((string HintName, string Source)?)null : (model.Name + ".SettingsItems.g.cs", EmitForType(model, token)))
+            .WithTrackingName("SettingsItemsSource");
+        context.RegisterSourceOutput(
+            sources,
+            static (production, source) =>
+            {
+                if (source is { } value)
+                {
+                    production.AddSource(value.HintName, value.Source);
                 }
             });
     }
 
-    private static void EmitForType(SourceProductionContext ctx, Compilation compilation, INamedTypeSymbol type)
+    /// <summary>
+    /// Resolves inherited and file-local semantics, then releases all symbols before caching the model.
+    /// </summary>
+    private static AnalysisResult<SettingsTypeModel> AnalyzeType(GeneratorAttributeSyntaxContext context, CancellationToken token)
     {
-        if (!type.IsPartial())
+        var analysis = new AnalysisContext(token);
+        var type = (INamedTypeSymbol)context.TargetSymbol;
+        if (!type.IsPartial(token))
         {
-            // Report diagnostic for not being a partial class
-            ctx.ReportDiagnostic(
-                Diagnostic.Create(
-                    Diagnostics.MustBePartial,
-                    type.Locations.FirstOrDefault(),
-                    type.Name));
-            return;
+            analysis.ReportDiagnostic(Diagnostic.Create(Diagnostics.MustBePartial, type.Locations.FirstOrDefault(), type.Name));
+            return analysis.Complete<SettingsTypeModel>(null);
         }
 
-        var generatedSettingsItemsAttribute = type.GetAttribute(KnownAttributes.GeneratedSettingsItems);
-        var includeInheritedMembers = generatedSettingsItemsAttribute?.GetNamedArgument("IncludeInheritedMembers") switch
+        var hasInheritedMembers = type.GetAttribute(KnownAttributes.GeneratedSettingsItems)?.GetNamedArgument("IncludeInheritedMembers") switch
         {
             { IsNull: false, Value: bool value } => value,
             _ => true
         };
+        var candidateMembers = hasInheritedMembers ? type.GetAllMembers() : type.GetMembers();
+        var metadata = candidateMembers.OfType<IPropertySymbol>()
+            .Where(static property => property is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
+            .Where(static property => !property.IsHiddenItem())
+            .Select(property =>
+            {
+                token.ThrowIfCancellationRequested();
+                return BuildPropertyMetadata(analysis, context.SemanticModel.Compilation, type, property);
+            })
+            .OrderBy(static property => property.Index);
+        var items = ImmutableArray.CreateBuilder<ItemModel>();
+        foreach (var property in metadata)
+        {
+            if (!string.IsNullOrWhiteSpace(property.HeaderKey) && AnalyzeItem(analysis, context.SemanticModel.Compilation, property) is { } item)
+            {
+                items.Add(item);
+            }
+        }
 
-        // Concrete settings models can opt out of inherited presentation metadata while still
-        // inheriting the underlying data model.
-        var candidateMembers = includeInheritedMembers ? type.GetAllMembers() : type.GetMembers();
-        var members = candidateMembers
-            .OfType<IPropertySymbol>()
-            .Where(p => p is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
-            .Where(p => !p.IsHiddenItem())
-            .Select(p => BuildPropertyMetadata(ctx, compilation, type, p, p, p.Name))
-            .OrderBy(static metadata => metadata.Index)
-            .ToImmutableArray();
+        var baseProperty = type.BaseType?.GetAllMembers().OfType<IPropertySymbol>()
+            .FirstOrDefault(static property => property.Name == "SettingsItems");
+        var modifier = (baseProperty is { IsVirtual: true } or { IsAbstract: true }) ||
+            type.BaseType?.HasAttribute(KnownAttributes.GeneratedSettingsItems) == true ? "override " :
+            type is { IsSealed: false, IsStatic: false } ? "virtual " : string.Empty;
+        return analysis.Complete(new SettingsTypeModel(type.GetNamespace(), type.Name, modifier, new EquatableArray<ItemModel>(items.ToImmutable())));
+    }
 
-        var ns = type.GetNamespace();
+    /// <summary>
+    /// Formats one settings class after value equality has excluded unchanged semantic results.
+    /// </summary>
+    private static string EmitForType(SettingsTypeModel type, CancellationToken token)
+    {
+        var members = type.Items;
+        var ns = type.Namespace;
         var sb = new IndentedStringBuilder();
         sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable").AppendLine();
@@ -96,19 +124,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             sb.AppendLine("[field: global::System.Diagnostics.CodeAnalysis.AllowNull, global::System.Diagnostics.CodeAnalysis.MaybeNull]");
             sb.Append("public ");
 
-            // Append override modifier if the property is present in the base type with virtual or abstract modifier
-            // Another case is base type also has the [GeneratedSettingsItems] property
-            var baseProperty = type.BaseType?.GetAllMembers().OfType<IPropertySymbol>().FirstOrDefault(p => p.Name == "SettingsItems");
-            if ((baseProperty != null && (baseProperty.IsVirtual || baseProperty.IsAbstract)) ||
-                type.BaseType?.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == KnownAttributes.GeneratedSettingsItems) == true)
-            {
-                sb.Append("override ");
-            }
-            // else, add virtual if this class is not sealed and not static
-            else if (type is { IsSealed: false, IsStatic: false })
-            {
-                sb.Append("virtual ");
-            }
+            sb.Append(type.Modifier);
 
             sb.AppendLine("global::Everywhere.Configuration.SettingsItems SettingsItems").AppendLine("{");
 
@@ -121,7 +137,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     sb.AppendLine("if (field is not null) return field;").AppendLine();
                     sb.AppendLine("field = new global::Everywhere.Configuration.SettingsItems();");
 
-                    foreach (var g in members.Where(meta => !string.IsNullOrWhiteSpace(meta.HeaderKey)).GroupBy(meta => meta.Group))
+                    foreach (var g in members.GroupBy(static item => item.Group))
                     {
                         if (g.Key is { } groupName)
                         {
@@ -142,7 +158,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
                             foreach (var meta in g)
                             {
-                                EmitItemRecursive(ctx, compilation, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, childrenVar);
+                                token.ThrowIfCancellationRequested();
+                                EmitItem(sb, meta, childrenVar);
                             }
 
                             sb.AppendLine($"{groupVar}.Children = {childrenVar};");
@@ -153,7 +170,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                         {
                             foreach (var meta in g)
                             {
-                                EmitItemRecursive(ctx, compilation, sb, meta, $"item_{meta.Name.Replace(".", "_")}", meta.Name, "field");
+                                token.ThrowIfCancellationRequested();
+                                EmitItem(sb, meta, "field");
                             }
                         }
                     }
@@ -166,270 +184,525 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         }
         sb.AppendLine("}");
 
-        ctx.AddSource($"{type.Name}.SettingsItems.g.cs", sb.ToString());
+        return sb.ToString();
     }
 
     /// <summary>
-    /// A settings item may be nested, so we use recursion here.
+    /// Extracts presentation values while symbols and semantic models are available.
     /// </summary>
-    /// <param name="ctx"></param>
-    /// <param name="compilation">The author compilation used to resolve file-local aliases.</param>
-    /// <param name="sb"></param>
-    /// <param name="metadata"></param>
-    /// <param name="itemName"></param>
-    /// <param name="bindingPath"></param>
-    /// <param name="parentCollection"></param>
-    private static void EmitItemRecursive(
-        in SourceProductionContext ctx,
-        Compilation compilation,
-        IndentedStringBuilder sb,
-        PropertyMetadata metadata,
-        string itemName,
-        string bindingPath,
-        string? parentCollection)
+    private static ItemModel? AnalyzeItem(AnalysisContext context, Compilation compilation, PropertyMetadata metadata)
     {
+        context.CancellationToken.ThrowIfCancellationRequested();
+        var attribute = metadata.ItemAttribute;
+        var type = metadata.Type;
+        var location = metadata.Symbol.Locations.FirstOrDefault();
+        var assignments = ImmutableArray.CreateBuilder<Assignment>();
+        var enumItems = ImmutableArray.CreateBuilder<EnumItem>();
+        SelectionModel? selection = null;
+        var creation = metadata.Kind switch
+        {
+            ItemKind.Bool => "new global::Everywhere.Configuration.SettingsBooleanItem { IsNullable = false }",
+            ItemKind.NullableBool => "new global::Everywhere.Configuration.SettingsBooleanItem { IsNullable = true }",
+            ItemKind.String => "new global::Everywhere.Configuration.SettingsStringItem()",
+            ItemKind.Int => "new global::Everywhere.Configuration.SettingsIntegerItem()",
+            ItemKind.Double => "new global::Everywhere.Configuration.SettingsDoubleItem()",
+            ItemKind.Enum => "new global::Everywhere.Configuration.SettingsSelectionItem()",
+            _ => string.Empty
+        };
+
         switch (metadata.Kind)
         {
-            case ItemKind.Selection:
+            case ItemKind.Selection when attribute is not null:
             {
-                if (metadata.ItemAttribute is not { } attribute)
+                var path = attribute.GetNamedArgument("ItemsSourceBindingPath") switch
                 {
-                    // This case should ideally not be hit if Classify is correct
-                    return;
-                }
-
-                var itemsSourceBindingPath = attribute.GetNamedArgument("ItemsSourceBindingPath") switch
-                {
-                    { IsNull: false, Value: string path } => path,
-                    _ => attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string ctorPath ?
-                        ctorPath :
-                        string.Empty
+                    { IsNull: false, Value: string value } => value,
+                    _ => attribute.ConstructorArguments.FirstOrDefault().Value as string ?? string.Empty
                 };
-
-                if (string.IsNullOrEmpty(itemsSourceBindingPath))
+                if (string.IsNullOrEmpty(path))
                 {
-                    // Report diagnostic for missing ItemsSourceBindingPath
-                    ctx.ReportDiagnostic(
-                        Diagnostic.Create(
-                            Diagnostics.MissingItemsSourceBindingPath,
-                            metadata.Symbol.Locations.FirstOrDefault(),
-                            metadata.Name));
-                    return;
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.MissingItemsSourceBindingPath, location, metadata.Name));
+                    return null;
                 }
 
-                var itemSourceType = ResolvePropertyPathType(metadata.RootType, itemsSourceBindingPath);
-                if (itemSourceType is null)
+                if (ResolvePropertyPathType(metadata.RootType, path) is not { } sourceType)
                 {
-                    ctx.ReportDiagnostic(
-                        Diagnostic.Create(
-                            Diagnostics.InvalidItemsSourceBindingPath,
-                            metadata.Symbol.Locations.FirstOrDefault(),
-                            metadata.Name,
-                            itemsSourceBindingPath));
-                    return;
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.InvalidItemsSourceBindingPath, location, metadata.Name, path));
+                    return null;
                 }
 
-                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsSelectionItem();");
-                sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsSelectionItem.ItemsSourceProperty] = ");
-
-                var converterBuilder = new IndentedStringBuilder();
-                converterBuilder.Append("new global::Avalonia.Data.Converters.FuncValueConverter<");
-                converterBuilder.Append(itemSourceType.ToDisplayString());
-                converterBuilder.AppendLine(
-                    ", global::System.Collections.Generic.IEnumerable<global::Everywhere.Configuration.SettingsSelectionItem.Item>?>(x =>");
-                converterBuilder.AppendLine("{");
-                using (converterBuilder.Indent())
-                {
-                    converterBuilder.AppendLine("if (x is null) return null;");
-                    converterBuilder.AppendLine("global::Avalonia.Controls.Templates.IDataTemplate? contentTemplate = null;");
-
-                    var dataTemplateKeyExpr = attribute.GetNamedArgument("DataTemplateKey") switch
-                    {
-                        { Kind: TypedConstantKind.Type, Value: INamedTypeSymbol typeSymbol } =>
-                            $"typeof({typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})",
-                        { IsNull: false, Value: string str } => str,
-                        _ => null
-                    };
-
-                    if (dataTemplateKeyExpr is not null)
-                    {
-                        converterBuilder.AppendLine(
-                            $$"""
-                              if (global::Avalonia.Application.Current?.Resources.TryGetResource({{dataTemplateKeyExpr}}, null, out var resource) is true)
-                              {
-                                  contentTemplate = resource as global::Avalonia.Controls.Templates.IDataTemplate;
-                              }
-                              """);
-                    }
-
-                    var transformExpr = GetNamedArgValue(attribute, "I18N", "false") == "true" ?
-                        $"DynamicLocaleKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
-                        "DirectLocaleKey(k)";
-
-                    converterBuilder.Append(
-                        "return x.Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
-                    converterBuilder.Append(transformExpr);
-                    converterBuilder.AppendLine(", k, contentTemplate)).ToArray();");
-                }
-
-                EmitBinding(
-                    ctx,
-                    sb,
-                    metadata,
-                    itemsSourceBindingPath,
-                    BindingMode.OneWay,
-                    converterBuilder.AppendLine("})").ToString());
-                sb.AppendLine(";");
-
-                sb.AppendLine($"{itemName}.IsEditable = {GetNamedArgValue(attribute, "IsEditable", "false")};");
+                var transform = GetNamedArgValue(attribute, "I18N", "false") == "true" ?
+                    $"DynamicLocaleKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
+                    "DirectLocaleKey(k)";
+                selection = new SelectionModel(
+                    sourceType.ToDisplayString(),
+                    GetTemplateExpression(attribute),
+                    transform,
+                    GetNamedArgValue(attribute, "IsEditable", "false"),
+                    AnalyzeBinding(context, metadata, path));
                 break;
             }
             case ItemKind.SettingsControl:
             {
-                // If the property is nullable, Report diagnostic
-                if (metadata.Type.NullableAnnotation == NullableAnnotation.Annotated)
+                if (type.NullableAnnotation == NullableAnnotation.Annotated)
                 {
-                    ctx.ReportDiagnostic(
-                        Diagnostic.Create(
-                            Diagnostics.NullableSettingsControl,
-                            metadata.Symbol.Locations.FirstOrDefault(),
-                            metadata.Name));
-                    return;
+                    context.ReportDiagnostic(Diagnostic.Create(Diagnostics.NullableSettingsControl, location, metadata.Name));
+                    return null;
                 }
-
-                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsControlItem(");
-                using (sb.Indent()) sb.AppendLine($"(global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name})");
-                sb.AppendLine("{");
-                using (sb.Indent()) sb.AppendLine("ControlDataContext = this,");
-                sb.AppendLine("};");
                 break;
             }
-            case ItemKind.Templated:
+            case ItemKind.Templated when attribute is not null:
             {
-                if (metadata.ItemAttribute is not { } attribute)
-                {
-                    // This case should ideally not be hit if Classify is correct
-                    return;
-                }
-
-                var dataTemplateKeyExpr = attribute.GetNamedArgument("DataTemplateKey") switch
-                {
-                    { Kind: TypedConstantKind.Type, Value: INamedTypeSymbol typeSymbol } =>
-                        $"typeof({typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})",
-                    { IsNull: false, Value: string str } => str,
-                    _ => null
-                };
-                dataTemplateKeyExpr ??= $"typeof({metadata.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})";
-
-                sb.AppendLine($"var {itemName} = global::Everywhere.Configuration.SettingsTemplatedItem.Create({dataTemplateKeyExpr});");
+                var template = GetTemplateExpression(attribute) ?? $"typeof({type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})";
+                creation = $"global::Everywhere.Configuration.SettingsTemplatedItem.Create({template})";
                 break;
             }
-            default:
+            case ItemKind.Unknown:
             {
-                // Generate the 'new' expression for the specific SettingsItem type
-                var newExpr = metadata.Kind switch
+                if (metadata.Symbol.HasAttribute(KnownAttributes.SettingsItems))
                 {
-                    ItemKind.Bool => "new global::Everywhere.Configuration.SettingsBooleanItem { IsNullable = false }",
-                    ItemKind.NullableBool => "new global::Everywhere.Configuration.SettingsBooleanItem { IsNullable = true }",
-                    ItemKind.String => "new global::Everywhere.Configuration.SettingsStringItem()",
-                    ItemKind.Int => "new global::Everywhere.Configuration.SettingsIntegerItem()",
-                    ItemKind.Double => "new global::Everywhere.Configuration.SettingsDoubleItem()",
-                    ItemKind.Enum => "new global::Everywhere.Configuration.SettingsSelectionItem()",
-                    _ => null
-                };
-
-                if (newExpr is null)
-                {
-                    if (metadata.AttributeOwner.HasAttribute(KnownAttributes.SettingsItems))
-                    {
-                        // It's a group item
-                        newExpr = "new global::Everywhere.Configuration.EmptySettingsTemplatedItem()";
-                    }
-                    else
-                    {
-                        // Report diagnostic for unsupported type, use TemplatedItem as fallback
-                        ctx.ReportDiagnostic(
-                            Diagnostic.Create(
-                                Diagnostics.UnsupportedSettingsItemType,
-                                metadata.Symbol.Locations.FirstOrDefault(),
-                                metadata.Name,
-                                metadata.Type.ToDisplayString()));
-                        newExpr =
-                            $"global::Everywhere.Configuration.SettingsTemplatedItem.Create(typeof({metadata.Type.ToDisplayString(NullableFlowState.NotNull)}))";
-                    }
+                    creation = "new global::Everywhere.Configuration.EmptySettingsTemplatedItem()";
                 }
-
-                sb.Append("var ").Append(itemName).Append(" = ").Append(newExpr).AppendLine(";");
+                else
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(Diagnostics.UnsupportedSettingsItemType, location, metadata.Name, type.ToDisplayString()));
+                    creation =
+                        $"global::Everywhere.Configuration.SettingsTemplatedItem.Create(typeof({type.ToDisplayString(NullableFlowState.NotNull)}))";
+                }
                 break;
             }
         }
 
-        // Apply header and description
-        ApplyHeaderAndDescription(sb, itemName, metadata);
-
-        // Apply IsEnabled/IsVisible bindings
-        ApplySettingsItemAttributes(ctx, sb, itemName, metadata);
-
-        // Apply type-specific properties from attributes (e.g., MaxLength)
-        ApplyTypeSpecificMetadata(compilation, sb, itemName, metadata);
-
-        // Handle nested items via [SettingsItems]
-        ApplySettingsItems(ctx, sb, itemName, metadata, bindingPath);
-
-        // A SettingsControl property is a control factory, not an editable settings value. Reading it again
-        // through Value would create a second wrapper and could eagerly construct the control it contains.
-        if (metadata.Kind != ItemKind.SettingsControl)
+        if (attribute is not null)
         {
-            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
-            EmitBinding(ctx, sb, metadata, bindingPath, BindingMode.TwoWay).AppendLine(";");
-        }
-
-        // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsDefaultValueItem to enable the Reset button.
-        if (metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
-        {
-            var defaultValueLiteral = ToLiteral(defaultValue.Value);
-            var resetValueLiteral = metadata is { Kind: ItemKind.String, Type.NullableAnnotation: NullableAnnotation.Annotated } ?
-                "null" :
-                defaultValueLiteral;
-            var wrapperItemName = $"{itemName}_wrapper";
-
-            if (metadata.Kind == ItemKind.String && defaultValue.Value is string)
+            switch (metadata.Kind)
             {
-                sb.AppendLine($"{itemName}.PlaceholderText = {defaultValueLiteral};");
+                case ItemKind.String when IsAttributeType(attribute, KnownAttributes.SettingsStringItem):
+                    Add("PlaceholderText", "PlaceholderText", "null");
+                    Add("MaxLength", "MaxLength", "int.MaxValue");
+                    Add("IsMultiline", "IsMultiline", "false");
+                    assignments.Add(
+                        new Assignment(
+                            "TextWrapping",
+                            GetNamedArgValue(
+                                attribute,
+                                "IsMultiline",
+                                false,
+                                "global::Avalonia.Media.TextWrapping.Wrap",
+                                "global::Avalonia.Media.TextWrapping.NoWrap")));
+                    assignments.Add(new Assignment("PasswordChar", GetNamedArgValue(attribute, "IsPassword", false, "'*'", "'\\0'")));
+                    Add("Height", "Height", "double.NaN");
+                    Add("MinWidth", "MinWidth", "320d");
+                    break;
+                case ItemKind.Int when IsAttributeType(attribute, KnownAttributes.SettingsIntegerItem):
+                    Add("MinValue", "Min", "int.MinValue");
+                    Add("MaxValue", "Max", "int.MaxValue");
+                    Add("IsSliderVisible", "IsSliderVisible", "true");
+                    Add("IsTextBoxVisible", "IsTextBoxVisible", "true");
+                    break;
+                case ItemKind.Double when IsAttributeType(attribute, KnownAttributes.SettingsDoubleItem):
+                    Add("MinValue", "Min", "double.NegativeInfinity");
+                    Add("MaxValue", "Max", "double.PositiveInfinity");
+                    Add("Step", "Step", "0.1d");
+                    Add("IsSliderVisible", "IsSliderVisible", "true");
+                    Add("IsTextBoxVisible", "IsTextBoxVisible", "true");
+                    break;
             }
+        }
 
-            sb.AppendLine($"var {wrapperItemName} = new global::Everywhere.Configuration.SettingsDefaultValueItem({itemName});");
-            sb.AppendLine($"{wrapperItemName}.ResetCommand = new global::CommunityToolkit.Mvvm.Input.RelayCommand(() =>");
-            sb.AppendLine("{");
-            using (sb.Indent())
+        if (metadata.Kind == ItemKind.Enum)
+        {
+            foreach (var member in type.GetMembers()
+                         .OfType<IFieldSymbol>()
+                         .Where(static field => field.IsConst)
+                         .Where(static field => !field.HasAttribute("MessagePack.IgnoreMemberAttribute")))
             {
-                sb.AppendLine($"this.{bindingPath} = {resetValueLiteral};");
+                context.CancellationToken.ThrowIfCancellationRequested();
+                var header = GetLocaleKeyExpression(compilation, member.GetAttribute(KnownAttributes.DynamicLocaleKey), 0, context.CancellationToken);
+                var key = header ?? $"\"{type.Name}_{member.Name}\"";
+                enumItems.Add(new EnumItem(key, $"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{member.Name}"));
             }
-            sb.AppendLine("});");
-
-            ApplyHeaderAndDescription(sb, wrapperItemName, metadata);
-            ApplySettingsItemAttributes(ctx, sb, wrapperItemName, metadata);
-
-            // Replace itemName with the wrapper
-            itemName = wrapperItemName;
         }
 
-        var finalItemName = $"{itemName}_final";
-        sb.AppendLine($"global::Everywhere.Configuration.SettingsItem {finalItemName} = {itemName};");
-
-        if (ResolveSettingsItemModifier(ctx, metadata) is { } modifier)
+        NestedItemsModel? nested = null;
+        if (metadata.Symbol.GetAttribute(KnownAttributes.SettingsItems) is { } nestedAttribute)
         {
-            EmitSettingsItemModifier(ctx, sb, modifier, itemName, finalItemName, metadata);
+            var hasAttribute = type.GetAttribute(KnownAttributes.GeneratedSettingsItems) is not null;
+            var hasProperty = type.GetMembers().OfType<IPropertySymbol>().Any(property =>
+                property.Name == "SettingsItems" && property.Type.AllInterfaces.Any(@interface =>
+                    @interface.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>" &&
+                    @interface.TypeArguments.Length == 1 &&
+                    @interface.TypeArguments[0].ToDisplayString() == "Everywhere.Configuration.SettingsItem"));
+            if (!hasAttribute && !hasProperty)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Diagnostics.InvalidSettingsItemsType, location, metadata.Name, type.ToDisplayString()));
+            }
+            else
+            {
+                var expandable = nestedAttribute.GetNamedArgument("IsExpandableBindingPath")?.Value as string;
+                var hasExpandablePath = !string.IsNullOrEmpty(expandable);
+                nested = new NestedItemsModel(
+                    AnalyzeBinding(context, metadata, metadata.Name + ".SettingsItems"),
+                    GetNamedArgValue(nestedAttribute, "IsExpanded", "false"),
+                    AnalyzeBinding(context, metadata, expandable is { Length: > 0 } ? expandable : metadata.Name),
+                    hasExpandablePath ? null : "global::Avalonia.Data.Converters.ObjectConverters.IsNotNull");
+            }
         }
 
-        // Add the generated item to its parent collection
-        if (!string.IsNullOrEmpty(parentCollection))
+        string? defaultLiteral = null;
+        var hasDefaultPlaceholder = false;
+        if (metadata.Symbol.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
         {
-            sb.AppendLine($"{parentCollection}.Add({finalItemName});").AppendLine();
+            defaultLiteral = ToLiteral(defaultValue.Value);
+            hasDefaultPlaceholder = metadata.Kind == ItemKind.String && defaultValue.Value is string;
+        }
+        var resetLiteral = metadata.Kind == ItemKind.String && type.NullableAnnotation == NullableAnnotation.Annotated ? "null" : defaultLiteral;
+        var common = AnalyzeCommonAttributes(context, metadata);
+        var valueBinding = metadata.Kind == ItemKind.SettingsControl ? null : AnalyzeBinding(context, metadata, metadata.Name);
+        var modifier = ResolveSettingsItemModifier(context, metadata);
+        return new ItemModel(
+            metadata.Name,
+            metadata.Kind,
+            metadata.HeaderKey,
+            metadata.DescriptionKey,
+            metadata.Group,
+            creation,
+            selection,
+            common,
+            new EquatableArray<Assignment>(assignments.ToImmutable()),
+            new EquatableArray<EnumItem>(enumItems.ToImmutable()),
+            nested,
+            valueBinding,
+            defaultLiteral,
+            resetLiteral,
+            hasDefaultPlaceholder,
+            modifier);
+
+        void Add(string propertyName, string argumentName, string fallback)
+        {
+            assignments.Add(new Assignment(propertyName, GetNamedArgValue(attribute, argumentName, fallback)));
         }
     }
 
-    private static void ApplyHeaderAndDescription(IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
+    /// <summary>
+    /// Resolves the template expression while attribute type constants are available.
+    /// </summary>
+    private static string? GetTemplateExpression(AttributeData attribute)
+    {
+        return attribute.GetNamedArgument("DataTemplateKey") switch
+        {
+            { Kind: TypedConstantKind.Type, Value: INamedTypeSymbol type } =>
+                $"typeof({type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})",
+            { IsNull: false, Value: string value } => value,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Resolves common presentation attributes once for both the item and its wrappers.
+    /// </summary>
+    private static CommonAttributesModel AnalyzeCommonAttributes(AnalysisContext context, PropertyMetadata metadata)
+    {
+        var attribute = metadata.ItemAttribute;
+        string? classes = null;
+        if (attribute?.GetNamedArgument("Classes") is { IsNull: false, Values: { Length: > 0 } values })
+        {
+            classes = string.Join(", ", values.Select(v => v.Value?.ToString()).OfType<string>().Select(v => $"\"{v.Replace("\"", "\\\"")}\""));
+        }
+        var experimental = attribute?.GetNamedArgument("IsExperimental") is { IsNull: false, Value: bool value } ?
+            value.ToString().ToLowerInvariant() :
+            null;
+        var documentBinding = Binding("DocumentUrlBindingPath");
+        var documentLiteral = documentBinding is null && attribute?.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string url } ?
+            ToLiteral(url) :
+            null;
+        return new CommonAttributesModel(
+            classes,
+            experimental,
+            documentBinding,
+            documentLiteral,
+            Binding("IsEnabledBindingPath"),
+            Binding("IsVisibleBindingPath"));
+
+        BindingModel? Binding(string name)
+        {
+            return attribute?.GetNamedArgument(name) is { IsNull: false, Value: string path } ?
+                AnalyzeBinding(context, metadata, path) :
+                null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves nullability in property chains without retaining syntax nodes or root symbols.
+    /// </summary>
+    private static BindingModel AnalyzeBinding(AnalysisContext context, PropertyMetadata metadata, string path)
+    {
+        context.CancellationToken.ThrowIfCancellationRequested();
+        var expression = SyntaxFactory.ParseExpression(path);
+        if (expression.ContainsDiagnostics || !IsSupportedBindingExpression(expression))
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Diagnostics.UnsupportedBindingExpression,
+                    metadata.Symbol.Locations.FirstOrDefault(),
+                    metadata.Name,
+                    path));
+            return new BindingModel(null, null, null, new EquatableArray<BindingModel>(ImmutableArray<BindingModel>.Empty));
+        }
+        return Build(expression);
+
+        BindingModel Build(ExpressionSyntax node)
+        {
+            node = UnwrapParentheses(node);
+            if (node is BinaryExpressionSyntax binary)
+            {
+                var converter = binary.IsKind(SyntaxKind.LogicalAndExpression) ? "And" : "Or";
+                return new BindingModel(
+                    null,
+                    null,
+                    $"global::Avalonia.Data.Converters.BoolConverters.{converter}",
+                    new EquatableArray<BindingModel>([Build(binary.Left), Build(binary.Right)]));
+            }
+            if (node is PrefixUnaryExpressionSyntax unary && !IsPropertyChainExpression(unary.Operand))
+            {
+                return new BindingModel(
+                    null,
+                    null,
+                    "new global::Avalonia.Data.Converters.FuncMultiValueConverter<bool, bool>(values => values.Any(value => !value))",
+                    new EquatableArray<BindingModel>([Build(unary.Operand)]));
+            }
+            return new BindingModel(
+                metadata.RootType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                BuildPropertyChainExpression(node, metadata.RootType),
+                null,
+                new EquatableArray<BindingModel>(ImmutableArray<BindingModel>.Empty));
+        }
+    }
+
+    /// <summary>
+    /// Emits one settings item using only resolved presentation values.
+    /// </summary>
+    private static void EmitItem(IndentedStringBuilder sb, ItemModel item, string parentCollection)
+    {
+        var itemName = $"item_{item.Name.Replace(".", "_")}";
+        if (item.Selection is { } selection)
+        {
+            sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsSelectionItem();");
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsSelectionItem.ItemsSourceProperty] = ");
+            var converter = new IndentedStringBuilder();
+            converter.Append("new global::Avalonia.Data.Converters.FuncValueConverter<");
+            converter.Append(selection.SourceType);
+            converter.AppendLine(
+                ", global::System.Collections.Generic.IEnumerable<global::Everywhere.Configuration.SettingsSelectionItem.Item>?>(x =>");
+            converter.AppendLine("{");
+            using (converter.Indent())
+            {
+                converter.AppendLine("if (x is null) return null;");
+                converter.AppendLine("global::Avalonia.Controls.Templates.IDataTemplate? contentTemplate = null;");
+                if (selection.TemplateExpression is { } template)
+                {
+                    converter.AppendLine(
+                        $$"""
+                          if (global::Avalonia.Application.Current?.Resources.TryGetResource({{template}}, null, out var resource) is true)
+                          {
+                              contentTemplate = resource as global::Avalonia.Controls.Templates.IDataTemplate;
+                          }
+                          """);
+                }
+                converter.Append("return x.Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
+                converter.Append(selection.TransformExpression);
+                converter.AppendLine(", k, contentTemplate)).ToArray();");
+            }
+            EmitBinding(sb, selection.Binding, BindingMode.OneWay, converter.AppendLine("})").ToString()).AppendLine(";");
+            sb.AppendLine($"{itemName}.IsEditable = {selection.IsEditable};");
+        }
+        else if (item.Kind == ItemKind.SettingsControl)
+        {
+            sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsControlItem(");
+            using (sb.Indent())
+            {
+                sb.AppendLine($"(global::Everywhere.Configuration.ISettingsControl)this.{item.Name})");
+            }
+            sb.AppendLine("{");
+            using (sb.Indent())
+            {
+                sb.AppendLine("ControlDataContext = this,");
+            }
+            sb.AppendLine("};");
+        }
+        else
+        {
+            sb.Append("var ").Append(itemName).Append(" = ").Append(item.CreationExpression).AppendLine(";");
+        }
+
+        ApplyHeaderAndDescription(sb, itemName, item);
+        ApplyCommonAttributes(sb, itemName, item.Common);
+        foreach (var assignment in item.Assignments)
+        {
+            sb.AppendLine($"{itemName}.{assignment.Name} = {assignment.Expression};");
+        }
+        if (item.Kind == ItemKind.Enum)
+        {
+            sb.AppendLine(
+                $"{itemName}.ItemsSource = new global::System.Collections.Generic.List<global::Everywhere.Configuration.SettingsSelectionItem.Item>");
+            sb.AppendLine("{");
+            using (sb.Indent())
+            {
+                foreach (var choice in item.EnumItems)
+                {
+                    sb.AppendLine(
+                        $"new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.DynamicLocaleKey({choice.Header}), {choice.Member}, null),");
+                }
+            }
+            sb.AppendLine("};");
+        }
+        if (item.Nested is { } nested)
+        {
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ChildrenProperty] = ");
+            EmitBinding(sb, nested.Children, BindingMode.OneWay).AppendLine(";");
+            sb.AppendLine($"{itemName}.IsExpanded = {nested.IsExpanded};");
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsExpandableProperty] = ");
+            EmitBinding(sb, nested.Expandable, BindingMode.OneWay, nested.ExpandableConverter).AppendLine(";").AppendLine();
+        }
+
+        // A control factory is not an editable value; binding Value would evaluate it twice.
+        if (item.ValueBinding is { } valueBinding)
+        {
+            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
+            EmitBinding(sb, valueBinding, BindingMode.TwoWay).AppendLine(";");
+        }
+        if (item.DefaultLiteral is { } defaultLiteral)
+        {
+            var wrapper = $"{itemName}_wrapper";
+            if (item.HasDefaultPlaceholder)
+            {
+                sb.AppendLine($"{itemName}.PlaceholderText = {defaultLiteral};");
+            }
+            sb.AppendLine($"var {wrapper} = new global::Everywhere.Configuration.SettingsDefaultValueItem({itemName});");
+            sb.AppendLine($"{wrapper}.ResetCommand = new global::CommunityToolkit.Mvvm.Input.RelayCommand(() =>");
+            sb.AppendLine("{");
+            using (sb.Indent())
+            {
+                sb.AppendLine($"this.{item.Name} = {item.ResetLiteral};");
+            }
+            sb.AppendLine("});");
+            ApplyHeaderAndDescription(sb, wrapper, item);
+            ApplyCommonAttributes(sb, wrapper, item.Common);
+            itemName = wrapper;
+        }
+
+        var finalName = $"{itemName}_final";
+        sb.AppendLine($"global::Everywhere.Configuration.SettingsItem {finalName} = {itemName};");
+        if (item.Modifier is { } modifier)
+        {
+            var call = $"{modifier.Target}.{modifier.MethodName}({itemName})";
+            if (!modifier.ReturnsSettingsItem)
+            {
+                sb.AppendLine($"{call};");
+            }
+            else
+            {
+                var modified = $"{itemName}_modified";
+                sb.AppendLine($"var {modified} = {call};");
+                sb.AppendLine($"if (!global::System.Object.ReferenceEquals({modified}, {finalName}))");
+                sb.AppendLine("{");
+                using (sb.Indent())
+                {
+                    sb.AppendLine($"{finalName} = {modified};");
+                    ApplyHeaderAndDescription(sb, finalName, item);
+                    ApplyCommonAttributes(sb, finalName, item.Common);
+                }
+                sb.AppendLine("}");
+            }
+        }
+        sb.AppendLine($"{parentCollection}.Add({finalName});").AppendLine();
+    }
+
+    /// <summary>
+    /// Applies common presentation values to an item or a replacement returned by its modifier.
+    /// </summary>
+    private static void ApplyCommonAttributes(IndentedStringBuilder sb, string name, CommonAttributesModel model)
+    {
+        if (model.Classes is { } classes)
+        {
+            sb.AppendLine($"{name}.Classes.AddRange(new string[] {{ {classes} }});");
+        }
+        if (model.IsExperimental is { } experimental)
+        {
+            sb.AppendLine($"{name}.IsExperimental = {experimental};");
+        }
+        if (model.DocumentBinding is { } document)
+        {
+            Bind("DocumentUrl", document);
+        }
+        else if (model.DocumentLiteral is { } literal)
+        {
+            sb.AppendLine($"{name}.DocumentUrl = {literal};");
+        }
+        if (model.Enabled is { } enabled)
+        {
+            Bind("IsEnabled", enabled);
+        }
+        if (model.Visible is { } visible)
+        {
+            Bind("IsVisible", visible);
+        }
+
+        void Bind(string property, BindingModel binding)
+        {
+            sb.Append($"{name}[!global::Everywhere.Configuration.SettingsItem.{property}Property] = ");
+            EmitBinding(sb, binding, BindingMode.OneWay).AppendLine(";");
+        }
+    }
+
+    /// <summary>
+    /// Emits resolved property chains and logical MultiBinding compositions.
+    /// </summary>
+    private static IndentedStringBuilder EmitBinding(IndentedStringBuilder sb, BindingModel model, BindingMode mode, string? converter = null)
+    {
+        if (model.LogicalConverter is { } logicalConverter)
+        {
+            sb.AppendLine("new global::Avalonia.Data.MultiBinding");
+            sb.AppendLine("{");
+            using (sb.Indent())
+            {
+                sb.AppendLine($"Converter = {logicalConverter},");
+                sb.AppendLine("Mode = global::Avalonia.Data.BindingMode.OneWay,");
+                sb.AppendLine("Bindings =");
+                sb.AppendLine("{");
+                using (sb.Indent())
+                {
+                    foreach (var child in model.Children)
+                    {
+                        EmitBinding(sb, child, mode, converter).AppendLine(",");
+                    }
+                }
+                sb.AppendLine("}");
+            }
+            return sb.Append("}");
+        }
+        if (model.Expression is null)
+        {
+            return sb.Append("new global::Avalonia.Data.CompiledBinding()");
+        }
+        sb.AppendLine("global::Avalonia.Data.CompiledBinding.Create(");
+        using (sb.Indent())
+        {
+            sb.AppendLine($"({model.RootType} source) => {model.Expression},");
+            sb.AppendLine("source: this,");
+            sb.Append($"mode: global::Avalonia.Data.BindingMode.{mode}");
+            if (converter is not null)
+            {
+                sb.AppendLine(",");
+                sb.Append($"converter: {converter}");
+            }
+            sb.AppendLine();
+        }
+        return sb.Append(")");
+    }
+
+    private static void ApplyHeaderAndDescription(IndentedStringBuilder sb, string itemName, ItemModel metadata)
     {
         var headerExpr = string.IsNullOrWhiteSpace(metadata.HeaderKey) ?
             "null" :
@@ -447,7 +720,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// Resolved constants become literals. Keys emitted by another generator retain their expression,
     /// with aliases expanded in the original semantic context.
     /// </summary>
-    private static string? GetLocaleKeyExpression(Compilation compilation, AttributeData? attribute, int index)
+    private static string? GetLocaleKeyExpression(Compilation compilation, AttributeData? attribute, int index, CancellationToken token)
     {
         if (attribute is null)
         {
@@ -459,7 +732,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             return ToLiteral(value);
         }
 
-        if (attribute.ApplicationSyntaxReference?.GetSyntax() is not AttributeSyntax { ArgumentList: { } arguments } syntax)
+        if (attribute.ApplicationSyntaxReference?.GetSyntax(token) is not AttributeSyntax { ArgumentList: { } arguments } syntax)
         {
             return null;
         }
@@ -474,7 +747,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         }
 
         var model = compilation.GetSemanticModel(syntax.SyntaxTree);
-        return new LocaleKeyExpressionRewriter(model).Visit(argument.Expression).ToString();
+        return new LocaleKeyExpressionRewriter(model, token).Visit(argument.Expression).ToString();
     }
 
     /// <summary>
@@ -485,20 +758,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
     private static PropertyMetadata BuildPropertyMetadata(
-        SourceProductionContext ctx,
+        AnalysisContext ctx,
         Compilation compilation,
         INamedTypeSymbol rootType,
-        ISymbol symbol,
-        ISymbol attributeOwner,
-        string name,
-        ITypeSymbol? type = null)
+        IPropertySymbol property)
     {
-        type ??= ((IPropertySymbol)symbol).Type;
-        var settingsItemAttribute = ResolveSettingsItemAttribute(ctx, attributeOwner);
+        var type = property.Type;
+        var settingsItemAttribute = ResolveSettingsItemAttribute(ctx, property);
         var kind = Classify(type, settingsItemAttribute);
-        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicLocaleKey);
-        var headerKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 0) ?? string.Empty;
-        var descriptionKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 1);
+        var dynamicResourceKeyAttribute = property.GetAttribute(KnownAttributes.DynamicLocaleKey);
+        var headerKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 0, ctx.CancellationToken) ?? string.Empty;
+        var descriptionKey = GetLocaleKeyExpression(compilation, dynamicResourceKeyAttribute, 1, ctx.CancellationToken);
         var index = settingsItemAttribute?.GetNamedArgument("Index") switch
         {
             { IsNull: false, Value: int value } => value,
@@ -506,7 +776,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         };
         var group = settingsItemAttribute?.GetNamedArgument("Group") switch
         {
-            { Kind: TypedConstantKind.Error } => settingsItemAttribute.ApplicationSyntaxReference?.GetSyntax().ToString() switch
+            { Kind: TypedConstantKind.Error } => settingsItemAttribute.ApplicationSyntaxReference?.GetSyntax(ctx.CancellationToken).ToString() switch
             {
                 { } syntax => GroupKeyRegex.Match(syntax) switch
                 {
@@ -520,10 +790,9 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         };
         return new PropertyMetadata(
             rootType,
-            symbol,
-            attributeOwner,
+            property,
             settingsItemAttribute,
-            name,
+            property.Name,
             kind,
             type,
             headerKey,
@@ -532,187 +801,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             group);
     }
 
-    private static void ApplyTypeSpecificMetadata(Compilation compilation, IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
-    {
-        switch (metadata.Kind)
-        {
-            case ItemKind.String when IsAttributeType(metadata.ItemAttribute, KnownAttributes.SettingsStringItem) &&
-                metadata.ItemAttribute is { } attribute:
-            {
-                sb.AppendLine($"{itemName}.PlaceholderText = {GetNamedArgValue(attribute, "PlaceholderText", "null")};");
-                sb.AppendLine($"{itemName}.MaxLength = {GetNamedArgValue(attribute, "MaxLength", "int.MaxValue")};");
-                sb.AppendLine($"{itemName}.IsMultiline = {GetNamedArgValue(attribute, "IsMultiline", "false")};");
-                sb.AppendLine(
-                    $"{itemName}.TextWrapping = {GetNamedArgValue(attribute, "IsMultiline", false, "global::Avalonia.Media.TextWrapping.Wrap", "global::Avalonia.Media.TextWrapping.NoWrap")};");
-                sb.AppendLine($"{itemName}.PasswordChar = {GetNamedArgValue(attribute, "IsPassword", false, "'*'", "'\\0'")};");
-                sb.AppendLine($"{itemName}.Height = {GetNamedArgValue(attribute, "Height", "double.NaN")};");
-                sb.AppendLine($"{itemName}.MinWidth = {GetNamedArgValue(attribute, "MinWidth", "320d")};");
-                break;
-            }
-            case ItemKind.Int when IsAttributeType(metadata.ItemAttribute, KnownAttributes.SettingsIntegerItem) &&
-                metadata.ItemAttribute is { } attribute:
-            {
-                sb.AppendLine($"{itemName}.MinValue = {GetNamedArgValue(attribute, "Min", "int.MinValue")};");
-                sb.AppendLine($"{itemName}.MaxValue = {GetNamedArgValue(attribute, "Max", "int.MaxValue")};");
-                sb.AppendLine($"{itemName}.IsSliderVisible = {GetNamedArgValue(attribute, "IsSliderVisible", "true")};");
-                sb.AppendLine($"{itemName}.IsTextBoxVisible = {GetNamedArgValue(attribute, "IsTextBoxVisible", "true")};");
-                break;
-            }
-            case ItemKind.Double when IsAttributeType(metadata.ItemAttribute, KnownAttributes.SettingsDoubleItem) &&
-                metadata.ItemAttribute is { } attribute:
-            {
-                sb.AppendLine($"{itemName}.MinValue = {GetNamedArgValue(attribute, "Min", "double.NegativeInfinity")};");
-                sb.AppendLine($"{itemName}.MaxValue = {GetNamedArgValue(attribute, "Max", "double.PositiveInfinity")};");
-                sb.AppendLine($"{itemName}.Step = {GetNamedArgValue(attribute, "Step", "0.1d")};");
-                sb.AppendLine($"{itemName}.IsSliderVisible = {GetNamedArgValue(attribute, "IsSliderVisible", "true")};");
-                sb.AppendLine($"{itemName}.IsTextBoxVisible = {GetNamedArgValue(attribute, "IsTextBoxVisible", "true")};");
-                break;
-            }
-            case ItemKind.Enum:
-            {
-                var enumTypeStr = metadata.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-                sb.AppendLine(
-                    $"{itemName}.ItemsSource = new global::System.Collections.Generic.List<global::Everywhere.Configuration.SettingsSelectionItem.Item>");
-                sb.AppendLine("{");
-                using (sb.Indent())
-                {
-                    var enumMembers = metadata.Type.GetMembers()
-                        .OfType<IFieldSymbol>()
-                        .Where(f => f.IsConst) // Enum members are constants
-                        .Where(f => !f.HasAttribute("MessagePack.IgnoreMemberAttribute"));
-
-                    foreach (var member in enumMembers)
-                    {
-                        var memberAccess = $"{enumTypeStr}.{member.Name}";
-                        // Check for [DynamicLocaleKey] on the enum member
-                        var headerKey = GetLocaleKeyExpression(compilation, member.GetAttribute(KnownAttributes.DynamicLocaleKey), 0);
-
-                        var resourceKeyExpr = headerKey is not null ?
-                            $"new global::Everywhere.I18N.DynamicLocaleKey({headerKey})" :
-                            $"new global::Everywhere.I18N.DynamicLocaleKey(\"{metadata.Type.Name}_{member.Name}\")";
-
-                        sb.AppendLine($"new global::Everywhere.Configuration.SettingsSelectionItem.Item({resourceKeyExpr}, {memberAccess}, null),");
-                    }
-                }
-                sb.AppendLine("};");
-                break;
-            }
-        }
-    }
-
-    private static void ApplySettingsItemAttributes(
-        in SourceProductionContext ctx,
-        IndentedStringBuilder sb,
-        string itemName,
-        in PropertyMetadata metadata)
-    {
-        if (metadata.ItemAttribute is not { } settingsItemAttribute) return;
-
-        if (settingsItemAttribute.GetNamedArgument("Classes") is { IsNull: false, Values: { Length: > 0 } classesArray })
-        {
-            var classes = classesArray
-                .Select(c => c.Value?.ToString())
-                .OfType<string>()
-                .Select(v => $"\"{v.Replace("\"", "\\\"")}\"");
-            sb.AppendLine($"{itemName}.Classes.AddRange(new string[] {{ {string.Join(", ", classes)} }});");
-        }
-
-        if (settingsItemAttribute.GetNamedArgument("IsExperimental") is { IsNull: false, Value: bool isExperimental })
-        {
-            sb.AppendLine($"{itemName}.IsExperimental = {isExperimental.ToString().ToLowerInvariant()};");
-        }
-
-        if (settingsItemAttribute.GetNamedArgument("DocumentUrlBindingPath") is { IsNull: false, Value: string documentUrlBindingPath })
-        {
-            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.DocumentUrlProperty] = ");
-            EmitBinding(ctx, sb, metadata, documentUrlBindingPath, BindingMode.OneWay).AppendLine(";");
-        }
-        else if (settingsItemAttribute.GetNamedArgument("DocumentUrl") is { IsNull: false, Value: string documentUrl })
-        {
-            sb.AppendLine($"{itemName}.DocumentUrl = {ToLiteral(documentUrl)};");
-        }
-
-        if (settingsItemAttribute.GetNamedArgument("IsEnabledBindingPath") is { IsNull: false, Value: string isEnabledBindingPath })
-        {
-            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsEnabledProperty] = ");
-            EmitBinding(ctx, sb, metadata, isEnabledBindingPath, BindingMode.OneWay).AppendLine(";");
-        }
-
-        if (settingsItemAttribute.GetNamedArgument("IsVisibleBindingPath") is { IsNull: false, Value: string isVisibleBindingPath })
-        {
-            sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsVisibleProperty] = ");
-            EmitBinding(ctx, sb, metadata, isVisibleBindingPath, BindingMode.OneWay).AppendLine(";");
-        }
-    }
-
-    private static void ApplySettingsItems(
-        in SourceProductionContext ctx,
-        IndentedStringBuilder sb,
-        string itemName,
-        in PropertyMetadata metadata,
-        string fullBindingPath)
-    {
-        if (metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsItems) is not { } settingsItemsAttribute) return;
-
-        // If we are here, it means this item has nested settings items.
-        // It must satisfy at least one of the following:
-        // - Has an attribute [GeneratedSettingsItems] on the class itself so that SettingsItems property is generated.
-        // - Has a property of name SettingsItems and type implementing IEnumerable<SettingsItem>.
-
-        // 1. check satisfactions
-        var hasAttribute = metadata.Type.GetAttribute(KnownAttributes.GeneratedSettingsItems) is not null;
-        var hasSettingsItemsProperty = metadata.Type.GetMembers()
-            .OfType<IPropertySymbol>()
-            .Any(p =>
-                p.Name == "SettingsItems" &&
-                p.Type.AllInterfaces.Any(i =>
-                    i.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>" &&
-                    i.TypeArguments.Length == 1 &&
-                    i.TypeArguments[0].ToDisplayString() == "Everywhere.Configuration.SettingsItem"));
-        if (!hasAttribute && !hasSettingsItemsProperty)
-        {
-            // Report diagnostic for missing GeneratedSettingsItems attribute or SettingsItems property
-            ctx.ReportDiagnostic(
-                Diagnostic.Create(
-                    Diagnostics.InvalidSettingsItemsType,
-                    metadata.Symbol.Locations.FirstOrDefault(),
-                    metadata.Name,
-                    metadata.Type.ToDisplayString()));
-            return;
-        }
-
-        // 2. Emit binding for SettingsItems -> Children
-        sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ChildrenProperty] = ");
-        EmitBinding(ctx, sb, metadata, $"{fullBindingPath}.SettingsItems", BindingMode.OneWay);
-        sb.AppendLine(";");
-
-        // 3. Emit IsExpanded
-        sb.AppendLine($"{itemName}.IsExpanded = {GetNamedArgValue(settingsItemsAttribute, "IsExpanded", "false")};");
-
-        // 4. Emit IsExpandableBindingPath
-        var isExpandableBindingPath = settingsItemsAttribute.GetNamedArgument("IsExpandableBindingPath") switch
-        {
-            { IsNull: false, Value: string path } => path,
-            _ => null
-        };
-
-        sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.IsExpandableProperty] = ");
-        if (string.IsNullOrEmpty(isExpandableBindingPath))
-        {
-            // No IsExpandableBindingPath provided, use a default logic: if there are any children, it's expandable
-            EmitBinding(ctx, sb, metadata, metadata.Name, BindingMode.OneWay, "global::Avalonia.Data.Converters.ObjectConverters.IsNotNull");
-        }
-        else
-        {
-            // Emit binding for IsExpandable
-            EmitBinding(ctx, sb, metadata, isExpandableBindingPath!, BindingMode.OneWay);
-        }
-
-        sb.AppendLine(";").AppendLine();
-    }
-
-    private static SettingsItemModifier? ResolveSettingsItemModifier(in SourceProductionContext ctx, in PropertyMetadata metadata)
+    private static SettingsItemModifier? ResolveSettingsItemModifier(in AnalysisContext ctx, in PropertyMetadata metadata)
     {
         var modifierName = metadata.ItemAttribute?.GetNamedArgument("Modifier") switch
         {
@@ -779,120 +868,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         }
 
         return false;
-    }
-
-    private static void EmitSettingsItemModifier(
-        in SourceProductionContext ctx,
-        IndentedStringBuilder sb,
-        SettingsItemModifier modifier,
-        string modifierArgumentName,
-        string finalItemName,
-        in PropertyMetadata metadata)
-    {
-        var call = $"{modifier.Target}.{modifier.MethodName}({modifierArgumentName})";
-        if (!modifier.ReturnsSettingsItem)
-        {
-            sb.AppendLine($"{call};");
-            return;
-        }
-
-        var modifiedItemName = $"{modifierArgumentName}_modified";
-        sb.AppendLine($"var {modifiedItemName} = {call};");
-        sb.AppendLine($"if (!global::System.Object.ReferenceEquals({modifiedItemName}, {finalItemName}))");
-        sb.AppendLine("{");
-        using (sb.Indent())
-        {
-            sb.AppendLine($"{finalItemName} = {modifiedItemName};");
-            ApplyHeaderAndDescription(sb, finalItemName, metadata);
-            ApplySettingsItemAttributes(ctx, sb, finalItemName, metadata);
-        }
-        sb.AppendLine("}");
-    }
-
-    /// <summary>
-    /// Emits typed property bindings rooted at the settings object. Logical combinations keep
-    /// MultiBinding composition because CompiledBinding.Create only accepts a single property chain.
-    /// </summary>
-    private static IndentedStringBuilder EmitBinding(
-        SourceProductionContext ctx,
-        IndentedStringBuilder sb,
-        PropertyMetadata metadata,
-        string path,
-        BindingMode mode,
-        string? converter = null)
-    {
-        var expression = SyntaxFactory.ParseExpression(path);
-        if (expression.ContainsDiagnostics || !IsSupportedBindingExpression(expression))
-        {
-            ctx.ReportDiagnostic(
-                Diagnostic.Create(
-                    Diagnostics.UnsupportedBindingExpression,
-                    metadata.Symbol.Locations.FirstOrDefault(),
-                    metadata.Name,
-                    path));
-            return sb.Append("new global::Avalonia.Data.CompiledBinding()");
-        }
-
-        EmitExpression(expression);
-        return sb;
-
-        void EmitExpression(ExpressionSyntax node)
-        {
-            node = UnwrapParentheses(node);
-            if (node is BinaryExpressionSyntax binary)
-            {
-                var logicalConverter = binary.IsKind(SyntaxKind.LogicalAndExpression) ? "And" : "Or";
-                EmitMultiBinding($"global::Avalonia.Data.Converters.BoolConverters.{logicalConverter}", binary.Left, binary.Right);
-                return;
-            }
-
-            if (node is PrefixUnaryExpressionSyntax unary && !IsPropertyChainExpression(unary.Operand))
-            {
-                EmitMultiBinding(
-                    "new global::Avalonia.Data.Converters.FuncMultiValueConverter<bool, bool>(values => values.Any(value => !value))",
-                    unary.Operand);
-                return;
-            }
-
-            var rootTypeName = metadata.RootType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            sb.AppendLine("global::Avalonia.Data.CompiledBinding.Create(");
-            using (sb.Indent())
-            {
-                sb.AppendLine($"({rootTypeName} source) => {BuildPropertyChainExpression(node, metadata.RootType)},");
-                sb.AppendLine("source: this,");
-                sb.Append($"mode: global::Avalonia.Data.BindingMode.{mode}");
-                if (converter is not null)
-                {
-                    sb.AppendLine(",");
-                    sb.Append($"converter: {converter}");
-                }
-                sb.AppendLine();
-            }
-            sb.Append(")");
-        }
-
-        void EmitMultiBinding(string logicalConverter, params ExpressionSyntax[] children)
-        {
-            sb.AppendLine("new global::Avalonia.Data.MultiBinding");
-            sb.AppendLine("{");
-            using (sb.Indent())
-            {
-                sb.AppendLine($"Converter = {logicalConverter},");
-                sb.AppendLine("Mode = global::Avalonia.Data.BindingMode.OneWay,");
-                sb.AppendLine("Bindings =");
-                sb.AppendLine("{");
-                using (sb.Indent())
-                {
-                    foreach (var child in children)
-                    {
-                        EmitExpression(child);
-                        sb.AppendLine(",");
-                    }
-                }
-                sb.AppendLine("}");
-            }
-            sb.Append("}");
-        }
     }
 
     private static ExpressionSyntax UnwrapParentheses(ExpressionSyntax expression)
@@ -1036,7 +1011,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static AttributeData? ResolveSettingsItemAttribute(SourceProductionContext ctx, ISymbol symbol)
+    private static AttributeData? ResolveSettingsItemAttribute(AnalysisContext ctx, ISymbol symbol)
     {
         var attributes = symbol.GetAttributes().Where(attribute => IsAttributeType(attribute, KnownAttributes.SettingsItem)).ToArray();
         if (attributes.Length > 1)
@@ -1098,12 +1073,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// <summary>
     /// Expands aliases and known type/namespace prefixes without requiring a generated key to exist yet.
     /// </summary>
-    private sealed class LocaleKeyExpressionRewriter(SemanticModel model) : CSharpSyntaxRewriter
+    private sealed class LocaleKeyExpressionRewriter(SemanticModel model, CancellationToken token) : CSharpSyntaxRewriter
     {
         /// <inheritdoc />
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
-            var symbol = model.GetAliasInfo(node)?.Target ?? model.GetSymbolInfo(node).Symbol;
+            var symbol = model.GetAliasInfo(node, token)?.Target ?? model.GetSymbolInfo(node, token).Symbol;
             if (symbol is INamespaceOrTypeSymbol type)
             {
                 return SyntaxFactory.ParseName(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).WithTriviaFrom(node);
@@ -1135,6 +1110,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
         public IndentedStringBuilder Append(string text)
         {
+            if (text.IndexOf('\r') < 0 && text.IndexOf('\n') < 0)
+            {
+                if (_isLineStart)
+                {
+                    _stringBuilder.Append(_indent);
+                }
+                _stringBuilder.Append(text);
+                _isLineStart = false;
+                return this;
+            }
+
             if (_isLineStart) _stringBuilder.Append(_indent);
 #pragma warning disable RS1035 // Do not use APIs banned for analyzers
             var lines = text.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -1167,6 +1153,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
         public IndentedStringBuilder AppendLine(string line)
         {
+            if (line.Length > 0 && line.IndexOf('\r') < 0 && line.IndexOf('\n') < 0)
+            {
+                if (_isLineStart)
+                {
+                    _stringBuilder.Append(_indent);
+                }
+                _stringBuilder.AppendLine(line);
+                _isLineStart = true;
+                return this;
+            }
+
             if (_isLineStart) _stringBuilder.Append(_indent);
 #pragma warning disable RS1035 // Do not use APIs banned for analyzers
             var lines = line.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -1225,10 +1222,130 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         Unknown
     }
 
+    /// <summary>
+    /// Defines one independently cached settings output.
+    /// </summary>
+    /// <param name="Namespace">The output namespace, empty for the global namespace.</param>
+    /// <param name="Name">The annotated class name.</param>
+    /// <param name="Modifier">The override or virtual keyword, including its trailing space.</param>
+    /// <param name="Items">Visible items in presentation order.</param>
+    private sealed record SettingsTypeModel(string Namespace, string Name, string Modifier, EquatableArray<ItemModel> Items);
+
+    /// <summary>
+    /// Contains resolved presentation and binding values, with no compiler objects.
+    /// </summary>
+    /// <param name="Name">The settings property path.</param>
+    /// <param name="Kind">The presentation control kind.</param>
+    /// <param name="HeaderKey">The resolved header key expression.</param>
+    /// <param name="DescriptionKey">The optional description key expression.</param>
+    /// <param name="Group">The optional group identity.</param>
+    /// <param name="CreationExpression">The control constructor expression for ordinary items.</param>
+    /// <param name="Selection">The items-source projection for selection controls.</param>
+    /// <param name="Common">Presentation values reapplied to wrappers and replacements.</param>
+    /// <param name="Assignments">Type-specific property assignments in output order.</param>
+    /// <param name="EnumItems">Enum choices and their localized labels.</param>
+    /// <param name="Nested">Bindings for a nested settings collection.</param>
+    /// <param name="ValueBinding">The editable value binding; absent for control factories.</param>
+    /// <param name="DefaultLiteral">The reset attribute value as a C# literal, if declared.</param>
+    /// <param name="ResetLiteral">The reset expression, accounting for nullable string placeholders.</param>
+    /// <param name="HasDefaultPlaceholder">Whether the default string value is displayed as a placeholder.</param>
+    /// <param name="Modifier">The validated item modifier, if declared.</param>
+    private sealed record ItemModel(
+        string Name,
+        ItemKind Kind,
+        string HeaderKey,
+        string? DescriptionKey,
+        string? Group,
+        string CreationExpression,
+        SelectionModel? Selection,
+        CommonAttributesModel Common,
+        EquatableArray<Assignment> Assignments,
+        EquatableArray<EnumItem> EnumItems,
+        NestedItemsModel? Nested,
+        BindingModel? ValueBinding,
+        string? DefaultLiteral,
+        string? ResetLiteral,
+        bool HasDefaultPlaceholder,
+        SettingsItemModifier? Modifier
+    );
+
+    /// <summary>
+    /// Represents a typed leaf binding or a logical combination of bindings.
+    /// </summary>
+    /// <param name="RootType">The fully qualified root type for a property chain.</param>
+    /// <param name="Expression">The resolved chain expression; null for logical or invalid bindings.</param>
+    /// <param name="LogicalConverter">The converter expression for a logical combination.</param>
+    /// <param name="Children">Operands of the logical combination.</param>
+    private sealed record BindingModel(string? RootType, string? Expression, string? LogicalConverter, EquatableArray<BindingModel> Children);
+
+    /// <summary>
+    /// Defines the items-source projection for a selection control.
+    /// </summary>
+    /// <param name="SourceType">The declared items-source type.</param>
+    /// <param name="TemplateExpression">The optional template resource expression.</param>
+    /// <param name="TransformExpression">The localization projection applied to each value.</param>
+    /// <param name="IsEditable">The editable flag as a C# literal.</param>
+    /// <param name="Binding">The resolved items-source binding.</param>
+    private sealed record SelectionModel(
+        string SourceType,
+        string? TemplateExpression,
+        string TransformExpression,
+        string IsEditable,
+        BindingModel Binding
+    );
+
+    /// <summary>
+    /// Carries attributes reapplied to default-value wrappers and modifier replacements.
+    /// </summary>
+    /// <param name="Classes">Comma-separated class literals, if declared.</param>
+    /// <param name="IsExperimental">The experimental flag literal, if declared.</param>
+    /// <param name="DocumentBinding">The documentation URL binding.</param>
+    /// <param name="DocumentLiteral">The URL literal when no binding is declared.</param>
+    /// <param name="Enabled">The enabled-state binding.</param>
+    /// <param name="Visible">The visibility binding.</param>
+    private sealed record CommonAttributesModel(
+        string? Classes,
+        string? IsExperimental,
+        BindingModel? DocumentBinding,
+        string? DocumentLiteral,
+        BindingModel? Enabled,
+        BindingModel? Visible
+    );
+
+    /// <summary>
+    /// Describes the child collection and its expansion bindings.
+    /// </summary>
+    /// <param name="Children">The child collection binding.</param>
+    /// <param name="IsExpanded">The initial expansion flag literal.</param>
+    /// <param name="Expandable">The expansion availability binding.</param>
+    /// <param name="ExpandableConverter">The default null check when no explicit binding is provided.</param>
+    private sealed record NestedItemsModel(
+        BindingModel Children,
+        string IsExpanded,
+        BindingModel Expandable,
+        string? ExpandableConverter
+    );
+
+    /// <summary>
+    /// Represents a presentation property assignment.
+    /// </summary>
+    /// <param name="Name">The presentation property name.</param>
+    /// <param name="Expression">The resolved value expression.</param>
+    private readonly record struct Assignment(string Name, string Expression);
+
+    /// <summary>
+    /// Represents an enum choice and its resolved localization expression.
+    /// </summary>
+    /// <param name="Header">The localization key expression.</param>
+    /// <param name="Member">The fully qualified enum member expression.</param>
+    private readonly record struct EnumItem(string Header, string Member);
+
+    /// <summary>
+    /// Holds symbols only during the current semantic transform, never in pipeline output.
+    /// </summary>
     private readonly record struct PropertyMetadata(
         INamedTypeSymbol RootType,
         ISymbol Symbol,
-        ISymbol AttributeOwner,
         AttributeData? ItemAttribute,
         string Name,
         ItemKind Kind,
@@ -1239,6 +1356,9 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         string? Group
     );
 
+    /// <summary>
+    /// Identifies the validated modifier method and whether its returned item replaces the original.
+    /// </summary>
     private readonly record struct SettingsItemModifier(
         string Target,
         string MethodName,
