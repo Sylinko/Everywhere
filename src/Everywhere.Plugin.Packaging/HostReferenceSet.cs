@@ -37,6 +37,11 @@ public sealed class HostReferenceSet
     /// </summary>
     public IReadOnlyDictionary<string, string> RuntimeAssemblies { get; }
 
+    /// <summary>
+    /// Gets resource assemblies declared by the selected deployment, used only for packaging exclusion.
+    /// </summary>
+    public IReadOnlyList<string> ResourceAssemblies { get; }
+
     private static readonly PackagingJsonSerializerContext DescriptorJsonContext = new(
         new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
@@ -86,6 +91,7 @@ public sealed class HostReferenceSet
         var target = dependencies.Targets[targetName];
         var assemblies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var runtimeAssemblies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var resourceAssemblies = new List<string>();
 
         foreach (var (library, assets) in target)
         {
@@ -93,9 +99,6 @@ public sealed class HostReferenceSet
 
             foreach (var asset in assets.Runtime.Keys)
             {
-                if (!asset.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
-                    asset.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase)) continue;
-
                 var relative = PackagePath.Resolve(Directory, asset);
                 var flat = Path.Combine(Directory, Path.GetFileName(asset));
                 var path = File.Exists(relative) ? relative : flat;
@@ -114,6 +117,19 @@ public sealed class HostReferenceSet
                 runtimeAssemblies[name] = path;
                 if (!isRuntimePack) assemblies[name] = path;
             }
+
+            foreach (var (asset, resource) in assets.Resources)
+            {
+                var relative = PackagePath.Resolve(Directory, asset);
+                var deployed = PackagePath.Resolve(Directory, resource.Locale + "/" + Path.GetFileName(asset));
+                var path = File.Exists(relative) ? relative : deployed;
+                if (!File.Exists(path))
+                {
+                    throw new PluginValidationException("MissingHostAsset", $"Declared host resource '{asset}' is missing.");
+                }
+
+                resourceAssemblies.Add(path);
+            }
         }
 
         var contract = typeof(IPlugin).Assembly.GetName().Name ?? "Everywhere.Plugin.Abstractions";
@@ -124,5 +140,6 @@ public sealed class HostReferenceSet
 
         Assemblies = assemblies;
         RuntimeAssemblies = runtimeAssemblies;
+        ResourceAssemblies = resourceAssemblies;
     }
 }

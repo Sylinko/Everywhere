@@ -33,5 +33,10 @@ public enum PluginState
     /// <summary>
     /// The desired plugin has no applicable entry on this host. No plugin code was loaded.
     /// </summary>
-    Skipped
+    Skipped,
+
+    /// <summary>
+    /// A selected dependency failed validation or activation, so this plugin was not started.
+    /// </summary>
+    Blocked
 }

@@ -7,6 +7,9 @@ They check omitted names and whole localization declarations, independent descri
 paths, content attachments, convention discovery and explicit overrides, including Chinese-only README
 remapping and ambiguous English README rejection. The generated maps are read back through
 PluginPackageStore without loading plugin code. Metadata and packaging do not require the I18N/UI APIs.
+The same author builds verify generated and referenced satellites, explicit resource-copy metadata,
+host resource exclusion, DLL-named ordinary content and rejection of a damaged managed output.
+Both source-project and installation-directory imports use the host's generated resource manifest.
 
 DynamicLocaleKeyTests check case-insensitive language lookup, order-independent equality/hashing,
 JSON and MessagePack round trips, and parent/English fallback. Text values remain case-sensitive.
@@ -47,7 +50,17 @@ Hosting, Packaging and SDK implementations.
 Coverage includes optional method/base-type availability and consumer reconstruction,
 controlled name-based assembly binding, initialization failure and retry, timeout handling,
 retained host roots, entry-disposal/reversal failure, resource disposal contracts, and satellite
-assembly resolution by metadata. Package tests cover immutable installation copies, ZIP
+assembly resolution by metadata. Imported-entry cases cover a truncated DLL, a missing type and
+an entry mistakenly pointing to a real satellite at an opaque path. They verify per-plugin diagnostics,
+blocked consumers and successful activation and retirement of an independent plugin.
+Failure-isolation cases use real collectible fixtures to verify
+provider failure and transitive blocking, consumer failure with surviving siblings, independent
+activation before and after failure, shared static registrations surviving a failed entry,
+two-stage replacement without old-version resurrection, explicit removal despite an invalid related update,
+sibling updates and new consumers of unchanged providers, shared-payload replacement ordering,
+new content/binding conflicts against resident owners, and directed-cycle isolation. Disposal failure
+and unconfirmed collection must prevent even preparing a new plugin's assembly. A new native provider
+cannot change a live resolver; an explicit replacement can retire its owner before selecting both providers. Package tests cover immutable installation copies, ZIP
 paths, duplicate sources, user-data preservation and platform/version selection.
 
 Resource tests cover synchronous and pending ValueTask sources, exactly-once result

@@ -11,14 +11,9 @@ public enum PluginApplyStatus
     Applied,
 
     /// <summary>
-    /// Preflight rejected the selection before existing plugins were stopped.
+    /// Some requested plugins failed or were blocked; independent changes were applied.
     /// </summary>
-    Rejected,
-
-    /// <summary>
-    /// Activation failed and its new ownership was successfully cleaned up and collected.
-    /// </summary>
-    ActivationFailed,
+    CompletedWithErrors,
 
     /// <summary>
     /// Shutdown, cleanup or collection is unconfirmed; further mutations require restart.

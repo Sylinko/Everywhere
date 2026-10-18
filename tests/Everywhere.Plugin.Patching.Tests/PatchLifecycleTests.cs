@@ -56,7 +56,7 @@ public sealed class PatchLifecycleTests
         var failed = await engine.ApplyAsync([a, b]);
 
         Assert.That(services.Observations, Does.Contain("itemBA"));
-        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.ActivationFailed), Describe(failed));
+        Assert.That(failed.Status, Is.EqualTo(PluginApplyStatus.CompletedWithErrors), Describe(failed));
         Assert.That(failed.ResidentAssemblyNames, Does.Not.Contain("PluginFixture.PatchB"));
         Assert.That(Target("item"), Is.EqualTo("itemA"));
 

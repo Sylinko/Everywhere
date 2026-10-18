@@ -3,6 +3,8 @@ using System.IO.Compression;
 using System.Security;
 using System.Text.Json;
 using System.Xml.Linq;
+using Everywhere.Plugin.Abstractions;
+using Everywhere.Plugin.Hosting;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Packaging;
 
@@ -88,8 +90,15 @@ public sealed class PluginSdkTests
                            <EverywherePluginLocalization Include="zh-Hans" Description="搜索本地文件" Readme="docs/中文指南.md" />
                            <Content Include="shared/中文指南.md" Link="docs/中文指南.md" CopyToOutputDirectory="PreserveNewest" />
                            <Content Include="docs/images/example.txt" CopyToOutputDirectory="PreserveNewest" />
+                           <Content Include="docs/sample.dll" CopyToOutputDirectory="PreserveNewest" />
+                           <Content Include="{Escape(Path.Combine(hostDirectory, "fr", "PluginFixture.Host.resources.dll"))}"
+                                    Link="fr/PluginFixture.Host.resources.dll" CopyToOutputDirectory="PreserveNewest" AssetType="resources" />
+                           <Reference Include="PluginFixture.B" HintPath="{Escape(Path.Combine(_repository, "tests", "Everywhere.Plugin.Tests", "Fixtures", "B", "bin", _configuration, "net10.0", "PluginFixture.B.dll"))}" />
                          </ItemGroup>
                          <Import Project="{Escape(Path.Combine(sdk, "Sdk", "Sdk.targets"))}" />
+                         <Target Name="CorruptEntryForPackaging" AfterTargets="Build" Condition="'$(CorruptEntry)' == 'true'">
+                           <WriteLinesToFile File="$(TargetPath)" Lines="truncated build output" Overwrite="true" />
+                         </Target>
                        </Project>
                        """;
         await File.WriteAllTextAsync(Path.Combine(_root, "Plugin.csproj"), project);
@@ -99,6 +108,7 @@ public sealed class PluginSdkTests
         await File.WriteAllTextAsync(Path.Combine(_root, "README.zh-Hans.md"), "# Conventional Chinese");
         await File.WriteAllTextAsync(Path.Combine(_root, "shared", "中文指南.md"), "# 中文\n![example](images/example.txt)");
         await File.WriteAllTextAsync(Path.Combine(_root, "docs", "images", "example.txt"), "attachment");
+        await File.WriteAllTextAsync(Path.Combine(_root, "docs", "sample.dll"), "A documentation sample, not a loadable library.");
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.resx"), "<root><data name=\"Greeting\"><value>Hello</value></data></root>");
         await File.WriteAllTextAsync(Path.Combine(_root, "Strings.fr.resx"), "<root><data name=\"Greeting\"><value>Bonjour</value></data></root>");
         var body = hasImplementationReference ?
@@ -132,6 +142,8 @@ public sealed class PluginSdkTests
         using var archive = ZipFile.OpenRead(Path.Combine(outputDirectory, "fixture.sdk-1.2.3.zip"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("Plugin.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("fr/Plugin.resources.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Contain("fr/PluginFixture.B.resources.dll"));
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("fr/PluginFixture.Host.resources.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Abstractions.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Versioning.dll"));
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain("Everywhere.Plugin.Packaging.dll"));
@@ -149,6 +161,10 @@ public sealed class PluginSdkTests
         using var manifest = JsonDocument.Parse(stream);
         var entry = manifest.RootElement.GetProperty("entry");
         Assert.That(entry.GetProperty("$type").GetString(), Is.EqualTo("universal"));
+        Assert.That(entry.GetProperty("contentFiles").EnumerateArray().Select(value => value.GetString()), Does.Contain("docs/sample.dll"));
+        Assert.That(entry.GetProperty("nativeLibraries").GetArrayLength(), Is.Zero);
+        Assert.That(entry.GetProperty("assemblies").EnumerateArray().Select(value => value.GetString()),
+            Does.Contain("PluginFixture.B.dll").And.Contain("fr/PluginFixture.B.resources.dll").And.Not.Contain("docs/sample.dll"));
         Assert.That(entry.GetProperty("pluginApiVersion").GetString(), Is.EqualTo("[1.0.0,2.0.0-0)"));
         Assert.That(entry.GetProperty("hostVersion").GetString(), Is.EqualTo(hasImplementationReference ? "[0.9.0,0.10.0)" : null));
         Assert.That(File.Exists(Path.Combine(hostDirectory, "PluginFixture.Host.xml")), Is.True);
@@ -227,7 +243,73 @@ public sealed class PluginSdkTests
             Assert.That(linkedManifest.Readme.Keys, Is.EquivalentTo(new[] { "zh-hans" }));
             Assert.That(linkedManifest.Readme["zh-hans"], Is.EqualTo("docs/guide.md"));
             Assert.That(File.ReadAllText(Path.Combine(linkedDirectory, "docs", "guide.md")), Is.EqualTo("# English"));
+
+            // A damaged compiler output must fail as managed input, not become a native library.
+            var damaged = await RunAsync(_root, "msbuild", "Plugin.csproj", "-target:EverywherePack",
+                "-property:CorruptEntry=true", "-nologo", "-verbosity:minimal");
+            Assert.That(damaged.ExitCode, Is.Not.Zero);
+            Assert.That(damaged.Output, Does.Contain("SdkOperationFailed"));
         }
+    }
+
+    /// <summary>
+    /// A real SDK command and runtime definition agree on prerelease host ranges and exact API defaults.
+    /// </summary>
+    [Test]
+    public async Task Pack_PrereleaseHostAndContract_AgreesWithRuntimeCompatibility()
+    {
+        var tools = Path.Combine(_repository, "src", "Everywhere.Plugin.Sdk", "bin", _configuration, "net10.0", "Everywhere.Plugin.Sdk.dll");
+        var references = Path.Combine(_root, "references.txt");
+        var payload = Path.Combine(_root, "payload.txt");
+        var presentation = Path.Combine(_root, "presentation");
+        Directory.CreateDirectory(presentation);
+        await File.WriteAllTextAsync(Path.Combine(presentation, "localizations.txt"), "");
+        await File.WriteAllTextAsync(Path.Combine(presentation, "readmes.txt"), "");
+        var archivePath = Path.Combine(_root, "plugin.zip");
+        var assembly = Path.Combine(AppContext.BaseDirectory, "fixtures", "PluginFixture.B.dll");
+        var contract = typeof(IPlugin).Assembly.Location;
+        var host = new PluginHostDescriptor
+        {
+            HostVersion = "0.9.0-canary.20261016.10",
+            PluginApiVersion = "1.1.0-preview.10",
+            Framework = "net10.0",
+            RuntimeIdentifier = "win-x64",
+            EntryAssembly = "Host.dll"
+        };
+        await File.WriteAllLinesAsync(references, [contract]);
+        await File.WriteAllLinesAsync(references + ".runtime.txt", [contract]);
+        await File.WriteAllTextAsync(references + ".host.json", JsonSerializer.Serialize(host));
+        await File.WriteAllTextAsync(payload, string.Empty);
+
+        var result = await RunAsync(_root, tools, "pack", assembly, references, payload,
+            "fixture.preview", "1.0.0-preview.2+commit", "PluginFixture.Entry", "net10.0",
+            "[0.9.0-canary.20261016.2,0.9.0)", "", "universal", archivePath, presentation, _root);
+        Assert.That(result.ExitCode, Is.Zero, result.Output);
+
+        var directory = Path.Combine(_root, "unpacked");
+        ZipFile.ExtractToDirectory(archivePath, directory);
+        var installation = new PluginInstallation
+        {
+            InstallationId = "preview",
+            Directory = directory,
+            Manifest = PluginManifestFile.Read(directory)
+        };
+        var definition = new PluginDefinition(installation, Path.Combine(_root, "data"), host.RuntimeIdentifier,
+            host.HostVersion, host.PluginApiVersion, host.Framework);
+        Assert.Multiple(() =>
+        {
+            Assert.That(definition.Diagnostic, Is.Null);
+            Assert.That(definition.Entry.PluginApiVersion, Is.EqualTo("[1.1.0-preview.10]"));
+            Assert.That(installation.Manifest.Version, Is.EqualTo("1.0.0-preview.2+commit"));
+            Assert.That(new PluginDefinition(installation, Path.Combine(_root, "data"), host.RuntimeIdentifier,
+                host.HostVersion, "1.1.0-preview.11", host.Framework).Diagnostic?.Code, Is.EqualTo("IncompatibleHost"));
+        });
+
+        var invalid = await RunAsync(_root, tools, "pack", assembly, references, payload,
+            "fixture.preview", "1.0.0-preview.2", "PluginFixture.Entry", "net10.0",
+            "[0.9.0,0.10.0)", "", "universal", Path.Combine(_root, "invalid.zip"), presentation, _root);
+        Assert.That(invalid.ExitCode, Is.Not.Zero);
+        Assert.That(invalid.Output, Does.Contain("BuildHostOutsideRange"));
     }
 
     /// <summary>

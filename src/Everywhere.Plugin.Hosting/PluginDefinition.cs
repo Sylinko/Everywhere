@@ -25,6 +25,11 @@ public sealed class PluginDefinition
     public PluginSkipReason? SkipReason { get; }
 
     /// <summary>
+    /// Gets a host compatibility failure without discarding this requested plugin's identity.
+    /// </summary>
+    public PluginDiagnostic? Diagnostic { get; }
+
+    /// <summary>
     /// Gets the stable plugin identifier.
     /// </summary>
     public string Id => Installation.Manifest.Id;
@@ -62,7 +67,12 @@ public sealed class PluginDefinition
             Entry.HostVersion is { } range && !PluginCompatibility.IsSatisfied(range, hostVersion) ||
             !PluginCompatibility.IsFrameworkCompatible(hostFramework, Entry.Framework))
         {
-            throw new PluginValidationException("IncompatibleHost", $"Plugin '{Id}' is incompatible with this host.");
+            Diagnostic = new PluginDiagnostic
+            {
+                PluginId = Id,
+                Code = "IncompatibleHost",
+                Detail = $"Plugin '{Id}' is incompatible with this host."
+            };
         }
     }
 }

@@ -34,10 +34,9 @@ internal static class PluginPackager
             File.ReadAllText(referenceList + ".host.json"),
             SdkJsonSerializerContext.Default.PluginHostDescriptor)
             ?? throw new PluginValidationException("MissingHostImport", "The build has no host import record.");
-        var hostAssemblies = File.ReadAllLines(referenceList + ".runtime.txt").ToDictionary(
-            path => AssemblyName.GetAssemblyName(path).Name ?? "",
-            AssemblyName.GetAssemblyName,
-            StringComparer.OrdinalIgnoreCase);
+        var hostAssemblies = File.ReadAllLines(referenceList + ".runtime.txt")
+            .Select(AssemblyName.GetAssemblyName)
+            .ToDictionary(GetIdentityKey, StringComparer.OrdinalIgnoreCase);
         var hostImplementationNames = File.ReadAllLines(referenceList)
             .Select(path => AssemblyName.GetAssemblyName(path).Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -48,7 +47,7 @@ internal static class PluginPackager
         var hasHostImplementationReference = false;
         var contractName = typeof(Abstractions.IPlugin).Assembly.GetName().Name;
 
-        foreach (var outputItem in File.ReadAllLines(payloadList).Append(assemblyPath + "|" + Path.GetFileName(assemblyPath))
+        foreach (var outputItem in File.ReadAllLines(payloadList).Append(assemblyPath + "|" + Path.GetFileName(assemblyPath) + "|runtime")
                      .Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var parts = outputItem.Split('|');
@@ -57,17 +56,12 @@ internal static class PluginPackager
             PackagePath.ValidateRelative(name);
             if (!File.Exists(path)) throw new PluginValidationException("MissingBuildOutput", path);
 
-            var identity = ReadManagedIdentity(path);
-            if (identity is not null)
+            var assetType = parts[2];
+            if (assetType is "runtime" or "resources")
             {
-                if (!string.IsNullOrEmpty(identity.CultureName) && identity.Name is { } satelliteName &&
-                    satelliteName.EndsWith(".resources", StringComparison.Ordinal) &&
-                    hostAssemblies.ContainsKey(satelliteName[..^".resources".Length]))
-                {
-                    continue;
-                }
-
-                if (hostAssemblies.TryGetValue(identity.Name ?? "", out var provided))
+                // A malformed managed output is a build error, never a native-library fallback.
+                var identity = AssemblyName.GetAssemblyName(path);
+                if (hostAssemblies.TryGetValue(GetIdentityKey(identity), out var provided))
                 {
                     if (provided.Version < identity.Version ||
                         !(provided.GetPublicKeyToken() ?? []).SequenceEqual(identity.GetPublicKeyToken() ?? []))
@@ -97,14 +91,18 @@ internal static class PluginPackager
                     }
                 }
             }
-            else if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
-                     parts.Length > 2 && parts[2] == "native" && !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            else if (assetType == "native" && !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
                 native.Add(name);
             }
+            else if (assetType is "content" or "native")
+            {
+                // NuGet also places helper executables in native assets; they are launched, not resolved as libraries.
+                content.Add(name);
+            }
             else
             {
-                content.Add(name);
+                throw new PluginValidationException("InvalidAssetType", $"Unsupported build asset type '{assetType}' for '{name}'.");
             }
 
             if (!files.TryAdd(name, path) && files[name] != path)
@@ -292,19 +290,8 @@ internal static class PluginPackager
     }
 
     /// <summary>
-    /// Classifies DLLs by PE metadata, without treating executables or supporting content as managed assemblies.
+    /// Matches deployment identities without conflating satellites of different cultures.
+    /// Version and public-key compatibility are checked after finding the host provider.
     /// </summary>
-    private static AssemblyName? ReadManagedIdentity(string path)
-    {
-        if (!path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) return null;
-
-        try
-        {
-            return AssemblyName.GetAssemblyName(path);
-        }
-        catch (BadImageFormatException)
-        {
-            return null;
-        }
-    }
+    private static string GetIdentityKey(AssemblyName identity) => identity.Name + "|" + identity.CultureName;
 }

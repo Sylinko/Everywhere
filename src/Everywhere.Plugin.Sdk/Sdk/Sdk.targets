@@ -76,10 +76,39 @@
       <_EverywherePresentationDirectory>$(IntermediateOutputPath)everywhere-presentation</_EverywherePresentationDirectory>
     </PropertyGroup>
     <ItemGroup>
-      <_EverywherePayload Include="@(ReferenceCopyLocalPaths->'%(FullPath)|%(DestinationSubDirectory)%(Filename)%(Extension)|%(AssetType)')" />
-      <_EverywherePayload Include="@(AllItemsFullPathWithTargetPath->'%(FullPath)|%(TargetPath)|%(AssetType)')" />
-      <_EverywherePayload Include="$(ProjectDepsFilePath)|$(TargetName).deps.json" Condition="Exists('$(ProjectDepsFilePath)')" />
-      <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath->'%(FullPath)|%(TargetPath)')" />
+      <!-- Copy-local membership determines which resolved references are shipped. RAR supplies
+           typed reference/satellite lists; NuGet supplies AssetType on its runtime assets. -->
+      <_EverywhereResolvedAssembly Include="@(ReferencePath);@(ReferenceDependencyPaths);@(ReferenceSatellitePaths)" />
+      <_EverywhereOtherReference Include="@(ReferenceCopyLocalPaths)" />
+      <_EverywhereOtherReference Remove="@(_EverywhereResolvedAssembly)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike" />
+      <_EverywhereManagedReference Include="@(ReferenceCopyLocalPaths)" />
+      <_EverywhereManagedReference Remove="@(_EverywhereOtherReference)" MatchOnMetadata="FullPath" MatchOnMetadataOptions="PathLike" />
+      <_EverywherePayload Include="@(_EverywhereManagedReference)">
+        <TargetPath>%(_EverywhereManagedReference.DestinationSubDirectory)%(_EverywhereManagedReference.Filename)%(_EverywhereManagedReference.Extension)</TargetPath>
+        <AssetType>runtime</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(_EverywhereOtherReference)">
+        <TargetPath>%(_EverywhereOtherReference.DestinationSubDirectory)%(_EverywhereOtherReference.Filename)%(_EverywhereOtherReference.Extension)</TargetPath>
+        <AssetType Condition="'%(_EverywhereOtherReference.AssetType)' == ''">content</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(AllItemsFullPathWithTargetPath)">
+        <AssetType>content</AssetType>
+      </_EverywherePayload>
+      <!-- GetCopyToOutputDirectoryItems intentionally strips non-copy metadata. Read explicit
+           asset roles from this project's original, target-path-assigned Content/None items. -->
+      <_EverywhereExplicitAsset Include="@(ContentWithTargetPath)"
+                                Condition="'%(ContentWithTargetPath.AssetType)' != '' And '%(ContentWithTargetPath.CopyToOutputDirectory)' != '' And '%(ContentWithTargetPath.CopyToOutputDirectory)' != 'Never'" />
+      <_EverywhereExplicitAsset Include="@(_NoneWithTargetPath)"
+                                Condition="'%(_NoneWithTargetPath.AssetType)' != '' And '%(_NoneWithTargetPath.CopyToOutputDirectory)' != '' And '%(_NoneWithTargetPath.CopyToOutputDirectory)' != 'Never'" />
+      <_EverywherePayload Remove="@(_EverywhereExplicitAsset)" MatchOnMetadata="FullPath;TargetPath" MatchOnMetadataOptions="PathLike" />
+      <_EverywherePayload Include="@(_EverywhereExplicitAsset)" />
+      <_EverywherePayload Include="$(ProjectDepsFilePath)" Condition="Exists('$(ProjectDepsFilePath)')">
+        <TargetPath>$(TargetName).deps.json</TargetPath>
+        <AssetType>content</AssetType>
+      </_EverywherePayload>
+      <_EverywherePayload Include="@(IntermediateSatelliteAssembliesWithTargetPath)">
+        <AssetType>resources</AssetType>
+      </_EverywherePayload>
     </ItemGroup>
     <ItemGroup>
       <_EverywhereConventionalReadme Include="$(MSBuildProjectDirectory)/README.md" Condition="Exists('$(MSBuildProjectDirectory)/README.md')" />
@@ -93,7 +122,7 @@
     <WriteLinesToFile File="$(_EverywherePresentationDirectory)/%(EverywherePluginLocalization.Identity).description.txt" Lines="@(EverywherePluginLocalization->'%(Description)')" Overwrite="true" Encoding="UTF-8" />
     <WriteLinesToFile File="$(_EverywherePresentationDirectory)/%(EverywherePluginLocalization.Identity).readme.txt" Lines="@(EverywherePluginLocalization->'%(Readme)')" Overwrite="true" Encoding="UTF-8" />
     <WriteLinesToFile File="$(_EverywherePresentationDirectory)/readmes.txt" Lines="@(_EverywhereConventionalReadme->'%(Filename)%(Extension)')" Overwrite="true" Encoding="UTF-8" />
-    <WriteLinesToFile File="$(_EverywherePayloadList)" Lines="@(_EverywherePayload)" Overwrite="true" />
+    <WriteLinesToFile File="$(_EverywherePayloadList)" Lines="@(_EverywherePayload->'%(FullPath)|%(TargetPath)|%(AssetType)')" Overwrite="true" />
     <Exec Command="dotnet &quot;$(EverywherePluginToolsDirectory)/Everywhere.Plugin.Sdk.dll&quot; pack &quot;$(TargetPath)&quot; &quot;$(_EverywhereHostReferences)&quot; &quot;$(_EverywherePayloadList)&quot; &quot;$(EverywherePluginId)&quot; &quot;$(Version)&quot; &quot;$(EverywherePluginEntryType)&quot; &quot;$(TargetFramework)&quot; &quot;$(EverywhereHostVersion)&quot; &quot;$(EverywherePluginApiVersion)&quot; &quot;$(EverywherePluginPlatform)&quot; &quot;$(EverywherePluginPackagePath)&quot; &quot;$(_EverywherePresentationDirectory)&quot; &quot;$(MSBuildProjectDirectory)&quot;" />
   </Target>
 </Project>

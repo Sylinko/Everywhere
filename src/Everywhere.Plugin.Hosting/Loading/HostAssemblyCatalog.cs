@@ -4,6 +4,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.Loader;
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Packaging;
+using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Loading;
 
@@ -25,7 +26,7 @@ public sealed class HostAssemblyCatalog
         var frameworkPaths = trustedPaths.Where(path => Path.GetDirectoryName(path) == frameworkDirectory);
         var contractPath = typeof(IPlugin).Assembly.Location;
 
-        foreach (var path in assemblyPaths.Concat(frameworkPaths).Append(contractPath).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var path in assemblyPaths.AsValueEnumerable().Concat(frameworkPaths).Append(contractPath).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var artifact = new AssemblyArtifact(path);
             var name = artifact.Identity.Name ?? throw new PluginValidationException("InvalidAssemblyName", path);
@@ -66,10 +67,9 @@ public sealed class HostAssemblyCatalog
             throw new FileLoadException($"Host assembly '{requested}' is not available in the deployment catalog.");
         }
 
-        var existing = AssemblyLoadContext.Default.Assemblies.FirstOrDefault(assembly => string.Equals(
-            assembly.GetName().Name,
-            name,
-            StringComparison.OrdinalIgnoreCase));
+        var existing = AssemblyLoadContext.Default.Assemblies
+            .AsValueEnumerable()
+            .FirstOrDefault(assembly => string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
         {
             if (!AssemblyArtifact.CanSatisfy(existing.GetName(), artifact.Identity) ||

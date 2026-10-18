@@ -398,7 +398,7 @@ The signature uses NotNullWhen from System.Diagnostics.CodeAnalysis. The catalog
 | Can my plugin use B in this activation? | `Plugins.IsAvailable("B")`: B is a declared, compatible, selected dependency that finished initialization |
 | Does the host know B? | `Plugins.TryGetInfo("B", out var info)`: no loading or enablement side effect |
 | Did the user request B to be enabled? | `info.IsEnabled`: desired configuration, not successful initialization |
-| What is B doing? | `info.State`: `Inactive`, `Initializing`, `Active`, `Stopping`, `Failed` or `Skipped` |
+| What is B doing? | `info.State`: `Inactive`, `Initializing`, `Active`, `Stopping`, `Failed`, `Blocked` or `Skipped` |
 
 Use IsAvailable to guard calls. A plugin can be enabled but skipped for an unsupported platform or failed, or globally active but incompatible with your dependency range. Querying IsAvailable for an undeclared dependency is an error; use TryGetInfo for general information about arbitrary plugins. A declared optional dependency that is absent, disabled, platform-skipped or incompatible returns false. `TryGetInfo` exposes `SkipReason = UnsupportedPlatform`; skipping does not satisfy a required dependency. Querying an unknown ID with TryGetInfo returns false.
 
@@ -507,7 +507,7 @@ The Windows and macOS host projects both emit `Everywhere.dll`. Compile each plu
 
 The loader selects the entry and applicable common/platform assets before dependency validation. Unselected platform files do not create active dependencies. `OperatingSystem.IsWindows()` guards execution but does not remove an AssemblyRef. Keep unavailable platform dependencies in separately selected artifacts or conditional builds. RequiresPlugin concerns another plugin's availability; it does not replace platform selection.
 
-The SDK preserves MSBuild output-relative paths, including satellite target paths. Resource-only satellites are identified by assembly metadata (name and culture), associated with their parent DLL, and loaded into that parent's collectible context. There is no hard-coded language list or language-folder discovery. ResourceManager provides normal parent-culture and neutral fallback. The SDK also preserves dependency records, native assets and executable/content files. Native resolution is on demand as described below; multi-entry aggregation and cross-platform native validation remain incomplete. Platform selection and archive installation APIs exist, while full application package management does not.
+The SDK packages satellites from the standard MSBuild resource outputs and preserves their target paths. Host-provided resources come from the host's .deps.json resources section and are excluded without adding them as compilation references. At runtime, resource-only satellites are associated with their parent DLL by assembly metadata and loaded into that parent's collectible context. There is no hard-coded language list or language-folder discovery. ResourceManager provides normal parent-culture and neutral fallback. Multi-entry aggregation and cross-platform native validation remain incomplete.
 
 ### Native libraries and executable content
 
@@ -516,6 +516,24 @@ Use the normal build/RID output. The SDK copies its declared output paths and ge
 Set the entry platform to the actual supported architecture, such as `win-x64`, when shipping an
 architecture-specific DLL. NuGet restore selects its runtime assets; the plugin loader does not
 download packages or recreate NuGet restore at activation time. Keep the generated `.deps.json`.
+
+Normal references, NuGet runtime/native/resource assets and generated satellites are classified by
+MSBuild. A damaged managed output fails packaging instead of being reclassified as native.
+Content/None items copied to the output stay content, even when named `.dll`.
+For a manually supplied binary in the plugin project, declare its role on the copy item:
+
+```xml
+<ItemGroup>
+  <Content Include="vendor/search.dll" CopyToOutputDirectory="PreserveNewest" AssetType="native" />
+</ItemGroup>
+```
+
+Use `runtime` for a manually supplied managed assembly and `resources` for its satellite;
+prefer ordinary Reference/ProjectReference/PackageReference items whenever available.
+These explicit Content/None roles apply to items declared in the plugin project; normal referenced
+projects and NuGet dependencies use their resolved asset lists. `Link` or `TargetPath` controls the
+package-relative path. Helper executables remain content, including `.exe` files delivered as NuGet
+native assets. The SDK does not inspect the native dependency tree or preload these files.
 
 A native DLL is resolved when P/Invoke or another supported request needs it. The host first uses
 the dependency resolver for the selected package and then declared copied-file paths. It does not
@@ -716,7 +734,7 @@ The SDK produces a standard ZIP. The host extracts it once into a staging direct
 
 Each installation gets its own directory, including rebuilds with the same plugin version. Treat package files as read-only while installed. Read bundled resources from `IPluginContext.InstallationDirectory` and write configuration/databases to `IPluginContext.DataDirectory`, the stable directory associated with your plugin ID. Updating or uninstalling code must not implicitly delete persistent data. Replace or remove original packages while the application is stopped. Source removal excludes the plugin on the next launch and preserves its data.
 
-An imported package can remain inactive because of a dependency conflict. Startup import and reuse are implemented. Persisted disablement, restart handoff and automatic cleanup of superseded copies remain pending. The agreed update contract is as follows: updates preflight the desired set before stopping affected plugins. If old owners cannot be released, the host retains both installations and records the change for restart. New initialization failures use the ordinary cleanup rules; there is no automatic retry loop or automatic restoration of the old activation. Old files are removed only when no longer needed; deletion failure can be retried later without invalidating a successful update.
+Check the startup log after installing or replacing a package: a successful import does not guarantee activation, and dependency conflicts can leave it inactive. The application currently imports sources only at startup; live update controls, persisted disablement, restart handoff and automatic cleanup of superseded installations are not available. The runtime update API retires affected owners before validating and activating replacements. If retirement requires restart, replacement loading does not begin. Failed replacements do not automatically restore the old activation. See the [operation results](#8-understanding-operation-results) for failure handling.
 
 Keeping an older installation makes explicit code rollback possible, but it does not undo database migrations or external effects. Design data compatibility and recovery accordingly. See the [installation contract](01-Specification.md#package-installation-updates-and-persistent-data) for staging, persistence and cleanup rules.
 
@@ -814,11 +832,26 @@ Never repair unload problems by blindly clearing undocumented CLR or patch-libra
 | Result | What to do |
 |---|---|
 | Applied | The selected set was applied. Inspect individual snapshots: an enabled platform-specific plugin can be `Skipped`. |
-| Rejected | Fix the package, dependency or compatibility input. No activation started. |
-| ActivationFailed | The attempted activation failed, but new managed ownership was cleaned up and collected. Correct the cause and explicitly retry if appropriate. |
+| CompletedWithErrors | Inspect per-plugin diagnostics. Failed or dependency-blocked plugins did not become active; independent plugins can still run. Correct the cause and explicitly retry. |
 | RestartRequired | Do not assume the plugin is disabled or its patch is removed. Further changes are blocked pending the application's save/restart workflow. |
 
-Retry does not mean automatically rerunning a failed callback. A deterministic bug normally fails again. During replacement, a failed new version does not automatically restore the stopped old version. Read the actual active/resident snapshot and diagnostic phase.
+A successful package import does not validate its entry type. The runtime checks the declared assembly path and type using inspected metadata, then verifies IPlugin when activating it. A damaged DLL, a missing entry type or an unsuitable type produces a diagnostic for that plugin; independent plugins can still start.
+
+`Failed` identifies the plugin's own preflight or lifecycle failure. `Blocked` identifies a dependency that prevents activation. `Skipped` remains reserved for unsupported platforms. A failed initializer is cleaned up without stopping successful dependencies or unrelated plugins. Shared assemblies and their static registrations remain resident while a surviving plugin needs them.
+
+For example, if A and D depend on B, a failure in B blocks A and D; independent C still starts. If only A fails, B, C and D remain active. This also applies when B was declared optional but was selected as available: A cannot switch to its absent-B path halfway through the operation.
+
+Hot update first retires affected old instances, then validates and starts the requested versions. Package metadata is inspected beforehand to determine which existing instances and bindings must change; it does not promise to keep an old version running when its replacement is invalid. Unchanged dependencies and shared DLLs stay available to surviving plugins. Enabling an optional dependency can also require reconstructing an existing consumer.
+
+If shutdown, registered cleanup or required assembly collection cannot be confirmed, loading does not begin and the result is `RestartRequired`. After successful retirement, a bad replacement stays failed; neither its predecessor nor an older dependency is restored automatically. Explicit removals remain effective even if a related update fails.
+
+For example, updating A and D while they both use an unchanged B can leave A failed and D successfully updated, with B continuously active. A new consumer of that unchanged B can also start. If B itself is replaced, its old consumers stop first; failure of B's replacement blocks their restart. Sharing a DLL does not by itself make unrelated entries update together, but replacing that DLL or its established binding environment does require retiring its users.
+
+A new plugin conflicting with a still-running assembly owner fails without stopping the existing plugins. The loading stage never widens the completed shutdown scope. Update the necessary existing users explicitly or restart if the new plugin requires a different shared owner. The same boundary applies when adding a native provider would change a live resolver's source environment. Read actual active/resident snapshots alongside the desired configuration; an unsuccessful update may have already stopped the old version.
+
+Retry is an explicit new operation, not an automatic callback loop. `RestartRequired` still freezes further changes when timeout, shutdown, cleanup or collection is uncertain. Successfully cleaning up a failed instance does not mean its shared DLL must disappear while another plugin is using it.
+
+A broken ZIP or folder in the startup plugins directory does not stop other imports. Duplicate IDs exclude all their providers; keep one source per ID. Startup import does not implement live folder watching or hot-update selection.
 
 ## 9. Testing and agent workflow — implementation pending
 
@@ -830,8 +863,8 @@ For optional code, test B absent, disabled, incompatible and available; exercise
 
 For SDK and packaging, test both host-import workflows, transitive host-library exclusion, incompatible shared-package versions, XML documentation and reference refresh after host changes. For platform entries, test exact and fallback RID matches, unsupported platforms, duplicate entries and an incompatible specific entry that must not fall back. Verify that foreign-platform dependencies stay outside the active graph. Test the intended installation and source-build combinations separately; a successful managed build does not replace execution on the supported target OS.
 
-The remaining schema, commands and build properties are implementation work, not instructions authors are expected to guess. Startup installation and reuse are implemented; the rest of the update policy and interrupted-operation tests remain pending. Native lifetime and advanced patching have separate design or validation work. The [specification's closure requirements](01-Specification.md#implementation-closure-and-final-merge) distinguish these from the completed SDK and installation architecture. Before final merge, finish all agreed in-scope work and reconcile the guide with working examples; explicitly agree and document any deferral. Implementation findings can require revising the design rather than preserving an earlier promise that cannot be supported.
+The remaining schema, commands and build properties are implementation work, not instructions authors are expected to guess. Startup installation and reuse are implemented; live update discovery, persisted enablement and interrupted installation handling remain pending. Native lifetime and advanced patching have separate design or validation work. The [specification's closure requirements](01-Specification.md#implementation-closure-and-final-merge) distinguish these from the completed SDK and installation architecture. Before final merge, finish all agreed in-scope work and reconcile the guide with working examples; explicitly agree and document any deferral. Implementation findings can require revising the design rather than preserving an earlier promise that cannot be supported.
 
-Existing repository evidence and reproduction entrypoints are indexed in [Validation](03-Validation.md). Those disposable probe runners are maintainer tools, not the final plugin author CLI.
+Maintained tests, reproduction commands and known limits are indexed in [Validation](03-Validation.md).
 
 The optional-dependency and conditional-discovery design was inspired in part by [tModLoader's cross-mod mechanisms](https://github.com/tModLoader/tModLoader/wiki/Expert-Cross-Mod-Content). The names and lifecycle promises above are Everywhere's contract, not a compatibility layer for tModLoader mods. tModLoader is [MIT-licensed](https://github.com/tModLoader/tModLoader/blob/stable/LICENSE); retain applicable copyright and permission notices when reusing substantial covered code. The [specification's attribution](01-Specification.md#design-references-and-attribution) explains the scope of this reference.
