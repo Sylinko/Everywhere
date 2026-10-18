@@ -9,6 +9,7 @@ Topic-specific guidance lives under `docs/References` and must be read only when
 
 ## Required References
 
+- For source generator implementation, review, or performance diagnosis, read [`docs/References/SourceGenerators.md`](docs/References/SourceGenerators.md).
 - For Avalonia controls, Views, Presentation objects, DynamicData-backed UI collections, virtualization, or UI animation, read [`docs/References/AvaloniaViewPresentation.md`](docs/References/AvaloniaViewPresentation.md) before making changes.
 
 ## Source of Truth and Change Discipline

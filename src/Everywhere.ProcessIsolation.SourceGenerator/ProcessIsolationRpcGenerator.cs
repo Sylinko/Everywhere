@@ -1,5 +1,6 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Globalization;
+using Everywhere.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -19,100 +20,114 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
             SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
+    /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var contracts = context.SyntaxProvider.ForAttributeWithMetadataName(
-                ContractAttributeName,
-                static (node, _) => node is InterfaceDeclarationSyntax,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
-            .Collect();
+            ContractAttributeName,
+            static (node, _) => node is InterfaceDeclarationSyntax,
+            static (attributeContext, token) => AnalyzeContract(attributeContext, token));
 
+        // Only ID uniqueness is global. Method models and source formatting remain per contract.
+        var conflicts = contracts.Select(static (contract, _) => contract.Identity).Collect()
+            .Select(static (identities, token) => ValidateIdentities(identities, token));
+        var checkedContracts = contracts.Combine(conflicts).Select(static (input, _) =>
+            input.Right.TryGetValue(input.Left.Identity.Name, out var diagnostics) ?
+                new AnalysisResult<RpcContractModel>(null, diagnostics) :
+                input.Left.Result);
         context.RegisterSourceOutput(
-            contracts.Combine(context.CompilationProvider),
-            static (productionContext, input) => Execute(productionContext, input.Left, input.Right));
+            checkedContracts,
+            static (production, result) =>
+            {
+                foreach (var diagnostic in result.Diagnostics)
+                {
+                    production.ReportDiagnostic(diagnostic);
+                }
+            });
+
+        var models = checkedContracts.Select(static (result, _) => result.Model).WithTrackingName("RpcModel");
+        var sources = models.Select(static (model, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            return model is null ? ((string HintName, string Source)?)null : (model.HintName, RpcSourceEmitter.Generate(model, token));
+        }).WithTrackingName("RpcSource");
+        context.RegisterSourceOutput(
+            sources,
+            static (production, source) =>
+            {
+                if (source is { } value)
+                {
+                    production.AddSource(value.HintName, value.Source);
+                }
+            });
     }
 
-    private static void Execute(SourceProductionContext context, ImmutableArray<INamedTypeSymbol> contractSymbols, Compilation compilation)
+    /// <summary>
+    /// Resolves method signatures inside the semantic transform, before any models are cached.
+    /// </summary>
+    private static ContractAnalysis AnalyzeContract(GeneratorAttributeSyntaxContext context, CancellationToken token)
     {
-        var symbols = DistinctSymbols(contractSymbols);
-        var contractIds = new Dictionary<ushort, INamedTypeSymbol>();
-        var duplicateContracts = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-
-        foreach (var symbol in symbols)
-        {
-            if (!TryGetId(symbol, ContractAttributeName, out var contractId, out var attributeLocation))
-            {
-                continue;
-            }
-
-            if (contractId == 0)
-            {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        RpcGeneratorDiagnostics.InvalidContractId,
-                        attributeLocation ?? symbol.Locations.FirstOrDefault(),
-                        symbol.Name));
-                duplicateContracts.Add(symbol);
-                continue;
-            }
-
-            if (contractIds.TryGetValue(contractId, out var existing))
-            {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        RpcGeneratorDiagnostics.DuplicateContractId,
-                        attributeLocation ?? symbol.Locations.FirstOrDefault(),
-                        contractId,
-                        existing.ToDisplayString()));
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        RpcGeneratorDiagnostics.DuplicateContractId,
-                        existing.Locations.FirstOrDefault(),
-                        contractId,
-                        symbol.ToDisplayString()));
-                duplicateContracts.Add(existing);
-                duplicateContracts.Add(symbol);
-                continue;
-            }
-
-            contractIds.Add(contractId, symbol);
-        }
-
-        foreach (var symbol in symbols)
-        {
-            if (duplicateContracts.Contains(symbol) ||
-                !TryGetId(symbol, ContractAttributeName, out var contractId, out _))
-            {
-                continue;
-            }
-
-            var model = BuildContract(context, compilation, symbol, contractId);
-            if (model is null)
-            {
-                continue;
-            }
-
-            context.AddSource(model.HintName, RpcSourceEmitter.Generate(model));
-        }
+        token.ThrowIfCancellationRequested();
+        var symbol = (INamedTypeSymbol)context.TargetSymbol;
+        var analysis = new AnalysisContext(token);
+        var hasId = TryGetId(symbol, ContractAttributeName, token, out var id, out var location);
+        var identity = new ContractIdentity(
+            symbol.ToDisplayString(),
+            symbol.Name,
+            hasId ? id : null,
+            location ?? symbol.Locations.FirstOrDefault(),
+            symbol.Locations.FirstOrDefault());
+        var model = hasId && id != 0 ? BuildContract(analysis, context.SemanticModel.Compilation, symbol, id) : null;
+        return new ContractAnalysis(identity, analysis.Complete(model));
     }
 
-    private static ImmutableArray<INamedTypeSymbol> DistinctSymbols(ImmutableArray<INamedTypeSymbol> symbols)
+    /// <summary>
+    /// Preserves duplicate-ID diagnostics and suppresses every conflicting contract's source.
+    /// </summary>
+    private static ImmutableDictionary<string, ImmutableArray<Diagnostic>> ValidateIdentities(
+        ImmutableArray<ContractIdentity> identities,
+        CancellationToken token)
     {
-        var seen = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-        var result = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
-        foreach (var symbol in symbols)
+        var firstById = new Dictionary<ushort, ContractIdentity>();
+        var diagnostics = new Dictionary<string, List<Diagnostic>>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var identity in identities)
         {
-            if (seen.Add(symbol))
+            token.ThrowIfCancellationRequested();
+            if (!seen.Add(identity.Name) || identity.Id is not { } id)
             {
-                result.Add(symbol);
+                continue;
+            }
+
+            if (id == 0)
+            {
+                Add(identity.Name, Diagnostic.Create(RpcGeneratorDiagnostics.InvalidContractId, identity.AttributeLocation, identity.ShortName));
+            }
+            else if (firstById.TryGetValue(id, out var first))
+            {
+                Add(identity.Name, Diagnostic.Create(RpcGeneratorDiagnostics.DuplicateContractId, identity.AttributeLocation, id, first.Name));
+                Add(first.Name, Diagnostic.Create(RpcGeneratorDiagnostics.DuplicateContractId, first.TypeLocation, id, identity.Name));
+            }
+            else
+            {
+                firstById.Add(id, identity);
             }
         }
+        return diagnostics.ToImmutableDictionary(pair => pair.Key, pair => pair.Value.ToImmutableArray(), StringComparer.Ordinal);
 
-        return result.ToImmutable();
+        void Add(string name, Diagnostic diagnostic)
+        {
+            if (!diagnostics.TryGetValue(name, out var entries))
+            {
+                entries = [];
+                diagnostics.Add(name, entries);
+            }
+            entries.Add(diagnostic);
+        }
     }
 
     private static RpcContractModel? BuildContract(
-        SourceProductionContext context,
+        AnalysisContext context,
         Compilation compilation,
         INamedTypeSymbol symbol,
         ushort contractId)
@@ -169,6 +184,7 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
 
         foreach (var member in symbol.GetMembers())
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
             if (member is IMethodSymbol { MethodKind: MethodKind.Ordinary })
             {
                 continue;
@@ -194,6 +210,7 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
                      .Where(static method => method.MethodKind == MethodKind.Ordinary)
                      .OrderBy(static method => method.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue))
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
             var attributes = method.GetAttributes()
                 .Where(static attribute => attribute.AttributeClass?.ToDisplayString() == MethodAttributeName)
                 .ToArray();
@@ -216,7 +233,8 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
                 context.ReportDiagnostic(
                     Diagnostic.Create(
                         RpcGeneratorDiagnostics.DuplicateMethodId,
-                        attributes[0].ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? method.Locations.FirstOrDefault(),
+                        attributes[0].ApplicationSyntaxReference?.GetSyntax(context.CancellationToken).GetLocation() ??
+                        method.Locations.FirstOrDefault(),
                         methodId,
                         existing.Name,
                         symbol.Name));
@@ -253,7 +271,7 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
             hintPrefix.Replace('<', '_').Replace('>', '_') + ".Rpc.g.cs");
     }
 
-    private static RpcMethodModel? BuildMethod(SourceProductionContext context, Compilation compilation, IMethodSymbol method, ushort methodId)
+    private static RpcMethodModel? BuildMethod(AnalysisContext context, Compilation compilation, IMethodSymbol method, ushort methodId)
     {
         string? unsupportedReason = null;
         if (method.IsStatic || !method.IsAbstract || method.IsGenericMethod || method.IsVararg)
@@ -377,10 +395,10 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
         return false;
     }
 
-    private static bool TryGetId(ISymbol symbol, string attributeName, out ushort id, out Location? location)
+    private static bool TryGetId(ISymbol symbol, string attributeName, CancellationToken token, out ushort id, out Location? location)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == attributeName);
-        location = attribute?.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+        location = attribute?.ApplicationSyntaxReference?.GetSyntax(token).GetLocation();
         if (attribute is null ||
             attribute.ConstructorArguments.Length != 1 ||
             attribute.ConstructorArguments[0].Value is null)
@@ -416,4 +434,51 @@ public sealed class ProcessIsolationRpcGenerator : IIncrementalGenerator
         SyntaxFacts.GetContextualKeywordKind(identifier) != SyntaxKind.None ?
             "@" + identifier :
             identifier;
+
+    /// <summary>
+    /// Keeps contract identity diagnostics separate from the comparable source model.
+    /// </summary>
+    private sealed class ContractAnalysis(ContractIdentity identity, AnalysisResult<RpcContractModel> result)
+    {
+        /// <summary>
+        /// Gets the identity used for compilation-wide duplicate detection.
+        /// </summary>
+        public ContractIdentity Identity { get; } = identity;
+
+        /// <summary>
+        /// Gets independently analyzed method metadata and diagnostics.
+        /// </summary>
+        public AnalysisResult<RpcContractModel> Result { get; } = result;
+    }
+
+    /// <summary>
+    /// Contains only ID-check inputs and diagnostic locations, never a contract symbol.
+    /// </summary>
+    private sealed class ContractIdentity(string name, string shortName, ushort? id, Location? attributeLocation, Location? typeLocation)
+    {
+        /// <summary>
+        /// Gets the fully qualified contract identity.
+        /// </summary>
+        public string Name { get; } = name;
+
+        /// <summary>
+        /// Gets the name used in invalid-ID diagnostics.
+        /// </summary>
+        public string ShortName { get; } = shortName;
+
+        /// <summary>
+        /// Gets the declared ID, or null while its argument cannot be resolved.
+        /// </summary>
+        public ushort? Id { get; } = id;
+
+        /// <summary>
+        /// Gets the location for a conflicting declaration.
+        /// </summary>
+        public Location? AttributeLocation { get; } = attributeLocation;
+
+        /// <summary>
+        /// Gets the location used when another declaration conflicts with this first declaration.
+        /// </summary>
+        public Location? TypeLocation { get; } = typeLocation;
+    }
 }
