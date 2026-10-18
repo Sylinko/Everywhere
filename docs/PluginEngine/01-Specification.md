@@ -303,6 +303,14 @@ explicit plugin-owned UI disposal. See [Known issues](03-Validation.md#known-iss
 registrations, AddOwner, class handlers, layout/render helpers, routed events and host-type mutations.
 Do not clear framework tables or host types indiscriminately.
 
+### Plugin settings
+
+**Persistence and migrations implemented; UI registration remains separate work.** Plugins may reuse
+context.OpenSettingsAsync with an independent document, explicitly supplied serializer options and
+a generated descriptor provider. SettingsEngine<TSettings> owns the returned document lifetime;
+SettingsInitializer is the internal application startup adapter. The entry owns final saving; migrations
+use temporary DI ownership and finish cleanup before committing the document. See the [settings specification](05-SettingsSpecification.md).
+
 ## 6. Applying changes and failures
 
 Validate the entire desired set before stopping current plugins. Compare selected content, entrypoints, payload ownership and dependency relationships. Reuse unaffected activations. For removal/replacement, expand the affected set through reverse assembly dependencies, plugin lifecycle dependencies and any co-owned assemblies until stable.

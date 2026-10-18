@@ -5,8 +5,13 @@ using System.Text.Json.Serialization;
 
 namespace Everywhere.Configuration.Engine;
 
-internal static class SettingsEngineJson
+public static class SettingsEngineJson
 {
+    /// <summary>
+    /// Names the root document metadata used by migrations, excluded from runtime settings models.
+    /// </summary>
+    public const string VersionPropertyName = "Version";
+
     public static JsonSerializerOptions SerializerOptions { get; } = CreateSerializerOptions();
 
     public static JsonDocumentOptions DocumentOptions { get; } = new()

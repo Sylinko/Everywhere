@@ -3,9 +3,10 @@ using Everywhere.Common;
 
 namespace Everywhere.Configuration.Migrations;
 
-public class _20260614154350_0_8_0 : SettingsMigration
+public class _20260614154350_0_8_0 : SettingsMigration, ISettingsMigrationMetadata
 {
-    public override SemanticVersion Version => new(0, 8, 0);
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 8, 0);
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [MigrateTask1];
 

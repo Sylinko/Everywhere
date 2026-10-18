@@ -6,7 +6,7 @@ Prompt Manager makes prompts first-class resources in Everywhere.
 
 Today, assistant prompts are stored as direct text fields inside assistant configuration. The new model moves prompt content into a dedicated prompt domain. Assistants reference prompts by ID, users can manage prompts directly, and prompts can later be synchronized as app-owned resources.
 
-This document focuses on Prompt Manager itself. SettingsEngine is treated as a completed prerequisite, including its `IAsyncInitializer` lifecycle.
+This document focuses on Prompt Manager itself. Settings Engine is treated as a completed prerequisite; its application startup adapter is the internal `SettingsInitializer`, which implements `IAsyncInitializer`.
 
 ## 2. Product Scope
 
@@ -73,7 +73,7 @@ The guided creator should be deterministic and understandable first. AI-assisted
 
 Prompt Manager depends on:
 
-1. SettingsEngine for stable settings load/save and post-settings migration ordering
+1. Settings Engine for stable settings load/save, with SettingsInitializer establishing post-settings migration ordering
 2. existing prompt template rendering
 3. assistant configuration models
 4. platform text insertion/clipboard support for the picker

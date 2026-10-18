@@ -1,8 +1,9 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Everywhere.AI;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -11,13 +12,14 @@ using Everywhere.Configuration.Engine;
 using Everywhere.Extensions;
 using Everywhere.Utilities;
 using Everywhere.Web;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using SettingsDescriptorProviderFactory = Everywhere.Configuration.Engine.SettingsDescriptorProviderFactory;
 
 namespace Everywhere.Core.Tests.Configuration;
 
-public sealed class SettingsEngineTests
+public sealed class SettingsInitializerTests
 {
     [Test]
     public async Task InitializeAsync_MigratesLegacyScalarValues()
@@ -39,9 +41,9 @@ public sealed class SettingsEngineTests
             }
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
-        var engine = new SettingsEngine(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+        var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync(default);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var titleGeneration = Require(Require(root["SystemAssistant"])["TitleGeneration"]).AsObject();
@@ -101,7 +103,7 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public async Task InitializeAsync_PatchesExistingSettingsRoot()
+    public async Task InitializeAsync_PatchesExistingSettingsRootAndPreservesVersionOnSave()
     {
         using var file = TestSettingsFile(
             """
@@ -114,13 +116,23 @@ public sealed class SettingsEngineTests
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
-        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
-        await engine.InitializeAsync(default);
+        using var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         Assert.That(engine.Settings, Is.SameAs(settings));
-        Assert.That(settings.Version, Is.EqualTo("99.0.0"));
+        Assert.That(engine.Storage.CreateSnapshot()["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
         Assert.That(settings.Common.IsStatisticsEnabled, Is.False);
         Assert.That(engine.Diagnostics, Is.Empty);
+
+        settings.Common.IsStatisticsEnabled = true;
+        await engine.Storage.FlushAsync();
+
+        var saved = Require(JsonNode.Parse(File.ReadAllText(file.Path)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(saved["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
+            Assert.That(saved["Common"]?["IsStatisticsEnabled"]?.GetValue<bool>(), Is.True);
+        });
     }
 
     [Test]
@@ -140,9 +152,9 @@ public sealed class SettingsEngineTests
             """);
         await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var settings = new Settings(serviceProvider);
-        var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance);
 
-        await engine.InitializeAsync(default);
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
 
         var root = Require(JsonNode.Parse(File.ReadAllText(file.Path))).AsObject();
         var chatWindow = Require(Require(root["Shortcut"])["ChatWindow"]).AsObject();
@@ -156,6 +168,40 @@ public sealed class SettingsEngineTests
             Assert.That(chatWindow.ContainsKey("Modifiers"), Is.False);
             Assert.That(engine.Diagnostics, Is.Empty);
         });
+    }
+
+    [Test]
+    public async Task InitializeAsync_WhenMigrationsAlreadyApplied_DoesNotResolvePromptDatabaseFactory()
+    {
+        using var file = TestSettingsFile("""{"Version":"99.0.0"}""");
+        using var serviceProvider = new ServiceCollection()
+            .AddSingleton<IDbContextFactory<PromptDbContext>>(_ => throw new InvalidOperationException("Database factory must not be resolved."))
+            .BuildServiceProvider();
+        using var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+        await ((IAsyncInitializer)engine).InitializeAsync(default);
+
+        Assert.That(engine.Storage.CreateSnapshot()["Version"]?.GetValue<string>(), Is.EqualTo("99.0.0"));
+    }
+
+    [Test]
+    public async Task InitializeAsync_WithPromptMigration_LeavesSharedFactoryOwnedByRootProvider()
+    {
+        using var file = TestSettingsFile("""{"Version":"0.8.0"}""");
+        var factory = new TrackingPromptDbContextFactory();
+
+        using (var serviceProvider = new ServiceCollection()
+                   .AddSingleton<IDbContextFactory<PromptDbContext>>(_ => factory)
+                   .BuildServiceProvider())
+        {
+            using var engine = new SettingsInitializer(new Settings(serviceProvider), file.Path, serviceProvider, NullLoggerFactory.Instance);
+
+            await ((IAsyncInitializer)engine).InitializeAsync(default);
+
+            Assert.That(factory.IsDisposed, Is.False);
+        }
+
+        Assert.That(factory.IsDisposed, Is.True);
     }
 
     [Test]
@@ -173,10 +219,11 @@ public sealed class SettingsEngineTests
             .BuildServiceProvider();
 
         Assert.That(serviceProvider.GetRequiredService<Settings>(), Is.Not.Null);
-        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<SettingsEngine>());
+        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<SettingsInitializer>());
 
         var initializers = serviceProvider.GetServices<IAsyncInitializer>().ToList();
-        Assert.That(initializers.OfType<SettingsEngine>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings));
+        var initializer = initializers.OfType<SettingsInitializer>().Single();
+        Assert.That(((IAsyncInitializer)initializer).Index, Is.EqualTo(AsyncInitializerIndex.Settings));
         Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings + 1));
     }
 
@@ -952,9 +999,9 @@ public sealed class SettingsEngineTests
         var settings = new Settings(serviceProvider);
         var id = Guid.CreateVersion7();
 
-        using (var engine = new SettingsEngine(settings, file.Path, serviceProvider, NullLoggerFactory.Instance))
+        using (var engine = new SettingsInitializer(settings, file.Path, serviceProvider, NullLoggerFactory.Instance))
         {
-            await engine.InitializeAsync(default);
+            await ((IAsyncInitializer)engine).InitializeAsync(default);
             settings.Plugin.WebSearchEngine.ApiKeys.Add(new ApiKey { Id = id, Name = "Tavily test" });
             var tavily = (ApiKeyWebSearchEngineProvider)settings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
             tavily.ApiKey = id;
@@ -965,8 +1012,8 @@ public sealed class SettingsEngineTests
         }
 
         var reloadedSettings = new Settings(serviceProvider);
-        using var reloadedEngine = new SettingsEngine(reloadedSettings, file.Path, serviceProvider, NullLoggerFactory.Instance);
-        await reloadedEngine.InitializeAsync(default);
+        using var reloadedEngine = new SettingsInitializer(reloadedSettings, file.Path, serviceProvider, NullLoggerFactory.Instance);
+        await ((IAsyncInitializer)reloadedEngine).InitializeAsync(default);
 
         var reloadedTavily = (ApiKeyWebSearchEngineProvider)reloadedSettings.Plugin.WebSearchEngine.Providers[WebSearchEngineProviderId.Tavily];
         Assert.Multiple(() =>
@@ -1173,7 +1220,7 @@ public sealed class SettingsEngineTests
     }
 
     [Test]
-    public async Task Store_WriteFailureAddsDiagnosticAndDeletesTemporaryFiles()
+    public void Store_WriteFailureAddsDiagnosticAndDeletesTemporaryFiles()
     {
         using var directory = new TempDirectory();
         var invalidTarget = Path.Combine(directory.Path, "settings-directory");
@@ -1183,7 +1230,7 @@ public sealed class SettingsEngineTests
         store.ReplaceSubtree(
             new SettingsJsonPath([SettingsJsonPathSegment.Property("Name")]),
             JsonValue.Create("cannot-write-over-directory"));
-        await store.FlushAsync();
+        Assert.That(async () => await store.FlushAsync(), Throws.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
 
         Assert.That(store.Diagnostics.Any(d => d.Kind == SettingsEngineDiagnosticKind.WriteFailure), Is.True);
         Assert.That(Directory.GetFiles(directory.Path), Is.Empty);
@@ -1306,6 +1353,23 @@ public sealed class SettingsEngineTests
     private sealed class SerializedThing
     {
         public int Value { get; set; }
+    }
+
+    /// <summary>
+    /// Tracks root-container ownership without opening a database when no prompt text needs migration.
+    /// </summary>
+    private sealed class TrackingPromptDbContextFactory : IDbContextFactory<PromptDbContext>, IDisposable
+    {
+        /// <summary>
+        /// Gets whether the owning container has released the factory.
+        /// </summary>
+        public bool IsDisposed { get; private set; }
+
+        /// <inheritdoc />
+        public PromptDbContext CreateDbContext() => throw new InvalidOperationException("No prompt data requires a database.");
+
+        /// <inheritdoc />
+        public void Dispose() => IsDisposed = true;
     }
 
     private sealed class TempSettingsFile : IDisposable

@@ -5,7 +5,7 @@
 Tasks:
 
 1. confirm SettingsEngine branch is merged
-2. confirm SettingsEngine runs migrations and binding in `AsyncInitializerIndex.Settings`
+2. confirm SettingsInitializer runs migrations and binding in `AsyncInitializerIndex.Settings`
 3. audit assistant prompt fields and prompt renderer entry points
 4. define prompt diagnostics codes
 5. define guided creation recipe shape

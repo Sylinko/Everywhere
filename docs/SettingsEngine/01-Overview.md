@@ -18,7 +18,7 @@ The goal is not to deserialize `settings.json` into a new `Settings` object. The
 Current fixed decisions:
 
 1. `_jsonObj` is the settings document source of truth.
-2. The runtime `Settings` object is patched from `_jsonObj`.
+2. The runtime `Settings` object is patched from `_jsonObj`, excluding the root `"Version"` migration metadata. The version stays in the stored document, not on the runtime model.
 3. `IConfiguration` should be removed from the core settings pipeline.
 4. First-stage migration uses hard-coded paths for known cleanup shapes.
 5. Existing `settings.json` values are already typed JSON; migration must not assume string-only leaves.
@@ -29,7 +29,7 @@ Current fixed decisions:
 10. Whole-subtree `System.Text.Json` handling is opt-in through `SettingsSerializedSubtree`.
 11. If serialized-subtree reading fails, keep the existing object unchanged and report a warning.
 12. `Settings` is registered directly as a singleton and may be injected before it has been patched from disk.
-13. `SettingsEngine` is a transient `IAsyncInitializer`, not a business-facing service.
+13. The internal `SettingsInitializer` is a transient `IAsyncInitializer`, not a business-facing service.
 14. Settings migration, JSON load, runtime patching, and change observation happen in `AsyncInitializerIndex.Settings`.
 15. Initializer constructors must not read final settings values or subscribe to settings changes. They may keep references and should consume settings in `InitializeAsync`.
 16. Init-only properties follow a load-time creation initializer model: they can be populated while SettingsEngine creates new objects during startup binding, but SettingsEngine does not provide dynamic JSON-to-runtime reload after initialization.
@@ -42,12 +42,12 @@ Startup lifecycle:
 
 1. DI creates the singleton `Settings` object with default values.
 2. DI may construct `IAsyncInitializer` instances before the settings phase.
-3. `SettingsEngine.InitializeAsync()` runs at `AsyncInitializerIndex.Settings`.
-4. SettingsEngine runs pending settings migrations against `settings.json`.
-5. SettingsEngine loads the JSON document, patches the existing `Settings` object in place, creates missing child/list/dictionary objects through descriptor factories, then starts observing changes for write-back.
+3. `SettingsInitializer` implements `IAsyncInitializer.InitializeAsync` and runs at `AsyncInitializerIndex.Settings`.
+4. SettingsInitializer runs pending settings migrations against `settings.json`.
+5. SettingsInitializer loads the JSON document and creates `SettingsEngine<Settings>`. The engine patches the existing `Settings` object in place, creates missing child/list/dictionary objects through descriptor factories, then observes changes for write-back.
 6. Later initializers read the patched settings object.
 
-SettingsEngine itself should not be injected by product code. If feature migrations need to inspect or edit the JSON document after settings initialization, expose only a narrow internal document-editing service for migration infrastructure. This keeps `SettingsEngine` out of normal application logic while avoiding external file edits that could race the JSON store.
+SettingsInitializer should not be injected by product code. If feature migrations need to inspect or edit the JSON document after settings initialization, expose only a narrow internal document-editing service for migration infrastructure. This keeps `SettingsInitializer` out of normal application logic while avoiding external file edits that could race the JSON store.
 
 ## 4. Semantic Merge Scope
 
@@ -97,8 +97,8 @@ Useful existing code:
 | Area | Existing path |
 | --- | --- |
 | Current settings root | `src/Everywhere.Core/Configuration/Settings.cs` |
-| Current DI registration | `src/Everywhere.Core/Configuration/SettingsExtensions.cs` |
-| Settings lifecycle | `src/Everywhere.Core/Configuration/Engine/SettingsEngine.cs` |
+| Current DI registration | `src/Everywhere.Core/Extensions/ServiceExtensions.cs` |
+| Settings lifecycle | `src/Everywhere.Core/Configuration/SettingsInitializer.cs` |
 | Existing settings source generator | `src/Everywhere.Configuration.SourceGenerator` |
 | Current settings migrations | `src/Everywhere.Core/Configuration/Migrations` |
 | Writable JSON reference | `3rd/WritableJsonConfiguration` |

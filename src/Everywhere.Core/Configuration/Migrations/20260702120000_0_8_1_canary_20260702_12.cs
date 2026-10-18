@@ -21,13 +21,14 @@ namespace Everywhere.Configuration.Migrations;
 /// </remarks>
 public sealed class _20260702120000_0_8_1_canary_20260702_12(
     IDbContextFactory<PromptDbContext> dbFactory,
-    ILogger<_20260702120000_0_8_1_canary_20260702_12> logger) : SettingsMigration
+    ILogger<_20260702120000_0_8_1_canary_20260702_12> logger) : SettingsMigration, ISettingsMigrationMetadata
 {
     private const string LegacySystemPromptPropertyName = "SystemPrompt";
     private const string SystemPromptIdPropertyName = "SystemPromptId";
     private const int PromptNameLimit = 256;
 
-    public override SemanticVersion Version => new(0, 8, 1, 0, "canary.20260702.12");
+    /// <inheritdoc />
+    public static SemanticVersion Version { get; } = new(0, 8, 1, 0, "canary.20260702.12");
 
     protected override IEnumerable<Func<JsonObject, bool>> MigrationTasks => [ImportAssistantPrompts];
 

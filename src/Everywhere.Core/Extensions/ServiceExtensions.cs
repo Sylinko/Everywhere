@@ -10,7 +10,6 @@ using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
-using Everywhere.Configuration.Engine;
 using Everywhere.Database;
 using Everywhere.Interop;
 using Everywhere.Plugins;
@@ -71,7 +70,7 @@ public static class ServiceExtensions
         public IServiceCollection AddSettings() =>
             services
                 .AddSingleton<Settings>()
-                .AddTransient<IAsyncInitializer, SettingsEngine>()
+                .AddTransient<IAsyncInitializer, SettingsInitializer>()
                 .AddTransient<SoftwareUpdateControl>()
                 .AddTransient<HostsStatusControl>()
 #if WINDOWS

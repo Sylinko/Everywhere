@@ -22,8 +22,8 @@ Acceptance criteria:
 Tasks:
 
 1. register `Settings` directly as a singleton
-2. register `SettingsEngine` only as a transient `IAsyncInitializer`
-3. move settings migration, JSON load, patch, and observe into `SettingsEngine.InitializeAsync`
+2. register the internal `SettingsInitializer` only as a transient `IAsyncInitializer`
+3. prepare migrations and JSON load in `SettingsInitializer` through `IAsyncInitializer.InitializeAsync`; use `SettingsEngine<Settings>` for patching and observation
 4. make `AsyncInitializerIndex.Settings` the settings initialization phase
 5. move `PersistentKeyValueStorage` and dependent initializers after the settings phase
 6. audit initializer constructors so they do not read final settings values before `InitializeAsync`
@@ -32,8 +32,8 @@ Acceptance criteria:
 
 1. `AddSettings()` performs registration only
 2. existing services can receive the singleton `Settings` object before it is patched
-3. settings values are read and subscribed to only after SettingsEngine has patched the object
-4. SettingsEngine is not a business-facing injected service
+3. settings values are read and subscribed to only after SettingsInitializer has prepared and patched the object
+4. SettingsInitializer is not a business-facing injected service
 
 ## 2. Phase 1: Attributes and Core Contracts
 
@@ -132,7 +132,7 @@ Tasks:
 2. use hard-coded paths for known obsolete assistant fields
 3. simplify legacy ARGB color objects to `SerializableColor` strings
 4. remove obsolete assistant root generation options
-5. validate cleaned JSON during SettingsEngine initialization before writing
+5. validate cleaned JSON during SettingsInitializer initialization before writing
 6. keep backup and atomic write semantics
 
 Acceptance criteria:
@@ -148,7 +148,7 @@ Tasks:
 
 1. remove `IConfiguration` registration for settings
 2. remove `WritableJsonConfiguration` as the core settings source
-3. update `SettingsExtensions.AddSettings()` to register `Settings` and the SettingsEngine initializer
+3. update `ServiceExtensions.AddSettings()` to register `Settings` and SettingsInitializer
 4. update call sites that used keyed `IConfiguration`
 5. keep no write path through `IConfiguration`
 
