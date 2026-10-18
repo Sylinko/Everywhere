@@ -107,6 +107,12 @@
     <TrimmerRootAssembly Include="WinRT.Runtime"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Scripts\PortableUpdate.ps1">
+      <LogicalName>Everywhere.Windows.Scripts.PortableUpdate.ps1</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <!-- Prune WPF/WinForms assemblies and localized resources natively without an external PowerShell script -->
   <Target Name="FilterPublishOutput" AfterTargets="ComputeResolvedFilesToPublishList">
     <ItemGroup>

@@ -1,8 +1,10 @@
 using System.Diagnostics;
-using System.Reflection;
+using System.IO.Compression;
+using System.Text;
 using System.Text.RegularExpressions;
 using Everywhere.Common;
 using Everywhere.Interop;
+using Serilog;
 
 namespace Everywhere.Windows.Common;
 
@@ -12,10 +14,7 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
 
     public UpdateAssetMetadata? SelectAsset(IEnumerable<UpdateAssetMetadata> assets, string versionString)
     {
-        var assetNameSuffix = nativeHelper.IsInstalled ?
-            $"-{OsIdentifier}-Setup-v{versionString}.exe" :
-            $"-{OsIdentifier}-v{versionString}.zip";
-
+        var assetNameSuffix = nativeHelper.IsInstalled ? $"-{OsIdentifier}-Setup-v{versionString}.exe" : $"-{OsIdentifier}-v{versionString}.zip";
         return assets.FirstOrDefault(a => a.Name.EndsWith(assetNameSuffix, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -51,40 +50,99 @@ public sealed partial class WindowsUpdateHandler(INativeHelper nativeHelper) : I
 
     private static async Task UpdateViaPortableAsync(string zipPath, CancellationToken cancellationToken = default)
     {
-        var scriptPath = Path.Combine(Path.GetTempPath(), "update.bat");
-        var exeLocation = Assembly.GetExecutingAssembly().Location;
-        var currentDir = Path.GetDirectoryName(exeLocation)!;
+        var executablePath = Environment.ProcessPath ?? throw new InvalidOperationException("The application executable path is unavailable.");
+        var startInfo = await PreparePortableUpdateAsync(zipPath, executablePath, cancellationToken);
+        using var process = new Process { StartInfo = startInfo };
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!process.Start()) throw new InvalidOperationException("Failed to start the portable updater.");
+        }
+        catch
+        {
+            DeletePreparationDirectory(startInfo.WorkingDirectory);
+            throw;
+        }
 
-        var scriptContent =
-            $"""
-             @echo off
-             ECHO Waiting for the application to close...
-             TASKKILL /IM "{Path.GetFileName(exeLocation)}" /F >nul 2>nul
-             timeout /t 2 /nobreak >nul
-             ECHO Backing up old version...
-             ren "{currentDir}" "{Path.GetFileName(currentDir)}_old"
-             ECHO Unpacking new version...
-             powershell -Command "Expand-Archive -LiteralPath '{zipPath}' -DestinationPath '{currentDir}' -Force"
-             IF %ERRORLEVEL% NEQ 0 (
-                 ECHO Unpacking failed, restoring old version...
-                 ren "{Path.Combine(Path.GetDirectoryName(currentDir)!, Path.GetFileName(currentDir) + "_old")}" "{Path.GetFileName(currentDir)}"
-                 GOTO END
-             )
-             ECHO Cleaning up old files...
-             rd /s /q "{Path.Combine(Path.GetDirectoryName(currentDir)!, Path.GetFileName(currentDir) + "_old")}"
-             ECHO Starting new version...
-             start "" "{exeLocation}"
-             :END
-             del "{scriptPath}"
-             """;
-
-        await File.WriteAllTextAsync(scriptPath, scriptContent, cancellationToken);
-
-        cancellationToken.ThrowIfCancellationRequested();
-        Process.Start(new ProcessStartInfo(scriptPath) { UseShellExecute = true, Verb = "runas" });
-        Environment.Exit(0);
+        // Keep Installing active until the helper exits, preventing another update from starting.
+        // After handoff, the helper owns shutdown, recovery files and failure UI. Do not cancel
+        // this wait or rethrow its reported failure as a second Toast.
+        await process.WaitForExitAsync();
+        if (process.ExitCode != 0)
+        {
+            Log.Warning("The portable updater exited with code {ExitCode}. Recovery files: {Directory}.", process.ExitCode, startInfo.WorkingDirectory);
+        }
     }
 
-    [GeneratedRegex(@"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "zh-CN")]
+    private static async Task<ProcessStartInfo> PreparePortableUpdateAsync(string zipPath, string executablePath, CancellationToken cancellationToken)
+    {
+        var applicationDirectory = Path.GetDirectoryName(executablePath) ??
+            throw new InvalidOperationException("The application directory is unavailable.");
+        var parentDirectory = Directory.GetParent(applicationDirectory) ??
+            throw new InvalidOperationException("Updating an application in a drive root is unsupported.");
+        // Keep staging and backup on the same volume as the application so replacement is a rename.
+        var workspace = Path.Combine(parentDirectory.FullName, $".Everywhere-update-{Guid.NewGuid():N}");
+        var stagingDirectory = Path.Combine(workspace, "new");
+        var scriptPath = Path.Combine(workspace, "update.ps1");
+        var failureMessage = string.Format(LocaleKey.Windows_PortableUpdate_Failed.I18N(), workspace);
+
+        try
+        {
+            Directory.CreateDirectory(stagingDirectory);
+            // Extraction can be slow; keep the UI responsive while the old version is still intact.
+            await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, stagingDirectory), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!File.Exists(Path.Combine(stagingDirectory, Path.GetFileName(executablePath))))
+            {
+                throw new InvalidDataException("The update package does not contain the application executable at its root.");
+            }
+
+            await using var resource =
+                typeof(WindowsUpdateHandler).Assembly.GetManifestResourceStream("Everywhere.Windows.Scripts.PortableUpdate.ps1") ??
+                throw new InvalidOperationException("The portable update script is missing.");
+            using var reader = new StreamReader(resource);
+            var script = await reader.ReadToEndAsync(cancellationToken);
+            await File.WriteAllTextAsync(scriptPath, script, new UTF8Encoding(true), cancellationToken);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workspace,
+                ArgumentList =
+                {
+                    "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                    "-File", scriptPath,
+                    "-ApplicationPath", executablePath,
+                    "-FailureMessage", failureMessage
+                }
+            };
+
+            return startInfo;
+        }
+        catch
+        {
+            DeletePreparationDirectory(workspace);
+            throw;
+        }
+    }
+
+    private static void DeletePreparationDirectory(string workspace)
+    {
+        try
+        {
+            if (Directory.Exists(workspace)) Directory.Delete(workspace, recursive: true);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Log.Warning(exception, "Could not clean portable update preparation directory {Directory}.", workspace);
+        }
+    }
+
+    [GeneratedRegex(
+        @"-v(?<version>\d+\.\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)?)\.(exe|zip)$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        "zh-CN")]
     private static partial Regex VersionRegex();
 }
