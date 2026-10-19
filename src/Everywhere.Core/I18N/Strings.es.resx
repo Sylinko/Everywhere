@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Descargando actualización...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>Validando actualización...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>Cancelando actualización...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>ID del Modelo</value>
     </data>
@@ -2698,6 +2704,15 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>Actualizar a la última versión</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>Descargar e instalar {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>Instalar {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>Instalar {0} descargado (no se pudo confirmar la última versión)</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Actual</value>
     </data>
@@ -2988,6 +3003,30 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
 Versión actual: {0}
 Última versión: {1}
 Fecha de lanzamiento: {2}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
+        <value>Buscando actualizaciones…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
+        <value>Descargando la actualización {0}…{1}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
+        <value>Preparando la actualización…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
+        <value>Cancelando actualización...</value>
+    </data>
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
+        <value>Instalando actualización...</value>
+    </data>
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
+        <value>La actualización está lista. Haz clic para instalar.</value>
+    </data>
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
+        <value>Actualización fallida, haz clic para reintentar</value>
+    </data>
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
+        <value>Actualización cancelada. Haz clic para volver a intentarlo.</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>Continuar y Reintentar</value>
@@ -4369,20 +4408,5 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>El servicio instalado pertenece a otra copia de Everywhere no identificable. Si continúas, se sobrescribirá.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
-        <value>Actualización cancelada. Haz clic para volver a intentarlo.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
-        <value>Buscando actualizaciones…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
-        <value>Descargando la actualización {0}…{1}</value>
-    </data>
-    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
-        <value>Preparando la actualización…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
-        <value>La actualización está lista. Haz clic para instalar.</value>
     </data>
 </root>

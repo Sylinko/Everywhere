@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere fonctionne actuellement avec des droits d'administrateur. Le glisser-déposer depuis des applications ordinaires peut ne pas fonctionner, et les actions effectuées par l'assistant auront des privilèges système accrus.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>La mise à jour a échoué, l'ancienne version ou sa sauvegarde a été conservée. Les journaux détaillés et les fichiers de récupération se trouvent à :
+{0}</value>
+    </data>
 </root>

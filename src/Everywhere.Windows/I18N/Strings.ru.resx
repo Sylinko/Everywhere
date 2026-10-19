@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere в данный момент работает с правами администратора. Перетаскивание из обычных приложений может быть недоступно, а действия помощника будут иметь более высокие системные права.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>Обновление не удалось, старая версия или её резервная копия сохранены. Подробные журналы и файлы восстановления находятся по адресу:
+{0}</value>
+    </data>
 </root>

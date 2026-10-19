@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere şu anda yönetici olarak çalışıyor. Normal uygulamalardan sürükleyip bırakma işlemleri kullanılamayabilir ve asistanın gerçekleştirdiği işlemler daha yüksek sistem izinlerine sahip olacaktır.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>Güncelleme tamamlanamadı, eski sürüm veya yedeği saklandı. Ayrıntılı günlük ve kurtarma dosyası şurada bulunuyor:
+{0}</value>
+    </data>
 </root>

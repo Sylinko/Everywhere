@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>업데이트 다운로드 중...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>업데이트를 확인하는 중...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>업데이트를 취소하는 중...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>모델 ID</value>
     </data>
@@ -2698,6 +2704,15 @@
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>최신 버전으로 업데이트</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>{0} 다운로드 및 설치</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>{0} 설치</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>다운로드된 {0} 설치(최신 버전을 확인할 수 없음)</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>현재</value>
     </data>
@@ -2988,6 +3003,30 @@
 현재 버전: {0}
 최신 버전: {1}
 출시 날짜: {2}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
+        <value>업데이트 확인 중…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
+        <value>업데이트 {0} 다운로드 중…{1}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
+        <value>업데이트 준비 중…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
+        <value>업데이트를 취소하는 중…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
+        <value>업데이트를 설치하는 중…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
+        <value>업데이트가 준비되었습니다. 클릭하여 설치하세요.</value>
+    </data>
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
+        <value>업데이트에 실패했습니다. 재시도하려면 클릭하세요.</value>
+    </data>
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
+        <value>업데이트가 취소되었습니다. 클릭하여 다시 시도하세요.</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>계속 및 재시도</value>
@@ -4369,20 +4408,5 @@
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
-        <value>업데이트가 취소되었습니다. 클릭하여 다시 시도하세요.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
-        <value>업데이트 확인 중…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
-        <value>업데이트 {0} 다운로드 중…{1}</value>
-    </data>
-    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
-        <value>업데이트 준비 중…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
-        <value>업데이트가 준비되었습니다. 클릭하여 설치하세요.</value>
     </data>
 </root>

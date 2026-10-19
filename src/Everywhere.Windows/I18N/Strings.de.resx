@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere läuft derzeit mit Administratorrechten. Drag &amp; Drop von normalen Anwendungen könnte nicht funktionieren, und die Aktionen des Assistenten haben höhere Systemrechte.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>Das Update konnte nicht abgeschlossen werden. Die alte Version oder deren Sicherung wurde beibehalten. Detaillierte Protokolle und Wiederherstellungsdateien befinden sich unter:
+{0}</value>
+    </data>
 </root>
