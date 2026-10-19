@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -59,31 +59,21 @@ public sealed class SoftwareUpdaterInitializer(
 
     private void HandleCommonPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(CommonSettings.IsAutomaticUpdateCheckEnabled))
-        {
-            if (settings.Common.IsAutomaticUpdateCheckEnabled)
-            {
-                softwareUpdater.RunAutomaticCheckInBackground(AutomaticCheckInterval, _cancellationTokenSource.Token);
-            }
-            else
-            {
-                _cancellationTokenSource.Cancel();
-            }
-            return;
-        }
+        if (e.PropertyName != nameof(CommonSettings.IsAutomaticUpdateCheckEnabled)) return;
 
-        if (e.PropertyName == nameof(CommonSettings.UpdateChannel))
+        if (settings.Common.IsAutomaticUpdateCheckEnabled)
         {
-            softwareUpdater
-                .HandleUpdateChannelChangedAsync(_cancellationTokenSource.Token)
-                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-            PublishUpdateNotification();
+            softwareUpdater.RunAutomaticCheckInBackground(AutomaticCheckInterval, _cancellationTokenSource.Token);
+        }
+        else
+        {
+            _cancellationTokenSource.Cancel();
         }
     }
 
     private void HandleSoftwareUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(ISoftwareUpdater.LatestUpdate) or nameof(ISoftwareUpdater.ReadyUpdate))
+        if (e.PropertyName == nameof(ISoftwareUpdater.DisplayUpdate))
         {
             PublishUpdateNotification();
         }

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
@@ -122,25 +122,48 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
     [ObservableProperty]
     public partial ReleaseInfo? SelectedReleaseInfo { get; set; }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsUpdateButtonVisible))]
-    [NotifyPropertyChangedFor(nameof(UpdateButtonContent))]
-    public partial UpdatePageAction UpdateAction { get; private set; }
+    /// <summary>
+    /// Gets the action projected from page discovery and the shared operation, without a second workflow state.
+    /// </summary>
+    public UpdatePageAction UpdateAction
+    {
+        get
+        {
+            if (IsBusy) return UpdatePageAction.Hidden;
+            if (SoftwareUpdater.CurrentOperation is { IsActive: true } operation)
+                return operation.CanCancel ? UpdatePageAction.Cancel : UpdatePageAction.Hidden;
+            if (_resolvedAction is UpdatePageAction.Install or UpdatePageAction.DownloadAndInstall)
+                return SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(_resolvedTarget) == true
+                    ? UpdatePageAction.Install : UpdatePageAction.DownloadAndInstall;
+            return _resolvedAction;
+        }
+    }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(UpdateButtonContent))]
-    public partial SoftwareUpdateMetadata? UpdateTarget { get; private set; }
+    /// <summary>
+    /// Gets the active operation's target, or the release resolved by this page.
+    /// </summary>
+    public SoftwareUpdateMetadata? UpdateTarget
+    {
+        get
+        {
+            if (IsBusy) return null;
+            return SoftwareUpdater.CurrentOperation is { IsActive: true, Target: { } target } ? target : _resolvedTarget;
+        }
+    }
 
     public bool IsUpdateButtonVisible => UpdateAction != UpdatePageAction.Hidden;
 
-    public string UpdateButtonContent => UpdateAction switch
+    /// <summary>
+    /// Gets the live-localized action label, including the selected version where applicable.
+    /// </summary>
+    public IDynamicLocaleKey UpdateButtonContentKey => UpdateAction switch
     {
-        UpdatePageAction.DownloadAndInstall => LocaleKey.ChangeLogView_DownloadAndInstallButton_Content.I18N().Format(UpdateTarget?.Version),
-        UpdatePageAction.Install => LocaleKey.ChangeLogView_InstallButton_Content.I18N().Format(UpdateTarget?.Version),
-        UpdatePageAction.InstallFallback => LocaleKey.ChangeLogView_InstallFallbackButton_Content.I18N().Format(UpdateTarget?.Version),
-        UpdatePageAction.Retry => LocaleKey.Common_Retry.I18N(),
-        UpdatePageAction.Cancel => LocaleKey.Common_Cancel.I18N(),
-        _ => LocaleKey.ChangeLogView_UpdateButton_Content.I18N()
+        UpdatePageAction.DownloadAndInstall => new FormattedDynamicLocaleKey(LocaleKey.ChangeLogView_DownloadAndInstallButton_Content, UpdateTarget?.Version),
+        UpdatePageAction.Install => new FormattedDynamicLocaleKey(LocaleKey.ChangeLogView_InstallButton_Content, UpdateTarget?.Version),
+        UpdatePageAction.InstallFallback => new FormattedDynamicLocaleKey(LocaleKey.ChangeLogView_InstallFallbackButton_Content, UpdateTarget?.Version),
+        UpdatePageAction.Retry => new DynamicLocaleKey(LocaleKey.Common_Retry),
+        UpdatePageAction.Cancel => new DynamicLocaleKey(LocaleKey.Common_Cancel),
+        _ => new DynamicLocaleKey(LocaleKey.ChangeLogView_UpdateButton_Content)
     };
 
     /// <summary>
@@ -433,36 +456,10 @@ public sealed partial class ChangeLogViewModel : BusyViewModelBase
 
     private void UpdateProjectedAction()
     {
-        if (IsBusy)
-        {
-            UpdateTarget = null;
-            UpdateAction = UpdatePageAction.Hidden;
-            return;
-        }
-
-        if (SoftwareUpdater.CurrentOperation is
-            {
-                IsActive: true
-            } currentOperation)
-        {
-            UpdateTarget = currentOperation.Target ?? _resolvedTarget;
-            UpdateAction = currentOperation.CanCancel ? UpdatePageAction.Cancel : UpdatePageAction.Hidden;
-            return;
-        }
-
-        if (_resolvedAction == UpdatePageAction.Install &&
-            SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(_resolvedTarget) != true)
-        {
-            _resolvedAction = UpdatePageAction.DownloadAndInstall;
-        }
-        else if (_resolvedAction == UpdatePageAction.DownloadAndInstall &&
-                 SoftwareUpdater.ReadyUpdate?.HasSamePackageIdentity(_resolvedTarget) == true)
-        {
-            _resolvedAction = UpdatePageAction.Install;
-        }
-
-        UpdateTarget = _resolvedTarget;
-        UpdateAction = _resolvedAction;
+        OnPropertyChanged(nameof(UpdateAction));
+        OnPropertyChanged(nameof(UpdateTarget));
+        OnPropertyChanged(nameof(IsUpdateButtonVisible));
+        OnPropertyChanged(nameof(UpdateButtonContentKey));
     }
 
     [RelayCommand(AllowConcurrentExecutions = true)]

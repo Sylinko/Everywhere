@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
@@ -18,6 +18,27 @@ namespace Everywhere.Core.Tests.Common.SoftwareUpdate;
 [TestFixture]
 public sealed class SoftwareUpdaterInitializerTests
 {
+    [AvaloniaTest]
+    public async Task Notification_WhenOnlyProgressChanges_DoesNotRepublish()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var updater = Substitute.For<ISoftwareUpdater>();
+        var publisher = Substitute.For<INotificationPublisher<SoftwareUpdater>>();
+        var initializer = new SoftwareUpdaterInitializer(updater, new Settings(services),
+            new PersistentState(new InMemoryKeyValueStorage()), publisher, services);
+        await initializer.InitializeAsync(CancellationToken.None);
+        var target = new SoftwareUpdateMetadata(UpdateChannel.Stable, "v99.0.0", new SemanticVersion(99), DateTimeOffset.UtcNow.AddDays(-1),
+            new SoftwareUpdateMetadata.UpdateAsset("update.exe", string.Empty, 3, "https://example.invalid/proxy", "https://example.invalid/direct"));
+        updater.DisplayUpdate.Returns(target);
+        updater.PropertyChanged += Raise.Event<PropertyChangedEventHandler>(updater, new PropertyChangedEventArgs(nameof(ISoftwareUpdater.DisplayUpdate)));
+        var calls = publisher.ReceivedCalls().Count();
+        SetOperation(updater, new SoftwareUpdateOperation(SoftwareUpdateOperationStage.Downloading, target, 0.2d));
+        SetOperation(updater, new SoftwareUpdateOperation(SoftwareUpdateOperationStage.Downloading, target, 0.7d));
+        Assert.That(publisher.ReceivedCalls().Count(), Is.EqualTo(calls));
+        updater.PropertyChanged += Raise.Event<PropertyChangedEventHandler>(updater, new PropertyChangedEventArgs(nameof(ISoftwareUpdater.DisplayUpdate)));
+        Assert.That(publisher.ReceivedCalls().Count(), Is.EqualTo(calls + 1));
+    }
+
     [AvaloniaTest]
     public async Task AutomaticChecking_WhenStartedAndReenabled_UsesFourHourInterval()
     {
@@ -121,7 +142,7 @@ public sealed class SoftwareUpdaterInitializerTests
             foreach (var stage in Enum.GetValues<SoftwareUpdateOperationStage>())
             {
                 SetOperation(updater, new SoftwareUpdateOperation(
-                    1, SoftwareUpdateOperationIntent.Manual, stage, null, 0.25d));
+                    stage, null, 0.25d));
                 Assert.That(window.GetVisualDescendants().OfType<Toast>(), Is.Empty);
             }
 

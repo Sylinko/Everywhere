@@ -2998,34 +2998,34 @@ Use scroll wheel or number keys to switch selection mode</value>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>The signature is private data for certain thought models, and Everywhere cannot decode it. Switching between different provider models in a context with thought content may cause this issue; starting a new conversation can resolve it.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>A new version is ready. Click to update now.
 Current version: {0}
 Latest version: {1}
 Release date: {2}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>Checking for updates…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>Downloading update {0}…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>Preparing update…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Cancelling" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
         <value>Canceling update...</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Installing" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
         <value>Installing update...</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>Update is ready. Click to install.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Failed" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
         <value>Update failed. Click to retry.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>Update canceled. Click to retry.</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">

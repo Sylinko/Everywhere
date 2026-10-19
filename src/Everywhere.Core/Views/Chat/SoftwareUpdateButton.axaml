@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI" xmlns:v="using:Everywhere.Views">
+  xmlns:common="using:Everywhere.Common" xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:SoftwareUpdateButton}"
     BasedOn="{StaticResource {x:Type Button}}"
@@ -18,7 +19,7 @@
     <Setter Property="AutomationProperties.Name" Value="{Binding ToolTipKey^, RelativeSource={RelativeSource Self}}"/>
     <Setter Property="Content" Value="{Binding SoftwareUpdater, RelativeSource={RelativeSource Self}}"/>
     <Setter Property="ContentTemplate">
-      <DataTemplate>
+      <DataTemplate DataType="common:ISoftwareUpdater">
         <Panel>
           <LucideIcon
             HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -28,27 +29,21 @@
             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
             IndicatorBrush="{DynamicResource PrimaryColor}"
             IsHitTestVisible="False"
-            IsIndeterminate="{Binding $parent[v:SoftwareUpdateButton].IsIndeterminate}"
-            IsVisible="{Binding $parent[v:SoftwareUpdateButton].IsBusy}"
+            IsIndeterminate="{Binding CurrentOperation.IsIndeterminate, FallbackValue={x:True}}"
+            IsVisible="{Binding CurrentOperation.IsActive, FallbackValue={x:False}}"
             Size="NaN"
             TrackBrush="{DynamicResource BorderColor}"
-            Value="{Binding $parent[v:SoftwareUpdateButton].Progress}"/>
+            Value="{Binding CurrentOperation.Progress, FallbackValue=0}"/>
           <Border
             x:Name="ErrorDot" Width="6"
             Height="6" Margin="0,4,4,0"
             HorizontalAlignment="Right" VerticalAlignment="Top"
             Background="{DynamicResource ErrorColor60}"
-            CornerRadius="3" IsHitTestVisible="False"/>
+            CornerRadius="3" IsHitTestVisible="False"
+            IsVisible="{Binding CurrentOperation.Stage, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static common:SoftwareUpdateOperationStage.Failed}, FallbackValue={x:False}}"/>
         </Panel>
       </DataTemplate>
     </Setter>
-
-    <Style Selector="^/template/ Border#ErrorDot">
-      <Setter Property="IsVisible" Value="False"/>
-    </Style>
-    <Style Selector="^:failed /template/ Border#ErrorDot">
-      <Setter Property="IsVisible" Value="True"/>
-    </Style>
 
     <Style Selector="^:available">
       <Setter Property="Background" Value="{DynamicResource SuccessColor60}"/>

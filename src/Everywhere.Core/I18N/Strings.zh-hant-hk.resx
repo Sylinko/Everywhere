@@ -2983,7 +2983,7 @@
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>簽名是某些思考模型的私有數據，Everywhere 無法解碼。在帶有思考內容的上下文中切換不同提供商的模型可能導致此問題，開啟一個新的對話可以解決此問題。</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>新版本已準備好，點擊立即更新。
 當前版本: {0}
 最新版本: {1}
@@ -4370,19 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>已安裝的服務屬於另一個無法識別的 Everywhere 副本，如果繼續將覆蓋它。</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>更新已取消，點擊重試</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>正在檢查更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>正在下載更新 {0}…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>正在準備更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>更新已準備就緒，點擊安裝</value>
     </data>
 </root>

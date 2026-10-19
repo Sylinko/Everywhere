@@ -2998,34 +2998,34 @@
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>signature 是某些思考模型的私有数据，Everywhere 无法解码。在带有思考内容的上下文中切换不同提供商的模型可能导致此问题，开启一个新的对话可以解决此问题。</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>新版本已准备好，点击立即更新。
 当前版本: {0}
 最新版本: {1}
 发布日期: {2}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>正在检查更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>正在下载更新 {0}…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>正在准备更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Cancelling" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
         <value>正在取消更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Installing" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
         <value>正在安装更新…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>更新已准备就绪，点击安装</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Failed" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
         <value>更新失败，点击重试</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>更新已取消，点击重试</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">

@@ -2983,7 +2983,7 @@
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>서명은 일부 사고 모델의 비공식 데이터로, Everywhere에서는 해독할 수 없습니다. 사고 내용이 포함된 컨텍스트에서 다른 공급자의 모델로 전환하면 이 문제가 발생할 수 있으며, 새로운 대화를 시작하면 이 문제를 해결할 수 있습니다.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>새 버전이 준비되었습니다. 지금 업데이트하려면 클릭하세요.
 현재 버전: {0}
 최신 버전: {1}
@@ -4370,19 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>설치된 서비스는 식별할 수 없는 다른 Everywhere 복사본에 속해 있습니다. 계속하면 덮어쓰게 됩니다.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>업데이트가 취소되었습니다. 클릭하여 다시 시도하세요.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>업데이트 확인 중…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>업데이트 {0} 다운로드 중…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>업데이트 준비 중…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>업데이트가 준비되었습니다. 클릭하여 설치하세요.</value>
     </data>
 </root>

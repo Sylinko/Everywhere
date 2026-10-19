@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace Everywhere.Common;
 
@@ -44,8 +44,8 @@ public interface ISoftwareUpdater : INotifyPropertyChanged
     /// Gets the release presented by compact update entry points.
     /// </summary>
     /// <remarks>
-    /// The latest discovered release takes precedence; a validated ready package is used as a best-effort
-    /// fallback when current discovery is unavailable.
+    /// Active work presents its fixed target. Otherwise the latest discovered release takes precedence,
+    /// with a validated ready package or a failed/cancelled target available as a fallback.
     /// </remarks>
     SoftwareUpdateMetadata? DisplayUpdate { get; }
 
@@ -69,17 +69,6 @@ public interface ISoftwareUpdater : INotifyPropertyChanged
     /// A token that stops the automatic workflow.
     /// </param>
     void RunAutomaticCheckInBackground(TimeSpan interval, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Invalidates work owned by the previous channel and refreshes discovery for the effective channel.
-    /// </summary>
-    /// <remarks>
-    /// Debug builds only invalidate channel state; discovery requires an explicit update action.
-    /// </remarks>
-    /// <param name="cancellationToken">
-    /// A token that cancels waiting for the refresh.
-    /// </param>
-    Task HandleUpdateChannelChangedAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Restores a validated cached update package, if one was persisted by a previous session.
@@ -123,6 +112,10 @@ public interface ISoftwareUpdater : INotifyPropertyChanged
     /// <summary>
     /// Starts or joins the manual update operation selected from current discovery and validated cache state.
     /// </summary>
+    /// <remarks>
+    /// The channel and any known target are captured when the operation starts. A running automatic
+    /// operation cannot be promoted to installation; cancel it or wait for it to finish first.
+    /// </remarks>
     /// <param name="cancellationToken">
     /// A token that cancels this caller's wait without canceling shared update work.
     /// </param>
@@ -143,8 +136,9 @@ public interface ISoftwareUpdater : INotifyPropertyChanged
     /// Requests cancellation of the current cancellable update operation.
     /// </summary>
     /// <remarks>
-    /// Manual work may be cancelled through downloading and validation. An automatic download may also be
-    /// cancelled while it is transferring; automatic validation is intentionally not cancellable from this entry point.
+    /// Checking, downloading, and validation are cancellable regardless of how the operation started.
+    /// Cancellation suppresses automatic downloading of that release for this application session;
+    /// an explicit manual retry clears its suppression. Installation is not cancellable.
     /// </remarks>
     void CancelCurrentOperation();
 }
