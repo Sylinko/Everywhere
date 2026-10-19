@@ -2983,7 +2983,7 @@
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>Подпись является приватными данными некоторых моделей мышления, которые Everywhere не может декодировать. Переключение между моделями разных провайдеров в контексте с содержанием мысли может привести к этой проблеме; открытие нового диалога может решить её.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>Доступна новая версия, нажмите, чтобы обновить.
 Текущая версия: {0}
 Последняя версия: {1}
@@ -4370,19 +4370,19 @@
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Установленная служба принадлежит другой неопознанной копии Everywhere. При продолжении она будет перезаписана.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>Обновление отменено. Нажмите, чтобы повторить попытку.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>Проверка обновлений…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>Загрузка обновления {0}…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>Подготовка обновления…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>Обновление готово. Нажмите, чтобы установить.</value>
     </data>
 </root>

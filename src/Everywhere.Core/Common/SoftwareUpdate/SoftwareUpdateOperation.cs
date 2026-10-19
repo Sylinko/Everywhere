@@ -1,10 +1,4 @@
-namespace Everywhere.Common;
-
-public enum SoftwareUpdateOperationIntent
-{
-    Automatic,
-    Manual
-}
+﻿namespace Everywhere.Common;
 
 public enum SoftwareUpdateOperationStage
 {
@@ -22,8 +16,6 @@ public enum SoftwareUpdateOperationStage
 /// An immutable presentation snapshot of coordinator-owned update work.
 /// </summary>
 public sealed record SoftwareUpdateOperation(
-    long Id,
-    SoftwareUpdateOperationIntent Intent,
     SoftwareUpdateOperationStage Stage,
     SoftwareUpdateMetadata? Target,
     double Progress = 0d,
@@ -36,14 +28,12 @@ public sealed record SoftwareUpdateOperation(
         SoftwareUpdateOperationStage.Cancelling or
         SoftwareUpdateOperationStage.Installing;
 
-    public bool IsIndeterminate => Stage != SoftwareUpdateOperationStage.Downloading || double.IsNaN(Progress);
+    public bool IsIndeterminate => Stage != SoftwareUpdateOperationStage.Downloading || !double.IsFinite(Progress) || Progress <= 0d;
 
-    public bool CanCancel =>
-        (Stage is SoftwareUpdateOperationStage.Checking or
-            SoftwareUpdateOperationStage.Downloading or
-            SoftwareUpdateOperationStage.Validating) &&
-        (Intent == SoftwareUpdateOperationIntent.Manual ||
-            (Intent == SoftwareUpdateOperationIntent.Automatic && Stage == SoftwareUpdateOperationStage.Downloading));
+    public bool CanCancel => Stage is
+        SoftwareUpdateOperationStage.Checking or
+        SoftwareUpdateOperationStage.Downloading or
+        SoftwareUpdateOperationStage.Validating;
 }
 
 internal sealed class SoftwareUpdateConsistencyException(string message) : Exception(message);

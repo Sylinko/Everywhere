@@ -2983,7 +2983,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>imza, bazı düşünce modellerinin özel verisidir ve Everywhere bunu çözemiyor. Düşünce içeriği olan bir bağlamda farklı sağlayıcıların modelleri arasında geçiş yapmak bu soruna neden olabilir; yeni bir sohbet başlatmak bu sorunu çözebilir.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>Yeni bir sürüm hazır, hemen güncellemek için tıklayın.
 Mevcut sürüm: {0}
 Son sürüm: {1}
@@ -4370,19 +4370,19 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Yüklü hizmet, tanımlanamayan başka bir Everywhere kopyasına ait. Devam ederseniz üzerine yazılacaktır.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>Güncelleme iptal edildi. Yeniden denemek için tıklayın.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>Güncellemeler denetleniyor…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>Güncelleme {0} indiriliyor…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>Güncelleme hazırlanıyor…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>Güncelleme hazır. Yüklemek için tıklayın.</value>
     </data>
 </root>

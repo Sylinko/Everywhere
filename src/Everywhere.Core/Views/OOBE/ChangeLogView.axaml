@@ -98,7 +98,7 @@
             shadui:ButtonAssist.Icon="{LucideIconContent RefreshCw}"
             Background="{DynamicResource SuccessColor60}"
             Command="{Binding PerformUpdateCommand}"
-            Content="{Binding UpdateButtonContent}"
+            Content="{Binding UpdateButtonContentKey^}"
             IsVisible="{Binding IsUpdateButtonVisible}"/>
         </StackPanel>
       </Grid>

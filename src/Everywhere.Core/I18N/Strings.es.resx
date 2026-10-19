@@ -2983,7 +2983,7 @@ Rueda o teclas numéricas para cambiar el modo de selección</value>
     <data name="HandledChatException_InvalidThoughtSignature" xml:space="preserve">
         <value>La firma es un dato privado de ciertos modelos de pensamiento que Everywhere no puede decodificar. Cambiar entre modelos de diferentes proveedores en un contexto con contenido de pensamiento puede causar este problema; iniciar una nueva conversación puede resolverlo.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_ToolTip" xml:space="preserve">
+    <data name="SoftwareUpdateButton_ToolTip" xml:space="preserve">
         <value>Una nueva versión está lista, haz clic para actualizar ahora.
 Versión actual: {0}
 Última versión: {1}
@@ -4370,19 +4370,19 @@ Si continúa, la otra copia desactivará el modo de servicio.</value>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>El servicio instalado pertenece a otra copia de Everywhere no identificable. Si continúas, se sobrescribirá.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Canceled" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
         <value>Actualización cancelada. Haz clic para volver a intentarlo.</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Checking" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
         <value>Buscando actualizaciones…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Downloading" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
         <value>Descargando la actualización {0}…{1}</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Validating" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
         <value>Preparando la actualización…</value>
     </data>
-    <data name="ChatInputArea_UpdateButton_Ready" xml:space="preserve">
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
         <value>La actualización está lista. Haz clic para instalar.</value>
     </data>
 </root>
