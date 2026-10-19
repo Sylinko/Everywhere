@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>アップデートをダウンロード中...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>更新を検証中...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>更新をキャンセル中...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>モデルID</value>
     </data>
@@ -2698,6 +2704,15 @@
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>最新バージョンに更新</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>{0} をダウンロードしてインストール</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>{0} をインストール</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>ダウンロード済みの {0} をインストール（最新バージョンの確認に失敗しました）</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>現在</value>
     </data>
@@ -2988,6 +3003,30 @@
 現在のバージョン: {0}
 最新のバージョン: {1}
 リリース日: {2}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
+        <value>アップデートを確認しています…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
+        <value>アップデート {0} をダウンロード中…{1}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
+        <value>アップデートを準備しています…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
+        <value>更新をキャンセル中…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
+        <value>更新をインストール中…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
+        <value>アップデートの準備ができました。クリックしてインストール</value>
+    </data>
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
+        <value>更新に失敗しました。再試行をクリック</value>
+    </data>
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
+        <value>更新はキャンセルされました。クリックして再試行してください。</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>続行して再試行</value>
@@ -4369,20 +4408,5 @@
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>インストールされているサービスは、識別できない別の Everywhere コピーに属しています。続行すると上書きされます。</value>
-    </data>
-    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
-        <value>更新はキャンセルされました。クリックして再試行してください。</value>
-    </data>
-    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
-        <value>アップデートを確認しています…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
-        <value>アップデート {0} をダウンロード中…{1}</value>
-    </data>
-    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
-        <value>アップデートを準備しています…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
-        <value>アップデートの準備ができました。クリックしてインストール</value>
     </data>
 </root>

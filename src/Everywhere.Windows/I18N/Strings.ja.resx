@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere は現在管理者として実行されています。通常のアプリからのドラッグ＆ドロップは使用できない場合があり、アシスタントが実行する操作はより高いシステム権限を持ちます。</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>更新に失敗しました。旧バージョンまたはそのバックアップが保持されています。詳細なログと復元ファイルは以下にあります：
+{0}</value>
+    </data>
 </root>

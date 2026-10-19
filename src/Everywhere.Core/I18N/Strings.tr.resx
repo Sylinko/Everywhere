@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>Güncelleme indiriliyor...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>Güncelleme doğrulanıyor...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>Güncelleme iptal ediliyor...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>Model Kimliği</value>
     </data>
@@ -2698,6 +2704,15 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>En son sürüme güncelle</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>İndir ve Yükle {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>Yükle {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>İndirilen {0}'ı yükle (en son sürüm doğrulanamadı)</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>Geçerli</value>
     </data>
@@ -2988,6 +3003,30 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
 Mevcut sürüm: {0}
 Son sürüm: {1}
 Yayın tarihi: {2}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
+        <value>Güncellemeler denetleniyor…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
+        <value>Güncelleme {0} indiriliyor…{1}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
+        <value>Güncelleme hazırlanıyor…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
+        <value>Güncelleme iptal ediliyor...</value>
+    </data>
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
+        <value>Güncelleme yükleniyor...</value>
+    </data>
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
+        <value>Güncelleme hazır. Yüklemek için tıklayın.</value>
+    </data>
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
+        <value>Güncelleme başarısız oldu, tekrar denemek için tıklayın</value>
+    </data>
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
+        <value>Güncelleme iptal edildi. Yeniden denemek için tıklayın.</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>Devam Et ve Yeniden Dene</value>
@@ -4369,20 +4408,5 @@ Devam ederseniz, diğer kopya hizmet modunu kapatır.</value>
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>Yüklü hizmet, tanımlanamayan başka bir Everywhere kopyasına ait. Devam ederseniz üzerine yazılacaktır.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
-        <value>Güncelleme iptal edildi. Yeniden denemek için tıklayın.</value>
-    </data>
-    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
-        <value>Güncellemeler denetleniyor…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
-        <value>Güncelleme {0} indiriliyor…{1}</value>
-    </data>
-    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
-        <value>Güncelleme hazırlanıyor…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
-        <value>Güncelleme hazır. Yüklemek için tıklayın.</value>
     </data>
 </root>

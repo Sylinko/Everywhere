@@ -740,6 +740,12 @@
     <data name="CommonSettings_SoftwareUpdate_Toast_DownloadingUpdate" xml:space="preserve">
         <value>正在下載更新...</value>
     </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_ValidatingUpdate" xml:space="preserve">
+        <value>正在驗證更新...</value>
+    </data>
+    <data name="CommonSettings_SoftwareUpdate_Toast_CancellingUpdate" xml:space="preserve">
+        <value>正在取消更新...</value>
+    </data>
     <data name="Assistant_ModelId_Header" xml:space="preserve">
         <value>模型 ID</value>
     </data>
@@ -2698,6 +2704,15 @@
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
         <value>更新到最新版本</value>
     </data>
+    <data name="ChangeLogView_DownloadAndInstallButton_Content" xml:space="preserve">
+        <value>下載並安裝 {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallButton_Content" xml:space="preserve">
+        <value>安裝 {0}</value>
+    </data>
+    <data name="ChangeLogView_InstallFallbackButton_Content" xml:space="preserve">
+        <value>安裝已下載的 {0}（未能確認最新版本）</value>
+    </data>
     <data name="ChangeLogView_CurrentBadge_Content" xml:space="preserve">
         <value>當前</value>
     </data>
@@ -2988,6 +3003,30 @@
 當前版本: {0}
 最新版本: {1}
 發佈日期: {2}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
+        <value>正在檢查更新…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
+        <value>正在下載更新 {0}…{1}</value>
+    </data>
+    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
+        <value>正在準備更新…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Cancelling" xml:space="preserve">
+        <value>正在取消更新…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Installing" xml:space="preserve">
+        <value>正在安裝更新…</value>
+    </data>
+    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
+        <value>更新已準備就緒，點擊安裝</value>
+    </data>
+    <data name="SoftwareUpdateButton_Failed" xml:space="preserve">
+        <value>更新失敗，點擊重試</value>
+    </data>
+    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
+        <value>更新已取消，點擊重試</value>
     </data>
     <data name="ChatMessageControl_ContinueButton_Content" xml:space="preserve">
         <value>繼續並重試</value>
@@ -4369,20 +4408,5 @@
     </data>
     <data name="HostsServiceModeControl_RebuildConfirmation" xml:space="preserve">
         <value>已安裝的服務屬於另一個無法識別的 Everywhere 副本，如果繼續將覆蓋它。</value>
-    </data>
-    <data name="SoftwareUpdateButton_Canceled" xml:space="preserve">
-        <value>更新已取消，點擊重試</value>
-    </data>
-    <data name="SoftwareUpdateButton_Checking" xml:space="preserve">
-        <value>正在檢查更新…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Downloading" xml:space="preserve">
-        <value>正在下載更新 {0}…{1}</value>
-    </data>
-    <data name="SoftwareUpdateButton_Validating" xml:space="preserve">
-        <value>正在準備更新…</value>
-    </data>
-    <data name="SoftwareUpdateButton_Ready" xml:space="preserve">
-        <value>更新已準備就緒，點擊安裝</value>
     </data>
 </root>

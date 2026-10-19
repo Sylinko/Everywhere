@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere se está ejecutando actualmente como administrador. El arrastre y la suelta desde aplicaciones normales pueden no funcionar, y las acciones realizadas por el asistente tendrán mayores permisos del sistema.</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>La actualización no se completó, se ha conservado la versión anterior o su copia de seguridad. Los registros detallados y el archivo de recuperación se encuentran en:
+{0}</value>
+    </data>
 </root>

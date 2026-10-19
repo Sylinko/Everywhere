@@ -31,4 +31,8 @@
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>Everywhere 目前正以管理員身份運行。來自普通應用的拖放可能無法使用，助手執行的操作也會擁有更高的系統權限。</value>
     </data>
+    <data name="Windows_PortableUpdate_Failed" xml:space="preserve">
+        <value>更新失敗，舊版本或其備份已保留。詳細日誌與恢復文件位於：
+{0}</value>
+    </data>
 </root>
