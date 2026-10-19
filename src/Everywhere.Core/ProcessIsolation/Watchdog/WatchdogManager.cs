@@ -4,6 +4,7 @@ using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
 using Everywhere.Common;
+using Everywhere.Initialization;
 using Everywhere.ProcessIsolation.Roles;
 using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.Utilities;
@@ -26,10 +27,7 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(3);
 
-    AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
-
     private AtomicBoolean IsDisposed => new(ref _isDisposed);
-    private AtomicBoolean IsInitialized => new(ref _isInitialized);
 
     private readonly HashSet<WatchdogRegistration> _registrations = [];
     private readonly CancellationTokenSource _lifetime = new();
@@ -38,31 +36,34 @@ public sealed partial class WatchdogManager : IWatchdogManager, IAsyncInitialize
     private readonly SemaphoreSlim _mutex = new(1, 1);
 
     private int _isDisposed;
-    private int _isInitialized;
     private Task<WatchdogSession?>? _sessionTask;
 
-    /// <summary>Creates the singleton coordinator; <see cref="InitializeAsync"/> schedules its process startup.</summary>
+    /// <summary>Creates the singleton coordinator; <see cref="IAsyncInitializer.InitializeAsync"/> schedules its process startup.</summary>
     public WatchdogManager(ILoggerFactory loggerFactory)
     {
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<WatchdogManager>();
     }
 
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
     /// <summary>
     /// Proactively schedules Watchdog startup on a worker thread. Returning a
     /// completed task is deliberate: Watchdog readiness must not delay Everywhere's UI.
     /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (IsInitialized.FlipIfFalse())
-        {
-            _sessionTask = Task.Run(() => StartSessionAsync(_lifetime.Token));
-        }
+        _sessionTask = Task.Run(() => StartSessionAsync(_lifetime.Token));
 
         return Task.CompletedTask;
     }
+
+    #endregion
 
     /// <inheritdoc />
     public Task<WatchdogRegistration?> RegisterProcessAsync(int processId)
@@ -518,7 +519,7 @@ public static class WatchdogServiceCollectionExtensions
     {
         services.AddSingleton<WatchdogManager>();
         services.AddSingleton<IWatchdogManager>(serviceProvider => serviceProvider.GetRequiredService<WatchdogManager>());
-        services.AddTransient<IAsyncInitializer>(serviceProvider => serviceProvider.GetRequiredService<WatchdogManager>());
+        services.AddAsyncInitializer<WatchdogManager>();
         return services;
     }
 }

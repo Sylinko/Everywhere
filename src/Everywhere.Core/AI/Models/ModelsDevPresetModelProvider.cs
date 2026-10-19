@@ -17,8 +17,6 @@ public sealed partial class ModelsDevPresetModelProvider(
     IPresetModelProvider,
     IAsyncInitializer
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1;
-
     public PresetModelCatalog Catalog => Volatile.Read(ref _catalog);
 
     public event EventHandler? CatalogChanged;
@@ -29,12 +27,19 @@ public sealed partial class ModelsDevPresetModelProvider(
 
     private PresetModelCatalog _catalog = CreateInitialCatalog();
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 1;
+
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        BindApplicationLifetime(cancellationToken);
         RefreshInBackground();
         return Task.CompletedTask;
     }
+
+    #endregion
 
     protected override PreparedCatalog PrepareCatalog(Dictionary<string, ModelsDevProvider> providers) => ConvertCatalog(providers);
 

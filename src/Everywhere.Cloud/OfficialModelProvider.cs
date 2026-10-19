@@ -15,8 +15,6 @@ public sealed partial class OfficialModelProvider :
 {
     public OfficialModelCatalog Catalog => Volatile.Read(ref _catalog);
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1;
-
     [ObservableProperty]
     public partial OfficialModelCatalogAccessStatus AccessStatus { get; private set; } = OfficialModelCatalogAccessStatus.Pending;
 
@@ -49,12 +47,22 @@ public sealed partial class OfficialModelProvider :
         _disposables.Add(Disposable.Create(() => cloudClient.PropertyChanged -= HandleCloudClientPropertyChanged));
     }
 
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 1;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        BindApplicationLifetime(cancellationToken);
         await RestoreCacheAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         HandleCloudClientStateChanged(nameof(ICloudClient.LoginStatus));
     }
+
+    #endregion
 
     protected override OfficialModelDefinition[] PrepareCatalog(OfficialModelDefinition[] definitions) => definitions;
 

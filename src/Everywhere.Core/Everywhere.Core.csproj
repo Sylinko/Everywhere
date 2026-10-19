@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Everywhere.Core.Tests"/>
+    <InternalsVisibleTo Include="Everywhere"/>
   </ItemGroup>
 
   <ItemGroup>

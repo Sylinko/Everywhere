@@ -2,6 +2,8 @@
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Hosting.Lifecycle;
 using Everywhere.Plugin.Hosting.Loading;
+using Everywhere.Plugin.Hosting.Services;
+using Microsoft.Extensions.DependencyInjection;
 using ZLinq;
 
 namespace Everywhere.Plugin.Hosting;
@@ -23,7 +25,7 @@ public sealed class PluginEngine : IAsyncDisposable
     public IReadOnlyList<PluginInfo> Plugins => _snapshots.Values.OrderBy(info => info.Id, StringComparer.Ordinal).ToArray();
 
     private readonly HostAssemblyCatalog _host;
-    private readonly IServiceProvider _services;
+    private readonly IPluginServiceBoundaryFactory _services;
     private readonly PluginEngineOptions _options;
     private readonly AssemblyRegistry _registry;
     private readonly SemaphoreSlim _operation = new(1, 1);
@@ -55,11 +57,12 @@ public sealed class PluginEngine : IAsyncDisposable
 
     /// <summary>
     /// Creates the runtime using the real deployment catalog, application services and lifecycle policy.
+    /// Build application services with HostServiceContainer so activation scope ownership is available.
     /// </summary>
     public PluginEngine(HostAssemblyCatalog host, IServiceProvider services, PluginEngineOptions options)
     {
         _host = host;
-        _services = services;
+        _services = services.GetRequiredService<IPluginServiceBoundaryFactory>();
         _options = options;
         _registry = new AssemblyRegistry(host);
     }
@@ -276,8 +279,9 @@ public sealed class PluginEngine : IAsyncDisposable
                 plan.Dependencies[definition.Id],
                 _snapshots);
             var entryName = entry.Identity.Name ?? string.Empty;
-            var context = new PluginContext(definition, _services, catalog);
-            var activation = new PluginActivation(definition, context, _registry, entryName);
+            var boundary = _services.CreateBoundary(_registry.GetContext(entryName));
+            var context = new PluginContext(definition, boundary, catalog);
+            var activation = new PluginActivation(definition, context, _registry, entryName, boundary);
             _activations.Add(definition.Id, activation);
             SetState(definition, PluginState.Initializing, true);
             return await activation.InitializeAsync(_options.CallbackTimeout).ConfigureAwait(false);

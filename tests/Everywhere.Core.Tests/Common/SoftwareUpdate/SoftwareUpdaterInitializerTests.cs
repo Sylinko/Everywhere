@@ -24,9 +24,9 @@ public sealed class SoftwareUpdaterInitializerTests
         using var services = new ServiceCollection().BuildServiceProvider();
         var updater = Substitute.For<ISoftwareUpdater>();
         var publisher = Substitute.For<INotificationPublisher<SoftwareUpdater>>();
-        var initializer = new SoftwareUpdaterInitializer(updater, new Settings(services),
+        using var initializer = new SoftwareUpdaterInitializer(updater, new Settings(services),
             new PersistentState(new InMemoryKeyValueStorage()), publisher, services);
-        await initializer.InitializeAsync(CancellationToken.None);
+        await ((IAsyncInitializer)initializer).InitializeAsync(CancellationToken.None);
         var target = new SoftwareUpdateMetadata(UpdateChannel.Stable, "v99.0.0", new SemanticVersion(99), DateTimeOffset.UtcNow.AddDays(-1),
             new SoftwareUpdateMetadata.UpdateAsset("update.exe", string.Empty, 3, "https://example.invalid/proxy", "https://example.invalid/direct"));
         updater.DisplayUpdate.Returns(target);
@@ -40,19 +40,32 @@ public sealed class SoftwareUpdaterInitializerTests
     }
 
     [AvaloniaTest]
-    public async Task AutomaticChecking_WhenStartedAndReenabled_UsesFourHourInterval()
+    public async Task AutomaticChecking_WhenStartedAndReenabled_UsesFourHourIntervalAndApplicationLifetime()
     {
         using var services = new ServiceCollection().BuildServiceProvider();
+        using var applicationLifetime = new CancellationTokenSource();
         var settings = new Settings(services);
         settings.Common.IsAutomaticUpdateCheckEnabled = true;
         var updater = Substitute.For<ISoftwareUpdater>();
-        var initializer = new SoftwareUpdaterInitializer(
+        var runTokens = new List<CancellationToken>();
+        updater.When(x => x.RunAutomaticCheckInBackground(Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>()))
+            .Do(call => runTokens.Add(call.Arg<CancellationToken>()));
+        using var initializer = new SoftwareUpdaterInitializer(
             updater, settings, new PersistentState(new InMemoryKeyValueStorage()),
             Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
 
-        await initializer.InitializeAsync(CancellationToken.None);
+        await ((IAsyncInitializer)initializer).InitializeAsync(applicationLifetime.Token);
         updater.Received(1).RunAutomaticCheckInBackground(TimeSpan.FromHours(4), Arg.Any<CancellationToken>());
 
+        settings.Common.IsAutomaticUpdateCheckEnabled = false;
+        Assert.That(runTokens[0].IsCancellationRequested, Is.True);
+        settings.Common.IsAutomaticUpdateCheckEnabled = true;
+        updater.Received(2).RunAutomaticCheckInBackground(TimeSpan.FromHours(4), Arg.Any<CancellationToken>());
+        Assert.That(runTokens[1].IsCancellationRequested, Is.False);
+
+        applicationLifetime.Cancel();
+        Assert.That(runTokens[1].IsCancellationRequested, Is.True);
+        initializer.Dispose();
         settings.Common.IsAutomaticUpdateCheckEnabled = false;
         settings.Common.IsAutomaticUpdateCheckEnabled = true;
         updater.Received(2).RunAutomaticCheckInBackground(TimeSpan.FromHours(4), Arg.Any<CancellationToken>());
@@ -68,10 +81,10 @@ public sealed class SoftwareUpdaterInitializerTests
         state.LastUpdateCheckTime = previous;
         var updater = Substitute.For<ISoftwareUpdater>();
         updater.LastCheckTime.Returns((DateTimeOffset?)null);
-        var initializer = new SoftwareUpdaterInitializer(
+        using var initializer = new SoftwareUpdaterInitializer(
             updater, new Settings(services), state,
             Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
-        await initializer.InitializeAsync(CancellationToken.None);
+        await ((IAsyncInitializer)initializer).InitializeAsync(CancellationToken.None);
         Assert.That(state.LastUpdateCheckTime, Is.EqualTo(previous));
 
         var current = previous.AddHours(4);
@@ -130,10 +143,10 @@ public sealed class SoftwareUpdaterInitializerTests
         window.Show();
         try
         {
-            var initializer = new SoftwareUpdaterInitializer(
+            using var initializer = new SoftwareUpdaterInitializer(
                 updater, settings, new PersistentState(new InMemoryKeyValueStorage()),
                 Substitute.For<INotificationPublisher<SoftwareUpdater>>(), services);
-            await initializer.InitializeAsync(CancellationToken.None);
+            await ((IAsyncInitializer)initializer).InitializeAsync(CancellationToken.None);
 #if DEBUG
             await updater.DidNotReceive().RecoverCachedPackageAsync(Arg.Any<CancellationToken>());
 #else

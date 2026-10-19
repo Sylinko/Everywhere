@@ -43,6 +43,11 @@ public sealed class Entry : IPlugin
         State.Gate = context.Services.GetService(typeof(TaskCompletionSource)) as TaskCompletionSource;
         context.Register(new ActivationRegistration(context.PluginId));
         State.Log?.Invoke("initialize:" + context.PluginId);
+        if (context.Services.GetService(typeof(Action<IServiceProvider, Type>)) is Action<IServiceProvider, Type> inspect)
+        {
+            inspect(context.Services, GetType());
+        }
+
 
         if (State.Mode == "initialize-failure") throw new InvalidOperationException("Injected initialization failure.");
 

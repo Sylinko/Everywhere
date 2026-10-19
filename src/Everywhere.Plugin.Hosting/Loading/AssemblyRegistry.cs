@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Hosting.Lifecycle;
+using Everywhere.Plugin.Hosting.Services;
 using ZLinq;
 
 namespace Everywhere.Plugin.Hosting.Loading;
@@ -63,6 +64,11 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
     /// Gets a prepared assembly without initiating selection or creating another owner.
     /// </summary>
     internal Assembly GetAssembly(string name) => _owners[name].LoadedAssembly;
+
+    /// <summary>
+    /// Gets the prepared entry owner for the activation's service lifetime scope.
+    /// </summary>
+    internal AssemblyLoadContext GetContext(string name) => _owners[name];
 
     /// <summary>
     /// Establishes the plugin's resolution scope for Default-owned calls made during lifecycle callbacks.
@@ -125,8 +131,10 @@ internal sealed class AssemblyRegistry(HostAssemblyCatalog host)
     /// Releases owners outside the collection loop's stack. No reflection objects escape this boundary.
     /// </summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal AssemblyRetirement[] Release(IEnumerable<string> names)
+    internal AssemblyRetirement[] Release(string[] names)
     {
+        var contexts = names.AsValueEnumerable().Where(_owners.ContainsKey).Select(AssemblyLoadContext (name) => _owners[name]).ToHashSet();
+        PluginReflectionCache.Clear(contexts);
         var references = new List<AssemblyRetirement>();
 
         foreach (var name in names)

@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Plugin.Hosting;
+using Everywhere.Plugin.Hosting.Services;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Hosting.Loading;
 using Everywhere.Plugin.Packaging;
@@ -154,14 +155,14 @@ public sealed class PluginNavigationTests
     /// <summary>
     /// Uses the production view model with in-memory configuration and no unrelated startup services.
     /// </summary>
-    private static ServiceProvider CreateServices()
+    private static HostServiceContainer CreateServices()
     {
-        return new ServiceCollection()
+        return new HostServiceContainer(new ServiceCollection()
             .AddSingleton<Settings>()
             .AddSingleton<IKeyValueStorage, InMemoryKeyValueStorage>()
             .AddSingleton<PersistentState>()
             .AddSingleton<MainViewModel>()
-            .BuildServiceProvider();
+            );
     }
 
     /// <summary>

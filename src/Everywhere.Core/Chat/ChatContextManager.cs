@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Initialization;
 using Everywhere.Messages;
 using Everywhere.Storage;
 using Everywhere.Utilities;
@@ -984,16 +985,21 @@ public sealed partial class ChatContextManager :
     private static string? NormalizeHistorySearchQuery(string? query) =>
         string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
 
     /// <summary>
     /// Defers history I/O until the history viewport requests its first page.
     /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.CompletedTask;
     }
+
+    #endregion
 
     /// <summary>
     /// Releases the manager-owned DynamicData pipeline and cancels pending history searches.
@@ -1041,7 +1047,7 @@ public static class ChatContextManagerExtensions
     {
         services.AddSingleton<ChatContextManager>();
         services.AddSingleton<IChatContextManager>(x => x.GetRequiredService<ChatContextManager>());
-        services.AddTransient<IAsyncInitializer>(x => x.GetRequiredService<ChatContextManager>());
+        services.AddAsyncInitializer<ChatContextManager>();
         return services;
     }
 }

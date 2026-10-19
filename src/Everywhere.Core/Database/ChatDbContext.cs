@@ -108,9 +108,13 @@ public sealed class ChatDbContext(DbContextOptions<ChatDbContext> options) : DbC
 
 public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory, ILogger<ChatDbInitializer> logger) : IAsyncInitializer
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Database;
+    #region IAsyncInitializer
 
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Database;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -124,6 +128,8 @@ public sealed class ChatDbInitializer(IDbContextFactory<ChatDbContext> dbFactory
 
         logger.LogInformation("Chat database initialized.");
     }
+
+    #endregion
 
     private async Task EnsureSyncMetadataAsync(ChatDbContext dbContext, CancellationToken cancellationToken)
     {

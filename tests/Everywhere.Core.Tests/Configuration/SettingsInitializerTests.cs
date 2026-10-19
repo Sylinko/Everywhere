@@ -219,12 +219,9 @@ public sealed class SettingsInitializerTests
             .BuildServiceProvider();
 
         Assert.That(serviceProvider.GetRequiredService<Settings>(), Is.Not.Null);
-        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<SettingsInitializer>());
-
-        var initializers = serviceProvider.GetServices<IAsyncInitializer>().ToList();
-        var initializer = initializers.OfType<SettingsInitializer>().Single();
-        Assert.That(((IAsyncInitializer)initializer).Index, Is.EqualTo(AsyncInitializerIndex.Settings));
-        Assert.That(initializers.OfType<PersistentKeyValueStorage>().Single().Index, Is.EqualTo(AsyncInitializerIndex.Settings + 1));
+        var initializers = serviceProvider.GetServices<AsyncInitializerRegistration>().ToArray();
+        Assert.That(initializers.Select(initializer => initializer.Index),
+            Is.EqualTo(new[] { AsyncInitializerIndex.Settings, AsyncInitializerIndex.Settings + 1 }));
     }
 
     [Test]

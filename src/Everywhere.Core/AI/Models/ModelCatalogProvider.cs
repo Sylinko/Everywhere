@@ -26,11 +26,8 @@ public interface IModelCatalogCacheStore<TCatalog> where TCatalog : class
 /// coalescing, conditional fetches, retry timing, atomic cache revisions, and refresh lifetime.
 /// It has no UI thread affinity; consumers marshal its notifications at their own boundary.
 /// </summary>
-public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
-    ModelCatalogHttpClient<TCatalog> client,
-    IModelCatalogCacheStore<TCatalog> cacheStore,
-    ILogger logger
-) : ObservableObject, IDisposable where TCatalog : class where TPrepared : class
+public abstract partial class ModelCatalogProvider<TCatalog, TPrepared> : ObservableObject, IDisposable
+    where TCatalog : class where TPrepared : class
 {
     [ObservableProperty]
     public partial bool IsRefreshing { get; private set; }
@@ -48,22 +45,48 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
 
     private readonly Lock _stateLock = new();
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly ModelCatalogHttpClient<TCatalog> _client;
+    private readonly IModelCatalogCacheStore<TCatalog> _cacheStore;
     // Serializes cache writes, invalidation, and publication so an obsolete revision cannot
     // publish after a newer revision has cleared the catalog.
     private readonly SemaphoreSlim _catalogMutationLock = new(1, 1);
 
-    protected readonly ILogger _logger = logger;
+    protected readonly ILogger _logger;
 
     private PreparedCache? _cache;
     private Task? _cacheLoadTask;
     private Task _cacheInvalidationTask = Task.CompletedTask;
     private RefreshOperation? _refreshOperation;
-    private CancellationTokenSource _revisionCancellation = new();
+    private CancellationTokenSource _revisionCancellation;
+    private CancellationTokenRegistration _applicationStoppingRegistration;
     private DateTimeOffset _nextAutomaticRefreshAt;
     private DateTimeOffset _serverRetryAfter;
     private long _revision;
 
     private int _disposeState;
+
+    /// <summary>
+    /// Creates the shared catalog state and links its first revision to the service lifetime.
+    /// </summary>
+    public ModelCatalogProvider(
+        ModelCatalogHttpClient<TCatalog> client,
+        IModelCatalogCacheStore<TCatalog> cacheStore,
+        ILogger logger)
+    {
+        _client = client;
+        _cacheStore = cacheStore;
+        _logger = logger;
+        _revisionCancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+    }
+
+    /// <summary>
+    /// Called once during application initialization to cancel shared catalog work on exit.
+    /// Individual refresh callers still cancel only their own wait.
+    /// </summary>
+    protected void BindApplicationLifetime(CancellationToken cancellationToken)
+    {
+        _applicationStoppingRegistration = cancellationToken.Register(_lifetime.Cancel);
+    }
 
     /// <summary>
     /// Restores usable cached data without asserting that the source is currently authoritative.
@@ -103,7 +126,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
         CancellationTokenSource obsoleteRevision;
         lock (_stateLock)
         {
-            if (IsDisposed) return;
+            if (IsDisposed || _lifetime.IsCancellationRequested) return;
 
             obsoleteRevision = _revisionCancellation;
             _revisionCancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
@@ -144,7 +167,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
             await _catalogMutationLock.WaitAsync(cancellationToken);
             try
             {
-                await cacheStore.ClearAsync(cancellationToken);
+                await _cacheStore.ClearAsync(cancellationToken);
             }
             finally
             {
@@ -188,7 +211,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
     {
         lock (_stateLock)
         {
-            if (IsDisposed) return Task.CompletedTask;
+            if (IsDisposed || _lifetime.IsCancellationRequested) return Task.CompletedTask;
             return _cacheLoadTask ??= Task.Run(() => LoadCacheCoreAsync(_revision, _revisionCancellation.Token));
         }
     }
@@ -198,7 +221,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
         await Task.Yield();
         try
         {
-            var entry = await cacheStore.LoadAsync(cancellationToken);
+            var entry = await _cacheStore.LoadAsync(cancellationToken);
             if (entry is null || entry.Version != CacheVersion || !IsCurrentRevision(revision)) return;
 
             var prepared = PrepareCatalog(entry.Catalog);
@@ -226,7 +249,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
     {
         lock (_stateLock)
         {
-            if (IsDisposed || !CanRefresh)
+            if (IsDisposed || _lifetime.IsCancellationRequested || !CanRefresh)
             {
                 return Task.FromResult<Exception?>(null);
             }
@@ -310,7 +333,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
         PreparedCache? cache;
         lock (_stateLock) cache = _cache;
 
-        var result = await client.FetchAsync(cache?.Entry.EntityTag, cancellationToken);
+        var result = await _client.FetchAsync(cache?.Entry.EntityTag, cancellationToken);
         if (!IsCurrentRevision(revision)) return;
 
         if (result is ModelCatalogFetchResult<TCatalog>.NotModified)
@@ -356,7 +379,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
 
             try
             {
-                await cacheStore.SaveAsync(updated, cancellationToken);
+                await _cacheStore.SaveAsync(updated, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -530,6 +553,7 @@ public abstract partial class ModelCatalogProvider<TCatalog, TPrepared>(
             revisionCancellation = _revisionCancellation;
         }
 
+        _applicationStoppingRegistration.Dispose();
         revisionCancellation.Cancel();
         _lifetime.Cancel();
         ReleaseLifetimeAsync(pendingCacheLoad, pendingInvalidation, pendingRefresh, revisionCancellation).Detach(_logger.ToExceptionHandler());

@@ -21,8 +21,6 @@ public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPrompt
 
     public IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 2;
-
     private readonly PersistentState _persistentState;
     private readonly SkillSource _skillSource;
     private readonly IReadOnlyList<IVirtualSkillProvider> _virtualSkillProviders;
@@ -53,8 +51,15 @@ public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPrompt
         _disposables.Add(_sourceGroupsSource);
     }
 
+    #region IAsyncInitializer
+
     /// <inheritdoc />
-    public Task InitializeAsync(CancellationToken cancellationToken) => RefreshAsync(cancellationToken);
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings + 2;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken) => RefreshAsync(cancellationToken);
+
+    #endregion
 
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken cancellationToken = default)

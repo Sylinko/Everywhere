@@ -12,9 +12,13 @@ internal sealed class ElevatedMainNotificationInitializer(
 {
     private const string NotificationId = "elevated_main";
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
+    #region IAsyncInitializer
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (ProcessSecurity.HasAdministrativeToken)
@@ -29,4 +33,6 @@ internal sealed class ElevatedMainNotificationInitializer(
 
         return Task.CompletedTask;
     }
+
+    #endregion
 }

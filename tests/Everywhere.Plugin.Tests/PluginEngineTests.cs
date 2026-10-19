@@ -1,4 +1,6 @@
 ﻿using Everywhere.Plugin.Hosting;
+using Everywhere.Plugin.Hosting.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Hosting.Loading;
 using Everywhere.Plugin.Packaging;
@@ -11,6 +13,7 @@ namespace Everywhere.Plugin.Tests;
 public sealed partial class PluginEngineTests
 {
     private string _dataDirectory = "";
+    private readonly List<HostServiceContainer> _containers = [];
 
     /// <summary>
     /// Allocates data paths outside build outputs.
@@ -25,8 +28,14 @@ public sealed partial class PluginEngineTests
     /// Removes the test-owned data after callbacks have completed.
     /// </summary>
     [TearDown]
-    public void TearDown()
+    public async Task TearDown()
     {
+        foreach (var container in _containers)
+        {
+            await container.DisposeAsync();
+        }
+
+        _containers.Clear();
         if (Directory.Exists(_dataDirectory)) Directory.Delete(_dataDirectory, recursive: true);
     }
 
@@ -170,11 +179,34 @@ public sealed partial class PluginEngineTests
     /// <summary>
     /// Creates the runtime against the framework and public contract only.
     /// </summary>
-    private static PluginEngine CreateEngine(Services services, PluginEngineOptions? options = null)
+    private PluginEngine CreateEngine(Services services, PluginEngineOptions? options = null)
     {
+        var registrations = new ServiceCollection();
+        registrations.AddSingleton<Action<string>>(_ => message => services.Record(message));
+        registrations.AddTransient(_ => services.Mode);
+        registrations.AddSingleton(services.Gate);
+        if (services.InspectServices is { } inspect)
+        {
+            registrations.AddSingleton(inspect);
+        }
+
+        if (services.ObserveStopReason is { } observeStopReason)
+        {
+            registrations.AddSingleton(observeStopReason);
+        }
+
+        services.ConfigureServices?.Invoke(registrations);
+        registrations.AddSingleton<Action<object>>(_ => value => services.Retained = value);
+        if (services.Modes is { } modes)
+        {
+            registrations.AddSingleton(modes);
+        }
+
+        var container = new HostServiceContainer(registrations);
+        _containers.Add(container);
         return new PluginEngine(
-            new HostAssemblyCatalog([]),
-            services,
+            new HostAssemblyCatalog([typeof(Microsoft.Extensions.Logging.ILogger<>).Assembly.Location]),
+            container,
             options ?? new PluginEngineOptions
             {
                 CallbackTimeout = TimeSpan.FromMilliseconds(300),
@@ -280,12 +312,22 @@ public sealed partial class PluginEngineTests
     /// <summary>
     /// Supplies only framework-owned callbacks and values to the collectible fixture.
     /// </summary>
-    private sealed class Services : IServiceProvider
+    private sealed class Services
     {
         /// <summary>
         /// Gets callback observations in invocation order.
         /// </summary>
         internal List<string> Events { get; } = [];
+
+        /// <summary>
+        /// Exercises the provider with the actual collectible entry type without retaining reflection objects.
+        /// </summary>
+        internal Action<IServiceProvider, Type>? InspectServices { get; init; }
+
+        /// <summary>
+        /// Adds host registrations used by service-boundary integration scenarios.
+        /// </summary>
+        internal Action<IServiceCollection>? ConfigureServices { get; init; }
 
         /// <summary>
         /// Observes only host-owned lifecycle values from the collectible fixture.
@@ -317,23 +359,10 @@ public sealed partial class PluginEngineTests
         /// </summary>
         internal object? Retained { get; set; }
 
-        /// <inheritdoc />
-        public object? GetService(Type serviceType)
-        {
-            if (serviceType == typeof(Action<string>)) return (Action<string>)Log;
-            if (serviceType == typeof(Action<Abstractions.PluginStopReason?>)) return ObserveStopReason;
-            if (serviceType == typeof(string)) return Mode;
-            if (serviceType == typeof(Func<string, string>)) return Modes;
-            if (serviceType == typeof(TaskCompletionSource)) return Gate;
-            if (serviceType == typeof(Action<object>)) return (Action<object>)(value => Retained = value);
-
-            return null;
-        }
-
         /// <summary>
         /// Records independent exit callbacks without concurrent writes to the observation list.
         /// </summary>
-        private void Log(string message)
+        internal void Record(string message)
         {
             lock (Events)
             {

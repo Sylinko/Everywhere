@@ -15,8 +15,6 @@ namespace Everywhere.Initialization;
 /// </summary>
 public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network;
-
     private readonly ProxySettings _proxySettings;
     private readonly DynamicWebProxy _dynamicWebProxy;
     private readonly ILogger<NetworkInitializer> _logger;
@@ -34,14 +32,22 @@ public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
             TimeSpan.FromSeconds(0.5));
     }
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ApplyProxySettings(false);
-        _settingsObserver ??= new DeepObserver(HandleProxySettingsChanged).Observe(_proxySettings);
+        _settingsObserver = new DeepObserver(HandleProxySettingsChanged).Observe(_proxySettings);
 
         return Task.CompletedTask;
     }
+
+    #endregion
 
     /// <summary>
     /// Stops proxy setting observation and cancels pending debounced updates.
@@ -99,8 +105,8 @@ public static class NetworkExtension
             .AddSingleton<RuntimeManager>()
             .AddSingleton<IRuntimeManager>(x => x.GetRequiredService<RuntimeManager>())
             .AddTransient<UserAgentHandler>()
-            .AddTransient<IAsyncInitializer, NetworkInitializer>()
-            .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<RuntimeManager>());
+            .AddAsyncInitializer<NetworkInitializer>()
+            .AddAsyncInitializer<RuntimeManager>();
 
         // Configure the default HttpClient to use the DynamicWebProxy.
         services

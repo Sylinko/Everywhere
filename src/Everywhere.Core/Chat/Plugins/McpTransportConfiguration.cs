@@ -7,7 +7,6 @@ using Everywhere.Common;
 using Everywhere.Configuration;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 

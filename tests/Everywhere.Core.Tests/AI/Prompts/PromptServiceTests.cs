@@ -1,3 +1,4 @@
+using Everywhere.Common;
 using Everywhere.AI;
 using Everywhere.AI.Prompts;
 using Everywhere.AI.Prompts.Database;
@@ -14,7 +15,7 @@ public sealed class PromptServiceTests
         using var database = PromptTestDatabase.Create();
         var initializer = new PromptDbInitializer(database.Factory, NullLogger<PromptDbInitializer>.Instance);
 
-        await initializer.InitializeAsync(default);
+        await ((IAsyncInitializer)initializer).InitializeAsync(default);
 
         await using var dbContext = await database.Factory.CreateDbContextAsync();
         Assert.That(await dbContext.Prompts.CountAsync(), Is.EqualTo(0));

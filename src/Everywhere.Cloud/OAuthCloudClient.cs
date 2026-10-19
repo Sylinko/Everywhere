@@ -62,8 +62,6 @@ public sealed partial class OAuthCloudClient :
     private readonly DynamicNotificationManager _notificationManager = new(new InMemoryKeyValueStorage());
     private readonly SemaphoreSlim _loginLock = new(1, 1); // Concurrency control for the UI entry point to prevent multiple login windows
     private readonly SemaphoreSlim _userDataLock = new(1, 1); // Prevent concurrent user data refreshes
-    private readonly Lock _initializeTaskGate = new();
-    private Task? _initializeTask;
 
     public OAuthCloudClient(IHttpClientFactory httpClientFactory, ILogger<OAuthCloudClient> logger)
     {
@@ -73,6 +71,85 @@ public sealed partial class OAuthCloudClient :
         _session = new TokenSessionContext(httpClientFactory, logger, HandleSessionInvalidated);
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
+
+    #region IAsyncInitializer
+
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 1;
+
+    /// <summary>
+    /// Initializes the client by attempting a silent login using stored tokens.
+    /// This allows the app to restore the user's session without requiring them to log in again.
+    /// </summary>
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        InitializeCoreAsync(cancellationToken).Detach(_logger.ToExceptionHandler());
+        return Task.CompletedTask;
+    }
+
+    private async Task InitializeCoreAsync(CancellationToken cancellationToken)
+    {
+        // An interactive login or logout may already own the session.
+        if (!await _loginLock.WaitAsync(0, cancellationToken)) return;
+
+        try
+        {
+            LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
+            LastLoginErrorKey = null;
+            _session.LoadFromVault();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Try to refresh token and restore user data silently if a refresh token exists
+            if (_session.HasRefreshToken)
+            {
+                TokenData? tokenData;
+                try
+                {
+                    tokenData = await _session.GetValidTokenDataAsync(true, cancellationToken);
+                }
+                catch (OAuthTokenRequestException ex) when (ex.IsRefreshTokenRejected)
+                {
+                    _logger.LogInformation(
+                        ex,
+                        "Stored OAuth refresh token was rejected during silent login. Clearing local session.");
+                    return;
+                }
+
+                if (tokenData is not null)
+                {
+                    await ReloadUserDataAsync(true, cancellationToken);
+                    LoginStatus = CloudClientLoginStatus.LoggedIn;
+                    LastLoginErrorKey = null;
+                    return;
+                }
+            }
+
+            LoginStatus = CloudClientLoginStatus.NotLoggedIn;
+            LastLoginErrorKey = null;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Application shutdown is not a login failure.
+        }
+        catch (Exception ex)
+        {
+            // Expected if the user has never logged in or if stored tokens are invalid/expired.
+            ex = HandledSystemException.Handle(ex);
+            _logger.LogInformation(ex, "Silent login failed during initialization.");
+
+            if (LoginStatus != CloudClientLoginStatus.LoginFailed)
+            {
+                LoginStatus = CloudClientLoginStatus.LoginFailed;
+                LastLoginErrorKey = ex.GetFriendlyMessage();
+            }
+        }
+        finally
+        {
+            _loginLock.Release();
+        }
+    }
+
+    #endregion
 
     public async Task LoginAsync(CancellationToken cancellationToken)
     {
@@ -329,86 +406,6 @@ public sealed partial class OAuthCloudClient :
         // Route the callback to the active interactive flow if one is currently awaiting
         _activeAuthFlow?.HandleCallback(oauth.Url);
     }
-
-    #region IAsyncInitializer Implementation
-
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1;
-
-    /// <summary>
-    /// Initializes the client by attempting a silent login using stored tokens.
-    /// This allows the app to restore the user's session without requiring them to log in again.
-    /// </summary>
-    public Task InitializeAsync(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Fire and forget the initialization to avoid blocking app startup.
-        lock (_initializeTaskGate)
-        {
-            _initializeTask ??= InitializeCoreAsync();
-            _initializeTask.Detach(_logger.ToExceptionHandler());
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private async Task InitializeCoreAsync()
-    {
-        if (!await _loginLock.WaitAsync(0)) return; // Prevent reentry for initialization
-
-        try
-        {
-            LoginStatus = CloudClientLoginStatus.AutoLoggingIn;
-            LastLoginErrorKey = null;
-            _session.LoadFromVault();
-
-            // Try to refresh token and restore user data silently if a refresh token exists
-            if (_session.HasRefreshToken)
-            {
-                TokenData? tokenData;
-                try
-                {
-                    tokenData = await _session.GetValidTokenDataAsync(true, CancellationToken.None);
-                }
-                catch (OAuthTokenRequestException ex) when (ex.IsRefreshTokenRejected)
-                {
-                    _logger.LogInformation(
-                        ex,
-                        "Stored OAuth refresh token was rejected during silent login. Clearing local session.");
-                    return;
-                }
-
-                if (tokenData is not null)
-                {
-                    await ReloadUserDataAsync(true, CancellationToken.None);
-                    LoginStatus = CloudClientLoginStatus.LoggedIn;
-                    LastLoginErrorKey = null;
-                    return;
-                }
-            }
-
-            LoginStatus = CloudClientLoginStatus.NotLoggedIn;
-            LastLoginErrorKey = null;
-        }
-        catch (Exception ex)
-        {
-            // Expected if the user has never logged in or if stored tokens are invalid/expired.
-            ex = HandledSystemException.Handle(ex);
-            _logger.LogInformation(ex, "Silent login failed during initialization.");
-
-            if (LoginStatus != CloudClientLoginStatus.LoginFailed)
-            {
-                LoginStatus = CloudClientLoginStatus.LoginFailed;
-                LastLoginErrorKey = ex.GetFriendlyMessage();
-            }
-        }
-        finally
-        {
-            _loginLock.Release();
-        }
-    }
-
-    #endregion
 
     /// <summary>
     /// Record for holding token data for secure storage. Using a record for easy JSON serialization and immutability.

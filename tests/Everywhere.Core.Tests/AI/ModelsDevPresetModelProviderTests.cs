@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using Avalonia.Headless.NUnit;
+using Everywhere.Common;
 using Everywhere.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelsDevPresetModelProvider = Everywhere.AI.ModelsDevPresetModelProvider;
@@ -79,7 +80,7 @@ public class ModelsDevPresetModelProviderTests
             using var provider = Create(handler, path);
             var validated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
-            await provider.InitializeAsync(CancellationToken.None);
+            await ((IAsyncInitializer)provider).InitializeAsync(CancellationToken.None);
             await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.That(provider.Catalog.GetModels("deepseek").Single().ModelId, Is.EqualTo("new-model"));
             Assert.That(provider.Catalog.GetProvider("deepseek")?.SourceStatus, Is.EqualTo(PresetModelSourceStatus.Unknown));
@@ -137,7 +138,7 @@ public class ModelsDevPresetModelProviderTests
         provider.CatalogChanged += (_, _) => { if (provider.Catalog.IsValidated) validated.TrySetResult(); };
         try
         {
-            var initialization = provider.InitializeAsync(CancellationToken.None);
+            var initialization = ((IAsyncInitializer)provider).InitializeAsync(CancellationToken.None);
             Assert.That(initialization.IsCompletedSuccessfully, Is.True);
             await validated.Task.WaitAsync(TimeSpan.FromSeconds(10));
             Assert.That(calls, Is.EqualTo(2));
@@ -255,6 +256,63 @@ public class ModelsDevPresetModelProviderTests
             }
         }
         finally { File.Delete(path); }
+    }
+
+    [AvaloniaTest]
+    public async Task Startup_WhenApplicationStops_CancelsSharedRefreshAcrossRevisions()
+    {
+        foreach (var shouldInvalidate in new[] { false, true })
+        {
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+            using var lifetime = new CancellationTokenSource();
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var canceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var calls = 0;
+            using var handler = new DelegateHandler(async (_, token) =>
+            {
+                if (++calls == 1 && shouldInvalidate)
+                {
+                    firstStarted.SetResult();
+                    await releaseFirst.Task.WaitAsync(token);
+                    return Response(Catalog);
+                }
+
+                started.TrySetResult();
+                using var registration = token.Register(() => canceled.TrySetResult());
+                await Task.Delay(Timeout.Infinite, token);
+                return Response(Catalog);
+            });
+            using var provider = Create(handler, path);
+            try
+            {
+                await ((IAsyncInitializer)provider).InitializeAsync(lifetime.Token);
+                if (shouldInvalidate)
+                {
+                    await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                    var firstRefresh = provider.RefreshAsync();
+                    releaseFirst.SetResult();
+                    await firstRefresh.WaitAsync(TimeSpan.FromSeconds(5));
+                    await provider.InvalidateAsync();
+                }
+
+                var refresh = provider.RefreshAsync();
+                await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                lifetime.Cancel();
+                await canceled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                await refresh.WaitAsync(TimeSpan.FromSeconds(5));
+
+                var completedCalls = calls;
+                await provider.RefreshAsync();
+                Assert.That(calls, Is.EqualTo(completedCalls), "Exit must not start another shared request.");
+                Assert.That(provider.IsRefreshing, Is.False);
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
     }
 
     private static ModelsDevPresetModelProvider Create(HttpMessageHandler handler, string path)

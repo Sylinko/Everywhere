@@ -22,8 +22,6 @@ public sealed partial class CloudChatDbSynchronizer(
     ILogger<CloudChatDbSynchronizer> logger
 ) : ObservableObject, IChatDbSynchronizer, IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Network + 1; // after persistentState initialization
-
     [ObservableProperty]
     public partial bool IsCloudSyncing { get; private set; }
 
@@ -41,7 +39,11 @@ public sealed partial class CloudChatDbSynchronizer(
     private static readonly TimeSpan[] ErrorBackoffSchedule =
         [TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(10)];
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Network + 1; // after persistentState initialization
+
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -51,24 +53,20 @@ public sealed partial class CloudChatDbSynchronizer(
         // Use System.Reactive to observe changes
         // If cloudClient.CurrentUser is not null && persistentState.IsCloudSyncEnabled, start synchronization.
         // Otherwise, cancel the token
-        cloudClient.WhenPropertyChanged(x => x.UserProfile)
+        var subscription = cloudClient.WhenPropertyChanged(x => x.UserProfile)
             .CombineLatest(
                 persistentState.WhenPropertyChanged(x => x.IsCloudSyncEnabled),
                 (user, enabled) => user.Value is not null && enabled.Value)
             .StartWith(cloudClient.UserProfile is not null && persistentState.IsCloudSyncEnabled)
             .DistinctUntilChanged()
-            .Select(isReady => Observable.FromAsync(cancellationToken => isReady ? StartSyncAsync(cancellationToken) : Task.CompletedTask))
+            .Select(isReady => Observable.FromAsync(token => isReady ? StartSyncAsync(token) : Task.CompletedTask))
             .Switch() // Only allow one active synchronization task at a time, cancel previous if new value comes in
-            .Subscribe()
-            .AddTo(_disposables);
+            .Subscribe();
+        subscription.AddTo(_disposables);
+        // Disposing the subscription also cancels the active synchronization operation.
+        cancellationToken.Register(subscription.Dispose).AddTo(_disposables);
 
         return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        _disposables.Dispose();
-        _syncLock.Dispose();
     }
 
     private Task StartSyncAsync(CancellationToken cancellationToken) => Task.Run(
@@ -82,7 +80,7 @@ public sealed partial class CloudChatDbSynchronizer(
             }
             catch (OperationCanceledException)
             {
-                // Ignored
+                return;
             }
 
             _consecutiveIdleCount = 0;
@@ -90,7 +88,7 @@ public sealed partial class CloudChatDbSynchronizer(
 
             while (true)
             {
-                SyncOutcome syncOutcome;
+                SyncState syncState;
                 try
                 {
                     IsCloudSyncing = true;
@@ -102,17 +100,17 @@ public sealed partial class CloudChatDbSynchronizer(
 
                     if (result.HadRemoteChanges)
                     {
-                        syncOutcome = SyncOutcome.RemoteChanges;
+                        syncState = SyncState.RemoteChanges;
                         _consecutiveIdleCount = 0;
                     }
                     else if (result.HadLocalChanges)
                     {
-                        syncOutcome = SyncOutcome.LocalChanges;
+                        syncState = SyncState.LocalChanges;
                         _consecutiveIdleCount = 0;
                     }
                     else
                     {
-                        syncOutcome = SyncOutcome.Idle;
+                        syncState = SyncState.Idle;
                         _consecutiveIdleCount++;
                     }
                 }
@@ -125,7 +123,7 @@ public sealed partial class CloudChatDbSynchronizer(
                     // Network-related errors
                     var handledException = HandledSystemException.Handle(ex);
                     persistentState.LastCloudSynchronizationErrorMessageKey = handledException.GetFriendlyMessage();
-                    syncOutcome = SyncOutcome.NetworkError;
+                    syncState = SyncState.NetworkError;
                     _consecutiveErrorCount++;
                     _consecutiveIdleCount = 0;
 
@@ -135,7 +133,7 @@ public sealed partial class CloudChatDbSynchronizer(
                 {
                     ex = HandledSystemException.Handle(ex);
                     persistentState.LastCloudSynchronizationErrorMessageKey = ex.GetFriendlyMessage();
-                    syncOutcome = SyncOutcome.Error;
+                    syncState = SyncState.Error;
                     _consecutiveErrorCount++;
                     _consecutiveIdleCount = 0;
 
@@ -146,10 +144,13 @@ public sealed partial class CloudChatDbSynchronizer(
                     IsCloudSyncing = false;
                 }
 
-                var nextDelay = CalculateNextDelay(syncOutcome);
+                var nextDelay = CalculateNextDelay(syncState);
                 logger.LogDebug(
                     "Sync outcome: {Outcome}, next delay: {Delay} (idle={IdleCount}, error={ErrorCount})",
-                    syncOutcome, nextDelay, _consecutiveIdleCount, _consecutiveErrorCount);
+                    syncState,
+                    nextDelay,
+                    _consecutiveIdleCount,
+                    _consecutiveErrorCount);
 
                 try
                 {
@@ -164,24 +165,26 @@ public sealed partial class CloudChatDbSynchronizer(
                 }
                 catch (OperationCanceledException)
                 {
-                    // Ignored
+                    break;
                 }
             }
         },
         cancellationToken);
 
-    private TimeSpan CalculateNextDelay(SyncOutcome outcome) => outcome switch
+    #endregion
+
+    private TimeSpan CalculateNextDelay(SyncState state) => state switch
     {
-        SyncOutcome.RemoteChanges => TimeSpan.FromSeconds(15),
-        SyncOutcome.LocalChanges => TimeSpan.FromMinutes(1),
-        SyncOutcome.Idle => IdleBackoffSchedule[Math.Min(_consecutiveIdleCount, IdleBackoffSchedule.Length - 1)],
-        SyncOutcome.NetworkError => ErrorBackoffSchedule[Math.Min(_consecutiveErrorCount, ErrorBackoffSchedule.Length - 1)],
-        SyncOutcome.Error => ErrorBackoffSchedule[Math.Min(_consecutiveErrorCount, ErrorBackoffSchedule.Length - 1)],
+        SyncState.RemoteChanges => TimeSpan.FromSeconds(15),
+        SyncState.LocalChanges => TimeSpan.FromMinutes(1),
+        SyncState.Idle => IdleBackoffSchedule[Math.Min(_consecutiveIdleCount, IdleBackoffSchedule.Length - 1)],
+        SyncState.NetworkError => ErrorBackoffSchedule[Math.Min(_consecutiveErrorCount, ErrorBackoffSchedule.Length - 1)],
+        SyncState.Error => ErrorBackoffSchedule[Math.Min(_consecutiveErrorCount, ErrorBackoffSchedule.Length - 1)],
         _ => TimeSpan.FromMinutes(1)
     };
 
-    public async Task SynchronizeAsync(CancellationToken cancellationToken = default)
-        => await SynchronizeCoreAsync(cancellationToken);
+    public async Task SynchronizeAsync(CancellationToken cancellationToken = default) =>
+        await SynchronizeCoreAsync(cancellationToken);
 
     private async Task<SyncResult> SynchronizeCoreAsync(CancellationToken cancellationToken)
     {
@@ -461,6 +464,26 @@ public sealed partial class CloudChatDbSynchronizer(
         var result = await ApiPayload.EnsureSuccessFromHttpResponseJsonAsync(response, cancellationToken: cancellationToken);
         logger.LogDebug("Pushed {EntityCount} entities to cloud successfully: {Result}", payload.Count, result);
     }
+
+    public void Dispose()
+    {
+        _disposables.Dispose();
+
+        // Cancellation does not wait for an active synchronization to unwind and release the lock.
+        // Leave the semaphore alive for that release. Its wait handle is never used, so it can
+        // be reclaimed with this instance without disposing it during asynchronous cleanup.
+    }
+
+    private readonly record struct SyncResult(bool HadRemoteChanges, bool HadLocalChanges);
+
+    private enum SyncState
+    {
+        Idle,
+        LocalChanges,
+        RemoteChanges,
+        NetworkError,
+        Error
+    }
 }
 
 [MessagePackObject(OnlyIncludeKeyedMembers = true, AllowPrivate = true)]
@@ -492,15 +515,4 @@ public sealed partial class CloudPullData
 
     [Key(2)]
     public List<EntityWrapper>? EntityWrappers { get; set; }
-}
-
-internal readonly record struct SyncResult(bool HadRemoteChanges, bool HadLocalChanges);
-
-internal enum SyncOutcome
-{
-    Idle,
-    LocalChanges,
-    RemoteChanges,
-    NetworkError,
-    Error
 }

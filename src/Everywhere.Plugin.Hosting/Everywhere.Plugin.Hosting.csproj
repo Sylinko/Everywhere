@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac"/>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection"/>
     <PackageReference Include="ZLinq"/>
   </ItemGroup>
 

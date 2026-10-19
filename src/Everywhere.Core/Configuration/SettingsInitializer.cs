@@ -27,9 +27,6 @@ internal sealed class SettingsInitializer : IAsyncInitializer, IDisposable
     private SettingsEngine<Settings>? _engine;
     private JsonSettingsStorage? _storage;
 
-    /// <inheritdoc />
-    AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings;
-
     /// <summary>
     /// Gets the runtime settings object used by the rest of the application.
     /// </summary>
@@ -72,6 +69,11 @@ internal sealed class SettingsInitializer : IAsyncInitializer, IDisposable
         _binder = new SettingsPatchBinder();
     }
 
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings;
+
     /// <inheritdoc />
     Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
@@ -92,6 +94,8 @@ internal sealed class SettingsInitializer : IAsyncInitializer, IDisposable
 
         return Task.CompletedTask;
     }
+
+    #endregion
 
     /// <summary>
     /// Stops observing runtime settings and releases the JSON document store.

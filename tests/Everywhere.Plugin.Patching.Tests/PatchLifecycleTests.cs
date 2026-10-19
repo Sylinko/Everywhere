@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Everywhere.Plugin.Hosting;
+using Everywhere.Plugin.Hosting.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Hosting.Loading;
 using Everywhere.Plugin.Packaging;
@@ -14,6 +16,22 @@ namespace Everywhere.Plugin.Patching.Tests;
 [NonParallelizable]
 public sealed class PatchLifecycleTests
 {
+    private readonly List<HostServiceContainer> _containers = [];
+
+    /// <summary>
+    /// Releases each test root after observing collection with the root still alive.
+    /// </summary>
+    [TearDown]
+    public async Task TearDown()
+    {
+        foreach (var container in _containers)
+        {
+            await container.DisposeAsync();
+        }
+
+        _containers.Clear();
+    }
+
     /// <summary>
     /// Removing either owner collects it while leaving the other callback usable.
     /// </summary>
@@ -103,10 +121,19 @@ public sealed class PatchLifecycleTests
     /// <summary>
     /// Shares the test host's managed dependencies, including RuntimeDetour, through Default.
     /// </summary>
-    private static PluginEngine CreateEngine(Services services)
+    private PluginEngine CreateEngine(Services services)
     {
         var paths = Directory.GetFiles(TestContext.CurrentContext.TestDirectory, "*.dll");
-        return new PluginEngine(new HostAssemblyCatalog(paths), services, new PluginEngineOptions
+        var registrations = new ServiceCollection();
+        registrations.AddSingleton(typeof(PatchLifecycleTests).GetMethod(services.IsExitTarget ? nameof(ExitTarget) : nameof(Target))
+            ?? throw new InvalidOperationException("Missing patch target."));
+        registrations.AddSingleton<Action>(() => services.Observations.Add(services.IsExitTarget ? ExitTarget("item") : Target("item")));
+        registrations.AddSingleton<Action<string>>(services.Observations.Add);
+        registrations.AddTransient(_ => services.FailingPluginId ?? string.Empty);
+
+        var container = new HostServiceContainer(registrations);
+        _containers.Add(container);
+        return new PluginEngine(new HostAssemblyCatalog(paths), container, new PluginEngineOptions
         {
             CollectionAttempts = 30,
             CollectionDelay = TimeSpan.FromMilliseconds(10)
@@ -158,7 +185,7 @@ public sealed class PatchLifecycleTests
     /// <summary>
     /// Supplies framework-owned observations and a host method to both collectible plugins.
     /// </summary>
-    private sealed class Services : IServiceProvider
+    private sealed class Services
     {
         /// <summary>
         /// Gets whether this test uses the independently retained process-exit target.
@@ -175,15 +202,5 @@ public sealed class PatchLifecycleTests
         /// </summary>
         internal List<string> Observations { get; } = [];
 
-        /// <inheritdoc />
-        public object? GetService(Type serviceType)
-        {
-            if (serviceType == typeof(MethodInfo)) return typeof(PatchLifecycleTests).GetMethod(IsExitTarget ? nameof(ExitTarget) : nameof(Target));
-            if (serviceType == typeof(string)) return FailingPluginId;
-            if (serviceType == typeof(Action)) return (Action)(() => Observations.Add(IsExitTarget ? ExitTarget("item") : Target("item")));
-            if (serviceType == typeof(Action<string>)) return (Action<string>)Observations.Add;
-
-            return null;
-        }
     }
 }
