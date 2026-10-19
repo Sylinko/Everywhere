@@ -256,23 +256,35 @@ Exit signals Stopping before joining a still-running initializer; initialization
 instance disposal can begin. Plugin code owns stopping and draining
 its background users; the engine cannot discover those users automatically.
 
-Normal exit follows existing DI ownership: the container captures PluginApplicationService through
-its IAsyncInitializer registration and invokes its IAsyncDisposable implementation. That service owns
-and disposes PluginEngine. There is no IAsyncShutdown or application-wide pre-exit service phase.
-The existing application entry points drain startup/activation ingress and asynchronously dispose DI
-after the Avalonia lifetime returns. Entry disposal must not require a live UI dispatcher or resolve new
-services from the disposing provider. Capture necessary dependencies during initialization and respect
-their actual ownership; final cleanup must not assume every other service is still usable.
+Application and activation service ownership is defined in [Service Boundary](07-ServiceBoundary.md).
+The Autofac application container and activation scopes preserve host service identity and isolate
+collectible generic registrations. Maintained tests cover direct, lazy and keyed generic logging
+through independent plugin retirement.
 
-The startup coordinator starts initializer groups on the UI thread but awaits their completion without
-capturing its synchronization context. Later UI steps use cancellable dispatcher operations, so the
-coordinator can finish after exit cancellation without requiring another UI continuation. Individual
-initializers still own cancellation of their asynchronous work; this does not forcibly stop them.
+Normal exit follows DI ownership: PluginEngineManager is a concrete singleton registered with
+AddAsyncInitializer<PluginEngineManager>(). Its deferred startup callback resolves that singleton;
+DI invokes its IAsyncDisposable implementation to dispose PluginEngine. There is no IAsyncShutdown
+interface or second service-disposal registry.
+
+App runs one application task on a background thread: resolve startup steps by
+static Index, publish UI readiness, then deliver activations. Steps in a group can overlap; a failure
+cancels the application-lifetime token and waits for the started group. All groups receive that same
+token, which remains usable by service-owned background work after initialization. Initializers
+explicitly dispatch UI work with cancellation; constructors must not depend on UI access or completed
+initialization of another service.
+
+App.Shutdown signals cancellation and closes Avalonia's desktop loop. External exit notifications
+also signal cancellation without vetoing termination. The platform entry point alone awaits the
+application task in its finally block and then asynchronously disposes DI on a worker thread.
+A service that needs to await its background work does so in its own IAsyncDisposable; there is no
+application-wide background-task registry. Entry disposal must not require a live UI dispatcher or
+resolve new services from the disposing provider. Capture necessary dependencies during initialization
+and respect their actual ownership; final cleanup must not assume every other service is still usable.
 
 Engine disposal rejects new mutations, waits for the current mutation, then disposes remaining entries
 sequentially in reverse dependency order. A failed consumer leaves its dependencies intact; independent
 entries are still attempted. Failures escape as host-owned diagnostic text in a host exception, and
-PluginApplicationService logs them so DI can continue releasing other host services. Repeated engine
+PluginEngineManager logs them so DI can continue releasing other host services. Repeated engine
 disposal joins the same task. RestartRequired does not suppress this final attempt.
 
 Process exit skips both registered reversal queues, patch/UI removal, assembly unloading, forced GC and
@@ -392,7 +404,7 @@ flowchart TD
 
 Within Hosting, `Installation` owns `PluginSourceCatalog`, `PluginPackageStore` and `PluginInstallation`; `Loading` owns PE inspection, load planning and assembly contexts; `Lifecycle` owns activation, context resources and catalog views. Shared `PluginValidationException` belongs to Packaging so both build-time and runtime validation use the same diagnostic contract without a reverse dependency. Installation state is not part of the shared package declaration model.
 
-`Build.Plugin.Hosting.targets` is imported by platform application projects to export the host reference contract and publish its descriptor. The descriptor remains `plugin-host.json`; the build target names and serialized formats are unchanged. `PluginApplicationService` and Avalonia-specific integration stay in Everywhere.Core. A developer's plugin uses Abstractions and any explicitly needed host APIs; SDK tool dependencies are not automatically runtime dependencies of that plugin.
+`Build.Plugin.Hosting.targets` is imported by platform application projects to export the host reference contract and publish its descriptor. The descriptor remains `plugin-host.json`; the build target names and serialized formats are unchanged. `PluginEngineManager` and Avalonia-specific integration stay in Everywhere.Core. A developer's plugin uses Abstractions and any explicitly needed host APIs; SDK tool dependencies are not automatically runtime dependencies of that plugin.
 
 Lifecycle contracts reside in the single abstraction assembly; do not introduce a second incompatible IPlugin identity. The SDK supplies compilation references to the appropriate contract, but a plugin package must not carry a competing runtime copy. This narrow contract dependency policy does not prohibit justified external dependencies in the SDK or engine.
 
@@ -772,7 +784,7 @@ Errors should identify plugin/assembly identities, files and hashes, originating
 
 The runtime takes explicit selected files and a host catalog. At startup, the application discovers ZIP files and immediate child folders containing `plugin.json` under `~/.everywhere/plugins`. `PluginSourceCatalog` imports or reuses immutable runtime copies before activation and returns successful, unambiguous installations separately from source diagnostics. The application logs source failures and continues with those installations. There is no recursive DLL discovery, watcher or management page. The engine isolates invalid or failed plugins and their affected dependents while allowing unrelated plugins to activate. Uncertain cleanup or collection requires restart and stops further loading. No highest-version or directory-order winner is chosen. This source-driven entry point does not yet implement persisted disablement, pending restart changes or automatic cleanup of superseded copies.
 
-Exit uses ordinary DI disposal of PluginApplicationService and its engine, as described in section 5.
+Exit uses ordinary DI disposal of PluginEngineManager and its engine, as described in section 5.
 App.Shutdown requests the Avalonia lifetime to close without invoking a special service shutdown phase.
 The plugin-specific Avalonia ShutdownRequested interception and internal OS-classification accessor
 have been removed. The macOS delegate still routes ordinary Quit to the existing Avalonia lifetime,

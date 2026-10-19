@@ -113,13 +113,23 @@ InitializeAsync receives an IPluginContext with these existing members:
 | Member | Responsibility |
 |---|---|
 | PluginId | Logical identity of the activation |
-| Services | Host services used during normal operation; not a promise that services can be resolved during container disposal |
+| Services | Activation-local services with shared host singletons; stop using them before entry disposal completes |
 | Stopping | Signal to stop accepting work and finish outstanding operations |
 | StopReason | Null while running; Unload or Exit is set before Stopping is signaled |
 | Register | Register a disposable handle that reverses an application change made by this activation |
 | Plugins | Activation-relative availability and host-owned plugin information |
 | InstallationDirectory | Installed package files, read-only by contract |
 | DataDirectory | Persistent data owned by this plugin ID |
+
+Use `context.Services` for service resolution, including generic loggers. Do not use the internal
+application `ServiceLocator`, obtain a root provider through access-check bypasses, or retain the
+activation provider after stopping. Child scopes belong to the activation and must be disposed by
+their callers before plugin cleanup completes. Settings control factories capture this provider or
+their required dependencies; presenters do not supply a container.
+
+Generic loggers, lazy relationships and keyed services use this activation boundary. Let the
+container dispose services it creates; do not register those instances again with `context.Register`.
+See [Service Boundary](07-ServiceBoundary.md) for service ownership and retirement rules.
 
 The lifecycle follows ordinary object ownership. Keep short-lived files inside using or await
 using scopes. Retain ongoing work so you can stop and await it before closing the resources it uses.

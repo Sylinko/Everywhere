@@ -43,6 +43,11 @@ public sealed class Entry : IPlugin, IAsyncDisposable, IDisposable
             context.Stopping.Register(() => observeStopReason(context.StopReason));
         }
 
+        if (context.Services.GetService(typeof(Action<IServiceProvider, Type>)) is Action<IServiceProvider, Type> inspect)
+        {
+            inspect(context.Services, GetType());
+        }
+
         context.Register(new Resource(() => log("dispose:first:" + context.PluginId)));
         context.Register(new Resource(() => log("dispose:second:" + context.PluginId)));
 

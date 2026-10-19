@@ -11,8 +11,6 @@ namespace Everywhere.Configuration;
 /// </summary>
 public sealed class PersistentKeyValueStorage : IKeyValueStorage, IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 1;
-
     private const string PrimaryExtension = ".bin";
     private const string TempExtension = ".tmp";
 
@@ -41,13 +39,21 @@ public sealed class PersistentKeyValueStorage : IKeyValueStorage, IAsyncInitiali
             TimeSpan.FromSeconds(1));
     }
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Settings + 1;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Load();
         _isLoaded = true;
         return Task.CompletedTask;
     }
+
+    #endregion
 
     public T? Get<T>(string key, T? defaultValue = default)
     {

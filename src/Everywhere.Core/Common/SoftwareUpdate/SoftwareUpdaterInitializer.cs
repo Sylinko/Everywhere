@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
 using Everywhere.Messages;
-using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
@@ -24,18 +24,34 @@ public sealed class SoftwareUpdaterInitializer(
     PersistentState persistentState,
     INotificationPublisher<SoftwareUpdater> notificationPublisher,
     IServiceProvider serviceProvider
-) : IAsyncInitializer
+) : IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
-
     private const string UpdateNotificationId = "software_update";
     private static readonly TimeSpan AutomaticCheckInterval = TimeSpan.FromHours(4);
 
-    private readonly ReusableCancellationTokenSource _cancellationTokenSource = new();
+    // Setup and settings callbacks run on the UI thread. The application drains startup and
+    // exits the desktop loop before DI disposal, so teardown needs neither a lock nor dispatch.
+    private CancellationToken _applicationToken;
+    private CancellationTokenSource? _automaticCheckSource;
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
+    {
+        return Dispatcher.UIThread.InvokeAsync(
+            () => Initialize(cancellationToken),
+            DispatcherPriority.Normal,
+            cancellationToken).GetTask();
+    }
+
+    private void Initialize(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        _applicationToken = cancellationToken;
         settings.Common.PropertyChanged += HandleCommonPropertyChanged;
         softwareUpdater.PropertyChanged += HandleSoftwareUpdaterPropertyChanged;
 
@@ -48,31 +64,52 @@ public sealed class SoftwareUpdaterInitializer(
 #endif
 
         PublishUpdateNotification();
+        UpdateAutomaticChecking();
+    }
 
-        if (settings.Common.IsAutomaticUpdateCheckEnabled)
-        {
-            softwareUpdater.RunAutomaticCheckInBackground(AutomaticCheckInterval, _cancellationTokenSource.Token);
-        }
+    #endregion
 
-        return Task.CompletedTask;
+    /// <summary>
+    /// Detaches settings/update notifications and cancels the automatic update schedule.
+    /// </summary>
+    public void Dispose()
+    {
+        settings.Common.PropertyChanged -= HandleCommonPropertyChanged;
+        softwareUpdater.PropertyChanged -= HandleSoftwareUpdaterPropertyChanged;
+        StopAutomaticChecking();
     }
 
     private void HandleCommonPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(CommonSettings.IsAutomaticUpdateCheckEnabled)) return;
 
-        if (settings.Common.IsAutomaticUpdateCheckEnabled)
-        {
-            softwareUpdater.RunAutomaticCheckInBackground(AutomaticCheckInterval, _cancellationTokenSource.Token);
-        }
-        else
-        {
-            _cancellationTokenSource.Cancel();
-        }
+        Dispatcher.UIThread.PostOnDemand(UpdateAutomaticChecking);
+    }
+
+    private void UpdateAutomaticChecking()
+    {
+        if (_applicationToken.IsCancellationRequested) return;
+
+        StopAutomaticChecking();
+        if (!settings.Common.IsAutomaticUpdateCheckEnabled) return;
+
+        _automaticCheckSource = CancellationTokenSource.CreateLinkedTokenSource(_applicationToken);
+        softwareUpdater.RunAutomaticCheckInBackground(AutomaticCheckInterval, _automaticCheckSource.Token);
+    }
+
+    // Only this automatic run is canceled; manual work belongs to the updater.
+    private void StopAutomaticChecking()
+    {
+        _automaticCheckSource?.Cancel();
+        _automaticCheckSource?.Dispose();
+        _automaticCheckSource = null;
     }
 
     private void HandleSoftwareUpdaterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // SoftwareUpdater publishes property changes on the UI thread.
+        if (_applicationToken.IsCancellationRequested) return;
+
         if (e.PropertyName == nameof(ISoftwareUpdater.DisplayUpdate))
         {
             PublishUpdateNotification();
@@ -122,7 +159,7 @@ public sealed class SoftwareUpdaterInitializer(
 
         try
         {
-            await softwareUpdater.PerformUpdateAsync(target);
+            await softwareUpdater.PerformUpdateAsync(target, CancellationToken.None);
         }
         catch (Exception ex)
         {

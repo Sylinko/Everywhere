@@ -113,8 +113,8 @@ public static class Program
 
             #region Initialize
 
-            .AddTransient<IAsyncInitializer, ChatWindowInitializer>()
-            .AddTransient<IAsyncInitializer, UpdaterInitializer>()
+            .AddAsyncInitializer<ChatWindowInitializer>()
+            .AddAsyncInitializer<SoftwareUpdaterInitializer>()
 
         #endregion
 
@@ -122,18 +122,26 @@ public static class Program
 
         try
         {
-            var exitCode = BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
-            if (Application.Current is App app)
-            {
-                await app.WaitForShutdownAsync().ConfigureAwait(false);
-            }
-
-            return exitCode;
+            return BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
         }
         finally
         {
-            // Avalonia's UI synchronization context no longer pumps after the desktop lifetime exits.
-            await serviceProvider.DisposeAsync().ConfigureAwait(false);
+            // Keep the shared token source alive until every host service has been disposed.
+            using var app = Application.Current as App;
+            try
+            {
+                // Also drain startup when the desktop loop throws instead of returning normally.
+                if (app is not null)
+                {
+                    await app.WaitForShutdownAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                // Enter disposal on a worker as well: ConfigureAwait(false) on this caller cannot
+                // prevent a service's own awaits from capturing Avalonia's stopped context.
+                await Task.Run(async () => await serviceProvider.DisposeAsync().ConfigureAwait(false)).ConfigureAwait(false);
+            }
         }
     }
 

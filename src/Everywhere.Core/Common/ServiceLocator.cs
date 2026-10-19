@@ -1,27 +1,49 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Everywhere.Plugin.Hosting.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Common;
 
-public static class ServiceLocator
+/// <summary>
+/// Provides the process-lived container to application composition and host-owned UI factories.
+/// Plugin code must use IPluginContext.Services so collectible generic services belong to its activation.
+/// Do not pass this provider to plugin factories or resolve services closed over plugin types here.
+/// </summary>
+internal static class ServiceLocator
 {
-    private static ServiceProvider? _serviceProvider;
+    private static HostServiceContainer? _serviceProvider;
 
-    public static ServiceProvider Build(Action<ServiceCollection> configureServices)
+    /// <summary>
+    /// Builds application services once. The platform entry point owns asynchronous disposal.
+    /// </summary>
+    internal static HostServiceContainer Build(Action<ServiceCollection> configureServices)
     {
-        if (_serviceProvider != null) throw new InvalidOperationException($"{nameof(ServiceLocator)} is already built.");
+        if (_serviceProvider is not null)
+        {
+            throw new InvalidOperationException($"{nameof(ServiceLocator)} is already built.");
+        }
+
         var serviceCollection = new ServiceCollection();
         configureServices(serviceCollection);
-        return _serviceProvider = serviceCollection.BuildServiceProvider();
+        return _serviceProvider = new HostServiceContainer(serviceCollection);
     }
 
-    public static object Resolve(Type type, object? key = null)
+    /// <summary>
+    /// Resolves a host-owned service. This method does not establish a collectible lifetime boundary.
+    /// </summary>
+    internal static object Resolve(Type type, object? key = null)
     {
-        if (_serviceProvider == null) throw new InvalidOperationException($"{nameof(ServiceLocator)} is not built.");
-        if (key == null) return _serviceProvider.GetRequiredService(type);
-        return _serviceProvider.GetRequiredKeyedService(type, key);
+        if (_serviceProvider is null)
+        {
+            throw new InvalidOperationException($"{nameof(ServiceLocator)} is not built.");
+        }
+
+        return key is null ? _serviceProvider.GetRequiredService(type) : _serviceProvider.GetRequiredKeyedService(type, key);
     }
 
-    public static T Resolve<T>(object? key = null) where T : class
+    /// <summary>
+    /// Resolves a typed host-owned service from the application container.
+    /// </summary>
+    internal static T Resolve<T>(object? key = null) where T : class
     {
         return (T)Resolve(typeof(T), key);
     }

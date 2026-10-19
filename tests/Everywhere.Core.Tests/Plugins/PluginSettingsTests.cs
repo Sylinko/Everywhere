@@ -2,6 +2,7 @@
 using System.Text.Json.Nodes;
 using Everywhere.Configuration;
 using Everywhere.Plugin.Hosting;
+using Everywhere.Plugin.Hosting.Services;
 using Everywhere.Plugin.Hosting.Installation;
 using Everywhere.Plugin.Hosting.Loading;
 using Everywhere.Plugin.Packaging;
@@ -114,7 +115,7 @@ public sealed class PluginSettingsTests
         public IList<string> Trace { get; } = new List<string>();
 
         private readonly string _root = Path.Combine(Path.GetTempPath(), "Everywhere.Settings.Tests", Guid.NewGuid().ToString("N"));
-        private readonly ServiceProvider _services;
+        private readonly HostServiceContainer _services;
 
         /// <summary>
         /// Shares declared test-host assemblies while excluding the collectible fixture assembly itself.
@@ -122,10 +123,9 @@ public sealed class PluginSettingsTests
         public SettingsHarness()
         {
             Directory.CreateDirectory(_root);
-            _services = new ServiceCollection()
+            _services = new HostServiceContainer(new ServiceCollection()
                 .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
-                .AddSingleton(Trace)
-                .BuildServiceProvider();
+                .AddSingleton(Trace));
             var fixture = typeof(PluginSettingsTests).Assembly.Location;
             var hostFiles = Directory.GetFiles(AppContext.BaseDirectory, "*.dll").Where(path => path != fixture && IsManaged(path));
             Engine = new PluginEngine(new HostAssemblyCatalog(hostFiles), _services, new PluginEngineOptions());

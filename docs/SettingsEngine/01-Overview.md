@@ -29,7 +29,7 @@ Current fixed decisions:
 10. Whole-subtree `System.Text.Json` handling is opt-in through `SettingsSerializedSubtree`.
 11. If serialized-subtree reading fails, keep the existing object unchanged and report a warning.
 12. `Settings` is registered directly as a singleton and may be injected before it has been patched from disk.
-13. The internal `SettingsInitializer` is a transient `IAsyncInitializer`, not a business-facing service.
+13. The internal `SettingsInitializer` is registered as a concrete transient with `AddAsyncInitializer<SettingsInitializer>()`, not exposed as a business-facing service.
 14. Settings migration, JSON load, runtime patching, and change observation happen in `AsyncInitializerIndex.Settings`.
 15. Initializer constructors must not read final settings values or subscribe to settings changes. They may keep references and should consume settings in `InitializeAsync`.
 16. Init-only properties follow a load-time creation initializer model: they can be populated while SettingsEngine creates new objects during startup binding, but SettingsEngine does not provide dynamic JSON-to-runtime reload after initialization.
@@ -41,7 +41,7 @@ Current fixed decisions:
 Startup lifecycle:
 
 1. DI creates the singleton `Settings` object with default values.
-2. DI may construct `IAsyncInitializer` instances before the settings phase.
+2. The startup coordinator reads static `IAsyncInitializer.Index` metadata without constructing initializers. It resolves each group only when the previous group has completed. Other DI dependencies can still construct a service earlier; constructors must not assume initialization has completed.
 3. `SettingsInitializer` implements `IAsyncInitializer.InitializeAsync` and runs at `AsyncInitializerIndex.Settings`.
 4. SettingsInitializer runs pending settings migrations against `settings.json`.
 5. SettingsInitializer loads the JSON document and creates `SettingsEngine<Settings>`. The engine patches the existing `Settings` object in place, creates missing child/list/dictionary objects through descriptor factories, then observes changes for write-back.

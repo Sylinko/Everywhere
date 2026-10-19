@@ -1,5 +1,6 @@
 ﻿using Everywhere.Plugin.Abstractions;
 using Everywhere.Plugin.Hosting.Loading;
+using Everywhere.Plugin.Hosting.Services;
 
 namespace Everywhere.Plugin.Hosting.Lifecycle;
 
@@ -14,7 +15,8 @@ internal sealed class PluginActivation(
     PluginDefinition definition,
     PluginContext context,
     AssemblyRegistry registry,
-    string entryAssemblyName
+    string entryAssemblyName,
+    PluginServiceBoundary services
 )
 {
     /// <summary>
@@ -107,7 +109,13 @@ internal sealed class PluginActivation(
         if (!result.IsCompleted || result.Error is not null) return result;
         IsActive = false;
 
-        result = await RunAsync(context.CleanupAsync, timeout).ConfigureAwait(false);
+        result = await RunAsync(
+            async () =>
+            {
+                await context.CleanupAsync().ConfigureAwait(false);
+                await services.DisposeAsync().ConfigureAwait(false);
+            },
+            timeout).ConfigureAwait(false);
 
         if (result is { IsCompleted: true, Error: null })
         {
@@ -159,12 +167,21 @@ internal sealed class PluginActivation(
             switch (_plugin)
             {
                 case IAsyncDisposable asyncDisposable:
+                {
                     await asyncDisposable.DisposeAsync().ConfigureAwait(false);
                     break;
-
+                }
+                // ReSharper disable once SuspiciousTypeConversion.Global
                 case IDisposable disposable:
+                {
                     disposable.Dispose();
                     break;
+                }
+            }
+
+            if (reason == PluginStopReason.Exit)
+            {
+                await services.DisposeAsync().ConfigureAwait(false);
             }
         }
     }

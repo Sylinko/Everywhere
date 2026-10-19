@@ -11,7 +11,10 @@ public interface IPluginContext
     string PluginId { get; }
 
     /// <summary>
-    /// Gets host services. Contributions published into those services must be removed during hot unload.
+    /// Gets this activation's service provider. Host singletons remain shared, while services closed
+    /// over collectible plugin types belong to the activation. Child scopes retain this boundary.
+    /// Stop using the provider before entry disposal completes; the host releases its scope after
+    /// registered changes have been reversed. Published contributions must be removed during hot unload.
     /// </summary>
     IServiceProvider Services { get; }
 

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Everywhere.Common;
 using Everywhere.Database;
+using Everywhere.Initialization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Cloud;
@@ -14,15 +15,15 @@ public static class ServiceExtension
         {
             services.AddSingleton<OAuthCloudClient>();
             services.AddSingleton<ICloudClient>(x => x.GetRequiredService<OAuthCloudClient>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OAuthCloudClient>());
+            services.AddAsyncInitializer<OAuthCloudClient>();
 
             services.AddSingleton<CloudChatDbSynchronizer>();
             services.AddSingleton<IChatDbSynchronizer>(x => x.GetRequiredService<CloudChatDbSynchronizer>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<CloudChatDbSynchronizer>());
+            services.AddAsyncInitializer<CloudChatDbSynchronizer>();
 
             services.AddSingleton<OfficialModelProvider>();
             services.AddSingleton<IOfficialModelProvider>(x => x.GetRequiredService<OfficialModelProvider>());
-            services.AddSingleton<IAsyncInitializer>(x => x.GetRequiredService<OfficialModelProvider>());
+            services.AddAsyncInitializer<OfficialModelProvider>();
 
             // Register the authenticated HttpClient for API requests.
             // This client includes the CloudAuthenticationHandler which:

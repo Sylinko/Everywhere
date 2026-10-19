@@ -22,7 +22,7 @@ Acceptance criteria:
 Tasks:
 
 1. register `Settings` directly as a singleton
-2. register the internal `SettingsInitializer` only as a transient `IAsyncInitializer`
+2. register the internal `SettingsInitializer` with `AddAsyncInitializer<SettingsInitializer>()`, preserving transient DI ownership and deferred startup resolution
 3. prepare migrations and JSON load in `SettingsInitializer` through `IAsyncInitializer.InitializeAsync`; use `SettingsEngine<Settings>` for patching and observation
 4. make `AsyncInitializerIndex.Settings` the settings initialization phase
 5. move `PersistentKeyValueStorage` and dependent initializers after the settings phase

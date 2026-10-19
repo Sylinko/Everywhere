@@ -27,16 +27,18 @@ public sealed class PluginEngineManager(IServiceProvider services) : IAsyncIniti
     /// </summary>
     public static string PluginDataDirectory => Path.Combine(RuntimeConstants.ConfigurationFolderPath, "plugins-data");
 
-    /// <inheritdoc />
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
-
     /// <summary>
     /// Owns the runtime created during startup; the root DI container owns this service, not plugin entries.
     /// </summary>
     private PluginEngine? _engine;
 
+    #region IAsyncInitializer
+
     /// <inheritdoc />
-    public async Task InitializeAsync(CancellationToken cancellationToken)
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    async Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -90,6 +92,8 @@ public sealed class PluginEngineManager(IServiceProvider services) : IAsyncIniti
             Log.ForContext<PluginEngineManager>().Error("Plugin startup failed: {Detail}", exception.ToString());
         }
     }
+
+    #endregion
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

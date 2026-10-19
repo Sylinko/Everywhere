@@ -1,4 +1,6 @@
-﻿using Avalonia.Threading;
+﻿using System.ComponentModel;
+using System.Reactive.Disposables;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Automation;
 using Everywhere.Common;
@@ -16,16 +18,19 @@ namespace Everywhere.Initialization;
 /// <summary>
 /// Initializes the chat window hotkey listener and preloads the chat window.
 /// </summary>
-public sealed class ChatWindowInitializer : IAsyncInitializer
+public sealed class ChatWindowInitializer : IAsyncInitializer, IDisposable
 {
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Startup;
-
     private readonly IServiceProvider _serviceProvider;
     private readonly Settings _settings;
     private readonly IShortcutListener _shortcutListener;
     private readonly ChatVisualService _chatVisualService;
     private readonly ILogger<ChatWindowInitializer> _logger;
     private readonly Lock _syncLock = new();
+
+    /// <summary>
+    /// Owns settings subscriptions and the currently registered native shortcuts.
+    /// </summary>
+    private readonly CompositeDisposable _shortcutSubscriptions = new();
 
     /// <summary>
     /// Initializes the chat window hotkey listener and preloads the chat window.
@@ -49,7 +54,23 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
         _logger = logger;
     }
 
-    public Task InitializeAsync(CancellationToken cancellationToken)
+    #region IAsyncInitializer
+
+    /// <inheritdoc />
+    static AsyncInitializerIndex IAsyncInitializer.Index => AsyncInitializerIndex.Startup;
+
+    /// <inheritdoc />
+    Task IAsyncInitializer.InitializeAsync(CancellationToken cancellationToken)
+    {
+        return Dispatcher.UIThread.InvokeAsync(
+            () => InitializeWindow(cancellationToken),
+            DispatcherPriority.Normal,
+            cancellationToken).GetTask();
+    }
+
+    #endregion
+
+    private void InitializeWindow(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var chatWindow = _serviceProvider.GetRequiredService<ChatWindow>();
@@ -68,9 +89,12 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
         InitializeShortcut(
             _settings.Shortcut.TakeScreenshot,
             (shortcut, ref subscription) => RegisterScreenshotShortcut(chatWindowViewModel, shortcut, ref subscription));
-
-        return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Removes settings handlers and native shortcuts without dispatching back to a closed UI loop.
+    /// </summary>
+    public void Dispose() => _shortcutSubscriptions.Dispose();
 
     private delegate void CompositeKeyboardShortcutRegister(KeyboardShortcut shortcut, ref IDisposable? subscription);
 
@@ -78,7 +102,20 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
     {
         IDisposable? mainSubscription = null, alternativeSubscription = null;
 
-        shortcut.PropertyChanged += (_, args) =>
+        shortcut.PropertyChanged += HandleShortcutChanged;
+        _shortcutSubscriptions.Add(Disposable.Create(() =>
+        {
+            shortcut.PropertyChanged -= HandleShortcutChanged;
+            using (_syncLock.EnterScope())
+            {
+                DisposeHelper.DisposeToDefault(ref mainSubscription);
+                DisposeHelper.DisposeToDefault(ref alternativeSubscription);
+            }
+        }));
+
+        if (shortcut.IsEnabled) RegisterAll();
+
+        void HandleShortcutChanged(object? sender, PropertyChangedEventArgs args)
         {
             switch (args.PropertyName)
             {
@@ -109,9 +146,7 @@ public sealed class ChatWindowInitializer : IAsyncInitializer
                     break;
                 }
             }
-        };
-
-        if (shortcut.IsEnabled) RegisterAll();
+        }
 
         void RegisterAll()
         {
