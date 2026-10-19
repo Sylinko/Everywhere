@@ -7,7 +7,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
-using Everywhere.AttachedProperties;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Interop;
@@ -46,6 +45,7 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
 
     private readonly Dictionary<Type, TransientWindow> _transientWindows = new();
 
+    private readonly IKeyValueStorage _keyValueStorage = serviceProvider.GetRequiredService<IKeyValueStorage>();
     private readonly INativeHelper _nativeHelper = serviceProvider.GetRequiredService<INativeHelper>();
     private readonly IWindowHelper _windowHelper = serviceProvider.GetRequiredService<IWindowHelper>();
 
@@ -268,13 +268,10 @@ public sealed partial class App(IServiceProvider serviceProvider) : Application,
 
                 var content = serviceProvider.GetRequiredService<TContent>();
                 content.To<ISetLogicalParent>().SetParent(null);
-                window = new TransientWindow
-                {
-                    [SaveWindowPlacementAssist.KeyProperty] = typeof(TContent).FullName,
-                    Content = content
-                };
+                window = new TransientWindow { Content = content };
                 _transientWindows[windowType] = window;
 
+                WindowPlacementAssist.Attach(window, _keyValueStorage, typeof(TContent).FullName ?? typeof(TContent).Name);
                 _windowHelper.InitializeWindow(window);
                 window.Show();
             }
