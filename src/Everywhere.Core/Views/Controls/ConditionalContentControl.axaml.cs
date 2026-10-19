@@ -83,6 +83,21 @@ public sealed class ConditionalContentControl : TransitioningContentControl
     }
 
     /// <summary>
+    /// Defines whether the content is cached and reused when switching between true/false/null conditions.
+    /// </summary>
+    public static readonly StyledProperty<bool> IsCachedProperty =
+        AvaloniaProperty.Register<ConditionalContentControl, bool>(nameof(IsCached));
+
+    /// <summary>
+    /// Gets or sets whether the content is cached and reused when switching between true/false/null conditions.
+    /// </summary>
+    public bool IsCached
+    {
+        get => GetValue(IsCachedProperty);
+        set => SetValue(IsCachedProperty, value);
+    }
+
+    /// <summary>
     /// Defines whether the content viewport smoothly follows the incoming page's size.
     /// </summary>
     public static readonly StyledProperty<bool> AnimateContentSizeProperty =
@@ -122,6 +137,7 @@ public sealed class ConditionalContentControl : TransitioningContentControl
 
     private bool _isContentDirty = true;
     private IDataTemplate? _appliedTemplate;
+    private Control?[]? _cachedControls;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -171,7 +187,8 @@ public sealed class ConditionalContentControl : TransitioningContentControl
 
     private void UpdateContent()
     {
-        var template = Condition switch
+        var condition = Condition;
+        var template = condition switch
         {
             true => TrueContent,
             false => FalseContent,
@@ -193,7 +210,15 @@ public sealed class ConditionalContentControl : TransitioningContentControl
             return;
         }
 
-        var control = template.Build(dataContext);
+        var control = IsCached ?
+            condition switch
+            {
+                true => (_cachedControls ??= new Control[3])[0] ??= template.Build(dataContext),
+                false => (_cachedControls ??= new Control[3])[1] ??= template.Build(dataContext),
+                _ => (_cachedControls ??= new Control[3])[2] ??= template.Build(dataContext),
+            } :
+            template.Build(dataContext);
+
         // Set DataContext before attaching the control so it cannot inherit an incorrect value.
         control?.DataContext = dataContext;
 

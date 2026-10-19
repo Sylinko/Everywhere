@@ -21,9 +21,16 @@
           </Button.Padding>
 
           <!-- <ToolTip.Tip> -->
-          <!--  <ContentPresenter  -->
-          <!--  Content="{TemplateBinding SelectedCustomAssistant}"  -->
-          <!--  ContentTemplate="{StaticResource {x:Type ai:CustomAssistant}}"/>  -->
+          <!--  <StackPanel  -->
+          <!--  MaxWidth="240" Spacing="4">  -->
+          <!--  <TextBlock  -->
+          <!--  Text="{Binding #AssistantName.Text}"  -->
+          <!--  TextWrapping="Wrap"/>  -->
+          <!--  <TextBlock  -->
+          <!--  Classes="Muted Caption"  -->
+          <!--  IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"  -->
+          <!--  Text="{Binding #ReasoningEffort.Text}"/>  -->
+          <!--   </StackPanel> -->
           <!-- </ToolTip.Tip> -->
 
           <DockPanel
@@ -35,7 +42,8 @@
               IconSize="{DynamicResource FontSizeM}"
               Size="{DynamicResource FontSizeXl}"/>
             <TextBlock
-              DockPanel.Dock="Left" VerticalAlignment="Center"
+              x:Name="AssistantName" DockPanel.Dock="Left"
+              VerticalAlignment="Center"
               Text="{Binding SelectedItem?.Name, RelativeSource={RelativeSource TemplatedParent}}"
               TextTrimming="CharacterEllipsis">
               <TextBlock.MaxWidth>
@@ -48,8 +56,9 @@
               </Interaction.Behaviors>
             </TextBlock>
             <TextBlock
-              Classes="Muted Caption" Margin="-2,0,0,0"
-              VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+              x:Name="ReasoningEffort" Classes="Muted Caption"
+              Margin="-2,0,0,0" VerticalAlignment="Center"
+              TextTrimming="CharacterEllipsis">
               <TextBlock.Text>
                 <MultiBinding Converter="{x:Static vc:ReasoningEffortConverters.EffectiveValue}">
                   <Binding
@@ -85,6 +94,7 @@
                 ContentSizeTransitionDuration="0:0:0.4"
                 ContentSizeTransitionEasing="{x:Static shadui:EaseOutBack.Soft}"
                 DataContext="{Binding #PART_AssistantSelectionButton.TemplatedParent}"
+                IsCached="True"
                 IsTransitionReversed="{Binding SelectedSettingsItem, Converter={x:Static ObjectConverters.IsNull}}">
                 <TransitioningContentControl.PageTransition>
                   <CompositePageTransition>
@@ -137,6 +147,15 @@
                               <Setter Property="Background" Value="{DynamicResource PrimaryColor25}"/>
                               <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource PrimaryColor50}"/>
                               <Setter Property="shadui:ButtonAssist.PressedBackground" Value="{DynamicResource PrimaryColor10}"/>
+                              <Setter Property="Interaction.Behaviors">
+                                <BehaviorCollectionTemplate>
+                                  <BehaviorCollection>
+                                    <LoadedTrigger>
+                                      <ScrollToControlAction/>
+                                    </LoadedTrigger>
+                                  </BehaviorCollection>
+                                </BehaviorCollectionTemplate>
+                              </Setter>
                             </Style>
                           </ItemsControl.Styles>
 
@@ -157,25 +176,10 @@
                                   Focusable="False">
                                   <Classes.Selected>
                                     <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                                      <Binding Path="."/>
+                                      <Binding/>
                                       <Binding Path="$parent[v:ChatCustomAssistantSelector].SelectedItem"/>
                                     </MultiBinding>
                                   </Classes.Selected>
-
-                                  <Interaction.Behaviors>
-                                    <AttachedToVisualTreeTrigger>
-                                      <AttachedToVisualTreeTrigger.Actions>
-                                        <ScrollToControlAction>
-                                          <ScrollToControlAction.IsEnabled>
-                                            <MultiBinding Converter="{x:Static vc:CommonConverters.AllEquals}">
-                                              <Binding Path="."/>
-                                              <Binding Path="$parent[v:ChatCustomAssistantSelector].SelectedItem"/>
-                                            </MultiBinding>
-                                          </ScrollToControlAction.IsEnabled>
-                                        </ScrollToControlAction>
-                                      </AttachedToVisualTreeTrigger.Actions>
-                                    </AttachedToVisualTreeTrigger>
-                                  </Interaction.Behaviors>
 
                                   <Grid
                                     MinHeight="36" ColumnSpacing="6"
@@ -277,28 +281,28 @@
                       <Grid
                         Margin="6,0" ColumnDefinitions="Auto,*"
                         ColumnSpacing="12" RowDefinitions="Auto,12,Auto,Auto">
-                        <DockPanel
-                          Grid.Row="0" Grid.Column="0"
-                          Grid.ColumnSpan="2" HorizontalSpacing="4">
-                          <Button
-                            Classes="Ghost Compact NoPadding" DockPanel.Dock="Left"
-                            Margin="-6,-2,-2,-2"
-                            Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
-                            CommandParameter="{x:Null}">
+                        <Button
+                          Classes="Ghost Compact NoPadding" Grid.Row="0"
+                          Grid.Column="0" Grid.ColumnSpan="2"
+                          Margin="-6,-2,0,-2" HorizontalAlignment="Left"
+                          Command="{Binding $parent[v:ChatCustomAssistantSelector].SetSelectedSettingsItemCommand}"
+                          CommandParameter="{x:Null}">
+                          <DockPanel HorizontalSpacing="4">
                             <LucideIcon
-                              Margin="3,4,5,4" Kind="ChevronLeft"
+                              DockPanel.Dock="Left" Margin="3,4,5,4"
+                              Kind="ChevronLeft"
                               Size="{DynamicResource FontSize2Xl}"/>
-                          </Button>
-
-                          <TextBlock
-                            VerticalAlignment="Center"
-                            Text="{Binding Name}"
-                            TextTrimming="CharacterEllipsis">
-                            <Interaction.Behaviors>
-                              <shadui:TextTrimmedToolTipBehavior/>
-                            </Interaction.Behaviors>
-                          </TextBlock>
-                        </DockPanel>
+                            <TextBlock
+                              Margin="0,0,12,0" VerticalAlignment="Center"
+                              FontSize="{DynamicResource FontSizeL}"
+                              Text="{Binding Name}"
+                              TextTrimming="CharacterEllipsis">
+                              <Interaction.Behaviors>
+                                <shadui:TextTrimmedToolTipBehavior/>
+                              </Interaction.Behaviors>
+                            </TextBlock>
+                          </DockPanel>
+                        </Button>
 
                         <v:IconPresenter
                           Grid.Row="2" Grid.RowSpan="2"
