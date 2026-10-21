@@ -54,6 +54,9 @@
     <Project Path="src/Everywhere.Modding.Packaging/Everywhere.Modding.Packaging.csproj" />
     <Project Path="src/Everywhere.Modding.Sdk/Everywhere.Modding.Sdk.csproj" />
   </Folder>
+  <Folder Name="/mods/">
+    <Project Path="mods/Everywhere.Mods.Everything/Everywhere.Mods.Everything.csproj" />
+  </Folder>
   <Folder Name="/mods/samples/">
     <Project Path="mods/samples/Everywhere.Mods.Sample/Everywhere.Mods.Sample.csproj" />
   </Folder>

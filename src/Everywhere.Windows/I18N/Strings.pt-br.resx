@@ -13,21 +13,6 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
-    <data name="Windows_BuiltInChatPlugin_Everything_Header" xml:space="preserve">
-        <value>Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_Description" xml:space="preserve">
-        <value>Use o Everything (um mecanismo de busca de arquivos local de alto desempenho) para procurar arquivos no computador.</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Header" xml:space="preserve">
-        <value>Pesquisar Arquivos com Everything</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_DetailMessage" xml:space="preserve">
-        <value>{0} Arquivos Encontrados</value>
-    </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Pesquise arquivos usando o Everything.</value>
-    </data>
     <data name="Windows_ElevatedMainWarning_Content" xml:space="preserve">
         <value>O Everywhere está sendo executado como administrador. O arrastar e soltar de aplicativos comuns pode não funcionar, e as ações executadas pelo assistente terão permissões de sistema mais altas.</value>
     </data>

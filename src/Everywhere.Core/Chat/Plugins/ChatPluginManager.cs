@@ -407,7 +407,7 @@ public partial class ChatPluginManager : IChatPluginManager, IDisposable
                     plugin.IsDefaultEnabled;
                 if (!isPluginAllowed) continue;
 
-                var registration = plugin is NativeChatPlugin nativePlugin && _registrations.TryGetValue(nativePlugin, out var registered) ?
+                var registration = plugin is ModChatPlugin modPlugin && _registrations.TryGetValue(modPlugin, out var registered) ?
                     registered :
                     null;
                 using var discovery = registration?.EnterInvocation();

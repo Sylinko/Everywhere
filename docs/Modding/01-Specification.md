@@ -593,6 +593,35 @@ The [Settings Specification](05-SettingsSpecification.md) owns persistence, regi
 ownership, migration and failure contracts. The [Settings Developer Guide](06-SettingsDeveloperGuide.md)
 documents the concrete opening API, generated providers, page ownership and migration declarations.
 
+### Windows Everything mod
+
+The mod explicitly opts into SettingsEngine<EverythingSettings> and its configuration analyzer.
+ExecutablePath and InstanceName are exposed in the chat tool page by overriding ChatPlugin.SettingsItems.
+Everything does not register a separate mod-wide settings entry. IModSettingsRegistry remains
+an independent optional display channel, and neither display contract requires SettingsEngine. The engine saves to
+`mods-data/everywhere.everything/settings.json`. Each query captures both settings on the UI thread
+and uses that pair throughout; edits affect the next query and do not reconnect active work. Settings
+format 1.0.0 does not migrate the previous WIP manual document. See the
+[settings contract](05-SettingsSpecification.md) for persistence and final-save ownership.
+
+`everywhere.everything` is the first Windows x64 native-backed tool mod. Its tool identity is
+`mod.everything`. This WIP identity replaces the former built-in key directly, without a migration or alias. Non-Windows platforms skip it. No native client or process starts
+during entry initialization; the first query connects to the default or conventional `1.5a` endpoint,
+then starts a discovered user installation if needed. User-owned processes are never registered
+with Watchdog, stopped on idle/unload, upgraded, or given mod-owned database paths.
+
+Only absence of a user installation permits the bundled 1.5 private fallback. That process has a
+unique instance name, a working executable copy/configuration/database in mod data, and its own
+Watchdog registration. A private 1.5 instance requires a compatible running 1.5 indexing service
+or existing administrator privileges. A 1.4 service is not compatible. Conventional installed
+service executable versions and endpoints are checked before launch; custom service configurations
+need the user installation workflow. The mod neither elevates nor installs an indexing service. An explicit
+configured instance is authoritative, with no silent switch to another index. Default 1.4 is supported
+through SDK 2; 1.5 through SDK 3 where available. Client disposal releases query state, never the
+user process. SDK 3 cancellation shuts down the connection and joins the call; SDK 2 synchronous
+queries cannot be forcibly aborted. Hot retirement that cannot drain remains `RestartRequired`.
+See the [mod instructions](../../mods/Everywhere.Mods.Everything/README.md).
+
 ### Package installation, updates and persistent data
 
 **Design agreed; startup source selection and installation implemented, complete package management pending.** The SDK distributes standard ZIP packages. The host extracts each installation once and loads from its final directory, not directly from the archive or from a fresh temporary copy on every launch. Preserve package-relative paths. Development tools may accept the equivalent unpacked directory without requiring a ZIP round trip; this does not permit overwriting active installation files. The filename extension and exact directory names are tooling details, not another container format.

@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop"/>
-    <PackageReference Include="EverythingNetCore"/>
     <PackageReference Include="Microsoft.Windows.CsWin32">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -62,8 +61,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Icons\Everything.svg"/>
-    <AvaloniaResource Include="Assets\Icons\Everything.svg"/>
     <None Remove="Assets\Icons\PowerShell.svg"/>
     <None Remove="Assets\Icons\Windows11.svg"/>
   </ItemGroup>

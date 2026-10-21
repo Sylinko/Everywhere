@@ -15,7 +15,6 @@ using Everywhere.ProcessIsolation.Rpc;
 using Everywhere.ProcessIsolation.Watchdog;
 using Everywhere.StrategyEngine;
 using Everywhere.Windows.Automation;
-using Everywhere.Windows.Chat.Plugins;
 using Everywhere.Windows.Common;
 using Everywhere.Windows.Initialization;
 using Everywhere.Windows.Interop;
@@ -126,12 +125,6 @@ public static class Program
                 .AddDatabaseAndStorage()
                 .AddCloudClient()
                 .AddChatEssentials()
-
-                #endregion
-
-                #region Chat Plugins
-
-                .AddTransient<BuiltInChatPlugin, EverythingPlugin>()
 
                 #endregion
 

@@ -24,8 +24,6 @@ public sealed class NativeHelper : INativeHelper
     /// </summary>
     public bool IsInstalled => MainBundle.BundlePath.StartsWith("/Applications", StringComparison.OrdinalIgnoreCase);
 
-    public bool IsAdministrator => throw new PlatformNotSupportedException();
-
     /// <summary>
     /// Manages whether the app starts automatically on user login.
     /// A per-user LaunchAgent executes the application bundle at login.

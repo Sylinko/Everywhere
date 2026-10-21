@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <data name="Everything_Header" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="Everything_Description" xml:space="preserve">
+    <value>Use Everything (a high-performance local file search engine) to search for files on your computer.</value>
+  </data>
+  <data name="Everything_SearchFiles_Header" xml:space="preserve">
+    <value>Search Files via Everything</value>
+  </data>
+  <data name="Everything_SearchFiles_DetailMessage" xml:space="preserve">
+    <value>{0} Items Found</value>
+  </data>
+  <data name="Everything_SearchFiles_Description" xml:space="preserve">
+    <value>Search files using Everything search engine.</value>
+  </data>
+  <data name="Everything_ExecutablePath_Header" xml:space="preserve">
+    <value>Everything executable</value>
+  </data>
+  <data name="Everything_ExecutablePath_Description" xml:space="preserve">
+    <value>Optional absolute path to Everything.exe. Used only when the requested instance is not running. Leave empty to find an installed copy. Changes apply to the next query.</value>
+  </data>
+  <data name="Everything_InstanceName_Header" xml:space="preserve">
+    <value>Everything instance name</value>
+  </data>
+  <data name="Everything_InstanceName_Description" xml:space="preserve">
+    <value>Optional exact instance name. Leave empty to use the default Everything 1.4 instance or the 1.5a instance. Changes apply to the next query.</value>
+  </data>
+</root>

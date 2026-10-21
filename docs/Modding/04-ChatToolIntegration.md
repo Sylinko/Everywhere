@@ -16,9 +16,11 @@ NativeChatPlugin is the common base for in-process managed tools. BuiltInChatPlu
 the manager's NativePlugins collection. MCP tools keep `mcp.{Id}` identities and their own collection.
 Mod tool-group names must be stable and unique within the mod namespace. Key identifies saved
 settings and approval rules; model-facing aliases and activation lifetimes must not change it.
-Registration ownership, not the Key prefix, determines whether functions use revocable proxies.
+Only ModChatPlugin enters the reversible registration path. Built-in tools are constructor-supplied;
+MCP tools keep their separate connection lifecycle. Registration ownership, not parsing the Key prefix,
+determines whether functions use revocable proxies.
 
-`IChatPluginManager.RegisterChatPlugin(NativeChatPlugin)` returns an asynchronous reversal handle.
+`IChatPluginManager.RegisterChatPlugin(ModChatPlugin)` returns an asynchronous reversal handle.
 Override ChatPlugin.SettingsItems to display tool-specific settings in the existing chat tool page.
 This does not require SettingsEngine or IModSettingsRegistry. The latter registers a separate,
 optional mod-wide settings entry for a future mod page. Tools can expose different settings
@@ -100,7 +102,7 @@ exceptions, arguments, filters, UI objects or third-party
 caches collectible. Preserve the existing chat persistence pipeline. For predictable hot unloading,
 return host-owned data or already materialized JSON, and use generated serialization where reflective
 caches would otherwise retain mod types. Such data choices belong to the mod, not an automatic
-host conversion. A string is one simple host-owned result shape. Unconfirmed collection still requires restart.
+host conversion. The Everything tool returns a string. Unconfirmed collection still requires restart.
 
 Persistent chat/localization data must use host-owned key/value types. Formatted and aggregate
 locale keys copy their argument containers: C# collection expressions can otherwise create a

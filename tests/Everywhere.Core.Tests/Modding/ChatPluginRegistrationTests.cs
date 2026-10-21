@@ -97,11 +97,58 @@ public sealed class ChatPluginRegistrationTests
     }
 
     /// <summary>
+    /// Built-in tools keep their ordinary functions and lifetime when a same-named mod tool retires.
+    /// </summary>
+    [AvaloniaTest]
+    public async Task RegisterChatPlugin_WithSameNamedBuiltIn_RetiresOnlyModFunctions()
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        using var builtIn = new BuiltInEchoPlugin();
+        using var manager = new ChatPluginManager(
+            services, [builtIn], new Settings(services), Substitute.For<IRuntimeManager>(), NullLogger<ChatPluginManager>.Instance);
+        using var mod = new BlockingPlugin();
+        await using var registration = manager.RegisterChatPlugin(mod);
+        using var chat = new ChatContext();
+        var scope = await manager.CreateScopeAsync(new CustomAssistant(), chat, null, CancellationToken.None);
+        var builtInSnapshot = scope.Plugins.Single(plugin => plugin.Key == "builtin.blocking");
+        var modFunction = scope.Plugins.Single(plugin => plugin.Key == "mod.blocking").Single();
+        Assert.That(builtInSnapshot.GetChatFunctions().Single(), Is.SameAs(builtIn.GetChatFunctions().Single()));
+
+        await registration.DisposeAsync();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Assert.That(manager.NativePlugins.Single(), Is.SameAs(builtIn));
+        Assert.That((await builtInSnapshot.Single().InvokeAsync(new Kernel())).GetValue<string>(), Is.EqualTo("built-in"));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await modFunction.InvokeAsync(new Kernel()));
+    }
+
+    /// <summary>
     /// Uses the production manager without unrelated runtimes or MCP connections.
     /// </summary>
     private static ChatPluginManager CreateManager(IServiceProvider services)
     {
         return new ChatPluginManager(services, [], new Settings(services), Substitute.For<IRuntimeManager>(), NullLogger<ChatPluginManager>.Instance);
+    }
+
+    /// <summary>
+    /// Supplies a permanent tool with the same model-facing name as the revocable fixture.
+    /// </summary>
+    private sealed class BuiltInEchoPlugin : BuiltInChatPlugin
+    {
+        /// <inheritdoc />
+        public override bool IsDefaultEnabled => true;
+
+        /// <inheritdoc />
+        public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("Built-in");
+
+        /// <inheritdoc />
+        public override IDynamicLocaleKey DescriptionKey { get; } = new DirectLocaleKey("Permanent test tool");
+
+        public BuiltInEchoPlugin() : base("blocking")
+        {
+            _functionsSource.Add(new NativeChatFunction(Echo, ChatFunctionPermissions.None));
+        }
+
+        private static string Echo() => "built-in";
     }
 
     /// <summary>
