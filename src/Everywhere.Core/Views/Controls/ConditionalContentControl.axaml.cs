@@ -1,6 +1,6 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia.Animation.Easings;
+using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Animation.Easings;
 
 namespace Everywhere.Views;
 
@@ -143,13 +143,64 @@ public sealed class ConditionalContentControl : TransitioningContentControl
     {
         base.OnPropertyChanged(change);
 
+        if (_cachedControls is { } cachedControls)
+        {
+            if (change.Property == TrueContentProperty)
+            {
+                cachedControls[0] = null;
+            }
+            else if (change.Property == FalseContentProperty)
+            {
+                cachedControls[1] = null;
+            }
+            else if (change.Property == NullContentProperty)
+            {
+                cachedControls[2] = null;
+            }
+            else if (change.Property == IsCachedProperty && !IsCached)
+            {
+                _cachedControls = null;
+            }
+        }
+
         if (change.Property == ConditionProperty ||
             change.Property == TrueContentProperty ||
             change.Property == FalseContentProperty ||
             change.Property == NullContentProperty ||
-            change.Property == ContentDataBindingProperty)
+            change.Property == ContentDataBindingProperty ||
+            change.Property == IsCachedProperty)
         {
             InvalidateContent();
+        }
+    }
+
+    /// <summary>
+    /// Applies the current branch synchronously, cancelling any running or pending page transition.
+    /// Cached controls remain reusable; the outgoing presenter releases its content immediately.
+    /// </summary>
+    public void UpdateContentWithoutTransition()
+    {
+        VerifyAccess();
+        ApplyStyling();
+
+        // PageTransition = null only disables new transitions. Cancel the base control's own
+        // token as well, so its asynchronous completion cannot hide a reused presenter later.
+        CurrentTransition(this)?.Cancel();
+        CurrentTransition(this) = null;
+        ShouldAnimate(this) = false;
+
+        var transition = PageTransition;
+        SetCurrentValue(PageTransitionProperty, null);
+        try
+        {
+            _isContentDirty = false;
+            UpdateContent();
+            HideOldPresenter(this);
+            InvalidateMeasure();
+        }
+        finally
+        {
+            SetCurrentValue(PageTransitionProperty, transition);
         }
     }
 
@@ -188,11 +239,11 @@ public sealed class ConditionalContentControl : TransitioningContentControl
     private void UpdateContent()
     {
         var condition = Condition;
-        var template = condition switch
+        var (cacheIndex, template) = condition switch
         {
-            true => TrueContent,
-            false => FalseContent,
-            _ => NullContent,
+            true => (0, TrueContent),
+            false => (1, FalseContent),
+            _ => (2, NullContent),
         };
 
         var dataContext = ContentDataBinding ?? DataContext;
@@ -207,16 +258,16 @@ public sealed class ConditionalContentControl : TransitioningContentControl
         if (ReferenceEquals(template, _appliedTemplate) && Content is Control existingControl)
         {
             existingControl.DataContext = dataContext;
+            if (IsCached)
+            {
+                (_cachedControls ??= new Control[3])[cacheIndex] = existingControl;
+            }
+
             return;
         }
 
         var control = IsCached ?
-            condition switch
-            {
-                true => (_cachedControls ??= new Control[3])[0] ??= template.Build(dataContext),
-                false => (_cachedControls ??= new Control[3])[1] ??= template.Build(dataContext),
-                _ => (_cachedControls ??= new Control[3])[2] ??= template.Build(dataContext),
-            } :
+            (_cachedControls ??= new Control[3])[cacheIndex] ??= template.Build(dataContext) :
             template.Build(dataContext);
 
         // Set DataContext before attaching the control so it cannot inherit an incorrect value.
@@ -225,4 +276,15 @@ public sealed class ConditionalContentControl : TransitioningContentControl
         _appliedTemplate = template;
         Content = control;
     }
+
+    // Avalonia 12.1.3 has no public cancellation API. Keep these version-sensitive accesses
+    // together rather than duplicating TransitioningContentControl's presenter lifecycle.
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_currentTransition")]
+    private static extern ref CancellationTokenSource? CurrentTransition(TransitioningContentControl control);
+
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_shouldAnimate")]
+    private static extern ref bool ShouldAnimate(TransitioningContentControl control);
+
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "HideOldPresenter")]
+    private static extern void HideOldPresenter(TransitioningContentControl control);
 }

@@ -1,4 +1,4 @@
-using Avalonia.Animation.Easings;
+﻿using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 
@@ -48,7 +48,6 @@ public sealed class ContentSizeTransitionPanel : Panel
 
     private readonly Dictionary<Control, Size> _pageSizes = new();
     private TopLevel? _topLevel;
-    private Size _availableSize;
     private Size _currentSize;
     private Size _fromSize;
     private Size _targetSize;
@@ -61,19 +60,46 @@ public sealed class ContentSizeTransitionPanel : Panel
     {
         base.OnAttachedToVisualTree(e);
         _topLevel = TopLevel.GetTopLevel(this);
+        if (_topLevel is not null)
+        {
+            _topLevel.PropertyChanged += HandleTopLevelPropertyChanged;
+        }
+
         InvalidateMeasure();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
+        if (_topLevel is not null)
+        {
+            _topLevel.PropertyChanged -= HandleTopLevelPropertyChanged;
+        }
+
         _topLevel = null;
+        ResetTransition();
+    }
+
+    private void HandleTopLevelPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == IsVisibleProperty)
+        {
+            // Hiding a pooled window does not detach its content. Reset synchronously rather than
+            // waiting for an animation frame that may not run until the window is visible again.
+            // The next appearance starts at its own natural size, even if its content has changed.
+            ResetTransition();
+        }
+    }
+
+    private void ResetTransition()
+    {
         _hasArranged = false;
         _isAnimating = false;
         _startedAt = null;
         _pageSizes.Clear();
         // A queued frame cannot be cancelled. Keep its pending flag until that callback runs,
         // including when this panel is reattached before the callback arrives.
+        InvalidateMeasure();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -100,27 +126,22 @@ public sealed class ContentSizeTransitionPanel : Panel
             return base.MeasureOverride(availableSize);
         }
 
-        var constraintsChanged = _availableSize != availableSize;
-        _availableSize = availableSize;
         var targetSize = default(Size);
         foreach (var child in Children)
         {
             if (!child.IsVisible)
+            {
                 continue;
+            }
 
             if (child is ContentPresenter presenter && ReferenceEquals(presenter.Content, TargetContent))
             {
-                // Discover the endpoint under real parent constraints, then measure and arrange
-                // at that endpoint. Animation frames never feed the viewport size into the page.
-                // Only new content, invalidated page layout or changed constraints require discovery.
-                if (!_pageSizes.TryGetValue(child, out var pageSize) || constraintsChanged || !child.IsMeasureValid)
-                {
-                    child.Measure(availableSize);
-                    pageSize = child.DesiredSize;
-                }
-
-                child.Measure(pageSize);
-                targetSize = pageSize;
+                // Always read the current desired size under real parent constraints. A child may
+                // already have been remeasured before invalidating this panel, so IsMeasureValid
+                // cannot tell us whether a cached endpoint is still current. Avalonia itself skips
+                // unchanged measurements; never feed the animated viewport back into this page.
+                child.Measure(availableSize);
+                targetSize = child.DesiredSize;
                 _pageSizes[child] = targetSize;
             }
             else
@@ -133,7 +154,7 @@ public sealed class ContentSizeTransitionPanel : Panel
             }
         }
 
-        if (!_hasArranged || _topLevel is null || !IsEnabled || ContentSizeTransitionDuration <= TimeSpan.Zero)
+        if (!_hasArranged || _topLevel is null || !IsEnabled || !IsEffectivelyVisible || ContentSizeTransitionDuration <= TimeSpan.Zero)
         {
             _isAnimating = false;
             _startedAt = null;
@@ -159,24 +180,28 @@ public sealed class ContentSizeTransitionPanel : Panel
         if (!AnimateContentSize)
         {
             _currentSize = _targetSize = finalSize;
-            _hasArranged = true;
+            _hasArranged = IsEffectivelyVisible;
             return base.ArrangeOverride(finalSize);
         }
 
         foreach (var child in Children)
         {
             if (child.IsVisible && _pageSizes.TryGetValue(child, out var pageSize))
+            {
                 child.Arrange(new Rect(pageSize));
+            }
         }
 
-        _hasArranged = true;
+        _hasArranged = IsEffectivelyVisible;
         return finalSize;
     }
 
     private void RequestFrame()
     {
         if (!_isAnimating || _frameRequested || _topLevel is null)
+        {
             return;
+        }
 
         _frameRequested = true;
         _topLevel.RequestAnimationFrame(OnAnimationFrame);
@@ -186,7 +211,9 @@ public sealed class ContentSizeTransitionPanel : Panel
     {
         _frameRequested = false;
         if (!_isAnimating || _topLevel is null)
+        {
             return;
+        }
 
         if (!AnimateContentSize || !IsEnabled || !IsEffectivelyVisible || ContentSizeTransitionDuration <= TimeSpan.Zero)
         {
