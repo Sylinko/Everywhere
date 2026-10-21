@@ -5,8 +5,9 @@
     <PatcherExe>$(PatchesBasePath)Everywhere.BuildTask.Patcher\bin\$(Configuration)\net10.0\Everywhere.BuildTask.Patcher.dll</PatcherExe>
   </PropertyGroup>
 
-  <UsingTask TaskName="Everywhere.BuildTask.Patcher.WeaveAssembliesTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" />
-  <UsingTask TaskName="Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" />
+  <!-- The patcher targets net10.0; select the .NET task host explicitly. -->
+  <UsingTask TaskName="Everywhere.BuildTask.Patcher.WeaveAssembliesTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" Runtime="NET" />
+  <UsingTask TaskName="Everywhere.BuildTask.Patcher.ReplaceItemsByFileNameTask" AssemblyFile="$(PatcherExe)" TaskFactory="TaskHostFactory" Runtime="NET" />
 
   <!-- Patcher tool: build-order dependency only, no runtime reference -->
   <ItemGroup>
