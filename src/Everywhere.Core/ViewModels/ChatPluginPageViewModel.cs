@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,6 +28,8 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             OnPropertyChanged(nameof(SelectedMcpPluginPresentation));
             OnPropertyChanged(nameof(SelectedMcpPlugin));
 
+            // A template may outlive selection briefly. Clear its source as well as removing the tab.
+            foreach (var tab in _contentTabItems.AsValueEnumerable().OfType<SettingsTabItem>()) tab.Clear();
             _contentTabItems.Clear();
             if (value is null) return;
 
@@ -89,6 +92,21 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             manager,
             ToolSettingsContext.CreateGlobal(settings.Plugin.ToolEnablementRulesets, settings.Plugin.ToolBypassApprovalRulesets));
         LifetimeDisposables.Add(ToolSettings);
+        ToolSettings.Plugins.CollectionChanged += HandlePluginsChanged;
+        LifetimeDisposables.Add(
+            Disposable.Create(() =>
+            {
+                ToolSettings.Plugins.CollectionChanged -= HandlePluginsChanged;
+                SelectedPlugin = null;
+            }));
+    }
+
+    /// <summary>
+    /// Releases the selected tool and its detail tabs when its registration disappears from the UI catalog.
+    /// </summary>
+    private void HandlePluginsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (SelectedPlugin is { } selected && !ToolSettings.Plugins.Contains(selected)) SelectedPlugin = null;
     }
 
     [RelayCommand]
@@ -151,8 +169,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             else if (count < configurations.Count)
             {
                 ToastHost
-                    .CreateToast(
-                        LocaleKey.ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title.I18N().Format(count, configurations.Count - count))
+                    .CreateToast(LocaleKey.ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title.I18N().Format(count, configurations.Count - count))
                     .OnBottomRight()
                     .ShowWarning();
             }
@@ -421,11 +438,24 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         IDynamicLocaleKey Header { get; }
     }
 
-    public class SettingsTabItem(IReadOnlyList<SettingsItem> settingsItems) : IContentTabItem
+    /// <summary>
+    /// Presents one tool's settings and releases its bindings when selection changes or the tool is removed.
+    /// </summary>
+    public partial class SettingsTabItem(IReadOnlyList<SettingsItem> settingsItems) : ObservableObject, IContentTabItem
     {
+        /// <inheritdoc />
         public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
 
-        public IReadOnlyList<SettingsItem> SettingsItems { get; } = settingsItems;
+        /// <summary>
+        /// Gets the settings while the tool is selected, or null after detachment.
+        /// </summary>
+        [ObservableProperty]
+        public partial IReadOnlyList<SettingsItem>? SettingsItems { get; private set; } = settingsItems;
+
+        /// <summary>
+        /// Drops the settings source and notifies any retained view before the tab is removed.
+        /// </summary>
+        public void Clear() => SettingsItems = null;
     }
 
     public class FunctionsTabItem(ToolPluginPresentation plugin) : IContentTabItem

@@ -571,98 +571,21 @@ specific to each library and platform.
 
 ### Register chat tools without retaining their implementation
 
-Derive your tool group from ModChatPlugin and populate it with NativeChatFunction instances.
-BuiltInChatPlugin is reserved for application-owned tools; both share NativeChatPlugin. The manager
-exposes them together through NativePlugins. A group named `everything` has Key `mod.everything`.
-Choose a stable group name that does not collide with another installed mod's group. Key is used
-by persisted settings and approval rules, independently of names deduplicated for the model.
+Use ModChatPlugin and NativeChatFunction with IChatPluginManager.RegisterChatPlugin.
+See [Chat Tool Integration](04-ChatToolIntegration.md#author-workflow) for registration lifetime,
+approval hooks, JSON metadata and the limits of retained snapshots.
 
-Resolve `IChatPluginManager` from host services and call `RegisterChatPlugin(yourTool)`.
-Register its returned IAsyncDisposable handle with the context. For an entry that owns ongoing
-queries, signal its stop source, dispose the handle to revoke and drain calls, then dispose the
-underlying connection/tool in entry disposal. The handle supports repeated disposal, so subsequent
-hot-unload reversal is safe. This also releases queries on ordinary exit, when the general reversal
-queue is deliberately skipped.
+### Mod settings and settings pages
 
-Discovery exposes your actual tool instance, including its settings, warnings and dynamic
-`GetAvailableFunctionsAsync` implementation. Each new chat scope uses that discovery and the normal
-enablement rules. Existing scopes retain their selected tools through weak, revocable function proxies.
-Use those scopes for chat execution; retaining the real instance from the discovery list retains the mod.
+context.OpenSettingsAsync opens a mod-owned SettingsEngine<TSettings> from
+`IModContext.DataDirectory/settings.json` using the shared settings pipeline, explicit JSON metadata
+and mod-local migrations. IModSettingsRegistry publishes lazy SettingsItems without changing
+IMod. Both are implemented in the working tree; the management page is not part of this batch.
 
-Closing the handle removes discovery, rejects new calls through old proxies and waits for admitted
-calls, post-invocation filters and streaming enumerators to finish or be disposed. Close it before
-disposing connections or the tool itself. A newly registered activation does not revive old proxies.
-Permission and friendly-rendering callbacks are also revoked. UI contributions still need their own
-removal/disposal; this registration does not make arbitrary controls or display objects collectible.
-
-Your methods keep the normal SK execution behavior: complex parameter binding, optional defaults,
-injected services, filters, cancellation and streaming. The host does not parse arguments, clone the
-kernel, convert result values or replace exceptions. It only changes FunctionResult.Function to refer
-to the proxy, so a stored result does not retain the original method through that property.
-
-Pass callbacks directly to NativeChatFunction using `permissionConsentHook` and `beforeCallHook`:
-
-- `PermissionConsentHook` receives FunctionCallContext and PermissionConsentRequest when existing
-  rules have not bypassed approval. Return true to allow, false to deny, or null to continue normal
-  approval. You may customize the request's HeaderKey, RememberMasks and CustomOptions. Obtain the
-  original call from `context.FunctionCallContent`. Use ToolConsentOption.BypassModApproval for
-  a host-handled option to remember approval for the current tool group; arbitrary option handlers
-  are not part of outer approval. The host owns dialogs, automatic review and rule persistence.
-- `BeforeCallHook` receives the original call before approval, even when Arguments is null or empty.
-  Return a ChatPluginDisplayBlock to display, or null. The call may still be denied, so do not execute
-  the tool operation here. Use host-owned display types and values that can outlive your mod.
-
-Both hooks are synchronous and do not imply UI-thread execution. The host forwards registered hooks
-without retaining mod delegates in chat snapshots and stops forwarding when registration closes.
-Consent requests can stay alive while a user decides: their titles, options and values must not keep
-mod-defined objects alive. Existing FullAccess and bypass rules take precedence over the hook.
-Returning null in Auto mode requests the existing automatic reviewer rather than opening a dialog.
-
-The proxy exposes a persistent description, not the original CLR reflection surface. Names,
-descriptions, required flags and SK-generated schemas remain available; ParameterType and
-UnderlyingMethod do not. Serializer options are not copied into the description.
-Parameter metadata's `DefaultValue` is assigned directly, without a type whitelist, serialization or
-conversion. Reference-type defaults keep the original object reference, including mutable objects.
-If a default is a mod-owned object or contains references to mod objects or types, a retained
-chat snapshot can prevent unloading. You are responsible for these references; the host will not
-erase defaults to force collection, and unconfirmed collection results in `RestartRequired`.
-SK's ordinary method-derived defaults already use strings. Actual argument/default binding remains
-SK's job; setting description metadata does not add an optional parameter to the underlying method.
-
-Function metadata's `AdditionalProperties` is shallow-copied into a new host-owned dictionary for each
-proxy and clone. All keys and values are preserved without filtering or serialization. Changing which
-entries exist in the original dictionary does not change an existing snapshot, but objects stored as
-values are still shared. Strings and Boolean flags do not themselves retain your mod. Mod-owned
-objects, delegates, `Type` values and collections containing them can prevent unloading for as long as
-the chat snapshot is retained. You are responsible for these references; the host will not erase chat
-metadata to force collection. If collection cannot be confirmed, the result is `RestartRequired`.
-
-For complex mod-owned parameter types, you can pass `jsonSerializerOptions` to NativeChatFunction.
-These options go directly to SK for schema generation and binding. For example:
-
-```csharp
-new NativeChatFunction(
-    Search,
-    ChatFunctionPermissions.FileRead,
-    jsonSerializerOptions: SearchJsonContext.Default.Options);
-```
-
-Use your normal System.Text.Json source-generated context or converters; include metadata for the
-parameter and return types SK needs. The host patches SK's strong parameter-converter cache to use
-weak keys for collectible types, without changing conversion behavior.
-
-Results remain the objects your method returns. Prefer host-owned result types, strings or a prebuilt
-JsonElement when chat history must survive mod removal. A mod-defined result, exception or
-metadata value held by history can still retain the mod. Reflection-based serialization elsewhere
-can also retain type/accessor caches; generated serialization avoids that particular path. Existing
-chat persistence rules still apply. The proxy does not promise that every object graph can unload,
-and the engine reports RestartRequired when collection cannot be confirmed.
-
-Use host-owned locale keys and ordinary strings/numbers in persistent messages. Do not put a
-mod enum, Type or custom object into a DirectLocaleKey. FormattedDynamicLocaleKey and
-AggregateDynamicLocaleKey copy the collection container, because a compiler-generated collection
-inside a mod can otherwise retain its assembly even when each element is a host-owned key.
-That copy does not remove references inside mod-defined elements.
+The [Settings Developer Guide](06-SettingsDeveloperGuide.md) shows generated descriptors, opening,
+UI registration, final saving and migration declarations. Keep the engine entry-owned so ordinary
+exit saves as well as hot unload. Do not substitute the host's Settings singleton or root migration
+container for this integration.
 
 ### Declare package names, descriptions and README files
 

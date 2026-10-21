@@ -92,6 +92,7 @@ public static class ServiceExtensions
         /// </summary>
         public IServiceCollection AddModding() =>
             services
+                .AddSingleton<IModSettingsRegistry, ModSettingsRegistry>()
                 .AddSingleton<ModEngineManager>().AddAsyncInitializer<ModEngineManager>();
 
         public IServiceCollection AddViewsAndViewModels() =>

@@ -3,8 +3,10 @@
 Read the [Settings Specification](05-SettingsSpecification.md) for the contract and the
 [main developer guide](02-ModDeveloperGuide.md) for mod lifecycle and packaging.
 
-**Status: persistence and migrations implemented; not yet released.** SettingsEngine<TSettings> and
-mod descriptor generation are available. UI registration is a separate implementation batch.
+**Status: implemented in the working tree; not yet merged or released.** SettingsEngine<TSettings>,
+mod descriptor generation, IModSettingsRegistry and migration initialization are available.
+The chat tool page uses ChatPlugin.SettingsItems for tool-specific settings. The independent,
+optional mod-wide registry is available; its general mod management page is not implemented.
 
 ## Define a separate settings model
 
@@ -115,6 +117,7 @@ Everywhere's Settings. A typical entry body is:
 
 ```csharp
 private SettingsEngine<SearchSettings>? _settings;
+private IAsyncDisposable? _settingsPage;
 
 public async ValueTask InitializeAsync(IModContext context, CancellationToken cancellationToken)
 {
@@ -126,14 +129,22 @@ public async ValueTask InitializeAsync(IModContext context, CancellationToken ca
         new SearchSettingsDescriptors(),
         configureMigrations: services => services.AddSettingsMigration<RenameSearchLimit>(),
         cancellationToken: cancellationToken);
+
+    var registry = context.Services.GetRequiredService<IModSettingsRegistry>();
+    _settingsPage = registry.Register(context, () => model.SettingsItems);
+    context.Register(_settingsPage);
 }
 
 public async ValueTask DisposeAsync()
 {
-    // Detach editors and stop and join any work that can still change the model here.
-    if (_settings is not null)
+    try
     {
-        await _settings.DisposeAsync();
+        if (_settingsPage is not null) await _settingsPage.DisposeAsync();
+        // Stop and join any mod work that can still change the model here.
+    }
+    finally
+    {
+        if (_settings is not null) await _settings.DisposeAsync();
     }
 }
 ```
@@ -148,20 +159,73 @@ The optional settingsFileName parameter selects a file under DataDirectory and d
 choosing a different display entry does not select or create a different file.
 
 Entry disposal saves on both hot unload and application exit. Merely calling context.Register on the
-engine is insufficient: ordinary exit skips registered reversal. Release editors and stop model writers
-before disposing the engine. Saving itself does not require a UI dispatcher.
+engine is insufficient: ordinary exit skips registered reversal. The page handle is idempotent, so
+entry disposal can close it early and later context reversal can await it again. On hot stop this
+closure detaches bindings before the final save. On exit it drops registry ownership without waiting
+for the dispatcher. IModContext.StopReason is set before Stopping: Unload includes initialization
+failure, and Exit means process shutdown. Authors do not need to branch when using the standard handle.
 
 If initialization fails, the host disposes the entry and registered resources that were created.
 Do not replace an unreadable or incompatible document with defaults. Stop external writers before
 flushing; a save failure is reported rather than silently treated as success. Forced termination
 cannot guarantee persistence.
 
-## Choose a presentation entry
+## Register an optional mod-wide settings entry
 
-A chat tool can override the existing ChatPlugin.SettingsItems property to expose its model's editor.
-This route does not require a mod-wide registry or establish persistence ownership. A separate
-optional mod-wide registry and management page are planned; their lifecycle integration is outside
-this persistence batch. Document when edits take effect in your mod's operations.
+IModSettingsRegistry is an application service obtained from context.Services. Register accepts
+an activation context and Func<SettingsItems>, and returns an asynchronous removal handle. Retain
+that handle on the entry and also register its reversal responsibility with context.Register.
+
+The factory is invoked on the UI thread only when a consumer calls registry.CreateView(modId).
+That method must be called on the UI thread; it returns the same Control while the registration is
+active, or null when unavailable. It never loads a mod. A future hot-reload entry point must drain ongoing UI retirement before shutting down
+the dispatcher; switching to Exit does not retroactively replace a hot stop already in progress.
+One live registration per mod ID is
+accepted; use SettingsItems groups for multiple categories. A handle from an old activation cannot
+remove a replacement's entry.
+
+The future management page will show installed mods on the left and details, README and settings
+on the right. Disabled, skipped or unloaded mods have no typed settings editor in this design.
+They are not activated just to render one. Persistence works without any page being opened.
+
+This entry is optional even when the mod uses SettingsEngine. Conversely, a registered editor
+can use another persistence mechanism or edit non-persistent state. It belongs to the whole mod;
+it does not replace settings supplied by an individual chat tool.
+
+## Expose settings for a chat tool
+
+Override the existing ChatPlugin.SettingsItems property. The model may be the same instance owned
+by SettingsEngine, but the display contract does not depend on that engine:
+
+```csharp
+// In the chat tool subclass, _settings is the mod-owned settings model.
+public override IReadOnlyList<SettingsItem>? SettingsItems => _settings.SettingsItems;
+
+// In the mod entry, publish the tool through the normal chat registration.
+_toolsRegistration = context.Services.GetRequiredService<IChatPluginManager>()
+    .RegisterChatPlugin(tools);
+context.Register(_toolsRegistration);
+```
+
+No IModSettingsRegistry registration is needed for this route.
+Each tool group can expose its own settings. A mod may additionally register a mod-wide entry,
+showing common settings or other model sections. Sharing a model does not require sharing a Control
+between display locations, nor does adding an editor create another settings document.
+
+When a tool disappears, the chat page clears selection and releases the old settings tab's item
+source, notifying its bound view. Registration disposal drains tool calls but does not wait for UI
+delivery. Coordinate UI detachment before disposing a shared settings model or saving its final state.
+Ordinary Exit must not depend on a live dispatcher. See the
+[chat registration contract](04-ChatToolIntegration.md#registration-contract).
+
+Document when edits affect running work. Capture UI-owned preferences on the UI thread before
+starting background operations if they need a consistent snapshot. Persistence does not make a
+sequence of separate user edits transactional.
+
+Prefer the existing GeneratedSettingsItems path, which is covered by the collectible settings fixture.
+A reflection Binding comparison retained the mod assembly; the specific framework root is not yet
+diagnosed. Custom controls, subscriptions and framework registrations retain the normal UI ownership
+limits. Page removal alone does not prove collection; use the engine result and honor RestartRequired.
 
 ## Add a migration
 
@@ -262,6 +326,7 @@ controls or third-party caches. Do not retain mod settings or migration objects 
 collections. The host must still confirm collection; RestartRequired remains the outcome when
 unloading cannot be confirmed.
 
-Maintained tests cover isolated documents and converters, final saving and confirmed collectible
-unloading through real activations, as well as migration selection, failure/retry and temporary
-resource ownership. Editor lifetime checks accompany the later UI and service-boundary integrations.
+The maintained tests cover isolated documents, final saves, mod enum keys, activation-specific
+converters for host integer keys, generated settings edits, migration failure/retry and confirmed
+collectible unloading. See the [validation record](03-Validation.md#mod-settings) for the exact
+scope. Application management UI and arbitrary Avalonia cache cleanup are not included.
