@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Reactive.Disposables;
 using Avalonia.Collections;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
@@ -9,7 +8,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Metadata;
 using Everywhere.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using ZLinq;
 
 namespace Everywhere.MarkupExtensions;
 

@@ -1,33 +1,68 @@
 ﻿# Mod validation
 
+## Runtime cache layout check (2026-10-22)
+
+The application now stores runtime copies and the import index in `cache/mods`, with staging in
+`cache/mods/staging`. The package fixture passed all 16 cases. New ZIP and unpacked-folder cases
+delete the entire inactive test cache, then verify reimport, source and persistent-data preservation,
+an empty staging directory, a rebuilt index and reuse on the following import. Existing cases retain
+coverage for source removal, source replacement, duplicate IDs and invalid packages.
+
+Core and its test project built successfully. The explicit packaged navigation sample test passed
+using the nested cache/staging layout. This path change does not alter its existing collection limits.
+Failure feedback and manual reinstall remain future management UI work; no automatic repair or
+additional integrity scanning is implemented. See the [package lifecycle design](01-Specification.md).
+
+## Naming integration check (2026-10-21)
+
+The renamed workspace was checked on Windows x64 with the current Modding assemblies and SDK:
+
+- The Modding suite passed 95 cases, including source/directory SDK imports and real collectible fixtures.
+- The selected Core modding, settings-migration and application-lifetime checks passed 26 cases.
+  The migration fixture is now named `ModSettingsMigrationTests`.
+- The separate Release patching suite passed four cases with `ModFixture.PatchA` and `ModFixture.PatchB`.
+- The Windows source-host build and Everything package completed with zero warnings/errors on the final
+  build. The explicit packaged Everything test passed, including the renamed entry, embedded icon,
+  English/Chinese settings and two query/unload cycles.
+- The navigation sample packaged through the host-directory workflow. It retains the known
+  WindowsBase reference warning described below. Its explicit test passed AXAML loading, language
+  switching, button behavior and contribution removal; the rendered Chinese page was inspected.
+  Collection remained unconfirmed for `Everywhere.Mods.Sample`, so cleanup reported `RestartRequired`.
+
+These checks use local Windows build outputs. Published SDK and cross-platform deployment gates
+remain listed below.
+
 ## Current regression coverage
 
-ModPackageTests covers startup source membership, unchanged-copy reuse and full inactive-cache deletion.
-Both ZIP and unpacked-folder sources rebuild `cache/mods` and its nested staging directory without
-removing the retained source or persistent mod data. This does not add partial-file or index repair.
+Version comparison and range tests live in Everywhere.Abstractions.Tests and exercise the shared
+Everywhere.Versioning assembly. The historical fixture records the pre-change order of 88 local
+Git tags and 10 settings migration declarations (91 distinct versions). It runs without Git and
+checks ordering and distinct identities. Additional cases cover arbitrary prerelease labels,
+numeric segment ordering, metadata-insensitive equality/hashing, normalization and interval bounds.
+Core tests exercise pending migration selection from an existing Canary settings document and
+verify that the external UpdateChannel enum retains the generated localization option keys.
+SDK tests package a real prerelease mod, check exact prerelease API defaults and host range
+rejection, then validate the generated manifest through the runtime ModDefinition path.
+Stable defaults exclude the next major's prereleases with a -0 upper bound. Tool assemblies must
+remain absent from generated mod archives.
 
 Package localization tests use real author projects with both source and installation host imports.
-They check omitted names and whole localization declarations, independent descriptions, Unicode README
-paths, content attachments, convention discovery and explicit overrides, including Chinese-only README
-remapping and ambiguous English README rejection. The generated maps are read back through
-ModPackageStore without loading mod code. Metadata and packaging do not require the I18N/UI APIs.
+They check omitted names and whole localization declarations, independent descriptions, Unicode README paths, content attachments,
+convention discovery and explicit overrides, including Chinese-only README remapping and ambiguous English README rejection.
+The generated maps are read back through ModPackageStore without loading mod code.
 The same author builds verify generated and referenced satellites, explicit resource-copy metadata,
 host resource exclusion, DLL-named ordinary content and rejection of a damaged managed output.
 Both source-project and installation-directory imports use the host's generated resource manifest.
-
+Everything packages built through both Windows source and directory host imports contain 13 name/
+description languages and only English/Simplified Chinese README files. The maintained packaged
+query/settings/unload test checks those maps and aliased generated settings keys before exercising
+its two activation/retirement cycles.
 DynamicLocaleKeyTests check case-insensitive language lookup, order-independent equality/hashing,
 JSON and MessagePack round trips, and parent/English fallback. Text values remain case-sensitive.
 
 Mod stop-reason tests exercise real collectible entries during hot unload, completed
 initialization failure and ordinary exit, including a pending initializer. Cancellation callbacks and
 entry disposal observe the assigned reason, and exit joining timed-out retirement keeps Unload.
-
-ModPackageTests exercise ZIP/folder import reuse, same-version replacement and persistent data.
-A broken neighboring ZIP is reported without hiding a valid source; retry reuses the successful
-installation. Duplicate mod IDs exclude every competing source rather than choosing a winner.
-Case-colliding tags in name, description and README maps report DuplicateTranslation per source;
-repairing the manifest permits retry while successful neighboring imports retain their installation IDs.
-The import result contains startup installations and diagnostics, not a live-update desired set.
 
 The runtime separates registered reversal of application changes from optional entry disposal.
 Normal DI disposal releases the engine and its entries without draining registered reversal containers.
@@ -41,13 +76,26 @@ not revive an old proxy. The fixture uses generated JSON metadata; unrelated ref
 caches are outside that guarantee. SK's collectible parameter-converter keys use weak storage while
 the converter factory and execution pipeline remain upstream code.
 
+Reversible registration accepts ModChatPlugin only. The same-named built-in/mod regression checks
+that built-in snapshots retain their ordinary function identity and remain callable after mod
+retirement, while old mod functions are revoked. NativePlugins remains their shared UI list;
+MCP keeps its separate connection lifetime.
+
 ChatToolConsentTests exercise the production outer approval path with chat snapshots. They cover
 MCP tool-group approval persistence, customized requests, null/allow/deny hook results, automatic
-review and bypass precedence. The host applies rules by snapshot Key, not concrete mod type.
+review and bypass precedence. The host applies rules by snapshot Key, not concrete ChatPlugin type.
 Registration tests cover forwarding and revocation of the expanded hook.
 
 The SK patch has also been validated from a published test output. This establishes patch copying
 and execution for that output, not a full signed desktop release or macOS runtime validation.
+
+Service-boundary tests resolve real `ILogger<ModType>` services directly, lazily and by key,
+then retire one mod while another mod and the application root remain alive. Collection must
+be confirmed before unloading the second mod. Additional lifecycle cases verify host singleton
+identity through direct and collection resolution, scoped/transient behavior, constructor-injected
+provider ownership, reactivation, and disposal after initialization failure. Service availability
+checks use the native provider. The root's native relationship sources are marked per-scope so their
+nested lookups cannot retain collectible types in the parent registry.
 
 The maintained suite is `tests/Everywhere.Modding.Tests`. It exercises the current
 Hosting, Packaging and SDK implementations.
@@ -65,7 +113,9 @@ sibling updates and new consumers of unchanged providers, shared-payload replace
 new content/binding conflicts against resident owners, and directed-cycle isolation. Disposal failure
 and unconfirmed collection must prevent even preparing a new mod's assembly. A new native provider
 cannot change a live resolver; an explicit replacement can retire its owner before selecting both providers. Package tests cover immutable installation copies, ZIP
-paths, duplicate sources, user-data preservation and platform/version selection.
+paths, duplicate sources, broken-source isolation, user-data preservation and platform/version selection.
+Case-colliding tags in name, description and README maps report DuplicateTranslation per source;
+repairing the manifest permits retry while successful neighboring imports retain their installation IDs.
 
 Resource tests cover synchronous and pending ValueTask sources, exactly-once result
 consumption, asynchronous disposal preference, reverse sequential cleanup after failures,
@@ -76,9 +126,7 @@ collection and reload, cleanup after static-constructor/initializer failure, and
 owners after cleanup failure or timeout. Completing a timed-out disposer does not clear
 RestartRequired.
 
-The UI sample cannot currently be repackaged: SamplePage.axaml references a missing HandleClick
-method in SamplePage.axaml.cs (AVLN3000). Packaged UI validation must be repeated once that sample
-builds. The WindowsBase reference-conflict warning is understood and remains an accepted limitation
+The WindowsBase reference-conflict warning remains an accepted limitation
 of runtime-directory imports; the Everything source ProjectReference build no longer produces it.
 
 Lifecycle cases verify optional absent/synchronous/asynchronous entry disposal, asynchronous
@@ -135,18 +183,11 @@ collection result and therefore is not an assertion of successful hot unload. Se
 Actual desktop appearance, bootstrap/shutdown and published deployments require additional
 validation; a headless test does not establish those results.
 
-The application checks in `tests/Everywhere.Core.Tests/Common/ApplicationShutdownTests.cs` verify
-that App.Shutdown closes the lifetime without a pre-exit service phase, the existing entry-point
-startup drain remains separate, and normal DI disposal invokes the initializer service's owned
-engine. A startup coordinator regression blocks the UI thread after cancellation and verifies that its
-pending initializer can complete without another UI continuation. The focused navigation test still
-verifies removal of a selected contribution. These checks
-do not simulate a complete native dispatcher shutdown or establish OS session-termination behavior.
-The macOS delegate still routes ordinary Quit through Avalonia and allows system-classified termination
-through. Real Quit/Dock, logout, restart and shutdown remain platform validation gates; automated tests
-must not terminate the user's session.
+Engine disposal tests cover the engine's shutdown contract, rather than the application's native
+dispatcher shutdown. Real Quit/Dock, logout, restart and shutdown remain platform validation gates;
+automated tests must not terminate the user's session.
 
-### Windows native loading
+### Windows native loading and Everything
 
 The maintained platform/native tests cover unsupported-platform skipping before foreign code is
 inspected, optional availability, rejection of required skipped dependencies, and unused native
@@ -159,6 +200,70 @@ the actual native request; no native dependency graph or eager preload is introd
 The original native test showed that managed context collection alone left the DLL resident.
 The implementation now owns the references acquired by its resolver and frees them only after
 confirmed collection. This establishes the tested host path, not arbitrary native loader behavior.
+
+The real `everywhere.everything` ZIP contains only Windows x64 SDK 2 and SDK 3 DLLs, bundled
+Everything 1.5.0.1424b, its managed wrapper/entry, icon, license notice, dependency record and
+12 satellite assemblies. It excludes host DLLs. A simulated `osx-arm64` selection reports enabled
+but `Skipped` without running Windows code or checking Windows entry compatibility against macOS.
+This is a selection test on Windows, not macOS native execution.
+
+The explicit Core test starts a uniquely named 1.5 test instance and treats it as user-owned. It
+queries a known file through the packaged chat tool, retains an old cloned function, and requires
+successful unload/reload twice. The user process stays alive, Watchdog is never called, localization
+registration disappears, later calls through the old function fail, and native package modules leave
+the process. Select this explicit test by its exact fully qualified name; a combined NUnit filter
+with ordinary tests can leave it unexecuted. See the [build/test instructions](../../mods/Everywhere.Mods.Everything/README.md).
+
+A real collection failure was traced with ClrMD: retained display data held a FormattedDynamicLocaleKey,
+which held a C# compiler-generated `IReadOnlyList` implementation defined in the mod. Its elements
+were host-owned, but its container still retained the mod's loader allocator. Formatted and aggregate
+keys now copy containers to arrays owned outside the mod. The packaged test passes while keeping
+old chat/display snapshots reachable; clearing test history is not used as a workaround.
+
+Reflection-based serialization can retain mod types through .NET accessor caches even when
+function registration has been released. The host does not clear these internal caches or guarantee
+arbitrary result graphs are collectible. Prefer generated serialization and host-owned persistent values.
+Relevant runtime sources:
+[options cache sharing](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Text.Json/src/System/Text/Json/Serialization/JsonSerializerOptions.Caching.cs),
+[reflection accessor cache](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Text.Json/src/System/Text/Json/Serialization/Metadata/ReflectionEmitCachingMemberAccessor.Cache.cs).
+
+Independent client probes used the user's existing 1.4 default instance read-only and a test-owned
+1.5 named instance. They checked bounded results/full paths/sizes, result validity after client disposal,
+repeated queries and cancellation of an in-flight SDK 3 pipe read. SDK 3.0.0.9's viewport-count setter
+sets its field but always returns FALSE; the wrapper ignores that incorrect return value for its valid state. Full path needs property 240,
+and SDK 3 string lengths can include the terminator. These findings are reflected in the real wrapper.
+
+The current wrapper also passed isolated 1.4.1.1028 default-instance checks and packaged
+1.5.0.1424b named-instance checks. The legacy SDK 2 DLL was replaced with the official current
+x64 binary after an identical query stalled with the old DLL and completed with the official one.
+Both backends now distinguish IPC failure from a database that is still loading. SDK 2 retains
+synchronous cancellation semantics; no managed window/message-loop adapter was introduced.
+RID-less and win-x64 published NuGet consumers exercise the native assets. The packaged SDK 3
+checks include independent disposal, copied results, cancellation and disconnection.
+
+The mod now consumes the published EverythingNetCore 999.20261016.4 NuGet package,
+including its license notice, instead of a sibling source project. Its packaged integration
+test passed two query/unload/reload cycles with that release, including revocation of retained
+tool functions, managed collection and native module release. Package restore used the configured
+Sylinko feed. The source-import ProjectReference build now targets net10.0-windows10.0.19041.0
+and completed with zero warnings/errors, selecting System.Reactive's NuGet `ref` assembly.
+The resulting ZIP passed the same real query/unload test. Inspection confirmed that it contains
+the mod, EverythingNet, its x64 native DLLs/executable, satellites, README, icon and license;
+host managed/framework DLLs, symbols, XML and terminal helpers are absent. The mod suite passed
+59 cases in Debug. Installation-directory imports retain the documented WindowsBase limitation.
+
+Private startup exposed a service compatibility mistake: a running 1.4 pipe was initially accepted
+for the bundled 1.5 process, whose database never became ready. The implementation now checks the
+installed service executable version as well as its endpoint. The local 1.4 service is rejected before
+launch/Watchdog registration. In a separate controlled probe, the test supplied a private folder-indexing
+process to the production disposer; disposal stopped that process, left package files unchanged and
+preserved the user's default instance. This does **not** validate the full successful private-startup
+path with a compatible 1.5 service or elevated token. Those environments, and starting a stopped user
+installation through discovery, remain manual acceptance cases. No service was installed or upgraded.
+The upstream developer confirms the [1.4/1.5 service incompatibility](https://www.voidtools.com/forum/viewtopic.php?t=17050).
+
+Both ordinary and win-x64 framework-dependent EverythingNetCore package consumption have been
+validated; x86 native assets are excluded.
 
 ### Avalonia cleanup evidence and limits
 
@@ -211,11 +316,9 @@ results or promises about every runtime/library version:
 - Earlier publish-size comparisons informed disabling trimming and adopting Rx 7. Their
   measurements depended on particular builds and are not a current size budget.
 
-The deleted pre-rewrite engine suite is not coverage of today's engine. In particular,
-directed-cycle rejection, valid diamonds, shared-generic independent collection, dependency
-replacement and concurrent/reentrant application need current-implementation evidence before
-being described as continuously verified. Do not restore an entire prototype solely to
-preserve its historical test count; add focused regression cases when closing these gaps.
+Shared-generic assembly ownership across independent mods and concurrent/reentrant application
+operations still need focused current-implementation coverage. The generic service tests above cover
+DI registrations, not every cross-mod CLR generic relationship.
 
 ## Known issues
 
@@ -351,29 +454,30 @@ views, exercises the real editor template, and checks that retaining the catalog
 disposed page alive through its collection-change subscription. These checks do not make
 registration disposal a completion barrier for asynchronous UI delivery.
 
-## Everything extraction (2026-10-22)
+EverythingModTests exercises the packaged mod and chat-page view model against two isolated
+Everything 1.5 instances with different indexes. It edits both generated text settings, checks the
+same chat snapshot queries the newly selected index, verifies automatic saving before unload and
+saved values after reload, and retains a host control bound to the original SettingsTabItem during
+collection. Everything exposes ChatPlugin.SettingsItems; the test services deliberately contain no
+IModSettingsRegistry. Tool removal clears the page selection/tabs and the tab's observable item
+source clears the retained control's binding. Old calls are revoked, and both managed
+collection and native-module release are required. Both test-owned user instances survive mod
+unload and never enter Watchdog. This is headless integration coverage, not desktop visual acceptance.
 
-Everything is packaged as everywhere.everything for Windows x64. Its entry, EverythingNetCore
-999.20261016.4 wrapper, SDK 2/3 native DLLs, bundled executable, icon, license notices and 12
-satellites belong to the mod ZIP, not the Windows host. The package exposes 13 name/description
-languages and English/Simplified Chinese README files. A simulated osx-arm64 selection skips
-the Windows entry without executing it.
+The SDK package no longer includes or imports Everywhere.Configuration.SourceGenerator. Everything
+opts into the analyzer explicitly through ProjectReference; its runtime ZIP excludes the generator
+and host-owned assemblies. The Windows source-host build and package check complete without a
+WindowsBase warning. The general mod management page remains deferred.
 
-The explicit EverythingModTests package test runs two isolated Everything 1.5 user instances with
-different indexes. Across two activations it checks query-time preference changes, automatic/final
-saving, generated settings keys, the embedded icon, old-call revocation and managed/native unload.
-It retains an old chat settings tab and bound host control during collection. Both user processes
-survive mod removal and never enter Watchdog. The independent mounted-editor regression covers
-production editor detachment separately. See the [build/test instructions](../../mods/Everywhere.Mods.Everything/README.md).
+The temporary migration provider uses standard MSDI disposal. A disposal exception stops remaining
+service disposal; the test verifies that no migrated document is committed in that case. This is not
+aggregate-and-continue cleanup. See the [.NET implementation](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/Microsoft.Extensions.DependencyInjection/src/ServiceLookup/ServiceProviderEngineScope.cs).
 
-Reversible chat registration now accepts ModChatPlugin only. A same-named built-in/mod regression
-checks that built-in functions retain their ordinary snapshot identity and remain callable after
-the mod retires, while the old mod functions are revoked. NativePlugins remains their shared UI list;
-MCP connection ownership is unchanged.
-
-Private startup with a compatible running 1.5 service or an elevated token, starting a stopped user
-installation, native desktop presentation and exit remain acceptance cases. The automated package
-test does not install services, request elevation or modify the user's existing Everything instance.
+Mod-model bindings in the maintained UI path are generated compiled bindings; Everything's retained
+test control binds only to the host-owned SettingsTabItem. A reflection Binding comparison against a mod model retained
+the assembly, but the precise framework root is not diagnosed. No general Avalonia cache cleanup or
+management page is implemented. The author remains responsible for custom UI resources and the host
+still requires confirmed collection.
 
 ## Remaining release gates
 
@@ -390,8 +494,9 @@ test does not install services, request elevation or modify the user's existing 
   constraints and mod-owned patch behavior.
 - Close current graph/lifetime coverage gaps and assess representative long-running workloads.
   Historical microbenchmarks do not establish a startup, memory or unload-latency guarantee.
-- Extend native asset ownership and recovery validation to further libraries and platforms before
-  claiming their support.
+- Validate Everything private startup with a compatible 1.5 service/elevated token and starting a stopped
+  user installation; retain the explicit package test for user-process preservation. Extend native asset
+  ownership and recovery validation to further libraries and platforms before claiming their support.
 
 Unconfirmed collection requires `RestartRequired`; it must not be reported as a successful
 hot unload. Failed historical cases must not be converted into unsupported compatibility claims.

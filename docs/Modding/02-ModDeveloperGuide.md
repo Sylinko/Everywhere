@@ -1,19 +1,17 @@
 ﻿# Mod Developer Guide
 
-Read [Specification](01-Specification.md) for the runtime contract and [Validation](03-Validation.md) for tested capabilities. This guide distinguishes existing repository APIs from the SDK and package interfaces that have not been released.
+Read [Specification](01-Specification.md) for the runtime contract and [Validation](03-Validation.md) for tested capabilities. This guide distinguishes existing repository APIs from the SDK and package interfaces that have not been released. The [documentation index](README.md) links the focused integration guides.
 
-**Design status (2026-10-13):** the SDK workflow, host imports and platform-entry model are agreed. The rewrite now contains buildable contracts, runtime and basic SDK tooling, but no SDK release or complete application integration. Implementation can reveal problems that require changing the design, including revising these instructions substantially. Before final merge, examples, supported capabilities and validation must match the implemented behavior; unresolved work must be completed or explicitly deferred with its limitations documented.
+The SDK is not yet published. Use the repository SDK and a mod-enabled host for development. The table below distinguishes available capabilities from pending tooling; examples marked as planned are not usable SDK declarations yet.
 
 | Status | What authors can rely on today |
 |---|---|
-| Implemented in the rewrite | Selected-file validation, lifecycle/context registration, coordinated replacement and collection checks |
+| Implemented | Selected-file validation, lifecycle/context registration, coordinated replacement and collection checks |
 | Implemented and tested with collectible fixtures | Isolated optional methods and derived types in one DLL, controlled Assembly.Load(name), and rebuilding consumers when dependencies change |
 | Basic implementation; broader validation pending | Host imports, platform entries, RequiresMod and the Mods catalog; simple generated manifests and ZIPs |
 | Implemented and Windows-tested | Platform `Skipped` status; preserved native/content output paths; on-demand native resolver and host-acquired handle release |
 | Implemented | Optional IDisposable/IAsyncDisposable on mod entries; normal DI exit releases entries and skips registered reversal |
 | Implementation closure required | Complete schema/layout, SDK release, remaining dependency-selection policies and platform validation |
-
-The previous runtime was deliberately removed and is not the implementation baseline. Registration, catalog and optional entry-disposal examples use the replacement public contracts. Sections marked pending still describe intended tooling or release behavior; the current SDK does not yet implement all declarations, analyzers or package layouts shown here.
 
 ## 1. What a mod can do
 
@@ -113,7 +111,7 @@ InitializeAsync receives an IModContext with these existing members:
 | Member | Responsibility |
 |---|---|
 | ModId | Logical identity of the activation |
-| Services | Activation-local services with shared host singletons; stop using them before entry disposal completes |
+| Services | Activation service provider; shares host singletons and owns collectible generic services; unavailable after activation scope disposal |
 | Stopping | Signal to stop accepting work and finish outstanding operations |
 | StopReason | Null while running; Unload or Exit is set before Stopping is signaled |
 | Register | Register a disposable handle that reverses an application change made by this activation |
@@ -354,13 +352,6 @@ context.Register(
 
 This makes this particular subscription reversible; it does not remove unrelated registrations made by the control. A mod-owned static field is not inherently an unload leak: the problematic path is a surviving host/framework object retaining a mod type, delegate or instance. Do not clear shared framework tables through reflection or unregister host types as a generic workaround. Use the engine's collection result to determine whether the current process can safely continue changing mods. Source-reviewed limits and experimentally confirmed behavior are separated in [Validation](03-Validation.md#avalonia-cleanup-evidence-and-limits).
 
-### Persist mod settings
-
-Use context.OpenSettingsAsync to obtain SettingsEngine<TSettings> when the mod needs application
-JSON patching, observation and migration behavior with its own document. Follow the [settings developer guide](06-SettingsDeveloperGuide.md)
-to declare metadata, open settings during initialization and save them during entry disposal.
-Presentation is independent; the optional mod-wide registry is a separate integration.
-
 ## 5. Dependencies and conditional code
 
 Multiple mods can share types because the loader selects one assembly instance per managed simple name. A conflicting dependency version is rejected rather than hidden in a private copy with incompatible type identity. Host assemblies and the lifecycle contract must not be shipped as competing mod-owned DLLs.
@@ -567,8 +558,8 @@ yourself, you own its lifetime and must validate whether release is safe.
 Executables are content, not DLLs to preload. Launch only when needed and explicitly distinguish
 user-owned from mod-owned processes. Mutable configuration/databases belong in DataDirectory;
 copy an executable there first if it writes beside itself. The
-[Everything mod](../../mods/Everywhere.Mods.Everything/README.md) demonstrates this for Windows x64.
-Native lifetime validation remains specific to each library and platform.
+[Everything mod](../../mods/Everywhere.Mods.Everything/README.md) demonstrates this for
+Windows x64, with running/installed user instances preferred over a private bundled process.
 
 ### Register chat tools without retaining their implementation
 
@@ -674,9 +665,9 @@ Keeping an older installation makes explicit code rollback possible, but it does
 
 ## 6. Generated entries and compatibility
 
-**Design agreed; complete schema/tooling pending.** You declare intent in projects and source; the SDK generates metadata from the resolved build inputs and final runtime files. The host rechecks declarations and actual files. Build locks and exact build versions support reproducibility; they do not automatically declare compatibility with other versions.
+Declare entry and compatibility requirements in projects and source. The SDK generates metadata from the resolved build inputs and final runtime files; the host checks the declarations against the package. Build locks identify the versions used to build, not the versions your mod promises to support. Multi-entry aggregation and complete dependency-declaration tooling remain pending.
 
-The agreed entry shape for one mod with two platform implementations is shown below. This is an explanation of generated output, not a manifest to maintain by hand or a complete package schema:
+The following excerpt illustrates metadata for two platform entries. Use it to understand the entry model; do not maintain the generated manifest by hand:
 
 ```json
 {
@@ -708,23 +699,11 @@ Platform names use portable .NET RIDs: `win`, `win-x64`, `osx`, `osx-arm64`. Use
 
 When no platform entry matches, the mod stays enabled but has `State = Skipped` and `SkipReason = UnsupportedPlatform`; it executes no entry code. This is a per-mod status, not an activation failure. Malformed metadata and incompatible selected entries still fail validation. The loader selects the platform entry first, then validates its compatibility. It does not fall back from an incompatible `win-x64` entry to `win` just because the latter permits the installed Everywhere version. Only the selected entry's dependencies and common applicable assets participate. Record the minimum OS/runtime separately from RID where needed; generic platform spelling cannot make architecture-specific native files portable.
 
-### Diagnose startup source imports
-
-Keep one ZIP or unpacked package folder per mod ID under `~/.everywhere/mods`. If a source
-cannot be read or validated, startup logs its path and diagnostic code and still imports the other
-valid sources. If several sources declare the same ID, none of those sources is selected; keep the
-one you intend to use and restart. Other mod IDs are unaffected by this duplicate-source check.
-
-Fix or replace the broken source and restart to retry. Unchanged successful imports reuse their
-runtime copies, and mod data is preserved. A package that imported successfully may still fail
-later compatibility, dependency or activation checks; source import success does not mean it started.
-Source discovery remains startup-only, without a live watcher or automatic runtime removal on failure.
-
 ### Declare compatibility for the entry you build
 
 Your mod has one exact version across its entries. The SDK version identifies build tooling; the Mod API requirement describes the host-owned abstraction contract. Everywhere's version is a separate constraint when your entry uses implementation APIs. Multiple host releases can share one Mod API version.
 
-Host compatibility belongs to the concrete entry, so Windows and macOS entries may declare different `hostVersion` ranges. For entries that reference host implementation APIs, local development can omit this range while tooling records the imported build. Distribution packaging requires an explicit permitted range; tooling may help you specify the exact imported version as a starting point. A broad range does not prove future versions work. Contract-only mods need Mod API compatibility without an unnecessary host-release restriction.
+Host compatibility belongs to the concrete entry, so Windows and macOS entries may declare different `hostVersion` ranges. Set `EverywhereHostVersion` for each entry that references host implementation APIs before packaging. An exact range such as `[0.9.0]` is a starting point when only that host version has been tested. Local compilation can omit the range; distribution packaging requires it. Contract-only mods need Mod API compatibility without an additional host-release restriction.
 
 The public Mod API policy preserves backward compatibility within one major version. The SDK implements the stable and prerelease defaults explained in the [distribution steps](#distribution-installed-files-and-mod-data). This API policy does not infer compatibility for internal host APIs or arbitrary NuGet packages.
 

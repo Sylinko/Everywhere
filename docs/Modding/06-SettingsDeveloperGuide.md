@@ -214,21 +214,22 @@ between display locations, nor does adding an editor create another settings doc
 
 When a tool disappears, the chat page clears selection and releases the old settings tab's item
 source, notifying its bound view. Registration disposal drains tool calls but does not wait for UI
-delivery. Coordinate UI detachment before disposing a shared settings model or saving its final state.
-Ordinary Exit must not depend on a live dispatcher. See the
-[chat registration contract](04-ChatToolIntegration.md#registration-contract).
+delivery. Coordinate this UI detachment before final saving. Everything
+closes its chat registration on the UI thread during hot unload, then disposes its work and settings
+engine. On ordinary Exit it closes the registration without dispatching, since the UI may already
+have stopped. This lifecycle coordination does not require a mod-wide settings registration.
 
-Document when edits affect running work. Capture UI-owned preferences on the UI thread before
-starting background operations if they need a consistent snapshot. Persistence does not make a
-sequence of separate user edits transactional.
+Document when edits take effect. Everything's two settings, ExecutablePath and InstanceName, take
+effect on the next query. It reads both values together on the UI thread before queuing native work;
+the connection/retry loop uses that captured pair. The existing text editors update the model as the
+user types and the engine saves automatically, but editing alone never reconnects or restarts a process.
+Changes are not transactional across multiple edits; finish editing before starting the next query.
 
-Everything closes chat registration on the UI thread during hot unload, then disposes its work
-and settings engine. On Exit it closes registration without dispatching. The next query captures
-both connection preferences on the UI thread, without reconnecting merely because an edit occurs.
-
-For generated settings attributes, a file-local using does not apply to the generated file.
-Use fully qualified LocaleKey expressions or import the locale namespace globally. Everything
-uses an explicit MSBuild Using item for this purpose.
+For attributes that reference a mod's generated LocaleKey, use its fully qualified name unless
+the namespace is globally imported. SettingsItems generation copies attribute expressions into a
+separate file, so a file-local using does not apply there. See EverythingSettings in the example mod.
+Everything makes its locale namespace available to generated files through an explicit MSBuild Using
+item in the mod project; its settings attributes can therefore use the ordinary LocaleKey name.
 
 Prefer the existing GeneratedSettingsItems path, which is covered by the collectible settings fixture.
 A reflection Binding comparison retained the mod assembly; the specific framework root is not yet

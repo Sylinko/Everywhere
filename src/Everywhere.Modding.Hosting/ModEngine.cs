@@ -22,7 +22,7 @@ public sealed class ModEngine : IAsyncDisposable
     /// <summary>
     /// Gets host-owned snapshots without extending collectible lifetimes.
     /// </summary>
-    public IReadOnlyList<ModInfo> Mods => _snapshots.Values.OrderBy(info => info.Id, StringComparer.Ordinal).ToArray();
+    public IReadOnlyList<ModInfo> Mods => _snapshots.Values.AsValueEnumerable().OrderBy(info => info.Id, StringComparer.Ordinal).ToArray();
 
     private readonly HostAssemblyCatalog _host;
     private readonly IModServiceBoundaryFactory _services;

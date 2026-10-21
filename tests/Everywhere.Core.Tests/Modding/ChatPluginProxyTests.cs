@@ -11,13 +11,14 @@ using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Core.Tests.Modding.Fixtures;
 using Everywhere.I18N;
 using Microsoft.Extensions.DependencyInjection;
-using AIFunction = Microsoft.Extensions.AI.AIFunction;
-using AIFunctionArguments = Microsoft.Extensions.AI.AIFunctionArguments;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NSubstitute;
+using AIFunction = Microsoft.Extensions.AI.AIFunction;
+using AIFunctionArguments = Microsoft.Extensions.AI.AIFunctionArguments;
 
 namespace Everywhere.Core.Tests.Modding;
 
@@ -160,7 +161,7 @@ public sealed class ChatPluginProxyTests
         Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(new Kernel(services)));
         Assert.That(manager.NativePlugins, Is.Empty);
 
-        using var replacement = new Fixtures.CollectibleChatPlugin();
+        using var replacement = new CollectibleChatPlugin();
         await using var registration = manager.RegisterChatPlugin(replacement);
         using var chat = new ChatContext();
         var newScope = await manager.CreateScopeAsync(new CustomAssistant(), chat, null, CancellationToken.None);
@@ -373,7 +374,7 @@ public sealed class ChatPluginProxyTests
         /// Exercises special parameters and custom FunctionResult handling in SK.
         /// </summary>
         private FunctionResult Echo(
-            KernelFunction function, Kernel kernel, Fixtures.SearchRequest request, [FromKernelServices] object service, int limit = 20)
+            KernelFunction function, Kernel kernel, SearchRequest request, [FromKernelServices] object service, int limit = 20)
         {
             Observed = $"{request.Location.Directory}:{string.Join(',', request.Tags)}:{limit}:{function.PluginName}:{function.Name}";
             ObservedKernel = kernel;

@@ -166,6 +166,7 @@ internal sealed class ModActivation(
 
             switch (_mod)
             {
+                // ReSharper disable once SuspiciousTypeConversion.Global
                 case IAsyncDisposable asyncDisposable:
                 {
                     await asyncDisposable.DisposeAsync().ConfigureAwait(false);

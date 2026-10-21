@@ -7,9 +7,9 @@ using Avalonia.VisualTree;
 using Everywhere.Configuration;
 using Everywhere.I18N;
 using Everywhere.Modding.Hosting;
-using Everywhere.Modding.Hosting.Services;
 using Everywhere.Modding.Hosting.Installation;
 using Everywhere.Modding.Hosting.Loading;
+using Everywhere.Modding.Hosting.Services;
 using Everywhere.Modding.Packaging;
 using Everywhere.ViewModels;
 using Everywhere.Views;
@@ -29,7 +29,7 @@ public sealed class ModNavigationTests
     [AvaloniaTest]
     public async Task RegisterNavigationItem_RemoveSelectedContribution_PreservesOtherItems()
     {
-        using var services = CreateServices();
+        await using var services = CreateServices();
         var navigation = services.GetRequiredService<MainViewModel>();
         var first = navigation.RegisterNavigationItem(new TestPage());
         var second = navigation.RegisterNavigationItem(new TestPage());
@@ -73,7 +73,7 @@ public sealed class ModNavigationTests
             var imported = await new ModSourceCatalog(sources, store).ImportAsync();
             var installation = imported.Installations.Single();
             var host = new HostReferenceSet(hostDirectory);
-            using var services = CreateServices();
+            await using var services = CreateServices();
             var navigation = services.GetRequiredService<MainViewModel>();
             // This test process is the host. Use its built copies of declared shared dependencies;
             // platform application builds may have different generated or patched module identities.
@@ -110,7 +110,7 @@ public sealed class ModNavigationTests
             Assert.That(stopped.ActiveModIds, Is.Empty);
             Assert.That(stopped.Status, Is.AnyOf(ModApplyStatus.Applied, ModApplyStatus.RestartRequired), Describe(stopped));
             Assert.That(stopped.Diagnostics.All(diagnostic => diagnostic.Code == "CollectionUnconfirmed"), Is.True, Describe(stopped));
-            TestContext.Out.WriteLine($"UI sample cleanup: {stopped.Status}. {Describe(stopped)}");
+            await TestContext.Out.WriteLineAsync($"UI sample cleanup: {stopped.Status}. {Describe(stopped)}");
         }
         finally
         {
@@ -143,7 +143,7 @@ public sealed class ModNavigationTests
             Assert.That(item.Content, Is.EqualTo("模组示例"));
             Assert.That(window.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "模组示例"), Is.True);
             window.GetVisualDescendants().OfType<Button>().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.That(window.GetVisualDescendants().OfType<TextBlock>().Any(text => text.IsVisible && text.Text == "模组的按钮可以正常工作！"), Is.True);
+            Assert.That(window.GetVisualDescendants().OfType<TextBlock>().Any(text => text is { IsVisible: true, Text: "模组的按钮可以正常工作！" }), Is.True);
         }
         finally
         {
@@ -157,12 +157,13 @@ public sealed class ModNavigationTests
     /// </summary>
     private static HostServiceContainer CreateServices()
     {
-        return new HostServiceContainer(new ServiceCollection()
-            .AddSingleton<Settings>()
-            .AddSingleton<IKeyValueStorage, InMemoryKeyValueStorage>()
-            .AddSingleton<PersistentState>()
-            .AddSingleton<MainViewModel>()
-            );
+        return new HostServiceContainer(
+            new ServiceCollection()
+                .AddSingleton<Settings>()
+                .AddSingleton<IKeyValueStorage, InMemoryKeyValueStorage>()
+                .AddSingleton<PersistentState>()
+                .AddSingleton<MainViewModel>()
+        );
     }
 
     /// <summary>

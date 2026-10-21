@@ -14,7 +14,7 @@ namespace Everywhere.Configuration;
 /// </summary>
 /// <remarks>
 /// This application-owned initializer prepares the built-in document and owns its
-/// <see cref="SettingsEngine{TSettings}"/> until shutdown. Plugins use the separate
+/// <see cref="SettingsEngine{TSettings}"/> until shutdown. Mods use the separate
 /// context settings extension rather than resolving this initializer.
 /// </remarks>
 internal sealed class SettingsInitializer : IAsyncInitializer, IDisposable

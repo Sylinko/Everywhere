@@ -51,7 +51,7 @@ public sealed partial class ModEngineTests
     public async Task ApplyAsync_UnusedNativeLibrary_DoesNotLoadOrValidateItsBinary()
     {
         Directory.CreateDirectory(_dataDirectory);
-        File.WriteAllText(Path.Combine(_dataDirectory, "unused.dll"), "Not executable code.");
+        await File.WriteAllTextAsync(Path.Combine(_dataDirectory, "unused.dll"), "Not executable code.");
         var definition = NativeDefinition("unused.dll");
         var engine = CreateEngine(new Services());
         AssertApplied(await engine.ApplyAsync([definition]));

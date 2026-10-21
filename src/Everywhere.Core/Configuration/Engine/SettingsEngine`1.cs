@@ -31,7 +31,7 @@ public sealed class SettingsEngine<TSettings> : IAsyncDisposable where TSettings
     private Task? _disposal;
 
     /// <summary>
-    /// Attaches an existing document to a model. Application and plugin entry points prepare their own migrations.
+    /// Attaches an existing document to a model. Application and mod entry points prepare their own migrations.
     /// </summary>
     internal SettingsEngine(TSettings settings, JsonSettingsStorage storage, SettingsPatchBinder binder)
     {

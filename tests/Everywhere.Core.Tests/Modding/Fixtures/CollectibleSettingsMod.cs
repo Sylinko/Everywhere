@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
-using Everywhere.I18N;
 using Everywhere.Configuration;
 using Everywhere.Configuration.Engine;
+using Everywhere.I18N;
 using Everywhere.Modding.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -177,12 +178,12 @@ internal sealed class ModIntConverter(string prefix) : JsonConverter<int>
     {
         var key = reader.GetString() ?? throw new JsonException("Missing dictionary key.");
         if (!key.StartsWith(prefix + ":", StringComparison.Ordinal)) throw new JsonException("Wrong activation's converter.");
-        return int.Parse(key.AsSpan(prefix.Length + 1), System.Globalization.CultureInfo.InvariantCulture);
+        return int.Parse(key.AsSpan(prefix.Length + 1), CultureInfo.InvariantCulture);
     }
 
     /// <inheritdoc />
     public override void WriteAsPropertyName(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
     {
-        writer.WritePropertyName(prefix + ":" + value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        writer.WritePropertyName(prefix + ":" + value.ToString(CultureInfo.InvariantCulture));
     }
 }

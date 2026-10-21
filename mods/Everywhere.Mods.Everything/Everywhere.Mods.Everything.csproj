@@ -1,4 +1,5 @@
 ﻿<Project>
+
   <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.props"/>
 
   <PropertyGroup>
@@ -94,6 +95,7 @@
       Include="$(PkgEverythingNetCore)/LICENSE" Link="Licenses/EverythingNetCore.txt"
       CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
+
   <Import Project="../../src/Build.I18N.targets"/>
   <Import Project="../../src/Everywhere.Modding.Sdk/Sdk/Sdk.targets"/>
 </Project>
