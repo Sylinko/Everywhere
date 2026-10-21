@@ -8,6 +8,7 @@
     <SelfContained>true</SelfContained>
     <TargetFramework>$(TargetFrameworkPrefix)-macos</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
     <IsDeploymentTarget>true</IsDeploymentTarget>
     <UseAppHost>true</UseAppHost>
     <CreateAppBundle>true</CreateAppBundle>

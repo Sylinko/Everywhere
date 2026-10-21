@@ -128,13 +128,23 @@ public partial class TextSelectionToolbarWindow
             _inputCapture = capture;
             _inputEditor = editor;
             capture.Lost += HandleInputCaptureLost;
+#if MACOS
+            // AppKit owns the panel's input route, including out-of-process IME candidates.
+            // Native key loss dismisses outside interactions without guessing candidate bounds.
+            StopWatchingInput();
+            OpacityFactor = 1d;
+#else
             UpdateInputWatch();
+#endif
 
-            // Native focus belongs to the hidden CoreWindow; this changes Avalonia logical focus
-            // only. IsFocused on ChatTextEditor itself is not meaningful: it delegates to TextArea.
+            // The native input route is already acquired; this sets Avalonia logical focus.
+            // IsFocused on ChatTextEditor itself is not meaningful: it delegates to TextArea.
             try
             {
                 editor.Focus();
+                Log.Debug(
+                    "Toolbar editor focused after input capture. Capture active {IsCaptureActive}, editor focused {IsEditorFocused}",
+                    capture.IsActive, editor.IsKeyboardFocusWithin);
             }
             finally
             {
@@ -213,6 +223,13 @@ public partial class TextSelectionToolbarWindow
             StartWatchingInput();
             UpdateOpacityTracking();
         }
+#if MACOS
+        else if (hasEditor && IsVisible)
+        {
+            StartWatchingInput();
+            UpdateOpacityTracking();
+        }
+#endif
     }
 
     private void HandleInputCaptureLost(object? sender, EventArgs e)

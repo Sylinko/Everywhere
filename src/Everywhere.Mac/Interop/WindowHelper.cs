@@ -6,17 +6,20 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
+using Avalonia.Platform;
 using CoreAnimation;
 using Everywhere.Interop;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using ObjCRuntime;
+using Serilog;
 
 namespace Everywhere.Mac.Interop;
 
 public sealed class WindowHelper : IWindowHelper
 {
     private readonly ConditionalWeakTable<Window, WindowPropertiesState> _windowProperties = new();
+    private MacWindowInputCapture? _inputCapture;
 
     private int OpenedWindowCount
     {
@@ -68,7 +71,7 @@ public sealed class WindowHelper : IWindowHelper
     {
         // Passive effect windows must not switch the application away from Accessory mode,
         // because that mode is part of keeping overlays visible over other apps' full-screen spaces.
-        if (window is not ChatWindow and not VisualElementEffectWindow) OpenedWindowCount++;
+        if (window is not ChatWindow and not VisualElementEffectWindow and not TextSelectionToolbarWindow) OpenedWindowCount++;
 
         if (_windowProperties.TryGetValue(window, out var properties) && GetNativeWindow(window) is { } nativeWindow)
         {
@@ -80,7 +83,7 @@ public sealed class WindowHelper : IWindowHelper
 
     private void HandleWindowClosed(Window window, RoutedEventArgs args)
     {
-        if (window is not ChatWindow and not VisualElementEffectWindow) OpenedWindowCount--;
+        if (window is not ChatWindow and not VisualElementEffectWindow and not TextSelectionToolbarWindow) OpenedWindowCount--;
     }
 
     /// <summary>
@@ -103,7 +106,13 @@ public sealed class WindowHelper : IWindowHelper
 
         if (inputMode is { } mode)
         {
-            window.Focusable = mode == WindowInputMode.Normal;
+            properties.InputMode = mode;
+            window.Focusable = mode != WindowInputMode.NonActivating;
+            if (mode != WindowInputMode.NonActivatingTextInput)
+            {
+                properties.PreparedSourcePid = null;
+                if (_inputCapture?.Target == window) _inputCapture.LoseCapture();
+            }
         }
 
         if (hitTestVisible is { } isHitTestVisible)
@@ -127,14 +136,70 @@ public sealed class WindowHelper : IWindowHelper
     /// <inheritdoc />
     public bool TryPrepareInput(Window window)
     {
-        // macOS input delegation has not been implemented. The caller can explicitly choose
-        // ordinary activated input; preparation itself must never activate the window.
-        return false;
+        Avalonia.Threading.Dispatcher.UIThread.VerifyAccess();
+        var nativeWindow = GetNativeWindow(window);
+        if (!_windowProperties.TryGetValue(window, out var properties) ||
+            properties.InputMode != WindowInputMode.NonActivatingTextInput ||
+            nativeWindow is not NSPanel { StyleMask: var style } ||
+            (style & NSWindowStyle.NonactivatingPanel) == 0)
+        {
+            Log.Debug(
+                "macOS panel input preparation unavailable. Mode {InputMode}, native type {NativeWindowType}, style {NativeWindowStyle}",
+                properties?.InputMode, nativeWindow?.GetType().Name, nativeWindow?.StyleMask);
+            return false;
+        }
+
+        properties.PreparedSourcePid = NSWorkspace.SharedWorkspace.FrontmostApplication?.ProcessIdentifier;
+        Log.Debug(
+            "Prepared macOS panel input. Source {SourceProcessId}, native type {NativeWindowType}, style {NativeWindowStyle}",
+            properties.PreparedSourcePid, nativeWindow.GetType().Name, style);
+        return properties.PreparedSourcePid > 0;
     }
 
     /// <inheritdoc />
     public IWindowInputCapture? TryCaptureInput(Window window)
     {
+        Avalonia.Threading.Dispatcher.UIThread.VerifyAccess();
+        _windowProperties.TryGetValue(window, out var properties);
+        var currentSourcePid = NSWorkspace.SharedWorkspace.FrontmostApplication?.ProcessIdentifier;
+        var nativeWindow = GetNativeWindow(window);
+        if (_inputCapture is not null || !window.IsVisible || window.WindowState == WindowState.Minimized ||
+            properties is null || properties.InputMode != WindowInputMode.NonActivatingTextInput ||
+            properties.PreparedSourcePid is not { } sourcePid || currentSourcePid != sourcePid ||
+            nativeWindow is not NSPanel panel ||
+            window.TryGetPlatformHandle() is not IMacOSTopLevelPlatformHandle handle ||
+            Runtime.GetNSObject<NSView>(handle.NSView) is not { } nativeView)
+        {
+            Log.Debug(
+                "macOS panel input capture unavailable. Prepared source {PreparedSourceProcessId}, current source {CurrentSourceProcessId}, mode {InputMode}, visible {IsVisible}, existing capture {HasCapture}, native type {NativeWindowType}, style {NativeWindowStyle}",
+                properties?.PreparedSourcePid, currentSourcePid, properties?.InputMode, window.IsVisible,
+                _inputCapture is not null, nativeWindow?.GetType().Name, nativeWindow?.StyleMask);
+            return null;
+        }
+
+        var capture = new MacWindowInputCapture(window, panel, nativeView, released =>
+        {
+            if (ReferenceEquals(_inputCapture, released)) _inputCapture = null;
+        });
+        _inputCapture = capture;
+        try
+        {
+            var hasKeyInput = capture.Start();
+            var capturedSourcePid = NSWorkspace.SharedWorkspace.FrontmostApplication?.ProcessIdentifier;
+            Log.Debug(
+                "macOS panel input capture completed. Prepared source {PreparedSourceProcessId}, current source {CurrentSourceProcessId}, key input {HasKeyInput}",
+                sourcePid, capturedSourcePid, hasKeyInput);
+            if (hasKeyInput && capturedSourcePid == sourcePid)
+            {
+                return capture;
+            }
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(exception, "Failed to acquire non-activating macOS panel input");
+        }
+
+        capture.Dispose();
         return null;
     }
 
@@ -394,6 +459,10 @@ public sealed class WindowHelper : IWindowHelper
 
     private sealed class WindowPropertiesState
     {
+        public WindowInputMode InputMode { get; set; }
+
+        public int? PreparedSourcePid { get; set; }
+
         public WindowLayer? Layer { get; set; }
 
         public bool? IsHitTestVisible { get; set; }

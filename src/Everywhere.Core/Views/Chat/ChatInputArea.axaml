@@ -48,7 +48,7 @@
           <v:ChatAttachmentSizeTransitionContainer
             x:Name="PART_ChatAttachmentSizeTransitionContainer" Grid.Row="1"
             Grid.Column="0" Grid.ColumnSpan="3"
-            ClipToBounds="True"
+            Margin="6,0" ClipToBounds="True"
             IsVisible="{Binding !!ChatAttachmentItemsSource?.Count, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
             <ScrollViewer
               x:Name="PART_AttachmentScrollViewer" MaxHeight="52"
@@ -69,7 +69,7 @@
           <ContentControl
             x:Name="PART_ToolBarContentControl" Grid.Row="2"
             Grid.Column="0" Grid.ColumnSpan="2"
-            Margin="3"
+            Margin="3,0,3,3"
             Content="{TemplateBinding ToolBarContent}"/>
 
           <DockPanel

@@ -14,32 +14,20 @@ namespace Everywhere.Windows.Interop;
 /// <summary>
 /// A single UI-thread capture lease. Native hit testing uses immutable thread and window identities.
 /// </summary>
-internal sealed class WindowsWindowInputCapture : IWindowInputCapture
+internal sealed class WindowsWindowInputCapture(Window window, CoreWindowInputHost host, WindowsTextInputMethod method) : IWindowInputCapture
 {
-    public Window Target => _window;
+    public Window Target => window;
 
     public bool IsActive => _isActive;
 
-    public bool IsComposing => _isActive && _method.IsComposing;
+    public bool IsComposing => _isActive && method.IsComposing;
 
     public event EventHandler? Lost;
 
-    private readonly Window _window;
-    private readonly CoreWindowInputHost _host;
-    private readonly WindowsTextInputMethod _method;
-    private readonly uint _inputThread;
-    private readonly nint _targetHandle;
+    private readonly uint _inputThread = TextInputNative.GetWindowThreadProcessId(host.Handle, out _);
+    private readonly nint _targetHandle = window.TryGetPlatformHandle()?.Handle ?? 0;
     private bool _isActive;
     private bool _hasRequestedCapture;
-
-    public WindowsWindowInputCapture(Window window, CoreWindowInputHost host, WindowsTextInputMethod method)
-    {
-        _window = window;
-        _host = host;
-        _method = method;
-        _inputThread = TextInputNative.GetWindowThreadProcessId(host.Handle, out _);
-        _targetHandle = window.TryGetPlatformHandle()?.Handle ?? 0;
-    }
 
     public void Start()
     {
@@ -50,22 +38,22 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
             throw new InvalidOperationException("Input capture requires a foreground source window.");
         }
 
-        _host.Capture = this;
+        host.Capture = this;
         _isActive = true;
-        _window.PropertyChanged += HandleWindowPropertyChanged;
-        _window.Closed += HandleWindowClosed;
-        _window.PositionChanged += HandlePositionChanged;
-        _window.ScalingChanged += HandleScalingChanged;
-        _host.Window.KeyDown += HandleKeyDown;
-        _host.Window.KeyUp += HandleKeyUp;
-        _method.FocusLost += HandleFocusLost;
+        window.PropertyChanged += HandleWindowPropertyChanged;
+        window.Closed += HandleWindowClosed;
+        window.PositionChanged += HandlePositionChanged;
+        window.ScalingChanged += HandleScalingChanged;
+        host.Window.KeyDown += HandleKeyDown;
+        host.Window.KeyUp += HandleKeyUp;
+        method.FocusLost += HandleFocusLost;
         // The host was prepared while the passive toolbar was visible. Only this later user
         // interaction creates the edit context and requests native delegation. The caller focuses
         // the attached Avalonia editor afterwards, which supplies its TextInputMethodClient.
-        _method.Start();
+        method.Start();
         _hasRequestedCapture = true;
-        _host.RequestCapture();
-        if (TextInputNative.GetFocus() != _host.Handle || TextInputNative.GetForegroundWindow() != foreground)
+        host.RequestCapture();
+        if (TextInputNative.GetFocus() != host.Handle || TextInputNative.GetForegroundWindow() != foreground)
         {
             throw new InvalidOperationException("Input capture did not preserve foreground and establish host focus.");
         }
@@ -86,17 +74,17 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
         }
 
         Volatile.Write(ref _isActive, false);
-        _window.PropertyChanged -= HandleWindowPropertyChanged;
-        _window.Closed -= HandleWindowClosed;
-        _window.PositionChanged -= HandlePositionChanged;
-        _window.ScalingChanged -= HandleScalingChanged;
-        _host.Window.KeyDown -= HandleKeyDown;
-        _host.Window.KeyUp -= HandleKeyUp;
-        _method.FocusLost -= HandleFocusLost;
+        window.PropertyChanged -= HandleWindowPropertyChanged;
+        window.Closed -= HandleWindowClosed;
+        window.PositionChanged -= HandlePositionChanged;
+        window.ScalingChanged -= HandleScalingChanged;
+        host.Window.KeyDown -= HandleKeyDown;
+        host.Window.KeyUp -= HandleKeyUp;
+        method.FocusLost -= HandleFocusLost;
 
         try
         {
-            _method.Stop();
+            method.Stop();
         }
         catch (Exception exception)
         {
@@ -106,13 +94,13 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
         {
             // Stop the CoreText context before releasing the route. Do not activate the source
             // window to "restore" typing: it has remained foreground throughout this lease.
-            _host.Capture = null;
+            host.Capture = null;
             if (_hasRequestedCapture)
             {
                 _hasRequestedCapture = false;
                 try
                 {
-                    _host.ReleaseCapture();
+                    host.ReleaseCapture();
                 }
                 catch (Exception exception)
                 {
@@ -124,8 +112,8 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
 
     private void HandleWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs args)
     {
-        if (args.Property == Visual.IsVisibleProperty && !_window.IsVisible ||
-            args.Property == Window.WindowStateProperty && _window.WindowState == WindowState.Minimized)
+        if (args.Property == Visual.IsVisibleProperty && !window.IsVisible ||
+            args.Property == Window.WindowStateProperty && window.WindowState == WindowState.Minimized)
         {
             LoseCapture();
         }
@@ -133,9 +121,9 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
 
     private void HandleWindowClosed(object? sender, EventArgs args) => LoseCapture();
 
-    private void HandlePositionChanged(object? sender, PixelPointEventArgs args) => _method.LayoutChanged();
+    private void HandlePositionChanged(object? sender, PixelPointEventArgs args) => method.LayoutChanged();
 
-    private void HandleScalingChanged(object? sender, EventArgs args) => _method.LayoutChanged();
+    private void HandleScalingChanged(object? sender, EventArgs args) => method.LayoutChanged();
 
     private void HandleFocusLost()
     {
@@ -163,7 +151,7 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
 
     private void ForwardKey(KeyEventArgs args, RawKeyEventType type)
     {
-        if (!_isActive || _method.IsComposing)
+        if (!_isActive || method.IsComposing)
         {
             return;
         }
@@ -196,12 +184,12 @@ internal sealed class WindowsWindowInputCapture : IWindowInputCapture
             return;
         }
 
-        args.Handled = _method.DispatchKey(
+        args.Handled = method.DispatchKey(
             KeyInterop.KeyFromVirtualKey(virtualKey, keyData),
             KeyInterop.PhysicalKeyFromVirtualKey(virtualKey, keyData),
             type,
             modifiers);
     }
 
-    private bool IsDown(VirtualKey key) => (_host.Window.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
+    private bool IsDown(VirtualKey key) => (host.Window.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
 }
