@@ -19,6 +19,7 @@
   <ItemGroup>
     <PackageReference Include="Anthropic"/>
     <PackageReference Include="Avalonia"/>
+    <PackageReference Include="Avalonia.Native" Condition="'$(IsMacOS)' == 'true'"/>
     <PackageReference Include="Avalonia.Fonts.Inter"/>
     <PackageReference Include="Avalonia.AvaloniaEdit"/>
     <PackageReference Include="Avalonia.HtmlRenderer"/>

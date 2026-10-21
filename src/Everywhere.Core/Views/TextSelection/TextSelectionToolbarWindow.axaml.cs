@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+#if MACOS
+using Avalonia.Native;
+#endif
 using Avalonia.Interactivity;
 using Avalonia.Rendering.Composition;
 using Avalonia.Threading;
@@ -96,6 +99,12 @@ public partial class TextSelectionToolbarWindow : Window
     private Action<PixelPoint>? _updateOpacityFactor;
 
     public TextSelectionToolbarWindow(IWindowHelper windowHelper, IOverlayInputWatcher inputWatcher, Settings settings)
+#if MACOS
+        : base(AvaloniaNativeWindowFactory.CreatePanel(new AvaloniaNativePanelOptions
+        {
+            IsNonActivating = true
+        }))
+#endif
     {
         Settings = settings;
         _windowHelper = windowHelper;
