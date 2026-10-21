@@ -6,12 +6,12 @@ using Everywhere.Common;
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Manages chat plugins, built-in, plugin-supplied and MCP tools.
+/// Manages chat plugins, including built-in, mod-supplied and MCP tools.
 /// </summary>
 public interface IChatPluginManager
 {
     /// <summary>
-    /// Gets the combined list of built-in and plugin-supplied native chat tools for Binding use in the UI.
+    /// Gets the combined list of built-in and mod-supplied native chat tools for Binding use in the UI.
     /// </summary>
     IReadOnlyBindableList<NativeChatPlugin> NativePlugins { get; }
 

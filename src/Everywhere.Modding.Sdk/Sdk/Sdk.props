@@ -1,0 +1,21 @@
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <SelfContained>false</SelfContained>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <EverywhereLocalConfiguration Condition="'$(EverywhereLocalConfiguration)' == ''">$(MSBuildProjectDirectory)/Everywhere.local.props</EverywhereLocalConfiguration>
+    <EverywhereModToolsDirectory Condition="'$(EverywhereModToolsDirectory)' == ''">$(MSBuildThisFileDirectory)../tools/net10.0</EverywhereModToolsDirectory>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <!-- Localization identities are language tags, not files in the project tree. -->
+    <EverywhereModLocalization>
+      <Visible>false</Visible>
+    </EverywhereModLocalization>
+  </ItemDefinitionGroup>
+
+  <Import Project="$(EverywhereLocalConfiguration)" Condition="Exists('$(EverywhereLocalConfiguration)')" />
+</Project>

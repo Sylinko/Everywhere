@@ -2,9 +2,9 @@
 
 Everywhere.Versioning contains SemanticVersion, SemanticVersionRange and UpdateChannel in the
 Everywhere.Common namespace. It uses only the base class library. Everywhere.Abstractions and
-Everywhere.Plugin.Packaging reference this assembly; SDK and runtime compatibility checks therefore
-use the same implementation and type identity. Importing the plugin MSBuild SDK does not add its
-tool dependencies as plugin compilation references.
+Everywhere.Modding.Packaging reference this assembly; SDK and runtime compatibility checks therefore
+use the same implementation and type identity. Importing the mod MSBuild SDK does not add its
+tool dependencies as mod compilation references.
 
 ## Versions and identity
 
@@ -59,7 +59,7 @@ declarations, floating patterns and compound range expressions are not supported
 bound is ignored just as it is in ordinary comparison.
 
 `[1.0,2.0)` includes `2.0.0-preview.1` because that version precedes `2.0.0`. Use
-`[1.0,2.0.0-0)` to exclude every prerelease of 2.0.0 too. Stable Plugin API default ranges use this
+`[1.0,2.0.0-0)` to exclude every prerelease of 2.0.0 too. Stable Mod API default ranges use this
 upper bound to keep their same-major compatibility promise. Prerelease API defaults are exact.
 
 ## Application channels and migration

@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Use the workspace SDK until its first NuGet release. EverywhereHost is machine-local. -->
+  <Import Project="../../../src/Everywhere.Modding.Sdk/Sdk/Sdk.props"/>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EverywhereModToolsDirectory>$(MSBuildThisFileDirectory)../../../src/Everywhere.Modding.Sdk/bin/$(Configuration)/net10.0</EverywhereModToolsDirectory>
+    <EverywhereModId>everywhere.sample.navigation</EverywhereModId>
+    <EverywhereModEntryType>Everywhere.Mods.Sample.NavigationMod</EverywhereModEntryType>
+    <EverywhereI18NNamespace>Everywhere.Mods.Sample.I18N</EverywhereI18NNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia"/>
+    <ProjectReference Include="../../../src/Everywhere.I18N.SourceGenerator/Everywhere.I18N.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
+  </ItemGroup>
+
+  <Import Project="../../../src/Build.I18N.targets"/>
+  <Import Project="../../../src/Everywhere.Modding.Sdk/Sdk/Sdk.targets"/>
+
+</Project>

@@ -226,7 +226,7 @@ public sealed class ChatToolConsentTests
     /// <summary>
     /// Provides a plugin-owned identity for approval tests.
     /// </summary>
-    private sealed class TestPlugin() : PluginChatPlugin("consent")
+    private sealed class TestPlugin() : ModChatPlugin("consent")
     {
         /// <inheritdoc />
         public override IDynamicLocaleKey HeaderKey { get; } = new DirectLocaleKey("Consent tool");

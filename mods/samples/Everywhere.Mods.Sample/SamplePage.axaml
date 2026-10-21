@@ -1,0 +1,34 @@
+<UserControl
+  x:Class="Everywhere.Mods.Sample.SamplePage" xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Everywhere.Mods.Sample"
+  x:DataType="local:SamplePage">
+  <ScrollViewer>
+    <StackPanel
+      MaxWidth="720" Margin="32"
+      HorizontalAlignment="Left" Spacing="16">
+      <TextBlock
+        FontSize="28" FontWeight="SemiBold"
+        Text="{Binding TitleKey^}"/>
+      <TextBlock
+        FontSize="16"
+        Text="{Binding DescriptionKey^}"
+        TextWrapping="Wrap"/>
+      <Border
+        Padding="20"
+        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+        BorderThickness="1" CornerRadius="8">
+        <StackPanel Spacing="12">
+          <TextBlock
+            Text="{Binding InstructionsKey^}"
+            TextWrapping="Wrap"/>
+          <Button
+            HorizontalAlignment="Left" Click="HandleButtonClick"
+            Content="{Binding ButtonKey^}"/>
+          <TextBlock
+            x:Name="ResultText" IsVisible="False"
+            Text="{Binding ResultKey^}"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

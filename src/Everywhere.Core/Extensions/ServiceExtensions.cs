@@ -13,7 +13,7 @@ using Everywhere.Configuration;
 using Everywhere.Database;
 using Everywhere.Initialization;
 using Everywhere.Interop;
-using Everywhere.Plugins;
+using Everywhere.Modding;
 using Everywhere.ProcessIsolation.Automation;
 using Everywhere.ProcessIsolation.Hosting;
 using Everywhere.ProcessIsolation.Input;
@@ -90,9 +90,9 @@ public static class ServiceExtensions
         /// <summary>
         /// Registers the engine-owning initializer once; DI discovers its asynchronous disposal interface.
         /// </summary>
-        public IServiceCollection AddPlugins() =>
+        public IServiceCollection AddModding() =>
             services
-                .AddSingleton<PluginEngineManager>().AddAsyncInitializer<PluginEngineManager>();
+                .AddSingleton<ModEngineManager>().AddAsyncInitializer<ModEngineManager>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services

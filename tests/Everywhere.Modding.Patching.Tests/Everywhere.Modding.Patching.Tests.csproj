@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="MonoMod.RuntimeDetour" VersionOverride="25.3.6" />
+    <ProjectReference Include="../../src/Everywhere.Modding.Hosting/Everywhere.Modding.Hosting.csproj" />
+    <Compile Remove="Fixtures/**/*.cs" />
+    <ProjectReference Include="Fixtures/A/ModFixture.PatchA.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures/B/ModFixture.PatchB.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyPatchFixtures" AfterTargets="Build">
+    <ItemGroup>
+      <_PatchFixture Include="Fixtures/A/bin/$(Configuration)/$(TargetFramework)/ModFixture.PatchA.dll" />
+      <_PatchFixture Include="Fixtures/B/bin/$(Configuration)/$(TargetFramework)/ModFixture.PatchB.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PatchFixture)" DestinationFolder="$(OutDir)fixtures" />
+  </Target>
+</Project>

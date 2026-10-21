@@ -48,7 +48,8 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     public abstract IReadOnlyBindableList<ChatFunction> Functions { get; }
 
     /// <summary>
-    /// Gets the SettingsItems for this chat function.
+    /// Gets settings specific to this tool group for the chat tool page.
+    /// Presentation is independent of persistence and of any optional mod-wide settings entry.
     /// </summary>
     public virtual IReadOnlyList<SettingsItem>? SettingsItems => null;
 
@@ -192,13 +193,13 @@ public abstract class BuiltInChatPlugin(string name) : NativeChatPlugin(name)
 }
 
 /// <summary>
-/// A plugin-supplied tool group. Register it with IChatPluginManager for revocable chat snapshots.
-/// Names must be unique among registered plugin tool groups and remain stable across activations.
+/// A mod-supplied tool group. Register it with IChatPluginManager for revocable chat snapshots.
+/// Names must be unique among registered mod-supplied tool groups and remain stable across activations.
 /// </summary>
-public abstract class PluginChatPlugin(string name) : NativeChatPlugin(name)
+public abstract class ModChatPlugin(string name) : NativeChatPlugin(name)
 {
     /// <inheritdoc />
-    public sealed override string Key => $"plugin.{Name}";
+    public sealed override string Key => $"mod.{Name}";
 }
 
 /// <summary>

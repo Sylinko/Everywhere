@@ -1,11 +1,11 @@
-using Everywhere.Plugin.Hosting.Services;
+using Everywhere.Modding.Hosting.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Everywhere.Common;
 
 /// <summary>
 /// Provides the process-lived container to application composition and host-owned UI factories.
-/// Plugin code must use IPluginContext.Services so collectible generic services belong to its activation.
+/// Plugin code must use IModContext.Services so collectible generic services belong to its activation.
 /// Do not pass this provider to plugin factories or resolve services closed over plugin types here.
 /// </summary>
 internal static class ServiceLocator
