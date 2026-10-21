@@ -20,45 +20,12 @@
             </exp:ExpressionBinding>
           </Button.Padding>
 
-          <!-- <ToolTip.Tip> -->
-          <!--  <StackPanel  -->
-          <!--  MaxWidth="240" Spacing="4">  -->
-          <!--  <TextBlock  -->
-          <!--  Text="{Binding #AssistantName.Text}"  -->
-          <!--  TextWrapping="Wrap"/>  -->
-          <!--  <TextBlock  -->
-          <!--  Classes="Muted Caption"  -->
-          <!--  IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"  -->
-          <!--  Text="{Binding #ReasoningEffort.Text}"/>  -->
-          <!--   </StackPanel> -->
-          <!-- </ToolTip.Tip> -->
-
           <DockPanel
             HorizontalSpacing="6" IsHitTestVisible="False">
-            <v:IconPresenter
-              DockPanel.Dock="Left"
-              FontSize="{DynamicResource FontSizeM}"
-              Icon="{Binding SelectedItem?.Icon, RelativeSource={RelativeSource TemplatedParent}}"
-              IconSize="{DynamicResource FontSizeM}"
-              Size="{DynamicResource FontSizeXl}"/>
-            <TextBlock
-              x:Name="AssistantName" DockPanel.Dock="Left"
-              VerticalAlignment="Center"
-              Text="{Binding SelectedItem?.Name, RelativeSource={RelativeSource TemplatedParent}}"
-              TextTrimming="CharacterEllipsis">
-              <TextBlock.MaxWidth>
-                <exp:ExpressionBinding Expression="3 * A">
-                  <DynamicResource ResourceKey="FontSize3Xl"/>
-                </exp:ExpressionBinding>
-              </TextBlock.MaxWidth>
-              <Interaction.Behaviors>
-                <shadui:TextTrimmedToolTipBehavior/>
-              </Interaction.Behaviors>
-            </TextBlock>
             <TextBlock
               x:Name="ReasoningEffort" Classes="Muted Caption"
-              Margin="-2,0,0,0" VerticalAlignment="Center"
-              TextTrimming="CharacterEllipsis">
+              DockPanel.Dock="Right" Margin="-2,0,0,0"
+              VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
               <TextBlock.Text>
                 <MultiBinding Converter="{x:Static vc:ReasoningEffortConverters.EffectiveValue}">
                   <Binding
@@ -81,6 +48,26 @@
                 <shadui:TextTrimmedToolTipBehavior/>
               </Interaction.Behaviors>
             </TextBlock>
+            <TextBlock
+              x:Name="AssistantName" DockPanel.Dock="Right"
+              VerticalAlignment="Center"
+              Text="{Binding SelectedItem?.Name, RelativeSource={RelativeSource TemplatedParent}}"
+              TextTrimming="CharacterEllipsis">
+              <TextBlock.MaxWidth>
+                <exp:ExpressionBinding Expression="3 * A">
+                  <DynamicResource ResourceKey="FontSize3Xl"/>
+                </exp:ExpressionBinding>
+              </TextBlock.MaxWidth>
+              <Interaction.Behaviors>
+                <shadui:TextTrimmedToolTipBehavior/>
+              </Interaction.Behaviors>
+            </TextBlock>
+
+            <v:IconPresenter
+              FontSize="{DynamicResource FontSizeM}"
+              Icon="{Binding SelectedItem?.Icon, RelativeSource={RelativeSource TemplatedParent}}"
+              IconSize="{DynamicResource FontSizeM}"
+              Size="{DynamicResource FontSizeXl}"/>
           </DockPanel>
 
           <Button.Flyout>
@@ -96,7 +83,7 @@
                 DataContext="{Binding #PART_AssistantSelectionButton.TemplatedParent}"
                 IsCached="True"
                 IsTransitionReversed="{Binding SelectedSettingsItem, Converter={x:Static ObjectConverters.IsNull}}">
-                <TransitioningContentControl.PageTransition>
+                <v:ConditionalContentControl.PageTransition>
                   <CompositePageTransition>
                     <PageSlide
                       FillMode="None" SlideInEasing="CubicEaseInOut"
@@ -105,7 +92,7 @@
                       FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
                       FillMode="None" Duration="0:0:0.5"/>
                   </CompositePageTransition>
-                </TransitioningContentControl.PageTransition>
+                </v:ConditionalContentControl.PageTransition>
 
                 <v:ConditionalContentControl.FalseContent>
                   <DataTemplate>
@@ -618,11 +605,44 @@
         </Button>
       </ControlTemplate>
     </Setter>
+
+    <Style Selector="^:not(.Compact) /template/ Button#PART_AssistantSelectionButton">
+      <Setter Property="ToolTip.Tip" Value="{I18N {x:Static LocaleKey.ChatInputArea_CustomAssistantSelector_ToolTip}}"/>
+    </Style>
+
+    <Style Selector="^.Compact /template/ Button#PART_AssistantSelectionButton">
+      <Setter Property="ToolTip.Tip">
+        <Template>
+          <StackPanel
+            MaxWidth="240" Orientation="Horizontal"
+            Spacing="4">
+            <TextBlock
+              Text="{Binding $parent[v:ChatCustomAssistantSelector].SelectedItem?.Name}"
+              TextWrapping="Wrap"/>
+            <TextBlock
+              Classes="Muted Caption"
+              IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+              <TextBlock.Text>
+                <MultiBinding Converter="{x:Static vc:ReasoningEffortConverters.EffectiveValue}">
+                  <Binding Path="$parent[v:ChatCustomAssistantSelector].SelectedItem?.EffectiveReasoningOptions?.ReasoningEffort"/>
+                  <Binding Path="$parent[v:ChatCustomAssistantSelector].SelectedItem?.EffectiveReasoningOptions?.SelectedReasoningEffort"/>
+                  <Binding Path="$parent[v:ChatCustomAssistantSelector].SelectedItem?.Configuration.DefaultReasoningEffortValues"/>
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+          </StackPanel>
+        </Template>
+      </Setter>
+    </Style>
+
     <Style Selector="^.Compact /template/ TextBlock#AssistantName">
       <Setter Property="IsVisible" Value="False"/>
     </Style>
     <Style Selector="^.Compact /template/ TextBlock#ReasoningEffort">
       <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <Style Selector="^ /template/ TextBlock#ReasoningEffort">
+      <Setter Property="IsVisible" Value="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </Style>
   </ControlTheme>
 </ResourceDictionary>

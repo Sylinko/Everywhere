@@ -5,14 +5,25 @@
   <ControlTheme
     x:Key="{x:Type v:ChatTextEditor}"
     TargetType="v:ChatTextEditor">
+    <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="Template">
       <ControlTemplate>
-        <Panel>
+        <Panel Margin="{TemplateBinding Padding}">
           <avaloniaEdit:TextEditor
-            x:Name="PART_TextEditor" Focusable="True"
-            HorizontalScrollBarVisibility="Disabled" ShowLineNumbers="False"
+            x:Name="PART_TextEditor" ClipToBounds="False"
+            Focusable="True" HorizontalScrollBarVisibility="Disabled"
+            ShowLineNumbers="False"
             SyntaxHighlighting="{x:Null}"
             WordWrap="True">
+            <avaloniaEdit:TextEditor.Styles>
+              <Style Selector="ScrollViewer#PART_ScrollViewer">
+                <Setter Property="Margin" Value="0,0,-10,0"/>
+              </Style>
+              <Style Selector="avaloniaEdit|TextArea">
+                <Setter Property="Margin" Value="0,0,10,0"/>
+              </Style>
+            </avaloniaEdit:TextEditor.Styles>
+
             <avaloniaEdit:TextEditor.Options>
               <avaloniaEdit:TextEditorOptions
                 AcceptsTab="False" AllowScrollBelowDocument="False"

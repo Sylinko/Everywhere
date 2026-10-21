@@ -33,12 +33,12 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Grid
-          ColumnDefinitions="*,Auto" RowDefinitions="*,Auto,Auto"
-          RowSpacing="4">
+          x:Name="PART_RootGrid" ColumnDefinitions="Auto,*,Auto"
+          RowDefinitions="*,Auto,Auto" RowSpacing="4">
           <v:ChatTextEditor
             x:Name="PART_ChatTextEditor" Grid.Row="0"
-            Grid.Column="0" Grid.ColumnSpan="2"
-            Margin="{TemplateBinding Padding}"
+            Grid.Column="0" Grid.ColumnSpan="3"
+            Padding="{TemplateBinding Padding}"
             LeadingContent="{TemplateBinding LeadingContent, Mode=TwoWay}"
             LeadingContentTemplate="{TemplateBinding LeadingContentTemplate}"
             MaxLength="{TemplateBinding MaxLength}"
@@ -46,8 +46,10 @@
             Text="{TemplateBinding Text, Mode=TwoWay}"/>
 
           <v:ChatAttachmentSizeTransitionContainer
-            Grid.Row="1" Grid.Column="0"
-            Grid.ColumnSpan="2" ClipToBounds="True">
+            x:Name="PART_ChatAttachmentSizeTransitionContainer" Grid.Row="1"
+            Grid.Column="0" Grid.ColumnSpan="3"
+            ClipToBounds="True"
+            IsVisible="{Binding !!ChatAttachmentItemsSource?.Count, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
             <ScrollViewer
               x:Name="PART_AttachmentScrollViewer" MaxHeight="52"
               Margin="0,2" Padding="0"
@@ -65,15 +67,17 @@
           </v:ChatAttachmentSizeTransitionContainer>
 
           <ContentControl
-            Grid.Row="2" Grid.Column="0"
+            x:Name="PART_ToolBarContentControl" Grid.Row="2"
+            Grid.Column="0" Grid.ColumnSpan="2"
+            Margin="3"
             Content="{TemplateBinding ToolBarContent}"/>
 
-          <StackPanel
-            Grid.Row="2" Grid.Column="1"
-            Margin="8,0,0,0" Orientation="Horizontal"
-            Spacing="8">
+          <DockPanel
+            x:Name="PART_SendButtonContainer" Grid.Row="2"
+            Grid.Column="2" Margin="3"
+            HorizontalSpacing="6" LastChildFill="False">
             <v:ContextUsageRing
-              VerticalAlignment="Center"
+              DockPanel.Dock="Left" VerticalAlignment="Center"
               IndicatorBrush="{DynamicResource PrimaryColor}"
               IsIndeterminate="{Binding ContextCompaction?.IsRunning, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}"
               IsVisible="{Binding IsContextUsageRingVisible, RelativeSource={RelativeSource TemplatedParent}}"
@@ -198,30 +202,35 @@
 
             <Button
               x:Name="PART_SendButton" Classes="Primary Rounded"
-              VerticalAlignment="Center"
-              IsVisible="{Binding !IsVisible, ElementName=PART_CancelButton}"
-              ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}">
+              DockPanel.Dock="Right" VerticalAlignment="Center"
+              IsVisible="{Binding !IsVisible, ElementName=PART_CancelButton}">
+              <ToolTip.Tip>
+                <v:KeyboardShortcutLabel
+                  x:DataType="v:ChatInputArea"
+                  DataContext="{Binding #PART_SendButton.((v:ChatInputArea)TemplatedParent)}"
+                  Shortcut="{Binding PressCtrlEnterToSend, Converter={x:Static v:ChatInputArea.SendShortcutConverter}}"
+                  Text="{I18N {x:Static LocaleKey.ChatInputArea_SendButton_ToolTip}}"/>
+              </ToolTip.Tip>
               <Button.IsEnabled>
                 <MultiBinding Converter="{x:Static BoolConverters.And}">
                   <TemplateBinding Property="IsSendButtonEnabled"/>
                   <MultiBinding Converter="{x:Static BoolConverters.Or}">
                     <Binding
-                      Converter="{x:Static vc:Int32Converters.GreaterThan}"
-                      ConverterParameter="0" Path="#PART_ChatTextEditor.Text?.Length"
-                      TargetNullValue="{x:False}"/>
+                      Converter="{x:Static StringConverters.IsNotNullOrEmpty}"
+                      Path="#PART_ChatTextEditor.Text"/>
                     <Binding
                       Converter="{x:Static ObjectConverters.IsNotNull}"
                       Path="#PART_ChatTextEditor.LeadingContent"/>
+                    <!--  Convert a nullable count to Boolean before the multi-value converter.  -->
                     <Binding
-                      Converter="{x:Static vc:Int32Converters.GreaterThan}"
-                      ConverterParameter="0" Path="$parent[v:ChatInputArea].ChatAttachmentItemsSource?.Count"
+                      Path="!!$parent[v:ChatInputArea].ChatAttachmentItemsSource?.Count"
                       TargetNullValue="{x:False}"/>
                   </MultiBinding>
                 </MultiBinding>
               </Button.IsEnabled>
 
               <LucideIcon
-                Margin="-2,0,0,-2"
+                x:Name="PART_SendButtonIcon" Margin="-2,0,0,-2"
                 Foreground="{DynamicResource PrimaryForegroundColor}"
                 Kind="Send"
                 Size="{DynamicResource FontSizeL}"/>
@@ -229,17 +238,77 @@
 
             <Button
               x:Name="PART_CancelButton" Classes="Primary Rounded"
+              DockPanel.Dock="Right" VerticalAlignment="Center"
               Command="{TemplateBinding CancelCommand}"
               Focusable="False"
+              IsEnabled="{Binding CancelCommand, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
               ToolTip.Tip="{I18N {x:Static LocaleKey.ChatInputArea_CancelButton_ToolTip}}">
               <Border
-                Width="12" Height="12"
+                x:Name="PART_CancelButtonIcon"
+                Width="{DynamicResource FontSizeL}"
+                Height="{DynamicResource FontSizeL}"
                 Background="{DynamicResource PrimaryForegroundColor}"
                 CornerRadius="1"/>
             </Button>
-          </StackPanel>
+          </DockPanel>
         </Grid>
       </ControlTemplate>
     </Setter>
+
+    <Style Selector="^.Compact">
+      <Style Selector="^ /template/ Grid#PART_RootGrid">
+        <Setter Property="RowSpacing" Value="0"/>
+      </Style>
+
+      <Style Selector="^ /template/ v|ChatTextEditor#PART_ChatTextEditor">
+        <Setter Property="Grid.Column" Value="1"/>
+        <Setter Property="Grid.ColumnSpan" Value="1"/>
+        <Setter Property="Margin" Value="4,0,0,0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="MaxWidth" Value="480"/>
+        <Setter Property="MaxHeight" Value="{DynamicResource LineHeight2Xl}"/>
+      </Style>
+
+      <Style Selector="^ /template/ v|ChatAttachmentSizeTransitionContainer#PART_ChatAttachmentSizeTransitionContainer">
+        <Setter Property="IsVisible" Value="False"/>
+      </Style>
+
+      <Style Selector="^ /template/ ContentControl#PART_ToolBarContentControl">
+        <Setter Property="Grid.Row" Value="0"/>
+        <Setter Property="Grid.ColumnSpan" Value="1"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0"/>
+      </Style>
+
+      <Style Selector="^ /template/ DockPanel#PART_SendButtonContainer">
+        <Setter Property="Grid.Row" Value="0"/>
+        <Setter Property="Margin" Value="8,0,0,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+      </Style>
+
+      <Style Selector="^ /template/ LucideIcon#PART_SendButtonIcon">
+        <Setter Property="Size" Value="{DynamicResource FontSizeM}"/>
+      </Style>
+
+      <Style Selector="^ /template/ Border#PART_CancelButtonIcon">
+        <Setter Property="Width" Value="{DynamicResource FontSizeM}"/>
+        <Setter Property="Height" Value="{DynamicResource FontSizeM}"/>
+      </Style>
+
+      <Style Selector="^ /template/ Button#PART_SendButton">
+        <Setter Property="MinHeight" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="Height" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="MinWidth" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="Width" Value="{DynamicResource FontSize2Xl}"/>
+      </Style>
+
+      <Style Selector="^ /template/ Button#PART_CancelButton">
+        <Setter Property="MinHeight" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="Height" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="MinWidth" Value="{DynamicResource FontSize2Xl}"/>
+        <Setter Property="Width" Value="{DynamicResource FontSize2Xl}"/>
+      </Style>
+    </Style>
   </ControlTheme>
 </ResourceDictionary>

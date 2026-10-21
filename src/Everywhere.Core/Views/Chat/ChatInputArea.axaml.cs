@@ -2,6 +2,7 @@
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
@@ -9,6 +10,7 @@ using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.AI;
 using Everywhere.Chat;
+using Everywhere.Interop;
 using Everywhere.Utilities;
 
 namespace Everywhere.Views;
@@ -19,6 +21,12 @@ namespace Everywhere.Views;
 [TemplatePart("PART_AttachmentScrollViewer", typeof(ScrollViewer), IsRequired = true)]
 public sealed class ChatInputArea : TemplatedControl
 {
+    /// <summary>
+    /// Projects the send-key setting into the shortcut displayed by the send button's tooltip.
+    /// </summary>
+    public static IValueConverter SendShortcutConverter { get; } = new FuncValueConverter<bool, KeyboardShortcut>(
+        shouldPressControl => new KeyboardShortcut(Key.Enter, shouldPressControl ? KeyModifiers.Control : KeyModifiers.None));
+
     public static readonly StyledProperty<string?> TextProperty =
         AvaloniaProperty.Register<ChatInputArea, string?>(nameof(Text));
 
@@ -66,6 +74,12 @@ public sealed class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<bool> IsSendButtonEnabledProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsSendButtonEnabled), true);
+
+    /// <summary>
+    /// Defines whether executing the send command immediately clears the input text.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShouldClearTextOnSubmitProperty =
+        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(ShouldClearTextOnSubmit), true);
 
     public static readonly StyledProperty<object?> LeadingContentProperty =
         ChatTextEditor.LeadingContentProperty.AddOwner<ChatInputArea>();
@@ -180,6 +194,16 @@ public sealed class ChatInputArea : TemplatedControl
         set => SetValue(IsSendButtonEnabledProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether invoking the send command clears the editor immediately.
+    /// Hosts that can reject submission can clear their bound text after acceptance instead.
+    /// </summary>
+    public bool ShouldClearTextOnSubmit
+    {
+        get => GetValue(ShouldClearTextOnSubmitProperty);
+        set => SetValue(ShouldClearTextOnSubmitProperty, value);
+    }
+
     public object? LeadingContent
     {
         get => GetValue(LeadingContentProperty);
@@ -268,7 +292,10 @@ public sealed class ChatInputArea : TemplatedControl
             {
                 if (Command?.CanExecute(Text) is not true) return;
                 Command.Execute(Text);
-                Text = string.Empty;
+                if (ShouldClearTextOnSubmit)
+                {
+                    Text = string.Empty;
+                }
                 args.Handled = true;
             },
             handledEventsToo: true);
@@ -348,7 +375,10 @@ public sealed class ChatInputArea : TemplatedControl
                 if (Command?.CanExecute(Text) is not true) break;
 
                 Command.Execute(Text);
-                Text = string.Empty;
+                if (ShouldClearTextOnSubmit)
+                {
+                    Text = string.Empty;
+                }
                 e.Handled = true;
                 break;
             }
